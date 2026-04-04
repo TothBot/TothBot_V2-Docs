@@ -1,0 +1,372 @@
+DocDCN:     1011011
+DocTitle:   Risk_Engine_Coding_Spec
+DocVersion: dv1_2
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011011_Risk_Engine_Coding_Spec_dv1_2.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+RISK ENGINE CODING SPECIFICATION
+============================================================
+
+STATUS: Working Draft — Placeholder
+Updated from dv1_0 per eighth 10-search FP/DP organism
+validation session (TB00016, 2026-03-26).
+
+New sections added:
+  3.4  Portfolio value definition and position sizing
+       (AR-051: RE-SZ-001 through RE-SZ-005)
+  3.5  Drawdown formula correction (AR-052: clarifies the
+       exact baseline, formula, and per_trade_USD definition
+       that supersedes the placeholder references in dv1_0
+       Section 3.2)
+
+============================================================
+1. PURPOSE
+============================================================
+
+The Risk Engine implements Gate 7 (Risk Guard) and Gate 8
+(Position Sizer) of the TothBot V2 trading pipeline. It
+enforces all position sizing, drawdown, and concentration
+rules. It is the final filter before order dispatch.
+
+The Risk Engine enforces the three halt/pause thresholds:
+  full_halt_drawdown:      10% of portfolio (HALT)
+  session_pause_drawdown:  5% of portfolio (PAUSE)
+  max_concurrent:          20 positions (BLOCK entry)
+
+All values are CIATS-owned starting values.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification         (TBD)
+  1010000  Trading_System_Coding_Anchor (TBD)
+  1011011  This document
+  Parent specifications:
+    0611001  Position_Sizing_Rules      (TBD Phase 4)
+    0611002  Drawdown_and_Halt_Rules    (TBD Phase 4)
+    0611003  Concentration_Exposure_Rules (TBD Phase 4)
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1-3.3 [All prior sections dv1_0 carry forward unchanged]
+------------------------------------------------------------
+
+See dv1_0 for complete text of Sections 3.1 through 3.3.
+All rules remain authoritative unless updated or superseded
+by Sections 3.4 and 3.5 below.
+
+KEY RULES CARRY FORWARD:
+  RE-SEM-001 through RE-SEM-006: BoundedSemaphore for
+    max_concurrent enforcement.
+  RE-DD-001 through RE-DD-006: Drawdown tracking pattern.
+    NOTE: Section 3.5 below provides the EXACT formula
+    for drawdown_pct. Section 3.2 formula (RE-DD-002)
+    is superseded by RE-FORM-001 in Section 3.5.
+  RE-SIZER-001 through RE-SIZER-004: Gate 8 R:R formula.
+    NOTE: Section 3.4 below provides the EXACT definition
+    of portfolio_value used in Gate 8 sizing.
+
+------------------------------------------------------------
+3.4 PORTFOLIO VALUE AND POSITION SIZING [NEW dv1_1 AR-051]
+------------------------------------------------------------
+
+RE-SZ-001  ★ NEW dv1_1: AUTHORITATIVE DEFINITION
+           of "portfolio" for ALL sizing computations in
+           the Risk Engine. This definition supersedes any
+           vague or undefined references to "portfolio" in
+           prior versions.
+
+           portfolio_USD = spot_usd_balance
+             (spot wallet, main sub-wallet, USD only)
+             (WM-BAL-002 provides the value via WS Manager)
+
+           This is REALIZED CAPITAL ONLY. It does NOT include
+           mark-to-market value of open positions.
+
+           RATIONALE: Using cash-in-hand for sizing prevents
+           a feedback loop where rising position values
+           inflate sizing of subsequent positions, increasing
+           total risk exposure beyond intent.
+
+RE-SZ-002  ★ TRADEABLE CAPITAL:
+             tradeable_USD = portfolio_USD × tradeable_pct
+
+           tradeable_pct is a CIATS-owned parameter.
+           Starting value: 0.50 (50% of portfolio).
+
+RE-SZ-003  ★ PER-TRADE ALLOCATION:
+             per_trade_USD = tradeable_USD × per_trade_pct
+
+           per_trade_pct is a CIATS-owned parameter.
+           Starting value: 0.05 (5% of tradeable).
+
+           At 200+ closed trades, CIATS activates Half-Kelly:
+             K_full = W - ((1 - W) / R)
+             # W = win_rate, R = avg_reward_risk_ratio
+             K_half = K_full * Decimal("0.5")
+             per_trade_USD = min(
+                 K_half * tradeable_USD,
+                 tradeable_USD / max_concurrent
+             )
+           The cap (tradeable / max_concurrent) prevents any
+           single trade from exceeding its proportional
+           share even with a high Kelly fraction.
+
+RE-SZ-004  ★ POSITION SIZE (base currency):
+             raw_qty = per_trade_USD / entry_limit_price
+             order_qty = raw_qty.quantize(qty_increment,
+                             rounding=ROUND_DOWN)
+           (Decimal rounding per BP-DEC-002 in 1011001)
+
+RE-SZ-005  ★ PENDING ORDER DEDUCTION FROM AVAILABLE USD:
+             available_USD = spot_usd_balance
+                 - sum(pending_orders.values())
+           Gate 7 uses available_USD (not portfolio_USD)
+           for the USD sufficiency check. This prevents
+           multiple simultaneous pipeline activations from
+           overcommitting available cash.
+           (Pending Order Registry per WM-POR-001 through -007)
+
+DECISION RATIONALE (RE-SZ-001 through RE-SZ-005):
+  TB00016 confirmed that no prior version of any spec
+  explicitly defined what "portfolio" means for sizing.
+  Without a definition, a coder could use portfolio_USD
+  as cash (correct), spot balance + earn balance (wrong),
+  or cash + MTM positions (wrong). The exact definition
+  is cash-in-hand, spot/main wallet only, which is the
+  most conservative and loss-minimizing approach: it
+  ensures TothBot never sizes positions from unrealized
+  or inaccessible capital.
+
+------------------------------------------------------------
+3.5 DRAWDOWN FORMULA — AUTHORITATIVE DEFINITION [NEW dv1_1]
+------------------------------------------------------------
+
+RE-FORM-001  ★ NEW dv1_1 (AR-052): AUTHORITATIVE FORMULA
+             superseding placeholder text in RE-DD-002.
+
+             BASELINE:
+               portfolio_baseline_USD: set at startup
+               (after snap_orders, Step 6 of 1011014)
+               = spot_usd_balance at that moment
+               NEVER updated during operation.
+               RESETS on TothBot restart.
+
+             CURRENT PORTFOLIO VALUE (for drawdown only):
+               current_portfolio_USD = spot_usd_balance
+                   + sum(
+                       bid_price[sym] × position_qty[sym]
+                       for sym in position_mirror.keys()
+                   )
+               Uses bid price for long positions (realizable
+               exit value). bid_price[sym] = latest ticker
+               bid from event_trigger:bbo subscription.
+
+             DRAWDOWN PERCENTAGE:
+               from decimal import Decimal
+               drawdown_pct = max(
+                   Decimal("0"),
+                   (portfolio_baseline_USD
+                    - current_portfolio_USD)
+                   / portfolio_baseline_USD
+               )
+               # Positive = loss. Zero = flat or gain.
+
+RE-FORM-002  ★ EVALUATION FREQUENCY:
+             drawdown_pct is re-evaluated on EVERY bbo
+             ticker event for pairs with open positions.
+             This provides continuous circuit breaker
+             monitoring between candle closes.
+
+RE-FORM-003  ★ THRESHOLD ACTIONS (authoritative):
+             if drawdown_pct >= full_halt_drawdown (0.10):
+                 → FULL_HALT: block all entries,
+                   batch_cancel open entry GTD orders,
+                   do NOT close positions,
+                   alert CRITICAL,
+                   require operator restart to resume.
+
+             if drawdown_pct >= session_pause_drawdown (0.05):
+                 → SESSION_PAUSED: block all entries,
+                   do NOT close positions,
+                   alert HIGH,
+                   resume when drawdown recovers AND
+                   operator acknowledges.
+
+RE-FORM-004  ★ EMERGSL REMAINS ACTIVE IN BOTH HALT STATES:
+             Neither halt state cancels TP or emergSL orders.
+             These are the position's loss floor.
+             batch_cancel in FULL_HALT only cancels
+             ENTRY GTD orders (pending, not yet filled).
+
+RE-FORM-005  ★ PEAK PORTFOLIO (from RE-DD-003, confirmed):
+             peak_portfolio_USD is updated when
+             current_portfolio_USD > peak_portfolio_USD.
+             Used by CIATS for maximum drawdown tracking.
+             Does NOT affect circuit breaker thresholds
+             (those use baseline, not peak).
+             CIATS will define HWM-based trailing drawdown
+             after 200 closed trades.
+
+DECISION RATIONALE (RE-FORM-001 through RE-FORM-005):
+  TB00016 confirmed that the placeholder drawdown formula
+  in dv1_0 Section 3.2 was not explicit enough to code
+  from. Specifically: what is the baseline? Is it session-
+  based or lifetime? Does current_portfolio include open
+  position mark-to-market? These ambiguities would lead
+  to incorrect implementations. The answers are:
+  baseline = startup cash (session-based), current =
+  cash + bid×qty (includes unrealized for monitoring
+  but not for sizing). Session-based baseline is correct
+  for paper trading V1; CIATS will evolve this after
+  sufficient data is available to implement HWM trailing
+  drawdown if data shows it is better.
+
+------------------------------------------------------------
+3.6 GATE 8 R:R FORMULA — DECIMAL ROUNDING UPDATE [NEW dv1_1]
+------------------------------------------------------------
+
+RE-RR-001  ★ Update to RE-SIZER-002 (from dv1_0):
+           The Gate 8 R:R formula carries forward from
+           dv1_0 but ALL price and quantity computations
+           MUST use Decimal per BP-DEC-001 through -008
+           in 1011001 Engineering_Best_Practices dv1_4.
+
+           UPDATED QUANTITY ROUNDING (supersedes old line):
+             # OLD (wrong): order_qty = trade_size_usd / entry_fill_price
+             # NEW (correct):
+             raw_qty = trade_size_usd / entry_fill_price
+             order_qty = raw_qty.quantize(
+                 pair_cache[sym]["qty_increment"],
+                 rounding=ROUND_DOWN
+             )
+
+           UPDATED TP ROUNDING:
+             raw_tp = entry_fill_price * (Decimal("1") + gross_target)
+             tp_price = raw_tp.quantize(
+                 pair_cache[sym]["price_increment"],
+                 rounding=ROUND_UP
+             )
+
+           UPDATED EMERGSL ROUNDING:
+             raw_sl = entry_fill_price - (atr_14 * emergsl_mult)
+             emergsl_price = raw_sl.quantize(
+                 pair_cache[sym]["price_increment"],
+                 rounding=ROUND_DOWN
+             )
+
+           All float math.floor/ceil calls for rounding
+           are PROHIBITED per BP-DEC-008.
+
+============================================================
+4. SCOPE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Complete Gate 7 Risk Guard implementation
+  4.2  Complete Gate 8 Position Sizer implementation
+  4.3  Drawdown tracking and circuit breaker procedure
+  4.4  Concentration and exposure rules
+  4.5  CIATS parameter update interface for Risk Engine
+  4.6  Unit tests for all sizing calculations
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (TBD IN FINAL SPEC)
+============================================================
+
+  (1) What does Risk Engine DO?
+      Gate 7: Checks drawdown, concentration, exposure.
+        Enforces max_concurrent via BoundedSemaphore.
+        Checks available_USD vs pending_orders.
+        Continuous ticker-driven drawdown monitoring.
+        Blocks entry or halts on threshold breach.
+      Gate 8: Calculates position size, TP price, emergSL
+        price. All values Decimal. Validates qty_min/cost_min.
+        Never blocks.
+  (2) Interfaces:
+      Inputs: Position Mirror (open positions count),
+        Parameter Store (all thresholds), WS Manager
+        (spot_usd_balance, pending_orders, bid prices),
+        Ticker (current bid prices).
+      Outputs: Gate 7 pass/halt, Gate 8 order parameters.
+  (3) Hard rules (updated dv1_1):
+      SACRED net_gain = net_loss × 1.5. NEVER changes.
+      portfolio_USD = spot_usd_balance (cash only). NEVER MTM.
+      ALL financial values: Python Decimal (BP-DEC-001 through -008).
+      ALL rounding: Decimal.quantize() ONLY. Never math.floor/ceil.
+      max_concurrent enforced by BoundedSemaphore.
+      BoundedSemaphore ValueError = critical bug.
+      Drawdown uses bid price (realizable value).
+      Drawdown baseline = startup cash. NEVER reset mid-session.
+      Manual operator intervention required to lift full halt.
+      Gate 7 checks available_USD (cash minus pending orders).
+  (4) Triggers:
+      Gate 7/8: each pipeline evaluation (5m candle).
+      Drawdown: every bbo ticker event for open positions.
+  (5) Logs:
+      Every Gate 7 decision with drawdown values.
+      Every Gate 8 calculation with full R:R detail.
+      Every halt/pause event with threshold values.
+      BoundedSemaphore state on every position change.
+      portfolio_baseline_USD at startup.
+      available_USD on every Gate 7 evaluation.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0500000  System_Architecture_Overview  dv1_12
+  0611001  Position_Sizing_Rules         (TBD Phase 4)
+  0611002  Drawdown_and_Halt_Rules       (TBD Phase 4)
+  0611003  Concentration_Exposure_Rules  (TBD Phase 4)
+  1011001  Engineering_Best_Practices    dv1_4
+  1011002  WS_Manager_Coding_Spec        dv1_9
+  1011010  CIATS_Coding_Spec             dv1_2
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_2  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial WD placeholder. Created under
+                     WD Exception (0311002 Section 1).
+                     Sixth 10-search FP/DP validation
+                     (TB00014). Three sections:
+                     Section 3.1: asyncio.BoundedSemaphore
+                     for max_concurrent enforcement (NEW-10).
+                     Section 3.2: Drawdown tracking pattern
+                     with ticker-driven continuous monitoring.
+                     Section 3.3: Gate 8 R:R formula
+                     implementation in Python Decimal.
+
+  dv1_1  03-26-2026  Eighth 10-search FP/DP validation
+                     (TB00016). Three new sections:
+                     Section 3.4: RE-SZ-001 through -005.
+                     Authoritative portfolio_USD definition:
+                     spot_usd_balance (cash only, not MTM).
+                     Tradeable and per_trade computation.
+                     Half-Kelly activation at 200 trades.
+                     available_USD = cash - pending_orders
+                     used for Gate 7 USD sufficiency check.
+                     Section 3.5: RE-FORM-001 through -005.
+                     Authoritative drawdown formula.
+                     baseline = startup spot_usd_balance.
+                     current = cash + bid×qty open positions.
+                     drawdown_pct formula with max(0,...).
+                     No auto-close in halt states.
+                     Section 3.6: RE-RR-001.
+                     Gate 8 formula updated with correct
+                     Decimal.quantize() rounding for qty,
+                     tp_price, and emergSL price. Replaces
+                     float math operations in dv1_0.
+
+============================================================
+END OF DOCUMENT
+============================================================

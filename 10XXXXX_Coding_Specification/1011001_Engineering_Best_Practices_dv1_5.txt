@@ -1,0 +1,329 @@
+DocDCN:     1011001
+DocTitle:   Engineering_Best_Practices
+DocVersion: dv1_5
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011001_Engineering_Best_Practices_dv1_5.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+ENGINEERING BEST PRACTICES
+============================================================
+
+STATUS: Working Draft — Placeholder
+Updated from dv1_3 per eighth 10-search FP/DP organism
+validation session (TB00015/TB00016, 2026-03-26).
+
+Section 3.11 added: Decimal precision for price/quantity
+rounding. BP-DEC-001 through BP-DEC-005 specify that ALL
+price and quantity rounding MUST use Decimal.quantize()
+not math.floor/ceil. Float binary representation errors
+cause incorrect price/quantity values when using math
+operations — corrupted orders, rejected fills, R:R
+violations. AR-047 amendment from TB00016.
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines non-negotiable engineering standards
+that apply to all TothBot V2 code. Every coding spec
+(1011002 through 1011014) must conform to these standards.
+Quality is built in — not inspected in.
+
+Primary mission lens: every engineering decision must serve
+maximizing profit and minimizing loss with emphasis on
+minimizing loss.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification         (TBD)
+  1010000  Trading_System_Coding_Anchor (TBD)
+  1011001  This document
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1-3.10 [All prior sections dv1_3 carry forward unchanged]
+------------------------------------------------------------
+
+See dv1_3 for complete text of Sections 3.1 through 3.10.
+All rules remain authoritative unless updated below.
+
+KEY RULES CARRY FORWARD:
+  BP-JSON-001  All JSON parsing: orjson.loads()
+  BP-JSON-002  All serialization: orjson.dumps(data,
+               default=_json_default).decode()
+  BP-JSON-004  Financial values: Python Decimal from string.
+  BP-JSON-005  orjson Decimal default callback MANDATORY.
+  BP-UVL-001   uvloop MANDATORY on Linux deployments.
+  BP-UVL-006   Python 3.11+ init: asyncio.Runner(
+               loop_factory=uvloop.new_event_loop)
+  BP-TCP-001   TCP_NODELAY on all WS sockets.
+  BP-ASYNC-001 Single Python process. All I/O-bound.
+  BP-ERR-001   No bare except clauses.
+  BP-LOG-003   Structured JSON via orjson with _json_default.
+  BP-TEST-003  Sacred 1:1.5 R:R tested in EVERY order test.
+  BP-TEST-004  stp_type underscore verified in all order tests.
+  BP-TEST-005  orjson Decimal serialization tested in Logger.
+  BP-HTTP-001  All aiohttp.ClientSession: explicit timeout
+               and connector. Never bare ClientSession().
+  BP-HTTP-002  ClientTimeout(total=10,connect=5,sock_read=8)
+               TCPConnector(limit=10,limit_per_host=5,
+               force_close=False)
+  BP-LIB-001 through BP-LIB-008: requirements.txt version
+               pinning (Section 3.10).
+
+------------------------------------------------------------
+3.11 DECIMAL PRECISION FOR PRICE/QUANTITY ROUNDING [NEW dv1_4]
+------------------------------------------------------------
+
+BACKGROUND (AR-047 amendment, TB00016 NEW-12):
+The original AR-047 specified math.floor(x / incr) * incr
+for rounding. This operates on Python float arithmetic.
+Float binary representation causes precision errors:
+
+  price_increment = 0.1  (float)
+  raw_price = 42350.15   (float from Kraken ticker)
+  math.floor(42350.15 / 0.1) * 0.1
+    = 42350.099999999985  ← WRONG (float arithmetic error)
+
+  Correct approach:
+  Decimal(str(42350.15)).quantize(
+      Decimal(str(0.1)), rounding=ROUND_DOWN
+  ) = 42350.1  ← CORRECT
+
+For exchange orders, any rounding error = REJECTED ORDER =
+failed trade entry. This directly violates loss minimization.
+
+BP-DEC-001  ★ NEW dv1_4 CRITICAL: ALL price and quantity
+            values received from Kraken (via WS or REST)
+            MUST be converted to Decimal immediately on
+            receipt using ONLY the string constructor:
+
+              price = Decimal(str(msg["price"]))
+              qty   = Decimal(str(msg["qty"]))
+
+            NEVER use the float constructor:
+              WRONG: Decimal(msg["price"])   ← float precision
+              WRONG: Decimal(0.1)            ← wrong
+              CORRECT: Decimal(str(0.1))     ← exact
+
+            RATIONALE: orjson decodes JSON numbers as Python
+            float by default. Decimal(float) inherits the
+            binary representation error. Decimal(str(float))
+            goes through the string representation first,
+            which preserves the correct decimal digits.
+
+            Applies to ALL values sourced from Kraken:
+            - ticker bid, ask prices
+            - executions avg_price, last_price, cum_cost
+            - instrument price_increment, qty_increment,
+              qty_min, cost_min
+            - balances channel balance, amount
+            - GetOHLCData OHLC candle values
+
+BP-DEC-002  ★ ROUNDING FOR ORDER QUANTITY (Gate 8):
+            Round DOWN (toward zero) to preserve R:R.
+            Sending MORE quantity than sized = taker fee
+            violation; sending LESS = conservative, OK.
+
+              from decimal import Decimal, ROUND_DOWN
+
+              def round_qty(raw_qty: Decimal,
+                            qty_increment: Decimal) -> Decimal:
+                  return raw_qty.quantize(
+                      qty_increment,
+                      rounding=ROUND_DOWN
+                  )
+
+              # Example:
+              raw_qty = Decimal("0.12345")
+              qty_incr = Decimal("0.001")
+              result = round_qty(raw_qty, qty_incr)
+              # result = Decimal("0.123")
+
+BP-DEC-003  ★ ROUNDING FOR ENTRY LIMIT PRICE (Gate 8):
+            Round DOWN (toward zero for buy = bid below ask).
+            Ensures limit buy rests on book as maker order.
+
+              def round_entry_price(raw_price: Decimal,
+                                    price_increment: Decimal
+                                    ) -> Decimal:
+                  return raw_price.quantize(
+                      price_increment,
+                      rounding=ROUND_DOWN
+                  )
+
+BP-DEC-004  ★ ROUNDING FOR TP LIMIT PRICE:
+            Round UP (toward positive infinity).
+            TP is a SELL limit — higher sell price is
+            better. Rounding UP maintains R:R constraint.
+
+              from decimal import Decimal, ROUND_UP
+
+              def round_tp_price(raw_tp: Decimal,
+                                 price_increment: Decimal
+                                 ) -> Decimal:
+                  return raw_tp.quantize(
+                      price_increment,
+                      rounding=ROUND_UP
+                  )
+
+BP-DEC-005  ★ ROUNDING FOR EMERGSL TRIGGER PRICE:
+            Round DOWN (toward zero).
+            emergSL is a stop-loss SELL trigger — lower
+            trigger price is more conservative (fires
+            earlier, limits loss more). Rounding DOWN
+            maintains loss-minimization mission.
+
+              def round_emergsl_price(raw_sl: Decimal,
+                                      price_increment: Decimal
+                                      ) -> Decimal:
+                  return raw_sl.quantize(
+                      price_increment,
+                      rounding=ROUND_DOWN
+                  )
+
+BP-DEC-006  ★ ROUNDING DIRECTION SUMMARY TABLE:
+
+            Value                  Round   Why
+            ─────────────────────  ──────  ──────────────────
+            order_qty (entry buy)  DOWN    Conservative size
+            entry limit_price      DOWN    Rest on book (maker)
+            tp_price (sell limit)  UP      Better exit, R:R
+            emergSL trigger price  DOWN    Earlier fire, safer
+            qty (partial fill TP)  DOWN    Conservative exit
+
+BP-DEC-007  ★ INSTRUMENT INCREMENT CONVERSION:
+            All values from instrument channel snapshot
+            MUST be converted to Decimal at parse time:
+
+              for pair in instrument_snapshot["pairs"]:
+                  pair_cache[pair["symbol"]] = {
+                      "price_increment": Decimal(
+                          str(pair["price_increment"])),
+                      "qty_increment": Decimal(
+                          str(pair["qty_increment"])),
+                      "qty_min": Decimal(
+                          str(pair["qty_min"])),
+                      "cost_min": Decimal(
+                          str(pair["cost_min"])),
+                      "status": pair["status"],
+                  }
+
+            These Decimal values are then passed directly
+            to all quantize() calls. No str() needed at
+            quantize time since they're already Decimal.
+
+BP-DEC-008  ★ MATH.FLOOR / MATH.CEIL PROHIBITION:
+            math.floor() and math.ceil() MUST NOT be used
+            for any price or quantity rounding in TothBot V2.
+            They operate on Python floats and produce
+            binary precision errors. Code review MUST reject
+            any PR that uses math.floor or math.ceil for
+            financial value rounding.
+
+            ONLY permitted uses of math.floor/ceil:
+            - Non-financial array indexing
+            - Statistical computations (EWMA, CUSUM) where
+              float precision is acceptable
+
+DECISION RATIONALE (BP-DEC-001 through BP-DEC-008):
+  TB00016 Search 4 confirmed from five independent sources
+  (Python official decimal docs, Real Python rounding guide,
+  GeeksforGeeks quantize, LabEx Decimal finance guide, 2026
+  best practices article) that math.floor() on floats
+  produces binary precision errors for decimal increments.
+  The specific failure case: math.floor(42350.15 / 0.1) * 0.1
+  gives 42350.09999... instead of 42350.1.
+
+  On Kraken, order prices must be exact multiples of
+  price_increment. A price of 42350.09999... would be
+  rejected by the matching engine with EOrder:Invalid price.
+  This would cause the entry to silently fail, leaving the
+  pipeline believing a position was opened when it was not.
+
+  For a 24/7 automated trading system, a silent order
+  failure is a loss event. All rounding uses Decimal.quantize()
+  which is the standard Python financial rounding method and
+  is guaranteed to produce exact decimal representations.
+  This directly serves TothBot's loss-minimization mission.
+
+============================================================
+4. SCOPE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Complete coding standards reference
+  4.2  All library choices and rationale
+  4.3  Complete testing requirements
+  4.4  Code review checklist
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (TBD IN FINAL SPEC)
+============================================================
+
+  (1) What standards apply?
+      All standards in this document apply to all code.
+  (2) Interfaces: this document is referenced by all
+      other AA=10 coding specs.
+  (3) Hard rules:
+      ALL prior rules carry forward.
+      ★ requirements.txt MUST pin library versions.
+      ★ websockets>=14.0 MINIMUM.
+      ★ uvloop>=0.21.0 MINIMUM.
+      ★ orjson Decimal callback required on all serialization.
+      ★ ALL price/qty rounding: Decimal.quantize() ONLY.
+      ★ NEVER math.floor/ceil for financial rounding.
+      ★ ALWAYS Decimal(str(value)) for Kraken API values.
+  (4) Triggers: applied at code authoring time.
+  (5) Logs: test failures, library version checks,
+      rounding operations (value, increment, direction, result).
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  All 1011XXX Coding Specification documents reference this.
+  0500000  System_Architecture_Overview dv1_12
+  1011002  WS_Manager_Coding_Spec       dv1_9
+  1011013  VPS_Deployment_Coding_Spec   dv1_2
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_5  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+
+  dv1_1  03-25-2026  BP-JSON-005 (orjson Decimal callback).
+                     BP-UVL-006 (asyncio.Runner pattern).
+
+  dv1_2  03-25-2026  BP-TEST-005 (orjson Decimal test).
+                     BP-HTTP-001 through BP-HTTP-004.
+
+  dv1_3  03-25-2026  Fifth 10-search validation (TB00013).
+                     Section 3.10: BP-LIB-001 through -008.
+                     Python library version pinning with
+                     requirements.txt entries.
+
+  dv1_4  03-26-2026  Eighth 10-search validation (TB00016).
+                     Section 3.11: BP-DEC-001 through -008.
+                     ALL price/quantity rounding MUST use
+                     Decimal.quantize() not math.floor/ceil.
+                     Float binary precision errors cause wrong
+                     prices → rejected orders → trade failures.
+                     Conversion rule: Decimal(str(value)) for
+                     all Kraken API numeric values on receipt.
+                     Rounding direction table for all four
+                     order value types. math.floor/ceil
+                     prohibited for financial rounding.
+
+============================================================
+END OF DOCUMENT
+============================================================

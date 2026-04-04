@@ -1,0 +1,266 @@
+DocDCN:     1011012
+DocTitle:   Regime_Engine_Coding_Spec
+DocVersion: dv1_3
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011012_Regime_Engine_Coding_Spec_dv1_3.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+REGIME ENGINE CODING SPECIFICATION
+============================================================
+
+STATUS: Working Draft — Placeholder
+Updated from dv1_1 per fifth 10-search FP/DP organism
+validation session (TB00013, 2026-03-25).
+
+Section 3.9 added: ADX convergence validation.
+  RE-FPD-004 through RE-FPD-006 document the distinction
+  between ADX first-value warm-up (28 candles) and full
+  convergence accuracy (128+ candles). With 719 committed
+  candles available, we have 4.6x the minimum convergence
+  requirement. All existing specs confirmed correct.
+
+============================================================
+1. PURPOSE
+============================================================
+
+The Regime Engine classifies the current market regime
+daily at 00:00 UTC for each pair in the trading universe.
+The regime classification is the single most upstream
+influence on all trade decisions: Gate 3 (pre-filter),
+Gate 6 (sizing), and CIATS per-regime optimization all
+depend on correct regime classification.
+
+An incorrect regime classification has direct loss
+consequences. It is the highest-priority correctness
+requirement in the system.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification         (TBD)
+  1010000  Trading_System_Coding_Anchor (TBD)
+  1011012  This document
+  Parent specification: 0711002 Regime_Taxonomy_Specification (TBD)
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1-3.8 [All prior sections dv1_1 carry forward unchanged]
+------------------------------------------------------------
+
+See dv1_1 for complete text of Sections 3.1 through 3.8.
+All rules remain authoritative unless updated below.
+
+KEY RULES CARRY FORWARD:
+  RE-OHLC-001  CRITICAL: response[-1] is always the current
+               not-yet-committed candle. ALWAYS EXCLUDE IT.
+  RE-OHLC-002  committed_candles = candles[:-1]  # ALWAYS
+  RE-OHLC-003  Including uncommitted candle corrupts all
+               indicators: ADX (zero DM), EMA (biased),
+               ATR (zero range).
+  RE-OHLC-006  Non-negotiable. No exceptions. Ever.
+  RE-SCH-001   Runs once daily at 00:00 UTC for all pairs.
+  RE-SCH-003   Must complete before first 5-min candle close.
+  RE-SCH-004   On failure: use stale regime. Log. Alert.
+               Do NOT halt.
+  RE-IND-001   All indicators from committed_candles only.
+  RE-IND-002   ADX(14): Wilder formula. Smoothing = 1/14.
+  RE-IND-003   EMA(20/50): alpha=2/(n+1). Warm-up = n candles.
+  RE-IND-004   ATR(14): incremental running ATR. Same as
+               pipeline. Single source of truth per pair.
+  RE-IND-005   ATR percentile: 67th in trailing window.
+  RE-TAX-001   Six regimes — CONFIRMED all valid.
+  RE-TAX-002   regime_cache: dict[str, RegimeState]
+  RE-TAX-003   Gate 3 check: TRENDING_NEG, NON_DIR+ELEVATED,
+               TRENDING_NEG+ELEVATED all NO-ENTRY.
+  RE-FPD-001   ADX(14): 28 candle minimum warm-up.
+               EMA(20): 20 minimum. ATR(14): 14 minimum.
+               Overall minimum: 28 committed candles.
+  RE-FPD-002   With 719 available: 691+ candles beyond
+               warm-up. Data sufficiency confirmed.
+  RE-FPD-003   ATR percentile: 30-candle minimum for
+               stability. With 719 candles: confirmed adequate.
+  RE-RL-001    CRITICAL: 1 call/second rate limit per pair.
+               asyncio.sleep(1.1) between each pair call.
+  RE-RL-002    Sequential stagger with asyncio.sleep(1.1).
+  RE-RL-003    50 pairs x 1.1s = 55 seconds. Well before
+               first 5m candle. Never asyncio.gather().
+  RE-RL-004    HTTP 429: backoff, retry x3, then stale.
+  RE-TAG-001   TWO regime tags per trade: asset + market.
+  RE-TAG-002   BTC/USD always in universe. Computed daily.
+  RE-TAG-003   market_regime written to Position Mirror.
+  RE-STL-001   Stale regime: use prior day, log, alert.
+  RE-STL-002   Never halt on stale regime.
+  RE-STL-003   computed_at timestamp in cache.
+
+------------------------------------------------------------
+3.9 ADX CONVERGENCE VALIDATION [NEW dv1_2]
+------------------------------------------------------------
+
+RE-FPD-004  ★ NEW dv1_2: CONVERGENCE DISTINCTION:
+            There are two different data requirements for
+            ADX(14):
+            (1) FIRST VALID VALUE: 28 committed candles
+                (already RE-FPD-001).
+            (2) FULL CONVERGENCE ACCURACY: 2*N+100 candles
+                = 2*14+100 = 128 candles.
+
+            The "first valid value" requirement means the
+            math can execute and produce a non-NaN result.
+            The "convergence accuracy" requirement means the
+            ADX value is stable and not subject to significant
+            (~5%) precision errors from Wilder smoothing
+            initialization.
+
+            Source: Stock Indicators for Python library
+            documentation (confirmed TB00013 Search 10):
+            "You must have at least 2xN+100 periods of quotes
+            to allow for smoothing convergence."
+
+RE-FPD-005  ★ CONFIRMED ADEQUATE: With 719 committed daily
+            candles available (response[:-1] of 720 returned):
+
+              First valid ADX value: 28 candles needed.
+              Full convergence:      128 candles needed.
+              Available:             719 candles.
+
+              Excess beyond convergence: 719 - 128 = 591
+              Factor of safety: 719 / 128 = 5.6x
+
+            TothBot V2 has 5.6x more data than required for
+            full ADX convergence. The 28-candle minimum
+            warm-up spec (RE-FPD-001) is correct in meaning
+            "first valid value," but the actual computation
+            is fully converged because we use all 719 candles
+            in the Wilder smoothing recursion.
+
+            NO SPEC CHANGE REQUIRED. RE-FPD-001 remains
+            correct. This section documents the confirmation.
+
+RE-FPD-006  ★ ADX WARM-UP IN CODE: When computing ADX
+            incrementally (walk-forward), the warm-up
+            applies to the initialization of the running
+            smoothed values (TR_smooth, +DM_smooth, -DM_smooth,
+            ADX itself). Because the Regime Engine always
+            uses the full 719-candle history at 00:00 UTC
+            (batch computation, not incremental), the
+            warm-up is handled automatically. The Regime
+            Engine does NOT compute ADX incrementally —
+            it runs the full Wilder recursion on all 719
+            committed candles once per day.
+
+            Pipeline ATR(14) is computed INCREMENTALLY
+            (RE-IND-004, AR-016). That incremental
+            computation has its own 14-candle warm-up
+            handled by the running ATR state.
+
+            These are different ATR computations:
+            (1) Regime Engine ATR: batch from 719 daily
+                candles (fully converged).
+            (2) Pipeline ATR: incremental from 5-min
+                candles (warm-up on first 14 candles).
+            They are different values for different purposes.
+            Regime uses daily candle ATR for volatility
+            regime classification. Pipeline uses 5-min
+            candle ATR for MAE threshold and emergSL.
+            Single source of truth means consistent data
+            source per ATR type, not identical values.
+
+DECISION RATIONALE (RE-FPD-004 through RE-FPD-006):
+  TB00013 Search 10 sourced the convergence requirement
+  from the Stock Indicators for Python library documentation
+  and cross-referenced with multiple ADX implementation
+  guides. The 2xN+100 convergence requirement was not in
+  the prior spec. Adding it confirms our existing 719-candle
+  data availability is more than adequate for fully converged
+  ADX calculations. This validation is important because an
+  insufficiently converged ADX could produce incorrect
+  regime classifications, potentially blocking valid
+  TRENDING_POS entries or allowing NON_DIR entries.
+  With 5.6x excess data, this risk is definitively eliminated.
+  The documentation also clarifies the difference between
+  daily batch ADX (Regime Engine) and incremental 5-min ATR
+  (pipeline), which are different computations with different
+  warm-up states. This distinction must be explicit to prevent
+  confusion during coding.
+
+============================================================
+4. SCOPE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Complete regime computation algorithm
+  4.2  CIATS regime library interface
+  4.3  Per-regime CIATS archiving
+  4.4  Historical regime backfill procedure
+  4.5  Unit test specifications for regime computation
+  4.6  Edge cases: insufficient data, REST failures
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (TBD IN FINAL SPEC)
+============================================================
+
+  (1) What does Regime Engine DO?
+      Classifies current market regime for each pair
+      daily at 00:00 UTC using committed daily OHLC.
+      Staggered to avoid rate limits. Stale fallback on
+      failure. Two-level tagging (asset + market).
+  (2) Interfaces: REST API -> Regime Engine -> regime_cache
+      -> Signal Pipeline (Gate 3, Gate 6), Position Mirror
+      (market_regime tag at entry)
+  (3) Hard rules:
+      ALWAYS exclude response[-1] (RE-OHLC-002).
+      ALWAYS stagger 1.1s between pair calls (RE-RL-002).
+      NEVER use asyncio.gather() for concurrent OHLC calls.
+      Use only committed candles. Never halt on failure.
+      ★ ADX convergence at 128+ candles. We have 719.
+        Batch computation on full history (RE-FPD-006).
+  (4) Triggers: 00:00 UTC daily asyncio.Task
+  (5) Logs: every regime classification, all indicator
+      values, all rate limit hits, all stale fallbacks,
+      all computation errors, ADX convergence status on
+      first computation.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0411001  Kraken_WS_v2_Specification   dv1_5
+  0500000  System_Architecture_Overview dv1_10
+  0711002  Regime_Taxonomy_Specification (TBD)
+  1011002  WS_Manager_Coding_Spec       dv1_5
+  1011003  Signal_Pipeline_Coding_Spec  (TBD)
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_3  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+
+  dv1_1  03-25-2026  Three additions from third 10-search
+                     FP/DP validation (TB00011):
+                     (A-24) GetOHLCData rate limit stagger.
+                     BTC/USD two-level tagging contract.
+                     Regime cache stale state handling.
+
+  dv1_2  03-25-2026  Fifth 10-search validation (TB00013).
+                     Section 3.9: RE-FPD-004 through -006.
+                     ADX convergence confirmation. First
+                     valid value at 28 candles (RE-FPD-001)
+                     vs full convergence at 128+ candles.
+                     With 719 committed candles: 5.6x excess.
+                     Fully converged computation confirmed.
+                     Clarification of batch vs incremental
+                     ATR computation (daily vs 5-min).
+                     All prior specs validated CONFIRMED.
+                     No changes to warm-up or scheduling.
+
+============================================================
+END OF DOCUMENT
+============================================================

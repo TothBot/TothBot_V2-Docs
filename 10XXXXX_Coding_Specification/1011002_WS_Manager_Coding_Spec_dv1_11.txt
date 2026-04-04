@@ -1,0 +1,532 @@
+DocDCN:     1011002
+DocTitle:   WS_Manager_Coding_Spec
+DocVersion: dv1_11
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_11.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+WS MANAGER CODING SPECIFICATION
+============================================================
+
+STATUS: Working Draft — Placeholder
+Updated from dv1_9 per tenth 10-search FP/DP validation
+session (TB00019, 2026-03-26 Pass 2).
+
+New sections added this version (dv1_10):
+  3.53  Connection parameters: max_queue, ping_interval,
+        new websockets API import path
+        (AR-058, AR-059, AR-060, NEW dv1_10 CRITICAL)
+  3.54  amended exec_type dispatch
+        (AR-057, NEW dv1_10 CRITICAL)
+  3.55  last_qty and last_price from trade events
+        (AR-061, NEW dv1_10)
+  3.56  connection_id logging from status channel
+        (AR-064, NEW dv1_10)
+  3.57  TP partial fill handling
+        (AR-066, NEW dv1_10 CRITICAL)
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document specifies the complete implementation
+requirements for the WS Manager component.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification         (TBD)
+  1010000  Trading_System_Coding_Anchor (TBD)
+  1011002  This document
+  Parent specification: 0511001 WS_Manager_Specification (TBD)
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1-3.52 [All prior sections dv1_9 carry forward unchanged]
+------------------------------------------------------------
+
+See dv1_9 for complete text of Sections 3.1 through 3.52.
+All rules remain authoritative unless updated below.
+
+KEY RULES SUMMARY CARRY FORWARD (from dv1_9):
+  WM-ZOM-001 through WM-ZOM-007: Zombie detection.
+  WM-PS-001 through WM-PS-009: Pair status + portfolio.
+  WM-WSLB-001: Library ping config.
+  WM-EXE-013: status exec_type on emergSL.
+  WM-CAN-001: cancel_order = individual (MAE exit).
+  WM-TOKEN-001: Token 15-min, fresh on reconnect.
+  WM-OHLC-001 through -005: Candle-close detection.
+  WM-STARTUP-001: Pointer to 1011014.
+  WM-ROUND-001 through -004: Decimal rounding.
+  WM-BAL-001 through -006: Balances spot wallet.
+  WM-PS-005 through -009: Portfolio sizing.
+  WM-DD-001 through -008: Drawdown formula + thresholds.
+  WM-POR-001 through -007: Pending Order Registry.
+  WM-DISP-020 through -023: Partial fill dispatch.
+  WM-DMS-001 through -004: DMS prohibition.
+  WM-RECONNECT-001 through -015: Reconnect sequence.
+  [All other prior rules carry forward unchanged]
+
+------------------------------------------------------------
+3.53 CONNECTION PARAMETERS [NEW dv1_10 AR-058, 059, 060]
+------------------------------------------------------------
+
+WM-CONN-001  ★ NEW dv1_10 (AR-058): max_queue REQUIRED.
+             The websockets library has max_queue=16 default
+             (internal receive buffer between TCP and recv).
+             For TothBot monitoring 50+ pairs with multiple
+             subscriptions, burst events (startup instrument
+             snapshot, rapid bbo ticker events, post-reconnect
+             snapshots) can exceed 16 messages before the
+             event loop processes them.
+
+             REQUIRED: Set max_queue=None on ALL websockets
+             connections. None = unlimited internal buffer.
+             Memory impact is negligible (small JSON payloads).
+
+WM-CONN-002  ★ max_queue=None CODE TEMPLATE:
+             from websockets.asyncio.client import connect
+
+             conn = await connect(
+                 uri,
+                 max_size=10 * 1024 * 1024,  # 10MB (AR-029)
+                 open_timeout=10,              # 10s (AR-029)
+                 max_queue=None,               # Unlimited (AR-058)
+                 ping_interval=None,           # Disabled (AR-059)
+             )
+
+WM-CONN-003  ★ APPLIES TO ALL FOUR CONNECTIONS:
+             (a) public WS  wss://ws.kraken.com/v2
+             (b) private WS wss://ws-auth.kraken.com/v2
+             (c) public WS reconnect (Section 3.52)
+             (d) private WS reconnect (Section 3.52)
+             All four use the same connection parameters.
+
+WM-CONN-004  ★ NEW dv1_10 (AR-059): DISABLE library ping.
+             Set ping_interval=None on all connections.
+
+             RATIONALE: TothBot uses APPLICATION-LEVEL JSON
+             ping ({"method":"ping"} every 30 seconds per
+             A-7). This is TothBot's sole keepalive mechanism.
+
+             The websockets library also has built-in TCP-level
+             PING frames (ping_interval parameter). Running
+             BOTH mechanisms simultaneously:
+               (a) Creates duplicate keepalive activity
+               (b) Library ping/pong is invisible to TothBot's
+                   application code (no zombie detection value)
+               (c) TothBot's JSON pong response IS visible
+                   and IS used for application health
+
+             DECISION: Disable library ping (ping_interval=None).
+             Rely exclusively on:
+               - TothBot's JSON ping every 30s (A-7)
+               - Zombie detection via last_real_data_time (A-8)
+             This gives TothBot single, authoritative, visible
+             keepalive control.
+
+WM-CONN-005  ★ APPLICATION-LEVEL JSON PING (unchanged A-7):
+             WS Manager sends every 30 seconds:
+               {"method": "ping", "req_id": <ping_req_id>}
+             Expects within 10 seconds:
+               {"method": "pong", "req_id": <ping_req_id>}
+             No pong within 10s: log PING_TIMEOUT, reconnect.
+             This is the SOLE keepalive mechanism. Library
+             ping is disabled.
+
+WM-CONN-006  ★ ZOMBIE vs PING DETECTION (clarification):
+             Two independent health checks:
+               PING (A-7): Application sends JSON ping every
+                 30s. Pong within 10s expected. No pong =
+                 dead TCP/application connection. Reconnect.
+               ZOMBIE (A-8): Track last_real_data_time.
+                 If >90s without real data: ZOMBIE_DETECTED.
+                 Reconnect even if ping/pong passes (zombie
+                 connection delivers pong but no market data).
+             Both must fire for complete connection health.
+             Neither is redundant with the other.
+
+WM-CONN-007  ★ NEW dv1_10 (AR-060): USE NEW WEBSOCKETS API.
+             All WS connections MUST use the new stable API:
+               from websockets.asyncio.client import connect
+             NOT the deprecated legacy:
+               import websockets
+               websockets.connect(...)  ← DEPRECATED, DO NOT USE
+
+             The legacy websockets.connect() API is deprecated
+             in websockets v14+ and will be removed in a future
+             version. Using the legacy API is a ticking time
+             bomb for a 24/7 trading system.
+
+             CORRECT IMPORT PATTERN (required in all modules):
+               from websockets.asyncio.client import connect
+
+             This applies to: startup (1011014 SS-STARTUP-006,
+             SS-STARTUP-013), reconnect (1011014 SS-RECON-006),
+             and any other WS connection in the codebase.
+
+DECISION RATIONALE (WM-CONN-001 through WM-CONN-007):
+  TB00019 Search 8 confirmed from websockets v16.0 docs
+  that max_queue=16 is the default. TB00019 Search 8 also
+  confirmed the new asyncio.client.connect() API is stable
+  in v14+. The library ping vs JSON ping distinction was
+  identified as an unspecified ambiguity. Resolving all
+  three in this version eliminates future implementation
+  confusion. All decisions serve loss minimization:
+  message drops (max_queue) and API deprecation (new API)
+  are direct loss risks for a 24/7 trading system.
+
+------------------------------------------------------------
+3.54 amended EXEC_TYPE DISPATCH [NEW dv1_10 AR-057]
+------------------------------------------------------------
+
+WM-DISP-024  ★ NEW dv1_10 (AR-057): Add amended to the
+             exec_type dispatch table (WM-DISP-023).
+
+             Complete updated dispatch table:
+               "pending_new"  → record, no action
+               "new"          → confirm live
+               "trade"        → partial fill update (see
+                                WM-DISP-020 for entries,
+                                WM-EC-004 for TP orders)
+               "filled"       → full fill (entry or TP)
+               "iceberg_refill" → no action
+               "canceled"     → partial fill check (see
+                                WM-DISP-020/021)
+               "expired"      → partial fill check (see
+                                WM-DISP-020/021)
+               "amended"      → ALERT — unexpected (see below)
+               "restated"     → update order params, log
+               "status"       → parse trigger update, log
+               UNKNOWN        → log WARNING, never drop
+
+WM-DISP-025  ★ amended HANDLER:
+             def handle_amended(event):
+                 order_id = event.get("order_id")
+                 cl_ord_id = event.get("cl_ord_id")
+                 new_limit = event.get("limit_price")
+                 new_qty   = event.get("order_qty")
+
+                 logger.log("UNEXPECTED_ORDER_AMENDED",
+                     level="CRITICAL",
+                     order_id=order_id,
+                     cl_ord_id=cl_ord_id,
+                     new_limit_price=new_limit,
+                     new_qty=new_qty)
+
+                 alert(PRIORITY_HIGH,
+                     f"UNEXPECTED order amendment: "
+                     f"order_id={order_id} "
+                     f"cl_ord_id={cl_ord_id}")
+
+                 # Cross-reference against Position Mirror
+                 # to determine if a TP or emergSL was amended
+                 for sym, pos in position_mirror.items():
+                     if order_id == pos.get("tp_order_id"):
+                         logger.log("AMENDED_ORDER_IS_TP",
+                             symbol=sym, level="CRITICAL")
+                         alert(PRIORITY_CRITICAL,
+                             f"TP order for {sym} was amended "
+                             f"— sacred R:R may be violated")
+                     elif order_id == pos.get("emergsl_order_id"):
+                         logger.log("AMENDED_ORDER_IS_EMERGSL",
+                             symbol=sym, level="CRITICAL")
+                         alert(PRIORITY_CRITICAL,
+                             f"emergSL for {sym} was amended "
+                             f"— crash protection may be altered")
+
+WM-DISP-026  ★ NO AUTO-CORRECTION ON amended:
+             TothBot does NOT attempt to auto-correct an
+             amended order (re-amend back to original params).
+             Rationale: The amendment source is unknown. Auto-
+             correction could conflict with an intentional
+             operator decision. Bill must review and act.
+             Pipeline continues normally — existing positions
+             are protected as-is until Bill intervenes.
+
+DECISION RATIONALE (WM-DISP-024 through WM-DISP-026):
+  TB00019 NEW-01 identified that amended was missing from
+  the dispatch table despite AR-023 requiring all 10
+  exec_types. TothBot V1 never sends amend_order. Any
+  amended event is therefore unexpected and a potential
+  system integrity issue. CRITICAL alert + no auto-correct
+  serves loss minimization — protecting the sacred R:R.
+
+------------------------------------------------------------
+3.55 last_qty AND last_price FROM TRADE EVENTS [NEW dv1_10]
+------------------------------------------------------------
+
+WM-EXE-014  ★ NEW dv1_10 (AR-061): Capture last_qty and
+             last_price from exec_type=trade events.
+
+             On every trade exec_type event:
+               last_qty_decimal  = Decimal(str(
+                                       msg.get("last_qty", 0)))
+               last_price_decimal = Decimal(str(
+                                       msg.get("last_price", 0)))
+               cum_qty_decimal   = Decimal(str(msg["cum_qty"]))
+               avg_price_decimal = Decimal(str(msg["avg_price"]))
+
+WM-EXE-015  ★ DATA USAGE:
+             Position Mirror + sizing: use cum_qty, avg_price.
+             Fill-level logging + CIATS analytics: use
+               last_qty, last_price.
+             The fill-level data will be used by CIATS to
+             evaluate entry execution quality:
+               slippage_pct = (last_price - intended_price)
+                              / intended_price
+             This will feed into the EWMA Monitor's rejection
+             rate and execution quality streams (future CIATS
+             enhancement — specify when OI-001 is resolved).
+
+WM-EXE-016  ★ LOGGING:
+             Log FILL_EVENT with both fill-level and
+             cumulative values:
+               LOG_FILL_EVENT(
+                   order_id=..., cl_ord_id=..., symbol=...,
+                   last_qty=last_qty_decimal,
+                   last_price=last_price_decimal,
+                   cum_qty=cum_qty_decimal,
+                   avg_price=avg_price_decimal,
+                   exec_type="trade")
+
+------------------------------------------------------------
+3.56 connection_id LOGGING [NEW dv1_10 AR-064]
+------------------------------------------------------------
+
+WM-STATUS-001  ★ NEW dv1_10 (AR-064): Log connection_id
+               from status channel on every new WS connection.
+
+               On status channel message (type="update"):
+                 connection_id = msg["data"][0]["connection_id"]
+                 system_status = msg["data"][0]["system"]
+                 api_version   = msg["data"][0]["api_version"]
+
+                 logger.log("WS_CONNECTED",
+                     endpoint="public|private",
+                     connection_id=connection_id,
+                     system=system_status,
+                     api_version=api_version)
+
+               Store connection_id as instance variable
+               for inclusion in subsequent log entries
+               during this connection's lifetime.
+
+               Include in reconnect logs:
+                 LOG_WS_RECONNECTED(
+                     old_connection_id=prev_id,
+                     new_connection_id=connection_id)
+
+------------------------------------------------------------
+3.57 TP PARTIAL FILL HANDLING [NEW dv1_10 AR-066]
+------------------------------------------------------------
+
+WM-EC-004  ★ NEW dv1_10 CRITICAL (AR-066):
+           TP orders can receive partial fills via
+           exec_type=trade events. When this occurs,
+           the position is partially closed and the
+           emergSL must be amended to match remaining qty.
+
+WM-EC-005  ★ IDENTIFICATION:
+           On exec_type=trade event:
+             1. Identify if this is a TP order:
+                Check order_id against TP order_ids in
+                Position Mirror across all symbols.
+             2. If TP order identified → PARTIAL TP FILL.
+             3. If entry order → per WM-DISP-020/021.
+
+WM-EC-006  ★ PARTIAL TP FILL SEQUENCE:
+
+           def handle_partial_tp_fill(event, symbol):
+               cum_qty    = Decimal(str(event["cum_qty"]))
+               avg_exit   = Decimal(str(event["avg_price"]))
+               pos        = position_mirror[symbol]
+               orig_qty   = pos["qty"]
+               remaining  = orig_qty - cum_qty
+               emergsl_id = pos["emergsl_order_id"]
+               p_incr     = pair_cache[symbol]["price_increment"]
+               q_incr     = pair_cache[symbol]["qty_increment"]
+               qty_min    = pair_cache[symbol]["qty_min"]
+               cost_min   = pair_cache[symbol]["cost_min"]
+               bid        = latest_bid[symbol]
+
+               # Update Position Mirror
+               position_mirror[symbol]["qty"] = remaining
+
+               # Check minimum size
+               remaining_r = remaining.quantize(q_incr,
+                                 ROUND_DOWN)
+               if (remaining_r < qty_min or
+                   remaining_r * bid < cost_min):
+                   # Cannot protect — exit remainder
+                   cancel_order(emergsl_id)
+                   dispatch_market_sell(symbol, remaining_r)
+                   del position_mirror[symbol]
+                   logger.log("TP_PARTIAL_FILL_BELOW_MIN_EXIT",
+                       symbol=symbol, remaining=remaining_r)
+                   return
+
+               # Amend emergSL qty (not cancel+resubmit)
+               amend_order(
+                   order_id=emergsl_id,
+                   order_qty=remaining_r,
+                   token=ws_token
+               )
+               logger.log("TP_PARTIAL_FILL",
+                   symbol=symbol,
+                   filled_qty=cum_qty,
+                   remaining_qty=remaining_r,
+                   avg_exit_price=avg_exit,
+                   emergsl_amended_to=remaining_r)
+
+WM-EC-007  ★ WHY amend_order NOT cancel+resubmit:
+           cancel_order (emergSL <5s): +8 rate counter
+           add_order (new emergSL): +1 rate counter
+           Total cancel+resubmit: +9 rate counter
+
+           amend_order (resting >300s): +1+1 = +2 rate counter
+           Total amend: +2 rate counter
+           Saves 7 rate counter units per event.
+           Also: preserves queue position on Kraken book.
+           Important during high-volatility TP partial fills
+           when rate limits may already be under pressure.
+
+WM-EC-008  ★ FULL TP FILL (exec_type=filled for TP):
+           Existing L1b logic unchanged. Cancel emergSL,
+           clear Position Mirror, fire CIATS Trade Outcome
+           Bus. No qty amendment needed.
+
+DECISION RATIONALE (WM-EC-004 through WM-EC-008):
+  TB00019 NEW-10 identified that AR-054 handles ENTRY
+  partial fills but the symmetric case (TP partial fill)
+  was not specified. A full-qty emergSL on a partially-
+  closed position creates a mismatched stop in spot trading.
+  amend_order is preferred over cancel+resubmit per the
+  rate counter analysis (7 units saved). The emergSL
+  must be correct at all times — it is the Layer 3 crash
+  protection for the remaining position.
+
+============================================================
+4. CONNECTION ARCHITECTURE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Two primary connections: public, private
+  4.2  Token management (GetWebSocketsToken) per 3.42
+  4.3  Connection state machine
+  4.4  Startup sequence: see 1011014
+  4.5  Mid-session reconnect: see Section 3.52
+  4.6  Subscription management (per 3.15)
+  4.7  Error handling
+  4.8  aiohttp session (per 3.17)
+  4.9  Task lifecycle management (per 3.16)
+  4.10 Zombie detection with heartbeat exclusion (per 3.40)
+  4.11 cancel_order / batch_cancel dispatch (per 3.41)
+  4.12 Balances: spot wallet filtering (per 3.46)
+  4.13 Pending Order Registry (per 3.49)
+  4.14 Partial fill — entry termination (per 3.50)
+  4.15 Dead Man's Switch prohibition (per 3.51)
+  4.16 Connection parameters (per 3.53)
+  4.17 TP partial fill (per 3.57)
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (TBD IN FINAL SPEC)
+============================================================
+
+  (1) What does WS Manager DO?
+      Manages all Kraken WS connections. Routes all inbound
+      messages. Dispatches all outbound orders. Executes
+      REST calls. Manages pair state machine (WARM_UP/READY/
+      BLOCKED). Maintains Position Mirror. Maintains Pending
+      Order Registry. Monitors balances (spot only). Enforces
+      drawdown circuit breakers. Handles reconnect. Detects
+      zombie connections. Dispatches TP/emergSL protection
+      for partial entry fills. Handles TP partial fill by
+      amending emergSL qty. Alerts on unexpected amendments.
+
+  (2) Interfaces: pipeline, Position Mirror, Exit Controller,
+      Risk Guard, CIATS Trade Outcome Bus, Logger.
+
+  (3) Hard rules (updated dv1_10):
+      [All prior hard rules carry forward]
+      ★ max_queue=None on all websockets connections (dv1_10).
+      ★ ping_interval=None — disable library ping (dv1_10).
+      ★ from websockets.asyncio.client import connect (dv1_10).
+      ★ amended exec_type → CRITICAL log + alert HIGH (dv1_10).
+      ★ TP partial fill → amend emergSL (NOT cancel+resubmit).
+      ★ connection_id: log on every new connection (dv1_10).
+
+  (4) Triggers: candle close, ticker events, executions events,
+      ping timer, zombie check, position changes, status events,
+      balance updates, reconnect events.
+
+  (5) Logs: all messages, connections (with connection_id),
+      gaps, errors, ticker changes, maintenance alerts,
+      pair status changes, emergSL events, cancel pathways,
+      zombie events, drawdown checks, halt/pause activations,
+      partial fill events, TP partial fills, reconnect events,
+      CIATS trade outcomes, unexpected amendments (CRITICAL).
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0411001  Kraken_WS_v2_Specification  dv1_9
+  0500000  System_Architecture_Overview dv1_13 (dv1_14 pending)
+  1011001  Engineering_Best_Practices  dv1_4
+  1011005  Exit_Controller_Coding_Spec dv1_0 (NEW)
+  1011007  Logger_Coding_Spec          dv1_0 (NEW)
+  1011011  Risk_Engine_Coding_Spec     dv1_1
+  1011012  Regime_Engine_Coding_Spec   dv1_2
+  1011013  VPS_Deployment_Coding_Spec  dv1_2
+  1011014  Startup_Sequence_Coding_Spec dv1_1
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_11  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+  dv1_1  03-25-2026  A-11 through A-19, IMP-06 through -08.
+  dv1_2  03-25-2026  WM-STP, WM-DL, WM-TKR, WM-REST timeout.
+  dv1_3  03-25-2026  WM-KEY IP whitelist, WM-RL OHLC stagger,
+                     WM-PM Position Mirror, WM-BA batch_add.
+  dv1_4  03-25-2026  WM-PF partial fill edge case.
+  dv1_5  03-25-2026  WM-PS pair status monitoring, WM-WSLB,
+                     WM-EXE-013 status on emergSL.
+  dv1_6  03-25-2026  WM-ZOM-004 through -007 (heartbeat).
+                     WM-CAN-001 through -004.
+                     WM-TOKEN-001 through -003.
+  dv1_7  03-26-2026  WM-OHLC-001 through -005 (interval_begin).
+                     WM-STARTUP-001 (pointer to 1011014).
+  dv1_8  03-26-2026  WM-ROUND, WM-BAL, WM-PS, WM-DD, WM-POR.
+  dv1_9  03-26-2026  WM-DISP-020 through -023 (entry partial).
+                     WM-DMS-001 through -004 (DMS prohibited).
+                     WM-RECONNECT-001 through -015 (reconnect).
+  dv1_10 03-26-2026  Tenth validation (TB00019 Pass 2).
+                     Section 3.53: WM-CONN-001 through -007.
+                     max_queue=None, ping_interval=None,
+                     new websockets asyncio.client.connect().
+                     Section 3.54: WM-DISP-024 through -026.
+                     amended exec_type — alert HIGH, no auto-
+                     correct. Completes dispatch table (10/10).
+                     Section 3.55: WM-EXE-014 through -016.
+                     last_qty and last_price captured from
+                     trade events for fill-level analytics.
+                     Section 3.56: WM-STATUS-001.
+                     connection_id from status channel logged
+                     on every WS connection.
+                     Section 3.57: WM-EC-004 through -008.
+                     TP partial fill: amend emergSL qty (not
+                     cancel+resubmit). Saves 7 rate counter
+                     units per event. Preserves queue position.
+
+============================================================
+END OF DOCUMENT
+============================================================

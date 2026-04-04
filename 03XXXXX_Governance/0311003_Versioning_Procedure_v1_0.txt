@@ -1,0 +1,283 @@
+DocDCN:     0311003
+DocTitle:   Versioning_Procedure
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+VERSIONING PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the rules governing how TothBot V2
+controlled documents are versioned. It specifies the
+version format, when versions increment, how lifecycle
+state changes, and how version history is maintained.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety            (Domain)
+  0100000  Management                   (Domain)
+  0200000  Operations                   (Domain)
+  0300000  Governance                   (Domain Document)
+  0310000  Governance_Procedures_Anchor (Sub-Domain Anchor)
+  0311003  This document                (Instance)
+
+============================================================
+3. VERSION FORMAT
+============================================================
+
+------------------------------------------------------------
+VP-001  DOCVERSION FORMAT
+------------------------------------------------------------
+
+DocVersion follows the format:  [STATE][MAJOR]_[MINOR]
+
+  STATE:  dv (working draft)
+          rv (review version)
+          v  (approved)
+          rt (retired)
+
+  MAJOR:  positive integer, starts at 1
+  MINOR:  positive integer, starts at 0
+
+Examples:
+  dv1_0  — working draft, first version
+  rv1_0  — review version, first version
+  v1_0   — approved, first version
+  v1_1   — approved, second minor version
+  v2_0   — approved, second major version
+  rt1_0  — retired
+
+------------------------------------------------------------
+VP-002  VERSION COMPONENT DEFINITIONS
+------------------------------------------------------------
+
+MAJOR version increments for:
+  - Significant content changes (new sections, major
+    rewrites, architectural changes captured).
+  - Lifecycle state transitions that represent a
+    completed review/approval cycle (e.g., v1_X → v2_0
+    on a major revision that went through rv state).
+
+MINOR version increments for:
+  - Corrections, additions, or clarifications within
+    existing structure.
+  - Addition of new requirements to "Must be Included"
+    sections in Working Draft coding specs.
+  - Header field updates (date, time) when making any
+    content change.
+
+Both MAJOR and MINOR reset to (0) when STATE changes
+to a new lifecycle stage (e.g., dv1_3 → rv1_0).
+
+------------------------------------------------------------
+VP-003  EVERY CHANGE INCREMENTS VERSION
+------------------------------------------------------------
+
+Every change to any controlled document — no matter how
+small — MUST increment the version. There is no such
+thing as a trivial change that does not require a version
+increment. If the document changed, the version changes.
+
+DocDate and DocTime are updated on every version change
+to reflect the UTC timestamp of the change.
+
+============================================================
+4. LIFECYCLE STATE TRANSITIONS
+============================================================
+
+------------------------------------------------------------
+VP-004  STATE TRANSITION RULES
+------------------------------------------------------------
+
+A document in dv state is under constant review. Bill
+may approve a dv document directly without requiring an
+intermediate rv state.
+
+  dv → dv:   Any change during working draft phase.
+             Version increments. Claude executes.
+
+  dv → v:    Bill approves the working draft directly.
+             Version resets to v1_0.
+             BILL ACTION ONLY. Claude cannot execute this.
+             The rv state is not required for initial
+             document development — dv is already under
+             constant review.
+
+  v → rv:    An approved document that requires changes
+             returns to rv state for revision.
+             BILL ACTION ONLY. Claude cannot execute this.
+             Version resets to rv1_0.
+
+  rv → rv:   Revisions made during revision of an approved
+             document. Version increments (rv1_1, rv1_2).
+             Claude executes per Bill feedback.
+
+  rv → v:    Bill re-approves after rv revision.
+             Version resets to v1_0.
+             BILL ACTION ONLY. Claude cannot execute this.
+
+  v → v:     Minor correction to approved document.
+             Version increments (v1_1, v1_2, etc.).
+             For significant content changes: must go
+             through rv state (v → rv → v).
+             For minor corrections (typos, clarifications
+             that do not change technical content): v1_0
+             → v1_1 with Bill approval; rv not required.
+
+  v → rt:    Document retired. Superseded or no longer
+             applicable. Moved to _Archive.
+             Version state changes to rt (e.g., rt1_0).
+             BILL ACTION ONLY. Claude cannot execute this.
+
+------------------------------------------------------------
+VP-005  STATE TRANSITION PROHIBITION
+------------------------------------------------------------
+
+Claude may NEVER change lifecycle state. Specifically:
+
+  - Claude may NOT change dv → v, v → rv, rv → v, or
+    v → rt. All state transitions are BILL ACTION ONLY.
+  - Claude may NOT mark a document as approved.
+  - Claude may NOT retire a document.
+
+Only Bill may change lifecycle state.
+
+Claude MAY increment versions within the same state.
+Claude MAY change dv to dv with a higher version number.
+
+============================================================
+5. WORKING DRAFT EXCEPTION (WD EXCEPTION)
+============================================================
+
+------------------------------------------------------------
+VP-006  WD EXCEPTION FOR CODING SPECS
+------------------------------------------------------------
+
+Working Draft (dv) coding specifications may capture
+requirements before their parent specification documents
+exist. This is permitted and does not violate document
+control because:
+
+  (a) The WD document contains a "Must be Included From
+      Previous Analysis" section that preserves requirements.
+  (b) The WD document is explicitly marked as a placeholder.
+  (c) The WD document cannot reach approved (v) state
+      until its parent specification is approved (v).
+
+WD documents version normally within the dv state (dv1_0,
+dv1_1, etc.) as requirements are added to them.
+
+------------------------------------------------------------
+VP-007  WD EXCEPTION DOES NOT PERMIT GITHUB COMMIT
+------------------------------------------------------------
+
+WD Exception documents may NOT be committed to GitHub
+until their complete parent chain exists and is committed.
+They exist in the Claude.ai project only until that
+condition is met.
+
+============================================================
+6. VERSION HISTORY REQUIREMENTS
+============================================================
+
+------------------------------------------------------------
+VP-008  REVISION HISTORY SECTION
+------------------------------------------------------------
+
+Every controlled document MUST include a Revision History
+section. Each entry contains:
+
+  [version]  [date]  [summary of changes]
+
+The Revision History grows with the document. No entry
+is ever removed. The complete change history is retained.
+
+Format:
+  dv1_0  MM-DD-YYYY  Initial document. [brief summary]
+  dv1_1  MM-DD-YYYY  [what changed]
+  rv1_0  MM-DD-YYYY  [submitted for review]
+  v1_0   MM-DD-YYYY  [approved by Bill; brief summary]
+
+------------------------------------------------------------
+VP-009  VERSION IN FILENAME
+------------------------------------------------------------
+
+The DocVersion is embedded in the filename:
+
+  [DCN]_[Title]_[DocVersion].txt
+
+Example:
+  0311003_Versioning_Procedure_dv1_0.txt
+  0311003_Versioning_Procedure_v1_0.txt
+
+The filename version must match the DocVersion in the
+header at all times. When version increments, the filename
+changes. Both old and new versions are retained by Bill.
+
+------------------------------------------------------------
+VP-010  SUPERSEDED DOCUMENTS
+------------------------------------------------------------
+
+When a document is updated, the prior version is:
+
+  (a) Retained by Bill on OneDrive as a read-only archive.
+  (b) In GitHub: superseded versions are managed through
+      git history. The _Archive folder contains explicitly
+      retired (rt) documents — not merely superseded ones.
+
+Only documents with rt state are moved to _Archive.
+All other version history is managed through git.
+
+============================================================
+7. VERSION VALIDATION RULES
+============================================================
+
+VP-011  DocVersion must match the version in the filename.
+VP-012  DocDate must be MM-DD-YYYY format.
+VP-013  DocTime must be HH:MM:SS UTC, 24-hour format.
+VP-014  State may only be: dv, rv, v, rt.
+VP-015  MAJOR must be >= 1.
+VP-016  MINOR must be >= 0.
+VP-017  Version must increment on every document change.
+VP-018  DocDate/DocTime must update on every change.
+
+These rules are enforced manually by Claude pre-GitHub
+automation and automatically by Pathway 1 post-deployment.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Corrected
+                     VP-004 lifecycle transition rules per
+                     Bill: dv → v is valid (direct promotion,
+                     no rv step required for initial
+                     development); rv state is for revising
+                     approved documents only (v → rv → v);
+                     removed incorrect dv → rv transition.
+                     VP-005 updated: prohibited list now
+                     correctly enumerates all state
+                     transitions as BILL ACTION ONLY.
+                     Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.8.
+                     Version format definition. Lifecycle
+                     state transition rules. WD Exception
+                     versioning. Revision history requirements.
+                     Filename version requirements. Superseded
+                     document handling. 18 validation rules.
+
+============================================================
+END OF DOCUMENT
+============================================================

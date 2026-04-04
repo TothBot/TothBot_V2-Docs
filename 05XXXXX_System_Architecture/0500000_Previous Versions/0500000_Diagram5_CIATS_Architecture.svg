@@ -1,0 +1,116 @@
+<svg viewBox="0 0 820 680" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="680" fill="#FFFFFF"/>
+  <text x="410" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1A1A1A">Diagram 5 — CIATS Architecture: Data Flows and Improvement Cycle</text>
+  <text x="410" y="50" text-anchor="middle" font-size="11" fill="#555">Fully asynchronous · Never blocks trading path · Reads Logger only · Writes Parameter Store only</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#424242"/>
+    </marker>
+    <marker id="arrGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2E7D32"/>
+    </marker>
+    <marker id="arrBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1565C0"/>
+    </marker>
+    <marker id="arrOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#E65100"/>
+    </marker>
+  </defs>
+
+  <!-- LOGGER (source) -->
+  <rect x="310" y="65" width="200" height="52" rx="6" fill="#1565C0"/>
+  <text x="410" y="86" text-anchor="middle" font-size="12" font-weight="bold" fill="#FFF">LOGGER</text>
+  <text x="410" y="104" text-anchor="middle" font-size="10" fill="#CFD8DC">Sole data interface to CIATS</text>
+
+  <!-- Arrow from Logger to Stream 1 -->
+  <line x1="360" y1="117" x2="180" y2="150" stroke="#1565C0" stroke-width="1.5" marker-end="url(#arrBlue)"/>
+  <!-- Arrow from Logger to Stream 2 -->
+  <line x1="460" y1="117" x2="610" y2="150" stroke="#1565C0" stroke-width="1.5" marker-end="url(#arrBlue)"/>
+
+  <!-- STREAM 1 - EWMA Monitor -->
+  <rect x="30" y="150" width="310" height="175" rx="6" fill="#E3F0FB" stroke="#1565C0" stroke-width="2"/>
+  <text x="185" y="172" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565C0">STREAM 1 — EWMA Monitor</text>
+  <text x="185" y="190" text-anchor="middle" font-size="10" fill="#555">288 candle evaluations/day</text>
+  <rect x="40" y="197" width="290" height="20" rx="3" fill="#BBDEFB"/>
+  <text x="185" y="211" text-anchor="middle" font-size="10" font-weight="bold" fill="#1565C0">Valid at 50 evals (~4 hours)</text>
+  <text x="40" y="232" font-size="10" fill="#333">Three monitoring signals:</text>
+  <text x="50" y="249" font-size="10" fill="#333">(1) post_only rejection_rate_by_regime</text>
+  <text x="70" y="264" font-size="9" fill="#555">High rate in TRENDING = miscalibrated entry placement</text>
+  <text x="50" y="280" font-size="10" fill="#333">(2) rate_counter_by_pair  (A-1)</text>
+  <text x="70" y="295" font-size="9" fill="#555">From executions ratecounter:true — execution pressure early warning</text>
+  <text x="50" y="311" font-size="10" fill="#333">(3) ws_roundtrip_latency_ms  (A-3)</text>
+  <rect x="38" y="316" width="292" height="8" fill="#E3F0FB"/>
+  <text x="185" y="330" text-anchor="middle" font-size="9" fill="#C62828" font-weight="bold">MONITORING ONLY — NEVER DRIVES PARAMETER CHANGES</text>
+
+  <!-- STREAM 2 - Trade Outcome Bus -->
+  <rect x="480" y="150" width="310" height="175" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="635" y="172" text-anchor="middle" font-size="12" font-weight="bold" fill="#2E7D32">STREAM 2 — Trade Outcome Bus</text>
+  <text x="635" y="190" text-anchor="middle" font-size="10" fill="#555">Fires on every position close (1-5/day)</text>
+  <text x="490" y="212" font-size="10" fill="#333">Captures per trade:</text>
+  <text x="500" y="228" font-size="10" fill="#333">· symbol, entry/exit price, hold duration</text>
+  <text x="500" y="244" font-size="10" fill="#333">· MAE reached, fees paid</text>
+  <text x="500" y="260" font-size="10" fill="#333">· exit reason code</text>
+  <text x="500" y="276" font-size="10" fill="#333">· asset_regime + market_regime tags</text>
+  <text x="500" y="292" font-size="10" fill="#333">· signal params at entry</text>
+  <text x="500" y="308" font-size="10" fill="#333">· actual R:R achieved, P/L</text>
+
+  <!-- STATISTICAL THRESHOLDS -->
+  <rect x="30" y="355" width="760" height="135" rx="6" fill="#FFF8E1" stroke="#F57F17" stroke-width="2"/>
+  <text x="410" y="375" text-anchor="middle" font-size="12" font-weight="bold" fill="#F57F17">STATISTICAL THRESHOLDS</text>
+  <text x="55" y="400" font-size="10" font-weight="bold" fill="#333">50 candles</text>
+  <text x="55" y="416" font-size="9" fill="#555">EWMA Monitor valid</text>
+  <text x="55" y="430" font-size="9" fill="#555">Fast warning active</text>
+  <text x="55" y="444" font-size="9" fill="#555">Monitoring only</text>
+  <text x="170" y="400" font-size="10" font-weight="bold" fill="#333">20 trades</text>
+  <text x="170" y="416" font-size="9" fill="#555">CUSUM SPC active</text>
+  <text x="170" y="430" font-size="9" fill="#555">Sensitivity detection</text>
+  <text x="170" y="444" font-size="9" fill="#555">Not for inference</text>
+  <text x="285" y="400" font-size="10" font-weight="bold" fill="#333">50 trades</text>
+  <text x="285" y="416" font-size="9" fill="#555">Health check</text>
+  <text x="285" y="430" font-size="9" fill="#555">Catastrophic</text>
+  <text x="285" y="444" font-size="9" fill="#555">misalignment only</text>
+  <rect x="380" y="385" width="130" height="95" rx="4" fill="#FFCC80" stroke="#E65100" stroke-width="2"/>
+  <text x="445" y="403" text-anchor="middle" font-size="10" font-weight="bold" fill="#E65100">200 trades</text>
+  <text x="445" y="418" text-anchor="middle" font-size="9" font-weight="bold" fill="#E65100">HARD FLOOR</text>
+  <text x="445" y="434" text-anchor="middle" font-size="9" fill="#333">Inference valid</text>
+  <text x="445" y="449" text-anchor="middle" font-size="9" fill="#333">Proposal Engine ON</text>
+  <text x="445" y="464" text-anchor="middle" font-size="9" fill="#333">Half-Kelly activates</text>
+  <text x="540" y="400" font-size="10" font-weight="bold" fill="#333">600 trades</text>
+  <text x="540" y="416" font-size="9" fill="#555">Per-regime analysis</text>
+  <text x="540" y="430" font-size="9" fill="#555">100+ per bucket</text>
+  <text x="540" y="444" font-size="9" fill="#555">Full optimization</text>
+  <text x="655" y="400" font-size="10" font-weight="bold" fill="#333">Rolling 200-300</text>
+  <text x="655" y="416" font-size="9" fill="#555">Current window</text>
+  <text x="655" y="430" font-size="9" fill="#555">What system does</text>
+  <text x="655" y="444" font-size="9" fill="#555">NOW</text>
+
+  <!-- STATISTICAL METHODS box -->
+  <rect x="30" y="510" width="365" height="80" rx="6" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="2"/>
+  <text x="212" y="530" text-anchor="middle" font-size="11" font-weight="bold" fill="#6A1B9A">STATISTICAL METHODS</text>
+  <text x="212" y="550" text-anchor="middle" font-size="10" fill="#333">Mann-Whitney U · Sharpe Ratio · Spearman Correlation</text>
+  <text x="212" y="568" text-anchor="middle" font-size="10" fill="#333">EWMA (λ=0.2) · CUSUM · Kelly Criterion (Half-Kelly)</text>
+
+  <!-- HALF-KELLY box -->
+  <rect x="415" y="510" width="375" height="80" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="602" y="530" text-anchor="middle" font-size="11" font-weight="bold" fill="#2E7D32">HALF-KELLY AT 200 TRADES</text>
+  <text x="602" y="550" text-anchor="middle" font-size="10" fill="#333">K% = W − (1−W)/R  where W = win rate, R = avg_win/avg_loss</text>
+  <text x="602" y="568" text-anchor="middle" font-size="10" fill="#333">Apply 50% of K% · Update every 50 trades · No ceilings</text>
+  <text x="602" y="585" text-anchor="middle" font-size="9" fill="#555">75% optimal growth at 50% less drawdown vs full Kelly</text>
+
+  <!-- PDCA + Parameter Store -->
+  <rect x="30" y="610" width="365" height="60" rx="6" fill="#FCE4EC" stroke="#C62828" stroke-width="2"/>
+  <text x="212" y="630" text-anchor="middle" font-size="11" font-weight="bold" fill="#C62828">DEMING PDCA ENGINE</text>
+  <text x="212" y="648" text-anchor="middle" font-size="10" fill="#333">Every parameter change: Plan → Do → Check → Act</text>
+  <text x="212" y="664" text-anchor="middle" font-size="9" fill="#555">Applied at inter-trade boundaries only</text>
+
+  <rect x="415" y="610" width="375" height="60" rx="6" fill="#FFF8E1" stroke="#F57F17" stroke-width="2"/>
+  <text x="602" y="630" text-anchor="middle" font-size="11" font-weight="bold" fill="#F57F17">PARAMETER STORE</text>
+  <text x="602" y="648" text-anchor="middle" font-size="10" fill="#333">CIATS writes here only · TothBot reads here only</text>
+  <text x="602" y="664" text-anchor="middle" font-size="9" fill="#555">All values are CIATS-owned · 1:1.5 R:R hardcoded — SACRED</text>
+
+  <!-- Arrows to thresholds -->
+  <line x1="185" y1="325" x2="185" y2="355" stroke="#1565C0" stroke-width="1.5" marker-end="url(#arrBlue)"/>
+  <line x1="635" y1="325" x2="635" y2="355" stroke="#2E7D32" stroke-width="1.5" marker-end="url(#arrGreen)"/>
+  <line x1="445" y1="490" x2="445" y2="510" stroke="#E65100" stroke-width="1.5" marker-end="url(#arrOrange)"/>
+</svg>

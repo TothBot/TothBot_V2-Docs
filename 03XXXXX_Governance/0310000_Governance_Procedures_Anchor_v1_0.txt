@@ -1,0 +1,117 @@
+DocDCN:     0310000
+DocTitle:   Governance_Procedures_Anchor
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0310000_Governance_Procedures_Anchor_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+GOVERNANCE PROCEDURES ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Governance Procedures Sub-Domain
+Anchor for TothBot V2. It anchors all governance procedure
+instance documents (0311001 through 0311005) to the
+Governance Domain Document (0300000).
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the governance sub-domain, allowing
+instance documents to have a valid parent chain.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety        (Domain)
+  0100000  Management               (Domain)
+  0200000  Operations               (Domain)
+  0300000  Governance               (Domain Document)
+  0310000  This document            (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    0311001  Namespace_Specification             v1_0
+    0311002  Document_Creation_Workflow          v1_0
+    0311003  Versioning_Procedure                v1_0
+    0311004  Document_Creation_and_Approval      v1_0
+    0311005  System_Definitions_and_Terminology  v1_0
+
+============================================================
+3. SUB-DOMAIN SCOPE
+============================================================
+
+The Governance Procedures sub-domain (AA=03, B=1, sub-domain
+family 031XXXX) contains the procedural instance documents
+that operationalize the principles defined in 0300000.
+
+Each instance document elaborates one specific governance
+procedure:
+
+  0311001  Namespace_Specification:
+           The complete DCN assignment system. All domain
+           assignments (AA=00 through AA=11), sub-domain
+           numbering, document tier rules, folder structure,
+           and DCN validation rules.
+
+  0311002  Document_Creation_Workflow:
+           The mandatory sequenced work plan for creating
+           all TothBot V2 documents. Phase definitions,
+           dependency rules, GATE 1 criteria, Parking Lot
+           protocol.
+
+  0311003  Versioning_Procedure:
+           How document versions increment. Version format
+           rules. Version bump triggers. Lifecycle state
+           transition rules.
+
+  0311004  Document_Creation_and_Approval_Procedure:
+           The template standard for all documents. The
+           approval workflow from dv to rv to v to rt.
+
+  0311005  System_Definitions_and_Terminology:
+           Canonical definitions for all terms used across
+           TothBot V2 documents. Single source of truth
+           for vocabulary.
+
+============================================================
+4. ANCHOR RULES
+============================================================
+
+GV-ANC-001  All instance documents in the 0311XXX family
+            MUST cite 0310000 as parent in their Parent
+            Chain section.
+
+GV-ANC-002  0310000 may not be committed to GitHub until
+            0300000 is committed to GitHub.
+
+GV-ANC-003  No 0311XXX instance document may be committed
+            to GitHub until 0310000 is committed.
+
+GV-ANC-004  This document has no content beyond its
+            structural and anchoring purpose. Procedural
+            content belongs in instance documents only.
+
+============================================================
+5. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Child chain
+                     version references updated to v1_0 for
+                     all 5 instance documents. Approved by
+                     Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.5.
+                     Structural anchor for governance
+                     procedures sub-domain. Parent chain
+                     established. Instance document inventory
+                     listed. Anchor rules defined.
+
+============================================================
+END OF DOCUMENT
+============================================================

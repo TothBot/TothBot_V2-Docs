@@ -1,0 +1,12 @@
+# Local-only folders - not part of controlled document set
+Project Instructions/
+TBXXXXX_Session_Logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temp files
+*.tmp
+~$*

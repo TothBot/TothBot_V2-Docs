@@ -1,0 +1,187 @@
+DocDCN:     0311004
+DocTitle:   Document_Creation_and_Approval_Procedure
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311004_Document_Creation_and_Approval_Procedure_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+DOCUMENT CREATION AND APPROVAL PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the procedure for creating, reviewing,
+approving, and retiring controlled documents in the TothBot
+V2 document control system. It governs how all documents
+progress through their lifecycle and defines the standard
+template for all new documents.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0300000  Governance            (Domain Document)
+  0310000  Governance_Procedures_Anchor (Sub-Domain Anchor)
+  0311004  This document         (Instance)
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1 STANDARD DOCUMENT TEMPLATE [PL-001 RESOLVED]
+------------------------------------------------------------
+
+DC-TMPL-001  All controlled documents MUST begin with
+             the 7-field header in exactly this order:
+
+===== MANDATORY HEADER FORMAT =====
+
+DocDCN:     [7-digit DCN, format AABCDDD, no spaces]
+DocTitle:   [Title_With_Underscores_No_Spaces]
+DocVersion: dv1_1 + major_minor, e.g., dv1_0]
+DocOwner:   [Bill]
+DocPath:    [GitHub.com/TothBot/TothBot_V2-Docs/FOLDER/FILENAME_VERSION.txt]
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC, 24-hour]
+
+===================================
+
+DC-TMPL-002  Following the 7-field header, the standard
+             document body structure is:
+
+             ============================================================
+             [DOCUMENT TITLE — ALL CAPS]
+             ============================================================
+
+             ============================================================
+             1. PURPOSE
+             ============================================================
+             [Why this document exists. What it governs.]
+
+             ============================================================
+             2. PARENT CHAIN
+             ============================================================
+             [Explicit trace to Domain Document via Anchor.]
+
+             ============================================================
+             3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+             ============================================================
+             [Present when applicable. See Section 4 of this doc.]
+
+             ============================================================
+             4. [CONTENT SECTIONS]
+             ============================================================
+             [Document-specific content.]
+
+             ============================================================
+             N-1. RELATED DOCUMENTS
+             ============================================================
+             [DCN references to related documents.]
+
+             ============================================================
+             N. REVISION HISTORY
+             ============================================================
+             [Version | Date | Description of change]
+
+             ============================================================
+             END OF DOCUMENT
+             ============================================================
+
+DC-TMPL-003  DocPath format: the path must exactly match
+             the file's location in the repository.
+             Folder: matches the DCN's AA domain prefix.
+             Filename: [DocDCN]_[DocTitle]_[DocVersion].txt
+             Example:
+             0311001_Namespace_Specification_dv1_2.txt
+             in folder 03XXXXX_Governance/
+
+DC-TMPL-004  DocVersion format:
+             dv = working draft (development)
+             rv = review version (under review)
+             v  = approved/validated
+             rt = retired
+             Version number: major_minor (e.g., dv1_0,
+             dv1_2, rv2_0, v2_1, rt1_0)
+
+DC-TMPL-005  DocDate and DocTime: set to the date and time
+             of the version change in UTC. 24-hour format.
+             Never use local time. Always use UTC.
+
+------------------------------------------------------------
+3.2 WORKING DRAFT EXCEPTION DOCUMENTS
+------------------------------------------------------------
+
+DC-WD-001  Working Draft documents created under the WD
+           Exception (0311002 Section 1) must include:
+
+           (a) STATUS line after the header stating:
+               "Working Draft — Placeholder" or
+               "Working Draft — [specific note]"
+
+           (b) A "Must be Included From Previous Analysis"
+               section (Section 3) that captures all
+               requirements from prior analysis sessions.
+               This section is authoritative and must be
+               fully implemented in the final approved
+               version.
+
+           (c) All other standard template sections, with
+               "TBD in Phase X" markers for content not
+               yet derivable.
+
+DC-WD-002  WD documents do not require Bill approval for
+           creation. They are working documents. Bill
+           approves when promoting dv → v (direct approval)
+           or rv → v (approval after revision).
+
+============================================================
+4. DOCUMENT LIFECYCLE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Creation procedure
+  4.2  Review procedure (rv state)
+  4.3  Approval procedure (v state) — Bill approves
+  4.4  Retirement procedure (rt state)
+  4.5  Version increment rules (governed by 0311003)
+  4.6  Parent chain validation before commit
+
+============================================================
+5. RELATED DOCUMENTS
+============================================================
+
+  0300000  Governance
+  0310000  Governance_Procedures_Anchor
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+  0311003  Versioning_Procedure
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Removed WD
+                     placeholder status line. Resolved TBD
+                     markers in Parent Chain and Related
+                     Documents. Corrected DC-WD-002: Bill
+                     approves via dv → v or rv → v.
+                     Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-24-2026  Initial WD placeholder. Created under
+                     WD Exception. Captures document
+                     template standard (PL-001 RESOLVED)
+                     in Section 3. Defines mandatory 7-field
+                     header format, standard body structure,
+                     DocPath format, DocVersion lifecycle
+                     states, and WD Exception document
+                     requirements.
+
+============================================================
+END OF DOCUMENT
+============================================================

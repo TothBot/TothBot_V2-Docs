@@ -1,0 +1,98 @@
+<svg width="860" height="820" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="820" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline  (8 Gates, dv1_5)</text>
+<rect x="190" y="44" width="480" height="36" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="4"/>
+<text x="430" y="58" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">★ TRIGGER: Kraken OHLC 5-min candle close event (WS v2 push)</text>
+<text x="430" y="72" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Fires on trade events not wall clock — candle stall handled in 0511002</text>
+<line x1="430" y1="74" x2="430" y2="88" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="88" width="480" height="32" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="101" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">★ PARAMETER STORE SNAPSHOT FROZEN  (NEW dv1_5 — I-4)</text>
+<text x="430" y="114" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">All CIATS params captured at pipeline start — consistent through full eval</text>
+<line x1="430" y1="112" x2="430" y2="126" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="126" width="480" height="36" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="430" y="140" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">★ PRE-COMPUTATION CACHE READ  (NEW dv1_5 — I-2)</text>
+<text x="430" y="153" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Regime cache | 1H EMA cache (ohlc-60) | ATR(14) running value | 24h liquidity</text>
+<line x1="430" y1="156" x2="430" y2="170" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="170" width="480" height="42" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="184" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 1: State Machine</text>
+<text x="430" y="197" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">blocks maintenance / cancel_only</text>
+<line x1="670" y1="188" x2="680" y2="184" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="174" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="188" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">WAIT — engine not ready</text>
+<line x1="430" y1="206" x2="430" y2="220" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="220" width="480" height="42" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="234" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 2: Liquidity Gate ★  ★</text>
+<text x="430" y="247" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">24h volume ≥ $500k USD</text>
+<line x1="670" y1="238" x2="680" y2="234" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="224" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="238" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — LIQUIDITY_REJECTED</text>
+<line x1="430" y1="256" x2="430" y2="270" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="270" width="480" height="50" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="4"/>
+<text x="430" y="284" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">Gate 3: Regime Pre-Filter  ★ NEW dv1_5 (I-1)</text>
+<text x="430" y="297" font-size="9" fill="#8B0000" font-weight="normal" text-anchor="middle">TRENDING_NEG → STOP  |  NON_DIR+ELEV → STOP</text>
+<text x="430" y="309" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Eliminates SSS computation on all no-trade regimes</text>
+<line x1="670" y1="292" x2="680" y2="288" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="278" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="292" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">STOP — REGIME_BLOCKED (pre-filter)</text>
+<line x1="430" y1="314" x2="430" y2="328" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="328" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="342" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 4: 1H HTF Confirmation  ★  (was Gate 3 in dv1_4)</text>
+<text x="430" y="355" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">1H EMA(20) &gt; EMA(50) required for TRENDING_POS entries</text>
+<text x="430" y="367" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">★ Cache reads from ohlc(60) WS subscription  (NEW dv1_5)</text>
+<line x1="670" y1="346" x2="680" y2="342" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="332" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="346" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — HTF_GATE_REJECTED</text>
+<line x1="430" y1="368" x2="430" y2="382" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="382" width="480" height="36" fill="#F0F0FF" stroke="#7030A0" stroke-width="1" rx="4"/>
+<text x="430" y="405" font-size="10" fill="#7030A0" font-weight="normal" text-anchor="middle">SSS Signal Engine — score 5-min candle (only runs if Gate 3 passed)</text>
+<line x1="430" y1="412" x2="430" y2="426" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="426" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="440" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 5: Selection Controller</text>
+<text x="430" y="453" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Signal fails any 6 quality gates  (was Gate 4 in dv1_4)</text>
+<line x1="670" y1="444" x2="680" y2="440" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="430" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="444" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — SELECTION_REJECTED</text>
+<line x1="430" y1="466" x2="430" y2="480" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="480" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="494" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 6: Regime Gate ★</text>
+<text x="430" y="507" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">NON_DIR+NORM → 50% size  (NO ENTRY cases handled by Gate 3)  (was Gate 5)</text>
+<line x1="670" y1="498" x2="680" y2="494" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="484" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="498" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — REGIME_SIZED_50PCT</text>
+<line x1="430" y1="520" x2="430" y2="534" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="534" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="548" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 7: Risk Guard</text>
+<text x="430" y="561" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Drawdown halt / concentration / exposure  ★ ticker-driven continuous  (was Gate 6)</text>
+<line x1="670" y1="552" x2="680" y2="548" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="538" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="552" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">HALT — RISK_GUARD</text>
+<line x1="430" y1="574" x2="430" y2="588" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="588" width="480" height="46" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="602" font-size="10" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Gate 8: Position Sizer ★  (was Gate 7 — never blocks, only sizes)</text>
+<text x="430" y="615" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">MAE=ATR(14)×1.5x | emergSL=ATR(14)×3.0x | TP=R:R formula  — ATR incremental ★</text>
+<line x1="430" y1="628" x2="430" y2="642" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="642" width="480" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="653" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">ORDER DISPATCH: WS add_order (limit / post_only / GTD 30-60s / cl_ord_id / stp_type:cancel-newest)</text>
+<text x="430" y="666" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Expired/rejected → log reason code → CIATS EWMA monitors rejection_rate_by_regime</text>
+<line x1="430" y1="666" x2="430" y2="680" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="680" width="480" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="691" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">ON FILL: WS batch_add (TP resting limit + emergSL stop-market — atomic)</text>
+<text x="430" y="704" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cl_ord_id recorded in Position Mirror at dispatch — no async gap</text>
+<rect x="0" y="790" width="860" height="30" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="808" font-size="8" fill="#FFFFFF" font-weight="normal" text-anchor="middle">All rejects logged with reason code  |  CIATS EWMA Monitor: rejection_rate_by_regime / rate_counter_by_pair / ws_roundtrip_latency_ms</text>
+</svg>

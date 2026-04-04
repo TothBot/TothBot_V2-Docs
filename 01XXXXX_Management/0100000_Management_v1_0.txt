@@ -1,0 +1,237 @@
+DocDCN:     0100000
+DocTitle:   Management
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/01XXXXX_Management/0100000_Management_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+MANAGEMENT
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Management Domain Document for
+TothBot V2. It defines who governs, who decides, who
+approves, and who is accountable for what.
+
+In a Deming system, authority and responsibility are
+inseparable. Whoever has the authority owns the
+responsibility. This domain defines those assignments
+for TothBot V2.
+
+Management depends on AA=00 Ethics_and_Safety. All
+management decisions and authorities operate within
+the ethical and safety constraints defined in 0000000.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety  (Domain — governs this domain)
+  0100000  This document      (Domain Document)
+
+  Child chain (depends on this document):
+    0200000  Operations
+    0300000  Governance
+    All higher AA domain documents
+
+============================================================
+3. DOMAIN SCOPE
+============================================================
+
+This domain governs:
+
+  3.1  Operator identity and authority — who Bill is,
+       what authority he holds, and the limits of that
+       authority.
+
+  3.2  Decision rights — which decisions require Bill's
+       approval, which are autonomous, and which are
+       delegated to CIATS.
+
+  3.3  Accountability structure — how accountability
+       flows through the system given that TothBot V2
+       is a single-operator automated system.
+
+  3.4  System boundaries — what TothBot V2 is authorized
+       to do autonomously and what requires human decision.
+
+============================================================
+4. OPERATOR IDENTITY AND AUTHORITY
+============================================================
+
+------------------------------------------------------------
+MG-001  SOLE OPERATOR
+------------------------------------------------------------
+
+Bill (William Stott) is the sole operator of TothBot V2.
+There is one operator. There is one decision authority.
+Accountability is singular and unambiguous.
+
+This is not a limitation — it is a design principle.
+In an automated system managing real capital, diffuse
+accountability is a safety risk. One operator, one
+authority, one accountable person.
+
+------------------------------------------------------------
+MG-002  OPERATOR AUTHORITY
+------------------------------------------------------------
+
+Bill holds full authority over:
+
+  (a) All specification documents — creates, reviews,
+      approves, and retires them.
+  (b) All parameter changes — CIATS proposes, Bill approves.
+  (c) System start, pause, and halt at any time.
+  (d) Any deviation from documented procedures.
+  (e) Architecture decisions and system design.
+  (f) Repository access and API key management.
+
+No automated system component — including CIATS — may
+exercise any of these authorities autonomously.
+
+------------------------------------------------------------
+MG-003  OPERATOR LIMITS
+------------------------------------------------------------
+
+Bill's authority has one absolute limit, derived from
+AA=00 Ethics_and_Safety ES-001 and HR-ES-001:
+
+  Bill cannot override the sacred net 1:1.5 R:R constraint.
+
+This limit exists to protect Bill from himself. The
+automation is more consistent than human discretion
+in fast markets. The R:R constraint is the one rule
+that protects capital even when discretion fails.
+
+All other constraints and parameters are within Bill's
+authority to change through the document control process.
+
+------------------------------------------------------------
+MG-004  CLAUDE'S ROLE UNDER MANAGEMENT
+------------------------------------------------------------
+
+Claude operates as Bill's technical partner in building
+TothBot V2. Claude's authority is bounded by:
+
+  (a) Claude does not self-approve documents.
+  (b) Claude does not self-retire documents.
+  (c) Claude does not implement parameter changes without
+      Bill's instruction.
+  (d) Claude does not deviate from the architecture in
+      0500000 without Bill's instruction.
+  (e) Claude executes Bill's instructions and flags
+      problems, conflicts, or risks honestly.
+
+Claude is not an operator. Claude is a tool under Bill's
+direction.
+
+============================================================
+5. DECISION RIGHTS MATRIX
+============================================================
+
+  DECISION                           AUTHORITY        MECHANISM
+  ----------------------------------------------------------------
+  New document creation              Claude (drafts)  Bill approves
+  Document version increment         Claude (drafts)  Bill approves
+  Document retirement                Bill only        Bill action
+  Architecture decisions             Bill             Document update
+  Parameter changes (CIATS-owned)    CIATS proposes   Bill approves
+  1:1.5 R:R (sacred)                 NOBODY           Hardcoded
+  System halt (emergency)            Bill OR circuit  Immediate
+  System halt (planned)              Bill             Manual
+  API key creation/rotation          Bill only        Bill action
+  GitHub commits                     Bill only        Bill action
+  VPS access                         Bill only        Bill action
+  Trading decisions (per spec)       TothBot auto     Spec governs
+  CIATS monitoring                   CIATS auto       Continuous
+  CIATS proposals                    CIATS auto       Bill approves
+
+============================================================
+6. ACCOUNTABILITY STRUCTURE
+============================================================
+
+------------------------------------------------------------
+MG-005  SINGLE ACCOUNTABILITY
+------------------------------------------------------------
+
+Bill is accountable for all system behavior, including:
+
+  (a) All trades executed by TothBot V2.
+  (b) All parameter values approved and in effect.
+  (c) All specification documents approved and in effect.
+  (d) All losses incurred by the system.
+  (e) All data handling, API key security, and VPS access.
+
+Automated execution does not reduce operator accountability.
+Bill approved the specifications that govern the automation.
+Bill is accountable for what those specifications produce.
+
+------------------------------------------------------------
+MG-006  DEMING ACCOUNTABILITY PRINCIPLE
+------------------------------------------------------------
+
+Deming's principle: Management is responsible for the
+system. Workers (automation in this case) operate within
+the system management creates. When the system produces
+bad outcomes, management examines and improves the system
+— not the automation.
+
+Applied to TothBot V2: when CIATS identifies a performance
+problem through its statistical engine, Bill examines and
+approves the proposed system change. CIATS surfaces the
+data. Bill makes the decision. The system improves.
+
+============================================================
+7. SYSTEM BOUNDARIES — AUTONOMOUS VS. HUMAN
+============================================================
+
+------------------------------------------------------------
+MG-007  AUTONOMOUS OPERATIONS (NO BILL APPROVAL NEEDED)
+------------------------------------------------------------
+
+TothBot V2 operates autonomously within approved specs:
+
+  - All trading decisions governed by signal pipeline.
+  - All exit decisions governed by Exit Controller.
+  - All position sizing governed by approved parameters.
+  - CIATS monitoring, analysis, and proposal generation.
+  - Automatic circuit breaker activation.
+  - WS reconnection and state recovery.
+  - Logger recording all events.
+  - Alert delivery to alert@tothbot.com.
+
+------------------------------------------------------------
+MG-008  REQUIRES BILL ACTION
+------------------------------------------------------------
+
+These actions require explicit Bill decision and action:
+
+  - Parameter change implementation (from CIATS proposal).
+  - Specification document approval.
+  - Manual system halt or resume.
+  - API key rotation or modification.
+  - VPS configuration changes.
+  - Any action outside approved specification.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.2.
+                     Operator identity, authority, and limits.
+                     Decision rights matrix. Accountability
+                     structure. Autonomous vs. human action
+                     boundaries. Claude's bounded role.
+
+============================================================
+END OF DOCUMENT
+============================================================

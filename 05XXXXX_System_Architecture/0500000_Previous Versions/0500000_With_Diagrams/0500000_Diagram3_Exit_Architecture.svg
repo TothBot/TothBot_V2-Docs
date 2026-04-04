@@ -1,0 +1,85 @@
+<svg width="860" height="660" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="660" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 3 — Exit Architecture: Ground Zero Redesign  (dv1_5)</text>
+<rect x="10" y="40" width="840" height="22" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="430" y="56" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">Exit Controller owns ALL normal exits  |  Off-book emergSL is crash protection only  |  OTO conditional orders EVALUATED AND REJECTED (AR-008)</text>
+<rect x="80" y="72" width="220" height="26" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="190" y="89" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 1a — Signal-Based Exit</text>
+<rect x="310" y="72" width="220" height="26" fill="#1E6B1E" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="420" y="89" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 1b — TP Fill</text>
+<rect x="560" y="72" width="220" height="26" fill="#C55A11" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="670" y="89" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 2 — MAE Threshold ★</text>
+<rect x="80" y="106" width="220" height="26" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="117" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Signal deterioration</text>
+<text x="190" y="129" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">SSS score drops below threshold</text>
+<rect x="80" y="136" width="220" height="26" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="147" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Time-based</text>
+<text x="190" y="159" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">max hold without TP progress</text>
+<rect x="80" y="166" width="220" height="26" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="177" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Momentum loss</text>
+<text x="190" y="189" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">trend breaks on 5m or 1H</text>
+<rect x="80" y="196" width="220" height="24" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="190" y="210" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">WS cancel_order(TP) + WS market_sell</text>
+<rect x="80" y="220" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="232" font-size="7.5" fill="#1F3864" font-weight="normal" text-anchor="middle">exit reason: SIGNAL_DECAY / TIME_EXPIRY / MOMENTUM_LOSS</text>
+<rect x="310" y="106" width="220" height="40" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="420" y="120" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Resting TP limit fills on Kraken</text>
+<text x="420" y="134" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">matching engine</text>
+<rect x="310" y="154" width="220" height="24" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="420" y="168" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">EC cancels emergSL after fill confirm</text>
+<rect x="310" y="184" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="420" y="196" font-size="7.5" fill="#1F3864" font-weight="normal" text-anchor="middle">exit reason: TP_FILL  (maker 0.16%)</text>
+<rect x="560" y="106" width="220" height="30" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="670" y="117" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">TRIGGER</text>
+<text x="670" y="130" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">price - entry ≥ ATR(14) × 1.5x</text>
+<rect x="560" y="142" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="670" y="154" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">① WS cancel_order(TP resting limit)</text>
+<rect x="560" y="164" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="670" y="176" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">② WS cancel_order(emergSL off-book)</text>
+<rect x="560" y="186" width="220" height="18" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="670" y="198" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">★ BOTH CANCELS BEFORE SELL</text>
+<rect x="560" y="208" width="220" height="58" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="670" y="219" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ CANCEL TIMEOUT FALLBACK  (NEW dv1_5 — I-6)</text>
+<text x="670" y="231" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">req_id registry tracks each cancel ACK</text>
+<text x="670" y="243" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">On timeout: check executions channel state</text>
+<text x="670" y="255" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Confirmed cancel → proceed | Unknown → retry 1x</text>
+<rect x="560" y="270" width="220" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="670" y="281" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">NEVER market sell with ambiguous order state</text>
+<text x="670" y="292" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">2nd timeout → alert + hold position + alert operator</text>
+<rect x="560" y="298" width="220" height="18" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="670" y="310" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">③ WS add_order (market sell  taker 0.26%)</text>
+<rect x="560" y="320" width="220" height="26" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="670" y="331" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">★ MPP RISK: market sell may reject on wide spread</text>
+<text x="670" y="343" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">EC must handle MPP rejection and retry (0511004)</text>
+<rect x="560" y="350" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="670" y="362" font-size="7.5" fill="#1F3864" font-weight="normal" text-anchor="middle">exit reason: MAE_THRESHOLD_BREACH</text>
+<rect x="30" y="430" width="800" height="26" fill="#8B0000" stroke="#8B0000" stroke-width="1" rx="4"/>
+<text x="430" y="447" font-size="11" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 3 — Emergency Brake (Kraken Matching Engine Only — System Failure ONLY)</text>
+<rect x="30" y="460" width="800" height="44" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="430" y="472" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">Fires ONLY: VPS crash / TothBot down / internet severed / unrecoverable WS disconnect</text>
+<text x="430" y="486" font-size="9" fill="#8B0000" font-weight="normal" text-anchor="middle">Off-book emergSL stop-market at ATR×3.0x on Kraken matching engine</text>
+<text x="430" y="498" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">★ MPP RISK: triggered market order subject to MPP on wide spread  (assign to 0411001)</text>
+<rect x="30" y="508" width="800" height="22" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="430" y="522" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">★ SHOULD NEVER FIRE IN NORMAL OPERATION  |  If fired: system failure event requiring investigation</text>
+<rect x="30" y="540" width="800" height="72" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="553" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">R:R FORMULA  (all calculations use ACTUAL fill price — not limit price  → why OTO was rejected)</text>
+<text x="430" y="567" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">mae_pct = ATR(14)×1.5x / entry_fill_price</text>
+<text x="430" y="581" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">net_loss = mae_pct + 0.16% + 0.26%        net_gain = net_loss × 1.5  ★ SACRED</text>
+<text x="430" y="595" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">gross_target = net_gain + 0.16%           emergSL_dist = ATR×3.0x / entry_fill_price  (NEVER in R:R formula)</text>
+<text x="430" y="607" font-size="8" fill="#1F3864" font-weight="normal" text-anchor="middle">exit codes: SIGNAL_DECAY / TIME_EXPIRY / MOMENTUM_LOSS / TP_FILL / MAE_THRESHOLD_BREACH / EMERGENCY_SL_FIRED</text>
+</svg>

@@ -1,0 +1,89 @@
+<svg width="860" height="680" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="680" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 5 — CIATS Architecture: Data Flows and Improvement Cycle  (dv1_5)</text>
+<rect x="10" y="44" width="840" height="74" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="58" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">LOGGER  (sole data interface to CIATS — reads only)</text>
+<rect x="16" y="66" width="410" height="46" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="221" y="80" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">★ ASYNC BOUNDED QUEUE  (NEW dv1_5 — I-5)</text>
+<text x="221" y="94" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Writes go to in-memory queue</text>
+<text x="221" y="107" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Async writer flushes to disk — NEVER blocks hot path</text>
+<rect x="434" y="66" width="408" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="638" y="80" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Records every event: time_in/time_out ★</text>
+<text x="638" y="94" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">rate_counter_by_pair ★ | rejection codes</text>
+<text x="638" y="107" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Queue alert if full — operator notified</text>
+<line x1="430" y1="118" x2="430" y2="134" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="10" y="134" width="840" height="42" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="148" font-size="10" fill="#1E6B1E" font-weight="bold" text-anchor="middle">★ PARAMETER STORE SNAPSHOT  (NEW dv1_5 — I-4)</text>
+<text x="430" y="162" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">TothBot reads frozen snapshot at start of each pipeline eval — CIATS writes queued at inter-trade boundaries only</text>
+<text x="430" y="174" font-size="8.5" fill="#808080" font-weight="normal" text-anchor="middle">Prevents parameter inconsistency within a single pipeline evaluation</text>
+<rect x="20" y="186" width="405" height="26" fill="#2E75B6" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="222" y="204" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">STREAM 1 — EWMA Monitor</text>
+<rect x="440" y="186" width="405" height="26" fill="#C55A11" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="642" y="204" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">STREAM 2 — Trade Outcome Bus</text>
+<rect x="20" y="218" width="405" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="231" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">288 candle evals/day</text>
+<rect x="20" y="240" width="405" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="253" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Valid at 50 evals (~4 hrs)</text>
+<rect x="20" y="262" width="405" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="275" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Detection within ~22 observations (~27 min)</text>
+<rect x="20" y="284" width="405" height="20" fill="#FFF2CC" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="222" y="297" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">THREE MONITORING SIGNALS:</text>
+<rect x="20" y="306" width="405" height="20" fill="#FFF2CC" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="319" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">(1) rejection_rate_by_regime  (F6)</text>
+<rect x="20" y="328" width="405" height="20" fill="#FFF2CC" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="341" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">(2) rate_counter_by_pair  ★ (A-1)</text>
+<rect x="20" y="350" width="405" height="20" fill="#FFF2CC" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="363" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">(3) ws_roundtrip_latency_ms  ★ (A-3)</text>
+<rect x="20" y="372" width="405" height="20" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="222" y="385" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">MONITORING ONLY — never drives param changes</text>
+<rect x="440" y="218" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="231" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Fires on every position close</text>
+<rect x="440" y="240" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="253" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry/exit price</text>
+<rect x="440" y="262" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="275" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">hold duration | MAE reached</text>
+<rect x="440" y="284" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="297" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">fees | exit reason</text>
+<rect x="440" y="306" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="319" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">asset_regime + market_regime</text>
+<rect x="440" y="328" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="341" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">signal params at entry</text>
+<rect x="440" y="350" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="363" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">actual R:R | P/L</text>
+<rect x="440" y="372" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="385" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">→ feeds Statistical Engine</text>
+<rect x="10" y="402" width="840" height="50" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="416" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">STATISTICAL ENGINE</text>
+<text x="430" y="430" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Mann-Whitney U | Sharpe Ratio | Spearman Correlation | EWMA (λ=0.2) | CUSUM | Half-Kelly</text>
+<text x="430" y="444" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">50 candle evals: EWMA valid  |  20 trades: CUSUM active  |  200 trades: HARD FLOOR — inference valid — Proposal Engine activates — Half-Kelly activates  |  600 trades: per-regime</text>
+<rect x="10" y="460" width="276" height="50" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="3"/>
+<text x="148" y="474" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">PDCA ENGINE</text>
+<text x="148" y="488" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Plan → Do → Check → Act</text>
+<text x="148" y="502" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Applied at inter-trade boundaries only</text>
+<rect x="291" y="460" width="276" height="50" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="429" y="474" font-size="10" fill="#1E6B1E" font-weight="bold" text-anchor="middle">PROPOSAL ENGINE</text>
+<text x="429" y="488" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Active at 200+ closed trades</text>
+<text x="429" y="502" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Half-Kelly: K%=W-(1-W)/R  apply 50%</text>
+<rect x="572" y="460" width="278" height="50" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="711" y="474" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">REGIME LIBRARY</text>
+<text x="711" y="488" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Per-regime P/L analysis at 600+ trades</text>
+<text x="711" y="502" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">100+ trades per bucket required</text>
+<rect x="10" y="518" width="840" height="30" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="430" y="529" font-size="10" fill="#8B0000" font-weight="bold" text-anchor="middle">PARAMETER STORE  (all CIATS-owned starting values — no ceilings — no mandatory review)</text>
+<text x="430" y="543" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">★ SACRED EXCEPTION: Net 1:1.5 R:R — HARDCODED — NOT CIATS — NEVER CHANGES</text>
+</svg>

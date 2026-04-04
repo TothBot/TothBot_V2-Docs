@@ -1,0 +1,117 @@
+<svg viewBox="0 0 820 620" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="620" fill="#FFFFFF"/>
+  <text x="410" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1A1A1A">Diagram 3 — Exit Architecture: Ground Zero Redesign for Kraken</text>
+  <text x="410" y="50" text-anchor="middle" font-size="11" fill="#555">Exit Controller owns ALL normal exits · Kraken emergency SL = crash protection only</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#424242"/>
+    </marker>
+    <marker id="arrRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#C62828"/>
+    </marker>
+    <marker id="arrGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2E7D32"/>
+    </marker>
+    <marker id="arrOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#E65100"/>
+    </marker>
+  </defs>
+
+  <!-- OPEN POSITION box -->
+  <rect x="310" y="65" width="200" height="42" rx="6" fill="#1565C0" stroke="#1565C0"/>
+  <text x="410" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="#FFF">OPEN POSITION</text>
+  <text x="410" y="98" text-anchor="middle" font-size="10" fill="#CFD8DC">Position Mirror active · Logger recording</text>
+
+  <!-- EXIT CONTROLLER -->
+  <rect x="285" y="135" width="250" height="35" rx="4" fill="#424242"/>
+  <text x="410" y="158" text-anchor="middle" font-size="12" font-weight="bold" fill="#FFF">EXIT CONTROLLER</text>
+  <line x1="410" y1="107" x2="410" y2="135" stroke="#424242" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Three paths diverge -->
+  <line x1="310" y1="170" x2="130" y2="210" stroke="#2E7D32" stroke-width="1.5" marker-end="url(#arrGreen)"/>
+  <line x1="410" y1="170" x2="410" y2="210" stroke="#E65100" stroke-width="1.5" marker-end="url(#arrOrange)"/>
+  <line x1="510" y1="170" x2="680" y2="210" stroke="#C62828" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrRed)"/>
+
+  <text x="195" y="200" text-anchor="middle" font-size="10" fill="#2E7D32" font-weight="bold">Layer 1</text>
+  <text x="410" y="200" text-anchor="middle" font-size="10" fill="#E65100" font-weight="bold">Layer 1b</text>
+  <text x="600" y="200" text-anchor="middle" font-size="10" fill="#C62828" font-weight="bold">Layer 3</text>
+
+  <!-- LAYER 1a box -->
+  <rect x="30" y="210" width="240" height="120" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="150" y="230" text-anchor="middle" font-size="12" font-weight="bold" fill="#2E7D32">LAYER 1a — Signal-Based Exit</text>
+  <text x="40" y="252" font-size="10" fill="#333">Triggers:</text>
+  <text x="50" y="268" font-size="10" fill="#333">· SSS score drops below threshold</text>
+  <text x="50" y="284" font-size="10" fill="#333">· Max hold time without TP progress</text>
+  <text x="50" y="300" font-size="10" fill="#333">· Trend structure breaks (5-min or 1H)</text>
+  <text x="40" y="320" font-size="10" font-weight="bold" fill="#2E7D32">Method: WS cancel_order(TP) + market sell</text>
+
+  <!-- LAYER 1b - TP Fill -->
+  <rect x="285" y="210" width="250" height="100" rx="6" fill="#E3F0FB" stroke="#1565C0" stroke-width="2"/>
+  <text x="410" y="232" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565C0">LAYER 1b — TP Fill</text>
+  <text x="295" y="255" font-size="10" fill="#333">Resting TP limit order fills on</text>
+  <text x="295" y="271" font-size="10" fill="#333">Kraken matching engine</text>
+  <text x="295" y="295" font-size="10" font-weight="bold" fill="#1565C0">EC cancels emergSL after fill</text>
+  <text x="295" y="311" font-size="10" fill="#555">Maker fee: 0.16%</text>
+
+  <!-- LAYER 3 box - emergency -->
+  <rect x="550" y="210" width="240" height="120" rx="6" fill="#FFF3E0" stroke="#C62828" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="670" y="232" text-anchor="middle" font-size="12" font-weight="bold" fill="#C62828">LAYER 3 — Emergency Brake</text>
+  <rect x="560" y="237" width="220" height="20" rx="3" fill="#FFCDD2"/>
+  <text x="670" y="251" text-anchor="middle" font-size="10" font-weight="bold" fill="#C62828">SHOULD NEVER FIRE IN NORMAL OPS</text>
+  <text x="560" y="272" font-size="10" fill="#333">Triggers: VPS crash · TothBot down</text>
+  <text x="560" y="288" font-size="10" fill="#333">          internet severed</text>
+  <text x="560" y="308" font-size="10" fill="#333">Off-book emergSL stop-market at ATR×3.0x</text>
+  <text x="560" y="324" font-size="10" fill="#555">Fires on Kraken matching engine only</text>
+
+  <!-- LAYER 2 -->
+  <rect x="285" y="340" width="250" height="140" rx="6" fill="#FCE4EC" stroke="#C62828" stroke-width="2"/>
+  <text x="330" y="362" text-anchor="middle" font-size="12" font-weight="bold" fill="#C62828">LAYER 2 — MAE Threshold</text>
+  <text x="345" y="362" font-size="10" fill="#2E7D32" font-weight="bold"> ★NEW</text>
+  <text x="295" y="382" font-size="10" fill="#333">Trigger: price − entry ≥ ATR(14) × 1.5x</text>
+  <rect x="295" y="390" width="230" height="20" rx="3" fill="#FFCDD2"/>
+  <text x="410" y="404" text-anchor="middle" font-size="10" font-weight="bold" fill="#C62828">SEQUENCE IS CRITICAL:</text>
+  <text x="305" y="422" font-size="10" fill="#333">1. WS cancel_order (cancel TP resting order)</text>
+  <text x="305" y="438" font-size="10" fill="#333">2. WS cancel_order (cancel emergSL off-book)</text>
+  <text x="305" y="454" font-size="10" fill="#333">3. WS add_order (market sell — taker 0.26%)</text>
+  <text x="295" y="472" font-size="9" fill="#C62828">Both orders cancelled BEFORE market sell</text>
+
+  <!-- Arrows to Layer 2 -->
+  <line x1="150" y1="330" x2="330" y2="340" stroke="#2E7D32" stroke-width="1.5" marker-end="url(#arrGreen)"/>
+  <line x1="680" y1="330" x2="490" y2="340" stroke="#C62828" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrRed)"/>
+  <text x="220" y="337" font-size="9" fill="#555">if MAE breach</text>
+
+  <!-- R:R FORMULA box -->
+  <rect x="30" y="360" width="240" height="140" rx="6" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="2"/>
+  <text x="150" y="381" text-anchor="middle" font-size="11" font-weight="bold" fill="#6A1B9A">R:R FORMULA (Updated dv1_2)</text>
+  <text x="40" y="403" font-size="10" fill="#333">mae_pct   = ATR(14)×1.5x / entry_price</text>
+  <text x="80" y="403" font-size="10" fill="#555"> ← CIATS</text>
+  <text x="40" y="421" font-size="10" fill="#333">net_loss  = mae_pct + 0.16% + 0.26%</text>
+  <rect x="35" y="427" width="225" height="20" rx="3" fill="#CE93D8"/>
+  <text x="150" y="441" text-anchor="middle" font-size="10" font-weight="bold" fill="#4A148C">net_gain  = net_loss × 1.5  ← SACRED</text>
+  <text x="40" y="460" font-size="10" fill="#333">gross_tgt = net_gain + 0.16%</text>
+  <text x="40" y="480" font-size="10" fill="#555">emergSL_dist = ATR×3.0x / entry_price</text>
+  <text x="40" y="496" font-size="9" fill="#C62828">NEVER in R:R formula — outside envelope</text>
+
+  <!-- OUTCOME -->
+  <rect x="550" y="360" width="240" height="140" rx="6" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="1.5"/>
+  <text x="670" y="381" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">ON POSITION CLOSE</text>
+  <text x="560" y="402" font-size="10" fill="#333">Logger records full exit record:</text>
+  <text x="570" y="418" font-size="10" fill="#333">· exit reason code</text>
+  <text x="570" y="434" font-size="10" fill="#333">· actual R:R achieved</text>
+  <text x="570" y="450" font-size="10" fill="#333">· MAE reached</text>
+  <text x="570" y="466" font-size="10" fill="#333">· fees paid</text>
+  <text x="570" y="482" font-size="10" fill="#333">· hold duration</text>
+  <text x="560" y="498" font-size="10" font-weight="bold" fill="#2E7D32">CIATS Trade Outcome Bus fires</text>
+
+  <!-- EXIT CODES box -->
+  <rect x="30" y="520" width="750" height="70" rx="6" fill="#FAFAFA" stroke="#BDBDBD" stroke-width="1"/>
+  <text x="405" y="540" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">EXIT REASON CODES (logged on every close)</text>
+  <text x="50" y="558" font-size="10" fill="#333">SIGNAL_DECAY</text>
+  <text x="165" y="558" font-size="10" fill="#333">TIME_EXPIRY</text>
+  <text x="270" y="558" font-size="10" fill="#333">MOMENTUM_LOSS</text>
+  <text x="400" y="558" font-size="10" fill="#333">TP_FILL</text>
+  <text x="460" y="558" font-size="10" fill="#C62828">MAE_THRESHOLD_BREACH</text>
+  <text x="620" y="558" font-size="10" fill="#C62828">EMERGENCY_SL_FIRED</text>
+  <text x="405" y="580" text-anchor="middle" font-size="9" fill="#555">EMERGENCY_SL_FIRED = system failure event requiring investigation</text>
+</svg>

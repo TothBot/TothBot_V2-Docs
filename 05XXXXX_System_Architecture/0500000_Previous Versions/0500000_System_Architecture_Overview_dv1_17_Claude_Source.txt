@@ -1,0 +1,2354 @@
+DocDCN:     0500000
+DocTitle:   TothBot_Kraken_System_Architecture_Overview
+DocVersion: dv1_17
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_17.docx
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+0500000 SYSTEM ARCHITECTURE OVERVIEW — CLAUDE SOURCE FILE
+============================================================
+
+PURPOSE: This file is the Claude-readable source for 0500000.
+It contains the complete document text AND all 6 embedded SVG
+diagrams as plain text. Upload this file to the Claude.ai project
+when 0500000 needs to be updated. Claude reads this file, applies
+changes, and rebuilds the .docx with embedded diagrams.
+
+Bill stores separately:
+  0500000_System_Architecture_Overview_dv1_16.docx  (Word — for Bill)
+  0500000_System_Architecture_Overview_dv1_16_Claude_Source.txt  (this file — for Claude)
+
+============================================================
+DOCUMENT CONTENT
+============================================================
+
+TOTHBOT — KRAKEN SYSTEM ARCHITECTURE OVERVIEW
+The Complete System — All Architectural Decisions + All Flow Diagrams
+
+DocDCN:     0500000
+DocTitle:   TothBot_Kraken_System_Architecture_Overview
+DocVersion: dv1_17
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_17.docx
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+PURPOSE: This document captures all architectural decisions, FP/DP analyses, and system
+specifications from the TothBot Kraken architecture sessions of March 2026. Includes all
+six system flow diagrams showing connections between Kraken, TothBot, and CIATS as one
+unified organism.
+
+Diagrams in this document (dv1_14 — diagrams unchanged from dv1_10):
+  Diagram 1 — Kraken API Connection Architecture
+    (dv1_6: amend_order primary, batch_cancel added, WS ping A-7, zombie A-8,
+     balances seq A-9, per-pair status, L3 URL corrected)
+    (dv1_7: executions seq gap detection A-10, GetOpenOrders gap recovery)
+    (dv1_9: GAP-A order_status:true CRITICAL FIX, GAP-C price_increment, GAP-D qty_min/cost_min,
+     GAP-E max_size=10MB, IMP-11 maxratecount, IMP-13 warnings[])
+    (dv1_10: GAP-B stp_type underscore CORRECTION, A-21 deadline parameter,
+     IMP-16 aiohttp ClientTimeout, IMP-17 TCPConnector, IMP-18 ticker bbo)
+    (dv1_12: text-only updates — diagrams unchanged)
+    (dv1_14: text-only — AR-057 through AR-066)
+    (dv1_15: text-only — AR-067 through AR-075)
+    (dv1_16: text-only — AR-076)
+  Diagram 2 — TothBot Trading Pipeline
+    (dv1_6: per-pair instrument status check added before Gate 1)
+  Diagram 3 — Exit Architecture: Ground Zero Redesign (dv1_6: title updated)
+  Diagram 4 — Regime Taxonomy: 6-Regime Grid + Two-Level Tagging (dv1_6: title updated)
+  Diagram 5 — CIATS Architecture: Data Flows and Improvement Cycle (dv1_6: title updated)
+  Diagram 6 — Complete System: One CIATS-Owned Organism (dv1_9: GAP-A through F, IMP-11 through 17)
+              (dv1_10: GAP-B stp_type correction, A-21 deadline, IMP-16/17 aiohttp, IMP-18 bbo, IMP-19 regime stagger)
+
+============================================================
+1. System Identity and Mission
+============================================================
+
+1.1 What TothBot Is
+
+TothBot is an automated cryptocurrency spot trading system on Kraken exchange. It runs
+24/7/365 on a Hetzner VPS, processes 5-minute OHLC candle close events as its system
+clock, and executes long-only trades using a momentum-based signal engine.
+
+TothBot is not an external system connected to Kraken — it IS Kraken's event processor.
+Every action is a response to a Kraken push event. No timers. No polling. Idle and silent
+until Kraken speaks.
+
+1.2 The One Organism Principle
+
+Three functional zones, one organism:
+  Kraken:  generates events, executes orders, holds resting TP limit orders and
+           off-book emergency SL stop orders on matching engine
+  TothBot: processes Kraken events, executes trading strategy, manages positions
+  CIATS:   learns from event records, continuously improves processing rules
+
+PRIMARY MISSION: Maximize profit. Minimize loss. With an emphasis on minimizing loss.
+Loss prevention takes priority over profit generation. Everything else is secondary.
+
+1.3 Operating Environment
+
+  Exchange:          Kraken Spot (Long Module — Short deferred)
+  Language:          Python 3.12.3
+  VPS:               Hetzner CPX22 — 87.99.141.44 — Ashburn VA
+                     (Kraken Spot servers: AWS us-west-2 Oregon)
+                     ★ Evaluate Hillsboro OR [dv1_6 IMP-01 — adjacent to Kraken AWS]
+  System Clock:      Kraken OHLC 5-minute candle close event (WS v2 push)
+  Fee Baseline:      Maker 0.16% / Taker 0.26% (CIATS monitors actuals)
+  Operation:         24/7/365 — CIATS may add stand-down periods via PDCA if data supports
+  Starting Portfolio: $1,000 Long Module
+  Sacred constraint: Net 1:1.5 R:R — HARDCODED — the only number not owned by CIATS
+
+============================================================
+2. Kraken API Connection Architecture
+============================================================
+
+All connection points verified across 3 independent analysis passes (15 sources) plus
+2 deep validation sessions (144+ sources total) plus 10-search FP/DP Kraken validation
+[dv1_6] (126 sources).
+
+2.1 Key Connection Points
+
+  Public WS v2:
+    instrument  — asset specs + per-pair status cache ★ dv1_6
+                  price_increment / qty_min / cost_min ★ GAP-C/D dv1_9
+    status      — global engine state (online/post_only/cancel_only/maintenance)
+    ohlc(5m)    — SYSTEM CLOCK (pipeline trigger, fires on trade events)
+    ohlc(60)    — 1H HTF cache for Gate 4 ★ NEW dv1_5
+    ticker      — price data, event_trigger:bbo (pairs with open positions) or
+                  event_trigger:trades (pairs without). WS Manager manages per-pair.
+
+  Private WS v2 inbound:
+    executions  — fills/expirations/SL-TP triggers, ratecounter:true (A-1),
+                  snap_orders:true, snap_trades:true, order_status:true on reconnect (A-3),
+                  sequence gap detection ★ A-10 dv1_7
+                  CRITICAL ★ GAP-A dv1_9: order_status:true MANDATORY — without it amended
+                  and restated exec_types are silently dropped, breaking A-12 and A-13
+    balances    — real-time settlement, sequence gap detection ★ A-9 dv1_6
+
+  Private WS v2 outbound:
+    add_order   — entry: limit/post_only/GTD/cl_ord_id/stp_type:cancel_newest/deadline:now+5s
+    amend_order — PRIMARY amendment method (edit_order DEPRECATED ★ dv1_6)
+    batch_add   — SL+TP atomic on fill. cl_ord_id/stp_type:cancel_newest/deadline:now+5s
+    cancel_order — exit leg cleanup, req_id tracked
+    batch_cancel — Full Halt multi-order cancel ★ dv1_6
+    All messages carry req_id (A-2), cl_ord_id (A-2), stp_type:cancel_newest (A-4) [WS v2 underscore]
+
+  REST:
+    GetWebSocketsToken  — startup/reconnect
+    GetOHLCData         — daily regime computation 00:00 UTC ★ NEW dv1_5
+                          CRITICAL: exclude response[-1] always ★ dv1_6
+    GetOpenOrders       — restart reconcile fallback / executions gap recovery ★ dv1_7
+    GetAccountBalance   — restart reconcile fallback / balances gap recovery ★ dv1_6
+    CancelAllOrders     — kill switch emergency only
+    Status API          — startup proactive maintenance check (AR-038 dv1_12)
+                          GET https://status.kraken.com/api/v2/
+                          scheduled-maintenances/upcoming.json
+                          No authentication. Informational only. Does not block startup.
+
+  Matching Engine:
+    Resting TP limit orders and off-book emergency SL stop orders survive any TothBot
+    failure independently — crash protection always active
+
+  EVALUATED AND REJECTED:
+    cancel_all_orders_after (WS v2 DMS) — destroys crash protection (AR-001)
+    FIX API cancel-on-disconnect — same architectural conflict (AR-001)
+    OTO conditional orders — uses limit price not fill price, violates R:R (AR-008)
+
+2.2 Four Kraken Engine States
+
+  online       — All orders. Signal pipeline runs normally.
+  post_only    — TothBot limit+post_only entries ARE valid. Trading continues.
+  cancel_only  — No new entries. Exit Controller can cancel. Resting orders active.
+  maintenance  — No orders, no cancels. Resting TP and emergSL active on engine.
+
+2.3 API Rate Limits — Intermediate Tier (C-2)
+
+  Rate limits shared across REST, WebSockets, and FIX — no separate per-protocol budget.
+
+  Rate counter threshold (per pair):   125
+  Rate counter decay (per second):      2.34
+  Max open orders (per pair):          80
+  Add order fixed cost:                +1
+  Amend order cost ★ dv1_6 (PRIMARY): +1 fixed, +3(<5s), +2(<10s), +1(<15s)
+  Edit order (DEPRECATED ★ dv1_6):    +1 fixed, +6(<5s), +5(<10s) — DO NOT USE
+  Batch add fixed cost:                +(n/2)
+  Cancel order cost (< 5s old):        +8
+  Cancel order cost (< 10s old):       +6
+  Cancel order cost (< 300s old):      +1
+  Batch cancel cost ★ dv1_6:          Cumulative sum of individual order cancel costs
+
+  amend_order is 43% cheaper than edit_order for orders resting <5s (+4 vs +7).
+  amend_order preserves queue position (unlike cancel+resubmit).
+
+2.4 WS Operational Requirements (A-1 through A-10)
+
+A-1  Rate counter monitoring via executions channel:
+     executions subscription accepts ratecounter:true. Real-time rate counter per pair
+     included at zero additional connection cost. CIATS EWMA Monitor adds
+     rate_counter_by_pair as third monitoring signal. Assign to 0511003 and 0211001.
+
+A-2  req_id and cl_ord_id on all outbound WS messages:
+     All outbound messages carry req_id (client-specified integer). All add_order and
+     batch_add additionally carry cl_ord_id (up to 18 characters). TothBot assigns
+     cl_ord_id at dispatch time before Kraken response. Position Mirror records cl_ord_id
+     immediately at dispatch — no async gap. WS Manager maintains pending-request registry.
+     Assign to 0511001, 0511003, 0511005.
+
+A-3  Round-trip latency monitoring and WS reconciliation:
+     All WS v2 responses include time_in and time_out to nanosecond precision. Logger
+     records these fields. CIATS EWMA Monitor adds ws_roundtrip_latency_ms. executions
+     channel supports snap_orders:true on subscription — preferred over REST GetOpenOrders
+     for restart reconciliation. Assign to 0511001, 0511006, 0211001.
+
+A-4  stp_type:cancel_newest on all WS v2 add_order and batch_add calls:
+     All add_order and batch_add include stp_type:cancel_newest [WS v2 underscore format].
+     REST API uses cancel-newest [hyphen] — different protocols, different formats (A-20).
+     Self Trade Prevention prevents TothBot from inadvertently filling against its own
+     resting orders.
+
+A-5  Reconnect behavior distinction:
+     (1) Random drop: reconnect instantly, up to a handful of attempts.
+     (2) After confirmed trading engine maintenance: minimum 5-second delay.
+     Both implemented as separate paths in WS Manager. Assign to 0511001.
+
+A-6 (dv1_5)  OTO conditional orders — REJECTED:
+     OTO uses limit price not actual fill price — violates sacred R:R. Creates Position
+     Mirror race condition. batch_add on fill confirmed correct. See AR-008.
+
+A-7 (dv1_6) ★  WS Ping / Keepalive Strategy:
+     Kraken WS server disconnects after ~60 seconds of inactivity. Cloudflare idle
+     timeout ~100 seconds. WS Manager MUST send {"method":"ping"} on each active
+     connection every 30 seconds. Expects {"method":"pong"} within 10 seconds. No pong
+     within 10 seconds = dead connection. Reconnect immediately. Application-level ping,
+     distinct from TCP keepalive. Assign to 0511001, 1011002.
+
+A-8 (dv1_6) ★  Zombie Connection Detection:
+     A WS connection can appear alive (ping/pong passing) while delivering no real market
+     data. WS Manager MUST track last_real_data_time per connection using time.monotonic().
+     Only actual market data events reset this timestamp — heartbeat messages alone do NOT.
+     If elapsed > 90 seconds: log ZOMBIE_CONNECTION_DETECTED, alert operator, reconnect.
+     Assign to 0511001, 1011002.
+
+A-9 (dv1_6) ★  Balances Channel Sequence Gap Detection:
+     Every balances channel message carries a sequence integer. WS Manager MUST track
+     last-seen sequence. Any gap (skip > 1) indicates a missed ledger event. On gap:
+     alert immediately, trigger REST GetAccountBalance reconciliation. Missed balance
+     events cause incorrect available capital calculation — direct loss risk.
+     Assign to 0511001, 1011002.
+
+A-10 (dv1_7) ★  Executions Channel Sequence Gap Detection:
+     Every executions channel message carries a sequence integer. WS Manager MUST track
+     last-seen sequence independently of balances. Any gap (skip > 1) indicates missed
+     order/fill events. On gap: alert immediately, trigger REST GetOpenOrders reconciliation
+     to restore Position Mirror accuracy. Missed execution events mean TothBot does not know
+     a position is open or closed — direct loss risk. Higher severity than A-9 (balances):
+     a missed fill leaves Position Mirror in stale state; the next pipeline evaluation
+     operates on incorrect position data. Sequence tracking resets on each new subscription
+     (reconnect). Do not gap-detect across sessions.
+     Assign to 0511001, 1011002.
+
+A-11 (dv1_8) ★  Executions Channel: cancel_reason Deprecated — Use reason Field:
+     The cancel_reason field in executions channel events is DEPRECATED since WS v2.0.0
+     (December 2023). All code parsing cancellation events MUST read msg["reason"], not
+     msg["cancel_reason"]. cancel_reason returns None on all modern messages. Silent
+     reason loss corrupts CIATS EWMA rejection_rate_by_regime monitoring accuracy.
+     Assign to 1011002 WM-EXE-002 through WM-EXE-004.
+
+A-12 (dv1_8) ★  Executions Channel: Complete exec_type Enum Handling Required:
+     WS Manager MUST handle all exec_type values: pending_new, new, trade, filled,
+     iceberg_refill, canceled, expired, amended, restated, status. Using a partial
+     dispatch table causes unknown exec_type events to silently fall through. Use
+     handle_exec_unknown for unrecognized values — log full payload, never silently ignore.
+     TothBot primary events: trade (trigger batch_add), filled, expired (log GTD expiry),
+     canceled (log with reason). amended and restated: log only, no Position Mirror change.
+     Assign to 1011002 WM-EXE-005 through WM-EXE-007.
+
+A-13 (dv1_8) ★  Executions Channel: restated exec_type Must Not Trigger Position Change:
+     restated fires when Kraken's matching engine amends an order for maintenance purposes.
+     It is NOT a fill, NOT a cancel, NOT a user action. On restated: (1) log with reason
+     field, (2) alert operator (informational), (3) do NOT update Position Mirror, (4) if
+     the restated order is a resting TP or emergSL, escalate to HIGH severity alert and
+     queue a reconciliation check on the next pipeline cycle. The restated event on a
+     resting crash-protection order indicates Kraken modified our stop — must be visible.
+     Assign to 1011002 WM-EXE-008 through WM-EXE-010.
+
+A-14 (dv1_8) ★  Spot REST Authentication: Confirmed Unchanged — PL-014 RESOLVED:
+     The October 1, 2025 authentication breaking change applied to Futures REST ONLY.
+     Kraken Spot REST authentication is UNCHANGED: HMAC-SHA512 of (URI path + SHA256
+     (nonce + POST data)) using base64-decoded secret. No code changes required.
+     PL-014 is fully resolved. No Bill verification action required.
+     Assign to 0411001 WS-AUTH-001 through WS-AUTH-003.
+
+A-15 (dv1_9) ★  Executions Channel: order_status:true MANDATORY — GAP-A CRITICAL FIX:
+     Without order_status:true in the executions subscription, the channel only delivers:
+     new, filled, canceled, expired. The exec_types amended and restated are SILENTLY DROPPED.
+     This means: (1) A-13 restated protection for crash-protection orders is completely non-
+     functional without this flag — the restated event never arrives. (2) A-12 dispatch table
+     handles 10 exec_types but receives only 4. The subscription is already specified correctly
+     (WS-EXE-001 in 0411001) but this architectural consequence must be explicitly documented.
+     Assign to 0411001 WS-OSTA-001 through WS-OSTA-003, 1011002 WM-EXE-011/-012.
+
+A-16 (dv1_9) ★  OHLC Channel: interval_begin Replaces Deprecated timestamp — GAP-B:
+     The Kraken WS v2 OHLC channel deprecated the timestamp field. Subscription ACK warns:
+     "timestamp is deprecated, use interval_begin". TothBot MUST parse interval_begin
+     (RFC3339 nanosecond string) as the candle start time, not timestamp.
+     Assign to 0411001 WS-OHLC-002 through -005, 1011002 WM-OHLC-001 through -003.
+
+A-17 (dv1_9) ★  Instrument Channel: price_increment / qty_min / cost_min — GAP-C/D:
+     (GAP-C) The instrument channel deprecated tick_size. Use price_increment exclusively.
+     Subscription ACK warns: "tick_size is deprecated, use price_increment".
+     (GAP-D) The instrument channel provides qty_min (minimum order quantity) and cost_min
+     (minimum order cost = price × qty). Gate 8 Position Sizer MUST validate both before
+     submitting any add_order. Violation causes immediate order rejection.
+     Assign to 0411001 WS-INST-001 through -007, 1011002 WM-INST-001 through -005.
+
+A-18 (dv1_9) ★  WebSocket Library max_size = 10MB — GAP-E:
+     Python websockets library default max_size = 1MB. The Kraken instrument channel
+     snapshot for 500+ pairs can exceed 1MB, causing PayloadTooBig and silent disconnect.
+     All WS connect() calls MUST set max_size=10*1024*1024 (10MB) and open_timeout=10.
+     Assign to 0411001 WS-LIB-001 through -003, 1011002 WM-LIB-001 through -003.
+
+A-19 (dv1_9) ★  maxratecount from Executions ACK is Operative Rate Threshold — IMP-11:
+     The executions subscription ACK returns maxratecount — the actual operative rate
+     counter ceiling for this user tier. TothBot MUST extract and use maxratecount as the
+     operative threshold for all rate counter monitoring, not the hardcoded value 125.
+     If tier changes, maxratecount automatically updates on next reconnect.
+     Assign to 0411001 WS-RL-003, WS-EXEC-001a, 1011002 WM-RATE-001 through -003.
+
+A-20 (dv1_10) ★  stp_type Format CORRECTION — WS v2 Uses Underscore, Not Hyphen:
+     Official Kraken WS v2 documentation and batch_add examples use underscore format:
+       cancel_newest, cancel_oldest, cancel_both
+     REST API uses hyphen format: cancel-newest, cancel-oldest, cancel-both.
+     These are DIFFERENT protocols with DIFFERENT formats. All WS v2 outbound messages
+     (add_order, batch_add) MUST use the underscore format. Using the hyphen format in
+     WS v2 will cause order rejection or silent failure. This was an error in all
+     prior dv1_9 and earlier specifications. Corrected here as AR-032.
+     Assign to 0411001 WS-STP-001 through -003, 1011002 WM-STP-001 through -003.
+
+A-21 (dv1_10) ★  deadline Parameter on All WS v2 Order Submissions:
+     Both add_order and batch_add support a deadline parameter: an ISO 8601 UTC
+     timestamp string. The engine rejects any order arriving after this time.
+     Valid range: 500ms to 60 seconds from current time. Default: 5 seconds.
+     TothBot standard: deadline = current UTC time + 5 seconds.
+     Provides protection against stale order placement due to network delay or
+     event loop pauses. Without deadline, a delayed add_order could place an entry
+     at a price that has already moved adversely.
+     CRITICAL: deadline also applies to batch_add. A delayed batch_add with incorrect
+     TP/emergSL prices due to fill price slippage is prevented by deadline enforcement.
+     Generate: deadline = (datetime.utcnow() + timedelta(seconds=5)).strftime(
+         '%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+     Assign to 0411001 WS-DL-001 through -004, 1011002 WM-DL-001 through -004.
+
+A-22 (dv1_10) ★  aiohttp ClientSession Timeout and Connector Configuration:
+     All REST calls use a single shared aiohttp.ClientSession with explicit timeout and
+     connector configuration. Without explicit timeout, REST calls can hang indefinitely
+     if Kraken REST servers become unresponsive. This blocks the asyncio event loop
+     for aiohttp operations and starves other tasks.
+     Required configuration:
+       timeout   = aiohttp.ClientTimeout(total=10, connect=5, sock_read=8)
+       connector = aiohttp.TCPConnector(limit=10, limit_per_host=5, force_close=False)
+       session   = aiohttp.ClientSession(timeout=timeout, connector=connector)
+     total=10: maximum 10 seconds for complete request (connect + send + read).
+     connect=5: maximum 5 seconds to establish TCP connection.
+     sock_read=8: maximum 8 seconds waiting for server response after sending.
+     force_close=False: enables HTTP keepalive — connection reused across calls.
+     Assign to 1011002 WM-REST-006 through -011, 1011001 BP-HTTP-001 through -004.
+
+A-23 (dv1_10) ★  Ticker event_trigger per Position State:
+     The ticker channel event_trigger parameter controls when updates are published.
+     event_trigger:bbo    — fires on every change to best bid or ask price.
+     event_trigger:trades — fires only when a trade occurs (matching engine event).
+     For pairs WITH open positions: use event_trigger:bbo.
+       Rationale: For long positions, the bid price is the realizable exit price.
+       bbo fires immediately when the bid drops, giving the Exit Controller maximum
+       reaction time to detect MAE threshold breach. trades-only can miss bid drops
+       that occur without a matching trade.
+     For pairs WITHOUT open positions: use event_trigger:trades.
+       Rationale: Reduces unnecessary event volume. Signal pipeline uses last price
+       not bid, so trades trigger is sufficient for scoring.
+     WS Manager adjusts per-pair event_trigger when Position Mirror changes state.
+     Implementation: re-subscribe ticker for that pair with updated event_trigger.
+     Assign to 0411001 WS-TKR-001 through -004, 1011002 WM-TKR-001 through -004.
+
+A-24 (dv1_10) ★  Regime Engine GetOHLCData Rate Limit Staggering:
+     REST public GetOHLCData is rate-limited by IP address + currency pair at 1/second.
+     Calling it for all monitored pairs simultaneously at 00:00 UTC triggers rate limits.
+     All GetOHLCData calls in the Regime Engine MUST be staggered with asyncio.sleep(1.1)
+     between each pair to stay below the rate limit ceiling.
+     Example for 50 pairs: 50 × 1.1s = 55s total. Completes well before first 5m candle
+     of the new day (~05:00 UTC for the first significant candle after the daily open).
+     On rate limit error (HTTP 429): exponential backoff, log REGIME_OHLC_RATE_LIMITED,
+     retry up to 3 times. If all fail: use stale regime (per RE-SCH-004).
+     Assign to 1011012 RE-RL-001 through -004.
+
+2.5 Data Architecture: Pre-Computation Cache (NEW dv1_5 — I-2)
+
+HOT PATH RULE: The 5-minute pipeline hot path reads cached values ONLY. No computation
+occurs during pipeline evaluation. All indicators maintained as incremental running
+calculations updated on each event trigger.
+
+IMP-06 (dv1_8) ★  aiohttp Mandatory for All REST Calls:
+     All Kraken REST calls MUST use aiohttp (async HTTP). Never use the requests library
+     inside asyncio — it blocks the event loop during the entire call duration. Create one
+     aiohttp.ClientSession at TothBot startup, reuse for all REST calls, close at shutdown.
+     Assign to 1011002 WM-REST-001 through WM-REST-005.
+
+IMP-07 (dv1_8) ★  asyncio TaskManager Pattern — Mandatory for 24/7 Operation:
+     All asyncio.create_task() calls MUST store a strong reference AND register a done
+     callback via task.add_done_callback(task_set.discard). Failure to do so causes memory
+     leaks in long-running processes: the task set grows indefinitely until OOM. All task
+     creation routed through a central create_task() helper function. Long-running tasks
+     (ping, zombie, watchdog) stored as named instance variables, cancelled and awaited
+     explicitly during reconnect cleanup.
+     Assign to 1011002 WM-TASK-001 through WM-TASK-004.
+
+IMP-08 (dv1_8) ★  systemd Watchdog Integration — Frozen Process Detection:
+     TothBot MUST run as a systemd service with WatchdogSec=120 and Type=notify. A
+     separate asyncio.Task pings systemd sd_notify every 30 seconds via WATCHDOG=1
+     message. If the event loop hangs (frozen process), the watchdog stops, systemd
+     detects no ping within 120s, and restarts TothBot. Without this, a frozen-but-alive
+     TothBot with open positions is undetected indefinitely.
+     Assign to 1011013 VPS_Deployment_Coding_Spec VD-WD-001 through VD-WD-006.
+
+IMP-16 (dv1_10) ★  aiohttp ClientSession Timeout — Required for REST Reliability:
+     All REST calls via aiohttp MUST use explicit timeout and connector configuration.
+     Without explicit timeout, a degraded Kraken REST server causes asyncio tasks to
+     hang indefinitely, blocking reconnect/gap recovery sequences.
+     ClientTimeout(total=10, connect=5, sock_read=8) applied at session creation.
+     See A-22 for full specification. Assign to 1011002 WM-REST-006 through -011.
+
+IMP-17 (dv1_10) ★  aiohttp TCPConnector for Connection Reuse:
+     TCPConnector(limit=10, limit_per_host=5, force_close=False) enables HTTP keepalive.
+     Without this, aiohttp closes the TCP connection after every REST call and re-opens
+     it on the next call. For GetWebSocketsToken (called every reconnect) and
+     GetOpenOrders (called on gap detection), connection reuse materially reduces latency.
+     See A-22 for full specification. Assign to 1011002 WM-REST-009 through -011.
+
+IMP-18 (dv1_10) ★  Ticker event_trigger:bbo for Open Position MAE Detection:
+     Pairs with open positions MUST use event_trigger:bbo on ticker subscription.
+     bbo fires immediately on any best bid/ask price change — not just on trades.
+     For long positions, bid = realizable exit price. bbo maximizes Layer 2 exit
+     detection speed. Pairs without open positions use event_trigger:trades.
+     See A-23 for full specification. Assign to 0411001, 1011002.
+
+IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
+     All GetOHLCData calls in the Regime Engine must use asyncio.sleep(1.1) between
+     pairs to stay within public REST rate limits. Without stagger, simultaneous calls
+     for 50+ pairs at 00:00 UTC hit the rate limit and corrupt regime classification
+     for all affected pairs. See A-24. Assign to 1011012 RE-RL-001 through -004.
+
+  Value                          Pre-computed by    Update Trigger                      Cache Read On
+  Regime classification          Regime Engine      Daily 00:00 UTC REST GetOHLCData    Every 5m eval (Gate 3+6)
+                                                    [CRITICAL: exclude response[-1] ★]
+  1H EMA(20) and EMA(50)         Signal Pipeline    1H candle close ohlc(60) WS event   Gate 4
+                                                    (parse interval_begin ★ A-16 dv1_9)
+  ATR(14) per pair               Signal Pipeline    Each 5m candle close (incremental)  Gate 8 + Exit Controller
+  24h liquidity per pair (USD)   Signal Pipeline    Daily ticker or daily OHLC pull     Gate 2
+  Per-pair instrument status ★   WS Manager         instrument channel events (live)    Gates 1/2 pre-filter
+
+============================================================
+3. TothBot Trading Pipeline
+============================================================
+
+The pipeline fires on every 5-minute OHLC candle close event. Synchronous and event-driven.
+8 gates. Gate 3 (Regime Pre-Filter) new in dv1_5. Per-pair status check new in dv1_6.
+
+NOTE — OHLC fires on trade events, not wall clock: If no trades occur after an interval
+border, no message sent until next trade. Liquidity Gate ($500k/day) reduces this risk.
+Same stall behavior applies to ohlc(60). TothBot must handle stalled system clock.
+Addressed in 0511002 Signal Pipeline Specification.
+
+3.1 Gate Summary
+
+  PRE-STEP: Parameter Store Snapshot Frozen (NEW dv1_5 — I-4)
+    CIATS params captured as read-only snapshot at pipeline start. Consistent throughout
+    full eval. CIATS writes applied only at inter-trade boundaries.
+
+  PRE-STEP: Pre-Computation Cache Read (NEW dv1_5 — I-2)
+    Hot path reads: regime cache | 1H EMA cache (ohlc-60) | ATR(14) running value |
+    24h liquidity | per-pair status. Zero computation on hot path.
+
+  ★ dv1_6: Per-pair Instrument Status Check
+    Skip pairs in reduce_only, work_in_progress, delisted, limit_only,
+    cancel_only, or maintenance state ★ dv1_12.
+    Only online or post_only pairs proceed into pipeline.
+    Prevents wasted rate counter. Full status list per 0411001 WS-INST-008.
+
+  Gate 1: State Machine
+    Kraken engine = maintenance or cancel_only: WAIT
+
+  Gate 2: Liquidity Gate ★
+    24h volume < $500k USD: SKIP → LIQUIDITY_REJECTED
+
+  Gate 3: Regime Pre-Filter ★ NEW dv1_5 (I-1)
+    TRENDING_NEG (any vol) or NON_DIR+ELEVATED: STOP → REGIME_BLOCKED
+    Eliminates SSS computation on all no-trade regimes.
+
+  Gate 4: 1H HTF Confirmation ★ (was Gate 3)
+    1H EMA(20) <= EMA(50) for TRENDING_POS entries: SKIP → HTF_GATE_REJECTED
+    Cache read from ohlc(60) WS subscription (NEW dv1_5).
+
+  SSS Signal Engine
+    Scores 5-min candle. Only reached if Gate 3 pre-filter passed.
+
+  Gate 5: Selection Controller (was Gate 4)
+    Signal fails any of 6 quality gates: SKIP → SELECTION_REJECTED
+
+  Gate 6: Regime Gate ★ (was Gate 5)
+    NON_DIR+NORMAL: 50% position size. All NO ENTRY cases blocked by Gate 3.
+
+  Gate 7: Risk Guard (was Gate 6)
+    Drawdown halt / concentration / exposure. Pass or HALT.
+    ★ Ticker-driven continuous drawdown monitoring between candle closes (I-7 dv1_5)
+
+  Gate 8: Position Sizer ★ (was Gate 7)
+    MAE = ATR(14) x 1.5x (incremental), emergSL = ATR(14) x 3.0x, TP = R:R formula.
+    Never blocks — only sizes.
+
+EVIDENCE BASE: 15-20% higher win rates with daily+hourly confirmation (5 independent
+sources 2024-2025). Market Cipher: accuracy drops 65% in TRENDING to 45-50% in
+NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
+
+============================================================
+4. Exit Architecture — Ground Zero Redesign for Kraken
+============================================================
+
+Rebuilt from zero for Kraken. Exit Controller owns all normal exits. Kraken off-book
+emergency SL stop order is crash protection only. OTO evaluated and rejected (AR-008).
+
+4.1 Three-Layer Summary
+
+  Layer 1a — Signal-Based Exit:
+    Signal decay / time expiry / momentum loss. WS cancel TP + market sell.
+
+  Layer 1b — TP Fill:
+    Resting TP limit on Kraken matching engine fills. EC cancels emergSL after fill confirm.
+
+  Layer 2 ★ — MAE Threshold:
+    price - entry >= ATR(14) x 1.5x.
+    SEQUENCE CRITICAL: (1) cancel TP  (2) cancel emergSL  THEN  (3) market sell.
+    CANCEL TIMEOUT FALLBACK (NEW dv1_5 — I-6):
+      req_id registry tracks each cancel ACK. On timeout: check executions channel state.
+      Confirmed cancelled: proceed. State unknown: retry once. Second timeout: ALERT +
+      hold position + alert operator. NEVER issue market sell with ambiguous order state.
+      Assign to 0511001 and 0511004.
+    MPP RISK (C-1 dv1_4): market sell may reject on wide spread. EC MUST handle MPP
+      rejection and retry. Assign to 0511004.
+
+  Layer 3 ★ — Emergency Brake:
+    VPS/TothBot/internet failure ONLY. Off-book emergSL stop order at ATR(14) x 3.0x
+    on Kraken matching engine. NEVER in normal operation.
+    MPP RISK (C-1 dv1_4): triggered market order subject to MPP on wide spread.
+    Assign to 0411001.
+
+4.2 R:R Formula
+
+  mae_pct      = ATR(14) x 1.5x / entry_fill_price  (CIATS-owned, uses ACTUAL fill price)
+  net_loss     = mae_pct + 0.16% + 0.26%            (entry maker + MAE taker exit)
+  net_gain     = net_loss x 1.5                      *** SACRED — hardcoded ***
+  gross_target = net_gain + 0.16%                    (TP maker exit)
+  emergSL_dist = ATR(14) x 3.0x / entry_fill_price  (NEVER in R:R formula)
+
+  NOTE: All calculations use actual fill price, not limit price. OTO uses limit price —
+  this is why OTO was rejected (AR-008).
+
+============================================================
+5. Regime Taxonomy
+============================================================
+
+Six-regime grid is foundation of CIATS regime-segmented analysis. Every trade tagged with
+both asset_regime and market_regime (BTC proxy). Computed daily at 00:00 UTC.
+
+5.1 Computation
+
+DATA SOURCE (NEW dv1_5 — FLAG 2 — FP/DP VERIFIED):
+  Daily candles via REST GetOHLCData called once per monitored pair at 00:00 UTC.
+  Returns 720 entries.
+
+  CRITICAL dv1_6 (GAP-03): The last entry (response[-1]) is ALWAYS the current
+  not-yet-committed candle. MUST be excluded from ALL calculations (ADX, EMA, ATR).
+  Use only response[:-1]. Including the uncommitted candle corrupts all regime indicators
+  and produces incorrect regime classification. See 1011012 Regime_Engine_Coding_Spec.
+
+  Directional state:  ADX(14) + EMA(20) vs EMA(50) on DAILY candles (response[:-1] ONLY)
+  Volatility state:   ATR(14) percentile rank in 50-day rolling window
+
+  TRENDING_POSITIVE:  ADX(14) > 25 AND EMA(20) > EMA(50)
+  TRENDING_NEGATIVE:  ADX(14) > 25 AND EMA(20) < EMA(50)
+  NON_DIRECTIONAL:    ADX(14) <= 25
+  NORMAL_VOL:         ATR percentile <= 67th
+  ELEVATED_VOL:       ATR percentile > 67th
+
+  asset_regime + market_regime (BTC/USD proxy) both tagged on every trade
+
+ALL REGIME THRESHOLDS ARE CIATS-OWNED: ADX threshold 25, ATR percentile 67th, EMA
+periods 20/50, rolling window 50 days — all starting values. CIATS validates each after
+600 closed trades (100+ per regime bucket).
+
+============================================================
+6. CIATS Architecture and Data Flows
+============================================================
+
+CIATS is fully asynchronous. Never blocks the trading critical path. Reads only from
+the Logger. Writes only to the Parameter Store. Deming PDCA governs every change.
+
+6.1 Two Data Streams
+
+  Stream 1: EWMA Monitor
+    288 candle evals/day. Valid at 50 evals (~4 hrs). lambda=0.2 [FP/DP validated dv1_6:
+    half-life=3.1 evals]. Three monitoring signals:
+      (1) rejection_rate_by_regime (F6)
+      (2) rate_counter_by_pair from executions channel (A-1)
+      (3) ws_roundtrip_latency_ms from WS response timestamps (A-3)
+    MONITORING SIGNALS ONLY — never drives parameter changes.
+
+  Stream 2: Trade Outcome Bus
+    Fires on each position close. Captures: symbol, entry/exit price, hold duration,
+    MAE reached, fees, exit reason, both regime tags, signal params at entry, actual R:R, P/L.
+
+LOGGER — ASYNC BOUNDED QUEUE (NEW dv1_5 — I-5):
+  Logger writes go to an in-memory bounded queue. Queue size: 10,000 entries
+  [FP/DP validated dv1_6: 20 positions x 10 events/candle x 50-candle buffer].
+  Separate async writer flushes to disk. Logger NEVER blocks the trading hot path.
+  Queue must be bounded with immediate alert if queue fills. Assign to 0511006.
+
+PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
+  TothBot takes frozen snapshot of all CIATS parameters at start of each pipeline eval.
+  Pipeline uses snapshot throughout. CIATS writes queued and applied only at confirmed
+  inter-trade boundaries. Prevents parameter inconsistency within single pipeline eval.
+  Assign to 0511002 and 0211001.
+
+6.2 Statistical Thresholds
+
+  50 candle evals:       EWMA Monitor valid. Monitoring only. lambda=0.2 validated.
+  200 trades HARD FLOOR: Inference valid. Proposal Engine activates. Half-Kelly activates.
+                         SE(win_rate)~3.5%, SE(Sharpe)~7.2% [FP/DP validated dv1_6].
+  600 trades:            Per-regime analysis. 100+ per bucket. MW power ~85% at alpha=0.01.
+  Rolling 200-300:       Current performance window.
+  Full corpus:           Zero-cost historical library.
+
+  Mann-Whitney alpha (dv1_6) ★:  alpha=0.01 (one-sided). 99% confidence required.
+  Spearman rho threshold (dv1_6) ★: |rho| > 0.3 AND p < 0.05 (both conditions).
+  CUSUM parameters (dv1_6) ★:    k=0.5*sigma, h=4*sigma. Starting values.
+  PDCA minimum interval (dv1_6) ★: Min 50 trades between any two parameter changes.
+
+============================================================
+7. Complete System: One CIATS-Owned Organism
+============================================================
+
+CIATS OWNS EVERYTHING EXCEPT 1:1.5 R:R: All parameters, thresholds, sizing decisions,
+halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
+
+============================================================
+8. Locked Architectural Decisions
+============================================================
+
+  AR-001: No Dead Man Switch — crash protection is resting TP + emergSL on matching engine.
+          DMS and FIX cancel-on-disconnect both REJECTED (destroy crash protection).
+  AR-002: Position Mirror — symbol-keyed dict, O(1) lookup. (NEW dv1_5 — I-3)
+  AR-003: Restart reconciliation — PREFERRED: snap_orders:true. FALLBACK: REST.
+  AR-004: Two API key pairs — DATA + TRADE. Nonce window 10,000ms.
+  AR-005: WS v2 only. All future Kraken enhancements in v2 only.
+  AR-006: Entry order — limit/post_only/GTD/cl_ord_id/stp_type:cancel_newest/deadline:now+5s.
+          ★ WS v2 uses underscore in stp_type values (cancel_newest). REST uses hyphen (cancel-newest).
+          Never confuse the two. Different protocols, different formats.
+  AR-007: TP placement — resting limit via batch_add on fill. Actual fill price for R:R.
+          batch_add includes deadline:now+5s and stp_type:cancel_newest on both legs.
+  AR-008: Emergency SL — stop-market via batch_add atomic with TP. ATR(14) x 3.0x.
+          OTO evaluated and REJECTED: uses limit price, violates R:R, Position Mirror race.
+  AR-009: Short deferred.
+  AR-010: 24/7/365. CIATS adds stand-down via PDCA if data supports.
+  AR-011: Net 1:1.5 R:R — SACRED — HARDCODED — NOT CIATS-OWNED.
+  AR-012: Fee baseline — Maker 0.16% / Taker 0.26%.
+  AR-013: Kraken Pro Intermediate tier confirmed.
+  AR-014: Logger async bounded queue (10,000 entries). Never blocks hot path. (dv1_5 I-5)
+  AR-015: WS dispatch table O(1) routing on channel+message type. (dv1_5 I-8)
+  AR-016: ATR(14) incremental running calculation. O(1) per update. (dv1_5 I-9)
+  AR-017: Daily regime via REST GetOHLCData at 00:00 UTC. CRITICAL: exclude response[-1].
+          (dv1_5 FLAG 2)
+  AR-018 (dv1_6) ★: amend_order PRIMARY. edit_order DEPRECATED.
+  AR-019 (dv1_6) ★: batch_cancel for Full Halt multi-order cancellation.
+  AR-020 (dv1_6) ★: Per-pair instrument status cache from instrument channel.
+  AR-021 (dv1_7) ★: Executions channel sequence gap detection → REST GetOpenOrders
+                    reconciliation. Missed executions = Position Mirror desync = loss risk.
+  AR-022 (dv1_8) ★: cancel_reason field deprecated — use reason field in all executions
+                    channel parsing. cancel_reason returns None silently on current messages.
+  AR-023 (dv1_8) ★: Complete exec_type dispatch table required. All 10 exec_type values
+                    handled explicitly. Unknown values logged, never silently dropped.
+  AR-024 (dv1_8) ★: restated exec_type = engine maintenance amend, NOT fill/cancel.
+                    Must not trigger Position Mirror update. Elevated alert if resting order.
+  AR-025 (dv1_8) ★: All REST calls via aiohttp (IMP-06). asyncio TaskManager pattern
+                    mandatory for 24/7 operation (IMP-07). systemd WatchdogSec=120 with
+                    30-second asyncio ping loop (IMP-08). See 1011013 VPS_Deployment_Spec.
+  AR-026 (dv1_9) ★: order_status:true MANDATORY in executions subscription. Without it
+                    amended and restated exec_types are silently dropped — A-12/A-13 blind.
+  AR-027 (dv1_9) ★: interval_begin replaces deprecated timestamp in OHLC WS v2 channel.
+  AR-028 (dv1_9) ★: price_increment replaces deprecated tick_size in instrument channel.
+                    qty_min and cost_min validated in Gate 8 before every add_order.
+  AR-029 (dv1_9) ★: WS connect max_size=10MB + open_timeout=10 on all connections.
+  AR-030 (dv1_9) ★: maxratecount from executions subscription ACK is the operative rate
+                    counter ceiling. Use it, not the hardcoded 125.
+  AR-031 (dv1_9) ★: Subscription ACK warnings[] parsed and logged on every subscribe call.
+                    QueryOrdersInfo REST endpoint for targeted single-order reconciliation.
+  AR-032 (dv1_10) ★: stp_type FORMAT CORRECTION — WS v2 uses underscores: cancel_newest,
+                    cancel_oldest, cancel_both. REST uses hyphens: cancel-newest. Never
+                    confuse the two protocols. All WS v2 add_order and batch_add MUST use
+                    cancel_newest (underscore). Assign: 0411001, 1011002.
+  AR-033 (dv1_10) ★: deadline parameter on all WS v2 add_order and batch_add.
+                    Standard: deadline = UTC now + 5 seconds (ISO 8601 string).
+                    Range 500ms–60s. Engine rejects orders arriving after this time.
+                    Provides latency protection on entry and TP/emergSL placement.
+                    Assign: 0411001 WS-DL-001–004, 1011002 WM-DL-001–004.
+  AR-034 (dv1_10) ★: Ticker event_trigger per position state:
+                    event_trigger:bbo   — pairs WITH open positions (faster adverse price
+                                          detection; for longs, bid = realizable exit price).
+                    event_trigger:trades — pairs WITHOUT open positions (less update volume).
+                    WS Manager switches trigger mode based on Position Mirror state.
+                    Assign: 0411001 WS-TKR-001–004, 1011002 WM-TKR-001–004.
+  AR-035 (dv1_10) ★: aiohttp ClientSession MUST configure explicit timeout + connector:
+                    ClientTimeout(total=10, connect=5, sock_read=8)
+                    TCPConnector(limit=10, limit_per_host=5, force_close=False)
+                    Without timeout, REST calls hang indefinitely on degraded networks.
+                    force_close=False enables connection reuse for reduced per-call overhead.
+                    Assign: 1011002 WM-REST-006–011, 1011001 BP-HTTP-001–004.
+  AR-036 (dv1_10) ★: Regime Engine REST calls MUST be staggered at 1.1s intervals.
+                    REST public OHLC rate-limit: 1 call/second per IP+pair.
+                    50 pairs × 1.1s = 55s total. Completes before first 5m candle.
+                    asyncio.sleep(1.1) between each GetOHLCData call.
+                    Assign: 1011012 RE-RL-001–004.
+  AR-037 (dv1_10) ★: Both DATA and TRADE API keys MUST be IP-whitelisted to VPS IP.
+                    Current VPS: 87.99.141.44. Update whitelist on any VPS migration.
+                    IP whitelisting is configured separately in Kraken API key settings.
+                    Assign: 1011013 VD-KEY-006–009.
+  AR-038 (dv1_12) ★: Kraken Status API used at startup for proactive maintenance detection.
+                    Public REST API at https://status.kraken.com/api/v2/. Query
+                    /scheduled-maintenances/upcoming.json on startup. If scheduled
+                    maintenance detected within 2 hours: log KRAKEN_MAINTENANCE_SCHEDULED,
+                    alert operator. Does NOT block startup — informational only.
+                    Assign: 0411001 WS-STAT-001 through -004, 1011013 VD-STAT-001.
+  AR-039 (dv1_12) ★: Per-pair instrument channel status check expanded. Complete set of
+                    NO-ENTRY states: reduce_only, work_in_progress, delisted, limit_only,
+                    cancel_only, maintenance. cancel_only and maintenance were previously
+                    missing. Both block all new order placement at the pair level.
+                    Assign: 0411001 WS-INST-008 through -011, 1011002 WM-PS-001 through -005.
+  AR-040 (dv1_12) ★: Exit Controller pair status adaptation for open positions.
+                    limit_only → IOC limit at best_bid (NOT market sell).
+                    cancel_only → HOLD + CRITICAL alert. No new orders possible.
+                    maintenance (pair level) → HOLD + CRITICAL alert.
+                    Existing resting TP + emergSL are the only protection during HOLD.
+                    Validates AR-001: resting emergSL crash protection is the correct
+                    architecture for pair-level disruption scenarios.
+                    Assign: 0411001 WS-EXIT-001 through -006, 1011002 WM-PS-003/004.
+  AR-041 (dv1_12) ★: cancel_order/batch_cancel behavioral distinction — NOT interchangeable.
+                    cancel_order: returns stream of individual responses per order (req_id
+                    trackable). Use for Layer 2 MAE exit cancel sequence (cancel timeout
+                    fallback I-6 requires per-order ACK tracking).
+                    batch_cancel: returns single count response + bypasses rate counter
+                    maximum. Use for Full Halt (count sufficient; rate bypass ensures
+                    execution even when rate limited).
+                    Assign: 0411001 WS-CAN-001 through -007, 1011002 WM-CAN-001 through -004.
+  AR-042 (dv1_12) ★: Zombie detection heartbeat exclusion. Heartbeat messages fire ONLY when
+                    no real market data is flowing — they are an indicator of zombie state,
+                    NOT connection health. last_real_data_time MUST be reset only on real
+                    channel events: ohlc, ticker, instrument, executions, balances, status.
+                    Heartbeat, pong, and ACK messages MUST NOT reset the timer.
+                    Assign: 1011002 WM-ZOM-004 through -007.
+  AR-043 (dv1_12) ★: max_concurrent position limit enforced by asyncio.BoundedSemaphore.
+                    BoundedSemaphore raises ValueError on over-release (bug detection).
+                    Gate 7 checks semaphore.locked() (non-blocking). Execution Engine
+                    acquires semaphore before dispatch. Position close triggers release.
+                    On CIATS max_concurrent update: recreate semaphore, re-acquire for
+                    all currently open positions.
+                    Assign: 1011011 RE-SEM-001 through -006.
+  AR-044 (dv1_13) ★: Startup warm-up — ATR(14) and EMA via REST GetOHLCData required
+                    before any pipeline execution. WS ohlc(5m) and ohlc(60) snapshots
+                    return only 1 candle — insufficient to seed ATR(14) or EMA(20/50).
+                    For each monitored pair at startup:
+                    (a) GetOHLCData(interval=5) — seed ATR(14). Use response[:-1].
+                        ATR seed = SMA of first 14 True Ranges. Incremental thereafter.
+                    (b) GetOHLCData(interval=60) — seed EMA(20) and EMA(50) for HTF
+                        cache. Use response[:-1]. EMA alpha=2/(n+1).
+                    (c) GetOHLCData(interval=1440) — Regime Engine. Use response[:-1].
+                    STAGGER: 1.1s between calls for the SAME pair (AR-036 applies).
+                    PARALLELISM: asyncio.gather() across DIFFERENT pairs.
+                    While ATR or EMA not seeded: pair remains in WARM_UP state.
+                    WARM_UP pairs are skipped at the pipeline pre-check (no entries).
+                    Pair transitions WARM_UP -> READY when ATR, EMA, and regime all
+                    seeded. System begins trading READY pairs immediately — does not
+                    wait for all pairs.
+                    Assign: 1011002 WM-STARTUP-001 through -008,
+                            1011014 SS-WARMUP-001 through -010.
+  AR-045 (dv1_13) ★: OHLC candle-close detection mechanism. WS OHLC fires on every
+                    trade event within the candle period, not only on candle close.
+                    WS Manager MUST track per symbol:
+                      last_interval_begin: dict[str, str]
+                      last_complete_candle: dict[str, OHLCCandle]
+                    On each ohlc(5m) message for symbol S:
+                      if msg.interval_begin == last_interval_begin[S]:
+                        Update in-progress candle. DO NOT fire pipeline.
+                      else:
+                        Candle for last_interval_begin[S] is NOW CLOSED.
+                        Fire pipeline with last_complete_candle[S].
+                        last_complete_candle[S] = current message data.
+                        last_interval_begin[S] = msg.interval_begin.
+                    Initialize last_interval_begin[S] from startup GetOHLCData(5)
+                    response[-2].interval_begin (last committed candle).
+                    Same logic for ohlc(60) with separate last_interval_begin_60.
+                    Assign: 1011002 WM-OHLC-001 through -006.
+  AR-046 (dv1_13) ★: emergSL triggers.reference MUST be explicit in all batch_add
+                    calls. Never rely on API defaults for crash-protection parameters.
+                    ALL emergSL stop-loss orders MUST include:
+                      "triggers": {
+                        "reference": "last",
+                        "price": <sl_trigger_price>,
+                        "price_type": "static"
+                      }
+                    reference="last" uses Kraken's internal last-traded price — always
+                    available regardless of external index feed status. reference="index"
+                    relies on external data providers that may be unavailable during
+                    exactly the market crashes when emergSL needs to fire.
+                    Assign: 0411001 WS-SL-001 through -003,
+                            1011002 WM-BATCHADD-003 through -004.
+  AR-047 (dv1_13) ★: Price and quantity rounding before ALL order dispatch. ALL rounding
+                    MUST use Decimal.quantize() — NEVER math.floor/ceil. Float binary
+                    representation causes precision errors (e.g. math.floor(0.3/0.1)*0.1
+                    = 0.2 not 0.3). For exchange orders: any rounding error = rejected
+                    order = failed trade = loss. Four mandatory rounding operations:
+                    (1) order_qty: Decimal.quantize(qty_increment, ROUND_DOWN).
+                        If result < qty_min OR result*price < cost_min: SKIP, log.
+                    (2) entry limit_price: Decimal.quantize(price_increment, ROUND_DOWN).
+                        Conservative: lower limit = more likely post_only fill.
+                    (3) TP limit_price: Decimal.quantize(price_increment, ROUND_UP).
+                        Conservative: higher TP = preserves net R:R at minimum.
+                    (4) emergSL trigger: Decimal.quantize(price_increment, ROUND_DOWN).
+                        Conservative: wider stop = more protective.
+                    ALL Kraken API values (prices, qtys) received via WS or REST MUST be
+                    converted to Decimal(str(value)) immediately on receipt.
+                    NEVER Decimal(float_value) — inherits float precision error.
+                    NEVER dispatch batch_add without pre-validated, pre-rounded prices.
+                    A batch_add validation failure at Kraken kills the entire batch,
+                    leaving an open position with NO TP and NO emergSL protection.
+                    Assign: 1011001 BP-DEC-001 through -008,
+                            1011002 WM-ROUND-001 through -012.
+  AR-048 (dv1_13) ★: Exit Controller MAE detection and drawdown calculation MUST use
+                    bid price (not last price) for long positions.
+                    bid = best price at which the position can be immediately sold
+                    (realizable exit value). last = most recent trade, can be stale.
+                    event_trigger:bbo was chosen specifically because bid updates fire
+                    immediately on any adversarial price move.
+                    MAE formula: current_mae = entry_fill_price - bid_price
+                    Layer 2 exit triggers when: current_mae >= ATR(14) * mae_mult
+                    Drawdown calculation:
+                      current_portfolio_USD = spot_usd_balance
+                          + sum(bid_price[sym] * position_qty[sym]
+                                for sym in position_mirror)
+                    Assign: 0411001 WS-TKR-005 through -007,
+                            1011002 WM-EC-001 through -003.
+  AR-049 (dv1_13) ★: Formal startup sequence required. TothBot MUST complete the
+                    10-step startup sequence before any pipeline evaluation. No pipeline
+                    evaluations permitted until at least one pair reaches READY state.
+                    Complete specification in 1011014 Startup_Sequence_Coding_Spec.
+                    Sequence: (1) Kraken Status API check, (2) GetWebSocketsToken,
+                    (3) Connect public WS + subscribe, (4) Process instrument snapshot,
+                    (5) Connect private WS + subscribe executions/balances,
+                    (6) snap_orders reconciliation -> Position Mirror,
+                    (7) Restore ticker subscriptions per position state,
+                    (8) REST warm-up GetOHLCData (AR-044: interval=5, 60, 1440),
+                    (9) First READY pair -> enter OPERATIONAL, (10) Continuous operation.
+                    Assign: 1011002 WM-STARTUP-001 through -012, 1011014 (full spec).
+  AR-050 (dv1_13) ★: Balances channel MUST use spot/main wallet balance only.
+                    The balances snapshot top-level "balance" field is the SUM across
+                    ALL wallet types (spot, earn, futures, flex, etc.). Earn/staking
+                    balances are NOT available for trading. Using top-level balance
+                    overstates tradeable capital and causes incorrect position sizing
+                    and drawdown calculations.
+                    Correct extraction: wallets[type="spot"][id="main"].balance
+                    On balances snapshot: iterate wallets array, filter type=="spot"
+                    AND id=="main". Store as Decimal(str(wallet.balance)).
+                    On balances update: filter wallet_type=="spot" AND wallet_id=="main".
+                    Two update events per completed trade: base currency debit + quote
+                    currency credit, both sharing the same ref_id.
+                    For portfolio tracking: process only USD event (asset=="USD").
+                    Assign: 0411001 WS-BAL-001 through -005,
+                            1011002 WM-BAL-001 through -006.
+  AR-051 (dv1_13) ★: Portfolio value definition for position SIZING:
+                    portfolio_USD = spot_usd_balance (spot/main wallet, USD only)
+                    This is REALIZED CAPITAL ONLY. Does NOT include mark-to-market
+                    value of open positions. Using MTM for sizing creates a feedback
+                    loop: rising positions inflate sizing of new positions, increasing
+                    total risk beyond intent. Cash-in-hand is the only correct basis.
+                    tradeable_USD = portfolio_USD * tradeable_pct
+                    per_trade_USD = tradeable_USD * per_trade_pct
+                    raw_qty = per_trade_USD / entry_limit_price
+                    At 200+ closed trades, CIATS activates Half-Kelly:
+                      K_full = W - ((1-W)/R)
+                      K_half = K_full * 0.5
+                      per_trade_USD = min(K_half*tradeable_USD,
+                                         tradeable_USD/max_concurrent)
+                    NOTE: Drawdown calculation uses a DIFFERENT formula (see AR-052).
+                    Sizing and drawdown are two separate computations.
+                    Assign: 1011002 WM-PS-005 through -009,
+                            1011011 RE-SZ-001 through -005.
+  AR-052 (dv1_13) ★: Portfolio drawdown formula and circuit breakers:
+                    BASELINE: portfolio_baseline_USD = spot_usd_balance captured ONCE
+                    at startup (after Step 6 snap_orders processing). NEVER updated
+                    during operation. NEVER reset on mid-session reconnect.
+                    Resets only on full TothBot process restart.
+                    CURRENT PORTFOLIO (for drawdown — includes MTM):
+                      current_portfolio_USD = spot_usd_balance
+                          + sum(bid_price[sym] * position_qty[sym]
+                                for sym in position_mirror)
+                    Uses bid price (AR-048) — realizable exit value, conservative.
+                    DRAWDOWN:
+                      drawdown_pct = max(0,
+                          (portfolio_baseline_USD - current_portfolio_USD)
+                          / portfolio_baseline_USD)
+                    max(..., 0): gains are not counted as negative drawdown.
+                    EVALUATION: on every bbo ticker event for any open-position pair
+                    AND at every Gate 7 evaluation.
+                    THRESHOLDS:
+                      session_pause_drawdown (5%): no new entries. Alert. Existing
+                        positions monitored normally. Resumes when drawdown recovers.
+                      full_halt_drawdown (10%): HALT. No new entries. Alert Bill.
+                        Does NOT auto-close positions. Bill decides.
+                    Assign: 1011002 WM-DD-001 through -008,
+                            1011011 RE-DD-001 through -006.
+  AR-053 (dv1_13) ★: Pending Order Registry — USD commitment tracking to prevent
+                    capital overcommitment when multiple pairs fire pipeline
+                    simultaneously. WS balances channel does NOT expose hold_trade
+                    (pending order USD holds). TothBot must self-track.
+                    REGISTRY: pending_orders: dict[str, Decimal]
+                              maps cl_ord_id -> estimated_USD_cost
+                    POPULATE on entry dispatch:
+                      estimated_cost = order_qty * entry_limit_price * (1 + maker_fee)
+                      pending_orders[entry_cl_ord_id] = estimated_cost
+                    CLEAR on: exec_type=filled, expired, or canceled.
+                    HOLD on: exec_type=trade (partial fill — order still open).
+                    GATE 7 USD CHECK:
+                      available_USD = spot_usd_balance - sum(pending_orders.values())
+                      if available_USD < per_trade_USD: SKIP_INSUFFICIENT_USD
+                    RECONCILIATION at startup (Step 6) and on mid-session reconnect:
+                      snap_orders "new"/"pending_new" -> populate registry.
+                      orders NOT in snap_orders -> clear from registry.
+                    Assign: 1011002 WM-POR-001 through -007,
+                            1011011 RE-SZ-005.
+  AR-054 (dv1_13) ★: Entry order partial fill + expiry/cancel creates unprotected open
+                    position. A GTD post_only entry order can receive partial fills
+                    before the GTD window expires or the order is canceled. When
+                    exec_type=="expired" OR exec_type=="canceled" AND cum_qty > 0:
+                    a REAL position exists at cum_qty units at avg_price fill price,
+                    with NO TP and NO emergSL protection. Must be handled immediately.
+                    CASE A (exec_type=="expired" AND cum_qty > 0):
+                    CASE B (exec_type=="canceled" AND cum_qty > 0):
+                      1. Clear Pending Order Registry for this cl_ord_id.
+                      2. Extract qty=Decimal(str(cum_qty)), entry=Decimal(str(avg_price)).
+                      3. Validate qty >= qty_min AND qty*entry >= cost_min.
+                         If not: dispatch market sell immediately. Log and fire CIATS.
+                      4. Recalculate TP and emergSL from actual entry price using
+                         current ATR(14) and mae_mult / emergency_sl_mult.
+                         Verify net_gain = net_loss * 1.5 (sacred R:R).
+                      5. Dispatch batch_add: TP limit + emergSL stop, using cum_qty.
+                      6. Enter Position Mirror with cum_qty and avg_price.
+                      7. Log ENTRY_PARTIAL_FILL_PROTECTED.
+                    CASE C (exec_type=="expired" OR "canceled" AND cum_qty == 0):
+                      No fill. Clear registry. Log. No position opened.
+                    CASE D (exec_type=="filled"): Unchanged. No partial fill concern.
+                    Assign: 1011002 WM-DISP-020 through -028.
+  AR-055 (dv1_13) ★: Dead Man's Switch (cancel_all_orders_after) is EXPLICITLY
+                    PROHIBITED in TothBot V2. No call to this endpoint under any
+                    circumstance. RATIONALE: DMS cancels ALL account orders when timer
+                    expires — including emergSL orders protecting open positions (Layer 3
+                    crash protection). DMS would destroy the only Kraken-side protection
+                    for open positions during the exact scenario (VPS crash, network
+                    severance) that emergSL is designed to protect against.
+                    PROTECTION IS FULLY PROVIDED WITHOUT DMS:
+                      Entry orders: GTD self-expiry in 30-60 seconds.
+                      Open positions: emergSL resting on Kraken matching engine.
+                      Process crash: systemd WatchdogSec=120 restarts TothBot.
+                      Network breakdown: emergSL survives on Kraken regardless.
+                    HARD RULE: Code review MUST reject any PR containing a call to
+                    cancel_all_orders_after (WS v2 or REST endpoint).
+                    Assign: HR-DMS-001 in 0411001 and 1011002.
+  AR-056 (dv1_13) ★: Mid-session WS reconnect sequence is DISTINCT from startup and
+                    MUST be implemented separately. 11-step sequence. Key distinctions:
+                    portfolio_baseline_USD: NEVER reset on reconnect.
+                    drawdown_pct: PRESERVED across reconnect.
+                    system_state (halt/pause): PRESERVED across reconnect.
+                    ATR/EMA caches: PRESERVED unless gap > 15 minutes (stale threshold).
+                    Position Mirror: reconciled via snap_orders comparison.
+                    Positions closed during gap (TP/emergSL fired while disconnected):
+                      detected by comparing pre-disconnect Position Mirror vs snap_orders.
+                      CIATS Trade Outcome Bus fired for each gap-closed position.
+                    Pending Order Registry: reconciled against snap_orders.
+                    Pipeline evaluations: PROHIBITED during reconnect. Candle events
+                      queued during reconnect are DISCARDED after completion.
+                    Fatal reconnect: 10 attempts over 120 seconds -> log CRITICAL ->
+                      systemd restart -> full startup sequence.
+                    Complete specification in 1011014 Section 2.
+                    Assign: 1011002 WM-RECONNECT-001 through -015,
+                            1011014 SS-RECON-001 through -016.
+  AR-057 (dv1_14) ★: amended exec_type MUST be in dispatch table. The complete Kraken
+                    executions channel exec_type list is 10 values: pending_new, new,
+                    trade, filled, iceberg_refill, canceled, expired, amended, restated,
+                    status. amended was missing from prior dispatch table (AR-023).
+                    amended = user-initiated order amend (e.g. limit price change).
+                    TothBot V1 never sends amend_order for its own orders. Any amended
+                    exec_type event is unexpected and must be treated as a system
+                    integrity alert: log UNEXPECTED_ORDER_AMENDED (CRITICAL level),
+                    alert operator HIGH, cross-reference Position Mirror to determine if
+                    TP or emergSL was amended (sacred R:R violation risk).
+                    Do NOT auto-correct — operator must review and decide.
+                    Assign: 0411001 WS-AMEND-001 through -003,
+                            1011002 WM-DISP-024 through -026.
+  AR-058 (dv1_14) ★: websockets library max_queue=None REQUIRED on all connections.
+                    Default max_queue=16 is insufficient for burst market data events
+                    (startup instrument snapshot for 200+ pairs, rapid bbo ticker events
+                    on multiple open positions, post-reconnect snapshots). Messages can
+                    be silently dropped or backed up when queue is exceeded.
+                    Set max_queue=None (unlimited) on all four websockets connections
+                    (public WS, private WS, and their reconnect variants). Memory impact
+                    is negligible. A dropped executions message = Position Mirror desync
+                    = loss risk. Non-negotiable for 24/7 operation.
+                    Assign: 1011002 WM-CONN-001 through -003.
+  AR-059 (dv1_14) ★: Disable websockets library ping, use application JSON ping only.
+                    Set ping_interval=None on all websockets.asyncio.client.connect()
+                    calls to disable the library's built-in TCP-level PING frames.
+                    TothBot's sole keepalive mechanism is the application-level JSON
+                    ping: {"method":"ping"} every 30 seconds (A-7), with pong expected
+                    within 10 seconds. Running two concurrent ping mechanisms creates
+                    duplicate activity and confusion. The JSON ping is fully visible to
+                    TothBot application code; the library PING is transparent and
+                    invisible. Single authoritative keepalive mechanism with full
+                    visibility is the correct architecture.
+                    Assign: 1011002 WM-CONN-004 through -006.
+  AR-060 (dv1_14) ★: All websockets connections MUST use the new stable asyncio API.
+                    REQUIRED import: from websockets.asyncio.client import connect
+                    DEPRECATED (DO NOT USE): import websockets; websockets.connect()
+                    The legacy API is deprecated in websockets v14+ and will be removed
+                    in a future release. Using it is a ticking time bomb for a 24/7
+                    trading system — a library version update would silently break all
+                    WS connections. Applies to: startup (1011014 SS-STARTUP-006,
+                    SS-STARTUP-013), reconnect (1011014 SS-RECON-006), all WS connections.
+                    Assign: 1011002 WM-CONN-007, 1011014 SS-PRE-006.
+  AR-061 (dv1_14) ★: Capture last_qty and last_price fields from executions trade events.
+                    Kraken added last_qty (quantity of this specific fill) and last_price
+                    (price of this specific fill) to exec_type=trade events. These are
+                    fill-level fields, distinct from cumulative cum_qty and avg_price.
+                    Position Mirror and sizing continue to use cum_qty and avg_price.
+                    last_qty and last_price are captured for fill-level logging and CIATS
+                    execution quality analytics (entry slippage monitoring).
+                    All values: Decimal(str()) immediately on receipt per AR-047.
+                    Assign: 0411001 WS-EXE-020 through -022,
+                            1011002 WM-EXE-014 through -016.
+  AR-062 (dv1_14) ★: Exit Controller Layer 1a — three triggers now specified.
+                    Three Layer 1a exit triggers are derivable before SSS (OI-001):
+                    EC-L1A-001 (HTF Regime Reversal): 1H EMA(20) crosses below EMA(50)
+                      while long open. Gate 4 symmetry. Check on every ohlc(60) close.
+                      Exit sequence: cancel TP → cancel emergSL → market sell.
+                    EC-L1A-002 (Daily Regime Downgrade): At 00:00 UTC regime refresh,
+                      pair reclassified TRENDING_POS → TRENDING_NEG or NON_DIR+ELEVATED.
+                      Gate 3 symmetry. Check immediately after regime computation.
+                      Exit sequence: cancel TP → cancel emergSL → market sell.
+                    EC-L1A-003 (Max Hold Time): max_hold_candles parameter. TBD value
+                      pending OI-001 SSS specification. CIATS-owned starting value.
+                    Both EC-L1A-001 and EC-L1A-002 use cancel timeout fallback (I-6).
+                    Assign: 1011005 EC-L1A-001 through -012.
+  AR-063 (dv1_14) ★: Logger MUST use queue.Queue (stdlib), not asyncio.Queue.
+                    CORRECT PATTERN:
+                      log_queue = queue.Queue(maxsize=10000)
+                      queue_handler = logging.handlers.QueueHandler(log_queue)
+                      log_listener = logging.handlers.QueueListener(log_queue, file_handler)
+                      log_listener.start()  # Runs in its own thread
+                    NOT asyncio.Queue: QueueListener runs in a separate non-asyncio
+                    thread and is not compatible with asyncio.Queue. An asyncio coroutine
+                    writer would compete with the event loop for scheduling.
+                    On queue.Full: log to stderr, alert HIGH, skip record — NEVER block.
+                    Stop listener on shutdown: log_listener.stop() drains and joins.
+                    Assign: 1011007 LG-QUEUE-001 through -008.
+  AR-064 (dv1_14) ★: Log connection_id from Kraken status channel on every WS connection.
+                    Status channel provides connection_id (uint64) per WS session — a
+                    unique Kraken-side identifier. Log on every new connection. Include
+                    in all reconnect, disconnect, and gap log entries. Useful for Kraken
+                    support requests and debugging. Zero additional cost — already in
+                    status channel message data.
+                    Assign: 0411001 WS-STAT-005 through -006,
+                            1011002 WM-STATUS-001.
+  AR-065 (dv1_14) ★: CIATS Kelly formula inputs MUST use net P/L from Trade Outcome Bus.
+                    Kelly K_full = W - ((1-W)/R).
+                    W = count(trades where net_gain_usd > 0) / total_trades.
+                    R = mean(net_gain_usd for wins) / mean(|net_loss_usd| for losses).
+                    Both W and R computed from Trade Outcome Bus realized net P/L data
+                    (all fees included — entry maker + exit taker). NOT gross price change.
+                    NOT theoretical R:R targets. For TothBot with 0.42% round-trip fees,
+                    gross vs net R:R diverges meaningfully. Inflated Kelly from gross
+                    inputs = oversized positions = excess loss on losers.
+                    Negative K_full: log CRITICAL, alert operator, do not update params.
+                    Assign: 1011010 CIATS-KE-006 through -009.
+  AR-066 (dv1_14) ★: TP order partial fill requires Position Mirror update + emergSL amendment.
+                    When exec_type=trade arrives for a TP order (identified by order_id
+                    matching TP order_id in Position Mirror):
+                      remaining_qty = tp_order_qty - cum_qty
+                      Update Position Mirror qty to remaining_qty
+                      Amend emergSL to remaining_qty via amend_order (NOT cancel+resubmit)
+                      Rate counter: amend_order (+2) saves 7 units vs cancel+resubmit (+9)
+                      amend_order also preserves queue position in Kraken book
+                    If remaining_qty < qty_min OR remaining_qty * bid < cost_min:
+                      cancel emergSL, immediate market sell of remainder, clear Mirror
+                    CIATS Trade Outcome Bus: fire ONCE on full position close (aggregate
+                      all partial fill data). Not on each partial fill event.
+                    On exec_type=filled (full TP fill): existing L1b logic unchanged.
+                    Assign: 0411001 WS-TP-001 through -005,
+                            1011002 WM-EC-004 through -008,
+                            1011005 EC-TP-001 through -006.
+  AR-067 (dv1_15) ★: SSS Signal Engine — three-factor momentum scoring on 5-minute candles.
+                    SSS is the signal engine that runs after Gate 4. It runs ONLY when the
+                    pair is in a tradeable regime (Gate 3 passed) with 1H EMA aligned (Gate 4 passed).
+                    SSS PASS = ALL THREE conditions true simultaneously:
+                      SC-SSS-1: RSI(14) on 5-min > rsi_entry_low (50) AND < rsi_entry_high (70)
+                                RSI > 50 = bullish momentum confirmed. RSI < 70 = not overbought.
+                      SC-SSS-2: EMA(9) on 5-min > EMA(21) on 5-min
+                                Short-term EMA alignment on entry timeframe within confirmed
+                                higher-timeframe trend. Validated by 8+ independent sources.
+                      SC-SSS-3: current_candle_volume > volume_MA(20) × volume_sss_threshold (1.0x)
+                                Above-average volume confirms genuine participant interest.
+                    All three thresholds are CIATS-owned starting values. All will be replaced
+                    by data. CIATS evaluates after 200 trades.
+                    SSS output: signal_params dict logged to Trade Outcome Bus:
+                      {rsi_14, ema_9, ema_21, volume_ratio, sss_pass}
+                    Evidence base: 8+ independent sources 2024-2026 confirm RSI(50-70) +
+                    EMA crossover + volume as validated 5-minute momentum entry pattern.
+                    Validated by TB00020 Search 1 (10 sources).
+                    OI-001: CLOSED.
+                    Assign: 0711001 SSS-001 through -012, 1011003 SP-SSS-001 through -010.
+  AR-068 (dv1_15) ★: SSS indicator seeding at startup — extension of AR-044.
+                    GetOHLCData(interval=5) already called per AR-044. The same response[:-1]
+                    seeds ALL five per-pair indicators (no additional REST calls required):
+                      ATR(14): first 14 True Ranges → SMA seed. Incremental thereafter.
+                      RSI(14): first 14 closes → RS=avg_gain/avg_loss. EMA-smoothed thereafter.
+                      EMA(9):  first 9 closes → SMA seed. alpha=2/10 thereafter.
+                      EMA(21): first 21 closes → SMA seed. alpha=2/22 thereafter.
+                      Volume MA(20): first 20 volumes → SMA seed. Rolling SMA thereafter.
+                    WARM_UP → READY transition requires ALL FIVE indicators seeded, not just ATR.
+                    GetOHLCData(interval=5) returns 700+ candles — adequate to seed all five.
+                    Assign: 1011002 WM-STARTUP-009 through -014, 1011014 SS-WARMUP-011 through -016.
+  AR-069 (dv1_15) ★: Entry limit price formula — OI-004 CLOSED.
+                    entry_limit_price_raw = last_complete_candle[symbol].close
+                      (the 5-minute ohlc close that triggered the pipeline — already in hot path)
+                    entry_limit_price = entry_limit_price_raw.quantize(price_increment, ROUND_DOWN)
+                    per AR-047 (conservative: lower limit → more likely post_only fill).
+                    In a TRENDING_POS pair with confirmed momentum, candle close ≤ current ask
+                    in a moving market. post_only guarantees maker fill if order reaches book.
+                    GTD 30-60s handles non-fills. No new WS subscriptions required.
+                    CIATS tracks rejection_rate_by_regime (EWMA Monitor signal 1) and optimizes.
+                    OI-004: CLOSED.
+                    Assign: 0811004 ELP-001 through -006, 0411001 WS-ENTRY-001 through -004,
+                            1011002 WM-ENTRY-001 through -004.
+  AR-070 (dv1_15) ★: Asset selection universe — OI-002 CLOSED.
+                    Monitored pair set = Kraken spot pairs satisfying ALL conditions:
+                      (1) Quote currency: USD or USDC
+                      (2) Instrument status = online (from instrument channel cache)
+                      (3) 24h volume >= min_volume_usd_daily ($500k starting, CIATS-owned)
+                    Starting monitored universe size: top 50 by 24h USD volume (CIATS-owned).
+                    Universe populated at startup from instrument channel snapshot.
+                    Updated when instrument channel fires status changes.
+                    BTC/USD always included regardless of ranking (see AR-074).
+                    CIATS may add/remove pairs via PDCA after 200 trades.
+                    OI-002: CLOSED.
+                    Assign: 0711003 AS-001 through -008, 1011009 SC-UNI-001 through -006.
+  AR-071 (dv1_15) ★: EC-L1A-003 max_hold_candles starting value — OI-003 CLOSED.
+                    max_hold_candles = 24 (2 hours at 5-minute cadence). CIATS-owned starting value.
+                    FP/DP derivation: 5-minute momentum trades in confirmed TRENDING_POS regimes
+                    resolve within 6-24 candles per research validation (TB00020 Search 3, 10 sources).
+                    EC-L1A-001 (1H EMA reversal) and EC-L1A-002 (daily regime) catch higher-timeframe
+                    failure. max_hold_candles is the backstop for stalled positions where neither fires.
+                    Counter: maintained per open position in WS Manager state. Increments on each
+                    ohlc(5m) close for that symbol. Exit sequence: same as EC-L1A-001.
+                    exit_reason = TIME_EXPIRY.
+                    OI-003: CLOSED (EC-L1A-003 now fully specified).
+                    Assign: 1011005 EC-L1A-010 updated (value = 24, no longer TBD).
+  AR-072 (dv1_15) ★: Selection Controller — all 6 quality gates specified — OI-005 CLOSED.
+                    Gate 5 receives SSS PASS and applies all 6 gates in sequence:
+                    SC-GATE-1: SSS PASS (all three SSS conditions true). Reject: SSS_SIGNAL_FAIL.
+                    SC-GATE-2: abs(candle_close - candle_open) > ATR(14) × body_threshold (0.3 start).
+                               Momentum candle must have directional commitment — not a doji.
+                               CIATS-owned. Reject: WEAK_CANDLE_BODY.
+                    SC-GATE-3: symbol NOT in position_mirror.
+                               No pyramiding. One position per pair. Reject: POSITION_ALREADY_OPEN.
+                    SC-GATE-4: symbol NOT in exit_cooldown_log OR elapsed >= cooldown_seconds (300s).
+                               Post-exit cooldown prevents immediate re-entry on a stopped-out pair.
+                               CIATS-owned. Reject: PAIR_IN_COOLDOWN.
+                    SC-GATE-5: quantized_qty >= qty_min AND quantized_qty × entry_limit_price >= cost_min.
+                               Pre-validates position size meets Kraken minimums before dispatch.
+                               Reject: POSITION_TOO_SMALL.
+                    SC-GATE-6: consecutive_loss_count[symbol] < consecutive_loss_limit (3 starting).
+                               3 consecutive losses on one pair → block new entries. Surface the problem.
+                               CIATS-owned. Resets on win or CIATS instruction. Reject: CONSECUTIVE_LOSSES_EXCEEDED.
+                    All gates: FAIL = SKIP pair + log reject code + CIATS EWMA monitors.
+                    OI-005: CLOSED.
+                    Assign: 0811002 SC-001 through -024, 1011009 SC-GATE-001 through -018.
+  AR-073 (dv1_15) ★: Selection Controller state management — WS Manager in-memory state.
+                    WS Manager maintains two per-symbol dicts:
+                      exit_cooldown_log: dict[str, float]  — symbol → time.monotonic() of last exit
+                      consecutive_loss_count: dict[str, int] — symbol → consecutive losses without win
+                    Update on position close:
+                      Always: exit_cooldown_log[symbol] = time.monotonic()
+                      If loss exit (MAE_THRESHOLD_BREACH, TIME_EXPIRY, HTF_REGIME_REVERSAL,
+                        DAILY_REGIME_DOWNGRADE, SIGNAL_DECAY): consecutive_loss_count[symbol] += 1
+                      If TP_FILL (win): consecutive_loss_count[symbol] = 0
+                    Both dicts PRESERVED across reconnect (in-memory, never discarded on reconnect).
+                    CIATS may reset consecutive_loss_count[symbol] via PDCA parameter update.
+                    Assign: 1011002 WM-SC-001 through -006.
+  AR-074 (dv1_15) ★: BTC/USD always in monitored universe — market_regime proxy commitment.
+                    BTC/USD is the market_regime proxy. Every trade record carries market_regime
+                    (BTC/USD regime tag). BTC/USD MUST always be subscribed to and included in
+                    the Regime Engine computation regardless of universe size N or ranking.
+                    If BTC/USD is excluded by any filter, it is added back explicitly.
+                    BTC/USD is NOT traded if it fails entry gates — it is subscribed for regime
+                    computation only. Its pipeline evaluation is optional (CIATS-owned).
+                    Assign: 1011012 RE-MKT-001 through -003.
+  AR-075 (dv1_15) ★: SSS indicators in per-symbol state dict — pre-computation cache addition.
+                    WS Manager per-symbol state dict is extended to include all SSS indicators.
+                    These are updated incrementally on each ohlc(5m) candle close (same pattern
+                    as ATR(14) incremental per AR-016):
+                      rsi_14_avg_gain: Decimal  (running RSI state)
+                      rsi_14_avg_loss: Decimal
+                      ema_9: Decimal
+                      ema_21: Decimal
+                      volume_ma_20: Decimal  (running SMA of 20-candle volume)
+                    SSS threshold params (rsi_entry_low, rsi_entry_high, volume_sss_threshold)
+                    are read from the Parameter Store snapshot at pipeline evaluation time (I-4).
+                    Pre-computation cache (I-2) is extended: regime | 1H EMA | ATR(14) |
+                    SSS state (rsi_14, ema_9, ema_21, volume_ma_20) | 24h liquidity | per-pair status.
+                    Assign: 1011002 WM-SSS-001 through -008.
+  AR-076 (dv1_16) ★: RSI(14) uses Wilder's SMMA — NOT standard EMA. Specification correction
+                    to AR-068 which stated "EMA-smoothed" — that phrase is ambiguous and points
+                    to the wrong algorithm. The correct RSI(14) incremental formula is
+                    Wilder's Smoothed Moving Average (SMMA, also called RMA), with α=1/14.
+                    This is distinct from standard EMA which uses α=2/(n+1)=2/15.
+                    The two produce materially different RSI values (~5-8% variance).
+                    A coder reading "EMA-smoothed" would likely implement α=2/15, producing
+                    non-standard RSI that does not match any trading platform and would
+                    systematically mis-fire the SSS SC-SSS-1 gate (RSI 50-70 condition).
+
+                    CORRECT RSI(14) INCREMENTAL FORMULA (Wilder's SMMA):
+                      Seed (first 14 candles):
+                        avg_gain = sum(gains[:14]) / Decimal("14")
+                        avg_loss = sum(losses[:14]) / Decimal("14")
+                      Incremental (each subsequent candle):
+                        avg_gain = (prev_avg_gain * Decimal("13") + current_gain) / Decimal("14")
+                        avg_loss = (prev_avg_loss * Decimal("13") + current_loss) / Decimal("14")
+                      RS  = avg_gain / avg_loss
+                      RSI = Decimal("100") - (Decimal("100") / (Decimal("1") + RS))
+
+                    For contrast — standard EMA (WRONG for RSI):
+                      alpha = 2/(n+1) = 2/15 ≈ 0.1333  ← DO NOT USE FOR RSI
+                      avg_gain = prev_avg_gain * (1 - alpha) + current_gain * alpha
+
+                    STANDARD EMA IS CORRECT for EMA(9) and EMA(21) in SSS Gate 2:
+                      EMA(9):  alpha = 2/10 = 0.2000  ← standard EMA, correct
+                      EMA(21): alpha = 2/22 = 0.0909  ← standard EMA, correct
+                    Only RSI uses Wilder's SMMA. EMA(9) and EMA(21) use standard EMA.
+                    Do not conflate the two algorithms.
+
+                    STATE STORED (unchanged from AR-075 — formula clarified only):
+                      rsi_14_avg_gain: Decimal  (Wilder SMMA running state)
+                      rsi_14_avg_loss: Decimal  (Wilder SMMA running state)
+
+                    EVIDENCE BASE: 10+ independent sources across validation search
+                    (TradingView rma(), StockCharts.com, Supra Oracle docs, Wikipedia,
+                    LuxAlgo, AlphaRithms, Quantinsti, PineScriptMarket, Medium) all confirm
+                    Wilder's SMMA (α=1/n) as the correct RSI formula. A 14-period SMMA is
+                    equivalent to a 27-period standard EMA (2×14-1=27), not a 15-period EMA.
+                    Validated TB00021, Search 4 and Search 10, 10+ sources.
+                    Assign: 1011002 WM-SSS-001 through -008 (RSI formula corrected),
+                            0711001 SSS-001 through -012 (RSI formula corrected).
+
+============================================================
+9. Complete CIATS Parameter Registry
+============================================================
+
+ALL PARAMETERS ARE CIATS-OWNED STARTING VALUES.
+
+  tradeable_pct:           50% of portfolio
+  per_trade_pct:           5% → Half-Kelly at 200 trades (update every 50 thereafter)
+                           ★ Applied_pct = min(raw_kelly_half, tradeable_pct/max_concurrent)
+                             Prevents capital overcommitment across concurrent positions.
+                             See 1011010 CIATS-KE-002 through CIATS-KE-005.
+  max_concurrent:          20 positions
+  mae_mult (ATR x):        1.5x ATR(14)
+  emergency_sl_mult:       3.0x ATR(14)
+  entry_timeout_sec:       30-60s GTD
+  full_halt_drawdown:      10% of portfolio
+  session_pause_drawdown:  5% of portfolio
+  adx_threshold:           25
+  atr_percentile_threshold: 67th
+  htf_ema_periods:         20/50 daily
+  min_volume_usd_daily:    $500k USD
+  monitored_universe_n:    50 pairs (top N by 24h USD volume)
+  1:1.5 R:R net:           HARDCODED — SACRED — NOT CIATS-OWNED
+
+  SSS Signal Engine parameters (★ dv1_15 — AR-067):
+  rsi_entry_low:           50 (RSI lower bound for SSS Gate 1)
+  rsi_entry_high:          70 (RSI upper bound for SSS Gate 1)
+  sss_ema_short:           9  (EMA short period for SSS Gate 2)
+  sss_ema_long:            21 (EMA long period for SSS Gate 2)
+  volume_sss_threshold:    1.0x (volume vs MA(20) for SSS Gate 3)
+
+  Selection Controller parameters (★ dv1_15 — AR-072):
+  sc_body_threshold:       0.3 (candle body vs ATR for SC Gate 2)
+  sc_cooldown_seconds:     300 (post-exit cooldown for SC Gate 4 = 1 candle)
+  sc_consecutive_limit:    3   (consecutive loss limit for SC Gate 6)
+
+  Exit Controller parameters (★ dv1_15 — AR-071):
+  max_hold_candles:        24  (maximum hold time = 2 hours, EC-L1A-003)
+
+============================================================
+10. Six FP/DP Validated System Improvements
+============================================================
+
+Derived from 80+ sources across 3 independent research passes plus 2 deep validation
+sessions (144+ sources) plus 10-search Kraken validation [dv1_6] (126 sources).
+5+ sources per parameter.
+
+Finding 1: 1H HTF Confirmation Gate [TothBot]
+  Gap: No layer between daily regime and 5-min entry.
+  Evidence: 15-20% higher win rates with daily+hourly filter (5 sources 2024-2025).
+  Change: 1H EMA(20) > EMA(50) required for TRENDING_POSITIVE. Cache from ohlc(60).
+  Effect: Removes false signals during 1H pullbacks. Zero API cost.
+
+Finding 2: ATR Dynamic Stop Distances [TothBot/Exit]
+  Gap: Fixed 2% stop ignores real-time market volatility.
+  Evidence: +15% performance, -22% max drawdown vs fixed stops (LuxAlgo + 4 sources).
+  Change: MAE ATR(14) x 1.5x. Emergency SL ATR(14) x 3.0x. Incremental (I-9).
+  Effect: Stop adapts to conditions. R:R formula preserved.
+
+Finding 3: Regime Gate [TothBot]
+  Gap: Long momentum system trading in absent-edge conditions.
+  Evidence: Accuracy 65%->45-50% in NON_DIRECTIONAL (Market Cipher). Break-even 40%.
+  Change: NON_DIR+ELEV and TRENDING_NEG: no entry (Gate 3). NON_DIR+NORM: 50% (Gate 6).
+          Daily candles via REST GetOHLCData. CRITICAL: exclude response[-1] [dv1_6].
+  Effect: Stops trading when documented edge is absent. Pure loss minimization.
+
+Finding 4: Minimum Liquidity Gate [TothBot]
+  Gap: No minimum 24h volume on asset selection.
+  Evidence: $1M+/day minimum for clean execution (Coin Bureau + 4 sources 2024-2025).
+  Change: min_24h_volume_usd $500k starting. Checked daily via ticker.
+  Effect: Protects fee formula. Ensures clean post_only fills and SL execution.
+
+Finding 5: CIATS Half-Kelly Pathway [CIATS]
+  Gap: Fixed 5% sizing had no defined data-driven transition.
+  Evidence: Half-Kelly: 75% optimal growth at 50% less drawdown (MacLean-Thorp-Ziemba + 4).
+            FP/DP validated [dv1_6].
+  Change: At 200 trades: K%=W-(1-W)/R, apply 50%. Update every 50 trades. No ceilings.
+  Effect: Data-driven sizing replaces arbitrary fixed fraction.
+
+Finding 6: post_only Rejection Monitoring [CIATS]
+  Gap: Rejection events logged but unused by CIATS EWMA.
+  Evidence: Rejection rate = direct signal of entry placement quality (Cube Exchange + 4).
+  Change: CIATS EWMA adds rejection_rate_by_regime stream.
+  Effect: Free diagnostic signal. Entry optimization pathway activated.
+
+============================================================
+11. Complete Trade Lifecycle — Narrative Reference
+============================================================
+
+11.1 Normal Trade (Entry to TP or Exit Controller)
+
+  OHLC 5-min candle close fires on public WS v2
+  Parameter Store snapshot frozen — all CIATS params captured (NEW dv1_5 — I-4)
+  Pre-computation cache read — regime, 1H EMA, ATR(14) incremental, 24h liquidity (I-2)
+  ★ Per-pair instrument status check — skip reduce_only/work_in_progress/delisted/
+    limit_only/cancel_only/maintenance [dv1_12]
+  Gate 1: State Machine — online or post_only: continue; else halt and wait
+  Gate 2: Liquidity Gate — 24h volume >= $500k: continue; else skip
+  Gate 3: Regime Pre-Filter — TRENDING_NEG or NON_DIR+ELEV: STOP; else continue (I-1)
+  Gate 4: 1H HTF Gate — 1H EMA(20) > EMA(50) for TRENDING_POS: continue; else skip
+  Signal Engine: SSS score computed on 5-min candle
+  Gate 5: Selection Controller — 6-gate quality evaluation: pass or reject
+  Gate 6: Regime Gate — TRENDING_POS: proceed; NON_DIR+NORM: 50% size
+  Gate 7: Risk Guard — drawdown/concentration/exposure checks: pass or halt
+  Gate 8: Position Sizer — MAE=ATR x 1.5x, emergSL=ATR x 3.0x, TP=R:R formula
+  Execution: WS add_order (limit/post_only/GTD 30-60s/cl_ord_id/stp_type:cancel_newest/deadline:now+5s)
+  If expired/rejected: log reason code → CIATS EWMA monitors rejection rate. Done.
+  If filled: WS batch_add → TP (resting limit) + emergSL (stop-market) atomic. cl_ord_id/stp_type:cancel_newest/deadline:now+5s
+  Position Mirror records: symbol (key), entry_fill_price, qty, TP id, cl_ord_id, emergSL id
+  Exit Controller monitors via ticker (continuous drawdown check — I-7)
+  Logger records full entry via async queue. CIATS Trade Outcome Bus ready.
+  TP fills: EC cancels emergSL. Or EC fires Layer 1/2 exit.
+  Logger records full exit. CIATS Trade Outcome Bus fires with complete trade record.
+
+11.2 Layer 2 MAE Exit (Adverse Price)
+
+  Exit Controller detects: current_price - entry >= ATR(14) x 1.5x
+  WS cancel_order: cancel TP resting order
+  WS cancel_order: cancel emergSL stop order (SEQUENCE CRITICAL: both cancels before sell)
+
+  CANCEL TIMEOUT FALLBACK (NEW dv1_5 — I-6):
+    req_id registry tracks each cancel ACK. On timeout: check executions channel state.
+    Confirmed cancelled: proceed. State unknown: retry once. Second timeout: ALERT and
+    hold position. NEVER issue market sell with ambiguous order state.
+    Assign to 0511001 and 0511004.
+
+  WS add_order: market sell (taker 0.26%)
+  MPP NOTE (C-1): Market sell subject to MPP. EC MUST handle MPP rejection and retry.
+  Logger: exit reason = MAE_THRESHOLD_BREACH
+  CIATS Trade Outcome Bus fires
+
+11.3 Emergency SL (Layer 3 — System Failure Only)
+
+  VPS crashes / TothBot dies / internet severs / unrecoverable WS disconnect
+  Kraken matching engine fires off-book emergSL stop-market at ATR x 3.0x
+  MPP NOTE: Triggered market order subject to MPP. Assign to 0411001.
+  On restart: reconciliation detects closed position → Logger: EMERGENCY_SL_FIRED
+  THIS IS A SYSTEM FAILURE EVENT. SHOULD NEVER FIRE IN NORMAL OPERATION.
+
+============================================================
+12. Open Items — Require Specification Documents
+============================================================
+
+  OI-001: Signal generation (SSS) — CLOSED (dv1_15, AR-067).
+           Three-factor SSS: RSI(14) 50-70, EMA(9)>EMA(21) on 5m, volume > MA(20)x1.0x.
+           Specify in 0711001 SSS_Signal_Model_Specification (Phase 5).
+  OI-002: Asset selection universe — CLOSED (dv1_15, AR-070).
+           Top 50 USD/USDC pairs by 24h volume. BTC/USD always included (AR-074).
+           Specify in 0711003 Asset_Selection_Specification (Phase 5).
+  OI-003: Exit Controller full specification — CLOSED (dv1_15, AR-071).
+           EC-L1A-001/002 specified dv1_14. EC-L1A-003 max_hold_candles=24 specified dv1_15.
+           All Layer 1a triggers complete. Specify in 0811003 Exit_Controller_Specification (Phase 6).
+  OI-004: Entry limit placement — CLOSED (dv1_15, AR-069).
+           entry_limit_price = last candle close quantized DOWN to price_increment.
+           Specify in 0811004 Entry_Limit_Placement_Specification (Phase 6).
+  OI-005: Selection Controller — CLOSED (dv1_15, AR-072).
+           All 6 gates specified: SSS PASS, candle body, no position, cooldown,
+           position size viability, consecutive loss limit.
+           Specify in 0811002 Selection_Controller_Specification (Phase 6).
+  OI-006: CIATS specification — all statistical thresholds and PDCA rules.
+           Mann-Whitney alpha=0.01, Spearman |rho|>0.3, CUSUM k/h, PDCA 50-trade interval.
+           Specify in 0211001 CIATS_Specification (Phase 3).
+  OI-007: AA=04 Exchange Interface formal document.
+           Specify in 0400000 and 0410000 (Phase 2).
+  OI-008: All AA=10 coding specs. WD documents active: 1011001 dv1_4, 1011002 dv1_10,
+           1011005 dv1_0, 1011007 dv1_0, 1011010 dv1_3, 1011011 dv1_1, 1011012 dv1_2,
+           1011013 dv1_2, 1011014 dv1_1. Current as of dv1_16. Phase 8 completes all.
+
+============================================================
+13. Revision History
+============================================================
+
+  dv1_16 03-26-2026  Text-only. No diagram changes. 1 new AR (AR-076).
+                     AR-076: RSI(14) smoothing formula correction. AR-068 stated
+                     "EMA-smoothed" — ambiguous, points to wrong algorithm. Correct
+                     formula is Wilder's SMMA (RMA), α=1/14 (not standard EMA α=2/15).
+                     Incremental: avg_gain=(prev×13+current)/14, avg_loss same.
+                     EMA(9) and EMA(21) in SSS Gate 2 correctly use standard EMA
+                     (α=2/10 and α=2/22). Only RSI uses Wilder's SMMA. Formula
+                     distinction critical — 5-8% variance between the two algorithms
+                     would systematically mis-fire SSS SC-SSS-1 (RSI 50-70 gate).
+                     Validated 10+ sources, TB00021 FP/DP validation pass.
+                     Architecture status: fully validated. Architecture complete.
+                     FP/DP validation finding rate: 0-2 predicted → 1 actual (AR-076).
+
+  dv1_15 03-26-2026  Complete architecture — OI-001 through OI-005 closed.
+                     Text-only. No diagram changes. 9 new ARs (AR-067 through AR-075).
+                     AR-067: SSS Signal Engine (3-factor: RSI+EMA+Volume). OI-001 CLOSED.
+                     AR-068: SSS indicator seeding at startup (extends AR-044).
+                     AR-069: Entry limit price = candle close quantized down. OI-004 CLOSED.
+                     AR-070: Asset universe (top 50 USD/USDC + BTC/USD always). OI-002 CLOSED.
+                     AR-071: max_hold_candles = 24 (2 hours). OI-003 CLOSED.
+                     AR-072: Selection Controller 6 gates fully specified. OI-005 CLOSED.
+                     AR-073: SC state management (cooldown + consecutive loss dicts).
+                     AR-074: BTC/USD always in universe (market_regime proxy commitment).
+                     AR-075: SSS indicators in per-symbol state dict (cache extension).
+                     CIATS Parameter Registry: 11 new parameters added.
+                     All OI-001 through OI-005 now CLOSED. Architecture complete.
+                     FP/DP analysis: 3 sequential searches, 30 sources (TB00020).
+  dv1_0  03-23-2026  Initial document.
+  dv1_1  03-23-2026  Added all six system flow diagrams.
+  dv1_2  03-24-2026  Six changes: C-1 emergSL terminology, C-2 rate limits, C-3 OHLC stall,
+                     A-1 ratecounter, A-2 req_id, A-3 latency logging.
+  dv1_3  03-24-2026  Rebuilt as correct .docx with all six diagrams embedded.
+  dv1_4  03-24-2026  Seven changes: C-1 MPP, A-1 AR-001 expansion, A-2 cl_ord_id,
+                     A-3 snap_orders, A-4 stp_type, A-5 reconnect distinction, A-6 OTO rejected.
+  dv1_5  03-24-2026  Eleven changes: FLAG1 ohlc(60), FLAG2 REST GetOHLCData, I-1 Gate 3,
+                     I-2 cache, I-3 Position Mirror O(1), I-4 Parameter Store snapshot,
+                     I-5 Logger async queue, I-6 cancel timeout, I-7 ticker drawdown,
+                     I-8 WS dispatch table, I-9 ATR incremental.
+  dv1_6  03-24-2026  Six changes from 10-search FP/DP validation + Operations/CIATS analysis:
+                     (1) amend_order primary, edit_order deprecated, batch_cancel, L3 URL corrected.
+                     (2) Rate table updated.
+                     (3) A-7 WS ping, A-8 zombie detection, A-9 balances seq gap.
+                     (4) Per-pair instrument status check, AR-018/019/020.
+                     (5) GetOHLCData response[-1] exclusion — CRITICAL correctness requirement.
+                     (6) Auth verification, CIATS statistical thresholds.
+  dv1_9  03-25-2026  Six new architectural requirements and five improvements from
+                     second 10-search FP/DP organism validation session (TB00010):
+                     A-15 (GAP-A CRITICAL) order_status:true mandatory in executions
+                     subscription — without it amended/restated silently dropped, breaking
+                     A-12/A-13. A-16 (GAP-B) OHLC interval_begin replaces deprecated
+                     timestamp. A-17 (GAP-C/D) instrument price_increment replaces
+                     tick_size; qty_min/cost_min mandatory Gate 8 validation. A-18 (GAP-E)
+                     websockets max_size=10MB + open_timeout=10 mandatory. A-19 (IMP-11)
+                     maxratecount from executions ACK is operative rate threshold. IMP-13
+                     subscription warnings[] parsed/logged. IMP-14 amend_id logged. IMP-15
+                     QueryOrdersInfo for targeted reconciliation. AR-026 through AR-031 added.
+                     0411001 updated to dv1_2. 1011002 updated to dv1_2.
+
+  dv1_10 03-25-2026  Seven new findings from third 10-search FP/DP organism validation
+                     (TB00011): A-20 stp_type FORMAT CORRECTION. A-21 deadline parameter.
+                     A-22 aiohttp ClientTimeout + TCPConnector. A-23 Ticker event_trigger:bbo.
+                     A-24 Regime Engine GetOHLCData stagger. AR-037 IP-whitelisting.
+                     IMP-16 through IMP-19. AR-032 through AR-037. 0411001 dv1_3.
+                     1011002 dv1_3. 1011012 dv1_1. 1011001 dv1_1.
+
+  dv1_12 03-25-2026  Ten text-only changes from fourth (TB00012), fifth (TB00013), and
+                     sixth (TB00014) 10-search FP/DP validation sessions. No diagram changes.
+                     AR-038: Kraken Status API startup maintenance check. Section 2 REST
+                     table: Status API endpoint added. AR-039: per-pair status check
+                     expanded — cancel_only and maintenance added as NO-ENTRY states.
+                     AR-040: Exit Controller pair status adaptation — IOC limit on limit_only,
+                     HOLD on cancel_only/maintenance. AR-041: cancel_order/batch_cancel
+                     behavioral distinction — cancel_order for MAE exit (individual ACK),
+                     batch_cancel for Full Halt (count + rate bypass). AR-042: zombie
+                     detection heartbeat exclusion — heartbeats MUST NOT reset
+                     last_real_data_time. AR-043: max_concurrent via asyncio.BoundedSemaphore.
+                     Section 9 CIATS Parameter Registry: Half-Kelly normalization note.
+                     Section 11.1: per-pair status check updated with full list.
+                     0411001 updated to dv1_6. 1011002 updated to dv1_6.
+                     1011010 updated to dv1_2. 1011011 dv1_0 new.
+                     1011012 updated to dv1_2. 1001001 updated to dv1_3.
+
+  dv1_13 03-26-2026  Fourteen text-only changes from seventh (TB00015), eighth (TB00016),
+                     and ninth (TB00017) 10-search FP/DP validation sessions. No diagram
+                     changes. AR-044: startup warm-up via REST GetOHLCData — ATR(14) seed
+                     (interval=5), EMA(20/50) seed (interval=60), regime (interval=1440).
+                     WARM_UP/READY pair state machine. asyncio.gather across pairs, 1.1s
+                     intra-pair stagger. AR-045: OHLC candle-close detection via
+                     interval_begin change (not wall clock). last_interval_begin tracking
+                     per symbol. AR-046: emergSL triggers.reference="last" explicit in all
+                     batch_add calls — never rely on defaults for crash protection params.
+                     AR-047: ALL rounding via Decimal.quantize() — NEVER math.floor/ceil.
+                     Float arithmetic causes silent precision errors that corrupt order
+                     prices. All Kraken API values: Decimal(str()) immediately on receipt.
+                     AR-048: Exit Controller MAE uses bid price (not last) for long
+                     positions. bid = realizable exit. drawdown formula uses bid.
+                     AR-049: Formal 10-step startup sequence. No pipeline until READY.
+                     Full spec in 1011014 Startup_Sequence_Coding_Spec.
+                     AR-050: Balances channel — spot/main wallet only. Top-level balance
+                     includes earn/staking (not tradeable). Filter wallets array.
+                     AR-051: Portfolio for sizing = cash only (no MTM of open positions).
+                     AR-052: Drawdown baseline set ONCE at startup. NEVER reset on
+                     reconnect. Current portfolio = cash + bid*qty of open positions.
+                     Session pause 5%, full halt 10%. Does not auto-close positions.
+                     AR-053: Pending Order Registry — self-tracks USD committed to
+                     outstanding entry orders. Gate 7 checks available_USD = balance
+                     minus pending commitments. Prevents overcommitment on simultaneous
+                     pipeline activations. AR-047 amendment: original AR-047 used
+                     math.floor/ceil — amended to Decimal.quantize() (BP-DEC-001 through
+                     BP-DEC-008 in 1011001). AR-054: Entry order partial fill + expiry or
+                     cancel creates unprotected open position. cum_qty > 0 on expired or
+                     canceled exec_type: recalculate TP/emergSL from avg_price, dispatch
+                     batch_add, enter Position Mirror. If below qty_min/cost_min: market
+                     sell immediately. AR-055: Dead Man's Switch (cancel_all_orders_after)
+                     EXPLICITLY PROHIBITED. Cancels emergSL orders — destroys crash
+                     protection. Hard rule: code review must reject any PR with this call.
+                     AR-056: Mid-session WS reconnect sequence distinct from startup.
+                     Never reset portfolio_baseline_USD or drawdown on reconnect. Reconcile
+                     Position Mirror vs snap_orders. Detect positions closed during gap.
+                     Fire CIATS Trade Outcome Bus for gap-closed positions. 15-minute
+                     threshold for cache staleness. Full spec in 1011014 Section 2.
+                     1011001 updated to dv1_4. 1011002 updated to dv1_9.
+                     1011011 updated to dv1_1. 1011014 updated to dv1_1.
+                     0411001 updated to dv1_8.
+
+  dv1_14 03-26-2026  Ten text-only changes from tenth 10-search FP/DP validation
+                     session (TB00019 Pass 2). No diagram changes.
+                     AR-057: amended exec_type added to dispatch table. TothBot V1
+                     never amends own orders. Any amended event = CRITICAL alert.
+                     AR-058: max_queue=None on all websockets connections. Default
+                     max_queue=16 risks silent drops on burst market data events.
+                     AR-059: ping_interval=None — disable library ping. Use only
+                     application-level JSON ping (A-7) as sole keepalive mechanism.
+                     AR-060: All WS connections use websockets.asyncio.client.connect().
+                     Legacy websockets.connect() deprecated in v14+, will be removed.
+                     AR-061: Capture last_qty and last_price from executions trade
+                     events for fill-level analytics and CIATS execution quality.
+                     AR-062: Exit Controller Layer 1a — EC-L1A-001 (HTF EMA reversal),
+                     EC-L1A-002 (daily regime downgrade), EC-L1A-003 (time TBD).
+                     AR-063: Logger uses queue.Queue (stdlib) + QueueHandler +
+                     QueueListener thread. NOT asyncio.Queue. Non-blocking hot path.
+                     AR-064: Log connection_id from Kraken status channel on every
+                     new WS connection for support and debug capability.
+                     AR-065: Kelly inputs W and R MUST use net P/L from Trade Outcome
+                     Bus. NOT gross price change. NOT theoretical targets.
+                     AR-066: TP partial fill — amend emergSL qty via amend_order
+                     (saves 7 rate counter units vs cancel+resubmit, preserves queue
+                     position). Update Position Mirror. CIATS fires once on full close.
+                     New WD documents: 1011005 Exit_Controller_Coding_Spec dv1_0,
+                     1011007 Logger_Coding_Spec dv1_0.
+                     Updated: 0411001 dv1_9, 1011002 dv1_10, 1011010 dv1_3.
+
+
+  dv1_8  03-25-2026  Eight changes from 10-search FP/DP organism validation session
+                     (TB00009 Part 2): A-11 executions cancel_reason deprecated — use
+                     reason field. A-12 complete exec_type enum handling required. A-13
+                     restated exec_type handling — engine amend, not fill/cancel. A-14
+                     PL-014 RESOLVED — Spot REST auth confirmed unchanged (Oct 2025 change
+                     was Futures REST only). IMP-06 aiohttp mandatory for all REST calls.
+                     IMP-07 asyncio TaskManager pattern for 24/7 memory safety. IMP-08
+                     systemd WatchdogSec=120 with 30s ping loop. New AR-022 through AR-025.
+                     New WD document 1011013 VPS_Deployment_Coding_Spec dv1_0 created.
+                     0411001 updated to dv1_1. 1011002 updated to dv1_1.
+                     Diagrams 1 and 6 updated.
+
+  dv1_7  03-25-2026  One change from 10-search FP/DP organism validation session (TB00009):
+                     A-10: Executions channel sequence gap detection. Every executions
+                     message carries a sequence integer. WS Manager tracks it; any gap
+                     triggers REST GetOpenOrders reconciliation immediately. Missed
+                     execution events leave Position Mirror in stale state — highest-
+                     severity gap class. AR-021 added. GetOpenOrders promoted from
+                     restart-only fallback to active gap recovery channel. Diagrams 1
+                     and 6 updated with A-10.
+
+
+============================================================
+EMBEDDED DIAGRAM SOURCE FILES — SVG (dv1_6)
+============================================================
+
+These are the authoritative SVG source files for all 6 diagrams.
+When rebuilding the .docx, Claude reads these SVGs, converts to PNG,
+and embeds them. Do not edit these manually.
+
+============================================================
+SVG SOURCE: Diagram 1 — Kraken API Connection Architecture
+============================================================
+<svg width="920" height="680" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="920" height="680" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="920" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="460" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 1 — Kraken API Connection Architecture (dv1_9)tion Architecture  (dv1_8)</text>
+<rect x="20" y="44" width="300" height="580" fill="#E8F4FB" stroke="#2E75B6" stroke-width="1" rx="6"/>
+<text x="170" y="62" font-size="11" fill="#1F3864" font-weight="bold" text-anchor="middle">KRAKEN</text>
+<rect x="30" y="70" width="280" height="200" fill="#FFFFFF" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="170" y="86" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Public WS v2</text>
+<text x="170" y="86" font-size="8" fill="#808080" font-weight="normal" text-anchor="middle">wss://ws.kraken.com/v2</text>
+<rect x="34" y="95" width="272" height="26" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="109" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">instrument</text>
+<text x="192" y="109" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">asset specs + per-pair status | price_increment / qty_min / cost_minus cache ★ dv1_6</text>
+<rect x="34" y="125" width="272" height="26" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="139" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">status</text>
+<text x="192" y="139" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">engine state — gates all order dispatch</text>
+<rect x="34" y="155" width="272" height="26" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="169" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">ohlc(5m)</text>
+<text x="192" y="169" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">SYSTEM CLOCK  ★ pipeline trigger</text>
+<rect x="34" y="185" width="272" height="26" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="199" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">ohlc(60)</text>
+<text x="192" y="199" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">1H HTF cache for Gate 4  ★ NEW dv1_5</text>
+<rect x="34" y="215" width="272" height="26" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="229" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">ticker</text>
+<text x="192" y="229" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">bid/ask/last — event_trigger configurable</text>
+<rect x="30" y="278" width="280" height="170" fill="#FFFFFF" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="170" y="294" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Private WS v2</text>
+<text x="170" y="304" font-size="8" fill="#808080" font-weight="normal" text-anchor="middle">wss://ws-auth.kraken.com/v2</text>
+<rect x="34" y="310" width="272" height="24" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="323" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">executions</text>
+<text x="192" y="323" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">fills/expires — reason field — order_status:true — ratecounter:trued ★A-11 | restated ★A-13 | ratecounter:true | seq gap ★A-10</text>
+<rect x="34" y="338" width="272" height="24" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="351" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">balances</text>
+<text x="192" y="351" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">real-time settlement on every fill</text>
+<rect x="34" y="366" width="272" height="24" fill="#C6EFCE" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="379" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">add_order</text>
+<text x="192" y="379" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">entry: limit / post_only / GTD / cl_ord_id / stp</text>
+<rect x="34" y="394" width="272" height="24" fill="#C6EFCE" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="407" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">batch_add</text>
+<text x="192" y="407" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TP+emergSL atomic — cl_ord_id / stp_type</text>
+<rect x="34" y="422" width="272" height="24" fill="#C6EFCE" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="435" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">cancel_order</text>
+<text x="192" y="435" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">exit leg cleanup — req_id tracked</text>
+<rect x="34" y="450" width="272" height="18" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="90" y="461" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">amend_order</text>
+<text x="192" y="461" font-size="7.5" fill="#C55A11" font-weight="normal" text-anchor="middle">edit_order DEPRECATED — amend_order primary [dv1_6]</text>
+<rect x="34" y="472" width="272" height="18" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="90" y="483" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">batch_cancel</text>
+<text x="192" y="483" font-size="7.5" fill="#C55A11" font-weight="normal" text-anchor="middle">multi-order cancel — Full Halt procedure [dv1_6]</text>
+<rect x="30" y="456" width="280" height="130" fill="#FFFFFF" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="170" y="472" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">REST API (startup + emergency + daily regime)</text>
+<rect x="34" y="480" width="272" height="18" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="491" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetWebSocketsToken</text>
+<text x="220" y="491" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">startup + every reconnect</text>
+<rect x="34" y="500" width="272" height="18" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="511" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetOHLCData</text>
+<text x="220" y="511" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">daily regime  00:00 UTC  ★ NEW dv1_5</text>
+<rect x="34" y="520" width="272" height="18" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="531" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetOpenOrders</text>
+<text x="220" y="531" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">restart reconcile / executions gap recovery ★ dv1_7</text>
+<rect x="34" y="540" width="272" height="18" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="551" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetAccountBalance</text>
+<text x="220" y="551" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">restart reconcile fallback only</text>
+<rect x="34" y="560" width="272" height="18" fill="#FFD7D7" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="571" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">CancelAllOrders</text>
+<text x="220" y="571" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">kill-switch emergency only</text>
+<rect x="30" y="594" width="280" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="170" y="611" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">Matching Engine: resting TP + off-book emergSL  (crash protection)</text>
+<rect x="340" y="44" width="280" height="580" fill="#F0FFF0" stroke="#1E6B1E" stroke-width="1" rx="6"/>
+<text x="480" y="62" font-size="11" fill="#1E6B1E" font-weight="bold" text-anchor="middle">TOTHBOT</text>
+<rect x="350" y="70" width="260" height="50" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/><!-- wsm -->
+<text x="480" y="81" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">WS Manager</text>
+<text x="480" y="92" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">req_id registry | cl_ord_id registry</text>
+<text x="480" y="103" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Dispatch Table O(1)  ★ NEW dv1_5</text>
+<text x="480" y="114" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">fast-reconnect / maint 5s delay</text>
+<rect x="350" y="120" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="130" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-7 dv1_6: JSON ping every 30s — pong within 10s or reconnect</text>
+<rect x="350" y="136" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="146" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-8 dv1_6: Zombie detect — last_real_data_time 90s threshold</text>
+<rect x="350" y="152" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="162" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-9 dv1_6: Balances seq gap → REST GetAccountBalance reconcile</text>
+<rect x="350" y="168" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="178" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-10 dv1_7: Executions seq gap → REST GetOpenOrders reconcile</text>
+<rect x="350" y="184" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="194" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-11 dv1_8: cancel_reason DEPRECATED — use reason field</text>
+<rect x="350" y="200" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="210" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-12 dv1_8: Full exec_type enum handled (incl amended/restated)</text>
+<rect x="350" y="216" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="226" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ A-13 dv1_8: restated exec_type — engine amend, NOT fill/cancel</text>
+<rect x="350" y="232" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="242" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ IMP-06 dv1_8: aiohttp mandatory — never requests in asyncio</text>
+<rect x="350" y="248" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="258" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ IMP-07 dv1_8: asyncio TaskManager — done callbacks mandatory</text>
+<rect x="350" y="264" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="274" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ IMP-08 dv1_8: systemd WatchdogSec=120 + 30s ping loop</text>
+<rect x="350" y="280" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="290" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ GAP-A dv1_9: order_status:true REQUIRED — else amended/restated silent</text>
+<rect x="350" y="296" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="306" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ IMP-11 dv1_9: maxratecount from executions ACK — use as operative threshold</text>
+<rect x="350" y="312" width="260" height="14" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="2"/>
+<text x="480" y="322" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ IMP-13 dv1_9: Parse warnings[] in all sub ACKs — detect deprecated fields</text>
+<rect x="350" y="128" width="260" height="44" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="136" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Signal Pipeline</text>
+<text x="480" y="147" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">8-Gate evaluation | Regime Pre-Filter ★</text>
+<text x="480" y="158" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Pre-computation Cache  ★ NEW dv1_5</text>
+<text x="480" y="169" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">ATR incremental  ★ NEW dv1_5</text>
+<rect x="350" y="180" width="260" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="192" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Position Mirror  (symbol-keyed dict O(1)  ★ NEW dv1_5)</text>
+<text x="480" y="203" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry | qty | TP id | cl_ord_id | emergSL id</text>
+<rect x="350" y="218" width="260" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="230" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Exit Controller  (Layer 1 / 2 / 3)</text>
+<text x="480" y="241" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cancel timeout fallback  ★ NEW dv1_5  |  ticker-driven drawdown ★</text>
+<rect x="350" y="256" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="269" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Regime Engine  (daily 00:00 UTC via REST GetOHLCData  ★ NEW)  </text>
+<rect x="350" y="286" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="299" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Position Sizer  (ATR×1.5x MAE | ATR×3.0x emergSL — incremental ★)</text>
+<rect x="350" y="316" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="329" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Risk Guard  (drawdown / concentration / exposure)</text>
+<rect x="350" y="346" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="359" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Logger  (async bounded queue  ★ NEW dv1_5 — never blocks hot path)</text>
+<rect x="350" y="376" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="389" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Parameter Store  (CIATS writes | TothBot reads snapshot  ★ NEW)</text>
+<rect x="350" y="406" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="419" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Balance Mirror  (real-time on every settlement event)</text>
+<rect x="350" y="436" width="260" height="120" fill="#FFFFFF" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="450" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">API Key Pairs</text>
+<rect x="356" y="456" width="120" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="416" y="468" font-size="8" fill="#1F3864" font-weight="normal" text-anchor="middle">DATA key  (market data)</text>
+<rect x="482" y="456" width="124" height="20" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="2"/>
+<text x="544" y="468" font-size="8" fill="#1E6B1E" font-weight="normal" text-anchor="middle">TRADE key  (orders+auth)</text>
+<text x="480" y="490" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Nonce window: 10,000ms on both</text>
+<text x="480" y="504" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Cloudflare: 150 reconnects/10min/IP</text>
+<text x="480" y="518" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Random drop: instant reconnect</text>
+<text x="480" y="532" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Maintenance: 5s minimum delay</text>
+<text x="480" y="546" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Auth: Spot REST UNCHANGED ★ A-14 (Oct 2025 change = Futures only)</text>
+<rect x="350" y="564" width="260" height="56" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="480" y="576" font-size="8" fill="#C55A11" font-weight="bold" text-anchor="middle">Rate Limits — Intermediate Tier</text>
+<text x="480" y="589" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">Threshold 125/pair | Decay 2.34/sec | Max 80 open orders/pair</text>
+<text x="480" y="601" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">add +1 | batch +(n/2) | cancel &lt;5s +8/&lt;10s +6/&lt;300s +1 | amend &lt;5s +4 [dv1_6]</text>
+<text x="480" y="613" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">ratecounter:true → CIATS EWMA monitoring signal</text>
+<rect x="350" y="626" width="260" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="480" y="642" font-size="7.5" fill="#8B0000" font-weight="bold" text-anchor="middle">DMS (cancel_all_orders_after) REJECTED  |  FIX CoD REJECTED  (AR-001)</text>
+<rect x="640" y="44" width="260" height="580" fill="#FFF8F0" stroke="#C55A11" stroke-width="1" rx="6"/>
+<text x="770" y="62" font-size="11" fill="#C55A11" font-weight="bold" text-anchor="middle">CIATS</text>
+<rect x="650" y="70" width="240" height="30" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="82" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Stream 1: EWMA Monitor (288 candles/day)</text>
+<text x="770" y="93" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">rejection_rate_by_regime | rate_counter_by_pair | ws_roundtrip_latency_ms</text>
+<rect x="650" y="108" width="240" height="25" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="117" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Stream 2: Trade Outcome Bus (on every close)</text>
+<text x="770" y="128" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry/exit | MAE | fees | exit reason | R:R | P/L</text>
+<rect x="650" y="141" width="240" height="25" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="150" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Statistical Engine</text>
+<text x="770" y="161" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Mann-Whitney U | Sharpe | Spearman | EWMA | CUSUM | Half-Kelly</text>
+<rect x="650" y="174" width="240" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="186" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">PDCA Engine — inter-trade boundaries only</text>
+<rect x="650" y="202" width="240" height="55" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="210" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Parameter Store (all CIATS-owned values)</text>
+<text x="770" y="221" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">tradeable_pct | per_trade_pct | mae_mult</text>
+<text x="770" y="232" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">emergency_sl_mult | adx_threshold</text>
+<text x="770" y="243" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">atr_percentile_thresh | htf_ema_periods</text>
+<text x="770" y="254" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">min_volume_usd_daily | signal_thresholds</text>
+<rect x="650" y="265" width="240" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="277" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Proposal Engine (active at 200+ closed trades)</text>
+<rect x="650" y="293" width="240" height="30" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="305" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Regime Library (two-level tagging)</text>
+<text x="770" y="316" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">asset_regime + market_regime (BTC proxy)</text>
+<rect x="650" y="331" width="240" height="25" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="340" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Statistical Thresholds</text>
+<text x="770" y="351" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">50 evals: EWMA valid | 200 trades: HARD FLOOR | 600: per-regime</text>
+<rect x="650" y="364" width="240" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="376" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Half-Kelly: K%=W-(1-W)/R  apply 50%  at 200 trades</text>
+<rect x="650" y="470" width="240" height="30" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="480" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">★ SACRED CONSTRAINT</text>
+<text x="770" y="493" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">Net 1:1.5 R:R — HARDCODED — NOT CIATS-OWNED</text>
+<rect x="650" y="508" width="240" height="110" fill="#F2F2F2" stroke="#808080" stroke-width="1" rx="3"/>
+<text x="770" y="522" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">NOT USED / REJECTED</text>
+<text x="770" y="538" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">DMS (cancel_all_orders_after) — destroys crash prot</text>
+<text x="770" y="554" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">FIX cancel-on-disconnect — same conflict (AR-001)</text>
+<text x="770" y="570" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">OTO conditional orders — uses limit price not fill</text>
+<text x="770" y="586" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">   → violates sacred R:R (AR-008)</text>
+<text x="770" y="602" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">Fixed stops — ATR-adaptive confirmed superior</text>
+<line x1="320" y1="83" x2="350" y2="83" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="140" x2="350" y2="140" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="178" x2="350" y2="178" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="268" x2="350" y2="268" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="290" x2="350" y2="290" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="310" x2="350" y2="310" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="330" x2="350" y2="330" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="610" y1="360" x2="650" y2="360" stroke="#C55A11" stroke-width="1.5" marker-end="url(#arr_gold)"/>
+<line x1="650" y1="220" x2="610" y2="390" stroke="#C55A11" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr_gold)"/>
+</svg>
+
+============================================================
+SVG SOURCE: Diagram 2 — TothBot Trading Pipeline (8 Gates)
+============================================================
+<svg width="860" height="820" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="820" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline  (8 Gates, dv1_6)</text>
+<rect x="190" y="44" width="480" height="36" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="4"/>
+<text x="430" y="58" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">★ TRIGGER: Kraken OHLC 5-min candle close event (WS v2 push)</text>
+<text x="430" y="72" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Fires on trade events not wall clock — candle stall handled in 0511002</text>
+<line x1="430" y1="74" x2="430" y2="88" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="88" width="480" height="32" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="101" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">★ PARAMETER STORE SNAPSHOT FROZEN  (NEW dv1_5 — I-4)</text>
+<text x="430" y="114" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">All CIATS params captured at pipeline start — consistent through full eval</text>
+<line x1="430" y1="112" x2="430" y2="126" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="126" width="480" height="36" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="430" y="140" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">★ PRE-COMPUTATION CACHE READ  (NEW dv1_5 — I-2)</text>
+<text x="430" y="153" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Regime cache | 1H EMA cache (ohlc-60) | ATR(14) running value | 24h liquidity</text>
+<line x1="430" y1="156" x2="430" y2="166" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="166" width="480" height="24" fill="#FFD700" stroke="#DAA520" stroke-width="2" rx="4"/>
+<text x="430" y="182" font-size="8.5" fill="#1F3864" font-weight="bold" text-anchor="middle">★ dv1_6 PER-PAIR STATUS CHECK: skip pairs in reduce_only / work_in_progress / delisted / limit_only (instrument channel cache)</text>
+<line x1="430" y1="190" x2="430" y2="200" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="200" width="480" height="42" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="214" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 1: State Machine</text>
+<text x="430" y="197" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">blocks maintenance / cancel_only</text>
+<line x1="670" y1="188" x2="680" y2="184" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="174" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="188" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">WAIT — engine not ready</text>
+<line x1="430" y1="206" x2="430" y2="220" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="220" width="480" height="42" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="234" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 2: Liquidity Gate ★  ★</text>
+<text x="430" y="247" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">24h volume ≥ $500k USD</text>
+<line x1="670" y1="238" x2="680" y2="234" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="224" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="238" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — LIQUIDITY_REJECTED</text>
+<line x1="430" y1="256" x2="430" y2="270" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="270" width="480" height="50" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="4"/>
+<text x="430" y="284" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">Gate 3: Regime Pre-Filter  ★ NEW dv1_5 (I-1)</text>
+<text x="430" y="297" font-size="9" fill="#8B0000" font-weight="normal" text-anchor="middle">TRENDING_NEG → STOP  |  NON_DIR+ELEV → STOP</text>
+<text x="430" y="309" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Eliminates SSS computation on all no-trade regimes</text>
+<line x1="670" y1="292" x2="680" y2="288" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="278" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="292" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">STOP — REGIME_BLOCKED (pre-filter)</text>
+<line x1="430" y1="314" x2="430" y2="328" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="328" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="342" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 4: 1H HTF Confirmation  ★  (was Gate 3 in dv1_4)</text>
+<text x="430" y="355" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">1H EMA(20) &gt; EMA(50) required for TRENDING_POS entries</text>
+<text x="430" y="367" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">★ Cache reads from ohlc(60) WS subscription  (NEW dv1_5)</text>
+<line x1="670" y1="346" x2="680" y2="342" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="332" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="346" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — HTF_GATE_REJECTED</text>
+<line x1="430" y1="368" x2="430" y2="382" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="382" width="480" height="36" fill="#F0F0FF" stroke="#7030A0" stroke-width="1" rx="4"/>
+<text x="430" y="405" font-size="10" fill="#7030A0" font-weight="normal" text-anchor="middle">SSS Signal Engine — score 5-min candle (only runs if Gate 3 passed)</text>
+<line x1="430" y1="412" x2="430" y2="426" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="426" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="440" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 5: Selection Controller</text>
+<text x="430" y="453" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Signal fails any 6 quality gates  (was Gate 4 in dv1_4)</text>
+<line x1="670" y1="444" x2="680" y2="440" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="430" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="444" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — SELECTION_REJECTED</text>
+<line x1="430" y1="466" x2="430" y2="480" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="480" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="494" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 6: Regime Gate ★</text>
+<text x="430" y="507" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">NON_DIR+NORM → 50% size  (NO ENTRY cases handled by Gate 3)  (was Gate 5)</text>
+<line x1="670" y1="498" x2="680" y2="494" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="484" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="498" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">SKIP — REGIME_SIZED_50PCT</text>
+<line x1="430" y1="520" x2="430" y2="534" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="534" width="480" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="430" y="548" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Gate 7: Risk Guard</text>
+<text x="430" y="561" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Drawdown halt / concentration / exposure  ★ ticker-driven continuous  (was Gate 6)</text>
+<line x1="670" y1="552" x2="680" y2="548" stroke="#8B0000" stroke-width="1" marker-end="url(#arr_red)"/>
+<rect x="680" y="538" width="180" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="552" font-size="8" fill="#8B0000" font-weight="normal" text-anchor="middle">HALT — RISK_GUARD</text>
+<line x1="430" y1="574" x2="430" y2="588" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="588" width="480" height="46" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="602" font-size="10" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Gate 8: Position Sizer ★  (was Gate 7 — never blocks, only sizes)</text>
+<text x="430" y="615" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">MAE=ATR(14)×1.5x | emergSL=ATR(14)×3.0x | TP=R:R formula  — ATR incremental ★</text>
+<line x1="430" y1="628" x2="430" y2="642" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="642" width="480" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="653" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">ORDER DISPATCH: WS add_order (limit / post_only / GTD 30-60s / cl_ord_id / stp_type:cancel_newest / deadline:now+5s)</text>
+<text x="430" y="666" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Expired/rejected → log reason code → CIATS EWMA monitors rejection_rate_by_regime</text>
+<line x1="430" y1="666" x2="430" y2="680" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="190" y="680" width="480" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="691" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">ON FILL: WS batch_add (TP resting limit + emergSL stop-market — atomic)</text>
+<text x="430" y="704" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cl_ord_id recorded in Position Mirror at dispatch — no async gap</text>
+<rect x="0" y="790" width="860" height="30" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="808" font-size="8" fill="#FFFFFF" font-weight="normal" text-anchor="middle">All rejects logged with reason code  |  CIATS EWMA Monitor: rejection_rate_by_regime / rate_counter_by_pair / ws_roundtrip_latency_ms</text>
+</svg>
+
+============================================================
+SVG SOURCE: Diagram 3 — Exit Architecture: Ground Zero Redesign
+============================================================
+<svg width="860" height="660" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="660" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 3 — Exit Architecture: Ground Zero Redesign  (dv1_6)</text>
+<rect x="10" y="40" width="840" height="22" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="430" y="56" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">Exit Controller owns ALL normal exits  |  Off-book emergSL is crash protection only  |  OTO conditional orders EVALUATED AND REJECTED (AR-008)</text>
+<rect x="80" y="72" width="220" height="26" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="190" y="89" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 1a — Signal-Based Exit</text>
+<rect x="310" y="72" width="220" height="26" fill="#1E6B1E" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="420" y="89" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 1b — TP Fill</text>
+<rect x="560" y="72" width="220" height="26" fill="#C55A11" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="670" y="89" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 2 — MAE Threshold ★</text>
+<rect x="80" y="106" width="220" height="26" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="117" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Signal deterioration</text>
+<text x="190" y="129" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">SSS score drops below threshold</text>
+<rect x="80" y="136" width="220" height="26" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="147" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Time-based</text>
+<text x="190" y="159" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">max hold without TP progress</text>
+<rect x="80" y="166" width="220" height="26" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="177" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Momentum loss</text>
+<text x="190" y="189" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">trend breaks on 5m or 1H</text>
+<rect x="80" y="196" width="220" height="24" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="190" y="210" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">WS cancel_order(TP) + WS market_sell</text>
+<rect x="80" y="220" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="190" y="232" font-size="7.5" fill="#1F3864" font-weight="normal" text-anchor="middle">exit reason: SIGNAL_DECAY / TIME_EXPIRY / MOMENTUM_LOSS</text>
+<rect x="310" y="106" width="220" height="40" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="420" y="120" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Resting TP limit fills on Kraken</text>
+<text x="420" y="134" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">matching engine</text>
+<rect x="310" y="154" width="220" height="24" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="420" y="168" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">EC cancels emergSL after fill confirm</text>
+<rect x="310" y="184" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="420" y="196" font-size="7.5" fill="#1F3864" font-weight="normal" text-anchor="middle">exit reason: TP_FILL  (maker 0.16%)</text>
+<rect x="560" y="106" width="220" height="30" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="670" y="117" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">TRIGGER</text>
+<text x="670" y="130" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">price - entry ≥ ATR(14) × 1.5x</text>
+<rect x="560" y="142" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="670" y="154" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">① WS cancel_order(TP resting limit)</text>
+<rect x="560" y="164" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="670" y="176" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">② WS cancel_order(emergSL off-book)</text>
+<rect x="560" y="186" width="220" height="18" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="670" y="198" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">★ BOTH CANCELS BEFORE SELL</text>
+<rect x="560" y="208" width="220" height="58" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="670" y="219" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ CANCEL TIMEOUT FALLBACK  (NEW dv1_5 — I-6)</text>
+<text x="670" y="231" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">req_id registry tracks each cancel ACK</text>
+<text x="670" y="243" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">On timeout: check executions channel state</text>
+<text x="670" y="255" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Confirmed cancel → proceed | Unknown → retry 1x</text>
+<rect x="560" y="270" width="220" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="670" y="281" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">NEVER market sell with ambiguous order state</text>
+<text x="670" y="292" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">2nd timeout → alert + hold position + alert operator</text>
+<rect x="560" y="298" width="220" height="18" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="670" y="310" font-size="8.5" fill="#1E6B1E" font-weight="bold" text-anchor="middle">③ WS add_order (market sell  taker 0.26%)</text>
+<rect x="560" y="320" width="220" height="26" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="670" y="331" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">★ MPP RISK: market sell may reject on wide spread</text>
+<text x="670" y="343" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">EC must handle MPP rejection and retry (0511004)</text>
+<rect x="560" y="350" width="220" height="18" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="670" y="362" font-size="7.5" fill="#1F3864" font-weight="normal" text-anchor="middle">exit reason: MAE_THRESHOLD_BREACH</text>
+<rect x="30" y="430" width="800" height="26" fill="#8B0000" stroke="#8B0000" stroke-width="1" rx="4"/>
+<text x="430" y="447" font-size="11" fill="#FFFFFF" font-weight="bold" text-anchor="middle">LAYER 3 — Emergency Brake (Kraken Matching Engine Only — System Failure ONLY)</text>
+<rect x="30" y="460" width="800" height="44" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="430" y="472" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">Fires ONLY: VPS crash / TothBot down / internet severed / unrecoverable WS disconnect</text>
+<text x="430" y="486" font-size="9" fill="#8B0000" font-weight="normal" text-anchor="middle">Off-book emergSL stop-market at ATR×3.0x on Kraken matching engine</text>
+<text x="430" y="498" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">★ MPP RISK: triggered market order subject to MPP on wide spread  (assign to 0411001)</text>
+<rect x="30" y="508" width="800" height="22" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="430" y="522" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">★ SHOULD NEVER FIRE IN NORMAL OPERATION  |  If fired: system failure event requiring investigation</text>
+<rect x="30" y="540" width="800" height="72" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="553" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">R:R FORMULA  (all calculations use ACTUAL fill price — not limit price  → why OTO was rejected)</text>
+<text x="430" y="567" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">mae_pct = ATR(14)×1.5x / entry_fill_price</text>
+<text x="430" y="581" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">net_loss = mae_pct + 0.16% + 0.26%        net_gain = net_loss × 1.5  ★ SACRED</text>
+<text x="430" y="595" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">gross_target = net_gain + 0.16%           emergSL_dist = ATR×3.0x / entry_fill_price  (NEVER in R:R formula)</text>
+<text x="430" y="607" font-size="8" fill="#1F3864" font-weight="normal" text-anchor="middle">exit codes: SIGNAL_DECAY / TIME_EXPIRY / MOMENTUM_LOSS / TP_FILL / MAE_THRESHOLD_BREACH / EMERGENCY_SL_FIRED</text>
+</svg>
+
+============================================================
+SVG SOURCE: Diagram 4 — Regime Taxonomy: 6-Regime Grid + Two-Level Tagging
+============================================================
+<svg width="860" height="580" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="580" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 4 — Regime Taxonomy: 6-Regime Grid + Two-Level Tagging  (dv1_6)</text>
+<rect x="10" y="40" width="840" height="22" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="430" y="56" font-size="8.5" fill="#C55A11" font-weight="bold" text-anchor="middle">★ DATA SOURCE (NEW dv1_5 — FLAG 2): Daily candles via REST GetOHLCData — 1 call/pair at 00:00 UTC — 720 committed candles returned</text>
+<rect x="10" y="68" width="415" height="90" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="217" y="82" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">DIRECTIONAL STATE (daily ADX + EMA)</text>
+<text x="217" y="98" font-size="9" fill="#1E6B1E" font-weight="normal" text-anchor="middle">TRENDING_POSITIVE: ADX(14)&gt;25  AND  EMA(20)&gt;EMA(50)</text>
+<text x="217" y="112" font-size="9" fill="#8B0000" font-weight="normal" text-anchor="middle">TRENDING_NEGATIVE: ADX(14)>25  AND  EMA(20)&lt;EMA(50)</text>
+<text x="217" y="126" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">NON_DIRECTIONAL: ADX(14)≤25</text>
+<text x="217" y="142" font-size="8.5" fill="#808080" font-weight="normal" text-anchor="middle">All thresholds CIATS-owned starting values</text>
+<rect x="435" y="68" width="415" height="90" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="642" y="82" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">VOLATILITY STATE (ATR percentile  50-day rolling)</text>
+<text x="642" y="98" font-size="9" fill="#1E6B1E" font-weight="normal" text-anchor="middle">NORMAL_VOL:    ATR(14) percentile ≤ 67th</text>
+<text x="642" y="112" font-size="9" fill="#8B0000" font-weight="normal" text-anchor="middle">ELEVATED_VOL: ATR(14) percentile &gt; 67th</text>
+<text x="642" y="126" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Computed from REST GetOHLCData daily candles</text>
+<text x="642" y="142" font-size="8.5" fill="#808080" font-weight="normal" text-anchor="middle">All thresholds CIATS-owned starting values</text>
+<rect x="110" y="144" width="370" height="22" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="295" y="158" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">NORMAL_VOL  (ATR ≤ 67th)</text>
+<rect x="480" y="144" width="370" height="22" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="665" y="158" font-size="9" fill="#FFFFFF" font-weight="bold" text-anchor="middle">ELEVATED_VOL  (ATR &gt; 67th)</text>
+<rect x="10" y="168" width="96" height="66" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="58" y="196" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">TRENDING_POSITIVE</text>
+<text x="58" y="210" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">(ADX&gt;25, EMA20&gt;EMA50)</text>
+<rect x="110" y="168" width="370" height="66" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="2"/>
+<text x="295" y="197" font-size="11" fill="#1E6B1E" font-weight="bold" text-anchor="middle">FULL POSITION (Optimal)</text>
+<text x="295" y="213" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TRENDING_POS × NORMAL_VOL</text>
+<rect x="480" y="168" width="370" height="66" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="2"/>
+<text x="665" y="197" font-size="11" fill="#1E6B1E" font-weight="bold" text-anchor="middle">FULL POSITION (ATR adapts)</text>
+<text x="665" y="213" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TRENDING_POS × ELEVATED_VOL</text>
+<rect x="10" y="234" width="96" height="66" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="58" y="262" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">NON_DIRECTIONAL</text>
+<text x="58" y="276" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">(ADX≤25)</text>
+<rect x="110" y="234" width="370" height="66" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="295" y="263" font-size="11" fill="#C55A11" font-weight="bold" text-anchor="middle">50% POSITION</text>
+<text x="295" y="279" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">NON_DIR × NORMAL_VOL  (Gate 6 sizes)</text>
+<rect x="480" y="234" width="370" height="66" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="665" y="263" font-size="11" fill="#8B0000" font-weight="bold" text-anchor="middle">NO ENTRY</text>
+<text x="665" y="279" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">NON_DIR × ELEVATED_VOL  ← Gate 3 blocks ★ NEW</text>
+<rect x="10" y="300" width="96" height="66" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="58" y="328" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">TRENDING_NEGATIVE</text>
+<text x="58" y="342" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">(ADX>25, EMA20&lt;EMA50)</text>
+<rect x="110" y="300" width="370" height="66" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="295" y="329" font-size="11" fill="#8B0000" font-weight="bold" text-anchor="middle">NO ENTRY</text>
+<text x="295" y="345" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TRENDING_NEG × NORMAL_VOL  ← Gate 3 blocks ★ NEW</text>
+<rect x="480" y="300" width="370" height="66" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="665" y="329" font-size="11" fill="#8B0000" font-weight="bold" text-anchor="middle">NO ENTRY</text>
+<text x="665" y="345" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TRENDING_NEG × ELEVATED_VOL  ← Gate 3 blocks ★ NEW</text>
+<rect x="10" y="376" width="840" height="30" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="430" y="388" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">★ Gate 3 (Regime Pre-Filter) now blocks TRENDING_NEG (all vol) and NON_DIR+ELEVATED before SSS computation  (NEW dv1_5 — I-1)</text>
+<text x="430" y="401" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Gate 6 (Regime Gate) only handles NON_DIR+NORMAL 50% sizing — all definitive NO ENTRY cases handled earlier in pipeline</text>
+<rect x="10" y="414" width="840" height="50" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="428" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">TWO-LEVEL TAGGING — every trade carries both:</text>
+<text x="430" y="444" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">asset_regime: regime of the traded asset  |  market_regime: BTC/USD proxy (market context)</text>
+<text x="430" y="458" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Break-even win rate for 1:1.5 R:R = 40%  |  Regime thresholds (ADX=25, ATR%ile=67th, EMA 20/50) are CIATS-owned starting values</text>
+</svg>
+
+============================================================
+SVG SOURCE: Diagram 5 — CIATS Architecture: Data Flows and Improvement Cycle
+============================================================
+<svg width="860" height="680" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="860" height="680" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="860" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="430" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 5 — CIATS Architecture: Data Flows and Improvement Cycle  (dv1_6)</text>
+<rect x="10" y="44" width="840" height="74" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="58" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">LOGGER  (sole data interface to CIATS — reads only)</text>
+<rect x="16" y="66" width="410" height="46" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="221" y="80" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">★ ASYNC BOUNDED QUEUE  (NEW dv1_5 — I-5)</text>
+<text x="221" y="94" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Writes go to in-memory queue</text>
+<text x="221" y="107" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Async writer flushes to disk — NEVER blocks hot path</text>
+<rect x="434" y="66" width="408" height="46" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="638" y="80" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">Records every event: time_in/time_out ★</text>
+<text x="638" y="94" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">rate_counter_by_pair ★ | rejection codes</text>
+<text x="638" y="107" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Queue alert if full — operator notified</text>
+<line x1="430" y1="118" x2="430" y2="134" stroke="#404040" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="10" y="134" width="840" height="42" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="4"/>
+<text x="430" y="148" font-size="10" fill="#1E6B1E" font-weight="bold" text-anchor="middle">★ PARAMETER STORE SNAPSHOT  (NEW dv1_5 — I-4)</text>
+<text x="430" y="162" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">TothBot reads frozen snapshot at start of each pipeline eval — CIATS writes queued at inter-trade boundaries only</text>
+<text x="430" y="174" font-size="8.5" fill="#808080" font-weight="normal" text-anchor="middle">Prevents parameter inconsistency within a single pipeline evaluation</text>
+<rect x="20" y="186" width="405" height="26" fill="#2E75B6" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="222" y="204" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">STREAM 1 — EWMA Monitor</text>
+<rect x="440" y="186" width="405" height="26" fill="#C55A11" stroke="#C55A11" stroke-width="1" rx="4"/>
+<text x="642" y="204" font-size="10" fill="#FFFFFF" font-weight="bold" text-anchor="middle">STREAM 2 — Trade Outcome Bus</text>
+<rect x="20" y="218" width="405" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="231" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">288 candle evals/day</text>
+<rect x="20" y="240" width="405" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="253" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Valid at 50 evals (~4 hrs)</text>
+<rect x="20" y="262" width="405" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="275" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Detection within ~22 observations (~27 min)</text>
+<rect x="20" y="284" width="405" height="20" fill="#FFF2CC" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="222" y="297" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">THREE MONITORING SIGNALS:</text>
+<rect x="20" y="306" width="405" height="20" fill="#FFF2CC" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="319" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">(1) rejection_rate_by_regime  (F6)</text>
+<rect x="20" y="328" width="405" height="20" fill="#FFF2CC" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="341" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">(2) rate_counter_by_pair  ★ (A-1)</text>
+<rect x="20" y="350" width="405" height="20" fill="#FFF2CC" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="222" y="363" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">(3) ws_roundtrip_latency_ms  ★ (A-3)</text>
+<rect x="20" y="372" width="405" height="20" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="2"/>
+<text x="222" y="385" font-size="8.5" fill="#8B0000" font-weight="bold" text-anchor="middle">MONITORING ONLY — never drives param changes</text>
+<rect x="440" y="218" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="231" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">Fires on every position close</text>
+<rect x="440" y="240" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="253" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry/exit price</text>
+<rect x="440" y="262" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="275" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">hold duration | MAE reached</text>
+<rect x="440" y="284" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="297" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">fees | exit reason</text>
+<rect x="440" y="306" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="319" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">asset_regime + market_regime</text>
+<rect x="440" y="328" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="341" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">signal params at entry</text>
+<rect x="440" y="350" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="363" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">actual R:R | P/L</text>
+<rect x="440" y="372" width="405" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="2"/>
+<text x="642" y="385" font-size="8.5" fill="#404040" font-weight="normal" text-anchor="middle">→ feeds Statistical Engine</text>
+<rect x="10" y="402" width="840" height="50" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="4"/>
+<text x="430" y="416" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">STATISTICAL ENGINE</text>
+<text x="430" y="430" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Mann-Whitney U | Sharpe Ratio | Spearman Correlation | EWMA (λ=0.2) | CUSUM | Half-Kelly</text>
+<text x="430" y="444" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">50 candle evals: EWMA valid  |  20 trades: CUSUM active  |  200 trades: HARD FLOOR — inference valid — Proposal Engine activates — Half-Kelly activates  |  600 trades: per-regime</text>
+<rect x="10" y="460" width="276" height="50" fill="#EBF4FB" stroke="#1F3864" stroke-width="1" rx="3"/>
+<text x="148" y="474" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">PDCA ENGINE</text>
+<text x="148" y="488" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Plan → Do → Check → Act</text>
+<text x="148" y="502" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Applied at inter-trade boundaries only</text>
+<rect x="291" y="460" width="276" height="50" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="429" y="474" font-size="10" fill="#1E6B1E" font-weight="bold" text-anchor="middle">PROPOSAL ENGINE</text>
+<text x="429" y="488" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Active at 200+ closed trades</text>
+<text x="429" y="502" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Half-Kelly: K%=W-(1-W)/R  apply 50%</text>
+<rect x="572" y="460" width="278" height="50" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="711" y="474" font-size="10" fill="#C55A11" font-weight="bold" text-anchor="middle">REGIME LIBRARY</text>
+<text x="711" y="488" font-size="9" fill="#404040" font-weight="normal" text-anchor="middle">Per-regime P/L analysis at 600+ trades</text>
+<text x="711" y="502" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">100+ trades per bucket required</text>
+<rect x="10" y="518" width="840" height="30" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="430" y="529" font-size="10" fill="#8B0000" font-weight="bold" text-anchor="middle">PARAMETER STORE  (all CIATS-owned starting values — no ceilings — no mandatory review)</text>
+<text x="430" y="543" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">★ SACRED EXCEPTION: Net 1:1.5 R:R — HARDCODED — NOT CIATS — NEVER CHANGES</text>
+</svg>
+
+============================================================
+SVG SOURCE: Diagram 6 — Complete System: One CIATS-Owned Organism
+============================================================
+<svg width="940" height="720" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="940" height="720" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="940" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="470" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 6 — Complete System: One CIATS-Owned Organism (dv1_9)One CIATS-Owned Organism  (dv1_7)</text>
+<rect x="8" y="40" width="280" height="620" fill="#E8F4FB" stroke="#1F3864" stroke-width="1" rx="6"/>
+<text x="148" y="56" font-size="11" fill="#1F3864" font-weight="bold" text-anchor="middle">ZONE 1 — KRAKEN</text>
+<rect x="14" y="64" width="268" height="112" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="148" y="78" font-size="9" fill="#2E75B6" font-weight="bold" text-anchor="middle">Public WS v2</text>
+<text x="148" y="90" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">instrument (asset specs)</text>
+<text x="148" y="108" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">status (engine state)</text>
+<text x="148" y="126" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">ohlc(5m)  SYSTEM CLOCK</text>
+<text x="148" y="144" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">ohlc(60)  1H HTF cache  ★ NEW dv1_5</text>
+<text x="148" y="162" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">ticker (price / drawdown monitor)</text>
+<rect x="14" y="200" width="268" height="112" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="148" y="214" font-size="9" fill="#2E75B6" font-weight="bold" text-anchor="middle">Private WS v2</text>
+<text x="148" y="226" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">executions (ratecounter:true ★)</text>
+<text x="148" y="244" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">balances (real-time)</text>
+<text x="148" y="262" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">add_order ← cl_ord_id / stp_type ★</text>
+<text x="148" y="280" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">batch_add ← TP+emergSL atomic ★</text>
+<text x="148" y="298" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cancel_order ← req_id tracked ★
+<text x="148" y="316" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">amend_order ← edit_order deprecated ★ dv1_6</text>
+<text x="148" y="334" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">batch_cancel ← Full Halt procedure ★ dv1_6</text></text>
+<rect x="14" y="340" width="268" height="112" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="3"/>
+<text x="148" y="354" font-size="9" fill="#2E75B6" font-weight="bold" text-anchor="middle">REST API</text>
+<text x="148" y="366" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">GetWebSocketsToken (startup)</text>
+<text x="148" y="384" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">GetOHLCData (00:00 UTC regime ★ NEW)</text>
+<text x="148" y="402" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">GetOpenOrders (fallback)</text>
+<text x="148" y="420" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">GetAccountBalance (fallback)</text>
+<text x="148" y="438" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">CancelAllOrders (kill-switch)</text>
+<rect x="14" y="480" width="268" height="76" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="148" y="494" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">Matching Engine</text>
+<text x="148" y="506" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Resting TP limit orders</text>
+<text x="148" y="524" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Off-book emergSL stop orders</text>
+<text x="148" y="542" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">(crash protection — always active)</text>
+<rect x="14" y="590" width="268" height="26" fill="#8B0000" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="148" y="607" font-size="8" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DMS REJECTED  |  FIX CoD REJECTED  (AR-001)</text>
+<rect x="14" y="620" width="268" height="34" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="148" y="632" font-size="7.5" fill="#C55A11" font-weight="bold" text-anchor="middle">Rate Limits: 125/pair | 2.34/sec decay | 80 open orders max</text>
+<text x="148" y="645" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">add +1 | batch +(n/2) | cancel &lt;5s +8 / &lt;10s +6 / &lt;300s +1</text>
+<rect x="298" y="40" width="320" height="620" fill="#F0FFF0" stroke="#1E6B1E" stroke-width="1" rx="6"/>
+<text x="458" y="56" font-size="11" fill="#1E6B1E" font-weight="bold" text-anchor="middle">ZONE 2 — TOTHBOT</text>
+<rect x="304" y="64" width="308" height="107" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="458" y="78" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">WS Manager  (★ Dispatch Table O(1) dv1_5)</text>
+<text x="458" y="92" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">req_id pending-request registry</text>
+<text x="458" y="109" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cl_ord_id registry at dispatch time ★</text>
+<rect x="308" y="116" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="126" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">Dispatch table keyed on channel+msg type ★ NEW</text>
+<text x="458" y="143" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">fast-reconnect | maintenance 5s delay</text>
+<text x="458" y="160" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">keepalive ping ★ A-7 30s JSON ping dv1_6
+<text x="458" y="178" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">★ A-8 zombie detect 90s | A-9 balances seq gap dv1_6 | A-10 exec seq gap dv1_7</text>
+<text x="458" y="195" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">★ per-pair status cache from instrument channel dv1_6</text></text>
+<rect x="304" y="192" width="308" height="209" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="458" y="206" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Signal Pipeline  (8 Gates  ★ dv1_5)</text>
+<rect x="308" y="210" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="220" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">Snapshot: Parameter Store frozen ★ NEW I-4</text>
+<rect x="308" y="227" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="237" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">Pre-computation cache read ★ NEW I-2</text>
+<text x="458" y="254" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Gate 1: State Machine</text>
+<text x="458" y="271" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Gate 2: Liquidity Gate ★</text>
+<rect x="308" y="278" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="288" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">Gate 3: Regime Pre-Filter ★ NEW I-1</text>
+<rect x="308" y="295" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="305" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">Gate 4: 1H HTF (ohlc-60 cache) ★ NEW</text>
+<text x="458" y="322" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">SSS Signal Engine</text>
+<text x="458" y="339" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Gate 5: Selection Controller</text>
+<text x="458" y="356" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Gate 6: Regime Gate (sizing only)</text>
+<rect x="308" y="363" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="373" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">Gate 7: Risk Guard (ticker-driven ★ NEW I-7)</text>
+<text x="458" y="390" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Gate 8: Position Sizer (ATR incremental ★ I-9)</text>
+<rect x="304" y="398" width="308" height="73" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="458" y="412" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Execution Engine</text>
+<text x="458" y="426" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">add_order: limit/post_only/GTD</text>
+<text x="458" y="443" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cl_ord_id assigned at dispatch ★</text>
+<text x="458" y="460" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">stp_type:cancel_newest ★ (WS v2 underscore)</text>
+<rect x="304" y="464" width="308" height="73" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="458" y="478" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Position Mirror  (★ symbol-keyed dict O(1) dv1_5)</text>
+<text x="458" y="492" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry_fill_price | qty</text>
+<text x="458" y="509" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TP order_id | cl_ord_id | emergSL order_id</text>
+<text x="458" y="526" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">recorded at dispatch — no async gap ★</text>
+<rect x="304" y="534" width="308" height="141" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="458" y="548" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">Exit Controller  (3 layers)</text>
+<text x="458" y="562" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">L1a: signal decay/time/momentum</text>
+<text x="458" y="579" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">L1b: TP fill → cancel emergSL</text>
+<text x="458" y="596" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">L2: MAE ≥ ATR×1.5x → cancel both → sell</text>
+<rect x="308" y="603" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="613" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">★ cancel timeout fallback NEW dv1_5 I-6</text>
+<text x="458" y="630" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">★ MPP rejection handling (0511004)</text>
+<text x="458" y="647" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">L3: emergSL (crash only — NEVER normal)</text>
+<rect x="308" y="654" width="300" height="15" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="1"/>
+<text x="458" y="664" font-size="8" fill="#C55A11" font-weight="normal" text-anchor="middle">★ ticker-driven drawdown check NEW I-7</text>
+<rect x="304" y="622" width="308" height="34" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="458" y="634" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">Logger  (★ async bounded queue  NEW dv1_5 — I-5)</text>
+<text x="458" y="648" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Never blocks trading hot path | sole CIATS data interface</text>
+<rect x="628" y="40" width="304" height="620" fill="#FFF8F0" stroke="#C55A11" stroke-width="1" rx="6"/>
+<text x="780" y="56" font-size="11" fill="#C55A11" font-weight="bold" text-anchor="middle">ZONE 3 — CIATS</text>
+<rect x="634" y="64" width="292" height="107" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="78" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">EWMA Monitor (Stream 1)</text>
+<text x="780" y="92" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">288 evals/day | valid at 50 evals</text>
+<text x="780" y="109" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">(1) rejection_rate_by_regime  F6 ★</text>
+<text x="780" y="126" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">(2) rate_counter_by_pair  A-1 ★</text>
+<text x="780" y="143" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">(3) ws_roundtrip_latency_ms  A-3 ★</text>
+<text x="780" y="160" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">MONITORING ONLY — never param changes</text>
+<rect x="634" y="170" width="292" height="73" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="184" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">Trade Outcome Bus (Stream 2)</text>
+<text x="780" y="198" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">fires on every position close</text>
+<text x="780" y="215" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">symbol | R:R | P/L | exit reason</text>
+<text x="780" y="232" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">both regime tags | signal params</text>
+<rect x="634" y="244" width="292" height="56" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="258" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">Statistical Engine</text>
+<text x="780" y="272" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Mann-Whitney α=0.01 | Spearman |ρ|&gt;0.3 [dv1_6]</text>
+<text x="780" y="289" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">EWMA λ=0.2 | CUSUM k=0.5σ h=4σ [dv1_6] | Half-Kelly</text>
+<rect x="634" y="300" width="292" height="56" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="314" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">PDCA Engine</text>
+<text x="780" y="328" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Plan→Do→Check→Act</text>
+<text x="780" y="345" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">inter-trade boundaries only | min 50-trade interval [dv1_6]</text>
+<rect x="634" y="348" width="292" height="90" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="362" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">Parameter Store</text>
+<text x="780" y="376" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">★ TothBot reads frozen snapshot ★</text>
+<text x="780" y="393" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">  at each pipeline eval start  NEW dv1_5</text>
+<text x="780" y="410" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">CIATS writes at inter-trade boundary</text>
+<text x="780" y="427" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">All values CIATS-owned starting values</text>
+<rect x="634" y="426" width="292" height="73" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="440" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">Proposal Engine</text>
+<text x="780" y="454" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Active at 200+ closed trades</text>
+<text x="780" y="471" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Half-Kelly: K%=W-(1-W)/R  apply 50%</text>
+<text x="780" y="488" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Update every 50 trades thereafter</text>
+<rect x="634" y="496" width="292" height="73" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="780" y="510" font-size="9" fill="#C55A11" font-weight="bold" text-anchor="middle">Regime Library</text>
+<text x="780" y="524" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">per-regime P/L at 600+ trades</text>
+<text x="780" y="541" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">100+ trades per bucket</text>
+<text x="780" y="558" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Full corpus: zero-cost library</text>
+<rect x="8" y="666" width="924" height="48" fill="#8B0000" stroke="#8B0000" stroke-width="1" rx="4"/>
+<text x="470" y="682" font-size="11" fill="#FFFFFF" font-weight="bold" text-anchor="middle">★ SACRED CONSTRAINT — HARDCODED — NOT CIATS-OWNED — NEVER CHANGES</text>
+<text x="470" y="698" font-size="9" fill="#FFFFFF" font-weight="normal" text-anchor="middle">Net 1:1.5 R:R  |  mae_pct=ATR×1.5x/fill_price  |  net_gain=net_loss×1.5  |  gross_target=net_gain+0.16%</text>
+<text x="470" y="712" font-size="8" fill="#FFCCCC" font-weight="normal" text-anchor="middle">All calculations use ACTUAL fill price — this is why OTO conditional orders were rejected (AR-008)</text>
+<line x1="288" y1="300" x2="298" y2="300" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="293" y="294" font-size="9" fill="#2E75B6" font-weight="normal" text-anchor="middle">events/fills</text>
+<line x1="618" y1="560" x2="628" y2="430" stroke="#C55A11" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="623" y="489" font-size="9" fill="#C55A11" font-weight="normal" text-anchor="middle">Logger→CIATS</text>
+<line x1="628" y1="380" x2="618" y2="300" stroke="#C55A11" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="623" y="334" font-size="9" fill="#C55A11" font-weight="normal" text-anchor="middle">params</text>
+</svg>
+
+============================================================
+END OF CLAUDE SOURCE FILE
+============================================================

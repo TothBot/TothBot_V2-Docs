@@ -1,0 +1,242 @@
+DocDCN:     0300000
+DocTitle:   Governance
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0300000_Governance_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+GOVERNANCE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Governance Domain Document for
+TothBot V2. It defines the document control system —
+the procedural machinery that manages how all TothBot V2
+controlled documents are created, versioned, approved,
+and retired.
+
+Governance depends on AA=00 Ethics_and_Safety,
+AA=01 Management, and AA=02 Operations. All governance
+procedures operate within those constraints.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety  (Domain)
+  0100000  Management         (Domain)
+  0200000  Operations         (Domain)
+  0300000  This document      (Domain Document)
+
+  Child chain:
+    0310000  Governance_Procedures_Anchor
+    0311001  Namespace_Specification
+    0311002  Document_Creation_Workflow
+    0311003  Versioning_Procedure
+    0311004  Document_Creation_and_Approval_Procedure
+    0311005  System_Definitions_and_Terminology
+
+============================================================
+3. DOMAIN SCOPE
+============================================================
+
+This domain governs:
+
+  3.1  The namespace — how DCNs are assigned and what
+       they mean. Governed by 0311001.
+
+  3.2  The document creation sequence — the order in which
+       documents must be written and the dependencies that
+       govern that order. Governed by 0311002.
+
+  3.3  Versioning — how document versions increment,
+       what each lifecycle state means, and how transitions
+       are controlled. Governed by 0311003.
+
+  3.4  Document lifecycle — how documents move from working
+       draft to approved to retired, and who approves each
+       transition. Governed by 0311004.
+
+  3.5  System terminology — canonical definitions for all
+       terms used across TothBot V2 documents. Governed
+       by 0311005.
+
+============================================================
+4. GOVERNANCE PRINCIPLES
+============================================================
+
+------------------------------------------------------------
+GV-001  DOCUMENT CONTROL IS QUALITY INFRASTRUCTURE
+------------------------------------------------------------
+
+The document set is not administrative overhead. It is
+the institutional memory of TothBot V2. Deming's principle:
+"Institute training and education. All rules and behaviors
+must be explicitly documented. Nothing operates from
+undocumented knowledge."
+
+Every behavior of TothBot V2 — every trading rule, every
+exit condition, every risk limit, every CIATS threshold —
+must be traceable to an approved document. Undocumented
+behavior is a safety risk.
+
+------------------------------------------------------------
+GV-002  THREE-TIER HIERARCHY
+------------------------------------------------------------
+
+All documents in TothBot V2 follow a three-tier hierarchy:
+
+  Tier 1 — Domain Document (B=0, C=0, DDD=000):
+    IS the domain. Defines scope and governing principles.
+    One per domain. Must exist before all lower-tier docs.
+
+  Tier 2 — Sub-Domain Anchor (B=1-9, C=0, DDD=000):
+    Anchors a governance family to the Domain Document.
+    One per sub-domain. Must exist before instance docs.
+
+  Tier 3 — Instance Document (B=1-9, C=1, DDD=001+):
+    Elaborates a specific component or procedure.
+    Traces back through Anchor to Domain Document.
+
+  Chain: Instance → Anchor → Domain Document
+  Unbroken. Mandatory. No exceptions.
+
+------------------------------------------------------------
+GV-003  PARENT CHAIN IS NON-NEGOTIABLE
+------------------------------------------------------------
+
+No document may be committed to GitHub without its
+complete parent chain already committed. A document
+without a valid parent chain is not a controlled document.
+It is an orphan and must not be used.
+
+  Instance requires: Anchor + Domain Document exist.
+  Anchor requires: Domain Document exists.
+  Domain Document requires: nothing (self-anchoring).
+
+------------------------------------------------------------
+GV-004  BILL APPROVES — CLAUDE DOES NOT
+------------------------------------------------------------
+
+Claude creates drafts. Bill approves. This is the
+fundamental governance rule. No document transitions
+to approved (v) state without Bill's explicit action.
+No document is retired without Bill's explicit action.
+
+Claude may increment versions when making changes.
+Claude may not change lifecycle state.
+
+------------------------------------------------------------
+GV-005  VERSION CONTROL IS MANDATORY
+------------------------------------------------------------
+
+Every change to any controlled document increments the
+version. DocDate and DocTime are updated on every change.
+No change is made without a version increment. This
+creates a complete audit trail. Prior versions are
+retained by Bill as read-only reference.
+
+------------------------------------------------------------
+GV-006  GITHUB IS THE APPROVED SOURCE OF TRUTH
+------------------------------------------------------------
+
+GitHub is the authoritative repository for all approved
+(v) documents. The Claude.ai project is the working
+source of truth during active development. A document
+is not officially approved until it is committed to
+GitHub with Bill's review.
+
+Documents exist in the Claude.ai project before GitHub
+commit. This is correct. Working drafts are developed
+in the project. They reach GitHub when they reach
+approved (v) state or when their parent chain allows
+GitHub commit.
+
+------------------------------------------------------------
+GV-007  CODING READINESS STANDARD
+------------------------------------------------------------
+
+Governance ensures that every specification document
+delivered to Phase 10 coding is coding-ready. A document
+is coding-ready when Claude can read it and write correct,
+complete code without asking any questions. Every spec
+must answer five questions for every component:
+
+  (1) What does this component DO?
+  (2) What are its interfaces to other components?
+  (3) What are its hard rules?
+  (4) What triggers it and what does it trigger?
+  (5) What does it log?
+
+Documents that cannot answer all five are incomplete
+and must be completed before coding begins.
+
+============================================================
+5. DOCUMENT LIFECYCLE STATES
+============================================================
+
+  dv   Working Draft — under active development and under
+       constant review. Bill may approve directly (dv → v).
+       May be committed to project. May not be committed
+       to GitHub without explicit Bill decision.
+
+  rv   Revision Version — an approved document that requires
+       changes returns to rv state for revision. Not used
+       for initial document development. After revision,
+       Bill re-approves (rv → v).
+
+  v    Approved — Bill approved. Committed to GitHub.
+       Governs the system. Requires changes to go through
+       rv state before returning to v.
+
+  rt   Retired — superseded by newer version or no longer
+       applicable. Committed to _Archive. Read-only.
+
+All lifecycle state transitions require Bill action.
+Claude may not change lifecycle state.
+
+============================================================
+6. RELATIONSHIP TO TWO PATHWAYS
+============================================================
+
+Governance documents serve both TothBot V2 pathways:
+
+  Pathway 1 (GitHub Automation): Once coded, Pathway 1
+  will enforce document control automatically at commit
+  time. Until then, Claude enforces manually. Governance
+  documents define the rules Pathway 1 enforces.
+
+  Pathway 2 (Trading System): The specification documents
+  created in Phases 2-8 are the direct input to Pathway 2
+  code. Governance ensures they are complete, consistent,
+  and coding-ready.
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Corrected
+                     Section 5 lifecycle state descriptions:
+                     dv is under constant review (Bill may
+                     approve dv → v directly); rv is for
+                     revising approved documents only (not
+                     for initial development); GV-004
+                     updated accordingly. Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.4.
+                     Governance domain scope. Six governing
+                     principles. Three-tier hierarchy.
+                     Parent chain rule. Bill approves only.
+                     Document lifecycle states. Pathway
+                     relationship. Coding readiness standard.
+
+============================================================
+END OF DOCUMENT
+============================================================

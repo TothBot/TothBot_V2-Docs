@@ -1,0 +1,76 @@
+<svg width="820" height="600" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+  <rect width="820" height="600" fill="#fff"/>
+  <rect x="10" y="8" width="800" height="30" rx="4" fill="#1F3864"/>
+  <text x="410" y="29" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">DIAGRAM 4 — REGIME TAXONOMY: 6-Regime Grid + Two-Level Tagging</text>
+
+  <!-- Computation -->
+  <rect x="10" y="48" width="800" height="75" rx="4" fill="#E3F2FD" stroke="#1565C0" stroke-width="1.5"/>
+  <text x="410" y="68" text-anchor="middle" fill="#0D47A1" font-size="11" font-weight="bold">COMPUTATION — Daily at 00:00 UTC</text>
+  <text x="20" y="86" fill="#0D47A1" font-size="10">Directional: ADX(14) + EMA(20) vs EMA(50) on DAILY candles</text>
+  <text x="20" y="102" fill="#0D47A1" font-size="10">Volatility: ATR(14) percentile rank in 50-day rolling window</text>
+  <text x="20" y="116" fill="#0D47A1" font-size="10">Two tags per trade: asset_regime (traded asset) + market_regime (BTC/USD proxy for market context)</text>
+
+  <!-- Grid headers -->
+  <rect x="10" y="133" width="800" height="30" rx="2" fill="#37474F"/>
+  <text x="210" y="153" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">NORMAL VOL  (ATR ≤ 67th pct)</text>
+  <text x="610" y="153" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">ELEVATED VOL  (ATR &gt; 67th pct)</text>
+  <!-- Row headers -->
+  <rect x="10" y="133" width="135" height="270" rx="2" fill="#455A64"/>
+  <text x="77" y="268" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" transform="rotate(-90,77,268)">DIRECTIONAL STATE</text>
+
+  <!-- Row 1: TRENDING_POSITIVE -->
+  <rect x="145" y="163" width="330" height="70" rx="2" fill="#C8E6C9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="310" y="185" text-anchor="middle" fill="#1B5E20" font-size="11" font-weight="bold">TRENDING_POSITIVE × NORMAL_VOL</text>
+  <text x="310" y="203" text-anchor="middle" fill="#1B5E20" font-size="10">FULL POSITION — Optimal condition</text>
+  <text x="310" y="219" text-anchor="middle" fill="#1B5E20" font-size="10">ADX(14) &gt; 25 AND EMA(20) &gt; EMA(50)</text>
+  <text x="310" y="225" text-anchor="middle" fill="#1B5E20" font-size="9">1H HTF Gate required (Gate 3)</text>
+  <rect x="475" y="163" width="330" height="70" rx="2" fill="#DCEDC8" stroke="#558B2F" stroke-width="2"/>
+  <text x="640" y="185" text-anchor="middle" fill="#33691E" font-size="11" font-weight="bold">TRENDING_POSITIVE × ELEVATED_VOL</text>
+  <text x="640" y="203" text-anchor="middle" fill="#33691E" font-size="10">FULL POSITION — ATR adapts automatically</text>
+  <text x="640" y="219" text-anchor="middle" fill="#33691E" font-size="10">ATR(14) percentile &gt; 67th — stops widen</text>
+
+  <!-- Row 2: NON_DIRECTIONAL -->
+  <rect x="145" y="233" width="330" height="70" rx="2" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
+  <text x="310" y="255" text-anchor="middle" fill="#E65100" font-size="11" font-weight="bold">NON_DIRECTIONAL × NORMAL_VOL</text>
+  <text x="310" y="273" text-anchor="middle" fill="#E65100" font-size="10">50% POSITION SIZE (CIATS-owned threshold)</text>
+  <text x="310" y="289" text-anchor="middle" fill="#E65100" font-size="10">ADX(14) ≤ 25 — edge degraded</text>
+  <rect x="475" y="233" width="330" height="70" rx="2" fill="#FFCCBC" stroke="#BF360C" stroke-width="2.5"/>
+  <text x="640" y="255" text-anchor="middle" fill="#BF360C" font-size="11" font-weight="bold">NON_DIRECTIONAL × ELEVATED_VOL</text>
+  <text x="640" y="273" text-anchor="middle" fill="#BF360C" font-size="10" font-weight="bold">NO ENTRY — Gate 5 blocks</text>
+  <text x="640" y="289" text-anchor="middle" fill="#BF360C" font-size="10">High vol + no trend = no edge</text>
+
+  <!-- Row 3: TRENDING_NEGATIVE -->
+  <rect x="145" y="303" width="330" height="70" rx="2" fill="#FFCDD2" stroke="#C62828" stroke-width="2.5"/>
+  <text x="310" y="325" text-anchor="middle" fill="#C62828" font-size="11" font-weight="bold">TRENDING_NEGATIVE × NORMAL_VOL</text>
+  <text x="310" y="343" text-anchor="middle" fill="#C62828" font-size="10" font-weight="bold">NO ENTRY — Gate 5 blocks (long-only)</text>
+  <text x="310" y="359" text-anchor="middle" fill="#C62828" font-size="10">ADX(14) &gt; 25 AND EMA(20) &lt; EMA(50)</text>
+  <rect x="475" y="303" width="330" height="70" rx="2" fill="#FFCDD2" stroke="#C62828" stroke-width="2.5"/>
+  <text x="640" y="325" text-anchor="middle" fill="#C62828" font-size="11" font-weight="bold">TRENDING_NEGATIVE × ELEVATED_VOL</text>
+  <text x="640" y="343" text-anchor="middle" fill="#C62828" font-size="10" font-weight="bold">NO ENTRY — Gate 5 blocks</text>
+  <text x="640" y="359" text-anchor="middle" fill="#C62828" font-size="10">Both conditions adverse</text>
+
+  <!-- Thresholds note -->
+  <rect x="10" y="383" width="800" height="45" rx="3" fill="#FFF8E1" stroke="#F9A825" stroke-width="1"/>
+  <text x="410" y="401" text-anchor="middle" fill="#E65100" font-size="10" font-weight="bold">ALL REGIME THRESHOLDS ARE CIATS-OWNED STARTING VALUES</text>
+  <text x="410" y="417" text-anchor="middle" fill="#E65100" font-size="10">ADX 25 | ATR percentile 67th | EMA periods 20/50 | rolling window 50 days — all replaced by data after 600 trades (100+/bucket)</text>
+
+  <!-- Break-even -->
+  <rect x="10" y="438" width="390" height="55" rx="3" fill="#E8EAF6" stroke="#3949AB" stroke-width="1.5"/>
+  <text x="205" y="458" text-anchor="middle" fill="#1A237E" font-size="11" font-weight="bold">BREAK-EVEN ANALYSIS</text>
+  <text x="20" y="476" fill="#1A237E" font-size="10">Net 1:1.5 R:R requires win rate &gt; 40% to be profitable</text>
+  <text x="20" y="490" fill="#1A237E" font-size="10">NON_DIR accuracy drops to 45-50% (Market Cipher research)</text>
+
+  <!-- Accuracy evidence -->
+  <rect x="420" y="438" width="390" height="55" rx="3" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.5"/>
+  <text x="615" y="458" text-anchor="middle" fill="#4A148C" font-size="11" font-weight="bold">1H HTF EVIDENCE</text>
+  <text x="430" y="476" fill="#4A148C" font-size="10">15-20% win rate improvement with 1H confirmation (5 sources)</text>
+  <text x="430" y="490" fill="#4A148C" font-size="10">Trending: 65% accuracy → NON_DIR: 45-50% accuracy</text>
+
+  <!-- Tagging note -->
+  <rect x="10" y="503" width="800" height="40" rx="3" fill="#E0F2F1" stroke="#00695C" stroke-width="1.5"/>
+  <text x="410" y="521" text-anchor="middle" fill="#004D40" font-size="10" font-weight="bold">TWO-LEVEL TAGGING ON EVERY TRADE</text>
+  <text x="410" y="537" text-anchor="middle" fill="#004D40" font-size="10">asset_regime: regime classification of the traded asset at entry time | market_regime: BTC/USD proxy (broader market context)</text>
+
+  <rect x="685" y="568" width="125" height="22" rx="3" fill="#1F3864"/>
+  <text x="747" y="583" text-anchor="middle" fill="#fff" font-size="10">0500000 dv1_4</text>
+</svg>

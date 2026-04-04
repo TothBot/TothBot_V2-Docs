@@ -1,0 +1,172 @@
+<svg width="920" height="680" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<defs>
+  <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#404040"/>
+  </marker>
+  <marker id="arr_green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#1E6B1E"/>
+  </marker>
+  <marker id="arr_red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#8B0000"/>
+  </marker>
+  <marker id="arr_gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#FF8C00"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="920" height="680" fill="#F2F2F2" stroke="#F2F2F2" stroke-width="1" rx="0"/>
+<rect x="0" y="0" width="920" height="34" fill="#1F3864" stroke="#1F3864" stroke-width="1" rx="0"/>
+<text x="460" y="22" font-size="13" fill="#FFFFFF" font-weight="bold" text-anchor="middle">DIAGRAM 1 — Kraken API Connection Architecture  (dv1_5)</text>
+<rect x="20" y="44" width="300" height="580" fill="#E8F4FB" stroke="#2E75B6" stroke-width="1" rx="6"/>
+<text x="170" y="62" font-size="11" fill="#1F3864" font-weight="bold" text-anchor="middle">KRAKEN</text>
+<rect x="30" y="70" width="280" height="200" fill="#FFFFFF" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="170" y="86" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Public WS v2</text>
+<text x="170" y="86" font-size="8" fill="#808080" font-weight="normal" text-anchor="middle">wss://ws.kraken.com/v2</text>
+<rect x="34" y="95" width="272" height="26" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="109" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">instrument</text>
+<text x="192" y="109" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">asset specs / qty_min / price_increment</text>
+<rect x="34" y="125" width="272" height="26" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="139" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">status</text>
+<text x="192" y="139" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">engine state — gates all order dispatch</text>
+<rect x="34" y="155" width="272" height="26" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="169" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">ohlc(5m)</text>
+<text x="192" y="169" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">SYSTEM CLOCK  ★ pipeline trigger</text>
+<rect x="34" y="185" width="272" height="26" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="199" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">ohlc(60)</text>
+<text x="192" y="199" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">1H HTF cache for Gate 4  ★ NEW dv1_5</text>
+<rect x="34" y="215" width="272" height="26" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="229" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">ticker</text>
+<text x="192" y="229" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">bid/ask/last — event_trigger configurable</text>
+<rect x="30" y="278" width="280" height="170" fill="#FFFFFF" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="170" y="294" font-size="10" fill="#1F3864" font-weight="bold" text-anchor="middle">Private WS v2</text>
+<text x="170" y="304" font-size="8" fill="#808080" font-weight="normal" text-anchor="middle">wss://ws-auth.kraken.com/v2</text>
+<rect x="34" y="310" width="272" height="24" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="323" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">executions</text>
+<text x="192" y="323" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">fills/expires — ratecounter:true — snap_orders:true</text>
+<rect x="34" y="338" width="272" height="24" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="351" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">balances</text>
+<text x="192" y="351" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">real-time settlement on every fill</text>
+<rect x="34" y="366" width="272" height="24" fill="#C6EFCE" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="379" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">add_order</text>
+<text x="192" y="379" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">entry: limit / post_only / GTD / cl_ord_id / stp</text>
+<rect x="34" y="394" width="272" height="24" fill="#C6EFCE" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="407" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">batch_add</text>
+<text x="192" y="407" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">TP+emergSL atomic — cl_ord_id / stp_type</text>
+<rect x="34" y="422" width="272" height="24" fill="#C6EFCE" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="90" y="435" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">cancel_order</text>
+<text x="192" y="435" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">exit leg cleanup — req_id tracked</text>
+<rect x="30" y="456" width="280" height="130" fill="#FFFFFF" stroke="#2E75B6" stroke-width="1" rx="4"/>
+<text x="170" y="472" font-size="9" fill="#1F3864" font-weight="bold" text-anchor="middle">REST API (startup + emergency + daily regime)</text>
+<rect x="34" y="480" width="272" height="18" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="491" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetWebSocketsToken</text>
+<text x="220" y="491" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">startup + every reconnect</text>
+<rect x="34" y="500" width="272" height="18" fill="#FFF2CC" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="511" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetOHLCData</text>
+<text x="220" y="511" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">daily regime  00:00 UTC  ★ NEW dv1_5</text>
+<rect x="34" y="520" width="272" height="18" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="531" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetOpenOrders</text>
+<text x="220" y="531" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">restart reconcile fallback only</text>
+<rect x="34" y="540" width="272" height="18" fill="#EBF4FB" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="551" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">GetAccountBalance</text>
+<text x="220" y="551" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">restart reconcile fallback only</text>
+<rect x="34" y="560" width="272" height="18" fill="#FFD7D7" stroke="#CCCCCC" stroke-width="1" rx="2"/>
+<text x="120" y="571" font-size="8" fill="#1F3864" font-weight="bold" text-anchor="middle">CancelAllOrders</text>
+<text x="220" y="571" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">kill-switch emergency only</text>
+<rect x="30" y="594" width="280" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="170" y="611" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">Matching Engine: resting TP + off-book emergSL  (crash protection)</text>
+<rect x="340" y="44" width="280" height="580" fill="#F0FFF0" stroke="#1E6B1E" stroke-width="1" rx="6"/>
+<text x="480" y="62" font-size="11" fill="#1E6B1E" font-weight="bold" text-anchor="middle">TOTHBOT</text>
+<rect x="350" y="70" width="260" height="50" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="81" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">WS Manager</text>
+<text x="480" y="92" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">req_id registry | cl_ord_id registry</text>
+<text x="480" y="103" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Dispatch Table O(1)  ★ NEW dv1_5</text>
+<text x="480" y="114" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">fast-reconnect / maint 5s delay</text>
+<rect x="350" y="128" width="260" height="44" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="136" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Signal Pipeline</text>
+<text x="480" y="147" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">8-Gate evaluation | Regime Pre-Filter ★</text>
+<text x="480" y="158" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Pre-computation Cache  ★ NEW dv1_5</text>
+<text x="480" y="169" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">ATR incremental  ★ NEW dv1_5</text>
+<rect x="350" y="180" width="260" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="192" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Position Mirror  (symbol-keyed dict O(1)  ★ NEW dv1_5)</text>
+<text x="480" y="203" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry | qty | TP id | cl_ord_id | emergSL id</text>
+<rect x="350" y="218" width="260" height="30" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="230" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Exit Controller  (Layer 1 / 2 / 3)</text>
+<text x="480" y="241" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">cancel timeout fallback  ★ NEW dv1_5  |  ticker-driven drawdown ★</text>
+<rect x="350" y="256" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="269" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Regime Engine  (daily 00:00 UTC via REST GetOHLCData  ★ NEW)  </text>
+<rect x="350" y="286" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="299" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Position Sizer  (ATR×1.5x MAE | ATR×3.0x emergSL — incremental ★)</text>
+<rect x="350" y="316" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="329" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Risk Guard  (drawdown / concentration / exposure)</text>
+<rect x="350" y="346" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="359" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Logger  (async bounded queue  ★ NEW dv1_5 — never blocks hot path)</text>
+<rect x="350" y="376" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="389" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Parameter Store  (CIATS writes | TothBot reads snapshot  ★ NEW)</text>
+<rect x="350" y="406" width="260" height="22" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="419" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Balance Mirror  (real-time on every settlement event)</text>
+<rect x="350" y="436" width="260" height="120" fill="#FFFFFF" stroke="#1E6B1E" stroke-width="1" rx="3"/>
+<text x="480" y="450" font-size="9" fill="#1E6B1E" font-weight="bold" text-anchor="middle">API Key Pairs</text>
+<rect x="356" y="456" width="120" height="20" fill="#EBF4FB" stroke="#2E75B6" stroke-width="1" rx="2"/>
+<text x="416" y="468" font-size="8" fill="#1F3864" font-weight="normal" text-anchor="middle">DATA key  (market data)</text>
+<rect x="482" y="456" width="124" height="20" fill="#C6EFCE" stroke="#1E6B1E" stroke-width="1" rx="2"/>
+<text x="544" y="468" font-size="8" fill="#1E6B1E" font-weight="normal" text-anchor="middle">TRADE key  (orders+auth)</text>
+<text x="480" y="490" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Nonce window: 10,000ms on both</text>
+<text x="480" y="504" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Cloudflare: 150 reconnects/10min/IP</text>
+<text x="480" y="518" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Random drop: instant reconnect</text>
+<text x="480" y="532" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Maintenance: 5s minimum delay</text>
+<text x="480" y="546" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Keepalive ping required (~60s)</text>
+<rect x="350" y="564" width="260" height="56" fill="#FFF2CC" stroke="#FF8C00" stroke-width="1" rx="3"/>
+<text x="480" y="576" font-size="8" fill="#C55A11" font-weight="bold" text-anchor="middle">Rate Limits — Intermediate Tier</text>
+<text x="480" y="589" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">Threshold 125/pair | Decay 2.34/sec | Max 80 open orders/pair</text>
+<text x="480" y="601" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">add_order +1 | batch_add +(n/2) | cancel &lt;5s +8 / &lt;10s +6 / &lt;300s +1</text>
+<text x="480" y="613" font-size="7.5" fill="#404040" font-weight="normal" text-anchor="middle">ratecounter:true → CIATS EWMA monitoring signal</text>
+<rect x="350" y="626" width="260" height="24" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="480" y="642" font-size="7.5" fill="#8B0000" font-weight="bold" text-anchor="middle">DMS (cancel_all_orders_after) REJECTED  |  FIX CoD REJECTED  (AR-001)</text>
+<rect x="640" y="44" width="260" height="580" fill="#FFF8F0" stroke="#C55A11" stroke-width="1" rx="6"/>
+<text x="770" y="62" font-size="11" fill="#C55A11" font-weight="bold" text-anchor="middle">CIATS</text>
+<rect x="650" y="70" width="240" height="30" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="82" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Stream 1: EWMA Monitor (288 candles/day)</text>
+<text x="770" y="93" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">rejection_rate_by_regime | rate_counter_by_pair | ws_roundtrip_latency_ms</text>
+<rect x="650" y="108" width="240" height="25" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="117" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Stream 2: Trade Outcome Bus (on every close)</text>
+<text x="770" y="128" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">symbol | entry/exit | MAE | fees | exit reason | R:R | P/L</text>
+<rect x="650" y="141" width="240" height="25" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="150" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Statistical Engine</text>
+<text x="770" y="161" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Mann-Whitney U | Sharpe | Spearman | EWMA | CUSUM | Half-Kelly</text>
+<rect x="650" y="174" width="240" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="186" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">PDCA Engine — inter-trade boundaries only</text>
+<rect x="650" y="202" width="240" height="55" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="210" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Parameter Store (all CIATS-owned values)</text>
+<text x="770" y="221" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">tradeable_pct | per_trade_pct | mae_mult</text>
+<text x="770" y="232" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">emergency_sl_mult | adx_threshold</text>
+<text x="770" y="243" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">atr_percentile_thresh | htf_ema_periods</text>
+<text x="770" y="254" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">min_volume_usd_daily | signal_thresholds</text>
+<rect x="650" y="265" width="240" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="277" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Proposal Engine (active at 200+ closed trades)</text>
+<rect x="650" y="293" width="240" height="30" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="305" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Regime Library (two-level tagging)</text>
+<text x="770" y="316" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">asset_regime + market_regime (BTC proxy)</text>
+<rect x="650" y="331" width="240" height="25" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="340" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Statistical Thresholds</text>
+<text x="770" y="351" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">50 evals: EWMA valid | 200 trades: HARD FLOOR | 600: per-regime</text>
+<rect x="650" y="364" width="240" height="20" fill="#FFF2CC" stroke="#C55A11" stroke-width="1" rx="3"/>
+<text x="770" y="376" font-size="8" fill="#404040" font-weight="normal" text-anchor="middle">Half-Kelly: K%=W-(1-W)/R  apply 50%  at 200 trades</text>
+<rect x="650" y="470" width="240" height="30" fill="#FFD7D7" stroke="#8B0000" stroke-width="1" rx="3"/>
+<text x="770" y="480" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">★ SACRED CONSTRAINT</text>
+<text x="770" y="493" font-size="8" fill="#8B0000" font-weight="bold" text-anchor="middle">Net 1:1.5 R:R — HARDCODED — NOT CIATS-OWNED</text>
+<rect x="650" y="508" width="240" height="110" fill="#F2F2F2" stroke="#808080" stroke-width="1" rx="3"/>
+<text x="770" y="522" font-size="9" fill="#8B0000" font-weight="bold" text-anchor="middle">NOT USED / REJECTED</text>
+<text x="770" y="538" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">DMS (cancel_all_orders_after) — destroys crash prot</text>
+<text x="770" y="554" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">FIX cancel-on-disconnect — same conflict (AR-001)</text>
+<text x="770" y="570" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">OTO conditional orders — uses limit price not fill</text>
+<text x="770" y="586" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">   → violates sacred R:R (AR-008)</text>
+<text x="770" y="602" font-size="7.5" fill="#8B0000" font-weight="normal" text-anchor="middle">Fixed stops — ATR-adaptive confirmed superior</text>
+<line x1="320" y1="83" x2="350" y2="83" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="140" x2="350" y2="140" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="178" x2="350" y2="178" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="268" x2="350" y2="268" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="290" x2="350" y2="290" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="310" x2="350" y2="310" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="320" y1="330" x2="350" y2="330" stroke="#2E75B6" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="610" y1="360" x2="650" y2="360" stroke="#C55A11" stroke-width="1.5" marker-end="url(#arr_gold)"/>
+<line x1="650" y1="220" x2="610" y2="390" stroke="#C55A11" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr_gold)"/>
+</svg>

@@ -1,0 +1,288 @@
+DocDCN:     0200000
+DocTitle:   Operations
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0200000_Operations_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+OPERATIONS
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Operations Domain Document for
+TothBot V2.
+
+In TothBot V2, Operations is not a procedural domain
+describing how to run the system. Operations IS the
+system's quality mechanism, continuous improvement engine,
+and CIATS implementation — unified into one domain.
+
+This reflects Deming's core principle: quality is not
+inspected in. It is not audited in. It is built into
+the operating system itself. The way TothBot V2 operates
+and the way it continuously improves are not two separate
+things. They are one thing.
+
+Operations = Quality = CIATS.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety  (Domain)
+  0100000  Management         (Domain)
+  0200000  This document      (Domain Document)
+
+  Child chain (depends on this document):
+    0200000 instance documents (0211001 etc.)
+    0300000 Governance and all higher AA domains
+
+============================================================
+3. DOMAIN SCOPE
+============================================================
+
+This domain governs:
+
+  3.1  CIATS — the Continuous Improvement and Autonomous
+       Trading System. Its data inputs, statistical engine,
+       improvement cycle, and parameter ownership model.
+
+  3.2  Quality standard — what constitutes correct system
+       behavior and how quality is measured, not inspected.
+
+  3.3  PDCA cycle — the Plan-Do-Check-Act improvement cycle
+       that governs all parameter changes.
+
+  3.4  Parameter ownership — all system parameters are
+       CIATS-owned starting values, with the sole exception
+       of the hardcoded net 1:1.5 R:R.
+
+  3.5  Operational procedures — startup, shutdown,
+       monitoring, incident response, and reconciliation.
+
+  3.6  Statistical thresholds — the data floors below which
+       no inference and no parameter change is valid.
+
+============================================================
+4. OPERATIONS = QUALITY = CIATS
+============================================================
+
+------------------------------------------------------------
+OP-001  THE UNIFIED PRINCIPLE
+------------------------------------------------------------
+
+Three concepts that appear separate are one thing in
+TothBot V2:
+
+  OPERATIONS:   How TothBot V2 runs 24/7.
+  QUALITY:      How TothBot V2 meets its mission.
+  CIATS:        How TothBot V2 continuously improves.
+
+They are unified because: a system that runs without
+improving is not meeting its quality mission. A system
+that improves without operating is not real. A quality
+standard that is not built into daily operation is
+aspirational, not functional.
+
+Deming's principle made concrete: Operations is the
+quality mechanism. CIATS is the improvement engine built
+into operations. They are inseparable.
+
+------------------------------------------------------------
+OP-002  QUALITY IS BUILT IN
+------------------------------------------------------------
+
+TothBot V2 does not inspect quality in after the fact.
+Quality is built into every process at the point of
+execution:
+
+  - A non-compliant signal cannot generate an entry.
+  - An entry without verified R:R cannot be dispatched.
+  - A parameter change without statistical support
+    cannot be proposed by CIATS.
+  - A proposal without Bill approval cannot be applied.
+
+Defects are blocked at the source. This is Deming.
+
+------------------------------------------------------------
+OP-003  CIATS AS OPERATIONS
+------------------------------------------------------------
+
+CIATS is not a separate system watching TothBot. CIATS
+IS TothBot's operating intelligence. It reads TothBot's
+Logger — the sole source of truth — and continuously
+improves TothBot's parameters.
+
+CIATS never blocks the trading hot path. It operates
+fully asynchronously. It reads only. It writes only to
+the Parameter Store at inter-trade boundaries.
+
+CIATS does not trade. CIATS improves the system that trades.
+
+============================================================
+5. PDCA CYCLE
+============================================================
+
+------------------------------------------------------------
+OP-004  PLAN-DO-CHECK-ACT GOVERNS ALL IMPROVEMENT
+------------------------------------------------------------
+
+Every parameter change in TothBot V2 follows the PDCA
+cycle without exception:
+
+  PLAN:   CIATS identifies a parameter candidate for change
+          based on statistical evidence from trade outcomes.
+          Generates a formal proposal with supporting data.
+          Statistical significance: Mann-Whitney U p<0.01.
+
+  DO:     Proposed change runs in paper trading or a limited
+          live tranche as defined by Bill.
+
+  CHECK:  Statistical validation of the change outcome.
+          Minimum 50 trades between any two parameter changes.
+          Results compared to baseline using Mann-Whitney U.
+
+  ACT:    If validated: parameter applied to Parameter Store
+          with Bill approval. If not validated: proposal
+          rejected, baseline maintained, findings logged.
+
+No parameter change skips any step of this cycle.
+
+------------------------------------------------------------
+OP-005  MINIMUM STATISTICAL FLOOR
+------------------------------------------------------------
+
+CIATS operates in three modes defined by trade count:
+
+  0–49 trades:        System inactive (no monitoring).
+  50–199 trades:      EWMA Monitor valid (monitoring only).
+                      No inference. No proposals. No changes.
+  200+ trades:        HARD FLOOR for all inference.
+                      Proposal Engine activates.
+                      Half-Kelly position sizing activates.
+  600+ trades:        Per-regime optimization valid.
+                      100+ trades per regime bucket required.
+
+The 200-trade floor is absolute. CIATS does not propose
+parameter changes below 200 closed trades regardless of
+what the data appears to show. Insufficient data produces
+false signals. False signals produce worse outcomes.
+
+------------------------------------------------------------
+OP-006  PARAMETER OWNERSHIP
+------------------------------------------------------------
+
+All trading parameters are CIATS-owned starting values.
+They are not permanent. They are not sacred. They are
+starting points subject to data-driven replacement by CIATS
+through the PDCA cycle.
+
+The sole exception:
+
+  Net 1:1.5 R:R — HARDCODED — NEVER CIATS — NEVER CHANGES.
+
+This is inherited from AA=00 ES-001. CIATS has no
+authority over this value. It is enforced in code.
+CIATS operates entirely within the R:R constraint.
+
+Complete parameter registry: Section 9 of 0500000.
+
+============================================================
+6. CIATS ARCHITECTURE REFERENCE
+============================================================
+
+------------------------------------------------------------
+OP-007  CIATS DATA FLOW
+------------------------------------------------------------
+
+CIATS has exactly two interfaces:
+
+  INPUT:   Logger (sole data source — read only)
+  OUTPUT:  Parameter Store (sole output — write only)
+
+CIATS reads no other source. CIATS writes to no other
+destination. This isolation is an architectural safety
+principle: CIATS cannot affect live trading except through
+the Parameter Store, and Parameter Store writes happen only
+at inter-trade boundaries with Bill approval.
+
+------------------------------------------------------------
+OP-008  TWO DATA STREAMS
+------------------------------------------------------------
+
+Stream 1 — EWMA Monitor (continuous, monitoring only):
+  288 candle evaluations per day.
+  Valid after 50 candle evaluations (~4 hours).
+  Three monitoring signals:
+    (1) rejection_rate_by_regime
+    (2) rate_counter_by_pair
+    (3) ws_roundtrip_latency_ms
+  MONITORING ONLY. Never drives parameter changes.
+  Early warning stream.
+
+Stream 2 — Trade Outcome Bus (per closed position):
+  Fires on every position close.
+  Captures: symbol, entry/exit price, hold duration,
+  MAE reached, fees, exit reason, both regime tags,
+  signal parameters at entry, actual R:R, P/L.
+  Feeds the Statistical Engine.
+  Foundation of all CIATS inference and proposals.
+
+------------------------------------------------------------
+OP-009  STATISTICAL METHODS
+------------------------------------------------------------
+
+All CIATS decisions are data-driven. Methods used:
+
+  Mann-Whitney U:     α=0.01 (one-sided). 99% confidence
+                      required for all parameter decisions.
+                      Heavy crypto tails require tighter
+                      threshold than standard α=0.05.
+  Spearman:           |ρ|>0.3 AND p<0.05 (both required).
+  CUSUM:              k=0.5σ, h=4σ. Starting values.
+  EWMA:               λ=0.2. Half-life 3.1 evals.
+  Kelly Criterion:    Half-Kelly at 200 trades.
+                      K%=W-(1-W)/R, apply 50%.
+                      Update every 50 trades thereafter.
+
+Numbers govern. Narratives do not. If the data does not
+support a change at p<0.01, the change is not made.
+
+============================================================
+7. OPERATIONAL PROCEDURES (TBD IN INSTANCE DOCUMENTS)
+============================================================
+
+Full operational procedures are defined in instance
+documents under the 0210000 Operations_Procedures_Anchor:
+
+  0211001  CIATS_Specification
+  0211002  Operations_Infrastructure_Spec
+  0211003  Startup_Shutdown_Procedure
+  0211004  Incident_Response_Procedure
+  0211005  Paper_Trading_Operations_Procedure
+
+These documents are created in Phase 3 per 0311002.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.3.
+                     Operations = Quality = CIATS principle.
+                     PDCA cycle. Statistical thresholds.
+                     Parameter ownership. CIATS data flow.
+                     Two data streams. Statistical methods.
+                     Instance document placeholders noted.
+
+============================================================
+END OF DOCUMENT
+============================================================

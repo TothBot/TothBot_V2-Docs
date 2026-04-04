@@ -1,0 +1,294 @@
+DocDCN:     0000000
+DocTitle:   Ethics_and_Safety
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/00XXXXX_Ethics_and_Safety/0000000_Ethics_and_Safety_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+ETHICS AND SAFETY
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Ethics and Safety Domain Document for
+TothBot V2. It defines the ethical constraints and safety
+principles that govern the entire system — including all
+code, all decisions, all documents, all parameters, and
+all operator actions.
+
+No domain, no document, no architectural decision, no
+code, and no parameter value can override an ethics or
+safety principle defined here. This document constrains
+everything that follows it.
+
+AA=00 Ethics_and_Safety has no dependencies. It is the
+foundation upon which all other domains rest.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  This document (Domain Document — no parent)
+
+  Child chain (depends on this document):
+    0100000  Management
+    0200000  Operations
+    0300000  Governance
+    All higher AA domain documents
+
+============================================================
+3. DOMAIN SCOPE
+============================================================
+
+This domain governs:
+
+  3.1  Financial safety — rules that prevent catastrophic
+       loss, protect trading capital, and ensure the system
+       cannot operate beyond defined risk boundaries.
+
+  3.2  Operational safety — rules that ensure the system
+       operates reliably, fails safely, and never enters
+       an undefined or unrecoverable state.
+
+  3.3  Data integrity — rules that ensure all system
+       records, logs, and audit trails are accurate,
+       complete, and tamper-resistant.
+
+  3.4  Operator ethics — rules governing Bill's conduct
+       as the sole operator of a fully automated system.
+
+  3.5  System honesty — the system must accurately report
+       its own state. No condition is suppressed to avoid
+       triggering an alert or breaching a threshold.
+
+============================================================
+4. ETHICS AND SAFETY PRINCIPLES
+============================================================
+
+------------------------------------------------------------
+ES-001  THE SACRED CONSTRAINT — NET 1:1.5 R:R
+------------------------------------------------------------
+
+The net 1:1.5 Risk:Reward ratio is the single hardcoded
+constraint in TothBot V2. It is not a parameter. It is
+not owned by CIATS. It cannot be changed. It cannot be
+overridden by any document, any code, any parameter update,
+or any operator instruction.
+
+Every trade must target net profit = net loss × 1.5.
+All calculations use actual fill price, not limit price.
+
+This constraint exists because: trading without a minimum
+positive expected value is gambling, not trading. The
+1:1.5 R:R ensures that a strategy with a win rate above
+40% is profitable. This floor is the ethical minimum for
+running an automated trading system with real capital.
+
+------------------------------------------------------------
+ES-002  CAPITAL PROTECTION IS THE PRIMARY MISSION
+------------------------------------------------------------
+
+The primary mission of TothBot V2 is to maximize profit
+and minimize loss — with an explicit emphasis on minimizing
+loss. Loss prevention takes priority over profit generation.
+Every architectural decision, every parameter value, and
+every operational procedure must be evaluated through this
+lens.
+
+A system that loses capital is a system that has failed
+its primary mission regardless of how many profitable
+trades it generates.
+
+------------------------------------------------------------
+ES-003  NO UNDOCUMENTED BEHAVIOR
+------------------------------------------------------------
+
+TothBot V2 must not execute any action that is not
+explicitly governed by a specification document. Undefined
+behavior is safety-critical in an automated trading system.
+If TothBot encounters a condition not covered by
+specification:
+
+  (a) The system halts that operation.
+  (b) The system logs the undefined condition.
+  (c) The system alerts the operator.
+  (d) The system waits for operator instruction.
+
+The system never assumes, never guesses, and never proceeds
+on undefined ground.
+
+------------------------------------------------------------
+ES-004  THE SYSTEM MUST SURFACE PROBLEMS
+------------------------------------------------------------
+
+Deming principle: Drive out fear. Create a system that
+can report problems without penalty.
+
+TothBot V2 must surface every problem immediately and
+completely. Alerts, halt conditions, error logs, and
+exception events are not failures — they are the system
+working correctly. No condition may be suppressed to
+avoid triggering an alert, breaching a threshold, or
+notifying the operator.
+
+A system that hides problems to appear healthy is more
+dangerous than a system that fails visibly.
+
+------------------------------------------------------------
+ES-005  OPERATOR ACCOUNTABILITY
+------------------------------------------------------------
+
+Bill is the sole operator of TothBot V2. As the sole
+operator of a fully automated system trading real capital:
+
+  (a) Bill reviews and approves all specification documents
+      before they govern the system.
+  (b) Bill reviews and approves all parameter changes
+      before they are applied.
+  (c) Bill is accountable for all system behavior.
+  (d) Bill may halt the system at any time for any reason.
+  (e) Bill may never override the sacred R:R constraint
+      (ES-001) by any means.
+
+No document, no code, and no CIATS recommendation can
+substitute for Bill's approval of specification changes.
+Claude does not self-approve documents. CIATS does not
+self-approve parameter changes. Bill approves.
+
+------------------------------------------------------------
+ES-006  EMERGENCY HALT AUTHORITY
+------------------------------------------------------------
+
+Bill retains unconditional authority to halt TothBot V2
+at any time. The system must implement:
+
+  (a) A manual kill switch accessible to Bill at all times:
+      REST CancelAllOrders — kills all open orders instantly.
+  (b) Automatic circuit breakers:
+      Full halt at 10% portfolio drawdown (CIATS-owned).
+      Session pause at 5% portfolio drawdown (CIATS-owned).
+  (c) The kill switch and circuit breakers operate
+      independently. Neither can disable the other.
+
+------------------------------------------------------------
+ES-007  CRASH PROTECTION IS NON-NEGOTIABLE
+------------------------------------------------------------
+
+Open positions on Kraken must be protected against system
+failure at all times. The architecture's crash protection
+mechanism — resting TP limit orders and off-book emergency
+SL stop-market orders on Kraken's matching engine — must
+never be disabled, bypassed, or replaced.
+
+The emergency SL must never be cancelled unless TothBot
+is actively managing the exit through the Exit Controller.
+Any mechanism that removes crash protection (Dead Man
+Switch, FIX cancel-on-disconnect) is prohibited.
+
+------------------------------------------------------------
+ES-008  DATA ACCURACY — NO FALSE RECORDS
+------------------------------------------------------------
+
+The Logger is the system's sole source of truth. All
+records must be accurate. Exit reasons, fill prices, R:R
+actuals, and parameter values at trade time must be
+recorded truthfully. Log entries must never be deleted,
+altered, or suppressed. CIATS depends on accurate records
+to make correct improvement decisions. False records
+corrupt the improvement engine and lead to worse outcomes.
+
+------------------------------------------------------------
+ES-009  AUTOMATION BOUNDARIES
+------------------------------------------------------------
+
+TothBot V2 is an automated system. CIATS may propose
+parameter changes. CIATS may not implement parameter
+changes without Bill's approval. The boundary between
+autonomous operation and operator oversight is defined by:
+
+  AUTONOMOUS (no Bill approval needed):
+    - Signal generation and trade execution within
+      approved specification parameters.
+    - CIATS monitoring and analysis.
+    - CIATS generating proposals.
+    - Automatic circuit breaker activation.
+    - Emergency halt triggering.
+    - Alert generation and delivery.
+
+  REQUIRES BILL APPROVAL:
+    - Any parameter change proposed by CIATS.
+    - Any change to specification documents.
+    - Any change to risk rules.
+    - Any change to the R:R constraint (prohibited).
+
+------------------------------------------------------------
+ES-010  SINGLE OPERATOR RULE
+------------------------------------------------------------
+
+TothBot V2 is designed for a single operator. Bill is
+the sole operator. No other person may access the API
+keys, modify the system, or instruct TothBot to take
+actions. This is both an operational and ethical rule:
+with automated capital management, accountability must
+be singular and unambiguous.
+
+============================================================
+5. SAFETY RULES — HARD CONSTRAINTS
+============================================================
+
+These rules are absolute. No document, no code, no
+operator instruction can override them.
+
+HR-ES-001  Net 1:1.5 R:R is hardcoded. Never changes.
+HR-ES-002  Emergency SL crash protection is always active
+           on open positions. Never disabled.
+HR-ES-003  Kill switch (CancelAllOrders) always functional.
+HR-ES-004  Circuit breakers always active and functional.
+HR-ES-005  Logger records are never deleted or altered.
+HR-ES-006  Undefined system states trigger halt + alert.
+HR-ES-007  CIATS proposals require Bill approval before
+           implementation.
+HR-ES-008  API keys are restricted to VPS IP. No exceptions.
+HR-ES-009  No market sell is ever issued with ambiguous
+           order state. Cancel confirmation required first.
+HR-ES-010  TothBot never trades on paper in live mode or
+           trades live in paper mode. Modes are distinct.
+
+============================================================
+6. RELATIONSHIP TO OTHER DOMAINS
+============================================================
+
+  AA=01 Management:    Implements ES-005 (operator accountability)
+                       and ES-006 (halt authority).
+  AA=02 Operations:    Implements ES-004 (surface problems),
+                       ES-008 (data accuracy), ES-009 (automation
+                       boundaries via CIATS PDCA governance).
+  AA=03 Governance:    Implements ES-003 (no undocumented behavior)
+                       through document control procedures.
+  AA=04–AA=08:         All system domains operate within the
+                       constraints defined in this document.
+  AA=10 Coding:        All code must implement the safety rules
+                       in Section 5. Unit tests verify HR-ES-001
+                       through HR-ES-010.
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.1.
+                     10 ethics and safety principles.
+                     10 hard safety rules (HR-ES-001/010).
+                     Domain scope defined. Relationship to
+                     all downstream domains established.
+
+============================================================
+END OF DOCUMENT
+============================================================

@@ -1,0 +1,402 @@
+DocDCN:     0411001
+DocTitle:   Kraken_WS_v2_Specification
+DocVersion: dv1_10
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/04XXXXX_Exchange_Interface/0411001_Kraken_WS_v2_Specification_dv1_10.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+KRAKEN WS V2 SPECIFICATION
+============================================================
+
+STATUS: Working Draft — Placeholder
+Updated from dv1_8 per tenth 10-search FP/DP validation
+session (TB00019, 2026-03-26 Pass 2).
+
+New sections added (dv1_9 accumulated):
+  3.44  amended exec_type handling
+        (AR-057, NEW dv1_9 CRITICAL)
+  3.45  last_qty and last_price in trade events
+        (AR-061, NEW dv1_9)
+  3.46  connection_id from status channel
+        (AR-064, NEW dv1_9)
+  3.47  TP order partial fill handling
+        (AR-066, NEW dv1_9 CRITICAL)
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document specifies all verified connection endpoints,
+subscription channels, message formats, rate limits, and
+operational rules for Kraken WebSocket API v2 and REST API
+as used by TothBot V2. Verified across 3 independent
+analysis passes (15+ sources), 2 deep validation sessions
+(144+ sources), and 10 sequential 10-search FP/DP
+validation sessions (TB00006 through TB00019).
+Total: 430+ unique sources.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0400000  Exchange_Interface           (TBD Phase 2)
+  0410000  Exchange_Interface_Anchor    (TBD Phase 2)
+  0411001  This document
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1-3.43 [All prior sections dv1_8 carry forward unchanged]
+------------------------------------------------------------
+
+See dv1_8 for complete text of Sections 3.1 through 3.43.
+All rules remain authoritative unless updated below.
+
+KEY RULES SUMMARY CARRY FORWARD (from dv1_8):
+  WS-INST-008  Complete pair status list (all 8 states)
+  WS-INST-009  cancel_only = NO-ENTRY
+  WS-INST-010  maintenance (pair) = NO-ENTRY
+  WS-INST-011  post_only pair + open position handling
+  WS-EXIT-001  Pair status change during open position
+  WS-EXIT-002  WS Manager monitors status for open pairs
+  WS-EXIT-003  Exit strategy by pair status
+  WS-EXIT-004  IOC limit exit for limit_only/post_only
+  WS-EXIT-005  HOLD procedure for cancel_only/maintenance
+  WS-CAN-001   cancel_order = individual responses (MAE)
+  WS-CAN-002   NEVER batch_cancel for MAE exit
+  WS-CAN-004   batch_cancel for Full Halt
+  WS-OHLC-001  interval_begin for candle detection
+  WS-OHLC-002  Candle-close via interval_begin change
+  WS-EMSL-001  emergSL triggers.reference = "last" MANDATORY
+  WS-EMSL-002  emergSL batch_add template with triggers
+  WS-BAL-001   spot/main wallet only — CRITICAL
+  WS-BAL-002   Snapshot and update parsing patterns
+  WS-DMS-001   cancel_all_orders_after PROHIBITED
+
+------------------------------------------------------------
+3.44 amended EXEC_TYPE HANDLING [NEW dv1_9 AR-057]
+------------------------------------------------------------
+
+WS-AMEND-001  ★ NEW dv1_9 CRITICAL (AR-057):
+              The complete exec_type list from Kraken
+              executions channel WS v2 is:
+                pending_new, new, trade, filled,
+                iceberg_refill, canceled, expired,
+                amended, restated, status
+              That is 10 exec_types total.
+
+              The amended exec_type was NOT in the prior
+              dispatch table (WM-DISP-023 dv1_9). This
+              gap is now closed.
+
+WS-AMEND-002  ★ WHAT amended MEANS:
+              "There is a user-initiated amend on the order,
+              i.e. limit price change." (Kraken API docs)
+
+              This is DISTINCT from restated:
+                amended: user-initiated via amend_order
+                restated: engine-initiated (maintenance)
+
+WS-AMEND-003  ★ TOTHBOT V1 BEHAVIOR:
+              TothBot V1 does NOT use amend_order for any
+              of its own orders. All TothBot orders are
+              set-and-forget (entry GTD, TP resting limit,
+              emergSL resting stop). TothBot does not
+              amend any of them in V1.
+
+              Therefore, any amended exec_type event is:
+              (a) Operator manual amend via Kraken web UI
+                  (should never happen in production)
+              (b) A future bug in TothBot code
+
+              HANDLING:
+                if exec_type == "amended":
+                    log(UNEXPECTED_ORDER_AMENDED,
+                        order_id=msg["order_id"],
+                        cl_ord_id=msg.get("cl_ord_id"),
+                        new_limit_price=msg.get("limit_price"),
+                        new_qty=msg.get("order_qty"),
+                        level=CRITICAL)
+                    alert(PRIORITY_HIGH,
+                        "Unexpected order amendment detected")
+                    # If the amended order is a TP or emergSL:
+                    # The sacred R:R may have been violated.
+                    # Do NOT auto-correct. Alert operator.
+                    # Bill must review and decide.
+
+DECISION RATIONALE (WS-AMEND-001 through WS-AMEND-003):
+  TB00019 Search 1-2 confirmed from Kraken API docs that
+  amended is a valid exec_type that must be in the dispatch
+  table per AR-023 ("all 10 exec_type values handled
+  explicitly"). TothBot V1 never sends amend_order, so
+  any amended event is unexpected. CRITICAL alert protects
+  the sacred R:R — if a TP or emergSL was manually amended,
+  the trade may no longer satisfy 1:1.5 net R:R.
+
+------------------------------------------------------------
+3.45 EXECUTIONS last_qty AND last_price FIELDS [NEW dv1_9]
+------------------------------------------------------------
+
+WS-EXE-020  ★ NEW dv1_9 (AR-061): Kraken added last_qty
+            and last_price fields to executions channel
+            exec_type=trade events:
+              last_qty: quantity executed in THIS specific
+                fill (float → Decimal(str()) on receipt)
+              last_price: price of THIS specific fill
+                (float → Decimal(str()) on receipt)
+
+WS-EXE-021  ★ DISTINCTION FROM CUMULATIVE FIELDS:
+            The existing cumulative fields:
+              cum_qty: total quantity filled so far (all
+                fills up to and including this one)
+              avg_price: average price across all fills
+            are for Position Mirror and sizing.
+
+            The new fill-level fields:
+              last_qty: just this fill's quantity
+              last_price: just this fill's price
+            are for fill-level logging and analytics.
+
+WS-EXE-022  ★ USAGE:
+            On exec_type=trade (partial fill event):
+              filled_this_event = Decimal(str(msg["last_qty"]))
+              price_this_fill   = Decimal(str(msg["last_price"]))
+              cumulative_filled = Decimal(str(msg["cum_qty"]))
+              average_price     = Decimal(str(msg["avg_price"]))
+
+            Log both last_qty and last_price for entry fill
+            analytics. Feed to CIATS Trade Outcome Bus
+            entry fill quality stream (planned — CIATS
+            can track slippage on post_only fills by
+            comparing last_price to expected entry price).
+
+            Position Mirror and Gate 8 sizing continue
+            to use avg_price (authoritative for R:R).
+
+DECISION RATIONALE (WS-EXE-020 through WS-EXE-022):
+  TB00019 Search 1 confirmed last_qty and last_price were
+  added to the Kraken WS v2 executions channel. Capturing
+  fill-level data enables CIATS to analyze entry execution
+  quality over time (e.g., whether post_only fills are
+  consistently at the requested price or worse). This is
+  a free diagnostic at zero cost.
+
+------------------------------------------------------------
+3.46 connection_id FROM STATUS CHANNEL [NEW dv1_9]
+------------------------------------------------------------
+
+WS-STAT-005  ★ NEW dv1_9 (AR-064): The Kraken status
+             channel provides a connection_id field
+             (uint64) on every WS connection. This is
+             a unique Kraken-side identifier for the
+             WS session.
+
+             Status channel message format:
+             {
+               "channel": "status",
+               "data": [{
+                 "api_version": "v2",
+                 "connection_id": 13834774380200032777,
+                 "system": "online",
+                 "version": "2.0.0"
+               }],
+               "type": "update"
+             }
+
+WS-STAT-006  ★ LOGGING REQUIREMENT:
+             On every new WS connection, log connection_id
+             from the first status channel message.
+             Include connection_id in:
+               - All connection establishment log entries
+               - All reconnect log entries
+               - All disconnect log entries
+             Format: LOG_WS_CONNECTED(connection_id=...,
+                       endpoint="public|private",
+                       timestamp=...)
+
+             Usefulness: When contacting Kraken support
+             about connectivity issues, providing the
+             connection_id enables faster diagnosis.
+
+DECISION RATIONALE (WS-STAT-005 through WS-STAT-006):
+  TB00019 Search 6 confirmed from Kraken status channel
+  docs that connection_id is available. Zero cost to log.
+  Improves debug and support capability.
+
+------------------------------------------------------------
+3.47 TP ORDER PARTIAL FILL HANDLING [NEW dv1_9 AR-066]
+------------------------------------------------------------
+
+WS-TP-001  ★ NEW dv1_9 CRITICAL (AR-066):
+           TP limit orders can receive partial fills.
+           When exec_type=trade arrives for a TP order:
+             remaining_qty = TP_order_qty - cum_qty
+             The position is only partially closed.
+           This requires:
+           (a) Position Mirror qty update
+           (b) emergSL qty amendment via amend_order
+
+WS-TP-002  ★ WHEN PARTIAL TP FILL OCCURS:
+           exec_type == "trade" AND
+           order_id matches a known TP order_id in
+           Position Mirror.
+
+           Note: Normal post_only entries also fire
+           exec_type=trade on partial fills. TothBot
+           identifies TP-specific fills by checking
+           whether the order_id is the TP order_id
+           stored in Position Mirror for that symbol.
+
+WS-TP-003  ★ PARTIAL TP FILL SEQUENCE:
+           1. remaining_qty = tp_order_qty - cum_qty
+           2. position_mirror[sym]["qty"] = remaining_qty
+           3. amend_order the emergSL to remaining_qty:
+                {
+                  "method": "amend_order",
+                  "params": {
+                    "order_id": emergsl_order_id,
+                    "order_qty": remaining_qty_rounded,
+                    "token": token
+                  }
+                }
+              Use Decimal rounding per AR-047.
+           4. If remaining_qty < qty_min OR
+              remaining_qty * bid < cost_min:
+                cancel emergSL (cancel_order)
+                market sell remaining_qty immediately
+                Clear Position Mirror for symbol
+                Log TP_PARTIAL_FILL_BELOW_MIN_EXIT
+           5. Log TP_PARTIAL_FILL(symbol, filled=cum_qty,
+                remaining=remaining_qty, avg_price=avg_price)
+
+WS-TP-004  ★ WHY amend_order NOT cancel+resubmit:
+           cancel_order on emergSL (<5s age): +8 rate
+           add_order new emergSL: +1 rate
+           Total cancel+resubmit: +9 rate counter
+
+           amend_order on emergSL (resting, age >300s):
+           +1 fixed + +1 (>300s bracket) = +2 rate counter
+           Total amend: +2 rate counter
+
+           amend_order saves 7 rate counter units per
+           partial TP fill. More importantly: amend_order
+           preserves queue position (resting emergSL
+           keeps its place in the book).
+
+WS-TP-005  ★ FULL TP FILL (exec_type=filled for TP):
+           Existing L1b logic applies unchanged:
+             cancel emergSL (cancel_order)
+             clear Position Mirror for symbol
+             record trade in CIATS Trade Outcome Bus
+           No qty amendment needed for full fill.
+
+DECISION RATIONALE (WS-TP-001 through WS-TP-005):
+  TB00019 Search 2 confirmed from Kraken API docs that
+  exec_type=trade fires on any partial fill including
+  TP limit orders. Without handling this case, a partial
+  TP fill leaves the emergSL at the original full qty —
+  if the emergSL fires after a partial TP fill, Kraken
+  would attempt to sell the ORIGINAL qty, which exceeds
+  the REMAINING position. In spot trading, Kraken would
+  either reject the sell (insufficient balance) or sell
+  into a position the trader doesn't fully hold. This is
+  a loss-exposure event. amend_order is used (not cancel+
+  resubmit) to save rate counter and preserve book position.
+
+============================================================
+4. CONNECTION ARCHITECTURE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Two primary connections: public, private
+  4.2  Token management (GetWebSocketsToken)
+  4.3  Connection state machine
+  4.4  Reconnect procedure (per 3.5 and 1011002 Section 3.52)
+  4.5  Subscription management and restoration
+  4.6  Error handling
+  4.7  aiohttp session management (per 3.30)
+  4.8  Connection parameters (per 1011002 Section 3.53)
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (TBD IN FINAL SPEC)
+============================================================
+
+  (1) What does Kraken WS Interface DO?
+  (2) Interfaces: Kraken WS <-> WS Manager <-> Kraken REST
+  (3) Hard rules (updated dv1_9):
+      [All prior rules carry forward]
+      ★ amended exec_type: log CRITICAL + alert HIGH.
+        TothBot V1 never amends own orders.
+        Any amended event is unexpected (WS-AMEND-003).
+      ★ last_qty and last_price: capture from all trade
+        events for fill-level analytics (WS-EXE-020).
+      ★ connection_id: log on every new connection
+        (WS-STAT-006).
+      ★ TP partial fill: amend_order emergSL qty, NOT
+        cancel+resubmit. Update Position Mirror (WS-TP-003).
+  (4) Triggered by: WS Manager at startup and on events
+  (5) Logs: all connections (with connection_id), all gaps,
+      all errors, all ticker trigger changes, maintenance
+      alerts, pair status changes for open-position pairs,
+      Full Halt executions, DMS calls (prohibited — CRITICAL
+      bug if seen), amended events (unexpected), TP partial
+      fills with remaining qty.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0500000  System_Architecture_Overview dv1_13 (dv1_14 pending)
+  1011001  Engineering_Best_Practices   dv1_4
+  1011002  WS_Manager_Coding_Spec       dv1_10
+  1011005  Exit_Controller_Coding_Spec  dv1_0 (NEW)
+  1011007  Logger_Coding_Spec           dv1_0 (NEW)
+  1011011  Risk_Engine_Coding_Spec      dv1_1
+  1011012  Regime_Engine_Coding_Spec    dv1_2
+  1011013  VPS_Deployment_Coding_Spec   dv1_2
+  1011014  Startup_Sequence_Coding_Spec dv1_1
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_10  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+  dv1_1  03-25-2026  First 10-search validation (TB00009).
+  dv1_2  03-25-2026  Second 10-search validation (TB00009).
+  dv1_3  03-25-2026  Third 10-search validation (TB00010).
+  dv1_4  03-25-2026  Fourth 10-search validation (TB00012).
+  dv1_5  03-25-2026  Fifth 10-search validation (TB00013).
+  dv1_6  03-25-2026  Sixth 10-search validation (TB00014).
+  dv1_7  03-26-2026  Seventh 10-search validation (TB00015).
+  dv1_8  03-26-2026  Eighth and ninth validation (TB00016/17).
+  dv1_9  03-26-2026  Tenth 10-search validation (TB00019).
+                     Section 3.44: WS-AMEND-001 through -003.
+                     amended exec_type was missing from the
+                     dispatch table. Now specified: log
+                     UNEXPECTED_ORDER_AMENDED + alert HIGH.
+                     TothBot V1 never amends orders.
+                     Section 3.45: WS-EXE-020 through -022.
+                     last_qty and last_price added to
+                     Kraken executions trade events.
+                     Capture for fill-level analytics and
+                     CIATS execution quality monitoring.
+                     Section 3.46: WS-STAT-005 through -006.
+                     connection_id from status channel.
+                     Log on every new WS connection for
+                     Kraken support debug capability.
+                     Section 3.47: WS-TP-001 through -005.
+                     TP order partial fill handling.
+                     When exec_type=trade for TP order:
+                     update Position Mirror qty, amend_order
+                     emergSL (not cancel+resubmit — saves
+                     rate counter, preserves queue position).
+                     If below qty_min: cancel SL, market sell.
+
+============================================================
+END OF DOCUMENT
+============================================================

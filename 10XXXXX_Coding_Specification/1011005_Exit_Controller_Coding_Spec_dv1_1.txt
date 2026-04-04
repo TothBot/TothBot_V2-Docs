@@ -1,0 +1,453 @@
+DocDCN:     1011005
+DocTitle:   Exit_Controller_Coding_Spec
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011005_Exit_Controller_Coding_Spec_dv1_1.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC UTC
+
+============================================================
+EXIT CONTROLLER CODING SPECIFICATION
+============================================================
+
+STATUS: Working Draft — Placeholder
+Created 03-26-2026 under WD Exception (0311002 Section 1).
+Captures Layer 1a exit trigger requirements from Pass 2
+FP/DP validation (TB00019) and TP partial fill handling
+from AR-066. These requirements are captured here to
+prevent information loss while Exit Controller's full
+specification (OI-003) remains pending in Phase 5-6.
+
+This document does NOT supersede OI-003. When Phase 5-6
+work begins, all content here must be absorbed into the
+full Exit Controller specification (0811003) and this
+document updates accordingly.
+
+============================================================
+1. PURPOSE
+============================================================
+
+The Exit Controller owns all normal exits from all open
+positions. It operates as three independent layers:
+
+  Layer 1a: Signal-based exits (momentum/time decay)
+  Layer 1b: TP fill on Kraken matching engine
+  Layer 2:  MAE threshold breach (ATR×1.5x)
+  Layer 3:  Emergency SL (crash protection — NOT EC's job)
+
+This document captures Exit Controller requirements that
+are definable before the full SSS signal specification
+(OI-001) is complete. It also captures TP partial fill
+handling (AR-066) which is needed regardless of SSS status.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification         (TBD)
+  1010000  Trading_System_Coding_Anchor (TBD)
+  1011005  This document
+  Parent specification: 0811003  Exit_Controller_Specification
+                                 (TBD — Phase 5-6)
+  OI-003 governs full Exit Controller specification.
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+All requirements below represent confirmed findings from
+the 10-session FP/DP validation series (TB00006-TB00019).
+They MUST be included in the final Exit Controller
+specification when OI-003 is resolved.
+
+------------------------------------------------------------
+3.1 LAYER 1a TRIGGER EC-L1A-001: HTF REGIME REVERSAL EXIT
+------------------------------------------------------------
+
+EC-L1A-001  ★ EXIT TRIGGER: 1H EMA(20) crosses BELOW
+            EMA(50) while a long position is open.
+
+EC-L1A-002  ★ DERIVATION (First Principles):
+            Gate 4 (HTF Confirmation) REQUIRES 1H EMA(20)
+            > EMA(50) as an entry condition. This gate
+            exists because multiple sources validate that
+            15-20% higher win rates are achieved when
+            the 1H trend aligns with the 5-min entry
+            (TB00001 FP/DP validation, 5 sources).
+
+            The SYMMETRIC REVERSAL of this condition is:
+            when 1H EMA(20) crosses BELOW EMA(50), the
+            1H trend that justified the entry has reversed.
+            Holding the position in the opposing HTF trend
+            has no edge — it was the edge that generated
+            the entry. Once the edge is gone, exit.
+
+EC-L1A-003  ★ CHECKING TIMING:
+            Evaluated on EVERY ohlc(60) candle close event
+            for ALL pairs with open positions.
+            The 1H EMA cache is updated by WS Manager on
+            each ohlc(60) close. Exit Controller reads
+            the updated cache after each 60m close event.
+
+EC-L1A-004  ★ EXIT SEQUENCE (same as all L1a exits):
+            (1) cancel_order(tp_order_id)
+                Track via req_id registry (I-6 cancel timeout)
+            (2) cancel_order(emergsl_order_id)
+                Track via req_id registry
+            NOTE: Both cancels use cancel_order individually
+            (NOT batch_cancel) so each cancel is ACK-tracked.
+            (3) After both confirmed cancelled:
+                market sell at current bid (taker 0.26%)
+            (4) Handle MPP rejection per C-1
+            (5) Fire CIATS Trade Outcome Bus with:
+                exit_reason = "HTF_REGIME_REVERSAL"
+            (6) Clear Position Mirror for symbol
+            (7) Release BoundedSemaphore slot
+
+EC-L1A-005  ★ CANCEL TIMEOUT FALLBACK (I-6, always applies):
+            If cancel ACK not received within timeout:
+              Check executions channel state.
+              Confirmed cancelled: proceed with sell.
+              State unknown: retry once.
+              Second timeout: ALERT + hold position.
+              NEVER issue market sell with ambiguous state.
+
+FP/DP BASIS: TB00019 Search 3-4, 5+ sources confirming
+EMA crossover reversal as primary momentum exit signal
+(Collin Seow, FMZQuant, Highstrike, Momentum Mind Math,
+AlgoStrategies 2026). Gate 4 symmetry derived from
+first principles of the entry architecture.
+
+LOSS MINIMIZATION: Exiting when the 1H trend reverses
+limits the holding period in an adverse environment.
+The alternative — holding through HTF trend reversal —
+has no documented edge and contradicts the entry rationale.
+
+------------------------------------------------------------
+3.2 LAYER 1a TRIGGER EC-L1A-002: DAILY REGIME DOWNGRADE
+------------------------------------------------------------
+
+EC-L1A-006  ★ EXIT TRIGGER: At 00:00 UTC regime refresh,
+            pair reclassified from TRENDING_POS to either
+            TRENDING_NEG or NON_DIR+ELEVATED while a long
+            position is open.
+
+EC-L1A-007  ★ DERIVATION (First Principles):
+            Gate 3 (Regime Pre-Filter) blocks new entries
+            in TRENDING_NEG (any vol) and NON_DIR+ELEVATED.
+            If an open long position's pair moves to a
+            NO-ENTRY regime, the position now exists in
+            a documented NO-EDGE environment.
+
+            The daily regime refresh at 00:00 UTC is the
+            authoritative regime classification. When it
+            reclassifies a pair to NO-ENTRY, the position
+            is no longer in a trade-favorable environment.
+
+EC-L1A-008  ★ CHECKING TIMING:
+            Immediately after 00:00 UTC regime computation
+            completes (Regime Engine updates regime_cache),
+            Exit Controller checks ALL open positions:
+              for sym in position_mirror:
+                  new_regime = regime_cache[sym]
+                  if new_regime.directional == TRENDING_NEG:
+                      → L1a exit
+                  if (new_regime.directional == NON_DIRECTIONAL
+                      and new_regime.volatility == ELEVATED):
+                      → L1a exit
+
+            Before 00:00 UTC regime computation, positions
+            continue to be managed under the prior regime.
+
+EC-L1A-009  ★ EXIT SEQUENCE: Same as EC-L1A-004.
+            exit_reason = "DAILY_REGIME_DOWNGRADE"
+
+FP/DP BASIS: Gate 3 is based on FP/DP analysis showing
+accuracy drops from 65% to 45-50% in NON_DIRECTIONAL
+(Market Cipher, 5 sources, TB00001). Continuing to hold
+a long in a NO-ENTRY regime contradicts this evidence.
+
+LOSS MINIMIZATION: Daily regime downgrade signals the
+documented edge has disappeared. Exiting limits exposure
+to a regime with no documented trading advantage.
+
+------------------------------------------------------------
+3.3 LAYER 1a TRIGGER EC-L1A-003: TIME-BASED EXIT [TBD]
+------------------------------------------------------------
+
+EC-L1A-010  ★ EXIT TRIGGER: Position held for >
+            max_hold_candles 5-minute candles without TP.
+
+EC-L1A-011  ★ STARTING VALUE: TBD.
+            Requires FP/DP derivation using:
+              (a) SSS signal specification (OI-001)
+              (b) Historical data on average winning trade
+                  hold times relative to signal strength
+              (c) CIATS-owned parameter after 200 trades
+
+            CIATS-OWNED: max_hold_candles is a CIATS
+            parameter. Starting value to be determined
+            in Phase 5-6 during OI-001 resolution.
+
+EC-L1A-012  ★ SPECIFICATION PENDING: EC-L1A-003 cannot
+            be fully specified until OI-001 is resolved.
+            EC-L1A-010 through EC-L1A-012 are placeholder
+            rules. Include max_hold_candles in CIATS
+            Parameter Store from day one.
+
+------------------------------------------------------------
+3.4 LAYER 1b: TP FILL (PARTIAL AND FULL)
+------------------------------------------------------------
+
+EC-TP-001  ★ FULL TP FILL (exec_type=filled for TP order):
+           Kraken matching engine filled the TP limit
+           order entirely. Exit Controller response:
+             (1) cancel_order(emergsl_order_id)
+             (2) After cancel confirmed:
+                 Clear Position Mirror for symbol
+                 Fire CIATS Trade Outcome Bus
+                   exit_reason = "TP_FILLED"
+                   actual_exit_price = tp_fill_price
+                 Release BoundedSemaphore slot
+                 log TP_FILLED with full P/L
+
+EC-TP-002  ★ PARTIAL TP FILL (exec_type=trade for TP order):
+           Kraken partially filled the TP limit order.
+           exec_type=trade with cum_qty < tp_order_qty.
+           Exit Controller response:
+             (1) Update Position Mirror qty:
+                 position_mirror[sym]["qty"] = remaining_qty
+                 where remaining_qty = tp_order_qty - cum_qty
+             (2) Amend emergSL to remaining_qty:
+                 amend_order(emergsl_order_id, remaining_qty)
+                 Use Decimal.quantize(qty_increment, ROUND_DOWN)
+             (3) If remaining_qty < qty_min OR
+                 remaining_qty * bid < cost_min:
+                   → cannot protect sub-minimum position
+                   cancel emergSL
+                   market sell remaining_qty immediately
+                   Clear Position Mirror
+                   log TP_PARTIAL_FILL_BELOW_MIN_EXIT
+             (4) Log TP_PARTIAL_FILL with filled and
+                 remaining quantities
+
+EC-TP-003  ★ WHY amend_order FOR EMERGSL QTY UPDATE:
+           Rate counter cost:
+             cancel_order (emergSL resting >300s): +2
+             new add_order (new emergSL): +1
+             Total cancel+resubmit: +3 rate counter
+
+           amend_order (emergSL resting >300s): +1+1=+2
+           Total amend: +2 rate counter
+           Saves 1 unit vs cancel+resubmit.
+
+           KEY BENEFIT: amend_order preserves queue position
+           on Kraken's matching engine. The emergSL resting
+           order keeps its time priority in the book, which
+           is important during volatile conditions when
+           TP partial fills typically occur.
+
+EC-TP-004  ★ FULL TP FILL AFTER PARTIAL (exec_type=filled):
+           After one or more partial fills, the final fill
+           (exec_type=filled) closes the position entirely:
+             cancel emergSL (at this point it has been
+               amended to remaining_qty = 0 after final
+               partial, or cancel the final amended qty)
+             Clear Position Mirror
+             Fire CIATS Trade Outcome Bus
+               actual_exit_price = weighted avg of all fills
+
+EC-TP-005  ★ CIATS TRADE OUTCOME BUS FOR PARTIAL FILLS:
+           For positions with partial TP fills, fire the
+           Trade Outcome Bus once the position is FULLY
+           closed (either by full fill or by market sell
+           of the remaining sub-minimum qty).
+           Do NOT fire CIATS multiple times per position.
+           Aggregate all partial fills into one record:
+             actual_exit_price = cum_cost / cum_qty
+             (Decimal arithmetic, not float)
+
+EC-TP-006  ★ FIRE PRIORITY:
+           If TP partial fill AND emergSL triggers
+           simultaneously (edge case — TP partially fills
+           while MAE breach hits):
+             MAE breach (Layer 2) takes priority.
+             Cancel remaining TP qty, execute Layer 2 exit.
+             Use cum_qty already filled as partial P/L.
+             Send one unified CIATS Trade Outcome Bus record.
+
+------------------------------------------------------------
+3.5 LAYER 2: MAE THRESHOLD (REFERENCE — PRIMARY IN 0500000)
+------------------------------------------------------------
+
+EC-L2-001  ★ REFERENCE: Layer 2 is fully specified in
+            0500000 Section 4 (AR-016, AR-047, AR-048).
+            Key rules:
+              MAE = entry_fill_price - bid_price (bid only)
+              Exit when MAE >= ATR(14) * mae_mult (1.5x)
+              Sequence: cancel TP → cancel emergSL → sell
+              Cancel timeout fallback per I-6
+              MPP rejection handling per C-1
+            This document adds no new Layer 2 content.
+            All Layer 2 coding is in 1011002 WM-EC-*.
+
+------------------------------------------------------------
+3.6 LAYER 3: EMERGENCY SL (NOT EXIT CONTROLLER'S DOMAIN)
+------------------------------------------------------------
+
+EC-L3-001  ★ REFERENCE: Layer 3 (emergSL) is NOT managed
+            by the Exit Controller during normal operation.
+            It is a resting stop order on Kraken's matching
+            engine. It fires autonomously if TothBot fails.
+            Exit Controller's only Layer 3 interaction:
+              (a) Cancel emergSL after TP fill (L1b)
+              (b) Cancel emergSL before Layer 2 market sell
+              (c) Amend emergSL qty on TP partial fill
+            Layer 3 specification is in 0500000 Section 4.
+
+============================================================
+4. SCOPE (TBD IN FINAL SPEC — Phase 5-6)
+============================================================
+
+  4.1  Complete Layer 1a SSS signal decay logic (OI-001)
+  4.2  EC-L1A-003 max_hold_candles derivation
+  4.3  Full signal decay decision tree
+  4.4  All entry/exit state machine
+  4.5  Complete Layer 1b/2/3 coordination
+  4.6  Position Mirror interaction contract
+  4.7  CIATS Trade Outcome Bus complete field spec
+  4.8  Unit and integration test specifications
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (PARTIAL)
+============================================================
+
+  (1) What does Exit Controller DO?
+      Monitors all open positions. Executes Layer 1 exits
+      (signal/regime reversal, HTF reversal, TP fills,
+      time expiry). Coordinates Layer 2 MAE exits via
+      WS Manager. Handles TP partial fills via emergSL
+      amendments. Fires CIATS Trade Outcome Bus on close.
+      NOTE: SSS signal decay portion TBD (OI-001).
+
+  (2) Interfaces:
+      IN:  Ticker channel (bid prices for MAE monitoring)
+           ohlc(60) channel (1H EMA cache for L1a-001)
+           Regime Engine (00:00 UTC regime for L1a-002)
+           Position Mirror (all open positions)
+           executions channel (TP fill events)
+      OUT: cancel_order, amend_order (via WS Manager)
+           market sell add_order (via WS Manager)
+           CIATS Trade Outcome Bus (via Logger queue)
+           Position Mirror update (Position Mirror component)
+
+  (3) Hard rules:
+      NEVER market sell with ambiguous cancel state (I-6).
+      ALWAYS cancel timeout fallback for cancel operations.
+      NEVER cancel emergSL without first canceling TP.
+      Layer 2 takes priority over any pending L1a exit.
+      TP partial fill → amend emergSL (NOT cancel+resubmit).
+      CIATS Trade Outcome Bus fires ONCE per closed position.
+      exit_reason must be set for every closure.
+
+  (4) Triggers:
+      bbo ticker events (MAE monitoring)
+      ohlc(60) close events (HTF reversal check)
+      00:00 UTC regime update (regime downgrade check)
+      exec_type=filled or trade for TP order IDs
+      Pipeline candle count (max_hold_candles — TBD)
+
+  (5) Logs:
+      Every exit decision with exit_reason.
+      Every cancel attempt and outcome.
+      Cancel timeout events (CRITICAL).
+      TP partial fills with qty changes.
+      emergSL amendment outcomes.
+      CIATS Trade Outcome Bus records (complete).
+
+============================================================
+6. CIATS TRADE OUTCOME BUS — REQUIRED FIELDS
+============================================================
+
+The Trade Outcome Bus fires on every position close.
+Complete field specification:
+
+  symbol                   str   — e.g. "BTC/USD"
+  asset_regime             str   — pair's daily regime
+  market_regime            str   — BTC/USD daily regime
+  entry_timestamp          str   — RFC3339 of entry fill
+  exit_timestamp           str   — RFC3339 of exit
+  entry_fill_price         Decimal — avg_price at entry
+  exit_price               Decimal — weighted avg exit price
+  position_qty             Decimal — original full qty
+  entry_fee_usd            Decimal — actual maker fee paid
+  exit_fee_usd             Decimal — actual taker fee paid
+  hold_candles             int   — count of 5m candles held
+  mae_reached_pct          Decimal — max adverse excursion %
+  gross_gain_usd           Decimal — exit proceeds - entry cost
+  net_gain_usd             Decimal — gross - all fees
+  exit_reason              str   — L1a-001 / L1a-002 /
+                                   L1b_TP / L2_MAE / L3_EMSL
+  signal_params_at_entry   dict  — SSS signal values at entry
+                                   (TBD pending OI-001)
+  post_only_rejected       bool  — was entry a rejection retry?
+  cl_ord_id_entry          str   — entry cl_ord_id
+  cl_ord_id_tp             str   — TP cl_ord_id
+  session_id               str   — TothBot session identifier
+
+NOTE: signal_params_at_entry field schema is TBD pending
+OI-001 SSS signal specification. All other fields are
+fully specified and must be populated on every close.
+
+PARTIAL FILL NOTE: For positions closed via partial TP
+fills + remainder market sell (EC-TP-003), compute:
+  exit_price = (partial_fill_cost + remainder_sell_proceeds)
+               / total_qty
+  exit_fee_usd = sum of all exit fees paid
+
+============================================================
+7. RELATED DOCUMENTS
+============================================================
+
+  0500000  System_Architecture_Overview dv1_13 (dv1_14 pending)
+  0411001  Kraken_WS_v2_Specification   dv1_9
+  0811003  Exit_Controller_Specification (TBD Phase 5-6)
+  1011001  Engineering_Best_Practices   dv1_4
+  1011002  WS_Manager_Coding_Spec       dv1_10
+  1011010  CIATS_Coding_Spec            dv1_3
+  1011011  Risk_Engine_Coding_Spec      dv1_1
+  1011012  Regime_Engine_Coding_Spec    dv1_2
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-26-2026  Initial Working Draft. Created under
+                     WD Exception (0311002 Section 1).
+                     Tenth 10-search FP/DP validation
+                     (TB00019). Contains:
+                     EC-L1A-001 through -012 (AR-062):
+                       Three Layer 1a exit triggers.
+                       EC-L1A-001: HTF reversal (1H EMA).
+                       EC-L1A-002: Daily regime downgrade.
+                       EC-L1A-003: Time-based (TBD pending
+                         OI-001 SSS specification).
+                     EC-TP-001 through -006 (AR-066):
+                       TP partial fill handling.
+                       Full and partial TP fill sequences.
+                       amend_order for emergSL qty (not
+                         cancel+resubmit — rate efficiency).
+                       CIATS Trade Outcome Bus for partial
+                         fill positions (aggregate record).
+                     Section 6: CIATS Trade Outcome Bus
+                       complete field specification (minus
+                       signal_params pending OI-001).
+                     Section 5 (partial): coding-readiness
+                       answers as far as specifiable without
+                       OI-001 SSS resolution.
+
+============================================================
+END OF DOCUMENT
+============================================================

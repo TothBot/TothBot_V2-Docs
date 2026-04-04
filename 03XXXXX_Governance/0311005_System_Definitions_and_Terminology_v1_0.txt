@@ -1,0 +1,353 @@
+DocDCN:     0311005
+DocTitle:   System_Definitions_and_Terminology
+DocVersion: v1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311005_System_Definitions_and_Terminology_v1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+SYSTEM DEFINITIONS AND TERMINOLOGY
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the canonical terminology for
+TothBot V2. All terms used across all documents must
+use these definitions. No term may be used in an
+ambiguous way. This document is the single source of
+truth for TothBot V2 vocabulary.
+
+Any term not defined here that is used in a specification
+document must be added here before the specification
+document is submitted for approval.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety            (Domain)
+  0100000  Management                   (Domain)
+  0200000  Operations                   (Domain)
+  0300000  Governance                   (Domain Document)
+  0310000  Governance_Procedures_Anchor (Sub-Domain Anchor)
+  0311005  This document                (Instance)
+
+============================================================
+3. SYSTEM IDENTITY TERMS
+============================================================
+
+TothBot V2:
+  The automated cryptocurrency spot trading system built
+  on Kraken exchange. The clean-slate rebuild for Kraken.
+  Distinct from all prior TothBot versions.
+
+The Organism:
+  The three-zone unified system: Kraken (event source) +
+  TothBot (event processor) + CIATS (improvement engine).
+  They are one organism, not three separate systems.
+
+CIATS:
+  Continuous Improvement and Autonomous Trading System.
+  TothBot V2's self-improvement engine. Reads Logger only.
+  Writes Parameter Store only. Fully asynchronous.
+
+Zone 1 — Kraken:
+  The exchange. Event source. Holds resting orders on its
+  matching engine. Crash protection always active here.
+
+Zone 2 — TothBot:
+  The event processor. Runs on the VPS. Processes Kraken
+  events and executes the trading strategy.
+
+Zone 3 — CIATS:
+  The improvement engine. Runs asynchronously alongside
+  Zone 2. Continuously improves Zone 2's parameters.
+
+============================================================
+4. TRADING TERMS
+============================================================
+
+Entry order:
+  The limit post_only GTD add_order submitted to enter
+  a long position. Uses stp_type:cancel_newest (WS v2
+  underscore format). Includes deadline:now+5s.
+
+Fill / Execution:
+  The event confirming an entry order has traded. The
+  fill price is the ACTUAL price used for all R:R
+  calculations. Never the limit price.
+
+batch_add:
+  The WS v2 method that atomically places both the TP
+  resting limit order and the emergSL stop-market order
+  on the Kraken matching engine immediately after fill.
+
+TP (Take Profit):
+  The resting limit order on Kraken's matching engine
+  at the gross_target price. Fills at maker rate (0.16%).
+
+emergSL (Emergency Stop Loss):
+  The off-book stop-market order on Kraken's matching
+  engine at ATR×3.0x. Crash protection only. Must NEVER
+  fire in normal operation.
+
+MAE (Maximum Adverse Excursion):
+  The maximum drawdown from entry price during a trade.
+  Layer 2 exit triggers when MAE reaches ATR×1.5x.
+
+R:R (Risk:Reward):
+  The ratio of net_gain to net_loss. Sacred constraint:
+  net 1:1.5. All calculations use actual fill price.
+
+net_loss:
+  mae_pct + entry_maker_fee + MAE_taker_fee
+  = ATR×1.5x/fill_price + 0.16% + 0.26%
+
+net_gain:
+  net_loss × 1.5 (SACRED — hardcoded)
+
+gross_target:
+  net_gain + TP_maker_fee = net_gain + 0.16%
+  This is the TP limit price distance from fill price.
+
+Position Mirror:
+  TothBot's in-memory symbol-keyed dict tracking all
+  open positions. O(1) lookup. The ground truth for
+  what positions TothBot believes are open.
+
+Regime:
+  The classified state of a tradeable pair based on
+  daily ADX, EMA, and ATR indicators. Six regimes total.
+  Computed daily at 00:00 UTC via REST GetOHLCData.
+
+asset_regime:
+  The regime of the specific pair being evaluated.
+
+market_regime:
+  The regime of BTC/USD (proxy for overall crypto market
+  conditions). Tagged on every trade alongside asset_regime.
+
+============================================================
+5. PIPELINE AND GATE TERMS
+============================================================
+
+Hot path:
+  The 5-minute candle evaluation pipeline. Must never
+  compute — reads pre-computed cached values only.
+
+Pre-computation cache:
+  The set of pre-computed values read by the hot path:
+  regime, 1H EMA, ATR(14), 24h liquidity, per-pair status.
+
+Gate:
+  A pipeline evaluation step that either passes (continue),
+  skips (reject this pair, try next), or halts (stop
+  all trading). There are 8 gates in the pipeline.
+
+REGIME_BLOCKED:
+  Gate 3 reject code. Pair is in a no-entry regime.
+  TRENDING_NEG or NON_DIR+ELEVATED.
+
+LIQUIDITY_REJECTED:
+  Gate 2 reject code. 24h volume < $500k USD.
+
+HTF_GATE_REJECTED:
+  Gate 4 reject code. 1H EMA(20) ≤ EMA(50) for a
+  TRENDING_POS pair.
+
+SELECTION_REJECTED:
+  Gate 5 reject code. Signal fails Selection Controller
+  quality gates.
+
+HALT_RISK_GUARD:
+  Gate 7 halt code. Drawdown, concentration, or exposure
+  limit breached. Trading halted until condition clears.
+
+SSS (Signal Scoring System):
+  The signal engine that scores 5-minute candles.
+  Specification TBD (OI-001). Full derivation required.
+
+Selection Controller:
+  Gate 5. 6-gate quality filter on SSS signals.
+  Specification TBD (OI-005).
+
+============================================================
+6. CONNECTION AND API TERMS
+============================================================
+
+WS v2:
+  Kraken WebSocket API version 2. The ONLY WS version
+  used by TothBot V2. All future Kraken enhancements
+  are in v2 only.
+
+Public WS v2:
+  wss://ws.kraken.com/v2 — unauthenticated market data.
+
+Private WS v2:
+  wss://ws-auth.kraken.com/v2 — authenticated trading
+  and account data.
+
+executions channel:
+  The private WS v2 channel for order lifecycle events.
+  All exec_types. MANDATORY: order_status:true in sub.
+
+exec_type:
+  The type of execution event in the executions channel.
+  Values: pending_new, new, trade, filled, iceberg_refill,
+  canceled, expired, amended, restated, status.
+
+trade exec_type:
+  A partial or full fill event. Triggers batch_add.
+
+restated exec_type:
+  Engine-initiated order amend for maintenance. NOT a
+  fill or cancel. No Position Mirror change. High alert
+  if it occurs on a resting TP or emergSL order.
+
+stp_type:
+  Self Trade Prevention type parameter on WS v2 orders.
+  WS v2 format (underscores): cancel_newest, cancel_oldest,
+  cancel_both. REST format (hyphens): cancel-newest.
+  TothBot V2 uses cancel_newest on all WS v2 add_order
+  and batch_add calls.
+
+deadline:
+  ISO 8601 UTC timestamp on WS v2 add_order and batch_add.
+  Engine rejects order if it arrives after this time.
+  TothBot standard: deadline = now + 5 seconds.
+
+GTD (Good Till Date):
+  The time_in_force of TothBot V2 entry orders.
+  expire_time = now + 30-60 seconds (CIATS-owned).
+  Distinct from deadline — GTD controls how long an
+  unfilled order rests in the book. deadline controls
+  when the engine accepts the order message.
+
+post_only:
+  Order flag that cancels the order if it would take
+  liquidity on arrival. Ensures maker fee (0.16%).
+  Used on all TothBot V2 entry orders.
+
+MPP (Market Price Protection):
+  Kraken's built-in protection against filling market
+  orders at extreme prices. Always active (no_mpp
+  deprecated Sep 2025). On MPP rejection of market
+  sell: retry with IOC limit at best_bid - 0.2%.
+
+req_id:
+  Client-specified integer identifier on all outbound
+  WS v2 messages. Used to correlate requests with
+  responses in the pending-request registry.
+
+cl_ord_id:
+  Client-specified alphanumeric identifier on add_order
+  and batch_add. Recorded in Position Mirror at dispatch
+  before Kraken ACK. Up to 18 characters.
+
+amend_order:
+  Primary WS v2 method for modifying a live order.
+  Preserves queue position. Returns amend_id for audit.
+  edit_order is deprecated — do not use.
+
+event_trigger:
+  Ticker channel parameter controlling update frequency.
+  bbo: fires on every best bid/offer change.
+  trades: fires on every trade.
+  TothBot uses bbo for pairs with open positions and
+  trades for pairs without open positions.
+
+============================================================
+7. CIATS TERMS
+============================================================
+
+Parameter Store:
+  The CIATS-managed store of all system parameters.
+  TothBot reads a frozen snapshot at pipeline start.
+  CIATS writes at inter-trade boundaries only.
+
+Proposal Engine:
+  The CIATS component that generates parameter change
+  proposals. Activates at 200 closed trades (HARD FLOOR).
+
+Trade Outcome Bus:
+  CIATS Stream 2. Fires on every closed position.
+  Complete trade record including both regime tags.
+
+EWMA Monitor:
+  CIATS Stream 1. Exponentially Weighted Moving Average
+  monitoring of three system health signals. Valid at
+  50 candle evaluations. Monitoring only — never drives
+  parameter changes.
+
+PDCA:
+  Plan-Do-Check-Act. The improvement cycle governing
+  all CIATS parameter change proposals.
+
+Half-Kelly:
+  Position sizing formula active at 200+ closed trades.
+  K% = W - (1-W)/R, applied at 50% of full Kelly.
+  W = win rate, R = win/loss ratio.
+
+============================================================
+8. DOCUMENT CONTROL TERMS
+============================================================
+
+DCN (Document Control Number):
+  The 7-digit identifier AABCDDD uniquely identifying
+  each TothBot V2 controlled document.
+
+Domain Document:
+  Tier 1 document. B=0, C=0, DDD=000. IS the domain.
+
+Sub-Domain Anchor:
+  Tier 2 document. B=1-9, C=0, DDD=000. Anchors a
+  family of instance documents to the Domain Document.
+
+Instance Document:
+  Tier 3 document. B=1-9, C=1, DDD=001+. Elaborates
+  a specific component or procedure.
+
+Parent chain:
+  The unbroken trace: Instance → Anchor → Domain Document.
+  Must be complete before any document is committed.
+
+WD Exception:
+  The rule allowing Working Draft coding specs to be
+  created before their parent specification documents
+  exist. They carry a "Must be Included" section and
+  cannot reach approved (v) state until their parent
+  is approved.
+
+GATE 1:
+  The hard stop in the workflow where all Phase 1
+  documents must be approved and committed to GitHub
+  before Phase 2 begins.
+
+Coding-ready:
+  A specification document that Claude can read and
+  produce correct, complete code from without asking
+  any questions. Answers all five coding-readiness
+  questions for every component.
+
+============================================================
+9. REVISION HISTORY
+============================================================
+
+  v1_0   04-04-2026  Promoted from dv to v. Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-25-2026  Initial document. Phase 1 Step 1.10.
+                     System identity terms. Trading terms
+                     including R:R formula components, Position
+                     Mirror, regime taxonomy. Pipeline and gate
+                     terms. Connection and API terms including
+                     stp_type format, deadline, MPP, exec_type.
+                     CIATS terms. Document control terms.
+
+============================================================
+END OF DOCUMENT
+============================================================

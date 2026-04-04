@@ -1,0 +1,170 @@
+<svg viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="900" height="700" fill="#FFFFFF"/>
+  <text x="450" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1A1A1A">Diagram 6 — Complete System: One CIATS-Owned Organism</text>
+  <text x="450" y="50" text-anchor="middle" font-size="11" fill="#555">Three zones · One organism · All connections · All flows · ★ = FP/DP validated additions</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#424242"/>
+    </marker>
+    <marker id="arrBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1565C0"/>
+    </marker>
+    <marker id="arrGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2E7D32"/>
+    </marker>
+    <marker id="arrOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#E65100"/>
+    </marker>
+    <marker id="arrRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#C62828"/>
+    </marker>
+    <marker id="arrPurple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6A1B9A"/>
+    </marker>
+  </defs>
+
+  <!-- Zone backgrounds -->
+  <rect x="15" y="65" width="255" height="545" rx="10" fill="#E3F0FB" stroke="#1565C0" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="142" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#1565C0">ZONE 1 — KRAKEN</text>
+  <text x="142" y="99" text-anchor="middle" font-size="9" fill="#1565C0">Event source + Matching Engine</text>
+
+  <rect x="285" y="65" width="330" height="545" rx="10" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="450" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#2E7D32">ZONE 2 — TOTHBOT</text>
+  <text x="450" y="99" text-anchor="middle" font-size="9" fill="#2E7D32">Event processor (VPS · Python 3.12.3)</text>
+
+  <rect x="630" y="65" width="255" height="545" rx="10" fill="#FFF8E1" stroke="#F57F17" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="757" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#F57F17">ZONE 3 — CIATS</text>
+  <text x="757" y="99" text-anchor="middle" font-size="9" fill="#F57F17">Continuous improvement engine</text>
+
+  <!-- KRAKEN zone contents -->
+  <rect x="30" y="110" width="225" height="35" rx="4" fill="#1565C0"/>
+  <text x="142" y="132" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">PUBLIC WS v2</text>
+
+  <rect x="30" y="155" width="225" height="55" rx="4" fill="#BBDEFB" stroke="#1565C0" stroke-width="1"/>
+  <text x="142" y="173" text-anchor="middle" font-size="10" fill="#333">ohlc(5m) — SYSTEM CLOCK ★</text>
+  <text x="142" y="189" text-anchor="middle" font-size="10" fill="#333">status · instrument · ticker</text>
+
+  <rect x="30" y="220" width="225" height="35" rx="4" fill="#6A1B9A"/>
+  <text x="142" y="242" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">PRIVATE WS v2</text>
+
+  <rect x="30" y="265" width="225" height="55" rx="4" fill="#E1BEE7" stroke="#6A1B9A" stroke-width="1"/>
+  <text x="142" y="283" text-anchor="middle" font-size="10" fill="#333">executions (fills, ratecounter) ★A-1</text>
+  <text x="142" y="299" text-anchor="middle" font-size="10" fill="#333">balances · add_order · batch_add</text>
+
+  <rect x="30" y="330" width="225" height="35" rx="4" fill="#E65100"/>
+  <text x="142" y="352" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">REST API (startup only)</text>
+
+  <rect x="30" y="375" width="225" height="45" rx="4" fill="#FFE0B2" stroke="#E65100" stroke-width="1"/>
+  <text x="142" y="393" text-anchor="middle" font-size="10" fill="#333">GetWSToken · GetOpenOrders</text>
+  <text x="142" y="409" text-anchor="middle" font-size="10" fill="#333">GetBalance · CancelAllOrders</text>
+
+  <rect x="30" y="430" width="225" height="35" rx="4" fill="#C62828"/>
+  <text x="142" y="452" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">MATCHING ENGINE</text>
+
+  <rect x="30" y="475" width="225" height="55" rx="4" fill="#FFCDD2" stroke="#C62828" stroke-width="1"/>
+  <text x="142" y="493" text-anchor="middle" font-size="10" fill="#333">Resting TP limit orders</text>
+  <text x="142" y="509" text-anchor="middle" font-size="10" fill="#333">Off-book emergSL stop orders ★</text>
+  <text x="142" y="527" text-anchor="middle" font-size="9" fill="#C62828" font-weight="bold">CRASH PROTECTION ONLY</text>
+
+  <!-- API KEYS note -->
+  <rect x="30" y="540" width="225" height="50" rx="4" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="1"/>
+  <text x="142" y="558" text-anchor="middle" font-size="9" font-weight="bold" fill="#6A1B9A">DATA key + TRADE key</text>
+  <text x="142" y="573" text-anchor="middle" font-size="9" fill="#333">Nonce: 10,000ms · Rate: 125/pair</text>
+
+  <!-- TOTHBOT zone contents -->
+  <rect x="300" y="110" width="300" height="30" rx="4" fill="#424242"/>
+  <text x="450" y="129" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">7-GATE TRADING PIPELINE (event-driven)</text>
+
+  <rect x="300" y="148" width="300" height="22" rx="3" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="450" y="163" text-anchor="middle" font-size="9" fill="#333">G1 State · G2 Liquidity★ · G3 HTF★ · SSS · G4 Select · G5 Regime★ · G6 Risk</text>
+
+  <rect x="300" y="178" width="300" height="30" rx="4" fill="#2E7D32"/>
+  <text x="450" y="197" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">POSITION SIZER ★ ATR(14)×1.5x MAE / ×3.0x SL</text>
+
+  <rect x="300" y="216" width="300" height="30" rx="4" fill="#2E7D32"/>
+  <text x="450" y="235" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">EXECUTION ENGINE (add_order + batch_add)</text>
+
+  <rect x="300" y="254" width="300" height="50" rx="4" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="450" y="272" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">POSITION MIRROR</text>
+  <text x="450" y="290" text-anchor="middle" font-size="9" fill="#555">symbol · entry price · qty · TP order ID · SL order ID</text>
+
+  <rect x="300" y="312" width="300" height="70" rx="4" fill="#FCE4EC" stroke="#C62828" stroke-width="1.5"/>
+  <text x="450" y="330" text-anchor="middle" font-size="10" font-weight="bold" fill="#C62828">EXIT CONTROLLER (owns all normal exits)</text>
+  <text x="450" y="347" text-anchor="middle" font-size="9" fill="#333">L1a: Signal decay · time · momentum loss</text>
+  <text x="450" y="362" text-anchor="middle" font-size="9" fill="#333">L1b: TP fill (EC cancels SL)</text>
+  <text x="450" y="377" text-anchor="middle" font-size="9" fill="#C62828">L2: MAE breach ★ cancel TP+SL then market sell</text>
+
+  <rect x="300" y="390" width="300" height="50" rx="4" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="450" y="408" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">REGIME ENGINE</text>
+  <text x="450" y="425" text-anchor="middle" font-size="9" fill="#555">ADX + EMA daily · 6 regimes · 00:00 UTC · ★</text>
+
+  <rect x="300" y="448" width="300" height="50" rx="4" fill="#E3F0FB" stroke="#1565C0"/>
+  <text x="450" y="466" text-anchor="middle" font-size="10" font-weight="bold" fill="#1565C0">WS MANAGER</text>
+  <text x="450" y="483" text-anchor="middle" font-size="9" fill="#333">req_id registry ★A-2 · token mgmt · reconnect · keepalive</text>
+
+  <rect x="300" y="506" width="300" height="50" rx="4" fill="#424242"/>
+  <text x="450" y="524" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">LOGGER</text>
+  <text x="450" y="541" text-anchor="middle" font-size="9" fill="#C8E6C9">All events · time_in/time_out ★A-3 · CIATS sole data interface</text>
+
+  <rect x="300" y="562" width="300" height="38" rx="4" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="450" y="580" text-anchor="middle" font-size="10" font-weight="bold" fill="#2E7D32">RISK GUARD</text>
+  <text x="450" y="596" text-anchor="middle" font-size="9" fill="#333">Drawdown halt · concentration · exposure limits (CIATS-owned)</text>
+
+  <!-- CIATS zone contents -->
+  <rect x="645" y="110" width="225" height="35" rx="4" fill="#F57F17"/>
+  <text x="757" y="132" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">STREAM 1: EWMA Monitor</text>
+  <rect x="645" y="153" width="225" height="45" rx="4" fill="#FFF9C4" stroke="#F57F17"/>
+  <text x="757" y="170" text-anchor="middle" font-size="9" fill="#333">rejection_rate_by_regime ★F6</text>
+  <text x="757" y="184" text-anchor="middle" font-size="9" fill="#333">rate_counter_by_pair ★A-1</text>
+  <text x="757" y="198" text-anchor="middle" font-size="9" fill="#555">ws_roundtrip_latency_ms ★A-3</text>
+
+  <rect x="645" y="207" width="225" height="35" rx="4" fill="#F57F17"/>
+  <text x="757" y="229" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">STREAM 2: Trade Outcome Bus</text>
+  <rect x="645" y="250" width="225" height="50" rx="4" fill="#FFF9C4" stroke="#F57F17"/>
+  <text x="757" y="268" text-anchor="middle" font-size="9" fill="#333">Fires on every position close</text>
+  <text x="757" y="283" text-anchor="middle" font-size="9" fill="#333">Full trade record + regime tags</text>
+
+  <rect x="645" y="310" width="225" height="45" rx="4" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="757" y="328" text-anchor="middle" font-size="10" font-weight="bold" fill="#2E7D32">STATISTICAL ENGINE</text>
+  <text x="757" y="344" text-anchor="middle" font-size="9" fill="#333">Mann-Whitney · Sharpe · Spearman</text>
+  <text x="757" y="358" text-anchor="middle" font-size="9" fill="#333">EWMA · CUSUM · Half-Kelly ★F5</text>
+
+  <rect x="645" y="363" width="225" height="45" rx="4" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="757" y="381" text-anchor="middle" font-size="10" font-weight="bold" fill="#2E7D32">PDCA ENGINE</text>
+  <text x="757" y="397" text-anchor="middle" font-size="9" fill="#333">Plan → Do → Check → Act</text>
+  <text x="757" y="411" text-anchor="middle" font-size="9" fill="#555">Applied at inter-trade boundaries</text>
+
+  <rect x="645" y="416" width="225" height="45" rx="4" fill="#FFF8E1" stroke="#E65100"/>
+  <text x="757" y="434" text-anchor="middle" font-size="10" font-weight="bold" fill="#E65100">PARAMETER STORE</text>
+  <text x="757" y="450" text-anchor="middle" font-size="9" fill="#333">All values CIATS-owned</text>
+  <text x="757" y="464" text-anchor="middle" font-size="9" fill="#333">200-trade gate for changes</text>
+
+  <rect x="645" y="469" width="225" height="45" rx="4" fill="#E8F5E9" stroke="#2E7D32"/>
+  <text x="757" y="488" text-anchor="middle" font-size="10" font-weight="bold" fill="#2E7D32">PROPOSAL ENGINE</text>
+  <text x="757" y="504" text-anchor="middle" font-size="9" fill="#555">Activates at 200 trades</text>
+  <text x="757" y="518" text-anchor="middle" font-size="9" fill="#555">Generates parameter change proposals</text>
+
+  <rect x="645" y="522" width="225" height="45" rx="4" fill="#F3E5F5" stroke="#6A1B9A"/>
+  <text x="757" y="541" text-anchor="middle" font-size="10" font-weight="bold" fill="#6A1B9A">REGIME LIBRARY</text>
+  <text x="757" y="557" text-anchor="middle" font-size="9" fill="#333">Full corpus growing perpetually</text>
+  <text x="757" y="571" text-anchor="middle" font-size="9" fill="#555">Per-regime analysis at 600 trades</text>
+
+  <!-- Flow arrows - Kraken to TothBot -->
+  <line x1="255" y1="182" x2="300" y2="182" stroke="#1565C0" stroke-width="1.5" marker-end="url(#arrBlue)"/>
+  <line x1="255" y1="295" x2="300" y2="295" stroke="#6A1B9A" stroke-width="1.5" marker-end="url(#arrPurple)"/>
+  <!-- TothBot to Kraken (orders) -->
+  <line x1="300" y1="235" x2="255" y2="290" stroke="#6A1B9A" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrPurple)"/>
+  <!-- TothBot to Kraken (TP+SL on fill) -->
+  <line x1="300" y1="245" x2="255" y2="490" stroke="#C62828" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrRed)"/>
+
+  <!-- Logger to CIATS -->
+  <line x1="600" y1="524" x2="645" y2="160" stroke="#F57F17" stroke-width="2" marker-end="url(#arrOrange)"/>
+  <!-- CIATS to Parameter Store to TothBot -->
+  <line x1="645" y1="430" x2="600" y2="430" stroke="#E65100" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrOrange)"/>
+
+  <!-- SACRED constraint banner -->
+  <rect x="15" y="620" width="870" height="40" rx="6" fill="#4A148C"/>
+  <text x="450" y="635" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">CIATS OWNS EVERYTHING EXCEPT 1:1.5 R:R</text>
+  <text x="450" y="652" text-anchor="middle" font-size="10" fill="#CE93D8">Net 1:1.5 R:R is HARDCODED — SACRED — the only permanent constraint in the system — NEVER changed by CIATS</text>
+</svg>

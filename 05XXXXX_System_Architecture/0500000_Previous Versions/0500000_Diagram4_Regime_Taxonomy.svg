@@ -1,0 +1,115 @@
+<svg viewBox="0 0 820 580" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <rect width="820" height="580" fill="#FFFFFF"/>
+  <text x="410" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1A1A1A">Diagram 4 — Regime Taxonomy: 6-Regime Grid + Two-Level Tagging</text>
+  <text x="410" y="50" text-anchor="middle" font-size="11" fill="#555">Computed daily at 00:00 UTC · asset_regime + market_regime (BTC proxy) tagged on every trade</text>
+
+  <!-- Column headers -->
+  <rect x="250" y="70" width="170" height="45" rx="4" fill="#1565C0"/>
+  <text x="335" y="88" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">NORMAL_VOL</text>
+  <text x="335" y="106" text-anchor="middle" font-size="10" fill="#CFD8DC">ATR percentile ≤ 67th</text>
+
+  <rect x="430" y="70" width="170" height="45" rx="4" fill="#6A1B9A"/>
+  <text x="515" y="88" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">ELEVATED_VOL</text>
+  <text x="515" y="106" text-anchor="middle" font-size="10" fill="#E1BEE7">ATR percentile &gt; 67th</text>
+
+  <!-- Row headers -->
+  <rect x="30" y="125" width="210" height="95" rx="4" fill="#2E7D32"/>
+  <text x="135" y="147" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">TRENDING_POSITIVE</text>
+  <text x="135" y="165" text-anchor="middle" font-size="10" fill="#C8E6C9">ADX(14) &gt; 25</text>
+  <text x="135" y="181" text-anchor="middle" font-size="10" fill="#C8E6C9">EMA(20) &gt; EMA(50)</text>
+  <text x="135" y="200" text-anchor="middle" font-size="9" fill="#A5D6A7">on DAILY candles</text>
+
+  <rect x="30" y="230" width="210" height="95" rx="4" fill="#F57F17"/>
+  <text x="135" y="253" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">NON_DIRECTIONAL</text>
+  <text x="135" y="271" text-anchor="middle" font-size="10" fill="#FFF3E0">ADX(14) ≤ 25</text>
+  <text x="135" y="291" text-anchor="middle" font-size="9" fill="#FFE0B2">(direction absent)</text>
+  <text x="135" y="310" text-anchor="middle" font-size="9" fill="#FFE0B2">on DAILY candles</text>
+
+  <rect x="30" y="335" width="210" height="95" rx="4" fill="#C62828"/>
+  <text x="135" y="358" text-anchor="middle" font-size="11" font-weight="bold" fill="#FFF">TRENDING_NEGATIVE</text>
+  <text x="135" y="376" text-anchor="middle" font-size="10" fill="#FFCDD2">ADX(14) &gt; 25</text>
+  <text x="135" y="392" text-anchor="middle" font-size="10" fill="#FFCDD2">EMA(20) &lt; EMA(50)</text>
+  <text x="135" y="412" text-anchor="middle" font-size="9" fill="#FFCDD2">on DAILY candles</text>
+
+  <!-- Grid cells - Row 1 -->
+  <!-- TRENDING_POS × NORMAL_VOL — OPTIMAL -->
+  <rect x="250" y="125" width="170" height="95" rx="4" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <rect x="255" y="130" width="160" height="18" rx="3" fill="#2E7D32"/>
+  <text x="335" y="143" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">✓ FULL POSITION</text>
+  <text x="335" y="163" text-anchor="middle" font-size="10" fill="#333">Optimal regime.</text>
+  <text x="335" y="179" text-anchor="middle" font-size="10" fill="#333">All 7 gates pass.</text>
+  <text x="335" y="199" text-anchor="middle" font-size="10" fill="#555">per_trade_pct × 1.0</text>
+
+  <!-- TRENDING_POS × ELEVATED_VOL -->
+  <rect x="430" y="125" width="170" height="95" rx="4" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <rect x="435" y="130" width="160" height="18" rx="3" fill="#2E7D32"/>
+  <text x="515" y="143" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">✓ FULL POSITION</text>
+  <text x="515" y="163" text-anchor="middle" font-size="10" fill="#333">ATR adapts stops.</text>
+  <text x="515" y="179" text-anchor="middle" font-size="10" fill="#333">Wider MAE + SL.</text>
+  <text x="515" y="199" text-anchor="middle" font-size="10" fill="#555">per_trade_pct × 1.0</text>
+
+  <!-- NON_DIR × NORMAL_VOL — 50% -->
+  <rect x="250" y="230" width="170" height="95" rx="4" fill="#FFF8E1" stroke="#F57F17" stroke-width="2"/>
+  <rect x="255" y="235" width="160" height="18" rx="3" fill="#F57F17"/>
+  <text x="335" y="248" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">⚠ 50% POSITION</text>
+  <text x="335" y="268" text-anchor="middle" font-size="10" fill="#333">Edge reduced.</text>
+  <text x="335" y="284" text-anchor="middle" font-size="10" fill="#333">Size reduced 50%.</text>
+  <text x="335" y="304" text-anchor="middle" font-size="9" fill="#555">CIATS-owned threshold</text>
+
+  <!-- NON_DIR × ELEVATED_VOL — NO ENTRY -->
+  <rect x="430" y="230" width="170" height="95" rx="4" fill="#FCE4EC" stroke="#C62828" stroke-width="2"/>
+  <rect x="435" y="235" width="160" height="18" rx="3" fill="#C62828"/>
+  <text x="515" y="248" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">✗ NO ENTRY</text>
+  <text x="515" y="268" text-anchor="middle" font-size="10" fill="#333">No edge.</text>
+  <text x="515" y="284" text-anchor="middle" font-size="10" fill="#333">Elevated risk.</text>
+  <text x="515" y="304" text-anchor="middle" font-size="9" fill="#C62828">Gate 5 blocks all signals</text>
+
+  <!-- TRENDING_NEG × NORMAL_VOL — NO ENTRY -->
+  <rect x="250" y="335" width="170" height="95" rx="4" fill="#FCE4EC" stroke="#C62828" stroke-width="2"/>
+  <rect x="255" y="340" width="160" height="18" rx="3" fill="#C62828"/>
+  <text x="335" y="353" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">✗ NO ENTRY</text>
+  <text x="335" y="373" text-anchor="middle" font-size="10" fill="#333">Long-only system.</text>
+  <text x="335" y="389" text-anchor="middle" font-size="10" fill="#333">Downtrend present.</text>
+  <text x="335" y="409" text-anchor="middle" font-size="9" fill="#C62828">Gate 5 blocks all signals</text>
+
+  <!-- TRENDING_NEG × ELEVATED_VOL — NO ENTRY -->
+  <rect x="430" y="335" width="170" height="95" rx="4" fill="#FCE4EC" stroke="#C62828" stroke-width="2"/>
+  <rect x="435" y="340" width="160" height="18" rx="3" fill="#C62828"/>
+  <text x="515" y="353" text-anchor="middle" font-size="10" font-weight="bold" fill="#FFF">✗ NO ENTRY</text>
+  <text x="515" y="373" text-anchor="middle" font-size="10" fill="#333">Long-only + elevated</text>
+  <text x="515" y="389" text-anchor="middle" font-size="10" fill="#333">volatility. Max risk.</text>
+  <text x="515" y="409" text-anchor="middle" font-size="9" fill="#C62828">Gate 5 blocks all signals</text>
+
+  <!-- TWO-LEVEL TAGGING box -->
+  <rect x="620" y="125" width="175" height="185" rx="6" fill="#E3F0FB" stroke="#1565C0" stroke-width="2"/>
+  <text x="707" y="145" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565C0">TWO-LEVEL TAGGING</text>
+  <text x="630" y="165" font-size="10" fill="#333">Every trade tagged with:</text>
+  <text x="630" y="185" font-size="10" font-weight="bold" fill="#333">asset_regime</text>
+  <text x="640" y="201" font-size="9" fill="#555">Regime of the traded asset</text>
+  <text x="630" y="221" font-size="10" font-weight="bold" fill="#333">market_regime</text>
+  <text x="640" y="237" font-size="9" fill="#555">BTC/USD proxy</text>
+  <text x="640" y="253" font-size="9" fill="#555">(market context)</text>
+  <text x="630" y="273" font-size="9" fill="#555">Enables CIATS to segment</text>
+  <text x="630" y="289" font-size="9" fill="#555">outcomes by regime at</text>
+  <text x="630" y="305" font-size="9" fill="#555">600 trades (100+/bucket)</text>
+
+  <!-- COMPUTATION box -->
+  <rect x="620" y="320" width="175" height="110" rx="6" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="2"/>
+  <text x="707" y="340" text-anchor="middle" font-size="11" font-weight="bold" fill="#6A1B9A">COMPUTATION</text>
+  <text x="630" y="360" font-size="9" fill="#333">Directional: ADX(14) + EMA</text>
+  <text x="640" y="374" font-size="9" fill="#555">on DAILY candles</text>
+  <text x="630" y="390" font-size="9" fill="#333">Volatility: ATR(14) percentile</text>
+  <text x="640" y="404" font-size="9" fill="#555">50-day rolling window</text>
+  <text x="630" y="420" font-size="9" fill="#555">Run daily at 00:00 UTC</text>
+
+  <!-- CIATS OWNERSHIP note -->
+  <rect x="30" y="445" width="755" height="55" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1.5"/>
+  <text x="407" y="464" text-anchor="middle" font-size="10" font-weight="bold" fill="#2E7D32">ALL REGIME THRESHOLDS ARE CIATS-OWNED STARTING VALUES</text>
+  <text x="407" y="482" text-anchor="middle" font-size="10" fill="#333">ADX threshold 25 · ATR percentile 67th · EMA periods 20/50 · Rolling window 50 days</text>
+  <text x="407" y="498" text-anchor="middle" font-size="9" fill="#555">CIATS validates each after 600 closed trades (100+ per regime bucket) · All will be replaced by data-driven values</text>
+
+  <!-- BREAK-EVEN note -->
+  <rect x="30" y="510" width="755" height="40" rx="6" fill="#FFF8E1" stroke="#F57F17" stroke-width="1.5"/>
+  <text x="407" y="528" text-anchor="middle" font-size="10" font-weight="bold" fill="#F57F17">BREAK-EVEN WIN RATE FOR NET 1:1.5 R:R = 40.0%</text>
+  <text x="407" y="545" text-anchor="middle" font-size="9" fill="#555">Trading in NON_DIRECTIONAL (45-50% accuracy) gives no statistical edge over break-even — Gate 5 blocks it</text>
+</svg>
