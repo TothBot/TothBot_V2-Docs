@@ -1,0 +1,144 @@
+DocDCN:     0710000
+DocTitle:   Strategy_Signals_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0710000_Strategy_Signals_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+STRATEGY_SIGNALS_ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for AA=07 Sub-Domain
+1 — Strategy_Signals. It anchors the three instance
+documents that specify TothBot V2 strategy signals, regime
+classification, and asset selection to the Strategy Domain
+Document (0700000).
+
+This document defines the governance chain, the scope
+boundary of Sub-Domain 1, and the mandatory reading and
+dependency order for all instance documents in this
+sub-domain.
+
+============================================================
+2. GOVERNING DOCUMENTS
+============================================================
+
+  0700000  Strategy          (Domain Document — parent)
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+  0500000  System_Architecture_Overview (primary source)
+
+============================================================
+3. SUB-DOMAIN 1 SCOPE
+============================================================
+
+Sub-Domain 1 (Strategy_Signals) governs:
+
+  - The SSS (Simple Signal System) signal model
+  - The 6-regime taxonomy and all classification rules
+  - The monitored asset universe and selection criteria
+
+Sub-Domain 1 does NOT govern:
+
+  - Selection Controller gate execution (AA=08)
+  - Position sizing or R:R computation (AA=06)
+  - Order dispatch or execution mechanics (AA=08)
+  - CIATS improvement procedures (AA=02)
+
+============================================================
+4. DOCUMENT INVENTORY — SUB-DOMAIN 1
+============================================================
+
+  0710000  Strategy_Signals_Anchor         [This document]
+           Tier: Sub-Domain Anchor
+           Depends on: 0700000
+
+  0711001  SSS_Signal_Model_Specification
+           Tier: Instance Document
+           Depends on: 0710000
+           Content: Three-factor SSS. RSI(14) Wilder's
+           SMMA. EMA(9), EMA(21) standard EMA. Volume
+           MA(20). Seeding procedure. Incremental updates.
+           signal_params dict output.
+
+  0711002  Regime_Taxonomy_Specification
+           Tier: Instance Document
+           Depends on: 0710000
+           Content: 6-regime grid. ADX(14) + EMA(20/50)
+           daily directional state. ATR(14) 67th percentile
+           volatility state. GetOHLCData daily. response
+           [-1] exclusion (GAP-03). Entry blocking rules.
+           Two-level trade tagging. BTC/USD proxy.
+
+  0711003  Asset_Selection_Specification
+           Tier: Instance Document
+           Depends on: 0710000, 0411003
+           Content: USD/USDC quote filter. Online status
+           filter. Volume filter ($500k min). Top 50
+           universe. BTC/USD always included (AR-074).
+           Startup population. Live update procedure.
+           CIATS adjustment procedure.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  0711001 -> 0710000 -> 0700000
+  0711002 -> 0710000 -> 0700000
+  0711003 -> 0710000 -> 0700000
+
+This chain is mandatory and unbroken. No instance document
+in this sub-domain may be committed to GitHub without both
+0710000 and 0700000 already present and committed.
+
+============================================================
+6. DEPENDENCY ORDER
+============================================================
+
+Within Sub-Domain 1, the instance documents are
+independent of each other. All three may be written and
+committed in any order, provided 0710000 and 0700000
+are already on GitHub.
+
+External dependencies:
+  0711003 depends on 0411003 (Kraken_Fee_Rate_Limit_
+  Specification) for min_volume_usd_daily definition
+  context. 0411003 must be on GitHub before 0711003
+  is committed.
+
+============================================================
+7. RELATED DOCUMENTS
+============================================================
+
+  0700000  Strategy                    (Domain Document)
+  0711001  SSS_Signal_Model_Specification
+  0711002  Regime_Taxonomy_Specification
+  0711003  Asset_Selection_Specification
+  0500000  System_Architecture_Overview
+  0411001  Kraken_WS_v2_Specification
+  0411002  Kraken_REST_API_Specification
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Sub-Domain 1
+                     Anchor for AA=07 Strategy_Signals.
+                     Defines sub-domain scope, document
+                     inventory (3 instance documents),
+                     document chain requirement, and
+                     dependency order. Anchors 0711001,
+                     0711002, 0711003 to 0700000.
+
+============================================================
+END OF DOCUMENT
+============================================================
