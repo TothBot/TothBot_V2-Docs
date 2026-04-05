@@ -1,0 +1,453 @@
+DocDCN:     0700000
+DocTitle:   Strategy
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0700000_Strategy_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+STRATEGY
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Domain Document for AA=07 Strategy.
+It defines the entire Strategy domain: its purpose, scope,
+governing principles, hard rules, and the complete
+structure of all controlled documents within it.
+
+The Strategy domain governs every rule, model, threshold,
+and decision that determines WHICH assets TothBot V2
+monitors, WHEN a trade signal is generated, and WHAT
+market regime conditions allow or block entry.
+
+Nothing that touches signal generation, regime
+classification, or asset universe definition is
+unspecified. Nothing is assumed. Everything is explicitly
+defined in this domain or in the instance documents
+beneath it.
+
+============================================================
+2. SCOPE
+============================================================
+
+The Strategy domain owns:
+
+  - The SSS (Simple Signal System) signal model: the
+    complete three-factor momentum scoring model operating
+    on 5-minute OHLC candles
+  - All indicator definitions, computation formulas,
+    seeding procedures, and incremental update rules
+    for RSI(14), EMA(9), EMA(21), and Volume MA(20)
+  - The regime taxonomy: the 6-regime classification
+    grid based on daily ADX(14), EMA(20/50), and ATR(14)
+    percentile rank
+  - All regime computation rules including data source,
+    timing, response[-1] exclusion, and entry blocking
+    rules per regime
+  - The asset selection universe: the criteria for which
+    Kraken spot pairs TothBot monitors and trades
+  - BTC/USD anchor status as the market_regime proxy
+  - All CIATS-owned strategy parameters and their
+    starting values
+
+The Strategy domain does NOT own:
+
+  - Selection Controller gate logic (AA=08):
+    Gate 5 (SSS), Gate 6 (Regime Gate) use Strategy
+    outputs. AA=08 owns the gate execution logic.
+  - Position sizing or R:R formula (AA=06)
+  - Order dispatch and entry mechanics (AA=08)
+  - Exchange wire protocol (AA=04)
+  - CIATS improvement cycle procedures (AA=02)
+  - System component architecture (AA=05)
+
+The boundary is signal and regime definition. The Strategy
+domain produces the signal and regime state. The Trading
+System domain (AA=08) consumes them. The domains are
+independent specifications. Neither owns the other's
+content.
+
+============================================================
+3. GOVERNING PRINCIPLES
+============================================================
+
+3.1 Loss Prevention Takes Priority Over Profit Generation
+
+Every strategy rule is designed first to avoid entering
+bad trades, second to capture good ones. Regime blocking
+(Gate 3) exists to prevent entries in adverse market
+conditions. The SSS thresholds exist to require confirmed
+momentum before entry, not to maximize signal frequency.
+When signal quality and signal frequency conflict, quality
+wins.
+
+3.2 All Strategy Parameters Are CIATS-Owned Starting Values
+
+Every strategy parameter — RSI thresholds, EMA periods,
+volume multiplier, ADX threshold, ATR percentile, universe
+size — is a starting value derived from FP/DP analysis.
+None are sacred. CIATS replaces every starting value with
+data after the 200-trade floor is reached. PDCA governs
+all changes. The only permanent strategy decision is the
+three-factor SSS structure and the 6-regime grid topology.
+The values inside them are CIATS property.
+
+3.3 Signal Must Align Across Timeframes
+
+The SSS signal is validated by multi-timeframe alignment:
+  - Daily regime (Gate 3): trend direction and volatility
+  - 1H HTF (Gate 4): 1H EMA(20) > EMA(50) confirmation
+  - 5-minute SSS (Gate 5): entry timeframe signal
+
+All three timeframes must be aligned before a trade is
+generated. A strong 5-minute signal in a bad regime is
+rejected. This is the core structural principle of the
+strategy.
+
+3.4 No Indicator Reimplementation Without Specification
+
+Indicator formulas are exactly specified in this domain.
+RSI uses Wilder's SMMA (AR-076) — NOT standard EMA. This
+distinction produces 5-8% variance in RSI values and
+would systematically mis-fire the SSS RSI gate if
+implemented incorrectly. The specifications in this domain
+are the coding contract. Deviations require an AR and a
+document update before code changes.
+
+3.5 The Asset Universe Is Dynamic, Not Static
+
+The monitored pair set is populated at startup and updated
+in real time from the Kraken instrument channel. CIATS
+may expand or contract the universe after 200 trades.
+BTC/USD is permanently anchored regardless of CIATS
+decisions — it is the market_regime proxy for all trades.
+
+============================================================
+4. STRATEGY ARCHITECTURE SUMMARY
+============================================================
+
+TothBot V2 strategy operates on three layers:
+
+------------------------------------------------------------
+4.1 Asset Universe Layer (0711003)
+------------------------------------------------------------
+
+Determines WHICH pairs TothBot monitors. Populated at
+startup from the Kraken instrument channel. Criteria:
+  (1) Quote currency: USD or USDC
+  (2) Instrument status: online
+  (3) 24h volume: >= min_volume_usd_daily ($500k starting)
+
+Starting universe size: top 50 by 24h USD volume.
+BTC/USD always included regardless of volume ranking.
+Universe is live: updated when instrument channel fires
+status changes. CIATS may adjust universe after 200 trades.
+
+------------------------------------------------------------
+4.2 Regime Classification Layer (0711002)
+------------------------------------------------------------
+
+Determines WHICH market conditions allow entry. Computed
+daily at 00:00 UTC for every monitored pair via REST
+GetOHLCData (daily interval). One call per pair per day.
+
+Six regimes on a 2x3 grid:
+  Directional state (rows):
+    TRENDING_POSITIVE:  ADX(14) > 25 AND EMA(20) > EMA(50)
+    TRENDING_NEGATIVE:  ADX(14) > 25 AND EMA(20) < EMA(50)
+    NON_DIRECTIONAL:    ADX(14) <= 25
+
+  Volatility state (columns):
+    NORMAL_VOL:         ATR(14) percentile <= 67th
+    ELEVATED_VOL:       ATR(14) percentile > 67th
+
+Entry is permitted in two of six regimes:
+  TRENDING_POS + NORMAL_VOL:   FULL position
+  NON_DIR + NORMAL_VOL:        50% position (Gate 6 sizes)
+All other regimes: Gate 3 blocks entry.
+
+Every trade is tagged with both asset_regime and
+market_regime (BTC/USD proxy) for CIATS analysis.
+
+------------------------------------------------------------
+4.3 SSS Signal Engine Layer (0711001)
+------------------------------------------------------------
+
+Determines WHEN to enter a monitored pair. Runs on every
+5-minute OHLC candle close after Regime (Gate 3) and HTF
+(Gate 4) pass. Three factors must all be true:
+
+  SC-SSS-1: RSI(14) on 5-min > 50 AND < 70
+  SC-SSS-2: EMA(9) > EMA(21) on 5-min
+  SC-SSS-3: Volume > Volume_MA(20) x 1.0x
+
+All three conditions are required simultaneously. A pass
+on two of three is a fail. SSS output is a signal_params
+dict logged to CIATS Trade Outcome Bus on every evaluation,
+pass or fail.
+
+============================================================
+5. HARD RULES — STRATEGY DOMAIN
+============================================================
+
+HR-STRAT-001  Strategy signals are generated only on
+              5-minute OHLC candle close events. Intra-
+              candle evaluation is prohibited. The candle
+              close is the system clock.
+
+HR-STRAT-002  SSS requires ALL THREE conditions
+              simultaneously. Two-of-three is a fail.
+              Partial credit does not exist.
+
+HR-STRAT-003  RSI(14) MUST use Wilder's SMMA (AR-076).
+              Standard EMA (alpha=2/15) is PROHIBITED for
+              RSI computation. EMA(9) and EMA(21) use
+              standard EMA. Only RSI uses Wilder's SMMA.
+
+HR-STRAT-004  GetOHLCData response[-1] MUST be excluded
+              from ALL regime calculations (GAP-03, AR-017).
+              The last entry is always the not-yet-committed
+              current candle. Including it corrupts all
+              regime indicators.
+
+HR-STRAT-005  Regime is computed from daily candles only
+              (GetOHLCData interval=1440 or equivalent).
+              The 1H EMA (Gate 4) uses the ohlc(60) stream.
+              The 5-minute SSS uses the ohlc(5) stream.
+              These are three separate data sources.
+              Never conflate timeframes.
+
+HR-STRAT-006  BTC/USD is permanently in the monitored
+              universe. It cannot be removed by CIATS.
+              It is the market_regime proxy. Every trade
+              carries market_regime from the BTC/USD
+              regime computation at trade entry time.
+
+HR-STRAT-007  WARM_UP to READY transition requires ALL
+              FIVE indicators seeded per pair (ATR(14),
+              RSI(14), EMA(9), EMA(21), Volume MA(20)).
+              A pair is not tradeable until all five are
+              seeded. ATR-only seeding is insufficient.
+
+HR-STRAT-008  CIATS parameter changes require the 200-trade
+              floor. No strategy parameter may be changed
+              by CIATS below 200 closed trades. EWMA
+              monitoring is active below 200 trades but
+              does not drive strategy parameter changes.
+
+HR-STRAT-009  Signal params are always logged, pass or
+              fail. The signal_params dict is written to
+              the Trade Outcome Bus on every SSS evaluation
+              regardless of result. This is CIATS data.
+              No evaluation is silent.
+
+HR-STRAT-010  Strategy domain does not own the Selection
+              Controller gate execution logic. 0711001
+              defines what the SSS signal IS. 0811002
+              defines the gate that evaluates it. They
+              are separate specifications. Never combine
+              signal definition with gate logic.
+
+============================================================
+6. STRATEGY PARAMETER SUMMARY
+============================================================
+
+The following parameters are CIATS-owned starting values.
+All are initial values derived from FP/DP analysis with
+5+ independent sources. All will be replaced by data
+after the 200-trade floor is reached.
+
+  SSS Signal Parameters (0711001):
+    rsi_entry_low:          50   (RSI > 50 = momentum on)
+    rsi_entry_high:         70   (RSI < 70 = not overbought)
+    sss_ema_short:          9    (5-min EMA short period)
+    sss_ema_long:           21   (5-min EMA long period)
+    volume_sss_threshold:   1.0x (volume multiplier on MA20)
+
+  Regime Parameters (0711002):
+    adx_threshold:          25   (trending vs non-directional)
+    htf_ema_short:          20   (daily EMA short period)
+    htf_ema_long:           50   (daily EMA long period)
+    atr_percentile_thresh:  67th (normal vs elevated vol)
+    atr_rolling_window:     50   (days for percentile rank)
+
+  Asset Universe Parameters (0711003):
+    monitored_universe_n:   50   (top N by 24h volume)
+    min_volume_usd_daily:   $500k (minimum 24h volume filter)
+
+The one non-CIATS strategy decision: three-factor SSS
+structure and 6-regime grid topology. These are
+architectural decisions, not tunable parameters.
+
+============================================================
+7. RELATIONSHIP TO TRADING PIPELINE
+============================================================
+
+The 8-gate trading pipeline (0500000 Section 3) operates
+on every 5-minute OHLC candle close. Strategy owns the
+content evaluated at three gates:
+
+  Gate 1  State Machine     — system readiness
+  Gate 2  Liquidity         — 24h volume check (0711003)
+  Gate 3  Regime Pre-Filter — regime blocks (0711002)
+  Gate 4  1H HTF            — 1H EMA alignment (0711002)
+  Gate 5  SSS Signal Engine — 3-factor signal (0711001)
+  Gate 6  Selection Ctrl    — quality gates (AA=08)
+  Gate 7  Risk Guard        — capital check (AA=06)
+  Gate 8  Position Sizer    — compute size (AA=06)
+
+Strategy domain content is evaluated at Gates 2, 3, 4,
+and 5. Strategy defines the rules. Trading System (AA=08)
+and Risk (AA=06) execute them. The domains do not overlap.
+
+============================================================
+8. DOCUMENT STRUCTURE
+============================================================
+
+The Strategy domain contains one sub-domain:
+
+  Sub-Domain 1 — Strategy_Signals (B=1)
+    Anchor: 0710000 Strategy_Signals_Anchor
+    Instance documents:
+      0711001  SSS_Signal_Model_Specification
+      0711002  Regime_Taxonomy_Specification
+      0711003  Asset_Selection_Specification
+
+------------------------------------------------------------
+8.1 Sub-Domain Descriptions
+------------------------------------------------------------
+
+0711001  SSS_Signal_Model_Specification
+  Complete specification of the Simple Signal System.
+  Covers three SSS conditions, all indicator formulas,
+  RSI Wilder's SMMA formula (AR-076), EMA standard formula,
+  Volume MA formula, seeding procedures for all five
+  indicators (AR-068), WARM_UP to READY transition rule,
+  incremental update rules, and signal_params dict output.
+
+0711002  Regime_Taxonomy_Specification
+  Complete specification of the 6-regime classification
+  grid. Covers directional state computation (ADX(14) +
+  EMA(20/50) daily), volatility state computation (ATR(14)
+  percentile 50-day rolling), data source (REST
+  GetOHLCData daily), timing (00:00 UTC daily), response
+  [-1] exclusion requirement (GAP-03), entry blocking
+  rules per regime, two-level trade tagging (asset_regime
+  + market_regime), and BTC/USD proxy role.
+
+0711003  Asset_Selection_Specification
+  Complete specification of the monitored pair universe.
+  Covers selection criteria (USD/USDC quote, online
+  status, volume threshold), universe size (top 50),
+  BTC/USD anchor rule (AR-074), startup population
+  procedure (instrument channel snapshot), live update
+  procedure (instrument channel status events), and
+  CIATS universe adjustment procedure.
+
+------------------------------------------------------------
+8.2 Document Chain Requirement
+------------------------------------------------------------
+
+  Instance Document -> 0710000 (Anchor) -> 0700000 (Domain)
+
+This chain is mandatory and unbroken. No instance document
+in AA=07 may be committed to GitHub without both 0710000
+and 0700000 already present and approved on GitHub.
+
+============================================================
+9. RELATIONSHIPS TO OTHER DOMAINS
+============================================================
+
+  AA=05 System_Architecture_Overview (0500000)
+    0500000 Sections 3 (pipeline), 4 (regime taxonomy),
+    and the AR entries AR-067 through AR-076 are the
+    primary source of record for all decisions captured
+    in this domain. 0500000 references; AA=07 specifies.
+
+  AA=08 Trading_System
+    The Selection Controller (0811002) evaluates SSS
+    output at Gate 5. The Long Module (0811001) dispatches
+    entries for SSS-passing pairs. Gate 3 (Regime Pre-
+    Filter) and Gate 4 (1H HTF) in the pipeline consume
+    regime state produced by this domain. AA=07 defines
+    the signal and regime state. AA=08 consumes them.
+
+  AA=04 Exchange_Interface
+    GetOHLCData REST call (daily interval) is the regime
+    data source (AR-017, 0411002). The ohlc(5) and
+    ohlc(60) WS streams are the SSS and HTF data sources
+    (0411001). Exchange Interface defines the wire
+    protocol. Strategy defines what is computed from it.
+
+  AA=06 Risk
+    Gate 7 (Risk Guard) and Gate 8 (Position Sizer)
+    receive pipeline flow only after Gates 3-5 pass.
+    Strategy domain does not own or reference risk
+    parameters. Risk does not own or reference signal
+    parameters. One-way dependency: Risk receives flow
+    from Strategy pipeline output.
+
+  AA=02 Operations / CIATS (0211001)
+    CIATS owns all strategy parameters in the Parameter
+    Store (except structural decisions). CIATS evaluates
+    signal quality metrics from the Trade Outcome Bus.
+    Strategy defines the parameters. CIATS evolves their
+    values through PDCA after the 200-trade floor.
+
+============================================================
+10. OPEN ITEMS
+============================================================
+
+  None at document creation.
+
+  All strategy architectural decisions are fully resolved
+  in 0500000 dv1_18 (AR-067 through AR-076). All signal
+  model parameters are defined. All regime rules are
+  locked. All asset selection criteria are specified.
+  This domain document captures no open items.
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0000000  Ethics_and_Safety            (root Domain Document)
+  0500000  System_Architecture_Overview (primary source)
+  0710000  Strategy_Signals_Anchor      (Sub-Domain 1 Anchor)
+  0711001  SSS_Signal_Model_Specification
+  0711002  Regime_Taxonomy_Specification
+  0711003  Asset_Selection_Specification
+  0411001  Kraken_WS_v2_Specification   (ohlc stream source)
+  0411002  Kraken_REST_API_Specification (GetOHLCData source)
+  0511002  Signal_Pipeline_Specification (pipeline consumer)
+  1011003  Signal_Pipeline_Coding_Spec  (AA=10 implementation)
+  1011012  Regime_Engine_Coding_Spec    (AA=10 implementation)
+  0311001  Namespace_Specification      (governs DCN structure)
+  0311002  Document_Creation_Workflow   (governs sequence)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Strategy Domain
+                     Document for TothBot V2. Defines
+                     domain scope, governing principles
+                     (5), hard rules (HR-STRAT-001 through
+                     HR-STRAT-010), strategy architecture
+                     summary (3 layers: asset universe,
+                     regime classification, SSS signal),
+                     strategy parameter summary (12 CIATS-
+                     owned parameters), relationship to
+                     8-gate trading pipeline, document
+                     structure (one sub-domain, three
+                     instance documents), and domain
+                     relationships. All content derived
+                     from FP/DP validated 0500000 dv1_18
+                     AR-067 through AR-076.
+
+============================================================
+END OF DOCUMENT
+============================================================
