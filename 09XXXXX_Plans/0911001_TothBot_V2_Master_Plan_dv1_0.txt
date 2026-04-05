@@ -1,0 +1,396 @@
+DocDCN:     0911001
+DocTitle:   TothBot_V2_Master_Plan
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0911001_TothBot_V2_Master_Plan_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+TOTHBOT V2 MASTER PLAN
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the complete development roadmap
+for TothBot V2. It records the phase sequence, completion
+status, milestone definitions, inter-phase dependencies,
+and remaining work from current state through live trading.
+
+This is a living document. It is updated each time a
+phase is completed. Every update increments the version.
+
+============================================================
+2. SYSTEM IDENTITY
+============================================================
+
+TothBot V2 is an automated cryptocurrency spot trading
+system running on Kraken using Python 3.12.3 on a
+Hetzner VPS (Ubuntu 24.04.4 LTS).
+
+TothBot V2 is a three-system organism:
+
+  Zone 1 — Kraken:  Event source.
+  Zone 2 — TothBot: Event processor. Executes trades.
+  Zone 3 — CIATS:   Continuous improvement engine.
+                    Owns all operating parameters.
+
+Operator: Bill (sole operator).
+Sole hardcoded constraint: Net 1:1.5 R:R — never changes.
+Everything else: CIATS-owned starting values.
+
+Primary mission: Maximize profit. Minimize loss.
+Emphasis: Minimize loss. Loss prevention takes priority.
+
+============================================================
+3. DEVELOPMENT ROADMAP
+============================================================
+
+The roadmap has two tracks:
+
+  Track A — Document Creation (Phases 1-8)
+            Produces the complete, unambiguous document
+            set from which TothBot V2 is fully coded.
+            Governed by 0311002 Document_Creation_Workflow.
+
+  Track B — Code Development and Deployment (Phases 9-12)
+            Codes, tests, and deploys the system.
+            Governed by AA=10 coding specifications.
+
+------------------------------------------------------------
+TRACK A — DOCUMENT CREATION
+------------------------------------------------------------
+
+------------------------------------------------------------
+PHASE 1 — FOUNDATIONS                         [COMPLETE]
+------------------------------------------------------------
+
+Scope: Domain Documents for AA=00 through AA=03.
+       Core Governance instance documents.
+
+Documents:
+  0000000  Ethics_and_Safety                   v1_0
+  0100000  Management                          v1_0
+  0200000  Operations                          v1_0
+  0300000  Governance                          v1_0
+  0310000  Governance_Procedures_Anchor        v1_0
+  0311001  Namespace_Specification             v1_0
+  0311002  Document_Creation_Workflow          v1_0
+  0311003  Versioning_Procedure                v1_0
+  0311004  Document_Creation_and_Approval      v1_0
+  0311005  System_Definitions_and_Terminology  v1_0
+
+Completion criteria: All 10 documents at approved (v)
+state and committed to GitHub. MET.
+
+Gate: GATE 1 — Phase 1 complete before Phase 2 begins.
+Status: PASSED. All 10 documents approved and committed.
+
+------------------------------------------------------------
+PHASE 2 — EXCHANGE INTERFACE + SYSTEM ARCHITECTURE
+                                               [COMPLETE]
+------------------------------------------------------------
+
+Scope: AA=04 Exchange Interface documents.
+       AA=05 System Architecture documents.
+
+Documents:
+  0400000  Exchange_Interface                  dv1_0
+  0410000  Exchange_Interface_Kraken_Anchor    dv1_0
+  0411001  Kraken_WS_v2_Specification          dv1_11
+  0411002  Kraken_REST_API_Specification       dv1_0
+  0411003  Kraken_Fee_Rate_Limit_Specification dv1_0
+  0500000  System_Architecture_Overview        dv1_18
+           (three formats: txt, docx, pdf)
+  0510000  System_Components_Anchor            dv1_0
+  0511001  WS_Manager_Specification            dv1_0
+  0511002  Signal_Pipeline_Specification       dv1_0
+  0511003  Execution_Engine_Specification      dv1_0
+  0511004  Exit_Controller_Specification       dv1_2
+  0511005  Position_Mirror_Specification       dv1_0
+  0511006  Logger_Specification                dv1_0
+
+Note: AA=04 and AA=05 documents are in dv state.
+They are on GitHub. Architecture is locked and complete.
+Promotion to v state occurs in Phase 8 per 0311002.
+
+------------------------------------------------------------
+PHASE 3 — OPERATIONS + CIATS SPECIFICATIONS   [COMPLETE]
+------------------------------------------------------------
+
+Scope: AA=02 Operations sub-domain documents.
+
+Documents:
+  0210000  Operations_CIATS_Anchor             dv1_0
+  0211002  Operations_Infrastructure_Spec      dv1_0
+  0211003  Startup_Shutdown_Procedure          dv1_0
+  0211004  Incident_Response_Procedure         dv1_0
+  0211005  Paper_Trading_Operations_Procedure  dv1_0
+
+------------------------------------------------------------
+PHASE 4 — RISK                                [COMPLETE]
+------------------------------------------------------------
+
+Scope: AA=06 Risk domain documents.
+
+Documents:
+  0600000  Risk                                dv1_0
+  0610000  Risk_Rules_Anchor                   dv1_0
+  0611001  Position_Sizing_Rules               dv1_0
+  0611002  Drawdown_and_Halt_Rules             dv1_0
+  0611003  Concentration_and_Exposure_Rules    dv1_0
+  0611004  Safety_Parameter_Framework          dv1_0
+
+------------------------------------------------------------
+PHASE 5 — STRATEGY                            [COMPLETE]
+------------------------------------------------------------
+
+Scope: AA=07 Strategy domain documents.
+
+Documents:
+  0700000  Strategy                            dv1_0
+  0710000  Strategy_Signals_Anchor             dv1_0
+  0711001  SSS_Signal_Model_Specification      dv1_0
+  0711002  Regime_Taxonomy_Specification       dv1_0
+  0711003  Asset_Selection_Specification       dv1_0
+
+------------------------------------------------------------
+PHASE 6 — TRADING SYSTEM                      [COMPLETE]
+------------------------------------------------------------
+
+Scope: AA=08 Trading System domain documents.
+
+Documents:
+  0800000  Trading_System                      dv1_0
+  0810000  Trading_System_Modules_Anchor       dv1_0
+  0811001  Long_Module_Specification           dv1_0
+  0811002  Selection_Controller_Specification  dv1_0
+  0811003  Exit_Controller_Specification       dv1_0
+  0811004  Entry_Limit_Placement_Specification dv1_0
+
+------------------------------------------------------------
+PHASE 7 — PLANS                               [IN PROGRESS]
+------------------------------------------------------------
+
+Scope: AA=09 Plans domain documents.
+       This phase. Current session.
+
+Documents:
+  0900000  Plans                               dv1_0
+  0910000  Master_Plan_Anchor                  dv1_0
+  0911001  TothBot_V2_Master_Plan              dv1_0
+  0920000  Business_Plan_Anchor                dv1_0
+  0921001  TothBot_V2_Business_Plan            dv1_0
+
+Completion criteria: All 5 documents written, delivered
+to Bill, committed to GitHub.
+
+------------------------------------------------------------
+PHASE 8 — CODING SPECIFICATIONS               [PENDING]
+------------------------------------------------------------
+
+Scope: AA=10 Coding Specification documents.
+       Final document writing phase before coding.
+
+Governed by: 0311002 Section 12 (Phase 8 steps).
+
+Summary of documents to write:
+
+  Domain and Anchors:
+    1000000  Coding_Specification              (Domain Doc)
+    1010000  Trading_System_Coding_Anchor      (Anchor P2)
+    1020000  Testing_Coding_Anchor             (Anchor P2)
+    1030000  GitHub_Automation_Coding_Anchor   (Anchor P1)
+
+  Working Draft coding specs to complete and elevate:
+    1011001  Engineering_Best_Practices        (WD dv1_5)
+    1011002  WS_Manager_Coding_Spec            (WD dv1_11)
+    1011005  Exit_Controller_Coding_Spec       (WD dv1_1)
+    1011007  Logger_Coding_Spec                (WD dv1_1)
+    1011010  CIATS_Coding_Spec                 (WD dv1_5)
+    1011011  Risk_Engine_Coding_Spec           (WD dv1_2)
+    1011012  Regime_Engine_Coding_Spec         (WD dv1_3)
+    1011013  VPS_Deployment_Coding_Spec        (WD dv1_3)
+    1011014  Startup_Sequence_Coding_Spec      (WD dv1_2)
+
+  New coding specs to write:
+    1011003  Signal_Pipeline_Coding_Spec
+    1011004  Execution_Engine_Coding_Spec
+    1011006  Position_Mirror_Coding_Spec
+    1011008  Long_Module_Coding_Spec
+    1011009  Selection_Controller_Coding_Spec
+
+  Testing specs:
+    1021001  Unit_Test_Specification
+    1021002  Integration_Test_Specification
+    1021003  Paper_Trading_Test_Specification
+
+  Pathway 1 (GitHub automation):
+    1031001  GitHub_Automation_Coding_Spec
+    1031002  Document_Control_Automation_Test_Spec
+    1031003  Approval_Workflow_Coding_Spec
+
+Completion criteria: All AA=10 coding specification
+documents written. All WD specs completed and elevated.
+Every spec passes five-question coding-readiness test
+(TB00000 Section 3.2). All specs deliver unambiguous
+coding contracts.
+
+------------------------------------------------------------
+TRACK B — CODE DEVELOPMENT AND DEPLOYMENT
+------------------------------------------------------------
+
+------------------------------------------------------------
+PHASE 9 — CODE DEVELOPMENT (PATHWAY 2)        [PENDING]
+------------------------------------------------------------
+
+Scope: Write all Pathway 2 trading system code.
+       TothBot-V2-Code repository.
+       Python 3.12.3 on Hetzner VPS.
+
+Sequence: Governed by AA=10 coding specifications.
+          Engineering_Best_Practices governs all code.
+
+Modules (dependency order):
+  1. Logger (no dependencies)
+  2. WS Manager (depends on Logger)
+  3. Position Mirror (depends on WS Manager)
+  4. Regime Engine (depends on Logger)
+  5. Risk Engine (depends on Logger, Position Mirror)
+  6. Signal Pipeline (depends on WS Manager, Regime Engine)
+  7. Selection Controller (depends on Signal Pipeline, Risk)
+  8. Long Module (depends on Selection Controller)
+  9. Execution Engine (depends on Long Module, WS Manager)
+  10. Exit Controller (depends on Execution Engine, Risk)
+  11. CIATS (depends on Logger — reads only)
+  12. Startup Sequence (integrates all modules)
+
+Completion criteria: All modules coded, unit tested,
+integration tested. System runs end-to-end in test
+mode against Kraken sandbox.
+
+------------------------------------------------------------
+PHASE 10 — PAPER TRADING                      [PENDING]
+------------------------------------------------------------
+
+Scope: Deploy to VPS. Run paper trading against live
+       Kraken market data. No real capital at risk.
+       Minimum duration and trade count required before
+       go-live decision.
+
+Paper trading governed by: 0211005 Paper_Trading_
+Operations_Procedure.
+
+Go-live criteria (minimum):
+  - 200 closed trades (CIATS statistical inference floor)
+  - No critical defects outstanding
+  - CIATS Proposal Engine active and making parameter
+    recommendations
+  - Half-Kelly position sizing active (replaces fixed 5%)
+  - All three Exit Controller layers validated
+  - Emergency SL confirmed to never fire in normal ops
+  - Drawdown circuit breakers validated
+  - All alert channels confirmed operational
+  - Bill review and approval of go-live decision
+
+------------------------------------------------------------
+PHASE 11 — LIVE TRADING (INITIAL)             [PENDING]
+------------------------------------------------------------
+
+Scope: Deploy with real capital. Conservative initial
+       posture. CIATS owns all parameters from day one.
+
+Initial capital posture:
+  - 50% of portfolio tradeable (CIATS starting value)
+  - 5% per trade (fixed until 200 closed trades)
+  - Half-Kelly activates at 200 closed trades
+  - Max 20 concurrent positions (CIATS starting value)
+
+Standing constraint: Net 1:1.5 R:R — HARDCODED.
+                     CIATS does not own this. Never changes.
+
+Milestone: 600 closed trades — full per-regime analysis
+           valid (100+ trades per regime bucket).
+
+------------------------------------------------------------
+PHASE 12 — PATHWAY 1 GITHUB AUTOMATION        [DEFERRED]
+------------------------------------------------------------
+
+Scope: Code and deploy GitHub Actions document control
+       automation (Pathway 1 per TB00000 Section 3.4.1).
+
+Timing: After Pathway 2 reaches paper trading readiness.
+        Tracked on Parking Lot (PL-003).
+
+============================================================
+4. CURRENT STATE SUMMARY
+============================================================
+
+As of 04-05-2026:
+
+  Phase 1:  COMPLETE — 10 documents approved on GitHub
+  Phase 2:  COMPLETE — 13 documents on GitHub (dv state)
+  Phase 3:  COMPLETE — 5 documents on GitHub (dv state)
+  Phase 4:  COMPLETE — 6 documents on GitHub (dv state)
+  Phase 5:  COMPLETE — 5 documents on GitHub (dv state)
+  Phase 6:  COMPLETE — 6 documents on GitHub (dv state)
+  Phase 7:  IN PROGRESS — this session
+  Phase 8:  PENDING
+  Phase 9:  PENDING
+  Phase 10: PENDING
+  Phase 11: PENDING
+  Phase 12: DEFERRED
+
+Working Draft coding specs on GitHub (premature commit —
+accepted as-is per TB00033 PL-NEW-001):
+  1011001  Engineering_Best_Practices          dv1_5
+  1011002  WS_Manager_Coding_Spec              dv1_11
+  1011005  Exit_Controller_Coding_Spec         dv1_1
+  1011007  Logger_Coding_Spec                  dv1_1
+  1011010  CIATS_Coding_Spec                   dv1_5
+  1011011  Risk_Engine_Coding_Spec             dv1_2
+  1011012  Regime_Engine_Coding_Spec           dv1_3
+  1011013  VPS_Deployment_Coding_Spec          dv1_3
+  1011014  Startup_Sequence_Coding_Spec        dv1_2
+
+============================================================
+5. OPEN ITEMS TRACKED HERE
+============================================================
+
+  OI-008  All AA=10 coding specs — Phase 8.
+          Includes completing all WD coding specs and
+          writing new specs not yet drafted.
+
+  PL-003  Pathway 1 GitHub automation — Phase 12.
+          Deferred until Pathway 2 reaches paper trading
+          readiness.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0900000  Plans
+  0910000  Master_Plan_Anchor
+  0921001  TothBot_V2_Business_Plan
+  0311002  Document_Creation_Workflow
+  0500000  System_Architecture_Overview
+  0211005  Paper_Trading_Operations_Procedure
+  TB00000  TothBot_V2_Project_Instructions_for_Claude
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 7 of
+                     Document Creation Workflow. Full
+                     development roadmap. Phases 1-6
+                     marked complete. Phase 7 in progress.
+                     Phases 8-12 defined as pending or
+                     deferred. Current state inventory
+                     as of 04-05-2026.
+
+============================================================
+END OF DOCUMENT
+============================================================
