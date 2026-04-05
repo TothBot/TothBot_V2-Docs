@@ -1,0 +1,211 @@
+DocDCN:     0510000
+DocTitle:   System_Components_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+SYSTEM COMPONENTS ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for the System
+Components sub-domain (AA=05, B=1). It anchors all TothBot
+V2 system component specification instance documents
+(0511001 through 0511006) to the System Architecture
+Domain Document (0500000).
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the System Components sub-domain,
+allowing instance documents to have a valid parent chain.
+No instance document in this sub-domain may be committed
+to GitHub without this anchor and 0500000 already present
+and approved.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain)
+  0300000  Governance                     (Domain)
+  0400000  Exchange_Interface             (Domain)
+  0500000  System_Architecture_Overview   (Domain Document)
+  0510000  This document                  (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    0511001  WS_Manager_Specification
+    0511002  Signal_Pipeline_Specification
+    0511003  Execution_Engine_Specification
+    0511004  Exit_Controller_Specification
+    0511005  Position_Mirror_Specification
+    0511006  Logger_Specification
+
+============================================================
+3. TRACEABILITY TO PARENT DOMAIN DOCUMENT
+============================================================
+
+This anchor elaborates the system component architecture
+defined throughout 0500000, specifically:
+  Section 2    — Kraken API Connection Architecture
+  Section 3    — TothBot Trading Pipeline
+  Section 4    — Exit Architecture
+  Section 6    — CIATS Architecture and Data Flows
+  Section 8    — Locked Architectural Decisions (AR-001
+                  through AR-076)
+  Section 9    — CIATS Parameter Registry
+  Section 11   — Complete Trade Lifecycle
+
+Every instance document under this anchor traces directly
+to the corresponding sections and ARs in 0500000 dv1_18.
+All locked architectural decisions (AR-001 through AR-076)
+are binding on all instance documents in this sub-domain.
+They are not repeated in this anchor. They apply in full.
+
+============================================================
+4. SUB-DOMAIN SCOPE
+============================================================
+
+The System Components sub-domain governs the complete
+internal component specifications for all TothBot V2
+modules that execute on the VPS. These documents define
+what each component does, its interfaces, its hard rules,
+what triggers it, and what it logs. Each document is
+a coding-ready specification from which AA=10 coding
+specifications and code can be directly derived.
+
+Each instance document elaborates one component:
+
+  0511001  WS_Manager_Specification
+           The WS Manager is TothBot's sole interface to
+           all Kraken WebSocket v2 connections. It owns
+           the two public WS connections (instrument,
+           status, ohlc, ticker) and the private WS
+           connection (executions, balances). Owns all
+           connection state: token management, keepalive
+           (JSON ping every 30 seconds per A-7), zombie
+           detection (90-second real-data timeout per A-8),
+           sequence gap detection on both executions (A-10)
+           and balances (A-9), per-pair instrument status
+           cache (AR-020, AR-039), candle-close detection
+           (AR-045), startup warm-up and indicator seeding
+           (AR-044, AR-068), mid-session reconnect distinct
+           from startup (AR-056), Pending Order Registry
+           (AR-053), drawdown state (AR-052), Selection
+           Controller state (AR-073), and all WS dispatch
+           routing (AR-015). The WS Manager is the event
+           processor — all Kraken push events flow through
+           it and are dispatched to appropriate components.
+
+  0511002  Signal_Pipeline_Specification
+           The Signal Pipeline owns the 8-gate evaluation
+           sequence that fires on every 5-minute OHLC
+           candle close event. Governs: Parameter Store
+           snapshot freeze (I-4), pre-computation cache
+           read (I-2), per-pair instrument status pre-check,
+           Gate 1 (State Machine), Gate 2 (Liquidity),
+           Gate 3 (Regime Pre-Filter), Gate 4 (1H HTF),
+           SSS Signal Engine (AR-067, AR-076), Gate 5
+           (Selection Controller), Gate 6 (Regime Gate),
+           Gate 7 (Risk Guard), Gate 8 (Position Sizer),
+           and OHLC stall handling. All rejection codes
+           and pass/fail logic defined here.
+
+  0511003  Execution_Engine_Specification
+           The Execution Engine owns order dispatch to
+           Kraken. Receives sizing output from Gate 8.
+           Constructs and sends: add_order (entry), and
+           batch_add (TP + emergSL atomic on fill). All
+           field requirements, parameter values, and error
+           handling. Owns cl_ord_id assignment, req_id
+           tracking, and Pending Order Registry population.
+
+  0511004  Exit_Controller_Specification
+           The Exit Controller owns all normal position
+           exits. Three-layer architecture: Layer 1a
+           (signal-based: HTF reversal, daily downgrade,
+           max hold), Layer 1b (TP fill confirmation and
+           emergSL cancellation), Layer 2 (MAE threshold
+           breach with cancel timeout fallback per I-6
+           and MPP handling per C-1). Layer 3 (emergency
+           SL) is crash protection only — NEVER in normal
+           operation. Owns ticker-driven continuous
+           drawdown monitoring (I-7), batch_cancel for
+           Full Halt (AR-019, AR-041), pair status
+           adaptation for open positions (AR-040), and
+           TP partial fill handling (AR-066).
+
+  0511005  Position_Mirror_Specification
+           The Position Mirror is TothBot's in-memory
+           authoritative record of all open positions.
+           O(1) symbol-keyed dict (AR-002). Records:
+           symbol, entry_fill_price, qty, TP order_id,
+           cl_ord_id, emergSL order_id. Recorded at
+           dispatch (no async gap per A-2). Reconciled
+           at startup and reconnect. Defines all update
+           rules: on fill, on TP partial fill (AR-066),
+           on position close, on reconciliation.
+
+  0511006  Logger_Specification
+           The Logger is the sole data interface between
+           TothBot and CIATS. Async bounded queue using
+           queue.Queue (stdlib) with maxsize=10,000
+           (AR-014, AR-063). NEVER blocks the trading
+           hot path. QueueHandler + QueueListener pattern.
+           Defines all event types that must be logged,
+           minimum fields per event type, CIATS Trade
+           Outcome Bus fields, EWMA Monitor stream fields,
+           and alert levels.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  Instance Document → 0510000 (this anchor) → 0500000
+
+No instance document in this sub-domain (0511001 through
+0511006) may be committed to GitHub without both this
+anchor and 0500000 already present and approved on GitHub.
+This rule is enforced by validation rule V-012 in 0311001
+Section 13.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0500000  System_Architecture_Overview   (parent Domain Doc)
+  0511001  WS_Manager_Specification
+  0511002  Signal_Pipeline_Specification
+  0511003  Execution_Engine_Specification
+  0511004  Exit_Controller_Specification
+  0511005  Position_Mirror_Specification
+  0511006  Logger_Specification
+  0400000  Exchange_Interface             (dependency)
+  0410000  Exchange_Interface_Kraken_Anchor
+  0411001  Kraken_WS_v2_Specification    (wire contract)
+  0311001  Namespace_Specification        (governs DCN)
+  0311002  Document_Creation_Workflow     (governs sequence)
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Sub-Domain Anchor
+                     for System Components (AA=05, B=1).
+                     Establishes parent chain from 0500000
+                     through this anchor to six instance
+                     documents (0511001 through 0511006).
+                     Scope defined. Traceability to 0500000
+                     Sections 2-4, 6, 8, 9, 11 established.
+                     AR-001 through AR-076 binding on all
+                     instance documents confirmed.
+
+============================================================
+END OF DOCUMENT
+============================================================
