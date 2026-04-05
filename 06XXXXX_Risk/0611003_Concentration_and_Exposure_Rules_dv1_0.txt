@@ -1,0 +1,667 @@
+DocDCN:     0611003
+DocTitle:   Concentration_and_Exposure_Rules
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0611003_Concentration_and_Exposure_Rules_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+CONCENTRATION AND EXPOSURE RULES
+============================================================
+
+All content derived from FP/DP validated sources.
+Primary ARs: AR-043, AR-053. Validated across 430+
+unique sources over 10 validation sessions (TB00006
+through TB00019). All rules are locked architectural
+decisions unless explicitly noted as a CIATS-owned
+starting value.
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, coding-ready specification
+for all position concentration limits and USD capital
+exposure tracking in TothBot V2. It defines exactly how
+the maximum concurrent position limit is enforced, how
+open capital commitment is tracked across simultaneous
+pipeline evaluations, and how Gate 7 uses both to protect
+against overexposure.
+
+A coder reading this document must be able to implement
+Gate 7 concentration and exposure checks completely
+without asking any questions.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0600000  Risk                     (Domain Document)
+  0610000  Risk_Rules_Anchor        (Sub-Domain Anchor)
+  0611003  This document            (Instance Document)
+
+============================================================
+3. SCOPE
+============================================================
+
+This document owns:
+  - max_concurrent position limit definition
+  - asyncio.BoundedSemaphore enforcement mechanism
+  - BoundedSemaphore acquire and release lifecycle
+  - BoundedSemaphore ValueError handling
+  - CIATS max_concurrent update procedure
+  - Pending Order Registry (POR) definition
+  - POR population on entry dispatch
+  - POR clearing conditions
+  - POR hold condition (partial fill)
+  - POR reconciliation at startup and reconnect
+  - Gate 7 available_USD sufficiency check
+  - Gate 7 check sequence (all three checks)
+  - All hard rules governing concentration and exposure
+  - All logging requirements for this module
+
+This document does NOT own:
+  - Drawdown monitoring and circuit breakers (0611002)
+  - Position sizing formulas (0611001)
+  - CIATS parameter registry (0611004)
+  - Order dispatch mechanics (0511003)
+  - Partial fill unprotected position handling (0511004)
+
+============================================================
+4. CONCENTRATION — MAX CONCURRENT POSITIONS
+============================================================
+
+------------------------------------------------------------
+4.1 Limit Definition
+------------------------------------------------------------
+
+  CE-MC-001   max_concurrent: the maximum number of
+              simultaneously open positions TothBot V2
+              may hold at any time.
+              CIATS-owned starting value: 20.
+
+  CE-MC-002   max_concurrent is enforced at Gate 7 before
+              every new entry dispatch. It is the position
+              count limit — not the order count limit.
+              A partially-filled entry that has produced
+              a real position counts against max_concurrent.
+              A pending entry order that has not yet filled
+              does NOT count against max_concurrent — it
+              is tracked by the Pending Order Registry
+              (Section 5) for USD exposure instead.
+
+------------------------------------------------------------
+4.2 BoundedSemaphore Enforcement
+------------------------------------------------------------
+
+  CE-SEM-001  max_concurrent is enforced by
+              asyncio.BoundedSemaphore(max_concurrent).
+              The semaphore value equals the number of
+              remaining position slots available.
+              semaphore._value == 0 means max_concurrent
+              is reached — no new entries permitted.
+
+  CE-SEM-002  Gate 7 concentration check:
+                if semaphore.locked():
+                    reject entry
+                    log CE-LOG-003
+                    rejection code: MAX_CONCURRENT_REACHED
+              semaphore.locked() is True when _value == 0.
+              This check is non-blocking. Gate 7 does not
+              await semaphore acquisition.
+
+  CE-SEM-003  Execution Engine acquires the semaphore
+              immediately before dispatching an entry order
+              (add_order). Acquisition is NOT at Gate 7
+              pass — it is at dispatch. This eliminates the
+              race window between Gate 7 pass and dispatch
+              where a concurrent pipeline evaluation could
+              also pass Gate 7 and overcount.
+
+              Acquisition pattern:
+                await semaphore.acquire()
+                # dispatch add_order
+
+  CE-SEM-004  Semaphore release on position close. When
+              a position is fully closed (Exit Controller
+              confirms close complete), the semaphore is
+              released:
+                semaphore.release()
+              "Position fully closed" means:
+                - Layer 1a/1b exit: exec_type=filled on
+                  TP or exec_type=filled on market sell
+                - Layer 2 MAE exit: market sell confirmed
+                - Layer 3 emergSL: stop-market fill
+                  confirmed via executions channel
+              Release fires after Position Mirror is
+              cleared for the symbol, not before.
+
+  CE-SEM-005  If an entry order expires or is canceled with
+              cum_qty == 0 (no fill): semaphore is NOT
+              acquired and NOT released. The position slot
+              was never consumed. No semaphore action needed.
+
+  CE-SEM-006  If an entry order expires or is canceled with
+              cum_qty > 0 (partial fill): the partial fill
+              constitutes a real position. The semaphore
+              WAS acquired at dispatch. It is released when
+              that partial position is subsequently closed.
+
+------------------------------------------------------------
+4.3 BoundedSemaphore ValueError — Critical Bug
+------------------------------------------------------------
+
+  CE-SEM-007  asyncio.BoundedSemaphore raises ValueError
+              if release() is called when the semaphore
+              is already at its maximum value (over-release).
+              This indicates a position accounting defect —
+              more releases than acquisitions.
+
+  CE-SEM-008  ValueError handling:
+                try:
+                    semaphore.release()
+                except ValueError:
+                    log CE-LOG-006 (CRITICAL)
+                    alert alert@tothbot.com (CRITICAL)
+                    halt all new entries
+                    do NOT attempt further release
+              This must never occur in normal operation.
+              If it occurs it is an immediate defect
+              requiring investigation before resuming.
+
+------------------------------------------------------------
+4.4 CIATS max_concurrent Update Procedure
+------------------------------------------------------------
+
+  CE-SEM-009  When CIATS updates max_concurrent via the
+              Parameter Store, the BoundedSemaphore must
+              be recreated to reflect the new limit.
+              asyncio.BoundedSemaphore does not support
+              runtime resizing.
+
+  CE-SEM-010  Update procedure (applied at inter-trade
+              boundary only — never during active pipeline
+              evaluation):
+                (1) Count open_positions = len(position_mirror)
+                (2) new_sem = asyncio.BoundedSemaphore(
+                        new_max_concurrent)
+                (3) for _ in range(open_positions):
+                        await new_sem.acquire()
+                    # Re-acquire for all currently open
+                    # positions to reflect correct state
+                (4) semaphore = new_sem
+                (5) Log CE-LOG-007 with old and new values.
+
+  CE-SEM-011  If new_max_concurrent < open_positions:
+              the semaphore will be created at 0 (locked).
+              No new entries will be accepted until
+              positions close to bring open_positions
+              below new_max_concurrent. This is correct
+              behavior — the CIATS-imposed limit is
+              respected immediately. Log CE-LOG-008
+              (WARNING) to alert that the system is
+              operating over the new limit until positions
+              naturally close.
+
+============================================================
+5. EXPOSURE — PENDING ORDER REGISTRY
+============================================================
+
+------------------------------------------------------------
+5.1 Purpose and Rationale
+------------------------------------------------------------
+
+  CE-POR-001  The Kraken WS v2 balances channel does NOT
+              expose hold_trade (the USD held for pending
+              unfilled entry orders). TothBot cannot rely
+              on spot_usd_balance alone for exposure
+              tracking — it does not reflect capital
+              committed to open entry orders.
+
+  CE-POR-002  Without self-tracking, simultaneous pipeline
+              evaluations for multiple pairs could each
+              see sufficient available_USD and all dispatch
+              entries, collectively overcommitting capital
+              beyond intent.
+
+  CE-POR-003  The Pending Order Registry (POR) self-tracks
+              all USD committed to open entry orders that
+              have not yet filled, expired, or been
+              canceled. Gate 7 deducts POR commitments
+              from spot_usd_balance before the sufficiency
+              check.
+
+------------------------------------------------------------
+5.2 Registry Definition
+------------------------------------------------------------
+
+  CE-POR-004  pending_orders: dict[str, Decimal]
+              Maps cl_ord_id -> estimated_USD_cost.
+              cl_ord_id: the unique client order ID
+              assigned at entry dispatch (AR-006).
+              estimated_USD_cost: the estimated USD
+              capital committed to this entry order.
+
+  CE-POR-005  estimated_USD_cost formula:
+                estimated_cost = (
+                    order_qty
+                    * entry_limit_price
+                    * (Decimal("1") + maker_fee_rate)
+                )
+              maker_fee_rate: Decimal("0.0016") (0.16%).
+              This is the conservative upper bound —
+              the entry will fill at or better than
+              entry_limit_price (post_only guarantee).
+
+------------------------------------------------------------
+5.3 Registry Population
+------------------------------------------------------------
+
+  CE-POR-006  The POR is populated at entry dispatch,
+              immediately when add_order is sent to
+              Kraken via WS v2. Population occurs at
+              the same time cl_ord_id is recorded in
+              the Position Mirror (no async gap, AR-002).
+
+  CE-POR-007  Population:
+                pending_orders[entry_cl_ord_id] = (
+                    estimated_cost
+                )
+              Both the Position Mirror entry and the POR
+              entry are written before the add_order
+              coroutine yields.
+
+------------------------------------------------------------
+5.4 Registry Clearing and Hold Conditions
+------------------------------------------------------------
+
+  CE-POR-008  CLEAR on exec_type = filled:
+              The entry order is fully filled. A real
+              position now exists. The USD is no longer
+              "pending" — it has been deployed.
+                del pending_orders[cl_ord_id]
+
+  CE-POR-009  CLEAR on exec_type = expired:
+              The GTD window elapsed. Whether cum_qty == 0
+              or cum_qty > 0, the order is no longer open.
+              The USD commitment is resolved (either
+              deployed into a partial position or returned).
+                del pending_orders[cl_ord_id]
+
+  CE-POR-010  CLEAR on exec_type = canceled:
+              The order was explicitly canceled. Whether
+              cum_qty == 0 or cum_qty > 0, the order is
+              no longer open.
+                del pending_orders[cl_ord_id]
+
+  CE-POR-011  HOLD on exec_type = trade (partial fill):
+              The entry order is still open and active.
+              A partial fill has occurred but the order
+              has not yet expired or been canceled.
+              DO NOT clear the POR entry. The remaining
+              unfilled portion is still a capital
+              commitment.
+                # No action on pending_orders
+                # Wait for filled, expired, or canceled
+
+  CE-POR-012  The distinction between CLEAR and HOLD is
+              critical. Premature clearing on exec_type=trade
+              would allow the next Gate 7 evaluation to
+              see inflated available_USD and potentially
+              dispatch a duplicate overcommitting entry.
+
+------------------------------------------------------------
+5.5 Gate 7 Available USD Check
+------------------------------------------------------------
+
+  CE-POR-013  Gate 7 exposure check (third check in
+              Gate 7 sequence — after drawdown and
+              concentration):
+                available_USD = (
+                    spot_usd_balance
+                    - sum(pending_orders.values())
+                )
+                if available_USD < per_trade_USD:
+                    reject entry
+                    log CE-LOG-004
+                    rejection code: SKIP_INSUFFICIENT_USD
+
+  CE-POR-014  available_USD uses spot_usd_balance (not
+              portfolio_USD, not current_portfolio_USD).
+              Cash available for trading is the basis.
+              MTM value of open positions is not usable
+              cash and must not be included.
+
+  CE-POR-015  per_trade_USD used in this check is the
+              value computed by Gate 8 sizing (or the
+              Phase 1 fixed formula). If Gate 6 applied
+              a 50% modifier, the reduced per_trade_USD
+              is used in this check.
+
+------------------------------------------------------------
+5.6 Registry Reconciliation
+------------------------------------------------------------
+
+  CE-POR-016  RECONCILIATION AT STARTUP (Step 6):
+              After snap_orders completes (GetOpenOrders
+              or WS executions snapshot):
+                For each order in snap_orders where
+                status in ("new", "pending_new"):
+                  if cl_ord_id not in pending_orders:
+                    estimated_cost = (
+                        Decimal(str(order.order_qty))
+                        * Decimal(str(order.limit_price))
+                        * (Decimal("1") + maker_fee_rate)
+                    )
+                    pending_orders[cl_ord_id] = estimated_cost
+                For each cl_ord_id in pending_orders:
+                  if cl_ord_id not in snap_orders:
+                    del pending_orders[cl_ord_id]
+              After reconciliation: POR reflects exact
+              state of open entry orders on Kraken.
+
+  CE-POR-017  RECONCILIATION ON MID-SESSION RECONNECT:
+              Same procedure as startup reconciliation.
+              Applied immediately after reconnect
+              snap_orders processing is complete.
+              A reconnect does not reset the POR — it
+              reconciles it against current Kraken state.
+
+  CE-POR-018  Stale POR entries (entries not in
+              snap_orders) are cleared during
+              reconciliation. A stale entry means TothBot
+              lost track of an order outcome during
+              disconnect. Clearing it restores correct
+              available_USD accounting.
+
+  CE-POR-019  RATIONALE for reconciliation on reconnect:
+              During a WS disconnect, entry orders may
+              have filled, expired, or been canceled.
+              TothBot did not receive the executions
+              channel confirmation. Without reconciliation,
+              the POR would contain stale entries that
+              deflate available_USD, causing false
+              SKIP_INSUFFICIENT_USD rejections.
+
+============================================================
+6. GATE 7 CHECK SEQUENCE
+============================================================
+
+Gate 7 executes three checks in this exact order.
+All three must pass for an entry to proceed to Gate 8.
+
+  CHECK 1 — Drawdown (0611002):
+    Is system_state NORMAL?
+    If SESSION_PAUSE or FULL_HALT: reject.
+    Rejection codes: SESSION_PAUSE_DRAWDOWN,
+                     FULL_HALT_DRAWDOWN.
+
+  CHECK 2 — Concentration (this document):
+    Is semaphore.locked() False?
+    If True (max_concurrent reached): reject.
+    Rejection code: MAX_CONCURRENT_REACHED.
+
+  CHECK 3 — Exposure (this document):
+    Is available_USD >= per_trade_USD?
+    If False: reject.
+    Rejection code: SKIP_INSUFFICIENT_USD.
+
+  PASS: All three checks passed. Proceed to Gate 8.
+
+The sequence is fixed. Drawdown is checked first because
+a halt condition supersedes all other checks. Concentration
+is checked second because a full semaphore is a hard
+structural block. Exposure is checked third as the
+financial sufficiency gate.
+
+============================================================
+7. INTERFACES
+============================================================
+
+  7.1  FROM Parameter Store (frozen snapshot at pipeline)
+       max_concurrent     — concentration limit
+       per_trade_USD      — exposure threshold (computed
+                            from sizing params)
+       maker_fee_rate     — for POR cost estimation
+
+  7.2  FROM WS Manager (0511001)
+       spot_usd_balance   — for available_USD computation
+       executions channel — exec_type events for POR
+                            population/clearing
+       snap_orders        — for POR reconciliation
+
+  7.3  FROM Position Mirror (0511005)
+       len(position_mirror) — for semaphore recreation
+                              on max_concurrent update
+
+  7.4  FROM Drawdown module (0611002)
+       system_state       — Gate 7 Check 1 input
+
+  7.5  FROM Execution Engine (0511003)
+       Signals semaphore acquire at dispatch.
+       Signals POR population at dispatch.
+
+  7.6  FROM Exit Controller (0511004)
+       Signals semaphore release on position close.
+       Signals POR clear on entry cancel/expire/fill.
+
+  7.7  TO Gate 8 (0611001 / Risk Engine 1011011)
+       Gate 7 pass signal — all three checks passed.
+
+  7.8  TO Logger (0511006)
+       All Gate 7 decisions and POR events (Section 8).
+
+============================================================
+8. LOGGING REQUIREMENTS
+============================================================
+
+  CE-LOG-001  Every Gate 7 PASS:
+                level: DEBUG
+                fields: symbol, available_USD,
+                        per_trade_USD,
+                        semaphore_value,
+                        open_position_count
+
+  CE-LOG-002  Every POR population (entry dispatch):
+                level: DEBUG
+                fields: cl_ord_id, estimated_cost,
+                        pending_orders_total_usd,
+                        available_USD_after
+
+  CE-LOG-003  MAX_CONCURRENT_REACHED rejection:
+                level: INFO
+                fields: symbol, max_concurrent,
+                        open_position_count,
+                        semaphore_locked=True
+
+  CE-LOG-004  SKIP_INSUFFICIENT_USD rejection:
+                level: INFO
+                fields: symbol, available_USD,
+                        per_trade_USD,
+                        spot_usd_balance,
+                        pending_orders_total_usd
+
+  CE-LOG-005  Every POR clear (filled/expired/canceled):
+                level: DEBUG
+                fields: cl_ord_id, reason (exec_type),
+                        cleared_amount,
+                        pending_orders_total_usd_after
+
+  CE-LOG-006  BoundedSemaphore ValueError (critical bug):
+                level: CRITICAL
+                fields: semaphore_value_at_release,
+                        max_concurrent,
+                        open_position_count,
+                        stack_trace
+
+  CE-LOG-007  max_concurrent update (CIATS):
+                level: INFO
+                fields: old_max_concurrent,
+                        new_max_concurrent,
+                        open_position_count,
+                        semaphore_recreated=True
+
+  CE-LOG-008  Semaphore locked after max_concurrent
+              reduction (operating over new limit):
+                level: WARNING
+                fields: new_max_concurrent,
+                        open_position_count,
+                        slots_over_limit
+
+  CE-LOG-009  POR reconciliation complete:
+                level: INFO
+                fields: entries_added, entries_cleared,
+                        final_registry_count,
+                        pending_orders_total_usd,
+                        trigger (STARTUP or RECONNECT)
+
+============================================================
+9. HARD RULES
+============================================================
+
+  HR-CE-001   max_concurrent is enforced by
+              asyncio.BoundedSemaphore. No other
+              enforcement mechanism is permitted.
+
+  HR-CE-002   Gate 7 checks semaphore.locked() —
+              non-blocking. Gate 7 never awaits
+              semaphore acquisition.
+
+  HR-CE-003   Semaphore is acquired by Execution Engine
+              at dispatch, not at Gate 7 pass.
+
+  HR-CE-004   Semaphore is released by Exit Controller
+              after Position Mirror is cleared —
+              not before.
+
+  HR-CE-005   BoundedSemaphore ValueError = critical bug.
+              Log CRITICAL, alert, halt new entries.
+              Must never occur in normal operation.
+
+  HR-CE-006   POR estimated_cost uses entry_limit_price
+              (not fill price — fill is unknown pre-fill).
+              maker_fee_rate = 0.0016 included.
+
+  HR-CE-007   POR holds on exec_type = trade (partial fill
+              with order still open). Never clear on trade.
+
+  HR-CE-008   POR clears on exec_type = filled, expired,
+              or canceled. No other clear conditions exist.
+
+  HR-CE-009   available_USD uses spot_usd_balance minus
+              sum(pending_orders.values()). MTM value of
+              open positions is never included.
+
+  HR-CE-010   POR is reconciled at startup (Step 6) and
+              on every mid-session reconnect. Stale
+              entries are cleared. Missing entries are
+              populated from snap_orders.
+
+  HR-CE-011   max_concurrent update recreates the
+              BoundedSemaphore and re-acquires for all
+              currently open positions. Update applied
+              at inter-trade boundary only.
+
+  HR-CE-012   Gate 7 check sequence is fixed: drawdown
+              first, concentration second, exposure third.
+              Sequence cannot be reordered.
+
+============================================================
+10. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+  (1) What does this module DO?
+      Enforces two Gate 7 checks. Concentration check:
+      queries asyncio.BoundedSemaphore.locked() — rejects
+      if max_concurrent is reached. Exposure check:
+      computes available_USD = spot_usd_balance minus
+      sum(pending_orders.values()) — rejects if
+      available_USD < per_trade_USD. Manages POR lifecycle:
+      populates on entry dispatch, clears on fill/expire/
+      cancel, holds on partial fill, reconciles on startup
+      and reconnect. Manages semaphore lifecycle: Execution
+      Engine acquires at dispatch, Exit Controller releases
+      on position close, recreates on CIATS max_concurrent
+      update.
+
+  (2) What are its interfaces?
+      Inputs: Parameter Store (max_concurrent, per_trade_USD,
+      maker_fee_rate), WS Manager (spot_usd_balance,
+      executions events, snap_orders), Position Mirror
+      (position count), drawdown module (system_state),
+      Execution Engine (acquire/populate signals), Exit
+      Controller (release/clear signals).
+      Outputs: Gate 7 pass to Gate 8, all events to Logger.
+
+  (3) What are its hard rules?
+      HR-CE-001 through HR-CE-012 above. Critically:
+      BoundedSemaphore is the only enforcement mechanism.
+      Semaphore acquired at dispatch not Gate 7.
+      POR holds on partial fill. ValueError = critical bug.
+      available_USD never includes MTM. POR reconciled
+      on every reconnect.
+
+  (4) What triggers it and what does it trigger?
+      Triggered by: every Gate 7 pipeline evaluation
+      (concentration + exposure checks), every entry
+      dispatch (POR population + semaphore acquire),
+      every position close (semaphore release), every
+      entry fill/expire/cancel (POR clear/hold), every
+      startup Step 6 and reconnect (POR reconciliation),
+      CIATS max_concurrent update (semaphore recreation).
+      Triggers: Gate 8 on pass, Logger on all events.
+
+  (5) What does it log?
+      Every Gate 7 pass (CE-LOG-001). Every POR population
+      (CE-LOG-002). Every rejection: MAX_CONCURRENT_REACHED
+      (CE-LOG-003), SKIP_INSUFFICIENT_USD (CE-LOG-004).
+      Every POR clear (CE-LOG-005). ValueError critical
+      bug (CE-LOG-006). max_concurrent updates (CE-LOG-007,
+      CE-LOG-008). POR reconciliation results (CE-LOG-009).
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0600000  Risk                         (Domain Document)
+  0610000  Risk_Rules_Anchor            (Sub-Domain Anchor)
+  0611001  Position_Sizing_Rules        (per_trade_USD src)
+  0611002  Drawdown_and_Halt_Rules      (Gate 7 Check 1)
+  0611004  Safety_Parameter_Framework   (parameter registry)
+  0500000  System_Architecture_Overview (AR-043, AR-053)
+  0411001  Kraken_WS_v2_Specification   (executions channel)
+  0411002  Kraken_REST_API_Specification (snap_orders recon)
+  0511003  Execution_Engine_Specification (dispatch signals)
+  0511004  Exit_Controller_Specification (release signals)
+  0511005  Position_Mirror_Specification (position count)
+  0511006  Logger_Specification          (log target)
+  0211003  Startup_Shutdown_Procedure    (Step 6 timing)
+  1011011  Risk_Engine_Coding_Spec       (implementation)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Complete coding-ready
+                     specification for all concentration and
+                     exposure rules. Covers: max_concurrent
+                     definition (AR-043), BoundedSemaphore
+                     enforcement, acquire/release lifecycle,
+                     ValueError critical bug handling, CIATS
+                     max_concurrent update procedure with
+                     over-limit behavior, Pending Order
+                     Registry definition and formula (AR-053),
+                     POR population/clear/hold conditions,
+                     Gate 7 available_USD check, Gate 7
+                     three-check sequence with fixed order,
+                     POR reconciliation at startup and
+                     reconnect with rationale, 8 interfaces,
+                     9 logging requirements, 12 hard rules,
+                     5 coding-readiness questions. All content
+                     derived from FP/DP validated 0500000
+                     dv1_18.
+
+============================================================
+END OF DOCUMENT
+============================================================
