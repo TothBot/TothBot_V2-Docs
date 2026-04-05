@@ -1,0 +1,199 @@
+DocDCN:     0610000
+DocTitle:   Risk_Rules_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0610000_Risk_Rules_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+RISK RULES ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for the Risk Rules
+sub-domain (AA=06, B=1). It anchors all TothBot V2 Risk
+instance documents (0611001 through 0611004) to the Risk
+Domain Document (0600000).
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the Risk Rules sub-domain, allowing
+instance documents to have a valid parent chain. No
+instance document in this sub-domain may be committed
+to GitHub without this anchor and 0600000 already present
+and approved on GitHub.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety        (Domain)
+  0100000  Management               (Domain)
+  0200000  Operations               (Domain)
+  0300000  Governance               (Domain)
+  0400000  Exchange_Interface       (Domain)
+  0500000  System_Architecture_Overview (Domain)
+  0600000  Risk                     (Domain Document)
+  0610000  This document            (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    0611001  Position_Sizing_Rules
+    0611002  Drawdown_and_Halt_Rules
+    0611003  Concentration_and_Exposure_Rules
+    0611004  Safety_Parameter_Framework
+
+============================================================
+3. TRACEABILITY TO PARENT DOMAIN DOCUMENT
+============================================================
+
+This anchor elaborates the Risk domain defined in 0600000,
+specifically:
+  Section 4    — Risk Architecture Summary (Gate 7,
+                  Gate 8, continuous drawdown monitor)
+  Section 5    — Position Sizing Rules Summary
+  Section 6    — Drawdown and Halt Rules Summary
+  Section 7    — Concentration and Exposure Rules Summary
+  Section 8    — Hard Rules (HR-RISK-001 through
+                  HR-RISK-014)
+  Section 9    — Document Structure (sub-domain and
+                  instance document definitions)
+
+All hard rules (HR-RISK-001 through HR-RISK-014) defined
+in 0600000 Section 8 are binding on every instance
+document in this sub-domain. They are not repeated in
+this anchor. They apply in full.
+
+The sacred constraint (net 1:1.5 R:R, HR-RISK-001) is
+the highest-priority rule in this sub-domain. Every
+instance document must be consistent with it. No instance
+document may define any rule or parameter that causes
+net R:R to fall below 1:1.5.
+
+============================================================
+4. SUB-DOMAIN SCOPE
+============================================================
+
+The Risk Rules sub-domain (AA=06, B=1) governs the
+complete specification of every risk rule that TothBot V2
+enforces. This sub-domain covers position sizing,
+drawdown monitoring and circuit breakers, concentration
+and exposure limits, and the safety parameter registry.
+
+Each instance document elaborates one specific area of
+the Risk rules framework:
+
+  0611001  Position_Sizing_Rules
+           The complete specification of how TothBot V2
+           calculates the size of every position. Covers:
+           portfolio_USD definition (cash only, spot/main
+           wallet), tradeable_USD formula, per_trade_USD
+           formula, Gate 8 R:R computation (mae_pct,
+           net_loss, net_gain, gross_target, emergSL_dist),
+           Half-Kelly formula and 200-trade activation
+           threshold, concurrent position normalization
+           cap, and all Decimal rounding rules for sizing
+           quantities. Primary source: AR-051, AR-011.
+
+  0611002  Drawdown_and_Halt_Rules
+           The complete specification of portfolio drawdown
+           monitoring and circuit breaker enforcement.
+           Covers: portfolio_baseline_USD definition and
+           capture timing (once at startup, after Step 6
+           snap_orders), current_portfolio_USD formula
+           (cash + bid * qty for all open positions),
+           drawdown_pct formula (max(0, ...) — gains not
+           counted), continuous evaluation trigger (every
+           bbo ticker event for open-position pairs AND
+           every Gate 7 evaluation), session pause (5%)
+           behavior and auto-resume condition, full halt
+           (10%) behavior and manual resume requirement,
+           alert routing (alert@tothbot.com), and logger
+           events for all threshold crossings. Primary
+           source: AR-052.
+
+  0611003  Concentration_and_Exposure_Rules
+           The complete specification of position
+           concentration limits and USD capital exposure
+           tracking. Covers: max_concurrent position
+           limit, asyncio.BoundedSemaphore enforcement
+           mechanism, BoundedSemaphore acquire/release
+           lifecycle (Execution Engine acquires, position
+           close releases), ValueError handling (critical
+           bug — halt and alert), CIATS max_concurrent
+           update procedure (recreate semaphore, re-acquire
+           for open positions), Pending Order Registry
+           definition (cl_ord_id -> estimated_USD_cost),
+           registry population on entry dispatch, clearing
+           conditions (filled, expired, canceled), hold
+           condition (partial fill — order still open),
+           reconciliation procedure at startup and
+           mid-session reconnect, and Gate 7 available_USD
+           sufficiency check. Primary source: AR-043,
+           AR-053.
+
+  0611004  Safety_Parameter_Framework
+           The complete CIATS-owned risk parameter registry
+           with starting values and governing rules.
+           Defines every risk parameter: tradeable_pct,
+           per_trade_pct, max_concurrent, mae_mult,
+           emergency_sl_mult, full_halt_drawdown,
+           session_pause_drawdown, and the 200-trade
+           Half-Kelly activation threshold. For each
+           parameter: starting value, CIATS ownership
+           status, activation condition, change constraint,
+           and governing specification reference. Defines
+           the sole hardcoded exception (net 1:1.5 R:R —
+           NOT CIATS — NEVER CHANGES). Absorbs and retires
+           the old 0511005 Safety_Parameter_Review_Procedure
+           content into TothBot V2 (PL-004 resolved).
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  Instance Document -> 0610000 (this anchor) -> 0600000
+
+No instance document in this sub-domain (0611001 through
+0611004) may be committed to GitHub without both this
+anchor and 0600000 already present and approved on GitHub.
+This rule is enforced by validation rule V-012 in 0311001
+Section 13.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0600000  Risk                         (parent Domain Doc)
+  0611001  Position_Sizing_Rules
+  0611002  Drawdown_and_Halt_Rules
+  0611003  Concentration_and_Exposure_Rules
+  0611004  Safety_Parameter_Framework
+  0500000  System_Architecture_Overview (primary AR source)
+  0511004  Exit_Controller_Specification (emergSL context)
+  0511006  Logger_Specification          (log event target)
+  1011011  Risk_Engine_Coding_Spec       (AA=10 impl)
+  0311001  Namespace_Specification       (governs DCN)
+  0311002  Document_Creation_Workflow    (governs sequence)
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Sub-Domain Anchor
+                     for Risk Rules (AA=06, B=1).
+                     Establishes parent chain from 0600000
+                     through this anchor to four instance
+                     documents (0611001 through 0611004).
+                     Scope defined. Traceability to 0600000
+                     Sections 4-9 (HR-RISK-001 through
+                     HR-RISK-014) established. All instance
+                     document scope summaries written.
+                     Document chain requirement stated.
+                     PL-004 resolution noted (0611004).
+
+============================================================
+END OF DOCUMENT
+============================================================
