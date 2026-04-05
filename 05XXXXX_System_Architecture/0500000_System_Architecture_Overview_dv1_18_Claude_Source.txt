@@ -1,10 +1,10 @@
 DocDCN:     0500000
 DocTitle:   TothBot_Kraken_System_Architecture_Overview
-DocVersion: dv1_17
+DocVersion: dv1_18
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_17.docx
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_18.docx
 DocDate:    04-04-2026
-DocTime:    23:59:59 UTC UTC
+DocTime:    23:59:59 UTC
 
 ============================================================
 0500000 SYSTEM ARCHITECTURE OVERVIEW — CLAUDE SOURCE FILE
@@ -17,8 +17,8 @@ when 0500000 needs to be updated. Claude reads this file, applies
 changes, and rebuilds the .docx with embedded diagrams.
 
 Bill stores separately:
-  0500000_System_Architecture_Overview_dv1_16.docx  (Word — for Bill)
-  0500000_System_Architecture_Overview_dv1_16_Claude_Source.txt  (this file — for Claude)
+  0500000_System_Architecture_Overview_dv1_17.docx  (Word — for Bill)
+  0500000_System_Architecture_Overview_dv1_17_Claude_Source.txt  (this file — for Claude)
 
 ============================================================
 DOCUMENT CONTENT
@@ -29,11 +29,11 @@ The Complete System — All Architectural Decisions + All Flow Diagrams
 
 DocDCN:     0500000
 DocTitle:   TothBot_Kraken_System_Architecture_Overview
-DocVersion: dv1_17
+DocVersion: dv1_18
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_17.docx
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_18.docx
 DocDate:    04-04-2026
-DocTime:    23:59:59 UTC UTC
+DocTime:    23:59:59 UTC
 
 PURPOSE: This document captures all architectural decisions, FP/DP analyses, and system
 specifications from the TothBot Kraken architecture sessions of March 2026. Includes all
@@ -1426,8 +1426,8 @@ Finding 6: post_only Rejection Monitoring [CIATS]
   OI-006: CIATS specification — all statistical thresholds and PDCA rules.
            Mann-Whitney alpha=0.01, Spearman |rho|>0.3, CUSUM k/h, PDCA 50-trade interval.
            Specify in 0211001 CIATS_Specification (Phase 3).
-  OI-007: AA=04 Exchange Interface formal document.
-           Specify in 0400000 and 0410000 (Phase 2).
+  OI-007: AA=04 Exchange Interface formal document — CLOSED (Phase 2 complete).
+           0400000 and 0410000 committed to GitHub 2026-04-04.
   OI-008: All AA=10 coding specs. WD documents active: 1011001 dv1_4, 1011002 dv1_10,
            1011005 dv1_0, 1011007 dv1_0, 1011010 dv1_3, 1011011 dv1_1, 1011012 dv1_2,
            1011013 dv1_2, 1011014 dv1_1. Current as of dv1_16. Phase 8 completes all.
@@ -1435,6 +1435,15 @@ Finding 6: post_only Rejection Monitoring [CIATS]
 ============================================================
 13. Revision History
 ============================================================
+
+  dv1_18 04-04-2026  Header-only update. No content or diagram changes.
+                     Parent chain (0400000 Exchange_Interface) committed to GitHub.
+                     0500000 parent chain now complete. DocTime typo corrected
+                     (UTC UTC -> UTC). OI-007 marked CLOSED.
+
+  dv1_17 04-04-2026  DocPath correction: TothBot-V2-Docs -> TothBot_V2-Docs
+                     (underscore before V2). Version incremented per Rule 4.
+                     All document dates updated.
 
   dv1_16 03-26-2026  Text-only. No diagram changes. 1 new AR (AR-076).
                      AR-076: RSI(14) smoothing formula correction. AR-068 stated
