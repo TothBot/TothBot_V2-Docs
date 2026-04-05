@@ -1,0 +1,1001 @@
+DocDCN:     0211001
+DocTitle:   CIATS_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211001_CIATS_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+CIATS SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete specification for CIATS —
+the Continuous Improvement and Autonomous Trading System.
+It is the sole authoritative specification for all CIATS
+behavior, data flows, statistical methods, improvement
+cycles, and parameter ownership rules.
+
+CIATS is TothBot V2's self-improvement engine. It is fully
+asynchronous. It reads only from the Logger. It writes
+only to the Parameter Store. It never blocks the trading
+critical path. Deming PDCA governs every change CIATS makes.
+
+This document is the primary input to AA=10 coding
+specification 1011010 CIATS_Coding_Spec.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  Operations_CIATS_Anchor        (Sub-Domain Anchor)
+  0211001  This document                  (Instance)
+
+============================================================
+3. CIATS INTERFACES
+============================================================
+
+------------------------------------------------------------
+CI-IF-001  SOLE INPUT: LOGGER
+------------------------------------------------------------
+
+CIATS reads data from exactly one source: the Logger
+(0511006). All CIATS data inputs arrive via Logger event
+records. CIATS reads no other source — not the Kraken WS,
+not the Position Mirror, not the Parameter Store.
+
+Two Logger data streams feed CIATS:
+  Stream 1: EWMA Monitor events (per candle close)
+  Stream 2: Trade Outcome Bus events (per position close)
+
+Both streams are defined in Section 5.
+
+------------------------------------------------------------
+CI-IF-002  SOLE OUTPUT: PARAMETER STORE
+------------------------------------------------------------
+
+CIATS writes to exactly one destination: the Parameter
+Store. All CIATS outputs are parameter value updates
+written to the Parameter Store. CIATS writes to no other
+destination.
+
+Parameter Store writes are queued and applied only at
+confirmed inter-trade boundaries. A confirmed inter-trade
+boundary is a moment when no pipeline evaluation is in
+progress and no order is in a pending state.
+
+This isolation is a safety principle: CIATS cannot affect
+live trading except through the Parameter Store, and
+Parameter Store writes cannot corrupt an in-progress
+pipeline evaluation.
+
+------------------------------------------------------------
+CI-IF-003  PARAMETER STORE SNAPSHOT PROTOCOL
+------------------------------------------------------------
+
+TothBot takes a frozen snapshot of all CIATS parameters
+at the start of each pipeline evaluation. The pipeline
+uses the snapshot throughout its execution. CIATS writes
+are queued and applied only after the pipeline completes
+and no orders are pending.
+
+This prevents parameter inconsistency within a single
+pipeline evaluation: a CIATS write that arrives mid-
+evaluation cannot change the parameters the pipeline
+is currently using.
+
+Governed by: 0500000 dv1_18 I-4. Assigned to: 0511002
+(pipeline snapshot) and this document (CIATS write rules).
+
+------------------------------------------------------------
+CI-IF-004  INTERFACE ISOLATION RULE
+------------------------------------------------------------
+
+CIATS isolation is absolute. No exceptions. Specifically:
+
+  (a) CIATS does NOT read the Position Mirror.
+  (b) CIATS does NOT read WS event streams directly.
+  (c) CIATS does NOT read the Kraken REST API.
+  (d) CIATS does NOT write to any file or stream other
+      than the Parameter Store.
+  (e) CIATS does NOT send alerts. The Logger sends alerts
+      when CIATS generates CRITICAL-level log entries
+      per 0511006.
+
+============================================================
+4. CIATS ARCHITECTURE
+============================================================
+
+------------------------------------------------------------
+CI-AR-001  ASYNCHRONOUS OPERATION
+------------------------------------------------------------
+
+CIATS runs as an asyncio task concurrent with the trading
+pipeline. It never blocks the trading critical path. All
+CPU-bound statistical computations (Mann-Whitney U,
+Spearman correlation) run in a ThreadPoolExecutor via
+asyncio.run_in_executor(). They do not block the event loop.
+
+------------------------------------------------------------
+CI-AR-002  CIATS COMPONENTS
+------------------------------------------------------------
+
+CIATS consists of seven components:
+
+  (1) EWMA Monitor      — Stream 1 processing
+  (2) Trade Outcome Bus — Stream 2 ingestion
+  (3) Statistical Engine — Mann-Whitney, Spearman,
+                           CUSUM, Sharpe computations
+  (4) PDCA Engine       — Improvement cycle management
+  (5) Proposal Engine   — Parameter change proposal
+                          generation (active at 200+ trades)
+  (6) Parameter Store   — All parameter values and history
+  (7) Regime Library    — Per-regime performance archives
+                          (active at 600+ trades)
+
+------------------------------------------------------------
+CI-AR-003  CIATS EVENT LOOP
+------------------------------------------------------------
+
+CIATS processes two event types:
+
+  Event Type 1: Candle close event (from EWMA Monitor feed)
+    Action: Update EWMA Monitor signals. Log values.
+    No parameter changes.
+
+  Event Type 2: Trade Outcome Bus event (position close)
+    Action: Ingest record. Update trade corpus. Run
+    Statistical Engine if 200-trade floor met. Run PDCA
+    cycle. Evaluate Proposal Engine. Update Kelly if
+    update interval met.
+
+============================================================
+5. TWO DATA STREAMS
+============================================================
+
+------------------------------------------------------------
+CI-DS-001  STREAM 1 — EWMA MONITOR
+------------------------------------------------------------
+
+Purpose: Continuous monitoring. Early warning only.
+         Never drives parameter changes.
+
+Rate: 288 candle evaluations per day (5-minute candles).
+      12 candles/hour × 24 hours = 288/day.
+
+Activation: Valid after 50 cumulative candle evaluations
+            (~4 hours from first evaluation).
+            Before 50 evals: CIATS inactive on Stream 1.
+
+EWMA formula: EWMA_t = λ × x_t + (1 - λ) × EWMA_{t-1}
+  λ = 0.2 (FP/DP validated — half-life = 3.1 evals)
+
+Three monitoring signals (updated every candle close):
+
+  Signal 1: rejection_rate_by_regime
+    What: Fraction of pipeline evaluations that resulted
+    in REJECTED outcome, segmented by current regime.
+    Source: Gate rejection codes from EWMA Monitor feed.
+    Purpose: Early detection of regime-driven signal
+    degradation. A rising rejection rate in a specific
+    regime is an early warning of parameter drift.
+
+  Signal 2: rate_counter_by_pair
+    What: Order submission rate per monitored pair,
+    from the executions channel rate tracking (A-1).
+    Purpose: Detects pairs approaching Kraken rate limits
+    before a limit event occurs.
+
+  Signal 3: ws_roundtrip_latency_ms
+    What: WebSocket round-trip latency in milliseconds,
+    from WS response timestamps (A-3).
+    Purpose: Infrastructure health monitoring. Latency
+    spikes precede connectivity failures.
+
+All three signals are MONITORING ONLY. They are logged
+every candle close. They never trigger parameter changes.
+They are early warning indicators only.
+
+------------------------------------------------------------
+CI-DS-002  STREAM 2 — TRADE OUTCOME BUS
+------------------------------------------------------------
+
+Purpose: Statistical inference. Parameter change engine.
+         Foundation of all CIATS decisions.
+
+Rate: Fires on every position close. Typically 1-5/day
+      depending on active positions and market conditions.
+
+Activation: Statistical Engine activates at 200 closed
+            trades (HARD FLOOR — see Section 6).
+
+Fields captured on every position close (from Logger):
+  symbol             — traded pair
+  entry_fill_price   — actual fill price (not limit price)
+  exit_fill_price    — actual exit fill price
+  qty                — position size
+  hold_duration_sec  — seconds from entry fill to exit fill
+  mae_reached        — maximum adverse excursion hit (bool)
+  fees_total_usd     — total fees paid (entry + exit)
+  exit_reason        — signal | tp_fill | mae_breach |
+                       emergency_sl | full_halt
+  asset_regime       — regime of the traded asset at entry
+  market_regime      — BTC/USD proxy regime at entry
+  signal_params      — SSS gate values at entry
+  actual_rr          — realized net R:R
+  net_gain_usd       — realized net P/L after all fees
+                       (positive = win, negative = loss)
+
+The net_gain_usd field is authoritative for all Kelly
+formula computations. It reflects actual realized P/L
+including all fees. Gross price change is never used.
+
+============================================================
+6. STATISTICAL THRESHOLDS
+============================================================
+
+------------------------------------------------------------
+CI-ST-001  INACTIVE STATE (0-49 CLOSED TRADES)
+------------------------------------------------------------
+
+0 to 49 closed trades: CIATS fully inactive.
+No EWMA Monitor. No Statistical Engine. No proposals.
+No parameter changes. CIATS is silent.
+
+Note: EWMA Monitor activates at 50 CANDLE EVALUATIONS,
+not 50 trades. Do not conflate these two thresholds.
+
+------------------------------------------------------------
+CI-ST-002  MONITORING STATE (50 CANDLE EVALS REACHED)
+------------------------------------------------------------
+
+At 50 cumulative candle evaluations: EWMA Monitor activates.
+EWMA Monitor runs continuously from this point forward.
+Three monitoring signals begin updating every candle close.
+MONITORING ONLY. No parameter changes. No proposals.
+No inference. This threshold is for early warning only.
+
+------------------------------------------------------------
+CI-ST-003  INFERENCE FLOOR (200 CLOSED TRADES)
+------------------------------------------------------------
+
+200 closed trades: HARD FLOOR for all statistical inference.
+
+At 200 closed trades:
+  (a) Proposal Engine activates. CIATS may now generate
+      parameter change proposals.
+  (b) Statistical Engine activates. Mann-Whitney U,
+      Spearman, Sharpe, CUSUM results are now valid
+      for inference.
+  (c) Half-Kelly position sizing activates. Fixed
+      per_trade_pct (5%) is replaced by computed
+      Half-Kelly applied_pct.
+
+The 200-trade floor is absolute. CIATS does not propose
+parameter changes below 200 closed trades regardless of
+what the data appears to show. Insufficient data produces
+false signals. False signals produce worse outcomes.
+
+Statistical error bounds at 200 trades:
+  SE(win_rate) ≈ 3.5%
+  SE(Sharpe)   ≈ 7.2%
+These bounds are the FP/DP justification for the 200-trade
+floor. Below 200 trades the error bounds are too large
+for reliable inference.
+
+------------------------------------------------------------
+CI-ST-004  REGIME ANALYSIS FLOOR (600 CLOSED TRADES)
+------------------------------------------------------------
+
+600 closed trades: Per-regime analysis valid.
+Requires 100+ trades per regime bucket.
+Mann-Whitney power ≈ 85% at α=0.01 with 100+ per bucket.
+
+At 600 closed trades:
+  Regime Library activates. Per-regime parameter
+  optimization is valid. The Proposal Engine may now
+  generate regime-segmented parameter proposals.
+
+Before 600 trades: regime tags are recorded on every
+trade (for future use) but are not used for per-regime
+parameter proposals.
+
+------------------------------------------------------------
+CI-ST-005  ROLLING WINDOW
+------------------------------------------------------------
+
+Current performance window: rolling 200-300 most recent
+closed trades. This is the window used for Kelly
+computation and for all inference-based proposals.
+
+Full corpus: all closed trades. Zero-cost historical
+library. Used for Regime Library analysis and Spearman
+correlation over full history.
+
+============================================================
+7. STATISTICAL ENGINE
+============================================================
+
+------------------------------------------------------------
+CI-SE-001  MANN-WHITNEY U
+------------------------------------------------------------
+
+Purpose: Non-parametric comparison of two distributions.
+         Used to test whether a proposed parameter change
+         produces a statistically significant improvement
+         in net P/L distribution.
+
+Significance level: α = 0.01 (one-sided).
+Rationale: Financial decisions require 99% confidence.
+α = 0.05 produces too many false-positive parameter
+changes, increasing over-optimization risk. Crypto
+return distributions have heavy tails — tighter threshold
+is required vs standard statistical practice.
+
+Application: Mann-Whitney U is the primary test for all
+Proposal Engine parameter change decisions. A proposal
+is only advanced to the PDCA DO phase if Mann-Whitney U
+confirms p < 0.01 in the CHECK phase.
+
+------------------------------------------------------------
+CI-SE-002  SPEARMAN RANK CORRELATION
+------------------------------------------------------------
+
+Purpose: Detect monotonic relationships between signal
+         parameters and trade outcomes. Identifies which
+         parameters are predictive of performance.
+
+Threshold: |ρ| > 0.3 AND p < 0.05 (both conditions
+           required simultaneously).
+Rationale: |ρ| < 0.3 is treated as noise regardless of
+           p-value. p ≥ 0.05 is treated as non-significant
+           regardless of |ρ|. Both gates must pass.
+
+Application: Used during PDCA PLAN phase to identify
+candidate parameters for improvement proposals. A
+parameter with |ρ| ≤ 0.3 or p ≥ 0.05 is not a
+candidate regardless of other signals.
+
+------------------------------------------------------------
+CI-SE-003  CUSUM (CUMULATIVE SUM CONTROL CHART)
+------------------------------------------------------------
+
+Purpose: Sequential detection of sustained shifts in
+         system performance. Catches gradual drift that
+         point-in-time tests miss.
+
+Parameters:
+  Reference value:  k = 0.5 × σ of the monitored metric
+  Decision threshold: h = 4 × σ of the monitored metric
+  Both k and h are CIATS-owned starting values subject
+  to CIATS optimization after 200-trade floor is reached.
+
+Application: CUSUM monitors the Trade Outcome Bus net_gain
+stream continuously. A CUSUM signal (cumulative sum
+exceeds h) triggers a PDCA PLAN evaluation regardless
+of whether the PDCA interval has been reached.
+
+Note: Cross-document discrepancy exists between h=4σ
+(0200000 v1_0, 0500000 dv1_18, 0311002 v1_0) and h=5.0
+(1011010 dv1_4 WD). This document uses h=4σ per the
+approved 0500000 dv1_18 and 0200000 v1_0. The 1011010
+WD must be corrected to h=4σ in its next update.
+
+------------------------------------------------------------
+CI-SE-004  EWMA (EXPONENTIALLY WEIGHTED MOVING AVERAGE)
+------------------------------------------------------------
+
+Purpose: Continuous Stream 1 monitoring signal computation.
+
+Parameters:
+  λ = 0.2 (FP/DP validated — half-life = 3.1 evaluations)
+  Detects drift within approximately 22 observations
+  (~27 minutes at 288 evals/day cadence).
+
+Formula: EWMA_t = λ × x_t + (1 - λ) × EWMA_{t-1}
+
+Application: Updates three monitoring signals every candle
+close (see CI-DS-001). Monitoring only — never drives
+parameter changes.
+
+------------------------------------------------------------
+CI-SE-005  SHARPE RATIO
+------------------------------------------------------------
+
+Purpose: Risk-adjusted return measurement.
+
+Formula: Sharpe = mean(net_gain_usd) / std(net_gain_usd)
+
+Application: Computed on the rolling 200-300 trade window.
+Used as a secondary performance indicator in the PDCA
+CHECK phase. Not the primary decision gate — Mann-Whitney
+U is the primary gate. Sharpe provides directional
+confirmation.
+
+------------------------------------------------------------
+CI-SE-006  CPU-BOUND COMPUTATION RULE
+------------------------------------------------------------
+
+Mann-Whitney U and Spearman correlation are CPU-bound
+computations. They must run in a ThreadPoolExecutor via
+asyncio.run_in_executor(). They must never block the
+asyncio event loop. EWMA and CUSUM are lightweight and
+may run directly in the event loop.
+
+============================================================
+8. HALF-KELLY POSITION SIZING
+============================================================
+
+------------------------------------------------------------
+CI-KE-001  ACTIVATION
+------------------------------------------------------------
+
+Half-Kelly activates at exactly 200 closed trades.
+Before 200 closed trades: fixed per_trade_pct (5%) applies.
+At and after 200 closed trades: Half-Kelly replaces
+per_trade_pct. Fixed per_trade_pct is no longer used.
+
+------------------------------------------------------------
+CI-KE-002  KELLY FORMULA
+------------------------------------------------------------
+
+  K_full = W - ((1 - W) / R)
+
+  W = WIN RATE (net):
+    W = count(trades where net_gain_usd > 0)
+        / count(total_closed_trades in rolling window)
+    Uses net_gain_usd from Trade Outcome Bus.
+    A "win" is a trade with positive net P/L after all fees.
+    Gross TP fills are not used. Gross price change is not
+    used. Net P/L after fees is the only valid W input.
+
+  R = NET REWARD:RISK RATIO:
+    R = mean(net_gain_usd for winning trades)
+        / mean(|net_gain_usd| for losing trades)
+    Uses actual realized net P/L from Trade Outcome Bus.
+    Both numerator and denominator include all fees.
+    Theoretical R:R targets are not used.
+
+Rationale: TothBot targets net 1:1.5 R:R. But actual
+realized R clusters around 1.5 for TP exits and varies
+for MAE exits based on slippage, partial fills, and fee
+accumulation. Using gross targets instead of realized net
+ignores all three. At 0.42% round-trip fees, a 1.5x gross
+trade nets approximately 1.4x. Kelly using 1.5 instead of
+1.4 inflates bet size by ~7%. Compounded across 200+ trades
+this degrades the portfolio's risk profile. Net P/L is
+the only correct Kelly input.
+
+------------------------------------------------------------
+CI-KE-003  HALF-KELLY APPLICATION
+------------------------------------------------------------
+
+  K_half = K_full × 0.5
+
+Half-Kelly (50% of full Kelly) is used because:
+  - Crypto return distributions have heavier tails than
+    the Kelly model assumes.
+  - Half-Kelly achieves ~75% of optimal growth at
+    approximately 50% less drawdown vs full Kelly.
+  - Loss minimization takes priority over growth
+    maximization in TothBot V2.
+
+------------------------------------------------------------
+CI-KE-004  CONCURRENT POSITION NORMALIZATION
+------------------------------------------------------------
+
+  applied_pct = min(K_half, tradeable_pct / max_concurrent)
+
+This normalization prevents capital overcommitment when
+multiple positions are open simultaneously. Without it,
+high Kelly fractions × 20 concurrent positions can demand
+more capital than tradeable_pct permits.
+
+The normalization is applied on every Kelly update before
+writing applied_pct to the Parameter Store.
+
+------------------------------------------------------------
+CI-KE-005  NEGATIVE KELLY RULE
+------------------------------------------------------------
+
+If K_full ≤ 0:
+  Log event at CRITICAL level with K_full, W, R, and
+  trade count.
+  Do NOT update the Parameter Store.
+  Do NOT apply any Kelly value.
+  The existing per_trade_pct value remains unchanged.
+
+A negative Kelly indicates the strategy has a negative
+expected value. This is a CRITICAL alert requiring
+operator attention.
+
+------------------------------------------------------------
+CI-KE-006  UPDATE INTERVAL
+------------------------------------------------------------
+
+Kelly is updated every 50 closed trades after the 200-
+trade activation floor. Rolling window of 200-300 most
+recent closed trades is used for W and R computation.
+
+Update schedule:
+  200 trades: First Kelly computation and activation.
+  250 trades: First Kelly update.
+  300 trades: Second Kelly update.
+  ... and so on every 50 trades.
+
+------------------------------------------------------------
+CI-KE-007  KELLY LOGGING
+------------------------------------------------------------
+
+Every Kelly computation must be logged with:
+  K_full, K_half, max_per_trade (tradeable_pct/max_concurrent),
+  applied_pct, W, R, wins count, losses count, total trades,
+  normalization_binding (bool: applied_pct < K_half),
+  rolling window bounds (first and last trade index used).
+
+============================================================
+9. PDCA CYCLE
+============================================================
+
+------------------------------------------------------------
+CI-PDCA-001  PDCA IS THE ONLY PATH TO PARAMETER CHANGES
+------------------------------------------------------------
+
+Every parameter change in TothBot V2 must follow the
+complete PDCA cycle. No parameter change skips any step.
+No parameter is changed outside the PDCA cycle.
+No CIATS output other than a completed PDCA cycle may
+result in a Parameter Store write (except Kelly updates,
+which are governed by CI-KE-006).
+
+------------------------------------------------------------
+CI-PDCA-002  MINIMUM INTERVAL
+------------------------------------------------------------
+
+Minimum 50 closed trades between any two parameter changes.
+This floor applies globally across all parameters. If a
+parameter change is applied at trade N, the next parameter
+change (for any parameter) cannot be applied before trade
+N + 50.
+
+Rationale: Insufficient data between changes produces
+false signals. 50 trades provides a minimum statistical
+buffer for observing the effect of the previous change.
+
+------------------------------------------------------------
+CI-PDCA-003  PLAN PHASE
+------------------------------------------------------------
+
+PLAN triggers:
+  (a) Periodic: Every 50 closed trades after 200-trade
+      floor is reached.
+  (b) CUSUM signal: Cumulative sum exceeds h threshold.
+
+PLAN activities:
+  - Compute Spearman correlation for all monitored
+    parameters against net_gain_usd.
+  - Identify candidate parameters: |ρ| > 0.3 AND p < 0.05.
+  - For each candidate: compute proposed new value with
+    supporting data.
+  - Generate formal proposal with: parameter name, current
+    value, proposed value, statistical basis (Spearman ρ,
+    p-value), trade sample size, rolling window bounds.
+  - If no candidate parameters meet threshold: log
+    "NO_PROPOSAL_GENERATED" and exit PDCA cycle.
+    No change is made.
+
+------------------------------------------------------------
+CI-PDCA-004  DO PHASE
+------------------------------------------------------------
+
+A PLAN-phase proposal with Mann-Whitney U p < 0.01
+advancement confirmation enters the DO phase.
+
+DO activities:
+  - Proposed change runs in paper trading (or a limited
+    live tranche as directed by Bill).
+  - Minimum 50 trades collected under the proposed value.
+  - Results captured in Trade Outcome Bus as a separate
+    cohort for CHECK comparison.
+
+------------------------------------------------------------
+CI-PDCA-005  CHECK PHASE
+------------------------------------------------------------
+
+CHECK activities:
+  - Compare DO cohort (proposed value) against baseline
+    cohort (current value) using Mann-Whitney U.
+  - Required: p < 0.01 (one-sided) for advancement.
+  - Also compute Sharpe ratio for both cohorts as
+    directional confirmation.
+  - If p ≥ 0.01: proposal REJECTED. Baseline maintained.
+    Log rejection with full statistical output.
+
+------------------------------------------------------------
+CI-PDCA-006  ACT PHASE
+------------------------------------------------------------
+
+ACT triggers: CHECK phase confirms p < 0.01.
+
+ACT activities:
+  - Parameter write is queued for next confirmed inter-
+    trade boundary.
+  - At inter-trade boundary: Parameter Store updated with
+    new value.
+  - Bill notification sent (alert@tothbot.com) with:
+    parameter name, old value, new value, p-value,
+    sample sizes, trade count at time of change.
+  - Bill approval required before parameter write is
+    applied. CIATS queues the change. Bill approves.
+    Unapproved changes remain queued indefinitely.
+  - After write: log PARAMETER_CHANGE event with full
+    details.
+
+------------------------------------------------------------
+CI-PDCA-007  REJECTED PROPOSAL HANDLING
+------------------------------------------------------------
+
+A rejected proposal (CHECK phase p ≥ 0.01):
+  - Baseline parameter value is maintained unchanged.
+  - Rejection logged with: parameter name, proposed value,
+    p-value achieved, sample sizes, rejection reason.
+  - Findings are retained in the Regime Library for
+    future reference.
+  - PDCA cycle exits. No change is made.
+
+============================================================
+10. PROPOSAL ENGINE
+============================================================
+
+------------------------------------------------------------
+CI-PE-001  ACTIVATION
+------------------------------------------------------------
+
+Proposal Engine activates at 200 closed trades.
+Before 200 trades: no proposals are generated regardless
+of what the data shows.
+
+------------------------------------------------------------
+CI-PE-002  PROPOSAL GENERATION RULES
+------------------------------------------------------------
+
+A proposal is generated only when ALL of the following
+are true:
+  (a) 200-trade floor is met.
+  (b) 50-trade minimum interval since last parameter
+      change has been met.
+  (c) Spearman correlation identifies at least one
+      candidate parameter (|ρ| > 0.3 AND p < 0.05).
+  (d) The proposed direction improves the primary mission:
+      maximize profit and minimize loss, with emphasis
+      on minimizing loss.
+
+A proposal is NOT generated when:
+  (a) Any of the above conditions is unmet.
+  (b) The parameter in question is the hardcoded net
+      1:1.5 R:R — CIATS has no authority over this value.
+
+------------------------------------------------------------
+CI-PE-003  ONE PROPOSAL AT A TIME
+------------------------------------------------------------
+
+CIATS generates one proposal per PDCA cycle. If multiple
+candidate parameters are identified in the PLAN phase,
+CIATS selects the single parameter with the strongest
+Spearman correlation |ρ| and initiates one proposal.
+The remaining candidates are retained and evaluated in
+subsequent PDCA cycles after the current cycle completes
+and the 50-trade interval is met.
+
+============================================================
+11. REGIME LIBRARY
+============================================================
+
+------------------------------------------------------------
+CI-RL-001  ACTIVATION
+------------------------------------------------------------
+
+Regime Library activates at 600 closed trades with
+100+ trades in each regime bucket.
+
+Before 600 trades (or before 100 trades in any bucket):
+regime tags are recorded on every trade for future use.
+No per-regime analysis is performed.
+
+------------------------------------------------------------
+CI-RL-002  REGIME SEGMENTATION
+------------------------------------------------------------
+
+Every trade carries two regime tags (from 0511002):
+  asset_regime:   regime of the traded asset at entry
+  market_regime:  BTC/USD proxy regime at entry (market
+                  context)
+
+Six regime combinations from the 3×2 grid:
+  TRENDING_POSITIVE × NORMAL_VOL
+  TRENDING_POSITIVE × ELEVATED_VOL
+  NON_DIRECTIONAL × NORMAL_VOL
+  NON_DIRECTIONAL × ELEVATED_VOL
+  TRENDING_NEGATIVE × NORMAL_VOL
+  TRENDING_NEGATIVE × ELEVATED_VOL
+
+The Regime Library maintains a separate trade corpus and
+performance statistics for each regime bucket.
+
+------------------------------------------------------------
+CI-RL-003  PER-REGIME ANALYSIS
+------------------------------------------------------------
+
+At 600+ trades with 100+ per bucket:
+  - Sharpe ratio computed per regime bucket.
+  - Mann-Whitney U applied for regime-segmented proposals.
+  - Parameters that optimize for a specific regime may
+    be proposed independently of the global parameter.
+  - Full corpus is the zero-cost historical library for
+    per-regime analysis.
+
+------------------------------------------------------------
+CI-RL-004  REGIME LIBRARY DATA STRUCTURE
+------------------------------------------------------------
+
+The Regime Library is an in-memory archive. Structure:
+  regime_library: dict[str, list[TradeOutcomeRecord]]
+  Keys: regime combination strings (e.g.,
+        "TRENDING_POSITIVE_NORMAL_VOL")
+  Values: list of all Trade Outcome Bus records for that
+          regime combination.
+
+Persisted to disk at every confirmed inter-trade boundary.
+Loaded at startup.
+
+============================================================
+12. PARAMETER STORE
+============================================================
+
+------------------------------------------------------------
+CI-PS-001  PARAMETER STORE CONTENTS
+------------------------------------------------------------
+
+The Parameter Store holds all CIATS-owned parameters.
+These are the current active values used by TothBot at
+every pipeline evaluation (via the snapshot protocol).
+
+Starting values (all CIATS-owned — subject to replacement
+by data through PDCA):
+
+  tradeable_pct:            0.50  (50% of portfolio)
+  per_trade_pct:            0.05  (5% → Half-Kelly at
+                                   200 trades)
+  max_concurrent:           20    (positions)
+  mae_mult:                 1.5   (× ATR(14))
+  emergency_sl_mult:        3.0   (× ATR(14))
+  entry_timeout_sec:        45    (30-60s range, starting)
+  full_halt_drawdown:       0.10  (10% of portfolio)
+  session_pause_drawdown:   0.05  (5% of portfolio)
+  adx_threshold:            25
+  atr_percentile_threshold: 0.67  (67th percentile)
+  htf_ema_fast:             20    (daily EMA periods)
+  htf_ema_slow:             50    (daily EMA periods)
+  min_volume_usd_daily:     500000 (USD)
+  signal_thresholds:        TBD   (SSS gates — Phase 5-6)
+
+NOT in Parameter Store — hardcoded in code:
+  net_rr_target:  1.5  (net 1:1.5 R:R — SACRED — NEVER
+                        CIATS — NEVER CHANGES)
+
+------------------------------------------------------------
+CI-PS-002  PARAMETER STORE HISTORY
+------------------------------------------------------------
+
+The Parameter Store maintains full history of all
+parameter changes: parameter name, old value, new value,
+timestamp, trade count at change, PDCA cycle reference.
+
+History is append-only. Values are never overwritten —
+new values are appended with timestamps.
+
+------------------------------------------------------------
+CI-PS-003  PARAMETER STORE PERSISTENCE
+------------------------------------------------------------
+
+The Parameter Store is persisted to disk at every
+confirmed inter-trade boundary write. Loaded at startup.
+Loss of the Parameter Store on VPS failure results in
+fallback to starting values. Starting values are hardcoded
+in code as the fallback.
+
+============================================================
+13. HARD RULES
+============================================================
+
+  HR-CI-001  CIATS reads only from the Logger.
+             No other data source is permitted.
+
+  HR-CI-002  CIATS writes only to the Parameter Store.
+             No other output is permitted.
+
+  HR-CI-003  Parameter Store writes occur only at confirmed
+             inter-trade boundaries. Never during a
+             pipeline evaluation. Never while an order
+             is in a pending state.
+
+  HR-CI-004  The 200-trade floor is absolute. No inference,
+             no proposals, and no parameter changes before
+             200 closed trades.
+
+  HR-CI-005  The 50-trade minimum interval between
+             parameter changes is absolute.
+
+  HR-CI-006  Net 1:1.5 R:R is hardcoded. CIATS has no
+             authority over this value. It is not in the
+             Parameter Store. It cannot be proposed for
+             change. It cannot be modified by any PDCA
+             cycle.
+
+  HR-CI-007  Mann-Whitney U α = 0.01 (one-sided) is the
+             decision gate for all parameter changes.
+             No parameter change is applied below this
+             threshold regardless of other signals.
+
+  HR-CI-008  Negative Kelly (K_full ≤ 0) must not update
+             the Parameter Store. A CRITICAL alert must
+             be generated.
+
+  HR-CI-009  Half-Kelly applied_pct must be normalized by
+             the concurrent position cap before every
+             Parameter Store write:
+             applied_pct = min(K_half, tradeable_pct /
+                               max_concurrent)
+
+  HR-CI-010  All CPU-bound statistical computations must
+             run in ThreadPoolExecutor. They must never
+             block the asyncio event loop.
+
+  HR-CI-011  Bill approval is required before any PDCA-
+             generated parameter change is applied to
+             the Parameter Store. CIATS queues the change.
+             Bill approves. No auto-approval.
+
+  HR-CI-012  CIATS does not send alerts directly. CIATS
+             logs CRITICAL-level events. The Logger sends
+             alerts per 0511006 alert rules.
+
+============================================================
+14. WHAT CIATS LOGS
+============================================================
+
+CIATS must log all of the following events:
+
+  EWMA_UPDATE         — every candle close (3 signal values)
+  TRADE_INGEST        — every Trade Outcome Bus record
+  KELLY_UPDATE        — every Kelly computation (full
+                        detail per CI-KE-007)
+  KELLY_NEGATIVE      — CRITICAL — negative Kelly event
+  CUSUM_SIGNAL        — when CUSUM cumulative sum exceeds h
+  PDCA_PLAN           — every PLAN phase initiation and
+                        all candidates evaluated
+  PDCA_PROPOSAL       — every proposal generated with
+                        full statistical basis
+  PDCA_DO             — DO phase initiation
+  PDCA_CHECK          — CHECK phase result (pass or fail)
+                        with p-value and sample sizes
+  PDCA_ACT            — parameter change queued for Bill
+                        approval
+  PDCA_APPLIED        — parameter change applied after
+                        Bill approval
+  PDCA_REJECTED       — proposal rejected with full stats
+  NO_PROPOSAL         — PLAN phase found no candidates
+  REGIME_LIBRARY_UPDATE — regime bucket updated
+  PARAMETER_CHANGE    — any Parameter Store write with
+                        old value, new value, timestamp,
+                        trade count
+
+All CRITICAL-level events trigger operator alerts
+per 0511006 Section 7.
+
+============================================================
+15. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) WHAT DOES CIATS DO?
+    CIATS continuously monitors TothBot V2 performance
+    via two Logger data streams. After 200 closed trades,
+    it applies statistical methods (Mann-Whitney U,
+    Spearman, CUSUM, EWMA, Sharpe, Half-Kelly) to detect
+    parameter drift and generate improvement proposals
+    through a PDCA cycle. It manages Half-Kelly position
+    sizing after 200 trades. After 600 trades, it performs
+    per-regime optimization. It writes approved parameter
+    changes to the Parameter Store at confirmed inter-trade
+    boundaries. It never blocks the trading critical path.
+
+(2) INTERFACES:
+    Input:  Logger (sole source) — two streams:
+            EWMA Monitor feed (per candle close)
+            Trade Outcome Bus (per position close)
+    Output: Parameter Store (sole destination) —
+            parameter value writes at inter-trade boundaries
+            (Bill-approved)
+    No other interfaces. No other inputs. No other outputs.
+
+(3) HARD RULES:
+    HR-CI-001 through HR-CI-012 (Section 13).
+    Key: 200-trade floor absolute. α=0.01 absolute.
+    50-trade interval absolute. 1:1.5 R:R never CIATS.
+    Negative Kelly never updates Parameter Store.
+    Bill approval required for all PDCA parameter changes.
+
+(4) TRIGGERS AND OUTPUTS:
+    Triggers CIATS:
+      Candle close event → EWMA Monitor update
+      Position close event → Trade Outcome Bus ingest,
+        Statistical Engine run (if 200-trade floor met),
+        Kelly update (if update interval met)
+      CUSUM signal → PDCA PLAN phase initiation
+      50-trade interval → PDCA PLAN phase initiation
+    CIATS triggers:
+      Parameter Store write (at inter-trade boundary,
+        after Bill approval)
+      CRITICAL alert log entry (negative Kelly, CUSUM
+        signal above h, other anomalies)
+
+(5) WHAT CIATS LOGS:
+    Full event list: Section 14.
+    Key entries: EWMA_UPDATE (every candle), TRADE_INGEST
+    (every close), KELLY_UPDATE (every 50 trades from 200),
+    KELLY_NEGATIVE (CRITICAL), all PDCA phases, all
+    proposals, all rejections, all parameter changes.
+
+============================================================
+16. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                    (parent Domain Doc)
+  0210000  Operations_CIATS_Anchor       (parent anchor)
+  0511006  Logger_Specification          (sole data source)
+  0511002  Signal_Pipeline_Specification (parameter snapshot)
+  0500000  System_Architecture_Overview  (CIATS arch Section 6)
+  1011010  CIATS_Coding_Spec             (AA=10 child — WD)
+  0311001  Namespace_Specification       (governs DCN)
+  0311002  Document_Creation_Workflow    (governs sequence)
+
+============================================================
+17. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Complete CIATS
+                     specification. All interfaces defined
+                     (CI-IF-001 through CI-IF-004). All
+                     components defined (CI-AR-001 through
+                     CI-AR-003). Both data streams specified
+                     (CI-DS-001 through CI-DS-002). All
+                     statistical thresholds (CI-ST-001
+                     through CI-ST-005). Full Statistical
+                     Engine (CI-SE-001 through CI-SE-006).
+                     Half-Kelly complete spec including
+                     net P/L inputs and normalization
+                     (CI-KE-001 through CI-KE-007). PDCA
+                     cycle all four phases (CI-PDCA-001
+                     through CI-PDCA-007). Proposal Engine
+                     (CI-PE-001 through CI-PE-003). Regime
+                     Library (CI-RL-001 through CI-RL-004).
+                     Parameter Store (CI-PS-001 through
+                     CI-PS-003). Hard Rules HR-CI-001
+                     through HR-CI-012. Complete logging
+                     spec. Five coding-readiness questions
+                     answered. CUSUM h discrepancy between
+                     1011010 dv1_4 (h=5.0) and all approved
+                     documents (h=4σ) noted — h=4σ is
+                     authoritative. 1011010 must be
+                     corrected.
+
+============================================================
+END OF DOCUMENT
+============================================================
