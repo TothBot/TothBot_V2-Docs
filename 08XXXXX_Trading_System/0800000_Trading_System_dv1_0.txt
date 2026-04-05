@@ -1,0 +1,396 @@
+DocDCN:     0800000
+DocTitle:   Trading_System
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0800000_Trading_System_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+TRADING SYSTEM
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Domain Document for AA=08
+Trading_System. It defines the scope, governing principles,
+module architecture, CIATS parameter ownership, and hard
+rules for the TothBot V2 trading system as an operational
+unit.
+
+The Trading System domain covers all modules that receive
+pipeline decisions and execute trades: the Long Module
+(entry dispatch), the Selection Controller (quality
+gating), the Exit Controller (position monitoring and
+exit execution), and the Entry Limit Placement engine
+(order price computation).
+
+This document is the authoritative parent for all AA=08
+sub-domain anchors and instance documents. No AA=08
+instance document may exist without this domain document
+already committed to GitHub.
+
+============================================================
+2. SCOPE
+============================================================
+
+AA=08 Trading_System governs:
+
+  - Long Module: entry order dispatch lifecycle
+  - Selection Controller: 6-gate quality filter
+  - Exit Controller: all normal position exits
+  - Entry Limit Placement: entry order price computation
+  - Position protection sequencing (TP + emergSL)
+  - order lifecycle: dispatch, fill, expiry, cancel
+  - CIATS Trade Outcome Bus reporting per closed position
+
+AA=08 Trading_System does NOT govern:
+
+  - WS connection management (AA=05, 0511001)
+  - Signal computation (AA=07, 0711001)
+  - Regime classification (AA=07, 0711002)
+  - Asset universe selection (AA=07, 0711003)
+  - Risk sizing computation (AA=06, 0611001)
+  - Drawdown circuit breakers (AA=06, 0611002)
+  - CIATS continuous improvement engine (AA=02, 0211001)
+  - Kraken WS API wire protocol (AA=04, 0411001)
+
+============================================================
+3. GOVERNING PRINCIPLES
+============================================================
+
+3.1 Loss Prevention First
+Every trading module decision prioritizes loss prevention
+over profit generation. This governs exit sequencing,
+cancel timeout behavior, MPP retry strategy, and all
+ambiguity resolution in position state.
+
+3.2 No Ambiguous Order State
+A market sell MUST NEVER be issued when order cancel state
+is unknown. Position holds with CRITICAL alert are
+preferable to issuing a sell against an uncancelled TP
+or emergSL. Duplicate position risk is the primary
+concern.
+
+3.3 Deterministic Exit Sequencing
+All exit sequences are deterministic. Cancel TP before
+cancel emergSL before market sell. No variation. No
+optimization of sequence for speed. Sequence integrity
+is correctness.
+
+3.4 CIATS Owns All Parameters
+All numeric thresholds, timeouts, retry counts, and
+sizing parameters are CIATS-owned starting values.
+None are hardcoded except net 1:1.5 R:R (AR-011).
+CIATS may update any parameter at inter-trade boundaries.
+
+3.5 Atomic TP + emergSL Placement
+TP and emergSL are placed atomically via batch_add on
+confirmed full entry fill. No fill → no protection.
+No sequential placement. One batch_add, two legs, zero
+gap between TP and emergSL placement.
+
+============================================================
+4. MODULE ARCHITECTURE SUMMARY
+============================================================
+
+The Trading System contains four operational modules.
+All execute within the 8-gate pipeline driven by
+5-minute OHLC candle close events from Kraken WS v2.
+
+------------------------------------------------------------
+4.1 Entry Path — Gates 5 through 8
+------------------------------------------------------------
+
+Gate 5 — Selection Controller
+  Receives SSS PASS from signal engine. Applies 6 quality
+  gates before authorizing dispatch. Manages cooldown and
+  consecutive loss state per pair.
+
+Gate 8 — Position Sizer (AA=06 — not AA=08)
+  Computes entry_qty. Owned by Risk domain.
+
+Entry Limit Placement (AA=08)
+  Computes entry_limit_price from candle close price,
+  quantized DOWN to price_increment. Runs before dispatch.
+
+Long Module (AA=08)
+  Dispatches entry add_order. Assigns cl_ord_id at
+  dispatch. Manages pending order registry. Processes
+  entry fill → triggers batch_add for TP + emergSL.
+  Records position to Position Mirror.
+
+------------------------------------------------------------
+4.2 Position Monitoring Path — Continuous
+------------------------------------------------------------
+
+Exit Controller (AA=08)
+  Monitors all open positions. Evaluates three exit
+  trigger layers. Executes cancel and sell sequences.
+  Enforces cancel timeout fallback. Handles MPP retry.
+  Reports closed position to CIATS Trade Outcome Bus.
+
+  Layer 1a — Signal-Based Exits:
+    HTF regime reversal (ohlc(60) trigger)
+    Daily regime downgrade (00:00 UTC trigger)
+    Max hold time expiry (ohlc(5m) trigger)
+
+  Layer 1b — TP Fill:
+    Resting TP limit on Kraken matching engine fills.
+    Exit Controller cancels emergSL after fill confirm.
+
+  Layer 2 — MAE Threshold:
+    bid_price triggers when MAE >= ATR(14) * mae_mult.
+    Sequence: cancel TP → cancel emergSL → market sell.
+    Cancel timeout fallback and MPP retry mandatory.
+
+  Layer 3 — Emergency Brake (Kraken only):
+    Not managed by Exit Controller during normal operation.
+    Fires only on VPS/TothBot/internet failure.
+    MUST NEVER fire in normal operation.
+
+============================================================
+5. PIPELINE POSITION
+============================================================
+
+The Trading System modules execute at specific positions
+in the 8-gate pipeline. This mapping is authoritative.
+
+  PRE-STEP  Parameter Store Snapshot frozen
+  PRE-STEP  Pre-computation cache read
+  Gate 1    State Machine         (not AA=08)
+  Gate 2    Liquidity Gate        (not AA=08)
+  Gate 3    Regime Pre-Filter     (not AA=08)
+  Gate 4    1H HTF Confirmation   (not AA=08)
+  SSS       Signal Engine         (not AA=08)
+  Gate 5    Selection Controller  (AA=08 — 0811002)
+  Gate 6    Regime Gate           (sizing — not AA=08)
+  Gate 7    Risk Guard            (not AA=08)
+  Gate 8    Position Sizer        (not AA=08)
+  DISPATCH  Entry Limit Placement (AA=08 — 0811004)
+            Long Module           (AA=08 — 0811001)
+  MONITOR   Exit Controller       (AA=08 — 0811003)
+
+Exit Controller runs continuously on ticker bbo events,
+ohlc close events, executions fills, and the 00:00 UTC
+trigger. It is NOT a gate in the entry pipeline.
+
+============================================================
+6. CIATS PARAMETER REGISTRY — TRADING SYSTEM
+============================================================
+
+All values listed below are CIATS-owned starting values.
+All will be replaced by data through PDCA after the
+200-trade floor. None are hardcoded except net 1:1.5 R:R.
+
+  Entry Parameters:
+    entry_timeout_sec:          45s (GTD window, CIATS)
+    sc_body_threshold:          0.3 (ATR multiple)
+    sc_cooldown_seconds:        300s
+    sc_consecutive_limit:       3 losses
+
+  Exit Parameters:
+    mae_mult:                   1.5x ATR(14)
+    emergency_sl_mult:          3.0x ATR(14)
+    max_hold_candles:           24 (2 hours)
+    cancel_timeout_window:      5.0 seconds
+    mpp_retry_count:            3 attempts
+
+  Sacred Constraint (not CIATS — hardcoded):
+    net 1:1.5 R:R               HARDCODED — NEVER CHANGES
+
+============================================================
+7. HARD RULES — TRADING SYSTEM
+============================================================
+
+HR-TS-001  Entry orders MUST be limit/post_only/GTD.
+           No market orders for entry. No IOC for entry.
+           No GTC for entry. GTD only — self-expiring.
+
+HR-TS-002  cl_ord_id MUST be assigned at dispatch, before
+           Kraken ACK. Position Mirror written at dispatch.
+           No async gap between dispatch and PM record.
+
+HR-TS-003  stp_type MUST be "cancel_newest" with underscore
+           on all WS v2 add_order and batch_add calls.
+           REST API uses hyphen. Never confuse the two.
+
+HR-TS-004  TP + emergSL MUST be placed atomically via
+           batch_add on confirmed full entry fill ONLY.
+           No batch_add on partial fill. No sequential
+           TP + emergSL placement.
+
+HR-TS-005  Exit sequence MUST be: cancel TP → cancel
+           emergSL → market sell. This sequence is
+           inviolable for Layer 1a and Layer 2 exits.
+           No shortcut. No optimization.
+
+HR-TS-006  Cancel timeout fallback MUST be applied to
+           ALL cancel_order calls in every exit layer.
+           No cancel_order may proceed to sell without
+           confirmed cancel ACK or executions verification.
+
+HR-TS-007  Market sell MUST NEVER be issued with
+           ambiguous order cancel state. HOLD +
+           CRITICAL alert is mandatory on second timeout.
+
+HR-TS-008  MPP retry MUST use IOC limit at best_bid
+           (refreshed) - 0.2% per attempt. NEVER retry
+           with market sell on MPP rejection.
+
+HR-TS-009  net 1:1.5 R:R is HARDCODED. No CIATS update
+           is permitted. No code path may alter this ratio.
+           TP and emergSL prices are computed from this
+           constraint using actual fill price only.
+
+HR-TS-010  All R:R calculations MUST use actual fill price
+           (avg_price from exec_type=filled). Never the
+           order limit_price. OTO was rejected for this
+           reason (AR-008).
+
+HR-TS-011  Position Mirror MUST be cleared only AFTER
+           confirmed position close. Never before.
+           On exit sequence: clear PM after sell fill
+           confirmed. On TP fill: clear PM after emergSL
+           cancel confirmed.
+
+HR-TS-012  CIATS Trade Outcome Bus MUST fire exactly once
+           per closed position. On partial TP fills:
+           aggregate all partial fills into one record
+           before firing. Never fire multiple records
+           for one position close.
+
+============================================================
+8. DOCUMENT STRUCTURE
+============================================================
+
+The Trading System domain contains one sub-domain:
+
+  Sub-Domain 1 — Trading_System_Modules (B=1)
+    Anchor: 0810000 Trading_System_Modules_Anchor
+    Instance documents:
+      0811001  Long_Module_Specification
+      0811002  Selection_Controller_Specification
+      0811003  Exit_Controller_Specification
+      0811004  Entry_Limit_Placement_Specification
+
+------------------------------------------------------------
+8.1 Sub-Domain Descriptions
+------------------------------------------------------------
+
+0811001 Long_Module_Specification
+  Complete specification of entry order dispatch. Covers
+  add_order construction (AR-006), cl_ord_id assignment
+  (AR-002), Pending Order Registry, entry fill handling,
+  batch_add TP+emergSL dispatch (AR-007), R:R computation
+  using actual fill price, partial fill protection (AR-054),
+  Position Mirror write, and CIATS Trade Outcome Bus
+  triggering at close.
+
+0811002 Selection_Controller_Specification
+  Complete specification of Gate 5 quality filter. Covers
+  all 6 SC gates (AR-072), state management (cooldown +
+  consecutive loss dicts, AR-073), gate failure reject
+  codes, CIATS EWMA monitoring of rejection rates, and
+  CIATS parameter ownership.
+
+0811003 Exit_Controller_Specification
+  Complete specification of the 3-layer exit architecture.
+  Covers Layer 1a (3 signal-based triggers), Layer 1b
+  (TP fill), Layer 2 (MAE threshold), and Layer 3
+  (emergency brake — reference only). Defines
+  cancel_timeout_window = 5.0s and mpp_retry_count = 3
+  (both FP/DP derived, CIATS-owned). All exit sequences.
+  MPP IOC retry strategy. CIATS Trade Outcome Bus fields.
+
+0811004 Entry_Limit_Placement_Specification
+  Complete specification of entry_limit_price computation.
+  Covers candle close as basis (AR-069), price_increment
+  source (instrument channel), ROUND_DOWN quantization,
+  and the rationale for candle close as the correct basis.
+
+------------------------------------------------------------
+8.2 Document Chain Requirement
+------------------------------------------------------------
+
+  Instance Document -> 0810000 (Anchor) -> 0800000 (Domain)
+
+This chain is mandatory and unbroken. No instance document
+in AA=08 may be committed to GitHub without both 0810000
+and 0800000 already present and committed.
+
+============================================================
+9. RELATIONSHIPS TO OTHER DOMAINS
+============================================================
+
+  AA=05 System_Architecture (0500000)
+    0500000 Sections 3, 4, 8, and 9 are the primary
+    source of record for all architectural decisions
+    captured in this domain. All AR entries (AR-002,
+    AR-006, AR-007, AR-008, AR-040, AR-041, AR-054,
+    AR-066, AR-069, AR-072, AR-073) trace to 0500000.
+    0500000 defines. AA=08 specifies at trading-module
+    level.
+
+  AA=07 Strategy (0700000)
+    Selection Controller (Gate 5) receives SSS PASS
+    from the Signal Engine (0711001). Regime state from
+    Regime Engine (0711002) drives Layer 1a EC-L1A-001
+    and EC-L1A-002 exit triggers. AA=07 produces signals
+    and regime state. AA=08 consumes them.
+
+  AA=06 Risk (0600000)
+    Position Sizer (Gate 8, 0611001) computes entry_qty
+    and TP/emergSL prices before Long Module dispatch.
+    Drawdown circuit breakers (0611002) may trigger
+    Full Halt, which causes Exit Controller batch_cancel.
+    AA=06 governs size and risk. AA=08 governs dispatch
+    and exit execution.
+
+  AA=04 Exchange_Interface (0400000)
+    All WS v2 order message formats are governed by
+    0411001 Kraken_WS_v2_Specification. AA=08 defines
+    WHAT to send and WHEN. AA=04 defines HOW to construct
+    the wire message.
+
+  AA=02 Operations / CIATS (0211001)
+    CIATS receives all Trade Outcome Bus data from the
+    Exit Controller (via Logger). CIATS owns all AA=08
+    CIATS parameters. PDCA governs all updates at
+    inter-trade boundaries after the 200-trade floor.
+
+============================================================
+10. OPEN ITEMS
+============================================================
+
+  None at document creation.
+
+  cancel_timeout_window = 5.0 seconds — FP/DP derived
+  this session. OI-003 CLOSED.
+
+  mpp_retry_count = 3 — FP/DP derived this session.
+
+  All AA=10 coding specifications for AA=08 modules are
+  deferred to Phase 8 per 0311002 Document_Creation_
+  Workflow. See OI-008.
+
+============================================================
+11. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. AA=08 Trading_System
+                     Domain Document. Scope, governing
+                     principles, module architecture, pipeline
+                     position, CIATS parameter registry (9
+                     parameters), 12 hard rules, document
+                     structure, and domain relationships
+                     defined. cancel_timeout_window and
+                     mpp_retry_count FP/DP derived this
+                     session. One sub-domain defined.
+                     OI-003 CLOSED.
+
+============================================================
+END OF DOCUMENT
+============================================================
