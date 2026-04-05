@@ -1,0 +1,74 @@
+DocDCN:     0920000
+DocTitle:   Business_Plan_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0920000_Business_Plan_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+BUSINESS PLAN ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for Sub-Domain 2
+(Business Plan) within AA=09 Plans. It anchors the Business
+Plan governance family to the Plans Domain Document
+(0900000) and governs the instance document in this
+sub-domain.
+
+============================================================
+2. SUB-DOMAIN DEFINITION
+============================================================
+
+Sub-Domain 2 — Business Plan — contains the business case
+for TothBot V2. It defines the capital model, performance
+targets, paper trading thresholds, go-live decision
+criteria, and ongoing operational success metrics.
+
+============================================================
+3. DOCUMENT HIERARCHY
+============================================================
+
+  0900000  Plans                          [Parent Domain]
+    0920000  Business_Plan_Anchor         [THIS DOCUMENT]
+      0921001  TothBot_V2_Business_Plan
+
+============================================================
+4. GOVERNANCE RULES
+============================================================
+
+GR-0920-001  0921001 TothBot_V2_Business_Plan is the sole
+             instance document in this sub-domain.
+
+GR-0920-002  0921001 must reference this anchor and
+             0900000 as its parent chain.
+
+GR-0920-003  0921001 is updated when capital parameters,
+             performance targets, or go-live criteria
+             change. Version increments on every update.
+
+============================================================
+5. RELATED DOCUMENTS
+============================================================
+
+  0900000  Plans
+  0910000  Master_Plan_Anchor
+  0600000  Risk
+  0611001  Position_Sizing_Rules
+  0611002  Drawdown_and_Halt_Rules
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 7 of
+                     Document Creation Workflow.
+                     Sub-Domain Anchor for Business Plan.
+
+============================================================
+END OF DOCUMENT
+============================================================
