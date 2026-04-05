@@ -1,0 +1,419 @@
+DocDCN:     1011010
+DocTitle:   CIATS_Coding_Spec
+DocVersion: dv1_5
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011010_CIATS_Coding_Spec_dv1_5.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+CIATS CODING SPECIFICATION
+============================================================
+
+STATUS: Working Draft — Placeholder
+Updated dv1_5: CUSUM defect corrected.
+  CIATS-CU-001 corrected: h=5.0 (unitless, wrong) replaced
+  with h=4sigma (relative to metric sigma, correct).
+  FP/DP rationale added. Consistent with 0500000 dv1_18,
+  0200000 v1_0, 0311002 v1_0, and 0211001 dv1_0.
+  Parent specification updated: 0211001 now exists (dv1_0).
+
+============================================================
+1. PURPOSE
+============================================================
+
+CIATS (Continuous Improvement and Autonomous Trading System)
+is the self-improvement engine of TothBot V2. It is fully
+asynchronous. It reads only from the Logger and writes only
+to the Parameter Store. It never blocks the trading hot path.
+Deming PDCA governs every change.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification         (TBD)
+  1010000  Trading_System_Coding_Anchor (TBD)
+  1011010  This document
+  Parent specification: 0211001  CIATS_Specification  dv1_0
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1-3.10 [All prior sections dv1_2 carry forward — with
+          CIATS-CU-001 corrected below]
+------------------------------------------------------------
+
+All rules remain authoritative unless explicitly updated
+in this version.
+
+KEY RULES — ALL CARRY FORWARD (with one correction):
+  CIATS-ST-001  EWMA valid at 50 candle evals — monitor only.
+  CIATS-ST-002  200 trades HARD FLOOR — inference valid.
+                Half-Kelly activates. Proposal Engine active.
+  CIATS-ST-003  600 trades — per-regime analysis valid.
+  CIATS-MW-001  Mann-Whitney U: alpha=0.01 (one-sided).
+  CIATS-SP-001  Spearman: |rho|>0.3 AND p<0.05.
+  CIATS-CU-001  ★ CORRECTED dv1_5: CUSUM k=0.5sigma,
+                h=4sigma. See Section 3.12 for full
+                rationale. Prior value h=5.0 was a defect:
+                unitless absolute value — wrong. Correct
+                value is h=4sigma (relative to the sigma
+                of the monitored metric).
+  CIATS-EW-001  EWMA lambda=0.2. Validated.
+  CIATS-KE-001  Half-Kelly: K%=W-(1-W)/R, apply 50%.
+  CIATS-PDCA-001 Min 50-trade interval between param changes.
+  CIATS-THR-001  CPU-bound stats: run_in_executor() mandatory.
+  CIATS-QUE-001  Logger hot path: put_nowait() only.
+  CIATS-ISO-001  CIATS reads Logger only. Writes PS only.
+  CIATS-KE-002  Half-Kelly concurrent position normalization.
+  CIATS-KE-003  applied_pct = min(raw_kelly_half,
+                               tradeable_pct/max_concurrent).
+  CIATS-KE-004  Normalization applied on every Kelly update.
+  CIATS-KE-005  Floor constraint: applied_pct >= min viable.
+
+------------------------------------------------------------
+3.11 KELLY FORMULA NET R:R CLARIFICATION [dv1_3 AR-065]
+------------------------------------------------------------
+
+CIATS-KE-006  ★ dv1_3 (AR-065): AUTHORITATIVE DEFINITION
+              of Kelly formula inputs W and R.
+
+              CIATS-KE-001 specifies:
+                K_full = W - ((1-W) / R)
+              This section specifies what W and R MEAN.
+
+              W = WIN RATE (net):
+                W = count(closed_trades where net_gain_usd > 0)
+                    / count(total_closed_trades)
+                Uses net_gain_usd from Trade Outcome Bus.
+                "Win" = position closed with POSITIVE NET P/L
+                        after all fees.
+                NOT gross TP fills. NOT gross price change.
+                A TP fill that results in negative net P/L
+                (e.g., if spread was extreme) = LOSS for Kelly.
+
+              R = NET REWARD:RISK RATIO:
+                R = mean(net_gain_usd for winning trades)
+                    / mean(|net_loss_usd| for losing trades)
+                Uses actual realized net P/L from Trade
+                Outcome Bus, not theoretical R:R targets.
+                Both net_gain_usd and net_loss_usd already
+                include all fees (entry maker + exit taker).
+
+CIATS-KE-007  ★ WHY NET NOT GROSS:
+              TothBot targets net 1:1.5 R:R (the sacred
+              constraint). But actual realized R will cluster
+              around 1.5 for TP exits and varies for MAE exits
+              based on slippage and fee accumulation.
+
+              Using gross targets (1.5) instead of realized
+              net would ignore:
+                (a) Slippage on market sells (MAE exits)
+                (b) Partial fills affecting actual avg price
+                (c) Fee accumulation over the full hold
+              All three cause realized R to deviate from 1.5.
+              Kelly must use realized, not theoretical.
+
+CIATS-KE-008  ★ ROLLING WINDOW:
+              CIATS computes W and R from the rolling window
+              of recent closed trades (per CIATS-PDCA-001).
+              Recommended window: last 200-300 trades
+              (see 0500000 Section 6.2 rolling window spec).
+              The entire corpus (zero-cost library) is
+              available for cross-validation but Kelly
+              uses the recent rolling window for sensitivity
+              to current market conditions.
+
+CIATS-KE-009  ★ COMPLETE KELLY UPDATE PROCEDURE:
+
+              def compute_kelly(closed_trades: list) -> Decimal:
+                  """
+                  Compute Half-Kelly fraction from recent trades.
+                  All monetary values are net (after fees).
+                  closed_trades: list of Trade Outcome Bus records
+                  Returns: applied_pct (Decimal, as fraction)
+                  """
+                  from decimal import Decimal
+
+                  # Compute W and R from net P/L
+                  wins  = [t for t in closed_trades
+                           if t.net_gain_usd > Decimal("0")]
+                  losses = [t for t in closed_trades
+                            if t.net_gain_usd <= Decimal("0")]
+
+                  if len(closed_trades) < 200:
+                      # Below HARD FLOOR — do not activate
+                      return None
+
+                  W = Decimal(len(wins)) / Decimal(len(closed_trades))
+
+                  if len(losses) == 0:
+                      # No losses — Kelly undefined. Do not update.
+                      logger.log("KELLY_NO_LOSSES",
+                          level="INFO",
+                          trades=len(closed_trades))
+                      return None
+
+                  avg_win  = (sum(t.net_gain_usd for t in wins)
+                             / Decimal(len(wins)))
+                  avg_loss = (sum(abs(t.net_gain_usd) for t in losses)
+                             / Decimal(len(losses)))
+
+                  if avg_loss == Decimal("0"):
+                      # Pathological — skip update
+                      return None
+
+                  R = avg_win / avg_loss
+                  K_full = W - ((Decimal("1") - W) / R)
+
+                  if K_full <= Decimal("0"):
+                      # Negative Kelly = no edge. Alert.
+                      logger.log("KELLY_NEGATIVE",
+                          level="CRITICAL",
+                          K_full=K_full, W=W, R=R,
+                          trades=len(closed_trades))
+                      alert(PRIORITY_CRITICAL,
+                          f"Kelly is NEGATIVE ({K_full}). "
+                          f"Strategy may have lost edge.")
+                      return None  # Do not update
+
+                  K_half = K_full * Decimal("0.5")
+
+                  # Normalization (CIATS-KE-003)
+                  max_per_trade = (parameter_store.tradeable_pct
+                                  / Decimal(str(
+                                      parameter_store.max_concurrent)))
+                  applied_pct = min(K_half, max_per_trade)
+
+                  # Floor constraint (CIATS-KE-005)
+                  # (minimum viable check TBD based on pair universe)
+
+                  logger.log("CIATS_KELLY_UPDATE",
+                      K_full=K_full, K_half=K_half,
+                      max_per_trade=max_per_trade,
+                      applied_pct=applied_pct,
+                      W=W, R=R,
+                      wins=len(wins), losses=len(losses),
+                      total_trades=len(closed_trades),
+                      normalization_binding=(applied_pct < K_half))
+
+                  return applied_pct
+
+DECISION RATIONALE (CIATS-KE-006 through CIATS-KE-009):
+  TB00019 Search 10 found from 5+ independent sources
+  (CAIA crypto framework, lbank.com Kelly, IntraAlpha
+  Kelly, QuantConnect Kelly, OSL Kelly) that Kelly formula
+  inputs must use realized net P/L. Multiple sources confirm
+  that transaction costs not factored into Kelly produce
+  inflated bet sizes. For TothBot with 0.42% round-trip
+  fees, using gross vs net makes a meaningful difference
+  at 1.5x R:R: ~7% bet size inflation compounded across
+  200+ trades degrades the portfolio's risk profile.
+
+------------------------------------------------------------
+3.12 CUSUM PARAMETER CORRECTION [NEW dv1_5]
+------------------------------------------------------------
+
+CIATS-CU-001 CORRECTED: k=0.5sigma, h=4sigma.
+
+DEFECT IN dv1_4: h=5.0 was specified as a unitless absolute
+value. This is wrong. CUSUM thresholds must be expressed
+relative to the standard deviation (sigma) of the monitored
+metric. h=5.0 absolute is dimensionally inconsistent with
+k=0.5sigma and produces incorrect behavior: if the metric
+has sigma=0.5, h=5.0 = 10sigma — far too conservative.
+If sigma=2.0, h=5.0 = 2.5sigma — too aggressive.
+
+The correct specification is h=4sigma, consistent with all
+approved TothBot V2 documents:
+  0500000 dv1_18: "CUSUM parameters (dv1_6): k=0.5*sigma,
+                   h=4*sigma. Starting values."
+  0200000 v1_0:   "CUSUM: k=0.5sigma, h=4sigma."
+  0311002 v1_0:   "h = 4sigma of the monitored metric."
+  0211001 dv1_0:  "h = 4 x sigma of the monitored metric."
+
+The h=4sigma value was established in 0500000 dv1_6 as a
+FP/DP validated starting value and carries the "FP/DP
+validated dv1_6" tag in 0500000 dv1_18.
+
+FP/DP RATIONALE FOR h=4sigma vs h=5sigma:
+
+CUSUM with k=0.5sigma detects shifts of 1sigma magnitude.
+The choice of h governs the tradeoff between detection
+speed and false alarm rate:
+
+  h=4sigma: ARL_0 (in-control) ≈ 168 observations before
+            a false alarm. ARL_1 for detecting a 1sigma
+            shift ≈ 10.4 observations. Faster detection.
+            Industry standard for active monitoring
+            applications (Montgomery, "Introduction to
+            Statistical Quality Control").
+
+  h=5sigma: ARL_0 ≈ 465. ARL_1 ≈ 14.3 observations.
+            Slower detection. More conservative. Standard
+            for slower-moving industrial processes where
+            false alarms are very costly.
+
+For TothBot V2, h=4sigma is correct for three reasons:
+
+  REASON 1 — LOSS MINIMIZATION MISSION:
+  Faster drift detection (h=4sigma, ARL_1≈10) minimizes
+  losses from degraded parameters operating longer than
+  necessary. h=5sigma delays detection by ≈4 additional
+  observations — at 1-5 trades/day, that is 1-4 additional
+  days of degraded performance before CUSUM signals.
+  h=4sigma is the loss-minimizing choice.
+
+  REASON 2 — FALSE ALARMS FILTERED DOWNSTREAM:
+  A CUSUM signal does not trigger an automatic parameter
+  change. It triggers a PDCA PLAN phase. The PLAN phase
+  applies Spearman correlation (|rho|>0.3, p<0.05). The
+  CHECK phase applies Mann-Whitney U at alpha=0.01.
+  Bill approval is required for any change. The false
+  alarm rate from h=4sigma vs h=5sigma (ARL_0 168 vs 465)
+  is irrelevant in practice: false CUSUM signals are
+  filtered by three downstream gates before any parameter
+  changes. The cost of a false CUSUM trigger is a PLAN
+  phase computation — not a parameter change.
+
+  REASON 3 — STARTING VALUE — CIATS OWNS IT:
+  h=4sigma is a starting value. CIATS will optimize k and
+  h after the 200-trade floor is reached using its own
+  performance data. The starting value only needs to be
+  directionally correct — faster detection for a loss-
+  minimization system. h=4sigma satisfies this.
+
+IMPLEMENTATION NOTE:
+  sigma in CIATS-CU-001 refers to the rolling standard
+  deviation of the monitored metric computed from the
+  Trade Outcome Bus corpus. It is recomputed at each
+  CUSUM evaluation. Both k and h scale with the metric's
+  current sigma — they are not fixed absolute values.
+
+  Pseudocode:
+    metric_sigma = std(metric_values[-200:])  # rolling
+    k = 0.5 * metric_sigma
+    h = 4.0 * metric_sigma
+    # CUSUM upper: S_pos_t = max(0, S_pos_{t-1} + x_t - k)
+    # Signal when S_pos_t > h
+
+============================================================
+4. CIATS ARCHITECTURE (SUMMARY — TBD IN FINAL SPEC)
+============================================================
+
+  4.1  CIATS Event Loop — asyncio task, runs concurrently
+  4.2  Stream 1 — EWMA Monitor (50-candle activates)
+  4.3  Stream 2 — Trade Outcome Bus (200-trade activates)
+  4.4  Proposal Engine — generates parameter proposals
+  4.5  Statistical Engine — Mann-Whitney, Spearman, CUSUM
+       (all in ThreadPoolExecutor per Section 3.7)
+  4.6  PDCA Engine — PDCA cycle management
+  4.7  Parameter Store — all parameter values and history
+  4.8  Regime Library — per-regime performance archives
+  4.9  CIATS logging — all proposals, decisions, rejections
+  4.10 Half-Kelly normalization (per Section 3.10)
+  4.11 Kelly net R:R from Trade Outcome Bus (per Section 3.11)
+
+============================================================
+5. FIVE CODING-READINESS QUESTIONS (TBD IN FINAL SPEC)
+============================================================
+
+  (1) What does CIATS DO?
+      TBD in final spec. See 0211001 CIATS_Specification
+      dv1_0 Section 15 for current answer.
+
+  (2) Interfaces:
+      Inputs: Logger Trade Outcome Bus (net P/L data).
+      Outputs: Parameter Store writes (queued at
+      inter-trade boundaries).
+
+  (3) Hard rules:
+      200-trade floor (CIATS-ST-002).
+      600-trade regime floor (CIATS-ST-003).
+      PDCA min 50-trade interval (CIATS-PDCA-001).
+      alpha=0.01 for all Mann-Whitney decisions.
+      CUSUM: k=0.5sigma, h=4sigma (CIATS-CU-001).
+      CPU-bound computations in ThreadPoolExecutor.
+      Logger hot path uses put_nowait.
+      ★ Half-Kelly MUST be normalized by concurrent position
+        cap before writing to Parameter Store (CIATS-KE-003).
+      ★ Kelly inputs W and R MUST be computed from realized
+        net P/L (CIATS-KE-006). Never gross price change.
+      ★ Negative Kelly → CRITICAL alert, no parameter update.
+
+  (4) Triggers: Trade Outcome Bus event, candle close
+      (EWMA update). Triggers: Parameter Store writes.
+
+  (5) Logs:
+      All proposals, all statistical test results, all
+      parameter changes, all rejections, all CUSUM signals.
+      ★ All Kelly update details including normalization
+        binding status and net W/R values (CIATS-KE-009).
+      ★ Negative Kelly events (CRITICAL).
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                    (parent Domain)
+  0210000  Operations_CIATS_Anchor       (parent Anchor)
+  0211001  CIATS_Specification           dv1_0
+  0500000  System_Architecture_Overview  dv1_18
+  0511006  Logger_Specification          dv1_0
+  1000000  Coding_Specification          (TBD)
+  1010000  Trading_System_Coding_Anchor  (TBD)
+  1011005  Exit_Controller_Coding_Spec   dv1_1
+  1011007  Logger_Coding_Spec            dv1_1
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_5  04-05-2026  CUSUM defect corrected. CIATS-CU-001
+                     h=5.0 (unitless absolute — wrong)
+                     corrected to h=4sigma (relative to
+                     metric sigma — correct). Section 3.12
+                     added: full FP/DP rationale for h=4sigma.
+                     ARL_0 and ARL_1 values documented.
+                     Three reasons for h=4sigma over h=5sigma
+                     stated: loss minimization mission,
+                     downstream false alarm filtering, and
+                     CIATS-owned starting value. CUSUM
+                     implementation pseudocode added.
+                     Parent specification updated to
+                     0211001 dv1_0 (now exists).
+                     Related documents updated to current
+                     versions. Section 5(3) hard rules
+                     updated to include CUSUM correction.
+                     DocDate/DocTime updated.
+
+  dv1_4  04-04-2026  DocPath correction: TothBot-V2-Docs
+                     corrected to TothBot_V2-Docs throughout.
+
+  dv1_3  03-26-2026  Tenth 10-search validation (TB00019).
+                     Section 3.11: CIATS-KE-006 through -009.
+                     Kelly formula inputs must use net P/L
+                     from Trade Outcome Bus, not theoretical
+                     gross R:R targets.
+                     W = net winning trade fraction.
+                     R = avg_net_win / avg_|net_loss|.
+                     Negative Kelly → CRITICAL alert + skip.
+                     Complete Python pseudocode for Kelly
+                     computation including edge cases.
+                     5+ independent sources validated
+                     (TB00019 Search 10).
+
+  dv1_2  03-25-2026  CIATS-KE-002 through -005. Half-Kelly
+                     concurrent normalization.
+
+  dv1_1  03-25-2026  ThreadPoolExecutor for CPU-bound stats.
+                     Logger queue discipline (put_nowait).
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+
+============================================================
+END OF DOCUMENT
+============================================================
