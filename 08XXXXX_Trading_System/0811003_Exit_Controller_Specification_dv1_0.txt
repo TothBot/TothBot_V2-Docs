@@ -1,0 +1,723 @@
+DocDCN:     0811003
+DocTitle:   Exit_Controller_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0811003_Exit_Controller_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+EXIT CONTROLLER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete trading-module specification
+for the Exit Controller — the TothBot V2 component that
+owns all normal position exits. It defines the 3-layer
+exit architecture, all trigger conditions, all exit
+sequences, the cancel timeout fallback mechanism, the
+MPP IOC retry strategy, Full Halt behavior, pair status
+adaptation, the CIATS Trade Outcome Bus record structure,
+interfaces, hard rules, and logging.
+
+This document is the AA=08 (Trading_System) authoritative
+specification for exit behavior. It defines the previously-
+deferred values cancel_timeout_window = 5.0 seconds and
+mpp_retry_count = 3, both FP/DP derived this session and
+CIATS-owned as starting values.
+
+This document references 0511004 (AA=05 Exit_Controller_
+Specification) for system architecture context. 0811003
+is the trading-rules authority. 0511004 is the system
+component architecture. They are complementary.
+
+============================================================
+2. GOVERNING DOCUMENTS
+============================================================
+
+  0800000  Trading_System               (Domain Document)
+  0810000  Trading_System_Modules_Anchor (Sub-Domain Anchor)
+  0500000  System_Architecture_Overview (primary source)
+  0511004  Exit_Controller_Specification (AA=05 reference)
+  0511001  WS_Manager_Specification
+  0511005  Position_Mirror_Specification
+  0411001  Kraken_WS_v2_Specification
+  0611002  Drawdown_and_Halt_Rules
+
+============================================================
+3. PARENT CHAIN
+============================================================
+
+  0811003 -> 0810000 -> 0800000
+
+============================================================
+4. FP/DP DERIVATION — DEFERRED VALUES
+============================================================
+
+Two values were deferred from 0511004 pending FP/DP
+analysis. Both are derived and defined here.
+
+------------------------------------------------------------
+4.1 cancel_timeout_window = 5.0 seconds
+------------------------------------------------------------
+
+FP/DP Analysis (this session — OI-003 CLOSED):
+
+The cancel_timeout_window defines how long to wait for
+a cancel_order ACK (exec_type=canceled from executions
+channel) before triggering the fallback recovery procedure.
+
+First principles constraints:
+  (a) Timeout MUST be >> typical round-trip to avoid
+      false trigger on legitimate network variation.
+  (b) Timeout MUST be << acceptable position exposure
+      window to bound the fallback recovery window.
+
+Observed system characteristics:
+  VPS location: Ashburn VA. Kraken infrastructure: AWS
+  us-east-1 or co-located data center.
+  ws_roundtrip_latency_ms (A-3 CIATS signal): typically
+  5-20ms under normal VPS-to-Kraken network conditions.
+  cancel_order response path: TothBot → Kraken network
+  (5-20ms) → matching engine processing → executions
+  channel push → VPS (~5-20ms). Total: 10-50ms typical.
+  Network degradation (congestion, packet loss): adds
+  100-500ms. TCP retry on packet loss: up to ~2-3 seconds.
+
+Decision:
+  5.0 seconds covers all realistic network disruption
+  scenarios (typical: 10-50ms, worst realistic: 3-4s)
+  with margin. 5 seconds is well within the 5-minute
+  candle evaluation window. A false timeout is recoverable
+  (fallback verifies executions channel before acting).
+  A too-short timeout creates spurious fallback activations
+  that disrupt the exit sequence unnecessarily.
+
+Derivation basis: VPS-to-Kraken latency characteristics
+in 0500000 (A-3 monitoring), TCP retry timing (established
+networking behavior), and fallback cost analysis.
+
+CIATS starts from 5.0s and adjusts based on actual
+ws_roundtrip_latency_ms data from A-3 EWMA Monitor.
+
+  cancel_timeout_window: 5.0 seconds (CIATS-owned)
+
+------------------------------------------------------------
+4.2 mpp_retry_count = 3
+------------------------------------------------------------
+
+FP/DP Analysis (this session):
+
+The mpp_retry_count defines how many IOC limit sell
+attempts to make at best_bid - 0.2% increments after
+a market sell is rejected by MPP (Market Price Protection).
+
+Kraken MPP behavior (AR-035, 0411001 WS-MPP-001 through -004):
+  MPP fires when a market sell would fill at a price
+  more than a threshold below the current market price.
+  MPP is always active (no_mpp deprecated Sep 2025).
+  On MPP rejection: retry with IOC limit at best_bid - 0.2%.
+  Each retry uses a fresh best_bid from the most recent
+  ticker bbo event (continuous for open-position pairs).
+
+First principles constraints:
+  (a) Too few retries: position may not exit if spread
+      briefly spikes — position remains unprotected.
+  (b) Too many retries: position holds too long in
+      adverse conditions; each retry adds ~10-50ms latency.
+  (c) After all retries exhausted: HOLD + CRITICAL alert
+      is correct. A catastrophically wide spread requires
+      human review.
+
+Spread analysis on Kraken spot pairs in the monitored
+universe ($500k+ USD daily volume):
+  Normal spread: 0.01-0.05% for liquid pairs.
+  Elevated spread (news event, thin liquidity): 0.2-1.0%.
+  Extreme spread (liquidity crisis, circuit breaker): >2%.
+  Gate 2 ($500k min volume) significantly reduces
+  exposure to pairs with chronic wide spreads.
+  IOC at best_bid - 0.2%: fills within 1-2 attempts
+  under elevated spreads. 3 attempts covers near-extreme
+  spread scenarios.
+
+Rate counter cost: each IOC retry = +1 add_order unit.
+3 retries = +3 units. Well within 125-unit ceiling.
+
+Decision:
+  3 retries at best_bid - 0.2% per attempt.
+  After 3 failures: spread is catastrophically wide.
+  HOLD + CRITICAL alert is the correct response.
+  Operator must review. CIATS adjusts from first data.
+
+  mpp_retry_count: 3 (CIATS-owned)
+
+============================================================
+5. THREE-LAYER EXIT ARCHITECTURE
+============================================================
+
+============================================================
+5.1 LAYER 1a — SIGNAL-BASED EXITS
+============================================================
+
+Three trigger conditions. Any one fires the Layer 1a exit
+sequence for the affected symbol.
+
+------------------------------------------------------------
+EC-L1A-001: HTF Regime Reversal
+------------------------------------------------------------
+
+EC-001  Trigger: ohlc(60) close detected by WS Manager.
+        Condition: 1H EMA(20) crosses BELOW 1H EMA(50)
+        while a long position is open in that symbol.
+        Gate 4 symmetry — same EMA relationship that
+        blocked entry now triggers exit.
+
+EC-002  Exit sequence (Layer 1a standard):
+          1. cancel_order: cancel TP resting order.
+             Record req_id in req_id_registry.
+          2. cancel_order: cancel emergSL stop order.
+             Record req_id in req_id_registry.
+             SEQUENCE CRITICAL: BOTH cancels BEFORE sell.
+          3. Apply cancel timeout fallback (Section 7)
+             to both cancel_order calls.
+          4. add_order: market sell of position qty.
+             (Or IOC limit if MPP rejection — Section 8.)
+          5. On fill: clear Position Mirror. Fire CIATS.
+        exit_reason: HTF_REGIME_REVERSAL
+
+------------------------------------------------------------
+EC-L1A-002: Daily Regime Downgrade
+------------------------------------------------------------
+
+EC-003  Trigger: 00:00 UTC daily regime refresh.
+        Condition: After Regime Engine recomputes daily
+        regime classifications, any open-position pair
+        that reclassifies to TRENDING_NEGATIVE or
+        NON_DIRECTIONAL + ELEVATED_VOL.
+        Gate 3 symmetry — same regime condition that blocks
+        entries now exits open positions.
+
+EC-004  Exit sequence: same as EC-002 (Layer 1a standard).
+        exit_reason: DAILY_REGIME_DOWNGRADE
+
+------------------------------------------------------------
+EC-L1A-003: Max Hold Time
+------------------------------------------------------------
+
+EC-005  Trigger: ohlc(5m) candle close.
+        WS Manager maintains hold_candle_count in the
+        Position Mirror record per open position symbol.
+        Increments on each ohlc(5m) close for that symbol.
+        Condition: hold_candle_count[symbol] >= max_hold_candles
+
+EC-006  max_hold_candles: 24 (2 hours at 5-min cadence).
+        CIATS-owned. FP/DP: 5-minute momentum trades in
+        TRENDING_POS regimes resolve within 6-24 candles
+        (validated AR-071, TB00020, 10 sources).
+        EC-001 and EC-003 catch higher-timeframe failures.
+        max_hold_candles is the backstop for stalled
+        positions where neither fires.
+
+EC-007  Exit sequence: same as EC-002 (Layer 1a standard).
+        exit_reason: TIME_EXPIRY
+
+============================================================
+5.2 LAYER 1b — TP FILL
+============================================================
+
+EC-008  Trigger: exec_type=filled on TP order.
+        Identified by: Kraken order_id matching tp_order_id
+        in Position Mirror record for that symbol.
+
+EC-009  Action:
+          1. cancel_order: cancel emergSL stop order.
+             Record req_id for ACK tracking.
+          2. Apply cancel timeout fallback (Section 7).
+          3. On cancel confirmed: clear Position Mirror.
+          4. Fire CIATS Trade Outcome Bus (Section 10).
+        exit_reason: TP_FILL
+
+------------------------------------------------------------
+EC-L1B-002: TP Partial Fill (AR-066)
+------------------------------------------------------------
+
+EC-010  Trigger: exec_type=trade on TP order (partial fill,
+        order still open). See 0511001 Section 8.1 for
+        WS Manager routing and emergSL amendment.
+        WS Manager amends emergSL qty via amend_order
+        to match remaining position qty.
+
+EC-011  If after TP partial fill, remaining_qty < qty_min
+        OR remaining_qty * bid < cost_min:
+          1. cancel_order: cancel emergSL.
+          2. Apply cancel timeout fallback.
+          3. add_order: market sell remaining_qty.
+          4. On fill: clear Position Mirror.
+          5. Fire CIATS Trade Outcome Bus (aggregate).
+        exit_reason: TP_PARTIAL_FILL_REMAINDER
+
+============================================================
+5.3 LAYER 2 — MAE THRESHOLD EXIT
+============================================================
+
+------------------------------------------------------------
+EC-L2-001: MAE Threshold Detection
+------------------------------------------------------------
+
+EC-012  Trigger: ticker bbo event for pair with open
+        position (event_trigger:bbo, continuous).
+        Condition:
+          MAE = entry_fill_price - bid_price
+          MAE >= entry_atr_14 * mae_mult (1.5x starting)
+        bid_price = Decimal(str(bid)) from ticker event.
+        entry_fill_price and entry_atr_14 from Position Mirror.
+        mae_mult from Parameter Store snapshot (I-4).
+
+EC-013  MAE uses bid_price ONLY (AR-048). Not ask. Not mid.
+        bid_price reflects what can actually be sold at.
+        Using ask would understate MAE. Using mid would
+        understate MAE. Loss prevention requires the
+        conservative (bid) measure.
+
+------------------------------------------------------------
+EC-L2-002: Layer 2 Exit Sequence (SEQUENCE CRITICAL)
+------------------------------------------------------------
+
+EC-014  SEQUENCE MANDATORY: BOTH cancels BEFORE market sell.
+          1. cancel_order: cancel TP resting order.
+             Record req_id in req_id_registry.
+          2. cancel_order: cancel emergSL stop order.
+             Record req_id in req_id_registry.
+          3. Apply cancel timeout fallback (Section 7)
+             to BOTH cancel_order calls.
+          4. add_order: market sell.
+             (Or IOC limit on MPP rejection — Section 8.)
+          5. On fill: clear Position Mirror. Fire CIATS.
+        exit_reason: MAE_THRESHOLD_BREACH
+
+EC-015  NEVER issue market sell with ambiguous cancel state.
+        An uncancelled TP or emergSL during market sell
+        creates: duplicate position risk (sell fires, then
+        TP or emergSL fires selling again into a flat or
+        reversed position — the worst possible outcome).
+        The cancel timeout fallback (Section 7) is the
+        mechanism that enforces this rule operationally.
+
+============================================================
+5.4 LAYER 3 — EMERGENCY BRAKE (REFERENCE ONLY)
+============================================================
+
+EC-016  Layer 3 (emergSL) is NOT managed by the Exit
+        Controller during normal operation. It is a
+        resting stop-market order on Kraken's matching
+        engine. It fires autonomously if TothBot fails.
+
+EC-017  Exit Controller's only Layer 3 interactions:
+          (a) Cancel emergSL after TP fill (L1b, EC-009).
+          (b) Cancel emergSL before Layer 1a/2 market sell.
+          (c) Amend emergSL qty on TP partial fill (AR-066).
+
+EC-018  Layer 3 MUST NEVER fire in normal operation.
+        If emergSL fires: IMMEDIATE CRITICAL alert.
+        Investigate system state before any other action.
+        emergSL firing in normal operation = system failure
+        event requiring root cause analysis.
+
+EC-019  Layer 3 specification: 0511004 and 0500000 Section 4.
+
+============================================================
+6. FULL HALT BEHAVIOR (AR-019, AR-041)
+============================================================
+
+EC-020  On FULL_HALT declared by Risk Engine (0611002):
+          batch_cancel: cancel ALL open entry orders
+          (unfilled orders only — not resting TP or emergSL).
+          batch_cancel chosen because:
+            Returns single count response (sufficient).
+            Bypasses rate counter maximum (critical when
+            halt is triggered by a rate-limit scenario).
+          Open positions continue to be monitored.
+          Exit Controller continues watching open positions
+          for Layer 1 and Layer 2 exit conditions.
+          No automatic position close on FULL_HALT.
+          Bill decides on open positions.
+
+EC-021  batch_cancel MUST NOT cancel resting TP or emergSL.
+        TP and emergSL protect open positions. Canceling
+        them during Full Halt leaves positions unprotected
+        — the opposite of what Full Halt is designed to do.
+
+============================================================
+7. CANCEL TIMEOUT FALLBACK (I-6)
+============================================================
+
+Applies to ALL cancel_order calls in Layer 1a, 1b, and 2.
+cancel_timeout_window = 5.0 seconds (FP/DP derived — Section 4.1).
+
+EC-022  On cancel_order dispatch:
+          Record in req_id_registry:
+            {req_id, timestamp (monotonic), symbol, order_id}
+          Start 5.0-second timeout timer.
+
+EC-023  On exec_type=canceled received for req_id:
+          Mark confirmed in registry.
+          Proceed with next step in exit sequence.
+
+EC-024  On timeout (5.0 seconds elapsed without ACK):
+          Step 1: Inspect executions channel state for
+                  this order_id.
+            If exec_type=canceled found for this order_id:
+              Mark confirmed. Proceed.
+            If order_id not found in executions (unknown):
+              Retry cancel_order once (second attempt).
+              Record new req_id in registry.
+              Start second 5.0-second timeout.
+
+EC-025  On second timeout (5.0 seconds, second attempt):
+          ALERT CRITICAL to operator.
+          HOLD position — DO NOT proceed to market sell.
+          Log CANCEL_TIMEOUT_HOLD with order_id, symbol,
+          both req_ids, both timestamps.
+          Exit Controller holds until operator clears or
+          order state resolves via executions channel.
+
+EC-026  NEVER issue market sell with ambiguous order state.
+        This rule cannot be overridden by any condition.
+
+============================================================
+8. MPP IOC RETRY STRATEGY (C-1)
+============================================================
+
+mpp_retry_count = 3 (FP/DP derived — Section 4.2).
+
+EC-027  MPP detection: market sell (add_order, side=sell,
+        order_type=market) returns exec_type=canceled
+        with reason field indicating MPP rejection.
+
+EC-028  On MPP rejection:
+          Retry with IOC limit sell at best_bid - 0.2%.
+          best_bid: most recent bid from ticker bbo event
+          for this symbol (always current for open pairs).
+          Format:
+            order_type: "limit"
+            side:       "sell"
+            time_in_force: "ioc"
+            limit_price:   (best_bid * 0.998).quantize(
+                           price_increment, ROUND_DOWN)
+            order_qty:     remaining position qty
+
+EC-029  Retry counter: increment on each MPP rejection.
+        Maximum retries: mpp_retry_count = 3.
+        Each retry uses fresh best_bid from latest ticker event.
+
+EC-030  IOC fill outcomes:
+          exec_type=filled: position sold. Log IOC_LIMIT_FILLED.
+          exec_type=canceled (IOC expired, no fill):
+            retry_count < mpp_retry_count: retry again.
+            retry_count == mpp_retry_count: exhausted.
+            ALERT CRITICAL. Log SELL_MPP_EXHAUSTED.
+            HOLD position. Operator must review.
+
+EC-031  On IOC sell: cancel timeout fallback does not apply
+        to the IOC sell order itself (IOC either fills or
+        self-cancels — no pending cancel to track).
+
+============================================================
+9. PAIR STATUS ADAPTATION FOR OPEN POSITIONS (AR-040)
+============================================================
+
+EC-032  When instrument channel fires a status change for
+        a pair that has an open position:
+
+        status = limit_only:
+          Cancel TP (if resting). Apply cancel timeout.
+          Place IOC limit sell at best_bid (NOT market sell).
+          IOC limit is the correct sell in limit_only state.
+          Market sell would fail in limit_only.
+          exit_reason: PAIR_LIMIT_ONLY_EXIT
+
+        status = cancel_only:
+          HOLD position. CRITICAL alert to operator.
+          No new orders possible in cancel_only state.
+          Resting TP and emergSL are the only protection.
+          Log PAIR_CANCEL_ONLY_HOLD.
+
+        status = maintenance (pair level):
+          HOLD position. CRITICAL alert to operator.
+          Same as cancel_only. Resting orders remain active.
+          Log PAIR_MAINTENANCE_HOLD.
+
+EC-033  For cancel_only and maintenance HOLD states:
+        Exit Controller continues monitoring ticker bbo
+        for MAE breach. If MAE fires during HOLD, log
+        MAE_HOLD_AMBIGUOUS. Do not attempt sell. Alert.
+        Bill must manually evaluate.
+
+============================================================
+10. CIATS TRADE OUTCOME BUS
+============================================================
+
+EC-034  Fires once on every full position close.
+        Never on partial fills (wait for complete close).
+        Partial TP fill data is aggregated into one record.
+
+EC-035  Trade Outcome Bus fields:
+          symbol:              str (Kraken pair name)
+          entry_fill_price:    Decimal (actual fill price)
+          exit_price:          Decimal (actual exit price,
+                               cumulative weighted avg on
+                               partial fills)
+          qty:                 Decimal (position qty)
+          entry_timestamp_utc: str (ISO 8601)
+          exit_timestamp_utc:  str (ISO 8601)
+          hold_candle_count:   int (actual hold duration)
+          exit_reason:         str (exit code)
+          entry_fees:          Decimal (maker 0.16%)
+          exit_fees:           Decimal (taker 0.26% or
+                               maker 0.16% on TP fill)
+          net_pnl_pct:         Decimal (after fees)
+          actual_rr:           Decimal (net_gain / net_loss)
+          asset_regime:        str (regime at entry)
+          market_regime:       str (BTC/USD regime at entry)
+          signal_params:       dict (SSS params at entry)
+          mae_mult_used:       Decimal (mae_mult at entry)
+
+EC-036  net_pnl_pct and actual_rr computed from Decimal
+        arithmetic on actual prices and fees. No float.
+
+============================================================
+11. INTERFACES
+============================================================
+
+11.1 From WS Manager (0511001)
+  Receives: ticker bbo events (continuous, open pairs).
+  Receives: ohlc(60) close events (HTF check, EC-001).
+  Receives: ohlc(5m) close events (hold counter, EC-005).
+  Receives: executions fills (TP fills, cancel ACKs).
+  Receives: instrument status change events (AR-040).
+  Receives: 00:00 UTC regime refresh trigger (EC-003).
+
+11.2 From Position Mirror (0511005)
+  Reads: entry_fill_price, qty, tp_order_id, emgsl_order_id,
+         entry_atr_14, hold_candle_count per symbol.
+         All O(1) dict lookups.
+
+11.3 From Parameter Store (via pipeline snapshot, I-4)
+  Reads: mae_mult (1.5x starting), max_hold_candles (24),
+         cancel_timeout_window (5.0s), mpp_retry_count (3).
+  EXCEPTION: drawdown circuit breaker thresholds read from
+  LIVE Parameter Store (not frozen snapshot) per D-003
+  in TB00031. A CIATS update between evaluations must
+  take effect immediately for circuit breakers.
+
+11.4 To WS Manager (0511001)
+  Sends: cancel_order instructions (per-order, Layer 1/2).
+  Sends: batch_cancel instruction (Full Halt, EC-020).
+  Sends: market sell add_order (Layer 1a, 2).
+  Sends: IOC limit sell add_order (MPP retry, limit_only).
+
+11.5 To Position Mirror (0511005)
+  Clears: PositionRecord on confirmed position close.
+  Updates: hold_candle_count on each ohlc(5m) close.
+
+11.6 To Logger (0511006)
+  All log events listed in Section 12.
+  CIATS Trade Outcome Bus data (Section 10) via Logger.
+
+============================================================
+12. HARD RULES
+============================================================
+
+HR-EC-001  Exit sequence MUST be: cancel TP → cancel emergSL
+           → market sell. This sequence is inviolable for
+           Layer 1a and Layer 2. No optimization permitted.
+
+HR-EC-002  Cancel timeout fallback MUST be applied to ALL
+           cancel_order calls. No cancel_order proceeds
+           to sell without confirmed ACK or executions
+           verification. No exception.
+
+HR-EC-003  Market sell MUST NEVER be issued with ambiguous
+           order cancel state. Second timeout = HOLD +
+           CRITICAL alert. Not sell. Not retry. HOLD.
+
+HR-EC-004  MPP retry MUST use IOC limit at best_bid - 0.2%
+           per attempt. NEVER retry with market sell after
+           MPP rejection. Market sell failed once — retry
+           with IOC limit.
+
+HR-EC-005  batch_cancel (Full Halt) MUST NOT cancel resting
+           TP or emergSL orders. Open positions must remain
+           protected during Full Halt.
+
+HR-EC-006  MAE detection MUST use bid_price exclusively.
+           Never ask, never mid, never last. Bid reflects
+           actual exit price. Using anything else understates
+           MAE and delays exit.
+
+HR-EC-007  Layer 3 (emergSL) MUST NEVER fire in normal
+           operation. If it fires: immediate CRITICAL alert.
+           This is a system failure event, not a normal exit.
+
+HR-EC-008  CIATS Trade Outcome Bus MUST fire exactly once
+           per closed position. On partial TP fills:
+           aggregate all data. Never fire multiple times
+           per position.
+
+HR-EC-009  Position Mirror MUST be cleared only AFTER
+           confirmed position close (sell fill confirmed or
+           TP fill + emergSL cancel confirmed).
+
+HR-EC-010  cancel_timeout_window and mpp_retry_count are
+           read from Parameter Store snapshot (I-4).
+           EXCEPTION: circuit breaker thresholds (FULL_HALT,
+           SESSION_PAUSE drawdown levels) are read live.
+
+HR-EC-011  In cancel_only or maintenance pair status:
+           HOLD position and alert. Do NOT attempt any new
+           orders. Resting orders are the only protection.
+
+HR-EC-012  Monotonic clock (time.monotonic()) MUST be used
+           for all timeout tracking. Never time.time() for
+           interval measurement.
+
+============================================================
+13. CIATS PARAMETERS
+============================================================
+
+  mae_mult:               1.5x ATR(14) (owned by AA=06)
+  max_hold_candles:       24 (2 hours)
+  cancel_timeout_window:  5.0 seconds (FP/DP derived here)
+  mpp_retry_count:        3 attempts (FP/DP derived here)
+
+  cancel_timeout_window CIATS adjustment basis:
+    ws_roundtrip_latency_ms from A-3 EWMA Monitor.
+    If p50 latency > 500ms: consider increasing timeout.
+    If p50 latency < 10ms and no false timeouts: may reduce.
+
+  mpp_retry_count CIATS adjustment basis:
+    IOC_LIMIT_FILLED vs SELL_MPP_EXHAUSTED event ratio.
+    If exhaustion rate > 1% of exit events: increase count.
+    If fill always achieved on attempt 1: may reduce to 2.
+
+============================================================
+14. WHAT IT LOGS
+============================================================
+
+  Layer 1a Exits:
+    HTF_REGIME_REVERSAL       — symbol, 1H EMA values
+    DAILY_REGIME_DOWNGRADE    — symbol, old_regime, new_regime
+    TIME_EXPIRY               — symbol, hold_candle_count
+
+  Layer 1b Exits:
+    TP_FILL                   — symbol, tp_price, qty, fees
+    TP_PARTIAL_FILL_REMAINDER — symbol, filled_qty, remainder
+
+  Layer 2 Exits:
+    MAE_THRESHOLD_BREACH      — symbol, mae_value, threshold
+    IOC_LIMIT_RETRY_SENT      — symbol, bid_price, attempt_num
+    IOC_LIMIT_FILLED          — symbol, fill_price, attempt_num
+    IOC_LIMIT_EXPIRED         — symbol, attempt_num
+    SELL_MPP_EXHAUSTED        — symbol, all attempts failed
+
+  Cancel Timeout Fallback:
+    CANCEL_TIMEOUT_RETRY      — symbol, order_id, req_id
+    CANCEL_TIMEOUT_HOLD       — symbol, order_id, both req_ids
+
+  Full Halt:
+    FULL_HALT_BATCH_CANCEL_SENT   — count of open entries
+    FULL_HALT_BATCH_CANCEL_RESULT — count_confirmed
+
+  Pair Status:
+    PAIR_LIMIT_ONLY_EXIT      — symbol, exit_price
+    PAIR_CANCEL_ONLY_HOLD     — symbol, current_mae
+    PAIR_MAINTENANCE_HOLD     — symbol, current_mae
+    MAE_HOLD_AMBIGUOUS        — symbol (MAE during HOLD)
+
+  General:
+    LAYER3_UNEXPECTED_FIRE    — symbol, CRITICAL (investigation)
+    POSITION_CLOSED           — symbol, exit_reason, net_pnl_pct
+
+============================================================
+15. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does the Exit Controller DO?
+    Monitors all open positions continuously via ticker bbo,
+    ohlc close events, executions fills, instrument status,
+    and 00:00 UTC trigger. Detects 3-layer exit conditions.
+    Executes cancel and sell sequences with cancel timeout
+    fallback and MPP IOC retry. Reports to CIATS.
+
+(2) What are its interfaces?
+    FROM: WS Manager (ticker, ohlc, fills, status, regime
+    trigger), Position Mirror (position state), Parameter
+    Store (snapshot params + live circuit breakers).
+    TO: WS Manager (cancel/sell orders), Position Mirror
+    (clear on close), Logger (all events + CIATS bus).
+
+(3) What are its hard rules?
+    Cancel before sell. Cancel timeout fallback on all
+    cancels. Never sell on ambiguous state. MPP retry with
+    IOC limit. Never fire market sell after MPP. Layer 3
+    never in normal operation. Trade Outcome Bus once per
+    close. Drawdown thresholds read live.
+
+(4) What triggers it and what does it trigger?
+    Triggered by: ticker bbo (continuous), ohlc(60) close,
+    ohlc(5m) close, executions fills, instrument status,
+    00:00 UTC daily trigger.
+    Triggers: cancel_order, batch_cancel, add_order (sell),
+    Position Mirror clear, Logger events, CIATS Trade
+    Outcome Bus.
+
+(5) What does it log?
+    All exit events by layer and reason. Cancel timeout
+    events. MPP retry events. Full Halt events. Pair
+    status adaptation events. Unexpected Layer 3 fire.
+    CIATS Trade Outcome Bus on every position close.
+
+============================================================
+16. RELATED DOCUMENTS
+============================================================
+
+  0800000  Trading_System
+  0810000  Trading_System_Modules_Anchor
+  0811001  Long_Module_Specification
+  0511004  Exit_Controller_Specification (AA=05 reference)
+  0511001  WS_Manager_Specification
+  0511005  Position_Mirror_Specification
+  0411001  Kraken_WS_v2_Specification
+  0611002  Drawdown_and_Halt_Rules
+  0500000  System_Architecture_Overview
+
+============================================================
+17. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Exit Controller
+                     complete trading-module specification
+                     at AA=08 level. Defines two previously-
+                     deferred values: cancel_timeout_window
+                     = 5.0s and mpp_retry_count = 3 (both
+                     FP/DP derived this session, OI-003
+                     CLOSED). Layer 1a (EC-001 through
+                     EC-007), Layer 1b (EC-008 through
+                     EC-011), Layer 2 (EC-012 through
+                     EC-015), Layer 3 reference (EC-016
+                     through EC-019). Full Halt (EC-020
+                     through EC-021). Cancel timeout
+                     fallback (EC-022 through EC-026).
+                     MPP IOC retry (EC-027 through EC-031).
+                     Pair status adaptation (EC-032 through
+                     EC-033). CIATS Trade Outcome Bus
+                     (EC-034 through EC-036). 12 hard rules.
+                     4 CIATS parameters. 5 coding-readiness
+                     questions.
+
+============================================================
+END OF DOCUMENT
+============================================================
