@@ -1,0 +1,195 @@
+DocDCN:     0210000
+DocTitle:   Operations_CIATS_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0210000_Operations_CIATS_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+OPERATIONS CIATS ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for the Operations
+CIATS sub-domain (AA=02, B=1). It anchors all TothBot V2
+Operations instance documents (0211001 through 0211005)
+to the Operations Domain Document (0200000).
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the Operations CIATS sub-domain,
+allowing instance documents to have a valid parent chain.
+No instance document in this sub-domain may be committed
+to GitHub without this anchor and 0200000 already present
+and approved.
+
+The Operations domain is unified: Operations = Quality
+= CIATS. All instance documents under this anchor
+implement one or more aspects of that unified principle.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  This document                  (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    0211001  CIATS_Specification
+    0211002  Operations_Infrastructure_Specification
+    0211003  Startup_Shutdown_Procedure
+    0211004  Incident_Response_Procedure
+    0211005  Paper_Trading_Operations_Procedure
+
+============================================================
+3. TRACEABILITY TO PARENT DOMAIN DOCUMENT
+============================================================
+
+This anchor elaborates the Operations domain defined in
+0200000, specifically:
+  Section 3    — Domain Scope (CIATS, quality standard,
+                  PDCA, parameter ownership, operational
+                  procedures, statistical thresholds)
+  Section 4    — Operations = Quality = CIATS (OP-001
+                  through OP-006)
+  Section 5    — PDCA Cycle (OP-002 through OP-004)
+  Section 6    — CIATS Architecture Reference (OP-007
+                  through OP-009)
+  Section 7    — Operational Procedures (instance
+                  document placeholders)
+
+All operational principles (OP-001 through OP-009) in
+0200000 are binding on all instance documents in this
+sub-domain. They are not repeated in this anchor.
+They apply in full.
+
+The Logger (0511006) is the sole data interface between
+TothBot and CIATS. All instance documents that reference
+CIATS data inputs must treat 0511006 as the authoritative
+interface specification.
+
+============================================================
+4. INSTANCE DOCUMENT SCOPE SUMMARY
+============================================================
+
+  0211001  CIATS_Specification
+           The complete specification for CIATS — the
+           Continuous Improvement and Autonomous Trading
+           System. Defines the two data streams (EWMA
+           Monitor and Trade Outcome Bus), the Statistical
+           Engine and all methods used (Mann-Whitney U
+           alpha=0.01, Spearman |rho|>0.3 AND p<0.05,
+           CUSUM k=0.5sigma h=4sigma, EWMA lambda=0.2,
+           Half-Kelly at 200 trades), the PDCA cycle and
+           all improvement rules, the Proposal Engine
+           (active at 200+ closed trades), the Regime
+           Library (active at 600+ trades, 100+ per
+           bucket), the Parameter Store and snapshot
+           protocol, and all statistical floors. Sole
+           authoritative specification for CIATS behavior.
+           CIATS reads only from the Logger. CIATS writes
+           only to the Parameter Store. No other interfaces.
+
+  0211002  Operations_Infrastructure_Specification
+           Defines the VPS operational environment and
+           all infrastructure requirements for TothBot V2.
+           Covers the Hetzner Cloud CPX22 VPS (Ubuntu
+           24.04.4 LTS, Python 3.12.3), network
+           connectivity requirements, process management
+           (systemd or equivalent), monitoring and
+           alerting (alert@tothbot.com), log retention
+           and rotation policy, and all standing
+           operational constraints. Defines infrastructure
+           as a CIATS-monitored resource.
+
+  0211003  Startup_Shutdown_Procedure
+           Defines the complete deterministic startup and
+           shutdown sequence for TothBot V2. Startup
+           covers: Parameter Store snapshot load,
+           WebSocket connection establishment, Position
+           Mirror reconciliation via snap_orders (preferred)
+           or REST GetOpenOrders (fallback), CIATS
+           initialization, and trading readiness gate.
+           Shutdown covers: halt criteria, order
+           cancellation, position mirror persistence,
+           and graceful disconnect. All steps are
+           deterministic and ordered. No step is skippable.
+
+  0211004  Incident_Response_Procedure
+           Defines the response procedures for all
+           identified incident categories: WS disconnect,
+           VPS failure, Kraken outage, drawdown circuit
+           breaker activation (session pause and full
+           halt), CIATS anomaly detection, and operator
+           alert acknowledgment. Each incident category
+           has: detection mechanism, severity, automated
+           response, and operator action required. Aligns
+           with the three-layer exit architecture
+           (0511004) and the circuit breaker parameters
+           in the CIATS Parameter Registry.
+
+  0211005  Paper_Trading_Operations_Procedure
+           Defines the complete paper trading phase
+           operational procedure. Covers: paper trading
+           environment setup, execution mode (live Kraken
+           data, simulated fills), CIATS activation
+           sequence (EWMA Monitor at 50 evals, Proposal
+           Engine at 200 trades, Regime Library at 600
+           trades), acceptance criteria for transition
+           to live trading, and parameter baseline
+           confirmation requirements. The paper trading
+           phase is the mandatory validation gate before
+           any live capital is deployed.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  Instance Document → 0210000 (this anchor) → 0200000
+
+No instance document in this sub-domain (0211001 through
+0211005) may be committed to GitHub without both this
+anchor and 0200000 already present and approved on GitHub.
+This rule is enforced by validation rule V-012 in 0311001
+Section 13.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                      (parent Domain Doc)
+  0211001  CIATS_Specification
+  0211002  Operations_Infrastructure_Specification
+  0211003  Startup_Shutdown_Procedure
+  0211004  Incident_Response_Procedure
+  0211005  Paper_Trading_Operations_Procedure
+  0500000  System_Architecture_Overview    (CIATS arch ref)
+  0511006  Logger_Specification            (CIATS data source)
+  0311001  Namespace_Specification         (governs DCN)
+  0311002  Document_Creation_Workflow      (governs sequence)
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Sub-Domain Anchor
+                     for Operations CIATS (AA=02, B=1).
+                     Establishes parent chain from 0200000
+                     through this anchor to five instance
+                     documents (0211001 through 0211005).
+                     Scope defined. Traceability to 0200000
+                     Sections 3-7 (OP-001 through OP-009)
+                     established. Logger (0511006) identified
+                     as sole CIATS data interface. All
+                     instance document scope summaries
+                     written. Document chain requirement
+                     stated.
+
+============================================================
+END OF DOCUMENT
+============================================================
