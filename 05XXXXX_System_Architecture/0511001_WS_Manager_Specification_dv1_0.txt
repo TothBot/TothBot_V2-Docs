@@ -1,0 +1,767 @@
+DocDCN:     0511001
+DocTitle:   WS_Manager_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511001_WS_Manager_Specification_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+WS MANAGER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+WS Manager component of TothBot V2. It defines what the
+WS Manager does, its interfaces, its hard rules, what
+triggers it, and what it logs. It is the authoritative
+parent document for 1011002 WS_Manager_Coding_Spec.
+
+The WS Manager is TothBot's sole interface to all Kraken
+WebSocket v2 connections and is the central event processor
+for the system. All Kraken push events flow through the WS
+Manager. It is the heart of the TothBot runtime.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Maintains all Kraken WS v2 connections. Receives all
+  Kraken push events and dispatches them to the correct
+  internal handlers via O(1) dispatch table (AR-015).
+  Manages all per-symbol state (indicators, position
+  tracking, cooldowns). Runs the pipeline trigger on
+  each 5-minute candle close. Executes all WS outbound
+  messages (orders, amendments, cancels). Manages
+  startup warm-up, mid-session reconnect, and all
+  connection health monitoring.
+
+Primary inputs:
+  Kraken WS v2 push events (all channels)
+  Internal calls from Signal Pipeline, Execution Engine,
+  Exit Controller, CIATS (via Parameter Store)
+
+Primary outputs:
+  Dispatched Kraken WS v2 outbound messages (orders,
+  cancels, amendments, pings)
+  Pipeline trigger events to Signal_Pipeline
+  Internal state updates (Position Mirror, indicator
+  caches, drawdown state, cooldown state)
+  Logger calls (all events)
+  Operator alerts
+
+============================================================
+3. WEBSOCKET CONNECTIONS
+============================================================
+
+3.1 Connection Inventory
+
+  PUBLIC WS v2 (wss://ws.kraken.com/v2):
+    Subscriptions:
+      instrument  — per-pair specs + status cache (startup)
+      status      — global engine state + connection_id
+      ohlc(5)     — 5-minute SYSTEM CLOCK
+      ohlc(60)    — 1H HTF cache for Gate 4
+      ticker      — price data (per-pair, event_trigger
+                    managed based on position state)
+
+  PRIVATE WS v2 (wss://ws-auth.kraken.com/v2):
+    Subscriptions inbound:
+      executions  — fills, expirations, rejections, status
+      balances    — real-time settlement
+    Outbound messages:
+      add_order, amend_order, batch_add, cancel_order,
+      batch_cancel
+
+3.2 Connection Library Configuration (AR-058, AR-059, AR-060)
+
+  REQUIRED import:
+    from websockets.asyncio.client import connect
+  DEPRECATED (DO NOT USE):
+    import websockets; websockets.connect()
+
+  All connections MUST set:
+    max_queue=None        — unlimited message queue (AR-058)
+    ping_interval=None    — disable library TCP PING (AR-059)
+    max_size=10MB         — AR-029
+    open_timeout=10       — AR-029
+
+  Application JSON ping is the sole keepalive mechanism.
+  Library built-in PING is explicitly disabled on all
+  connections.
+
+3.3 REST Connection Configuration (AR-035)
+
+  aiohttp ClientSession settings (applied to all REST):
+    ClientTimeout(total=10, connect=5, sock_read=8)
+    TCPConnector(limit=10, limit_per_host=5,
+                 force_close=False)
+  All REST calls via aiohttp (AR-025). asyncio.gather()
+  for parallel calls across different pairs. asyncio.sleep
+  (1.1) between sequential calls to same pair (AR-036).
+
+============================================================
+4. STARTUP SEQUENCE
+============================================================
+
+4.1 Pre-Connection Checks
+
+  Step 0: Query Kraken Status API at startup (AR-038).
+          GET https://status.kraken.com/api/v2/
+          scheduled-maintenances/upcoming.json
+          If maintenance within 2 hours: log
+          KRAKEN_MAINTENANCE_SCHEDULED, alert operator.
+          Informational only — does not block startup.
+
+  Step 1: Acquire WS token via REST GetWebSocketsToken
+          using TRADE API key. Token valid 900 seconds.
+          Reconnect logic also acquires new token.
+
+4.2 WS Connection and Subscription
+
+  Step 2: Connect public WS (instrument, status, ohlc(5),
+          ohlc(60), ticker). Connect private WS with
+          acquired token. Log connection_id from status
+          channel message on both connections (AR-064).
+
+  Step 3: Subscribe instrument channel. Receive full
+          instrument snapshot. Build per-pair status
+          cache. Populate monitored_universe from
+          instrument snapshot per AR-070 criteria:
+            (1) Quote currency: USD or USDC
+            (2) Status: online
+            (3) 24h volume >= min_volume_usd_daily ($500k)
+          Top N=50 pairs by 24h volume (CIATS-owned).
+          BTC/USD ALWAYS included regardless of ranking
+          (AR-074). Parse and log subscription ACK
+          warnings[] (AR-031). Capture maxratecount from
+          executions subscription ACK (AR-030).
+
+  Step 4: Subscribe executions channel with:
+            ratecounter:true     (A-1)
+            snap_orders:true     (A-3, AR-003)
+            snap_trades:true     (A-3, AR-003)
+            order_status:true    (AR-026 — MANDATORY)
+          CRITICAL: order_status:true MUST be present.
+          Without it, amended and restated exec_types are
+          silently dropped, breaking A-12 and A-13.
+
+  Step 5: Subscribe balances channel. Begin tracking
+          sequence integers for gap detection (A-9).
+
+  Step 6: Process snap_orders and snap_trades response
+          from executions subscription. Reconcile Position
+          Mirror. Populate Pending Order Registry for all
+          orders in new or pending_new status (AR-053).
+          Capture spot_usd_balance from balances snapshot.
+          Set portfolio_baseline_USD = spot_usd_balance.
+          This baseline is NEVER updated during operation
+          and NEVER reset on reconnect (AR-052).
+
+4.3 Indicator Warm-Up (AR-044, AR-068)
+
+  For each pair in monitored_universe (stagger 1.1s per
+  pair for the same-pair sequence; asyncio.gather() across
+  different pairs):
+
+  Step 7a: GetOHLCData(interval=5). Use response[:-1].
+           Seed ALL five per-pair indicators:
+             ATR(14): SMA of first 14 True Ranges. Then
+                      incremental: ATR = (prev_ATR*13 +
+                      current_TR) / 14. O(1) per update
+                      (AR-016).
+             RSI(14): Wilder's SMMA (AR-076). Seed:
+                      avg_gain = sum(gains[:14]) / 14
+                      avg_loss = sum(losses[:14]) / 14
+                      Incremental:
+                      avg_gain = (prev*13 + gain) / 14
+                      avg_loss = (prev*13 + loss) / 14
+                      RS = avg_gain / avg_loss
+                      RSI = 100 - (100 / (1 + RS))
+                      DO NOT use EMA alpha=2/15 for RSI.
+             EMA(9):  SMA seed on first 9 closes. Then
+                      alpha = 2/10 = 0.2 (standard EMA).
+             EMA(21): SMA seed on first 21 closes. Then
+                      alpha = 2/22 (standard EMA).
+             Vol MA(20): SMA of first 20 volumes. Then
+                         rolling SMA thereafter.
+           Initialize last_interval_begin from
+           response[-2].interval_begin (AR-045).
+           Pair transitions WARM_UP → READY only when ALL
+           FIVE indicators seeded (AR-068).
+
+  Step 7b: GetOHLCData(interval=60). Use response[:-1].
+           Seed EMA(20) and EMA(50) for HTF cache.
+             EMA(20): SMA seed on first 20 closes. alpha = 2/21.
+             EMA(50): SMA seed on first 50 closes. alpha = 2/51.
+           Initialize last_interval_begin_60 from
+           response[-2].interval_begin.
+
+  Step 7c: GetOHLCData(interval=1440). Use response[:-1].
+           Regime Engine seeding. Passed to Regime Engine.
+           Regime computation: exclude response[-1] ALWAYS
+           (AR-017). Use only response[:-1].
+
+  STAGGER RULE (AR-036): 1.1s between calls for the SAME
+  pair. asyncio.gather() across DIFFERENT pairs.
+
+  WARM_UP pairs are SKIPPED at pipeline pre-check.
+  READY pairs begin trading immediately — system does NOT
+  wait for all pairs to reach READY (AR-044).
+
+4.4 Post-Warm-Up: ticker subscription
+
+  Subscribe ticker for all READY pairs using event_trigger
+  based on Position Mirror state (AR-034):
+    event_trigger:bbo    — pairs WITH open positions
+    event_trigger:trades — pairs WITHOUT open positions
+  WS Manager manages per-pair trigger mode and updates
+  subscription when position state changes.
+
+============================================================
+5. PER-SYMBOL STATE (in-memory, not persisted)
+============================================================
+
+5.1 Indicator State (updated on each ohlc(5m) close)
+
+  Per monitored pair, WS Manager maintains:
+    atr_14:              Decimal   (incremental running value)
+    prev_tr:             Decimal   (previous True Range)
+    rsi_14_avg_gain:     Decimal   (Wilder SMMA state — AR-076)
+    rsi_14_avg_loss:     Decimal   (Wilder SMMA state — AR-076)
+    ema_9:               Decimal   (standard EMA alpha=0.2)
+    ema_21:              Decimal   (standard EMA alpha=2/22)
+    volume_ma_20:        Decimal   (rolling 20-candle SMA)
+    last_interval_begin: str       (candle close detection)
+    last_complete_candle: OHLCCandle (closed candle data)
+
+  Per monitored pair for HTF Gate 4:
+    htf_ema_20:          Decimal   (1H EMA(20))
+    htf_ema_50:          Decimal   (1H EMA(50))
+    last_interval_begin_60: str    (1H candle close detection)
+
+  Per-pair status cache (from instrument channel):
+    pair_status:         dict[str, str] (symbol → status string)
+    price_increment:     dict[str, Decimal]   (AR-028)
+    qty_min:             dict[str, Decimal]   (AR-028)
+    cost_min:            dict[str, Decimal]   (AR-028)
+
+  Pair warm-up state:
+    warm_up_state:       dict[str, str]  WARM_UP | READY
+
+5.2 Position State (managed jointly with Position Mirror)
+
+  position_mirror:       dict[str, PositionRecord]
+                         (sole authoritative O(1) record)
+  pending_orders:        dict[str, Decimal]
+                         cl_ord_id → estimated_USD_cost (AR-053)
+
+5.3 Selection Controller State (AR-073)
+
+  exit_cooldown_log:         dict[str, float]
+                             symbol → time.monotonic() of last exit
+  consecutive_loss_count:    dict[str, int]
+                             symbol → consecutive losses without win
+  Update on position close:
+    Always: exit_cooldown_log[symbol] = time.monotonic()
+    If loss exit (MAE_THRESHOLD_BREACH, TIME_EXPIRY,
+      HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE,
+      SIGNAL_DECAY): consecutive_loss_count[symbol] += 1
+    If TP_FILL (win): consecutive_loss_count[symbol] = 0
+  Both dicts PRESERVED across reconnect. NEVER discarded.
+
+5.4 Drawdown State (AR-052)
+
+  portfolio_baseline_USD:   Decimal   (set once at startup Step 6)
+  spot_usd_balance:         Decimal   (updated on every balances event)
+  drawdown_pct:             Decimal   (computed on every bbo event)
+  system_state:             str       NORMAL | SESSION_PAUSE | FULL_HALT
+  PRESERVED across reconnect. NEVER reset on reconnect.
+
+5.5 Connection Health State
+
+  last_real_data_time_public:  float  (time.monotonic())
+  last_real_data_time_private: float
+  executions_last_seq:         int    (gap detection A-10)
+  balances_last_seq:           int    (gap detection A-9)
+  req_id_registry:             dict[int, RequestRecord]
+                               req_id → {method, timestamp, symbol}
+
+============================================================
+6. CANDLE-CLOSE DETECTION (AR-045)
+============================================================
+
+WS OHLC fires on every trade event within the candle
+period — NOT only on candle close. WS Manager MUST
+implement candle-close detection:
+
+  On each ohlc(5m) message for symbol S:
+    if msg.interval_begin == last_interval_begin[S]:
+      Update in-progress candle. DO NOT fire pipeline.
+    else:
+      Candle for last_interval_begin[S] is NOW CLOSED.
+      Fire pipeline with last_complete_candle[S].
+      last_complete_candle[S] = current message data.
+      last_interval_begin[S] = msg.interval_begin.
+
+  Same logic for ohlc(60) with separate
+  last_interval_begin_60 dict.
+
+  OHLC interval field: use interval_begin (AR-027).
+  deprecated timestamp field MUST NOT be used.
+
+  OHLC stall: If no trades occur after an interval border,
+  no OHLC message is sent until next trade. WS Manager
+  MUST handle this — pipeline does not fire on stalled
+  pairs. Addressed in 0511002.
+
+============================================================
+7. CONNECTION HEALTH MONITORING
+============================================================
+
+7.1 JSON Ping / Keepalive (A-7)
+
+  Send {"method":"ping"} on EACH active WS connection
+  every 30 seconds. Expect {"method":"pong"} within 10
+  seconds. No pong within 10 seconds = dead connection.
+  Reconnect immediately.
+  Application-level ping only. Library TCP PING disabled
+  (AR-059). No dual ping mechanism.
+
+7.2 Zombie Connection Detection (A-8, AR-042)
+
+  Track last_real_data_time per connection using
+  time.monotonic(). Reset ONLY on real channel events:
+    ohlc, ticker, instrument, executions, balances, status
+  MUST NOT reset on: heartbeat, pong, ACK messages.
+  If elapsed > 90 seconds:
+    Log ZOMBIE_CONNECTION_DETECTED (CRITICAL)
+    Alert operator (HIGH)
+    Reconnect immediately
+
+7.3 Balances Sequence Gap Detection (A-9)
+
+  Track balances_last_seq integer. Any gap (skip > 1):
+    Alert immediately (HIGH)
+    Trigger REST GetAccountBalance reconciliation
+    Log BALANCES_SEQUENCE_GAP
+  Missed balance events = incorrect capital calculation
+  = direct loss risk.
+
+7.4 Executions Sequence Gap Detection (A-10)
+
+  Track executions_last_seq independently. Any gap:
+    Alert immediately (CRITICAL — higher severity than A-9)
+    Trigger REST GetOpenOrders reconciliation
+    Reconcile Position Mirror
+    Log EXECUTIONS_SEQUENCE_GAP
+  Missed execution events = Position Mirror desync =
+  TothBot does not know position state = direct loss risk.
+  Sequence tracking resets on each new subscription
+  (reconnect). Do NOT gap-detect across sessions.
+
+7.5 Rate Counter Monitoring (A-1, AR-030)
+
+  executions subscription includes ratecounter:true at
+  zero additional cost. WS Manager tracks per-pair rate
+  counter. Operative ceiling = maxratecount from
+  subscription ACK (AR-030). Use ACK value, not hardcoded
+  125. Expose rate_counter_by_pair to CIATS EWMA Monitor.
+
+7.6 Connection ID Logging (AR-064)
+
+  Log connection_id (uint64) from status channel on every
+  new WS connection. Include in all reconnect, disconnect,
+  and gap log entries. Zero additional cost.
+
+============================================================
+8. INBOUND DISPATCH TABLE (AR-015, AR-023)
+============================================================
+
+All inbound WS messages routed via O(1) dispatch table
+keyed on channel + message type. Unknown message types:
+log UNKNOWN_MESSAGE_TYPE (WARN), never silently dropped.
+
+The executions channel exec_type dispatch table MUST handle
+ALL 10 values explicitly (AR-023):
+
+  pending_new    — Order accepted by engine. No Mirror update.
+  new            — Order active on book. No Mirror update.
+  trade          — Partial fill. Update Mirror (cum_qty,
+                   avg_price). If entry: check for partial
+                   fill protection trigger (AR-054).
+                   Capture last_qty, last_price (AR-061).
+  filled         — Full fill. Trigger appropriate action:
+                   - Entry filled: Execution Engine dispatches
+                     batch_add TP+emergSL (0511003).
+                   - TP filled: L1b — Exit Controller cancels
+                     emergSL (0511004). Fire CIATS.
+  iceberg_refill — Log only. No Mirror update.
+  canceled       — Clear pending_orders. If entry canceled
+                   with cum_qty > 0: partial fill protection
+                   (AR-054). If exit canceled: cancel timeout
+                   fallback resolution.
+  expired        — Same as canceled handling (AR-054 applies).
+  amended        — User-initiated amend. TothBot V1 NEVER
+                   sends amend_order for its own orders.
+                   Any amended event = UNEXPECTED_ORDER_AMENDED
+                   (CRITICAL), alert operator HIGH. Do NOT
+                   auto-correct. Operator must review (AR-057).
+  restated       — Engine maintenance amend. NOT fill/cancel.
+                   Do NOT update Position Mirror. Elevated
+                   alert if resting order affected (AR-024).
+  status         — Order status snapshot. Log. No trade action.
+
+  use reason field (not cancel_reason — deprecated, AR-022).
+
+8.1 TP Partial Fill Handling (AR-066)
+
+  When exec_type=trade for a TP order (identified by
+  order_id matching TP order_id in Position Mirror):
+    remaining_qty = tp_order_qty - cum_qty
+    Update Position Mirror qty to remaining_qty
+    Amend emergSL to remaining_qty via amend_order
+      (NOT cancel+resubmit — saves rate counter + preserves
+      queue position)
+    Rate counter: amend_order (+1 fixed) vs cancel_order
+      (+8 <5s) + add_order (+1) = +9 total — amend saves 8.
+    If remaining_qty < qty_min OR remaining_qty * bid < cost_min:
+      cancel emergSL → immediate market sell → clear Mirror
+  Fire CIATS Trade Outcome Bus ONCE on full position close
+  (aggregate all partial fill data). Not on each partial.
+  On exec_type=filled (full TP): L1b logic unchanged.
+
+8.2 Entry Partial Fill + Expiry/Cancel (AR-054)
+
+  GTD post_only entry orders can receive partial fills
+  before expiry or cancel. When exec_type=="expired" OR
+  exec_type=="canceled" AND cum_qty > 0 (REAL position,
+  no TP, no emergSL):
+    CASE A (expired, cum_qty > 0) or CASE B (canceled, cum_qty > 0):
+      1. Clear Pending Order Registry for this cl_ord_id.
+      2. Extract qty=Decimal(str(cum_qty)),
+         entry=Decimal(str(avg_price)).
+      3. Validate qty >= qty_min AND qty*entry >= cost_min.
+         If fails: dispatch market sell immediately.
+      4. Recalculate TP and emergSL from actual entry price
+         using current ATR(14) and mae_mult / sl_mult.
+         Verify net_gain = net_loss * 1.5 (sacred R:R).
+      5. Dispatch batch_add: TP limit + emergSL stop.
+      6. Enter Position Mirror with cum_qty and avg_price.
+      7. Log ENTRY_PARTIAL_FILL_PROTECTED.
+    CASE C (expired or canceled, cum_qty == 0):
+      No fill. Clear registry. Log. No position.
+
+============================================================
+9. OUTBOUND WS MESSAGES
+============================================================
+
+9.1 All Outbound Fields (mandatory on every message, A-2)
+
+  req_id:      client-assigned integer, unique per message
+               Tracked in req_id_registry with timestamp.
+  cl_ord_id:   up to 18 chars on add_order and batch_add.
+               Assigned at dispatch before Kraken response.
+               Position Mirror records cl_ord_id immediately
+               at dispatch — no async gap.
+
+9.2 stp_type Format (AR-032)
+
+  WS v2 USES UNDERSCORES: cancel_newest, cancel_oldest,
+  cancel_both. REST uses hyphens: cancel-newest.
+  All WS v2 add_order and batch_add MUST use cancel_newest
+  (underscore). Never use hyphen in WS v2 messages.
+
+9.3 deadline Parameter (AR-033)
+
+  Standard: deadline = UTC now + 5 seconds (ISO 8601).
+  Range: 500ms–60s. Required on ALL add_order and batch_add.
+  Engine rejects orders arriving after this time.
+
+9.4 cancel_order vs batch_cancel (AR-041)
+
+  cancel_order: individual cancel with per-order ACK tracked
+                by req_id. Use for Layer 2 MAE exit cancel
+                sequence (cancel timeout fallback requires
+                per-order ACK tracking per I-6).
+  batch_cancel: returns single count response. Bypasses rate
+                counter maximum. Use for Full Halt ONLY
+                (count sufficient; rate bypass ensures
+                execution when rate-limited). (AR-019)
+
+9.5 Dead Man's Switch — EXPLICITLY PROHIBITED (AR-055)
+
+  No call to cancel_all_orders_after under ANY circumstance.
+  DMS would cancel ALL orders including emergSL stop orders
+  protecting open positions during crash — destroying the
+  sole Kraken-side crash protection. HARD PROHIBITION.
+
+9.6 Entry Limit Price (AR-069)
+
+  entry_limit_price_raw = last_complete_candle[symbol].close
+  entry_limit_price = quantize(raw, price_increment, ROUND_DOWN)
+  Conservative: lower limit → more likely post_only fill.
+
+9.7 emergSL Trigger Reference (AR-046)
+
+  ALL emergSL batch_add calls MUST include explicit triggers:
+    "triggers": {
+      "reference": "last",
+      "price": <sl_trigger_price>,
+      "price_type": "static"
+    }
+  reference="last" uses Kraken internal last-traded price —
+  always available regardless of external index feed status.
+  Never rely on API defaults for crash-protection parameters.
+
+============================================================
+10. TICKER EVENT_TRIGGER MANAGEMENT (AR-034)
+
+  Pairs WITH open positions:    subscribe ticker with
+                                 event_trigger:bbo
+  Pairs WITHOUT open positions: subscribe ticker with
+                                 event_trigger:trades
+  WS Manager updates subscription mode on position open
+  and close. bbo fires faster — adverse price detection
+  for open longs uses bid as realizable exit value.
+
+============================================================
+11. MID-SESSION RECONNECT (AR-056)
+============================================================
+
+Mid-session reconnect is DISTINCT from startup. Implemented
+as a separate code path.
+
+Key distinctions from startup:
+  portfolio_baseline_USD: NEVER reset on reconnect.
+  drawdown_pct:           PRESERVED across reconnect.
+  system_state:           PRESERVED across reconnect.
+  ATR/EMA caches:         PRESERVED unless gap > 15 minutes
+                          (stale threshold — re-seed if stale).
+  exit_cooldown_log:      PRESERVED.
+  consecutive_loss_count: PRESERVED.
+
+Reconnect sequence:
+  1. Acquire new WS token (GetWebSocketsToken).
+  2. Connect public and private WS.
+  3. Subscribe all channels (same as startup Step 2-5).
+  4. Process snap_orders: compare against pre-disconnect
+     Position Mirror. Detect gap-closed positions.
+  5. For each position closed during gap:
+     Fire CIATS Trade Outcome Bus with available data.
+     Log GAP_CLOSED_POSITION.
+  6. Reconcile Pending Order Registry against snap_orders.
+  7. Reset sequence counters (executions_last_seq,
+     balances_last_seq) — do NOT gap-detect across sessions.
+  8. Resume ticker subscriptions for active pairs.
+  9. DISCARD any pipeline events queued during reconnect.
+     Pipeline evaluations PROHIBITED during reconnect.
+  10. Resume normal operation.
+
+Fatal reconnect: 10 attempts over 120 seconds →
+  Log FATAL_RECONNECT_FAILURE (CRITICAL) →
+  systemd restarts TothBot process → full startup sequence.
+
+============================================================
+12. INTERFACES
+============================================================
+
+12.1 To Signal Pipeline (0511002)
+  WS Manager fires pipeline on each candle close.
+  Passes: closed candle data, pre-computation cache,
+  Parameter Store snapshot.
+
+12.2 To Execution Engine (0511003)
+  Receives sizing output from Gate 8 via pipeline.
+  Dispatches add_order on entry.
+
+12.3 To Exit Controller (0511004)
+  Fires Exit Controller on:
+    - ticker bbo event for open-position pairs (drawdown)
+    - ohlc(60) candle close (HTF regime check L1a-001)
+    - ohlc(5m) candle close (max hold count L1a-003)
+    - 00:00 UTC (daily regime check L1a-002)
+    - executions fill events (L1b, L2)
+  Dispatches cancel_order and batch_cancel on EC instruction.
+
+12.4 To Position Mirror (0511005)
+  WS Manager is the sole writer to Position Mirror.
+  Updates on: dispatch (entry cl_ord_id recorded),
+  fill, partial fill, position close, reconciliation.
+
+12.5 To Logger (0511006)
+  All events, state transitions, alerts, and data records
+  passed to Logger. Non-blocking (async queue).
+
+12.6 To CIATS Parameter Store
+  Reads frozen snapshot at pipeline start. WS Manager
+  never writes to Parameter Store directly.
+
+12.7 To REST (Kraken)
+  GetWebSocketsToken: startup and every reconnect.
+  GetOHLCData: startup warm-up per pair (AR-044).
+  GetOpenOrders: executions gap recovery fallback.
+  GetAccountBalance: balances gap recovery fallback.
+  Status API: startup proactive check (AR-038).
+
+============================================================
+13. HARD RULES
+============================================================
+
+HR-WM-001  Two API key pairs: DATA (public WS, REST market
+           data) and TRADE (private WS, REST auth). Both
+           IP-whitelisted to 87.99.141.44 (AR-037).
+
+HR-WM-002  All WS connections: max_queue=None, ping_interval
+           =None, max_size=10MB, open_timeout=10. No exceptions.
+
+HR-WM-003  Application JSON ping every 30 seconds on EACH
+           connection. Library TCP PING disabled. Single
+           authoritative keepalive mechanism (AR-059).
+
+HR-WM-004  last_real_data_time reset ONLY on real channel
+           events. Heartbeat, pong, and ACK MUST NOT reset
+           the zombie detection timer (AR-042).
+
+HR-WM-005  executions subscription MUST include
+           order_status:true (AR-026). Without it, amended
+           and restated exec_types are silently dropped.
+
+HR-WM-006  All 10 exec_type values handled explicitly in
+           dispatch table. No silent drops (AR-023).
+
+HR-WM-007  cancel_reason is deprecated. Use reason field
+           in all executions channel parsing (AR-022).
+
+HR-WM-008  All Decimal values from WS messages: convert via
+           Decimal(str()) immediately on receipt (AR-047).
+
+HR-WM-009  stp_type in WS v2: underscore (cancel_newest).
+           REST: hyphen (cancel-newest). Never confuse
+           (AR-032).
+
+HR-WM-010  cancel_all_orders_after: EXPLICITLY PROHIBITED
+           under any circumstance (AR-055, HR-DMS-001).
+
+HR-WM-011  portfolio_baseline_USD: set once at startup.
+           NEVER updated or reset during operation or on
+           reconnect (AR-052).
+
+HR-WM-012  Pipeline evaluations PROHIBITED during reconnect.
+           Candle events queued during reconnect discarded.
+
+HR-WM-013  GetOHLCData response[-1]: ALWAYS excluded from
+           all indicator calculations (AR-017, AR-027).
+           Use only response[:-1].
+
+HR-WM-014  deadline parameter required on ALL add_order and
+           batch_add. Standard: UTC now + 5 seconds (AR-033).
+
+HR-WM-015  emergSL stop orders MUST include explicit trigger
+           with reference="last" (AR-046). Never rely on
+           API defaults.
+
+HR-WM-016  Mid-session reconnect is a separate code path
+           from startup. Never use startup code for
+           reconnect (AR-056).
+
+HR-WM-017  All five SSS indicators (ATR, RSI, EMA9, EMA21,
+           VolumeMA20) must be seeded before pair reaches
+           READY. WARM_UP pairs skipped at pipeline (AR-068).
+
+HR-WM-018  RSI(14) uses Wilder's SMMA (alpha=1/14). Standard
+           EMA (alpha=2/15) MUST NOT be used for RSI (AR-076).
+
+HR-WM-019  Subscription ACK warnings[] parsed and logged on
+           every subscribe call. maxratecount from executions
+           ACK is operative rate ceiling (AR-030, AR-031).
+
+HR-WM-020  Both DATA and TRADE keys IP-whitelisted. Update
+           on any VPS migration (AR-037).
+
+============================================================
+14. WHAT TRIGGERS IT
+============================================================
+
+  Kraken ohlc(5m) close event    → Pipeline trigger
+  Kraken ohlc(60) close event    → L1a HTF check
+  Kraken ticker bbo event        → Drawdown check (EC)
+  Kraken executions event        → Dispatch table handler
+  Kraken balances event          → Balance update, seq check
+  Kraken instrument event        → Status cache update
+  Kraken status event            → Engine state update
+  30-second timer                → JSON ping on all connections
+  90-second inactivity           → Zombie detection trigger
+  00:00 UTC                      → Daily regime refresh call
+  System startup                 → Full startup sequence
+  WS disconnect                  → Reconnect sequence
+
+============================================================
+15. WHAT IT LOGS
+============================================================
+
+All log entries include: timestamp (UTC), component=WS_MGR,
+symbol (where applicable), connection_id, level.
+
+  STARTUP:            WS_TOKEN_ACQUIRED, WS_CONNECTED,
+                      INSTRUMENT_SNAPSHOT_COMPLETE,
+                      SUBSCRIPTION_ACK (warnings if any),
+                      MAXRATECOUNT_SET, WARM_UP_STARTED,
+                      PAIR_READY, ALL_PAIRS_WARM_UP_COMPLETE
+  CONNECTION:         PING_SENT, PONG_RECEIVED, PING_TIMEOUT,
+                      ZOMBIE_CONNECTION_DETECTED,
+                      RECONNECT_INITIATED, RECONNECT_COMPLETE,
+                      FATAL_RECONNECT_FAILURE,
+                      KRAKEN_MAINTENANCE_SCHEDULED,
+                      CONNECTION_ID_LOGGED
+  SEQUENCE GAPS:      EXECUTIONS_SEQUENCE_GAP,
+                      BALANCES_SEQUENCE_GAP
+  CANDLE EVENTS:      CANDLE_CLOSE (symbol, interval, OHLC)
+  EXEC DISPATCH:      EXEC_TRADE, EXEC_FILLED, EXEC_CANCELED,
+                      EXEC_EXPIRED, EXEC_RESTATED,
+                      UNEXPECTED_ORDER_AMENDED (CRITICAL),
+                      UNKNOWN_EXEC_TYPE
+  POSITION:           ENTRY_DISPATCHED, TP_PARTIAL_FILL,
+                      ENTRY_PARTIAL_FILL_PROTECTED,
+                      GAP_CLOSED_POSITION
+  DRAWDOWN:           SESSION_PAUSE_TRIGGERED,
+                      FULL_HALT_TRIGGERED, DRAWDOWN_RECOVERED
+  RATE COUNTER:       RATE_COUNTER_UPDATE (per pair, per eval)
+  ERRORS:             UNKNOWN_MESSAGE_TYPE (WARN), any exception
+
+============================================================
+16. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0411001  Kraken_WS_v2_Specification       (wire contract)
+  0411002  Kraken_REST_API_Specification    (REST contract)
+  0511002  Signal_Pipeline_Specification    (fired by WM)
+  0511003  Execution_Engine_Specification   (called by WM)
+  0511004  Exit_Controller_Specification    (called by WM)
+  0511005  Position_Mirror_Specification    (owned by WM)
+  0511006  Logger_Specification             (called by WM)
+  1011002  WS_Manager_Coding_Spec           (AA=10 child)
+
+============================================================
+17. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Derived from
+                     0500000 dv1_18 Sections 2, 6, 8, 9,
+                     11. Covers all AR entries assigned to
+                     WS Manager: A-1 through A-10, AR-015
+                     through AR-056 (WM assignments), AR-057
+                     through AR-076 (WM assignments). All
+                     five coding-readiness questions answered.
+                     Hard rules HR-WM-001 through HR-WM-020
+                     defined.
+
+============================================================
+END OF DOCUMENT
+============================================================
