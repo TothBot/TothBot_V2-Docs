@@ -1,0 +1,558 @@
+DocDCN:     0211002
+DocTitle:   Operations_Infrastructure_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211002_Operations_Infrastructure_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+OPERATIONS INFRASTRUCTURE SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the complete operational infrastructure
+requirements for TothBot V2. It specifies the VPS
+environment, process management, network requirements,
+API key security, alerting, log management, and all
+standing operational constraints.
+
+Infrastructure reliability is not optional. A crashed
+and unmonitored TothBot V2 with open positions is a
+direct loss event. Every infrastructure requirement in
+this document exists to prevent that outcome.
+
+This document is the parent specification for AA=10
+coding specification 1011013 VPS_Deployment_Coding_Spec.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  Operations_CIATS_Anchor        (Sub-Domain Anchor)
+  0211002  This document                  (Instance)
+
+============================================================
+3. VPS ENVIRONMENT
+============================================================
+
+------------------------------------------------------------
+IN-VPS-001  CURRENT VPS
+------------------------------------------------------------
+
+  Provider:   Hetzner Cloud
+  Type:       CPX22 (2 vCPU, 4GB RAM, 40GB disk)
+  Location:   Ashburn, VA
+  IP:         87.99.141.44
+  OS:         Ubuntu 24.04.4 LTS
+  Python:     3.12.3
+  SSH access: ssh root@87.99.141.44
+  SSH key:    C:\Users\wstot\.ssh\id_ed25519
+
+------------------------------------------------------------
+IN-VPS-002  RECOMMENDED MIGRATION — HILLSBORO, OR
+------------------------------------------------------------
+
+Kraken Spot matching engine runs on AWS us-west-2
+(Oregon). The current Ashburn, VA location adds
+unnecessary round-trip latency to every order submission
+and execution confirmation.
+
+Recommended migration: Hetzner Cloud CPX22, Hillsboro, OR.
+Rationale: ~50-70ms round-trip improvement vs Ashburn.
+At 5-minute candle frequency this has no strategy impact
+but reduces execution risk in fast market conditions by
+delivering order confirmations faster.
+
+Migration timing: evaluate at paper trading start.
+IP whitelist on both Kraken API keys MUST be updated to
+the new IP before any VPS migration is executed.
+Migration without IP whitelist update will lock TothBot
+out of all private API calls.
+
+Note: Hetzner US locations support CPX/CCX series only.
+US pricing is higher than EU. Confirm CPX22 pricing
+in Hillsboro before committing to migration.
+
+------------------------------------------------------------
+IN-VPS-003  MINIMUM RESOURCE REQUIREMENTS
+------------------------------------------------------------
+
+TothBot V2 minimum requirements on CPX22:
+  RAM:   4GB (adequate for asyncio event loop, 20 positions,
+              Logger queue 10,000 entries, CIATS corpus)
+  CPU:   2 vCPU (adequate for asyncio single-threaded
+              hot path + ThreadPoolExecutor for CPU-bound
+              statistical computations)
+  Disk:  40GB (adequate for log retention per IN-LOG-001)
+  Network: Hetzner standard — adequate for WS + REST
+
+CPX22 is validated as sufficient for TothBot V2.
+No upgrade is required unless CIATS data volumes grow
+significantly beyond initial projections.
+
+============================================================
+4. PROCESS MANAGEMENT
+============================================================
+
+------------------------------------------------------------
+IN-PM-001  TOTHBOT MUST RUN AS A SYSTEMD SERVICE
+------------------------------------------------------------
+
+TothBot V2 must be managed by systemd. Manual process
+management is prohibited in production. systemd provides:
+  - Automatic restart on crash (Restart=on-failure)
+  - Automatic start on VPS reboot (WantedBy=multi-user.target)
+  - Watchdog monitoring of event loop health
+  - Structured startup/shutdown lifecycle
+  - Integration with system journal logging
+
+------------------------------------------------------------
+IN-PM-002  SYSTEMD SERVICE REQUIREMENTS
+------------------------------------------------------------
+
+Required systemd unit configuration:
+
+  [Unit]
+  Description=TothBot V2 Trading System
+  After=network-online.target
+  Wants=network-online.target
+
+  [Service]
+  Type=notify
+  User=root
+  WorkingDirectory=/root/TothBot_V2-Code
+  EnvironmentFile=/root/.tothbot.env
+  ExecStart=/usr/bin/python3 -m tothbot
+  Restart=on-failure
+  RestartSec=5
+  WatchdogSec=120
+  LimitNOFILE=65535
+
+  [Install]
+  WantedBy=multi-user.target
+
+Requirements explained:
+  After=network-online.target: TothBot does not start
+    until the network is confirmed available. Prevents
+    startup failures caused by boot-time race conditions.
+  Type=notify: TothBot signals systemd when it is
+    actually ready (READY=1 via sd_notify). systemd
+    does not mark the service as started until TothBot
+    confirms readiness after full startup validation.
+  EnvironmentFile: API keys and secrets are loaded from
+    /root/.tothbot.env — never hardcoded in source code.
+  Restart=on-failure with RestartSec=5: automatic restart
+    on crash after 5-second delay. Prevents restart storm.
+  WatchdogSec=120: systemd restarts TothBot if no watchdog
+    ping is received within 120 seconds. Detects frozen
+    event loops that do not crash outright.
+  LimitNOFILE=65535: prevents EMFILE errors under high
+    WebSocket subscription load across many monitored pairs.
+
+------------------------------------------------------------
+IN-PM-003  SYSTEMD WATCHDOG REQUIREMENT
+------------------------------------------------------------
+
+TothBot V2 must implement an internal watchdog loop that
+sends a systemd watchdog ping every 30 seconds. This is
+separate from and in addition to the systemd WatchdogSec
+timer.
+
+The watchdog loop runs as a persistent asyncio Task.
+If the event loop hangs, the watchdog Task stops sending
+pings. systemd detects the absence of pings after 120
+seconds and restarts TothBot.
+
+The 30-second ping interval with a 120-second watchdog
+timeout provides 4 missed pings before restart — enough
+tolerance for brief event loop delays without triggering
+spurious restarts.
+
+------------------------------------------------------------
+IN-PM-004  STARTUP NOTIFICATION REQUIREMENT
+------------------------------------------------------------
+
+TothBot V2 must send sd_notify READY=1 after all startup
+validation steps complete successfully. Specifically,
+READY=1 is sent only after:
+  - Both WebSocket connections established
+  - Position Mirror reconciled (snap_orders or REST)
+  - Parameter Store loaded
+  - CIATS initialized
+  - All startup gates passed
+
+systemd holds the service in activating state until
+READY=1 is received. This prevents dependent services
+from starting before TothBot is actually ready.
+
+============================================================
+5. NETWORK REQUIREMENTS
+============================================================
+
+------------------------------------------------------------
+IN-NET-001  OUTBOUND CONNECTIVITY REQUIREMENTS
+------------------------------------------------------------
+
+TothBot V2 requires persistent outbound connectivity to:
+
+  Kraken Public WS v2:
+    wss://ws.kraken.com/v2
+    Port 443 (WSS). Persistent connection. 24/7.
+
+  Kraken Private WS v2:
+    wss://ws-auth.kraken.com/v2
+    Port 443 (WSS). Persistent connection. 24/7.
+
+  Kraken REST API:
+    https://api.kraken.com
+    Port 443 (HTTPS). Periodic calls. Not persistent.
+
+  Kraken Status API:
+    https://status.kraken.com/api/v2/scheduled-maintenances.json
+    Port 443 (HTTPS). Called at startup only.
+
+  Email alerts (SMTP):
+    alert@tothbot.com outbound. SMTP port as configured.
+
+------------------------------------------------------------
+IN-NET-002  CONNECTION FAILURE BEHAVIOR
+------------------------------------------------------------
+
+WebSocket disconnection is a normal operational event
+that must be handled gracefully per the reconnection
+specification in 0511001 WS_Manager_Specification.
+
+TothBot V2 must never halt on a transient WS disconnection.
+It must reconnect automatically per the reconnection
+procedure. Emergency SL orders on the Kraken matching
+engine provide crash protection during any disconnection
+period.
+
+------------------------------------------------------------
+IN-NET-003  CLOUDFLARE RECONNECT CONSTRAINT
+------------------------------------------------------------
+
+Kraken WS endpoints are served through Cloudflare.
+Cloudflare enforces connection limits per IP. Rapid
+reconnection cycling can trigger rate limiting.
+Reconnection backoff must be implemented per 0511001.
+Minimum reconnect delay: 5 seconds. Maximum: per
+backoff schedule in 0511001.
+
+============================================================
+6. API KEY SECURITY
+============================================================
+
+------------------------------------------------------------
+IN-KEY-001  TWO API KEY PAIRS REQUIRED
+------------------------------------------------------------
+
+TothBot V2 requires exactly two Kraken API key pairs:
+  DATA key:  market data access only. No order permissions.
+  TRADE key: order submission and account access.
+
+The two-key architecture limits blast radius: a compromise
+of the DATA key cannot submit orders.
+
+------------------------------------------------------------
+IN-KEY-002  IP WHITELISTING — MANDATORY
+------------------------------------------------------------
+
+Both the DATA key and the TRADE key MUST be IP-whitelisted
+to the VPS IP address in the Kraken account settings.
+This is not optional. A non-whitelisted TRADE key is a
+security exposure — any party with the key string can
+submit orders.
+
+IP whitelist must be updated BEFORE any VPS migration.
+Executing a VPS migration without updating the whitelist
+will immediately lock TothBot out of all private API calls
+with open positions potentially unmonitored.
+
+Sequence for VPS migration:
+  1. Provision new VPS, obtain new IP.
+  2. Update Kraken API key whitelist to new IP.
+  3. Verify connectivity from new VPS.
+  4. Migrate TothBot to new VPS.
+  5. Decommission old VPS.
+
+------------------------------------------------------------
+IN-KEY-003  ENVIRONMENT FILE STORAGE
+------------------------------------------------------------
+
+API keys, secrets, and all credentials are stored in
+/root/.tothbot.env on the VPS. This file is:
+  - Loaded by systemd via EnvironmentFile directive.
+  - Never committed to any Git repository.
+  - Never logged in any log file.
+  - Never transmitted in any alert message.
+  - Readable only by root (chmod 600).
+
+API keys are never hardcoded in source code. Any source
+file containing an API key literal is a critical defect.
+
+------------------------------------------------------------
+IN-KEY-004  NONCE WINDOW
+------------------------------------------------------------
+
+Kraken API nonce window: 10,000ms (10 seconds).
+Both DATA and TRADE key nonce windows must be set to
+10,000ms in Kraken account settings. This accommodates
+clock drift and retry delays without nonce collisions.
+
+============================================================
+7. ALERTING
+============================================================
+
+------------------------------------------------------------
+IN-ALT-001  ALERT DESTINATION
+------------------------------------------------------------
+
+All TothBot V2 operational alerts are sent to:
+  alert@tothbot.com
+
+No other alert destination is used. CIATS does not send
+alerts directly — all alerts flow through the Logger
+per 0511006 Section 7.
+
+------------------------------------------------------------
+IN-ALT-002  ALERT LEVELS
+------------------------------------------------------------
+
+Alert severity levels (per 0511006):
+  INFO:     Informational. No action required.
+            Example: startup complete, daily regime update.
+  WARNING:  Degraded condition. Monitor.
+            Example: WS reconnection, CUSUM signal.
+  CRITICAL: Immediate operator attention required.
+            Example: negative Kelly, full halt drawdown,
+            Logger queue full, VPS resource exhaustion.
+
+CRITICAL alerts require operator acknowledgment.
+TothBot V2 does not auto-resolve CRITICAL alerts.
+
+------------------------------------------------------------
+IN-ALT-003  KRAKEN STATUS API CHECK AT STARTUP
+------------------------------------------------------------
+
+TothBot V2 must query the Kraken Status API at every
+startup to check for scheduled maintenance windows:
+  https://status.kraken.com/api/v2/scheduled-maintenances.json
+
+If a scheduled maintenance is within 2 hours of startup:
+  Log at CRITICAL level. Send alert to alert@tothbot.com.
+  Continue startup — this check is informational only.
+  It does not block startup.
+
+Rationale: Forewarned maintenance allows Bill to decide
+whether to proceed with live trading or stand down until
+the maintenance window passes.
+
+============================================================
+8. LOG MANAGEMENT
+============================================================
+
+------------------------------------------------------------
+IN-LOG-001  LOG RETENTION REQUIREMENTS
+------------------------------------------------------------
+
+TothBot V2 generates two log streams:
+  System journal: managed by systemd/journald.
+  TothBot log files: managed by the Logger (0511006).
+
+TothBot log file retention:
+  Minimum retention: 90 days of trading logs.
+  Rotation: daily. Compressed after rotation.
+  Location: /root/TothBot_V2-Code/logs/ (or as configured)
+
+CIATS data retention:
+  Trade Outcome Bus records: retained indefinitely.
+  These are the zero-cost historical library. They must
+  never be deleted — they are the foundation of all
+  regime-segmented optimization after 600 trades.
+  Stored in: /root/TothBot_V2-Code/data/ (or as configured)
+
+------------------------------------------------------------
+IN-LOG-002  LOGROTATE REQUIREMENT
+------------------------------------------------------------
+
+logrotate must be configured and active before the first
+live trading run. Required configuration:
+
+  /root/TothBot_V2-Code/logs/*.log {
+      daily
+      rotate 90
+      compress
+      delaycompress
+      missingok
+      notifempty
+      copytruncate
+  }
+
+copytruncate: allows log rotation without restarting
+TothBot — rotation is performed on the active file
+without interrupting the Logger's file handle.
+
+------------------------------------------------------------
+IN-LOG-003  LOGGER QUEUE ALERT REQUIREMENT
+------------------------------------------------------------
+
+The Logger maintains an async bounded queue (maxsize=10,000
+per 0511006). If the queue fills, an immediate CRITICAL
+alert must be sent to alert@tothbot.com. The Logger must
+never silently drop events. A full queue indicates either
+a disk I/O problem or an unexpectedly high event rate —
+both require immediate operator attention.
+
+============================================================
+9. STANDING OPERATIONAL CONSTRAINTS
+============================================================
+
+------------------------------------------------------------
+IN-OC-001  24/7/365 OPERATION
+------------------------------------------------------------
+
+TothBot V2 operates 24/7/365. Kraken Spot trades
+continuously. There are no scheduled maintenance windows,
+no planned downtime windows, and no trading hours. Any
+planned maintenance or upgrade requires:
+  (a) Waiting for all positions to close, OR
+  (b) Manual position management by Bill before stopping
+      TothBot.
+  (c) Confirming emergency SL orders are active on the
+      Kraken matching engine before stopping TothBot.
+
+------------------------------------------------------------
+IN-OC-002  TOTHBOT RESTART IS AN OPERATIONAL EVENT
+------------------------------------------------------------
+
+Every TothBot restart — whether from crash, manual stop,
+or watchdog timeout — must be logged as an operational
+event with timestamp and cause. Restarts are not routine
+maintenance — they are incidents requiring review.
+
+Frequent restarts (more than 3 per 24-hour period) are
+a CRITICAL operational alert condition.
+
+------------------------------------------------------------
+IN-OC-003  VPS RESOURCE MONITORING
+------------------------------------------------------------
+
+The following VPS resource thresholds are CRITICAL alert
+conditions:
+  RAM utilization:  > 80% of 4GB = > 3.2GB
+  CPU utilization:  > 80% sustained over 5 minutes
+  Disk utilization: > 80% of 40GB = > 32GB
+  Network:          any sustained packet loss > 1%
+
+These thresholds are CIATS-owned starting values. CIATS
+monitors ws_roundtrip_latency_ms (Stream 1 Signal 3) as
+a proxy for network health. Direct VPS resource monitoring
+is a future infrastructure enhancement (not in V1 scope).
+
+------------------------------------------------------------
+IN-OC-004  NO LIVE TRADING WITHOUT EMERGENCY SL ACTIVE
+------------------------------------------------------------
+
+TothBot V2 must never hold an open position without an
+active emergency SL order on the Kraken matching engine.
+The emergency SL is crash protection — it fires only if
+TothBot fails to manage the exit. It must be present at
+all times for all open positions.
+
+Verification: confirmed at startup via snap_orders
+reconciliation (AR-003). Any position without a
+corresponding emergency SL order is a CRITICAL defect
+requiring immediate remediation.
+
+============================================================
+10. HARD RULES
+============================================================
+
+  HR-IN-001  TothBot V2 runs as a systemd service.
+             Manual process management is prohibited
+             in production.
+
+  HR-IN-002  Both API keys MUST be IP-whitelisted to the
+             VPS IP. Non-whitelisted TRADE key is a
+             critical security exposure.
+
+  HR-IN-003  API keys are stored in EnvironmentFile only.
+             Never in source code. Never in logs.
+
+  HR-IN-004  IP whitelist MUST be updated BEFORE any
+             VPS migration. Sequence: update whitelist,
+             verify, migrate.
+
+  HR-IN-005  logrotate MUST be configured and active
+             before the first live trading run.
+
+  HR-IN-006  CIATS Trade Outcome Bus records are retained
+             indefinitely. They must never be deleted.
+
+  HR-IN-007  TothBot must never hold an open position
+             without an active emergency SL order on
+             the Kraken matching engine.
+
+  HR-IN-008  A full Logger queue is a CRITICAL alert.
+             Events must never be silently dropped.
+
+  HR-IN-009  Frequent restarts (>3 per 24h) are a
+             CRITICAL alert condition requiring
+             immediate investigation.
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                    (parent Domain Doc)
+  0210000  Operations_CIATS_Anchor       (parent anchor)
+  0211001  CIATS_Specification           dv1_0
+  0511001  WS_Manager_Specification      dv1_0
+  0511006  Logger_Specification          dv1_0
+  0500000  System_Architecture_Overview  dv1_18
+  1011013  VPS_Deployment_Coding_Spec    dv1_3
+  0311001  Namespace_Specification       (governs DCN)
+  0311002  Document_Creation_Workflow    (governs sequence)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Complete infrastructure
+                     specification. VPS environment (IN-VPS-001
+                     through IN-VPS-003): Hetzner CPX22,
+                     Ashburn VA, migration recommendation to
+                     Hillsboro OR. Process management (IN-PM-001
+                     through IN-PM-004): systemd mandatory,
+                     full unit file spec, watchdog loop
+                     requirement, READY=1 notification.
+                     Network (IN-NET-001 through IN-NET-003):
+                     all endpoint requirements, connection
+                     failure behavior, Cloudflare constraint.
+                     API key security (IN-KEY-001 through
+                     IN-KEY-004): two-key architecture,
+                     IP whitelisting mandatory, environment
+                     file storage, nonce window. Alerting
+                     (IN-ALT-001 through IN-ALT-003): all
+                     alerts to alert@tothbot.com, severity
+                     levels, Kraken Status API startup check.
+                     Log management (IN-LOG-001 through
+                     IN-LOG-003): retention 90 days minimum,
+                     logrotate spec, Logger queue alert.
+                     Standing constraints (IN-OC-001 through
+                     IN-OC-004): 24/7/365, restart as incident,
+                     resource thresholds, emergency SL always
+                     active. Hard rules HR-IN-001 through
+                     HR-IN-009 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================
