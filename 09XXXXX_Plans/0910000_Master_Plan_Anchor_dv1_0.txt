@@ -1,0 +1,73 @@
+DocDCN:     0910000
+DocTitle:   Master_Plan_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0910000_Master_Plan_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+MASTER PLAN ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for Sub-Domain 1
+(Master Plan) within AA=09 Plans. It anchors the Master
+Plan governance family to the Plans Domain Document
+(0900000) and governs the instance document in this
+sub-domain.
+
+============================================================
+2. SUB-DOMAIN DEFINITION
+============================================================
+
+Sub-Domain 1 — Master Plan — contains the complete
+development roadmap for TothBot V2. It defines all
+development phases from document creation through live
+trading, milestone completion criteria, and inter-phase
+dependencies.
+
+============================================================
+3. DOCUMENT HIERARCHY
+============================================================
+
+  0900000  Plans                          [Parent Domain]
+    0910000  Master_Plan_Anchor           [THIS DOCUMENT]
+      0911001  TothBot_V2_Master_Plan
+
+============================================================
+4. GOVERNANCE RULES
+============================================================
+
+GR-0910-001  0911001 TothBot_V2_Master_Plan is the sole
+             instance document in this sub-domain.
+
+GR-0910-002  0911001 must reference this anchor and
+             0900000 as its parent chain.
+
+GR-0910-003  0911001 is updated each time a development
+             phase is completed. Version increments on
+             every update.
+
+============================================================
+5. RELATED DOCUMENTS
+============================================================
+
+  0900000  Plans
+  0920000  Business_Plan_Anchor
+  0311002  Document_Creation_Workflow
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 7 of
+                     Document Creation Workflow.
+                     Sub-Domain Anchor for Master Plan.
+
+============================================================
+END OF DOCUMENT
+============================================================
