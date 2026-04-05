@@ -1,0 +1,516 @@
+DocDCN:     0811001
+DocTitle:   Long_Module_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0811001_Long_Module_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+LONG MODULE SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete trading-module specification
+for the Long Module — TothBot V2's entry dispatch and
+position protection placement engine. It defines what the
+Long Module does, its exact order construction rules,
+interfaces, hard rules, and what it logs.
+
+The Long Module is the sole entry dispatch component.
+Short Module is explicitly deferred (AR-009). All trading
+is long-only spot on Kraken.
+
+This document is the authoritative parent for the Long
+Module portion of AA=10 coding specifications.
+
+============================================================
+2. GOVERNING DOCUMENTS
+============================================================
+
+  0800000  Trading_System               (Domain Document)
+  0810000  Trading_System_Modules_Anchor (Sub-Domain Anchor)
+  0500000  System_Architecture_Overview (primary source)
+  0511003  Execution_Engine_Specification
+  0511005  Position_Mirror_Specification
+  0411001  Kraken_WS_v2_Specification
+  0611001  Position_Sizing_Rules
+
+============================================================
+3. PARENT CHAIN
+============================================================
+
+  0811001 -> 0810000 -> 0800000
+
+============================================================
+4. WHAT THE LONG MODULE DOES
+============================================================
+
+The Long Module executes in two phases:
+
+Phase 1 — Entry Dispatch:
+  Dispatches the entry add_order to Kraken WS v2 after
+  Gate 8 authorizes the trade. Manages the Pending Order
+  Registry during the GTD window. Processes all entry
+  order outcomes.
+
+Phase 2 — Position Protection Placement:
+  On confirmed full entry fill: computes TP and emergSL
+  prices from actual fill price using the sacred 1:1.5
+  R:R formula. Dispatches batch_add atomically. Writes
+  completed position record to Position Mirror.
+
+Input:  Gate 8 authorized dispatch (symbol, entry_qty,
+        entry_limit_price, ATR(14), mae_mult, sl_mult,
+        price_increment, qty_min, cost_min)
+Output: On fill — open position in Position Mirror.
+        On no-fill — no position. Logging only.
+
+============================================================
+5. PHASE 1 — ENTRY DISPATCH
+============================================================
+
+------------------------------------------------------------
+5.1 cl_ord_id Assignment (AR-002)
+------------------------------------------------------------
+
+LM-001  cl_ord_id MUST be assigned before add_order is
+        dispatched. Not after. Not on ACK. Before dispatch.
+
+LM-002  cl_ord_id format: symbol prefix (stripped of /
+        and USDC/USDT suffix) + millisecond timestamp.
+        Maximum 18 characters (Kraken limit).
+        Example: "BTCUSD1712230000001"
+
+LM-003  cl_ord_id is recorded in Position Mirror and
+        Pending Order Registry at dispatch time. Before
+        Kraken ACK. No async gap (A-2, record-at-dispatch).
+
+LM-004  tp_cl_ord_id and emgsl_cl_ord_id for batch_add
+        are assigned at the same time as entry cl_ord_id
+        (before dispatch). All three recorded in Position
+        Mirror at dispatch. Kraken-assigned order_ids are
+        populated later on batch_add ACK.
+
+------------------------------------------------------------
+5.2 add_order Construction (AR-006)
+------------------------------------------------------------
+
+LM-005  Entry add_order MUST conform to this exact format.
+        No field may be omitted. No extra fields.
+
+        {
+          "method": "add_order",
+          "params": {
+            "order_type":    "limit",
+            "side":          "buy",
+            "symbol":        <symbol>,
+            "limit_price":   <entry_limit_price_str>,
+            "order_qty":     <entry_qty_quantized_str>,
+            "post_only":     true,
+            "time_in_force": "gtd",
+            "expire_time":   <ISO 8601 UTC now + entry_timeout_sec>,
+            "cl_ord_id":     <assigned cl_ord_id>,
+            "stp_type":      "cancel_newest",
+            "deadline":      <ISO 8601 UTC now + 5s>
+          },
+          "req_id": <assigned req_id>
+        }
+
+LM-006  stp_type MUST be "cancel_newest" with underscore.
+        WS v2 ALWAYS uses underscore format. REST API uses
+        hyphen (cancel-newest). Never confuse the two.
+        A wrong format silently accepts but does not apply
+        STP. A duplicate order could fill double (AR-006).
+
+LM-007  deadline MUST be ISO 8601 UTC string = now + 5s.
+        Engine rejects message arriving after this time.
+        Do NOT omit deadline. Do NOT use a longer window.
+
+LM-008  post_only MUST be true. Guarantees maker fee
+        (0.16%). If the order would cross the spread on
+        arrival, Kraken rejects it with exec_type=canceled
+        reason=post_only. This is correct behavior — log
+        and record ENTRY_POST_ONLY_REJECTED.
+
+LM-009  time_in_force MUST be "gtd". expire_time =
+        ISO 8601 UTC now + entry_timeout_sec. CIATS-owned
+        starting value: 45 seconds. Unfilled order expires
+        automatically. No manual cancel required.
+
+LM-010  All price and quantity values MUST be sent as
+        strings with the precision of price_increment
+        (for prices) and qty_min (for quantities).
+        Decimal(str()) throughout. No float values.
+
+------------------------------------------------------------
+5.3 Pending Order Registry (AR-053)
+------------------------------------------------------------
+
+LM-011  On add_order dispatch:
+          estimated_cost = entry_qty * entry_limit_price
+                           * (1 + maker_fee_rate)
+          pending_orders[entry_cl_ord_id] = estimated_cost
+        Gate 7 available_USD uses this registry to prevent
+        capital overcommitment on simultaneous entries.
+
+LM-012  Pending Order Registry is maintained by WS Manager.
+        Long Module instructs WS Manager to populate it at
+        dispatch. WS Manager clears it on fill or expiry.
+
+------------------------------------------------------------
+5.4 Entry Order Outcomes
+------------------------------------------------------------
+
+LM-013  exec_type = filled (full fill):
+          Trigger Phase 2. Extract qty = Decimal(str(cum_qty))
+          and entry_fill_price = Decimal(str(avg_price)).
+          Clear pending_orders[entry_cl_ord_id].
+          Log ENTRY_FILLED.
+
+LM-014  exec_type = trade (partial fill, order still open):
+          Order is still active. Hold Pending Order Registry.
+          Do NOT dispatch batch_add yet.
+          Log ENTRY_PARTIAL_TRADE (cum_qty, avg_price).
+
+LM-015  exec_type = expired OR canceled, cum_qty == 0:
+          No fill. Clear Pending Order Registry.
+          Log ENTRY_EXPIRED_NO_FILL or ENTRY_CANCELED_NO_FILL.
+          No position opened.
+
+LM-016  exec_type = expired OR canceled, cum_qty > 0:
+          Unprotected partial fill. Trigger partial fill
+          protection immediately per AR-054.
+          See Section 5.5.
+          Log ENTRY_EXPIRED_PARTIAL_FILL or
+          ENTRY_CANCELED_PARTIAL_FILL.
+
+LM-017  exec_type = canceled, reason = post_only:
+          Order crossed spread on arrival. Clear registry.
+          Log ENTRY_POST_ONLY_REJECTED.
+          CIATS EWMA Monitor: rejection_rate_by_regime
+          increments (A-1 signal 1).
+
+LM-018  exec_type = new (order accepted on book):
+          No action required. Log ENTRY_ACCEPTED_ON_BOOK.
+
+------------------------------------------------------------
+5.5 Partial Fill Protection (AR-054)
+------------------------------------------------------------
+
+LM-019  Triggered when exec_type=expired or canceled AND
+        cum_qty > 0. An unprotected position exists.
+        Execute immediately:
+          (1) Extract qty = Decimal(str(cum_qty)) and
+              entry_fill_price = Decimal(str(avg_price)).
+          (2) Validate qty >= qty_min AND
+              qty * entry_fill_price >= cost_min.
+              If fails: dispatch market sell immediately.
+              Log PARTIAL_FILL_BELOW_MINIMUM.
+              Fire CIATS Trade Outcome Bus.
+          (3) Compute TP and emergSL using actual
+              entry_fill_price (see Section 6.2).
+          (4) Dispatch batch_add (TP + emergSL).
+          (5) Write Position Mirror.
+          Log ENTRY_PARTIAL_FILL_PROTECTED.
+
+============================================================
+6. PHASE 2 — POSITION PROTECTION PLACEMENT
+============================================================
+
+------------------------------------------------------------
+6.1 Trigger Condition
+------------------------------------------------------------
+
+LM-020  Phase 2 triggers on exec_type=filled ONLY.
+        Not on exec_type=trade (partial — wait for filled).
+        Not on any other exec_type.
+
+------------------------------------------------------------
+6.2 R:R Computation (AR-008, AR-011)
+------------------------------------------------------------
+
+LM-021  ALL R:R calculations MUST use actual fill price
+        (avg_price from exec_type=filled event).
+        NEVER the limit price. OTO was rejected because
+        it uses limit price — R:R violation (AR-008).
+
+LM-022  R:R formula (sacred — hardcoded — CIATS-exempt):
+
+          entry_fill_price = Decimal(str(avg_price))
+          mae_dist         = entry_atr_14 * mae_mult
+          emergSL_dist     = entry_atr_14 * emergency_sl_mult
+
+          net_loss    = mae_dist / entry_fill_price
+                        + Decimal("0.0016")   (entry maker)
+                        + Decimal("0.0026")   (exit taker)
+
+          net_gain    = net_loss * Decimal("1.5")
+                        *** SACRED — HARDCODED — NOT CIATS ***
+
+          gross_tp    = entry_fill_price * (Decimal("1") + net_gain
+                        + Decimal("0.0016"))  (TP maker exit)
+
+          tp_price    = gross_tp.quantize(price_increment,
+                        rounding=ROUND_UP)
+
+          emergSL_trigger = (entry_fill_price - emergSL_dist
+                        ).quantize(price_increment,
+                        rounding=ROUND_DOWN)
+
+        Note: emergSL_dist (ATR x 3.0x) is NEVER in the
+        R:R formula. It is crash protection only.
+
+LM-023  Decimal arithmetic throughout. No float. All
+        string-converted inputs before any computation.
+        No accumulation of floating-point rounding error.
+
+------------------------------------------------------------
+6.3 batch_add Construction (AR-007, AR-046, AR-032, AR-033)
+------------------------------------------------------------
+
+LM-024  TP + emergSL dispatched atomically via batch_add
+        on confirmed full fill. No sequential placement.
+        No gap between TP and emergSL. One message, two legs.
+
+LM-025  batch_add format:
+        {
+          "method": "batch_add",
+          "params": {
+            "orders": [
+              {
+                "order_type": "limit",
+                "side":       "sell",
+                "symbol":     <symbol>,
+                "limit_price": <tp_price_str>,
+                "order_qty":   <entry_fill_qty_str>,
+                "post_only":   true,
+                "cl_ord_id":   <tp_cl_ord_id>,
+                "stp_type":    "cancel_newest",
+                "deadline":    <ISO 8601 UTC now + 5s>
+              },
+              {
+                "order_type": "stop-loss",
+                "side":       "sell",
+                "symbol":     <symbol>,
+                "order_qty":  <entry_fill_qty_str>,
+                "cl_ord_id":  <emgsl_cl_ord_id>,
+                "stp_type":   "cancel_newest",
+                "deadline":   <ISO 8601 UTC now + 5s>,
+                "triggers": {
+                  "reference":  "last",
+                  "price":      <emergSL_trigger_str>,
+                  "price_type": "static"
+                }
+              }
+            ],
+            "token":  <ws_auth_token>,
+            "req_id": <assigned req_id>
+          }
+        }
+
+LM-026  triggers.reference MUST be "last" on emergSL leg.
+        "last" = last traded price. Always available on
+        Kraken matching engine, including crash scenarios.
+        "index" uses external price feeds which may be
+        unavailable during crash. NEVER use "index" or
+        "mark" for emergSL (AR-046).
+
+LM-027  batch_add rate cost = +(n/2) rounded up.
+        Two orders = +1 rate counter unit.
+
+------------------------------------------------------------
+6.4 Position Mirror Write (AR-002, AR-052)
+------------------------------------------------------------
+
+LM-028  Position Mirror record structure written on
+        entry dispatch (cl_ord_id fields) and updated
+        on fill (entry_fill_price, qty, order_ids):
+          symbol, entry_fill_price, qty,
+          tp_order_id, tp_cl_ord_id,
+          emgsl_order_id, emgsl_cl_ord_id,
+          entry_timestamp_utc, entry_atr_14,
+          asset_regime, market_regime,
+          signal_params, hold_candle_count (0 at entry)
+
+LM-029  tp_order_id and emgsl_order_id populated from
+        batch_add ACK response. Not from add_order ACK.
+        cl_ord_id values populated at dispatch (before ACK).
+
+============================================================
+7. INTERFACES
+============================================================
+
+7.1 From Risk Engine (0611001 / 0611003)
+  Receives: Gate 8 authorization with entry_qty, mae_mult,
+            emergency_sl_mult, entry_limit_price.
+  Receives: Gate 7 FULL_HALT signal (blocks new dispatch).
+
+7.2 From WS Manager (0511001)
+  Receives: executions channel events routed by exec_type.
+  Receives: entry_atr_14, price_increment from pre-computation
+            cache (read at pipeline start, I-2).
+
+7.3 To WS Manager (0511001)
+  Sends: add_order instructions with all required params.
+  Sends: batch_add instructions on fill.
+  Sends: Pending Order Registry populate/clear instructions.
+
+7.4 To Position Mirror (0511005)
+  Writes: PositionRecord at dispatch and on fill.
+
+7.5 To Exit Controller (0811003)
+  Position Mirror is the shared state. Long Module writes.
+  Exit Controller reads. No direct inter-module call.
+
+7.6 To Logger (0511006)
+  All log events including CIATS Trade Outcome Bus data.
+
+============================================================
+8. HARD RULES
+============================================================
+
+HR-LM-001  cl_ord_id MUST be assigned and written to
+           Position Mirror before add_order dispatch.
+           Never after. Never on ACK. Before dispatch only.
+
+HR-LM-002  stp_type MUST be "cancel_newest" (underscore).
+           WS v2 ALWAYS uses underscore. REST uses hyphen.
+           Any code review must flag "cancel-newest" in
+           WS v2 context as a defect.
+
+HR-LM-003  batch_add MUST fire on exec_type=filled ONLY.
+           Never on trade (partial). Never on expired.
+           Exception: partial fill protection AR-054 uses
+           batch_add after expiry + cum_qty > 0.
+
+HR-LM-004  ALL R:R calculations MUST use actual fill price
+           (avg_price). Never limit_price. This is sacred
+           and cannot be changed by CIATS or Bill.
+
+HR-LM-005  net_gain = net_loss × 1.5 is HARDCODED. This
+           line of code is never parameterized. CIATS
+           cannot touch it. Not in Parameter Store.
+
+HR-LM-006  emergSL triggers.reference MUST be "last".
+           Never "index". Never "mark". Never API default.
+
+HR-LM-007  All Decimal arithmetic throughout. No float
+           values anywhere in price or quantity computation.
+           Decimal(str()) on all WS message numeric fields.
+
+HR-LM-008  Dead Man's Switch is PROHIBITED. TothBot V2
+           MUST NOT call cancel_all_orders_after at any
+           time. DMS cancels emergSL — removes the crash
+           protection it is meant to provide (AR-055).
+
+============================================================
+9. CIATS PARAMETERS
+============================================================
+
+  entry_timeout_sec:      45s (GTD window, CIATS-owned)
+  mae_mult:               1.5x ATR(14) (Risk domain)
+  emergency_sl_mult:      3.0x ATR(14) (Risk domain)
+
+  Note: mae_mult and emergency_sl_mult are owned by
+  AA=06 Risk domain. Received by Long Module from the
+  Position Sizer (Gate 8) output at dispatch time.
+
+============================================================
+10. WHAT IT LOGS
+============================================================
+
+  ENTRY_ACCEPTED_ON_BOOK     — symbol, cl_ord_id, limit_price
+  ENTRY_FILLED               — symbol, fill_price, qty, fees
+  ENTRY_PARTIAL_TRADE        — symbol, cum_qty, avg_price
+  ENTRY_EXPIRED_NO_FILL      — symbol, cl_ord_id
+  ENTRY_CANCELED_NO_FILL     — symbol, cl_ord_id, reason
+  ENTRY_EXPIRED_PARTIAL_FILL — symbol, cum_qty, avg_price
+  ENTRY_CANCELED_PARTIAL_FILL — symbol, cum_qty, reason
+  ENTRY_POST_ONLY_REJECTED   — symbol, regime, rejection_code
+  ENTRY_PARTIAL_FILL_PROTECTED — symbol, cum_qty, tp_price,
+                                  emgSL_trigger
+  PARTIAL_FILL_BELOW_MINIMUM — symbol, cum_qty (emergency sell)
+  TP_PLACED                  — symbol, tp_price, qty
+  EMGSL_PLACED               — symbol, trigger_price, qty
+  POSITION_OPENED            — symbol, fill_price, qty,
+                               tp_price, emgSL_trigger,
+                               asset_regime, market_regime,
+                               signal_params
+
+============================================================
+11. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does the Long Module DO?
+    Dispatches entry add_order after Gate 8 authorization.
+    On full fill: computes TP/emergSL prices from actual
+    fill price using hardcoded 1:1.5 R:R. Dispatches
+    batch_add atomically. Writes Position Mirror.
+    Handles all entry order outcomes including partial
+    fill protection.
+
+(2) What are its interfaces?
+    FROM: Risk Engine (Gate 8 params), WS Manager
+    (executions events, ATR/price cache reads).
+    TO: WS Manager (order instructions), Position Mirror
+    (write), Logger (all events).
+
+(3) What are its hard rules?
+    cl_ord_id at dispatch. stp_type underscore. batch_add
+    on filled only (except AR-054). Actual fill price for
+    R:R. net_gain = net_loss × 1.5 hardcoded. reference=
+    "last" on emergSL. Decimal throughout. No DMS.
+
+(4) What triggers it and what does it trigger?
+    Triggered by Gate 8 authorized dispatch signal (every
+    pipeline evaluation that passes all 8 gates).
+    Triggers: WS Manager send add_order, then on fill:
+    WS Manager send batch_add, Position Mirror write,
+    Logger events.
+
+(5) What does it log?
+    All entry outcomes (filled, partial, expired, canceled,
+    post_only). Partial fill protection events. TP and
+    emergSL placement confirmations. Position opened record.
+
+============================================================
+12. RELATED DOCUMENTS
+============================================================
+
+  0800000  Trading_System
+  0810000  Trading_System_Modules_Anchor
+  0811004  Entry_Limit_Placement_Specification
+  0511003  Execution_Engine_Specification (AA=05 reference)
+  0511005  Position_Mirror_Specification
+  0411001  Kraken_WS_v2_Specification
+  0611001  Position_Sizing_Rules
+  0500000  System_Architecture_Overview
+
+============================================================
+13. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Long Module complete
+                     trading-module specification. Phase 1
+                     (entry dispatch) and Phase 2 (TP +
+                     emergSL placement) fully specified.
+                     cl_ord_id assignment (AR-002/LM-001
+                     through LM-004). add_order format
+                     (AR-006/LM-005 through LM-010).
+                     Pending Order Registry (AR-053/LM-011
+                     through LM-012). 6 entry outcomes
+                     (LM-013 through LM-018). Partial fill
+                     protection (AR-054/LM-019). R:R formula
+                     (AR-011/LM-021 through LM-023). batch_add
+                     format (AR-007/LM-024 through LM-027).
+                     Position Mirror write (LM-028 through
+                     LM-029). 8 hard rules. 5 coding-
+                     readiness questions.
+
+============================================================
+END OF DOCUMENT
+============================================================
