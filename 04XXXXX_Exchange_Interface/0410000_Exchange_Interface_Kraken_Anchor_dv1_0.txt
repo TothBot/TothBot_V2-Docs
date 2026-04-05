@@ -1,0 +1,149 @@
+DocDCN:     0410000
+DocTitle:   Exchange_Interface_Kraken_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/04XXXXX_Exchange_Interface/0410000_Exchange_Interface_Kraken_Anchor_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+EXCHANGE INTERFACE KRAKEN ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for the Kraken
+Exchange Interface sub-domain (AA=04, B=1). It anchors
+all Kraken-specific exchange interface instance documents
+(0411001 through 0411003) to the Exchange Interface
+Domain Document (0400000).
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the Kraken exchange interface
+sub-domain, allowing instance documents to have a valid
+parent chain. No instance document in this sub-domain
+may be committed to GitHub without this anchor and 0400000
+already present and approved.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety        (Domain)
+  0100000  Management               (Domain)
+  0200000  Operations               (Domain)
+  0300000  Governance               (Domain)
+  0400000  Exchange_Interface       (Domain Document)
+  0410000  This document            (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    0411001  Kraken_WS_v2_Specification
+    0411002  Kraken_REST_API_Specification
+    0411003  Kraken_Fee_Rate_Limit_Specification
+
+============================================================
+3. TRACEABILITY TO PARENT DOMAIN DOCUMENT
+============================================================
+
+This anchor elaborates Section 8.1 of 0400000, which
+defines Sub-Domain 1 — Exchange_Interface_Kraken (B=1)
+and its three instance documents. Every instance document
+under this anchor traces to 0400000 Section 8.1.
+
+All hard rules HR-EI-001 through HR-EI-015 defined in
+0400000 Section 7 govern every instance document in this
+sub-domain. They are not repeated here. They apply in full.
+
+============================================================
+4. SUB-DOMAIN SCOPE
+============================================================
+
+The Exchange Interface Kraken sub-domain governs the
+complete technical interface specification between
+TothBot V2 and the Kraken exchange. This sub-domain
+covers Kraken exclusively. If TothBot V2 is ever extended
+to a second exchange, that exchange receives its own
+sub-domain anchor (B=2) under 0400000.
+
+Each instance document elaborates one specific area of
+the Kraken interface:
+
+  0411001  Kraken_WS_v2_Specification
+           The complete Kraken WebSocket v2 interface.
+           All channels (Public and Private WS v2).
+           All message formats, parameters, and field
+           requirements. Connection management: startup,
+           keepalive (JSON ping every 20-30 seconds),
+           zombie detection (90-second real-data timeout),
+           reconnection procedures, and token refresh.
+           All WS operational requirements A-1 through
+           A-21 and all validated GAPs and ARs that
+           affect WS behavior. This is the authoritative
+           wire contract for all WebSocket communication.
+           WD dv1_10 exists — to be completed and approved
+           after this anchor reaches approved (v) state.
+
+  0411002  Kraken_REST_API_Specification
+           The complete Kraken REST API interface for
+           all endpoints used by TothBot V2:
+             GetWebSocketsToken  — startup and reconnect
+             GetOHLCData         — daily regime (00:00 UTC)
+             GetOpenOrders       — reconciliation fallback
+             GetAccountBalance   — reconciliation fallback
+             CancelAllOrders     — emergency kill switch only
+             Status API          — proactive maintenance check
+           All request formats, authentication requirements,
+           response formats, error codes, and handling
+           behaviors. CRITICAL: GetOHLCData response[-1]
+           exclusion rule (HR-EI-004) must be specified
+           explicitly in this document.
+
+  0411003  Kraken_Fee_Rate_Limit_Specification
+           The complete Kraken fee structure (maker/taker
+           rates, fee tiers), rate limit rules (Intermediate
+           Tier C-2 rate counter, decay rate, cost schedule
+           per order type), API key configuration
+           requirements, and CIATS monitoring hooks for
+           fee actuals and rate counter actuals.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  Instance Document → 0410000 (this anchor) → 0400000
+
+No instance document in this sub-domain (0411001,
+0411002, 0411003) may be committed to GitHub without
+both this anchor and 0400000 already present and approved
+on GitHub. This rule is enforced by validation rule V-012
+(0311001 Section 13).
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0400000  Exchange_Interface         (parent Domain Document)
+  0411001  Kraken_WS_v2_Specification
+  0411002  Kraken_REST_API_Specification
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  0311001  Namespace_Specification    (governs DCN structure)
+  0311002  Document_Creation_Workflow (governs sequence)
+  0500000  System_Architecture_Overview
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Sub-Domain Anchor
+                     for Kraken Exchange Interface (AA=04,
+                     B=1). Establishes parent chain from
+                     0400000 through this anchor to three
+                     instance documents (0411001, 0411002,
+                     0411003). Scope defined. Traceability
+                     to 0400000 Section 8.1 established.
+
+============================================================
+END OF DOCUMENT
+============================================================

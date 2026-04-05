@@ -1,0 +1,463 @@
+DocDCN:     0400000
+DocTitle:   Exchange_Interface
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/04XXXXX_Exchange_Interface/0400000_Exchange_Interface_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+EXCHANGE INTERFACE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Domain Document for AA=04
+Exchange_Interface. It defines the entire Exchange
+Interface domain: its purpose, scope, governing principles,
+and the complete structure of all controlled documents
+within it.
+
+The Exchange Interface domain governs every connection,
+protocol, message, and behavior that crosses the boundary
+between TothBot and Kraken. Nothing that crosses that
+boundary is unspecified. Nothing that crosses that boundary
+is assumed. Everything is explicitly defined in this domain.
+
+============================================================
+2. SCOPE
+============================================================
+
+The Exchange Interface domain owns:
+
+  - All WebSocket v2 connections between TothBot and Kraken
+  - All REST API calls between TothBot and Kraken
+  - All message formats, parameters, and response handling
+    for every channel and endpoint
+  - API rate limits, rate counter management, and
+    rate cost accounting
+  - Fee structure, maker/taker classification, and
+    fee monitoring hooks for CIATS
+  - Connection lifecycle: startup, keepalive, reconnection,
+    and graceful shutdown
+  - Kraken engine state handling (online/post_only/
+    cancel_only/maintenance)
+  - Authentication model: REST private call signing,
+    WebSocket token management
+  - All error codes, error handling, and recovery behaviors
+    at the connection and message level
+
+The Exchange Interface domain does NOT own:
+
+  - Trading strategy decisions (AA=07 Strategy)
+  - Position sizing and risk rules (AA=06 Risk)
+  - Signal pipeline logic (AA=08 Trading_System)
+  - CIATS improvement cycles (AA=02 Operations)
+  - System architecture assembly (AA=05 System_Architecture)
+
+The boundary is the wire. The Exchange Interface domain
+owns everything on and at the wire. The trading system
+domains own everything that consumes or produces wire
+events.
+
+============================================================
+3. GOVERNING PRINCIPLES
+============================================================
+
+3.1 Kraken Is the Event Source — TothBot Is the Processor
+
+TothBot does not poll. TothBot does not generate its own
+clock. Kraken generates events. TothBot processes them.
+The 5-minute OHLC candle close event on the Public WS v2
+ohlc(5m) channel is the system clock. No event = no action.
+This principle governs all connection management decisions:
+connections must be maintained with zero interruption
+because every missed event is a missed trading decision.
+
+3.2 The Wire Contract Is Absolute
+
+Every message sent to Kraken and every message received
+from Kraken must conform exactly to the Kraken WS v2
+and REST API specifications. No approximation. No
+assumption. No field omitted unless explicitly optional.
+No field added unless explicitly supported. The wire
+contract defined in this domain is the complete
+authoritative interface between TothBot and Kraken.
+
+3.3 Crash Protection Is Always Active
+
+Kraken holds resting TP limit orders and off-book
+emergency SL stop orders on its matching engine. These
+orders survive any TothBot failure independently.
+No exchange interface design may undermine crash
+protection. Architecturally:
+
+  HR-EI-001  cancel_all_orders_after (WS v2 DMS) is
+             PROHIBITED. It destroys crash protection
+             by canceling resting TP and emergSL on
+             WS disconnect. (AR-001)
+
+  HR-EI-002  FIX API cancel-on-disconnect is PROHIBITED.
+             Same architectural conflict as DMS. (AR-001)
+
+3.4 Connection Failures Are Expected — Recovery Is Mandatory
+
+All connections will fail. Network interruptions occur.
+Kraken performs scheduled maintenance. The exchange
+interface must recover from every failure state without
+data loss, without position state corruption, and without
+missed events. Recovery procedures are mandatory
+specifications, not optional enhancements.
+
+3.5 Rate Limits Are a Hard Constraint
+
+Kraken rate limits are shared across REST, WebSocket,
+and FIX — there is no per-protocol budget. Exceeding
+rate limits causes order rejections that corrupt position
+state. Rate limit compliance is a hard rule. Rate counter
+monitoring via the executions channel ratecounter:true is
+mandatory from startup. CIATS monitors actuals.
+
+3.6 All Architectural Decisions Are From First Principles
+
+Every connection parameter, every message field, every
+rate cost, and every protocol choice in this domain has
+been validated through FP/DP analysis using a minimum of
+5 independent sources. No parameter is inherited from
+assumption. All parameters are starting values owned by
+CIATS unless explicitly marked HARDCODED.
+
+============================================================
+4. KRAKEN EXCHANGE — SYSTEM INTERFACE SUMMARY
+============================================================
+
+TothBot connects to Kraken via two protocols:
+
+4.1 WebSocket v2
+
+  Two concurrent connections maintained at all times:
+
+  Public WS v2 (wss://ws.kraken.com/v2):
+    Receives: market data, instrument status, system
+              clock events, engine state
+    Sends:    nothing (public connection — receive only)
+
+  Private WS v2 (wss://ws-l3.kraken.com/v2):
+    Receives: execution fills, order status, balance
+              updates, rate counter data
+    Sends:    add_order, amend_order, batch_add,
+              cancel_order, batch_cancel
+
+  Both connections require JSON ping every 20-30 seconds.
+  Both connections require zombie detection: no real data
+  received in 90 seconds triggers alert and reconnect.
+
+4.2 REST API (https://api.kraken.com)
+
+  Used for:
+    - WebSocket authentication token (startup/reconnect)
+    - Daily regime data (GetOHLCData at 00:00 UTC)
+    - Restart reconciliation (GetOpenOrders,
+      GetAccountBalance)
+    - Proactive maintenance check at startup
+    - Emergency kill switch (CancelAllOrders — emergency
+      only)
+
+  Not used for normal trading flow. All normal trading
+  operates through WS v2.
+
+4.3 Kraken Matching Engine
+
+  Holds resting TP limit orders and off-book emergency
+  SL stop orders. These are placed via WS v2 (batch_add
+  on fill) and remain active independent of TothBot state.
+  The matching engine is not directly interfaced — orders
+  placed on it behave autonomously.
+
+4.4 Four Kraken Engine States
+
+  online       All orders. Signal pipeline runs normally.
+  post_only    TothBot limit+post_only entries remain
+               valid. Existing positions managed normally.
+               Trading continues.
+  cancel_only  No new entries. Exit Controller can cancel.
+               Resting TP and emergSL orders remain active
+               on the matching engine.
+  maintenance  No orders, no cancels. Resting TP and
+               emergSL remain active on the matching engine.
+               TothBot halts new entries and waits.
+
+  Engine state is received via the Public WS v2 status
+  channel. TothBot reacts to state transitions
+  immediately. The WS Manager routes state change events
+  to the trading pipeline.
+
+============================================================
+5. API RATE LIMITS — INTERMEDIATE TIER (C-2)
+============================================================
+
+Rate limits are shared across REST, WebSocket, and FIX.
+There is no per-protocol budget. All rate costs count
+against one shared counter per pair.
+
+  Rate counter threshold (per pair):   125
+  Rate counter decay (per second):      2.34
+  Max open orders (per pair):          80
+
+  Order cost schedule:
+    add_order (limit):         +1
+    amend_order (PRIMARY):     +1 fixed
+                               +3 additional if order < 5s old
+                               +2 additional if order < 10s old
+                               +1 additional if order < 15s old
+    edit_order (DEPRECATED):   PROHIBITED — DO NOT USE
+                               +1 fixed, +6 if < 5s old
+                               43% more expensive than amend
+    batch_add (per order):     +(n/2) rounded up
+    cancel_order:              +8 if order < 5s old
+                               +6 if order < 10s old
+                               +1 if order < 300s old
+    batch_cancel:              Cumulative sum of individual
+                               cancel costs per order in batch
+
+  HR-EI-003  edit_order is PROHIBITED. It is deprecated
+             by Kraken and 43% more expensive than
+             amend_order for orders resting < 5 seconds.
+             amend_order is the sole amendment method.
+
+  Rate counter monitoring is mandatory from startup via
+  executions channel ratecounter:true at zero additional
+  connection cost. CIATS EWMA Monitor includes
+  rate_counter_by_pair as a monitoring signal.
+
+============================================================
+6. AUTHENTICATION MODEL
+============================================================
+
+6.1 REST Private Calls
+
+  All private REST calls use HMAC-SHA512 signature
+  authentication. Standard Kraken REST authentication
+  as documented at docs.kraken.com/api/docs/guides/
+  spot-rest-auth/.
+
+  CRITICAL NOTE: Kraken published an authentication
+  breaking change effective October 1, 2025. The current
+  date is April 4, 2026 — this change is in effect.
+  Standard HMAC-SHA512 signature appears unchanged but
+  MUST be verified against current Kraken documentation
+  before coding any private REST call. (GAP-02)
+
+6.2 WebSocket Private Connection
+
+  Private WS v2 requires a WebSocket token obtained from
+  the REST GetWebSocketsToken endpoint. Token is fetched
+  at startup and on every reconnect. Token management is
+  a mandatory WS Manager responsibility.
+
+============================================================
+7. HARD RULES — EXCHANGE INTERFACE DOMAIN
+============================================================
+
+The following hard rules govern the entire Exchange
+Interface domain. All instance documents in this domain
+must comply. No exception is permitted.
+
+  HR-EI-001  cancel_all_orders_after (WS v2 DMS) is
+             PROHIBITED. Destroys crash protection.
+
+  HR-EI-002  FIX API cancel-on-disconnect is PROHIBITED.
+             Same architectural conflict as HR-EI-001.
+
+  HR-EI-003  edit_order is PROHIBITED. Deprecated. Use
+             amend_order exclusively.
+
+  HR-EI-004  GetOHLCData response[-1] MUST be excluded
+             from ALL calculations. The last entry is
+             always the not-yet-committed current candle.
+             Only response[:-1] is valid input. Violating
+             this rule corrupts regime indicators and all
+             dependent calculations. (GAP-03 CRITICAL)
+
+  HR-EI-005  All outbound WS messages MUST carry req_id.
+             All add_order and batch_add MUST additionally
+             carry cl_ord_id (max 18 characters) assigned
+             at dispatch before Kraken response.
+
+  HR-EI-006  stp_type:cancel_newest (underscore format,
+             WS v2 standard) MUST be set on all add_order
+             and batch_add messages. (GAP-B dv1_10
+             CRITICAL — hyphenated format is invalid in
+             WS v2)
+
+  HR-EI-007  order_status:true MUST be set on all
+             executions channel subscriptions. Without it,
+             amended and restated exec_types are silently
+             dropped, breaking position state tracking.
+             (GAP-A dv1_9 CRITICAL)
+
+  HR-EI-008  snap_orders:true and snap_trades:true MUST
+             be used on executions subscribe (replacing
+             deprecated snapshot and snapshot_trades
+             parameters). (GAP-09)
+
+  HR-EI-009  All WS connections require JSON ping every
+             20-30 seconds: {"method":"ping"}.
+             No pong response within timeout triggers
+             reconnect. (GAP-01)
+
+  HR-EI-010  Zombie detection is mandatory. If no real
+             data received on a connection in > 90 seconds
+             (measured by monotonic clock), alert and
+             reconnect. (GAP-08)
+
+  HR-EI-011  Per-pair instrument status MUST be checked
+             from the instrument channel cache before any
+             pipeline evaluation. Pairs in reduce_only,
+             work_in_progress, delisted, or limit_only
+             status are NO-ENTRY. (GAP-07)
+
+  HR-EI-012  Sequence gap detection is mandatory on both
+             executions and balances channels. Gap
+             detected = alert + REST reconciliation
+             triggered immediately. (A-9, A-10)
+
+  HR-EI-013  deadline:now+5s MUST be set on all add_order
+             and batch_add messages. (A-21)
+
+  HR-EI-014  The Private WS v2 endpoint is
+             wss://ws-l3.kraken.com/v2. The old
+             ws-auth endpoint is DEPRECATED. (PL-009)
+
+  HR-EI-015  CancelAllOrders (REST kill switch) is for
+             emergency use only. It is not used in normal
+             trading operations.
+
+============================================================
+8. DOCUMENT STRUCTURE — AA=04 EXCHANGE INTERFACE
+============================================================
+
+The Exchange Interface domain is organized into one
+sub-domain governing all Kraken-specific interface
+specifications.
+
+------------------------------------------------------------
+8.1 Sub-Domain 1 — Exchange_Interface_Kraken (B=1)
+------------------------------------------------------------
+
+Anchor: 0410000 Exchange_Interface_Kraken_Anchor
+
+Purpose: Governs all Kraken-specific connection, protocol,
+and interface specifications for TothBot V2.
+
+Instance Documents:
+
+  0411001  Kraken_WS_v2_Specification
+           Complete specification of all Public WS v2
+           and Private WS v2 channels, messages, parameters,
+           behaviors, connection management, reconnection,
+           keepalive, and all WS operational requirements
+           A-1 through A-21 and beyond. This is the
+           authoritative wire contract for all WS
+           communication.
+
+  0411002  Kraken_REST_API_Specification
+           Complete specification of all REST endpoints
+           used by TothBot V2: GetWebSocketsToken,
+           GetOHLCData, GetOpenOrders, GetAccountBalance,
+           CancelAllOrders, Status API. All request
+           formats, response formats, error codes, and
+           handling behaviors.
+
+  0411003  Kraken_Fee_Rate_Limit_Specification
+           Complete specification of Kraken fee structure
+           (maker/taker), rate limit rules, API key
+           configuration, and CIATS monitoring hooks for
+           fee and rate actuals.
+
+------------------------------------------------------------
+8.2 Document Chain Requirement
+------------------------------------------------------------
+
+  Instance Document → 0410000 (Anchor) → 0400000 (Domain)
+
+This chain is mandatory and unbroken. No instance document
+in AA=04 may be committed to GitHub without both 0410000
+and 0400000 already present and approved.
+
+============================================================
+9. RELATIONSHIPS TO OTHER DOMAINS
+============================================================
+
+  AA=05 System_Architecture_Overview (0500000)
+    Depends on this domain. 0500000 Section 2 (Kraken API
+    Connection Architecture) summarizes the Exchange
+    Interface. The authoritative specification lives here
+    in AA=04. 0500000 references, not duplicates.
+
+  AA=08 Trading_System
+    WS Manager (0511001) consumes Exchange Interface
+    specifications to implement connection management.
+    Execution Engine (0511003) consumes 0411001 for
+    order submission. The trading system does not define
+    the wire — it consumes it.
+
+  AA=02 Operations / CIATS (0211001)
+    CIATS monitors fee actuals, rate counter actuals, and
+    WS round-trip latency. All monitoring data originates
+    at the exchange interface and flows through Logger
+    to CIATS. CIATS does not own exchange interface
+    parameters — those are defined here and in AA=06 Risk.
+
+  AA=06 Risk
+    Risk rules govern position sizing and drawdown halts.
+    When a halt is triggered, the exchange interface
+    (batch_cancel) executes the mechanical halt action.
+    Risk defines the trigger. Exchange Interface defines
+    the execution mechanism.
+
+============================================================
+10. OPEN ITEMS
+============================================================
+
+  None at document creation.
+
+  OI-007 (from TB00025): AA=04 Exchange Interface
+  document writing — THIS DOCUMENT RESOLVES OI-007 STEP 1.
+  Steps 2.2 through 2.13 remain in progress.
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0000000  Ethics_and_Safety         (root Domain Document)
+  0500000  System_Architecture_Overview (consumes this domain)
+  0410000  Exchange_Interface_Kraken_Anchor (Sub-Domain 1)
+  0411001  Kraken_WS_v2_Specification
+  0411002  Kraken_REST_API_Specification
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  0311001  Namespace_Specification    (governs DCN structure)
+  0311002  Document_Creation_Workflow (governs sequence)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Exchange Interface
+                     Domain Document for TothBot V2. Defines
+                     domain scope, governing principles,
+                     15 hard rules (HR-EI-001 through
+                     HR-EI-015), Kraken interface summary
+                     (WS v2, REST, matching engine, four
+                     engine states), rate limit schedule,
+                     authentication model, document
+                     structure (one sub-domain, three
+                     instance documents), and domain
+                     relationships. All content derived
+                     from FP/DP validated 0500000 dv1_17.
+
+============================================================
+END OF DOCUMENT
+============================================================
