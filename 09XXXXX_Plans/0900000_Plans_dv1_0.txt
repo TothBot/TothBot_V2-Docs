@@ -1,0 +1,118 @@
+DocDCN:     0900000
+DocTitle:   Plans
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0900000_Plans_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+PLANS
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Domain Document for AA=09 Plans.
+It anchors the Plans domain in the TothBot V2 document
+hierarchy. It establishes the domain, defines its scope,
+and governs all documents within AA=09.
+
+============================================================
+2. DOMAIN DEFINITION
+============================================================
+
+AA=09 Plans contains the forward-looking planning
+documents for TothBot V2. These documents define:
+
+  - The complete development roadmap from current state
+    to live trading deployment.
+
+  - The business case, capital model, performance targets,
+    and go-live criteria for TothBot V2.
+
+Plans documents are not specifications. They do not
+define system behavior. They define intent, sequence,
+milestones, and success criteria.
+
+============================================================
+3. SCOPE
+============================================================
+
+AA=09 Plans governs two sub-domains:
+
+  Sub-Domain 1 — Master Plan
+    Defines the full development roadmap for TothBot V2.
+    Phase sequencing, milestone definitions, dependencies,
+    and completion criteria for each development phase
+    from document creation through live trading.
+
+  Sub-Domain 2 — Business Plan
+    Defines the business case for TothBot V2. Capital
+    allocation model, performance targets, paper trading
+    thresholds, go-live criteria, and ongoing operational
+    goals.
+
+============================================================
+4. DOMAIN RULES
+============================================================
+
+DR-0900-001  All sub-domain anchors and instance documents
+             in AA=09 must reference this Domain Document
+             as their root authority.
+
+DR-0900-002  Plans documents do not define system behavior.
+             Behavioral specifications belong in AA=04
+             through AA=08. Plans documents reference those
+             specifications — they do not duplicate them.
+
+DR-0900-003  Plans documents are living documents. They
+             are updated as milestones are completed and
+             as the system moves through development phases.
+             Every update increments the version.
+
+DR-0900-004  Plans documents are governed by the same
+             document control rules as all other TothBot V2
+             controlled documents: 7-field header, version
+             increment on every change, Bill approval
+             required for v state.
+
+============================================================
+5. DOCUMENT HIERARCHY
+============================================================
+
+  0900000  Plans                          [THIS DOCUMENT]
+    0910000  Master_Plan_Anchor
+      0911001  TothBot_V2_Master_Plan
+    0920000  Business_Plan_Anchor
+      0921001  TothBot_V2_Business_Plan
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0000000  Ethics_and_Safety
+  0100000  Management
+  0200000  Operations
+  0300000  Governance
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+  0500000  System_Architecture_Overview
+  0600000  Risk
+  0700000  Strategy
+  0800000  Trading_System
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 7 of
+                     Document Creation Workflow. Domain
+                     Document for AA=09 Plans. Establishes
+                     domain scope, two sub-domains, and
+                     domain rules.
+
+============================================================
+END OF DOCUMENT
+============================================================
