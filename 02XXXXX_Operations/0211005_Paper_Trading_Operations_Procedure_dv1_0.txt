@@ -1,0 +1,545 @@
+DocDCN:     0211005
+DocTitle:   Paper_Trading_Operations_Procedure
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+PAPER TRADING OPERATIONS PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the complete paper trading phase
+operational procedure for TothBot V2. Paper trading is
+the mandatory validation gate before any live capital is
+deployed. No live trading begins until the paper trading
+acceptance criteria in Section 6 are satisfied.
+
+Paper trading uses live Kraken market data and runs the
+complete TothBot V2 system — all 8 pipeline gates, all
+CIATS functions, all exit logic — but intercepts order
+dispatch and simulates fills rather than placing real
+orders on Kraken. The Logger records all events as if
+trading were live. CIATS accumulates real statistical
+data during paper trading.
+
+The purpose of the paper trading phase is threefold:
+  (1) Validate that TothBot V2 executes correctly against
+      live market data.
+  (2) Accumulate the 200-trade minimum statistical floor
+      required for CIATS to activate fully.
+  (3) Confirm starting parameters produce expected outcomes
+      before real capital is at risk.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  Operations_CIATS_Anchor        (Sub-Domain Anchor)
+  0211005  This document                  (Instance)
+
+============================================================
+3. PAPER TRADING MODE
+============================================================
+
+------------------------------------------------------------
+PT-MODE-001  EXECUTION MODE DEFINITION
+------------------------------------------------------------
+
+Paper trading mode: TothBot V2 runs with a configuration
+flag that activates simulated order execution. In this mode:
+
+  LIVE:     All Kraken WS connections (public and private).
+            All market data is real-time live data.
+            All pipeline gate evaluations execute in full.
+            All CIATS monitoring and analysis runs in full.
+            All Logger records are written in full.
+
+  SIMULATED: Order dispatch is intercepted before reaching
+            Kraken. No add_order, batch_add, cancel_order,
+            batch_cancel, or amend_order is sent to Kraken.
+
+  SIMULATED FILLS: When TothBot would have dispatched an
+            entry order, a simulated fill is generated at
+            the entry limit price. The Position Mirror is
+            updated as if a real fill occurred. TP and
+            emergSL prices are computed from the simulated
+            fill price using the actual R:R formula. No
+            resting orders are placed on Kraken.
+
+  SIMULATED EXITS: When an exit condition triggers (Layer
+            1a signal, Layer 1b TP, Layer 2 MAE threshold,
+            Layer 3 emergSL price breach), the exit is
+            simulated at the bid price (for Layer 1a, 1b)
+            or at the emergSL price (Layer 3). Net P/L is
+            computed with full fee application.
+
+------------------------------------------------------------
+PT-MODE-002  PAPER TRADING CONFIGURATION FLAG
+------------------------------------------------------------
+
+A single configuration parameter controls paper trading
+mode: paper_trading_mode = True/False.
+
+This flag is set in the EnvironmentFile (/root/.tothbot.env)
+before TothBot starts. It is never changed during a running
+session. Starting with paper_trading_mode = True and
+switching to False requires a full TothBot restart.
+
+The flag must be logged at startup (PAPER_TRADING_MODE_ON
+or PAPER_TRADING_MODE_OFF) so that all Logger records are
+unambiguously tagged as paper or live. CIATS Trade Outcome
+Bus records must carry a paper_trade: bool field.
+
+------------------------------------------------------------
+PT-MODE-003  PRIVATE WS CONNECTION IN PAPER MODE
+------------------------------------------------------------
+
+TothBot V2 connects to the private Kraken WS in paper
+trading mode. This is required for:
+  - Real-time balances monitoring (for drawdown calculation
+    using actual account balance as portfolio_baseline_USD)
+  - Rate counter monitoring (real market data)
+  - Authentic market conditions including real bid/ask
+    spreads and real order book conditions
+
+The private WS is READ ONLY in paper trading mode. No
+orders are written. API key permissions: the DATA key
+is used in paper mode. The TRADE key is not used.
+
+------------------------------------------------------------
+PT-MODE-004  PORTFOLIO BASELINE IN PAPER MODE
+------------------------------------------------------------
+
+In paper trading mode, portfolio_baseline_USD is set from
+the actual Kraken spot/main USD balance at startup (per
+0211003 Step 5). This represents the actual capital Bill
+has available, even though it is not being traded.
+
+All drawdown calculations in paper mode use this real
+baseline. This ensures the paper trading drawdown thresholds
+(5%/10%) are calibrated to actual capital, not an arbitrary
+notional amount. The paper trading session pause and full
+halt thresholds fire against real portfolio size.
+
+====================================================== =====
+4. CIATS ACTIVATION SEQUENCE DURING PAPER TRADING
+============================================================
+
+CIATS activates in stages during paper trading. These
+stages are not optional — they are statistical floors
+that cannot be bypassed.
+
+------------------------------------------------------------
+PT-CIATS-001  STAGE 1 — EWMA MONITOR ACTIVATION
+              (50 cumulative candle evaluations)
+------------------------------------------------------------
+
+At 50 cumulative candle evaluations (~4 hours from first
+pipeline evaluation):
+
+  EWMA Monitor activates. Three monitoring signals begin
+  updating every candle close:
+    (1) rejection_rate_by_regime
+    (2) rate_counter_by_pair
+    (3) ws_roundtrip_latency_ms
+
+  This is MONITORING ONLY. No inference. No proposals.
+  No parameter changes. The EWMA Monitor provides early
+  warning signals that Bill monitors during paper trading.
+
+  Bill action at Stage 1:
+    Review EWMA Monitor signals periodically. Look for
+    unusual rejection rate patterns or latency spikes.
+    These are signals to investigate, not to act on.
+
+------------------------------------------------------------
+PT-CIATS-002  STAGE 2 — PROPOSAL ENGINE ACTIVATION
+              (200 closed paper trades)
+------------------------------------------------------------
+
+At 200 closed paper trades (HARD FLOOR):
+
+  Statistical Engine activates. All statistical methods
+  (Mann-Whitney U α=0.01, Spearman, CUSUM, Sharpe) are
+  now valid for inference.
+
+  Proposal Engine activates. CIATS may now generate
+  parameter change proposals through the PDCA cycle.
+
+  Half-Kelly position sizing activates. Fixed per_trade_pct
+  (5%) is replaced by computed Half-Kelly applied_pct.
+
+  The 200-trade floor is the most important milestone in
+  the paper trading phase. All starting parameters should
+  be evaluated against actual paper trading performance
+  data at this point.
+
+  Bill action at Stage 2:
+    Review the first CIATS performance report when the
+    200-trade floor is reached. Review any proposals
+    generated. If a proposal passes Mann-Whitney U at
+    α=0.01 and Bill approves, apply to Parameter Store.
+    Note that 200 paper trades are required — simulated
+    trades count. At ~1-5 trades/day, this milestone
+    takes approximately 40-200 trading days to reach.
+
+------------------------------------------------------------
+PT-CIATS-003  STAGE 3 — REGIME LIBRARY ACTIVATION
+              (600 closed paper trades, 100+ per bucket)
+------------------------------------------------------------
+
+At 600 closed paper trades with 100+ in each regime bucket:
+
+  Regime Library activates. Per-regime parameter
+  optimization is now valid. CIATS can generate regime-
+  segmented proposals.
+
+  Stage 3 is not a required gate for transitioning to
+  live trading (see Section 6). However, reaching Stage 3
+  before going live is preferred because it provides the
+  most complete picture of strategy performance across
+  all market conditions.
+
+  Bill action at Stage 3:
+    Review per-regime performance statistics. Identify
+    any regime buckets with significantly worse outcomes.
+    These may indicate parameter adjustments specific to
+    those regimes. Engage CIATS PDCA cycle for regime-
+    specific proposals before going live if significant
+    issues are identified.
+
+============================================================
+5. PAPER TRADING MONITORING CHECKLIST
+============================================================
+
+Bill reviews the following at regular intervals during
+paper trading (recommended: daily or after every 25 trades):
+
+------------------------------------------------------------
+PT-MON-001  DAILY CHECKS
+------------------------------------------------------------
+
+  [ ] TothBot process running (systemctl status tothbot)
+  [ ] No unacknowledged CRITICAL alerts in alert@tothbot.com
+  [ ] Logger queue not approaching capacity
+  [ ] Paper trade count progressing
+  [ ] No unexpected incident categories from 0211004
+
+------------------------------------------------------------
+PT-MON-002  PER-25-TRADE CHECKS
+------------------------------------------------------------
+
+  [ ] Running win rate vs expected (target: ≥40% at 1:1.5 R:R)
+  [ ] Running Sharpe ratio trend (target: positive)
+  [ ] Exit reason distribution (L1a vs L1b vs L2 vs L3)
+    - L3 fires: investigate immediately (should be zero)
+    - High L2 rate: review MAE threshold parameter
+  [ ] Regime distribution of trades
+  [ ] Drawdown from portfolio_baseline_USD (must not
+      approach 10% even in paper mode — full halt still fires)
+  [ ] EWMA Monitor signals (rejection_rate_by_regime
+      trending up in any regime = early warning)
+
+------------------------------------------------------------
+PT-MON-003  AT 200-TRADE MILESTONE
+------------------------------------------------------------
+
+  [ ] Review CIATS first full statistical report
+  [ ] Review actual win rate vs break-even win rate
+      (break-even at net 1:1.5 R:R ≈ 40%)
+  [ ] Review actual realized R:R vs target net 1:1.5
+  [ ] Review Half-Kelly applied_pct computed value
+  [ ] Review any CIATS proposals and decide on each
+  [ ] Evaluate whether all acceptance criteria (Section 6)
+      are achievable or if parameter changes are needed
+
+------------------------------------------------------------
+PT-MON-004  BEFORE LIVE TRANSITION
+------------------------------------------------------------
+
+  [ ] All acceptance criteria (Section 6) satisfied
+  [ ] No open CRITICAL incidents
+  [ ] All CIATS proposals reviewed and dispositioned
+  [ ] Parameter baseline documented (Section 7)
+  [ ] Bill formal approval recorded
+
+============================================================
+6. ACCEPTANCE CRITERIA FOR LIVE TRANSITION
+============================================================
+
+All criteria in this section must be satisfied before
+TothBot V2 transitions from paper trading to live trading.
+Bill evaluates each criterion. No criterion may be waived.
+
+------------------------------------------------------------
+PT-AC-001  MINIMUM TRADE COUNT: 200 CLOSED PAPER TRADES
+------------------------------------------------------------
+
+Required: 200 closed paper trades minimum.
+Rationale: The 200-trade floor is the statistical minimum
+for valid inference (SE(win_rate)≈3.5%, SE(Sharpe)≈7.2%).
+No live trading before this floor is reached regardless
+of how the paper trading period appears.
+
+This is the only hard quantitative gate. All other
+criteria are evaluated by Bill using judgment informed
+by the data.
+
+------------------------------------------------------------
+PT-AC-002  NO CRITICAL DEFECTS
+------------------------------------------------------------
+
+Required: No open Critical defects in TothBot V2 code
+or configuration. A Critical defect is defined as:
+  - Any Layer 3 emergSL fire during paper trading
+    (emergSL should never fire in normal operation)
+  - Any Position Mirror inconsistency vs expected state
+  - Any CIATS Trade Outcome Bus data loss (Logger queue
+    full events that dropped Trade Outcome Bus records)
+  - Any panic, assertion error, or unhandled exception
+    that crashed TothBot more than 3 times in 24 hours
+  - Any incorrect R:R computation (net_gain not matching
+    expected formula output)
+
+All Critical defects must be identified, root-caused,
+fixed, and verified before transitioning to live.
+
+------------------------------------------------------------
+PT-AC-003  POSITIVE EXPECTATION CONFIRMED
+------------------------------------------------------------
+
+Required: Paper trading data shows positive expectation.
+Evaluation: CIATS Statistical Engine output at 200+ trades.
+
+  Minimum acceptable performance (all required):
+    Win rate:      ≥ 40% (break-even at net 1:1.5 R:R)
+    Realized R:R:  ≥ 1.3 net (allows for market impact)
+    Sharpe ratio:  ≥ 0 (non-negative risk-adjusted return)
+
+  These are minimum floors, not targets. A win rate of
+  40% and Sharpe of 0 indicates the system is barely
+  viable. The decision to go live at minimums vs waiting
+  for better performance is Bill's judgment call.
+
+  If any metric is below its floor: do not go live.
+  Engage CIATS PDCA cycle to identify and test parameter
+  changes. Return to live evaluation after another 50+
+  trades under revised parameters.
+
+------------------------------------------------------------
+PT-AC-004  CIATS OPERATING CORRECTLY
+------------------------------------------------------------
+
+Required: CIATS has completed at least one full PDCA
+cycle (Plan → Do → Check → Act or Plan → Reject) after
+the 200-trade floor. This confirms CIATS is functioning,
+the statistical engine is producing valid output, and
+the Logger → CIATS → Parameter Store pipeline is intact.
+
+If CIATS has not triggered a PDCA cycle by 200 trades:
+verify CUSUM k and h parameters, verify Trade Outcome
+Bus is being populated correctly, verify CIATS asyncio
+task is running without exceptions.
+
+------------------------------------------------------------
+PT-AC-005  NO OPEN CRITICAL ALERTS
+------------------------------------------------------------
+
+Required: No unacknowledged CRITICAL alerts outstanding
+at the time of live transition. All incidents from 0211004
+are either resolved or have documented disposition.
+
+------------------------------------------------------------
+PT-AC-006  BILL FORMAL APPROVAL
+------------------------------------------------------------
+
+Required: Bill explicitly approves transition to live
+trading after reviewing all acceptance criteria above.
+Approval is recorded in the session log with:
+  - Date and time of approval
+  - Trade count at approval
+  - Win rate, realized R:R, and Sharpe at approval
+  - Parameter Store values at time of transition
+  - Any open items and their dispositions
+
+============================================================
+7. PARAMETER BASELINE DOCUMENTATION
+============================================================
+
+Before transitioning to live trading, the complete
+Parameter Store state must be documented and approved
+by Bill. This baseline record is the reference point
+for all future CIATS parameter change tracking.
+
+------------------------------------------------------------
+PT-BASE-001  BASELINE RECORD CONTENTS
+------------------------------------------------------------
+
+The parameter baseline document (to be created as a
+controlled document or session log entry) must record:
+
+  Date and time of baseline capture (UTC)
+  Paper trade count at baseline
+  Win rate at baseline
+  Realized net R:R at baseline
+  Sharpe ratio at baseline
+
+  Complete Parameter Store values at baseline:
+    tradeable_pct:            [value]
+    per_trade_pct:            [value or HALF_KELLY_ACTIVE]
+    Half-Kelly applied_pct:   [value if active]
+    max_concurrent:           [value]
+    mae_mult:                 [value]
+    emergency_sl_mult:        [value]
+    entry_timeout_sec:        [value]
+    full_halt_drawdown:       [value]
+    session_pause_drawdown:   [value]
+    adx_threshold:            [value]
+    atr_percentile_threshold: [value]
+    htf_ema_fast:             [value]
+    htf_ema_slow:             [value]
+    min_volume_usd_daily:     [value]
+    signal_thresholds:        [all SSS gate values]
+    sc_body_threshold:        [value]
+    sc_cooldown_seconds:      [value]
+    sc_consecutive_limit:     [value]
+    max_hold_candles:         [value]
+
+  Bill approval signature and date.
+
+------------------------------------------------------------
+PT-BASE-002  BASELINE IS THE CIATS REFERENCE POINT
+------------------------------------------------------------
+
+The parameter baseline at live transition is the starting
+point from which all CIATS parameter changes are measured.
+CIATS logs every parameter change with the delta from the
+baseline. The baseline itself is immutable — it is a
+historical record, not a live value.
+
+============================================================
+8. LIVE TRANSITION PROCEDURE
+============================================================
+
+When all acceptance criteria are satisfied and Bill has
+approved the transition:
+
+  Step 1: Stop TothBot (per 0211003 SS-STOP-001 — wait
+          for all paper positions to close, or manually
+          close all simulated positions).
+
+  Step 2: Document the parameter baseline (PT-BASE-001).
+
+  Step 3: Update EnvironmentFile on VPS:
+          paper_trading_mode = False
+
+  Step 4: Verify all infrastructure per 0211002:
+          - logrotate configured and active
+          - Both API keys IP-whitelisted
+          - systemd service enabled
+          - TRADE key credentials confirmed in EnvironmentFile
+          - VPS disk space adequate for 90-day log retention
+
+  Step 5: Start TothBot in live mode:
+          systemctl start tothbot
+
+  Step 6: Verify startup log shows PAPER_TRADING_MODE_OFF.
+
+  Step 7: Verify first pipeline evaluation log shows
+          live order dispatch (not simulated).
+
+  Step 8: Monitor alert@tothbot.com closely for the
+          first 24-48 hours of live operation.
+
+  Step 9: Record transition date and time in session log.
+
+============================================================
+9. HARD RULES
+============================================================
+
+  HR-PT-001  Paper trading is mandatory before live trading.
+             No live capital is deployed without completing
+             the paper trading phase and satisfying all
+             acceptance criteria.
+
+  HR-PT-002  The 200-trade minimum (PT-AC-001) is absolute.
+             No waiver. No exception. Fewer than 200 trades
+             is insufficient for valid inference regardless
+             of apparent performance.
+
+  HR-PT-003  Any Layer 3 emergSL fire during paper trading
+             is a Critical defect (PT-AC-002). Must be
+             root-caused and resolved before live transition.
+
+  HR-PT-004  paper_trading_mode flag is never changed during
+             a running session. Mode changes require a
+             full TothBot restart.
+
+  HR-PT-005  All paper trading Trade Outcome Bus records
+             carry paper_trade: True. Live records carry
+             paper_trade: False. These are never mixed
+             in CIATS statistical computations after
+             live trading begins.
+
+  HR-PT-006  Bill formal approval (PT-AC-006) is required
+             before live transition. No automated process
+             or CIATS output can substitute for this.
+
+  HR-PT-007  The parameter baseline (PT-BASE-001) must be
+             documented and approved before live mode is
+             activated. It is the immutable reference point
+             for all future parameter change tracking.
+
+============================================================
+10. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                    (parent Domain Doc)
+  0210000  Operations_CIATS_Anchor       (parent anchor)
+  0211001  CIATS_Specification           dv1_0
+  0211002  Operations_Infrastructure_Specification dv1_0
+  0211003  Startup_Shutdown_Procedure    dv1_0
+  0211004  Incident_Response_Procedure   dv1_0
+  0511006  Logger_Specification          dv1_0
+  0500000  System_Architecture_Overview  dv1_18
+  0311001  Namespace_Specification       (governs DCN)
+  0311002  Document_Creation_Workflow    (governs sequence)
+
+============================================================
+11. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Paper trading mode
+                     defined (PT-MODE-001 through PT-MODE-004):
+                     live data + simulated fills, config flag,
+                     private WS read-only, real portfolio
+                     baseline. CIATS activation sequence
+                     (PT-CIATS-001 through PT-CIATS-003):
+                     Stage 1 EWMA at 50 evals, Stage 2
+                     Proposal Engine at 200 trades, Stage 3
+                     Regime Library at 600 trades. Monitoring
+                     checklist (PT-MON-001 through PT-MON-004):
+                     daily, per-25-trade, 200-trade milestone,
+                     and pre-transition checks. Six acceptance
+                     criteria (PT-AC-001 through PT-AC-006):
+                     200-trade minimum, no critical defects,
+                     positive expectation (win≥40%, R:R≥1.3,
+                     Sharpe≥0), CIATS operating, no open
+                     CRITICAL alerts, Bill formal approval.
+                     Parameter baseline documentation
+                     (PT-BASE-001 through PT-BASE-002).
+                     Live transition procedure (8 steps).
+                     Hard rules HR-PT-001 through HR-PT-007.
+
+============================================================
+END OF DOCUMENT
+============================================================
