@@ -1,0 +1,640 @@
+DocDCN:     0611002
+DocTitle:   Drawdown_and_Halt_Rules
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0611002_Drawdown_and_Halt_Rules_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+DRAWDOWN AND HALT RULES
+============================================================
+
+All content derived from FP/DP validated sources.
+Primary ARs: AR-041, AR-048, AR-052. Validated across
+430+ unique sources over 10 validation sessions
+(TB00006 through TB00019). All rules are locked
+architectural decisions unless explicitly noted as
+a CIATS-owned starting value.
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, coding-ready specification
+for all portfolio drawdown monitoring and circuit breaker
+enforcement in TothBot V2. It defines exactly how the
+drawdown baseline is established, how current portfolio
+value is computed, how drawdown is evaluated continuously
+between candle closes, and what the system does at each
+circuit breaker threshold.
+
+A coder reading this document must be able to implement
+all drawdown monitoring and halt logic completely without
+asking any questions.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0600000  Risk                     (Domain Document)
+  0610000  Risk_Rules_Anchor        (Sub-Domain Anchor)
+  0611002  This document            (Instance Document)
+
+============================================================
+3. SCOPE
+============================================================
+
+This document owns:
+  - portfolio_baseline_USD definition and capture timing
+  - current_portfolio_USD formula (MTM)
+  - drawdown_pct formula
+  - Continuous evaluation trigger (bbo ticker)
+  - Gate 7 evaluation trigger
+  - system_state machine (NORMAL, SESSION_PAUSE,
+    FULL_HALT)
+  - Session pause (5%) behavior, entry blocking,
+    and auto-resume condition
+  - Full halt (10%) behavior, entry blocking,
+    batch_cancel of open entry orders, and manual
+    resume requirement
+  - peak_portfolio_USD tracking for CIATS
+  - Alert routing for both thresholds
+  - All logger events for drawdown state transitions
+  - All hard rules governing drawdown monitoring
+
+This document does NOT own:
+  - Position sizing formula (0611001)
+  - Concentration and exposure checks (0611003)
+  - CIATS parameter registry (0611004)
+  - batch_cancel wire protocol (0411001)
+  - Exit Controller exit logic (0511004)
+
+============================================================
+4. PORTFOLIO BASELINE — DEFINITION AND CAPTURE
+============================================================
+
+  DD-BASE-001  portfolio_baseline_USD = spot_usd_balance
+               captured ONCE at TothBot startup.
+
+  DD-BASE-002  Capture timing: immediately after Step 6
+               of the startup sequence (snap_orders
+               reconciliation complete, Position Mirror
+               populated from any pre-existing open
+               positions). The baseline reflects the
+               true starting capital after all open
+               position state is known.
+
+  DD-BASE-003  portfolio_baseline_USD is NEVER updated
+               during operation regardless of portfolio
+               gains or losses.
+
+  DD-BASE-004  portfolio_baseline_USD is NEVER reset on
+               mid-session reconnect. A reconnect is not
+               a restart. The baseline continues from
+               the original startup capture.
+
+  DD-BASE-005  portfolio_baseline_USD resets ONLY on a
+               full TothBot process restart. Each process
+               start establishes a fresh baseline from the
+               current spot_usd_balance at that moment.
+
+  DD-BASE-006  portfolio_baseline_USD is logged at startup
+               at INFO level (DD-LOG-001). It is the
+               reference point for all drawdown calculations
+               in the session.
+
+  DD-BASE-007  RATIONALE for session-based baseline:
+               Session-based baseline is correct for
+               paper trading V1. It measures loss relative
+               to where the session started — the most
+               operationally meaningful reference for
+               intraday circuit breakers. CIATS will
+               evaluate HWM (High Water Mark) trailing
+               drawdown after 200 closed trades and may
+               propose migration via PDCA if data supports
+               it as superior.
+
+============================================================
+5. CURRENT PORTFOLIO VALUE — MTM FORMULA
+============================================================
+
+  DD-CURR-001  current_portfolio_USD =
+                   spot_usd_balance
+                   + sum(
+                       bid_price[sym] * position_qty[sym]
+                       for sym in position_mirror
+                     )
+
+  DD-CURR-002  bid_price[sym]: the most recent best bid
+               price for the symbol, received from the
+               bbo ticker channel (AR-048). This is the
+               realizable exit value — the conservative
+               choice. Using ask price would overstate
+               portfolio value.
+
+  DD-CURR-003  position_qty[sym]: the open position
+               quantity from the Position Mirror (0511005).
+               Uses actual filled quantity, not order
+               quantity.
+
+  DD-CURR-004  If position_mirror is empty (no open
+               positions):
+                 current_portfolio_USD = spot_usd_balance
+               The sum term is zero when no positions
+               are held.
+
+  DD-CURR-005  current_portfolio_USD for drawdown is NOT
+               the same as portfolio_USD for sizing.
+               current_portfolio_USD includes MTM.
+               portfolio_USD for sizing is cash only.
+               These must never be conflated.
+               See 0611001 PS-PORT-001 through PS-PORT-003.
+
+============================================================
+6. DRAWDOWN FORMULA
+============================================================
+
+  DD-FORM-001  drawdown_pct = max(
+                   Decimal("0"),
+                   (portfolio_baseline_USD
+                    - current_portfolio_USD)
+                   / portfolio_baseline_USD
+               )
+
+  DD-FORM-002  max(Decimal("0"), ...): portfolio gains are
+               not counted as negative drawdown. The circuit
+               breaker is one-directional. When portfolio
+               value exceeds the baseline, drawdown_pct = 0.
+               The circuit breakers do not fire on gains.
+
+  DD-FORM-003  drawdown_pct is a Decimal value in the
+               range [0, unbounded). A value of 0.05
+               represents 5% drawdown. A value of 0.10
+               represents 10% drawdown.
+
+  DD-FORM-004  All arithmetic uses Python Decimal.
+               float is PROHIBITED (BP-DEC-001 in 1011001).
+
+============================================================
+7. EVALUATION TRIGGERS
+============================================================
+
+  DD-EVAL-001  CONTINUOUS TRIGGER — bbo ticker:
+               drawdown_pct is recomputed on every bbo
+               ticker event received for any symbol that
+               has an open position in the Position Mirror.
+               This provides real-time circuit breaker
+               monitoring between 5-minute candle closes.
+
+  DD-EVAL-002  PIPELINE TRIGGER — Gate 7:
+               drawdown_pct is also recomputed at every
+               Gate 7 evaluation (each 5-minute OHLC
+               candle close pipeline run). Gate 7 checks
+               the current drawdown_pct before allowing
+               any new entry.
+
+  DD-EVAL-003  The bbo continuous trigger (DD-EVAL-001) is
+               the primary protection. Gate 7 (DD-EVAL-002)
+               is the confirmation check. A halt triggered
+               by bbo monitoring fires before the next
+               candle close — it does not wait for Gate 7.
+
+  DD-EVAL-004  When no positions are open, drawdown_pct
+               will always be 0 (current = baseline =
+               spot_usd_balance). Continuous evaluation
+               still occurs but triggers no action.
+               Optimization: skip bbo drawdown evaluation
+               when position_mirror is empty.
+
+============================================================
+8. SYSTEM STATE MACHINE
+============================================================
+
+TothBot operates in one of three system states with
+respect to new entry gating:
+
+  NORMAL:         New entries permitted. No drawdown
+                  threshold breached.
+
+  SESSION_PAUSE:  New entries blocked. drawdown_pct
+                  >= session_pause_drawdown (5%).
+                  Existing positions monitored normally.
+                  Auto-resumes when drawdown recovers.
+
+  FULL_HALT:      New entries blocked. drawdown_pct
+                  >= full_halt_drawdown (10%).
+                  Existing positions monitored normally.
+                  Manual operator action required to resume.
+
+State transitions:
+
+  NORMAL → SESSION_PAUSE:
+    When drawdown_pct >= 0.05 at any evaluation point.
+
+  SESSION_PAUSE → NORMAL:
+    When drawdown_pct < 0.05 at any evaluation point.
+    Auto-resume — no operator action required.
+    Log SESSION_PAUSE_RECOVERED.
+
+  NORMAL → FULL_HALT  (or SESSION_PAUSE → FULL_HALT):
+    When drawdown_pct >= 0.10 at any evaluation point.
+
+  FULL_HALT → NORMAL:
+    Manual operator action ONLY. TothBot process restart.
+    There is no automated path from FULL_HALT to NORMAL.
+
+  Note: If drawdown_pct >= 0.10, the state is FULL_HALT
+  regardless of whether SESSION_PAUSE was transited first.
+  FULL_HALT supersedes SESSION_PAUSE.
+
+============================================================
+9. SESSION PAUSE — 5% THRESHOLD
+============================================================
+
+  DD-SP-001   TRIGGER: drawdown_pct >=
+              session_pause_drawdown (Decimal("0.05")).
+              session_pause_drawdown is a CIATS-owned
+              starting value.
+
+  DD-SP-002   IMMEDIATE ACTIONS on SESSION_PAUSE trigger:
+                (1) system_state = SESSION_PAUSE
+                (2) Gate 7 blocks all new entry evaluations.
+                    Rejection code: SESSION_PAUSE_DRAWDOWN.
+                (3) Log SESSION_PAUSE_TRIGGERED (DD-LOG-003).
+                (4) Alert alert@tothbot.com at WARNING
+                    severity with drawdown_pct,
+                    portfolio_baseline_USD,
+                    current_portfolio_USD.
+
+  DD-SP-003   WHAT SESSION_PAUSE DOES NOT DO:
+                - Does NOT close or cancel open positions.
+                - Does NOT cancel resting TP orders.
+                - Does NOT cancel emergSL orders.
+                - Does NOT halt the Exit Controller.
+                - Does NOT halt the CIATS monitor.
+              All existing positions continue to be
+              managed and exited normally by the Exit
+              Controller under all three exit layers.
+
+  DD-SP-004   AUTO-RESUME:
+              SESSION_PAUSE resolves automatically when
+              drawdown_pct < session_pause_drawdown (0.05)
+              at any evaluation point (bbo or Gate 7).
+                (1) system_state = NORMAL
+                (2) Gate 7 resumes accepting entries.
+                (3) Log SESSION_PAUSE_RECOVERED (DD-LOG-004).
+                (4) No operator action required.
+
+  DD-SP-005   SESSION_PAUSE may oscillate if portfolio
+              value fluctuates near the 5% threshold.
+              Each state transition generates a log event.
+              CIATS monitors SESSION_PAUSE frequency and
+              duration. Frequent oscillation may indicate
+              that session_pause_drawdown requires
+              adjustment — a CIATS Proposal Engine concern.
+
+============================================================
+10. FULL HALT — 10% THRESHOLD
+============================================================
+
+  DD-FH-001   TRIGGER: drawdown_pct >=
+              full_halt_drawdown (Decimal("0.10")).
+              full_halt_drawdown is a CIATS-owned starting
+              value.
+
+  DD-FH-002   IMMEDIATE ACTIONS on FULL_HALT trigger:
+                (1) system_state = FULL_HALT.
+                (2) Gate 7 blocks all new entry evaluations.
+                    Rejection code: FULL_HALT_DRAWDOWN.
+                (3) Cancel all open entry GTD orders via
+                    batch_cancel (see DD-FH-003).
+                (4) Log FULL_HALT_TRIGGERED (DD-LOG-005).
+                (5) Alert alert@tothbot.com at CRITICAL
+                    severity with drawdown_pct,
+                    portfolio_baseline_USD,
+                    current_portfolio_USD,
+                    open_position_count,
+                    open_entry_orders_canceled_count.
+
+  DD-FH-003   batch_cancel SCOPE — ENTRY GTD ORDERS ONLY:
+              batch_cancel cancels only open entry GTD
+              orders (orders submitted but not yet filled).
+              batch_cancel does NOT cancel:
+                - Resting TP limit orders
+                - Off-book emergSL stop-market orders
+              TP and emergSL remain active. They are the
+              loss floor for existing positions through
+              and after the halt.
+              RATIONALE: batch_cancel is used (not
+              cancel_order) because it bypasses the rate
+              counter maximum, ensuring cancellation
+              executes even when the rate limit is under
+              pressure from prior activity (AR-041).
+
+  DD-FH-004   WHAT FULL_HALT DOES NOT DO:
+                - Does NOT close or cancel open positions.
+                - Does NOT cancel resting TP orders.
+                - Does NOT cancel emergSL orders.
+                - Does NOT halt the Exit Controller.
+                - Does NOT halt the CIATS monitor.
+                - Does NOT auto-resume under any condition.
+              Existing positions continue to be managed
+              and exited normally by the Exit Controller.
+
+  DD-FH-005   MANUAL RESUME:
+              FULL_HALT requires a full TothBot process
+              restart initiated by Bill. There is no
+              automated resume path. On restart:
+                (1) TothBot performs full startup sequence.
+                (2) New portfolio_baseline_USD captured
+                    at Step 6 of startup.
+                (3) system_state initializes to NORMAL.
+                (4) If drawdown from the prior session is
+                    not recovered, the new baseline will
+                    reflect the lower starting balance.
+                    CIATS will observe this in its
+                    Trade Outcome Bus history.
+
+  DD-FH-006   RATIONALE for no auto-resume from full halt:
+              A 10% drawdown event may be caused by a
+              systemic condition (strategy failure, market
+              regime change, or infrastructure problem).
+              Auto-resuming into a failing condition would
+              risk compounding the loss. Bill must assess
+              the cause before capital is recommitted.
+              This is the correct loss-prevention design.
+
+============================================================
+11. PEAK PORTFOLIO TRACKING — CIATS USE ONLY
+============================================================
+
+  DD-PEAK-001  TothBot maintains peak_portfolio_USD:
+               the highest value current_portfolio_USD
+               has reached since startup.
+
+  DD-PEAK-002  Update rule:
+                 if current_portfolio_USD > peak_portfolio_USD:
+                     peak_portfolio_USD = current_portfolio_USD
+
+  DD-PEAK-003  peak_portfolio_USD does NOT affect circuit
+               breaker thresholds. Circuit breakers use
+               portfolio_baseline_USD (startup capture).
+               peak_portfolio_USD is maintained exclusively
+               for CIATS maximum drawdown tracking and
+               future HWM trailing drawdown analysis.
+
+  DD-PEAK-004  peak_portfolio_USD is initialized at startup
+               to portfolio_baseline_USD. It can only
+               increase from that point.
+
+  DD-PEAK-005  peak_portfolio_USD is logged to Logger on
+               every update (DD-LOG-007). CIATS reads it
+               from Logger as part of the Trade Outcome Bus.
+
+============================================================
+12. INTERFACES
+============================================================
+
+  12.1  FROM WS Manager (0511001)
+        spot_usd_balance      — current cash (balances ch.)
+        bid_price[sym]        — current best bid (bbo ticker)
+
+  12.2  FROM Position Mirror (0511005)
+        position_mirror       — {sym: qty} for all open
+                                positions
+
+  12.3  FROM Parameter Store (frozen snapshot at Gate 7;
+        live read for continuous ticker evaluation)
+        session_pause_drawdown — threshold (0.05 starting)
+        full_halt_drawdown     — threshold (0.10 starting)
+        NOTE: Continuous ticker evaluation reads from the
+        live Parameter Store, not the frozen snapshot.
+        The frozen snapshot is pipeline-only (I-4). Circuit
+        breaker thresholds must always reflect the current
+        CIATS-owned value, not a stale snapshot.
+
+  12.4  FROM Startup Sequence (0211003)
+        Notifies this module when Step 6 is complete
+        so portfolio_baseline_USD can be captured.
+
+  12.5  TO Gate 7 (Risk Engine — 1011011)
+        system_state          — NORMAL / SESSION_PAUSE /
+                                FULL_HALT
+        drawdown_pct          — current computed value
+
+  12.6  TO WS Manager (0511001)
+        batch_cancel signal on FULL_HALT (DD-FH-002 step 3)
+        Cancels all pending entry GTD orders.
+
+  12.7  TO Logger (0511006)
+        All state transition events (DD-LOG-001 through
+        DD-LOG-007).
+
+  12.8  TO Alert system
+        alert@tothbot.com for SESSION_PAUSE (WARNING)
+        and FULL_HALT (CRITICAL).
+
+============================================================
+13. LOGGING REQUIREMENTS
+============================================================
+
+  DD-LOG-001  STARTUP: portfolio_baseline_USD captured.
+                level: INFO
+                fields: portfolio_baseline_USD,
+                        timestamp
+
+  DD-LOG-002  EVERY DRAWDOWN EVALUATION:
+                level: DEBUG
+                fields: drawdown_pct, current_portfolio_USD,
+                        spot_usd_balance,
+                        open_position_mtm_total,
+                        evaluation_trigger (BBO or GATE7),
+                        symbol (if BBO trigger)
+
+  DD-LOG-003  SESSION_PAUSE_TRIGGERED:
+                level: WARNING
+                fields: drawdown_pct,
+                        portfolio_baseline_USD,
+                        current_portfolio_USD,
+                        timestamp
+
+  DD-LOG-004  SESSION_PAUSE_RECOVERED:
+                level: INFO
+                fields: drawdown_pct (recovery value),
+                        portfolio_baseline_USD,
+                        current_portfolio_USD,
+                        pause_duration_seconds,
+                        timestamp
+
+  DD-LOG-005  FULL_HALT_TRIGGERED:
+                level: CRITICAL
+                fields: drawdown_pct,
+                        portfolio_baseline_USD,
+                        current_portfolio_USD,
+                        open_position_count,
+                        entry_orders_canceled_count,
+                        timestamp
+
+  DD-LOG-006  FULL_HALT_BATCH_CANCEL_RESULT:
+                level: CRITICAL
+                fields: orders_canceled_count,
+                        batch_cancel_response,
+                        timestamp
+
+  DD-LOG-007  PEAK_PORTFOLIO_UPDATED:
+                level: DEBUG
+                fields: peak_portfolio_USD (new value),
+                        prior_peak,
+                        current_portfolio_USD,
+                        timestamp
+
+============================================================
+14. HARD RULES
+============================================================
+
+  HR-DD-001   portfolio_baseline_USD is set ONCE at
+              startup (after Step 6). It is never updated
+              during operation and never reset on reconnect.
+
+  HR-DD-002   current_portfolio_USD uses bid price for
+              MTM valuation. Ask price is PROHIBITED for
+              drawdown computation.
+
+  HR-DD-003   drawdown_pct uses max(0, ...). Portfolio
+              gains never produce negative drawdown.
+
+  HR-DD-004   All arithmetic uses Python Decimal.
+              float is PROHIBITED.
+
+  HR-DD-005   Continuous drawdown evaluation fires on
+              every bbo ticker event for open-position
+              pairs. It is NOT deferred to the next
+              candle close.
+
+  HR-DD-006   SESSION_PAUSE does not close positions,
+              cancel TP, or cancel emergSL. Entry
+              blocking only.
+
+  HR-DD-007   FULL_HALT does not close positions, cancel
+              TP, or cancel emergSL. Entry blocking +
+              open entry GTD cancellation only.
+
+  HR-DD-008   FULL_HALT batch_cancel targets ONLY open
+              entry GTD orders. TP and emergSL are
+              explicitly excluded.
+
+  HR-DD-009   batch_cancel is used for FULL_HALT (not
+              cancel_order) because it bypasses the rate
+              counter maximum (AR-041). This guarantees
+              execution when rate limited.
+
+  HR-DD-010   FULL_HALT has no automated resume path.
+              Manual TothBot process restart is the
+              only resume mechanism.
+
+  HR-DD-011   SESSION_PAUSE auto-resumes when drawdown_pct
+              recovers below session_pause_drawdown.
+              No operator action required for recovery.
+
+  HR-DD-012   Circuit breaker thresholds are read from
+              the live Parameter Store for continuous
+              ticker evaluation — not from the frozen
+              pipeline snapshot.
+
+  HR-DD-013   peak_portfolio_USD does not affect circuit
+              breakers. It is for CIATS tracking only.
+
+============================================================
+15. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+  (1) What does this module DO?
+      Captures portfolio_baseline_USD at startup. On every
+      bbo ticker event for open-position pairs AND on
+      every Gate 7 evaluation, recomputes drawdown_pct
+      using the MTM formula. Manages system_state
+      (NORMAL / SESSION_PAUSE / FULL_HALT). On SESSION_PAUSE:
+      blocks entries, alerts, auto-resumes on recovery.
+      On FULL_HALT: blocks entries, batch_cancels open
+      entry GTD orders, alerts CRITICAL, requires manual
+      restart to resume. Tracks peak_portfolio_USD for
+      CIATS. Logs all state transitions.
+
+  (2) What are its interfaces?
+      Inputs: spot_usd_balance (WS Manager), bid_price[sym]
+      (bbo ticker), position_mirror (Position Mirror),
+      drawdown thresholds (Parameter Store), Step 6
+      complete signal (startup sequence).
+      Outputs: system_state and drawdown_pct to Gate 7,
+      batch_cancel signal to WS Manager on FULL_HALT,
+      all events to Logger, alerts to alert@tothbot.com.
+
+  (3) What are its hard rules?
+      HR-DD-001 through HR-DD-013 above.
+      Critically: baseline set once, MTM uses bid, Decimal
+      only, continuous evaluation, no auto-resume from
+      FULL_HALT, TP and emergSL always preserved.
+
+  (4) What triggers it and what does it trigger?
+      Triggered by: every bbo ticker event for open-position
+      pairs (continuous), every Gate 7 pipeline evaluation,
+      startup Step 6 complete (baseline capture).
+      Triggers: system_state changes to Gate 7, batch_cancel
+      to WS Manager (FULL_HALT only), Logger events,
+      alert@tothbot.com alerts.
+
+  (5) What does it log?
+      Startup baseline (DD-LOG-001). Every evaluation at
+      DEBUG (DD-LOG-002). SESSION_PAUSE triggered/recovered
+      (DD-LOG-003, DD-LOG-004). FULL_HALT triggered and
+      batch_cancel result (DD-LOG-005, DD-LOG-006). Peak
+      portfolio updates (DD-LOG-007).
+
+============================================================
+16. RELATED DOCUMENTS
+============================================================
+
+  0600000  Risk                         (Domain Document)
+  0610000  Risk_Rules_Anchor            (Sub-Domain Anchor)
+  0611001  Position_Sizing_Rules        (sizing complement)
+  0611003  Concentration_Exposure_Rules (Gate 7 complement)
+  0611004  Safety_Parameter_Framework   (parameter registry)
+  0500000  System_Architecture_Overview (AR-041, AR-048,
+                                         AR-052 source)
+  0411001  Kraken_WS_v2_Specification   (batch_cancel,
+                                         bbo ticker)
+  0511004  Exit_Controller_Specification (exit layers active
+                                         through halt)
+  0511005  Position_Mirror_Specification (position_qty src)
+  0511006  Logger_Specification          (log target)
+  0211003  Startup_Shutdown_Procedure    (Step 6 timing)
+  0211004  Incident_Response_Procedure   (IC-007, IC-008)
+  1011011  Risk_Engine_Coding_Spec       (implementation)
+
+============================================================
+17. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Complete coding-ready
+                     specification for all drawdown monitoring
+                     and circuit breaker rules. Covers:
+                     portfolio_baseline_USD capture (AR-052),
+                     current_portfolio_USD MTM formula
+                     (AR-048, AR-052), drawdown_pct formula,
+                     bbo continuous evaluation trigger,
+                     Gate 7 evaluation trigger, three-state
+                     system_state machine (NORMAL /
+                     SESSION_PAUSE / FULL_HALT), session
+                     pause behavior and auto-resume (AR-052),
+                     full halt behavior, batch_cancel scope
+                     (entry GTD only — AR-041), manual resume
+                     requirement, peak_portfolio_USD tracking,
+                     12 interfaces, 7 logging requirements,
+                     13 hard rules, 5 coding-readiness
+                     questions. All content derived from
+                     FP/DP validated 0500000 dv1_18.
+
+============================================================
+END OF DOCUMENT
+============================================================
