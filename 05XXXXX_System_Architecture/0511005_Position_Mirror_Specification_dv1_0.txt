@@ -1,0 +1,320 @@
+DocDCN:     0511005
+DocTitle:   Position_Mirror_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511005_Position_Mirror_Specification_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+POSITION MIRROR SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+Position Mirror component of TothBot V2. It defines what
+the Position Mirror does, its interfaces, its hard rules,
+what triggers it, and what it logs. It is the authoritative
+parent document for 1011006 Position_Mirror_Coding_Spec.
+
+The Position Mirror is TothBot's in-memory authoritative
+record of all open positions. It is the single source of
+truth for what positions TothBot believes it holds at any
+moment. Every component that needs to know position state
+reads from the Position Mirror.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Maintains an O(1) symbol-keyed dict of all open positions.
+  Recorded at dispatch (no async gap). Updated on fill,
+  partial fill, amendment, and close events. Reconciled
+  against Kraken snap_orders on startup and reconnect.
+  Read by Signal Pipeline, Exit Controller, Risk Guard,
+  and CIATS EWMA Monitor.
+
+Primary inputs:
+  Execution Engine dispatch events (new position record)
+  WS executions channel events (fills, amends, closes)
+  snap_orders response (reconciliation)
+
+Primary outputs:
+  Read-only access to all components needing position state
+  Logger entries on all state changes
+
+Data structure type: dict[str, PositionRecord]
+  Key: symbol (str)
+  Access: O(1) lookup, O(1) insert, O(1) delete (AR-002)
+
+============================================================
+3. DATA STRUCTURE
+============================================================
+
+3.1 PositionRecord fields
+
+  symbol:              str     — Kraken pair name (e.g. BTC/USD)
+  entry_fill_price:    Decimal — actual fill price (avg_price)
+                                 NOT the limit price (AR-008)
+  qty:                 Decimal — current position quantity
+                                 (cum_qty at time of record)
+  tp_order_id:         str     — Kraken-assigned TP order_id
+  tp_cl_ord_id:        str     — TothBot-assigned TP cl_ord_id
+  emgsl_order_id:      str     — Kraken-assigned emergSL order_id
+  emgsl_cl_ord_id:     str     — TothBot-assigned emergSL cl_ord_id
+  entry_timestamp_utc: str     — ISO 8601 entry fill time
+  entry_atr_14:        Decimal — ATR(14) at entry (for exit calcs)
+  asset_regime:        str     — regime at entry time (CIATS tagging)
+  market_regime:       str     — BTC/USD regime at entry (CIATS)
+  signal_params:       dict    — SSS params at entry (CIATS)
+  hold_candle_count:   int     — incremented by WS Manager on
+                                 each ohlc(5m) close (L1a-003)
+
+3.2 Design rationale (AR-002)
+
+  Symbol-keyed dict provides O(1) lookup for all hot-path
+  operations. The Signal Pipeline checks for open positions
+  at Gate 5 SC-GATE-3 on every evaluation. Exit Controller
+  reads TP and emergSL order_ids on every exit trigger.
+  The ticker drawdown loop reads qty for every open pair.
+  All these are O(1) with a symbol-keyed dict. A list or
+  ordered structure would be O(n) — unacceptable at 20
+  concurrent positions with 288 pipeline evals/day.
+
+============================================================
+4. WRITE RULES — WHEN AND HOW IT IS UPDATED
+============================================================
+
+4.1 Record Creation (on entry dispatch)
+
+  Triggered: Execution Engine dispatches add_order for entry.
+  Action: WS Manager creates PositionRecord immediately.
+  Record created with:
+    symbol, entry_limit_price (used as placeholder until fill),
+    entry_qty, tp_cl_ord_id (assigned by EE), emgsl_cl_ord_id.
+    tp_order_id and emgsl_order_id: empty — populated on
+    batch_add ACK from Kraken (after entry fill).
+    entry_fill_price: populated on exec_type=filled event.
+  Rationale (A-2 record-at-dispatch rule):
+    Position Mirror records cl_ord_id at dispatch BEFORE
+    Kraken ACK. This eliminates the async gap where a fill
+    arrives before the add_order ACK, leaving TothBot with
+    an orphaned position. With record-at-dispatch, any
+    subsequent fill event is matched immediately.
+
+4.2 Update on Entry Fill (exec_type=filled, entry order)
+
+  Update PositionRecord:
+    entry_fill_price = Decimal(str(avg_price))
+    qty = Decimal(str(cum_qty))
+    entry_timestamp_utc = timestamp from fill event
+  Trigger: Execution Engine dispatches batch_add (TP+emergSL).
+  After batch_add ACK:
+    tp_order_id = Kraken-assigned order_id for TP leg
+    emgsl_order_id = Kraken-assigned order_id for emergSL leg
+
+4.3 Update on TP Partial Fill (exec_type=trade on TP order, AR-066)
+
+  When exec_type=trade arrives with order_id matching
+  tp_order_id in Position Mirror:
+    remaining_qty = tp_order_qty - Decimal(str(cum_qty))
+    Update: qty = remaining_qty
+  If remaining_qty < qty_min OR remaining_qty * bid < cost_min:
+    Initiate position close sequence (EC handles).
+  Do NOT fire CIATS Trade Outcome Bus on partial fill.
+  Fire ONCE on full position close (aggregate all fills).
+
+4.4 Record Deletion (on position close)
+
+  Triggered by Exit Controller on exit sequence completion
+  OR by reconciliation detecting gap-closed position.
+  Action: del position_mirror[symbol]
+  Hold_candle_count for symbol reset (counter lives in
+  WS Manager state dict, not in PositionRecord — reset
+  on same event).
+  Selection Controller state updated:
+    exit_cooldown_log[symbol] = time.monotonic()
+    consecutive_loss_count updated per exit_reason (AR-073).
+
+4.5 Update on amend_order for emergSL (TP partial fill sequence)
+
+  When Exit Controller amends emergSL qty to remaining_qty
+  after TP partial fill: update emgsl_order_id if new
+  order_id assigned (amend_order may return updated order_id).
+  Verify: net_gain = net_loss * 1.5 still satisfied at
+  remaining_qty.
+
+============================================================
+5. RECONCILIATION
+============================================================
+
+5.1 At Startup (Step 6)
+
+  After executions subscription returns snap_orders:
+  For each order in snap_orders with status new/pending_new:
+    If order matches a known Position Mirror entry by cl_ord_id:
+      Confirm — no action needed.
+    If order is NOT in Position Mirror (unexpected open order):
+      Log UNEXPECTED_OPEN_ORDER (WARN). Alert operator.
+      Do NOT auto-manage. Operator decides.
+  For each symbol in Position Mirror with no matching
+  snap_orders entry:
+    Position was closed during prior session's gap.
+    Log GAP_CLOSED_POSITION.
+    Delete from Position Mirror.
+    Fire CIATS Trade Outcome Bus with available data.
+  PREFERRED reconciliation source: snap_orders:true on
+  executions subscription (AR-003). FALLBACK: REST
+  GetOpenOrders.
+
+5.2 On Mid-Session Reconnect (AR-056)
+
+  Same reconciliation process as startup Step 6.
+  Pre-disconnect Position Mirror state preserved in memory.
+  snap_orders compared against pre-disconnect state.
+  gap-closed positions detected and processed.
+  Pending Order Registry also reconciled.
+  portfolio_baseline_USD NOT reset (AR-052).
+
+============================================================
+6. READ ACCESS
+============================================================
+
+All reads are O(1) symbol lookups. Position Mirror is
+read-only from the perspective of all components except
+WS Manager (sole writer). No locking required in single-
+threaded asyncio event loop.
+
+  Signal Pipeline (Gate 5 SC-GATE-3): symbol NOT in mirror
+  Signal Pipeline (Gate 7 Risk Guard): sum of position
+    values for drawdown computation
+  Exit Controller: tp_order_id, emgsl_order_id, qty,
+    entry_fill_price, entry_atr_14 for exit calculations
+  CIATS EWMA Monitor: position count, regime tags
+  WS Manager: per-symbol bid price lookup for drawdown MTM
+  Execution Engine: confirmation that record exists before
+    batch_add dispatch
+
+============================================================
+7. INTERFACES
+============================================================
+
+7.1 Written by WS Manager (0511001) exclusively.
+    WS Manager is the sole writer. All other components
+    read-only.
+
+7.2 Read by Signal Pipeline (0511002) — Gates 5, 7.
+
+7.3 Read by Exit Controller (0511004) — exit sequences,
+    order_id lookups, qty reads.
+
+7.4 Read by Execution Engine (0511003) — record existence
+    check before batch_add.
+
+7.5 Feeds Logger (0511006) — all state change events.
+
+7.6 Reconciled against Kraken snap_orders via executions
+    subscription and REST GetOpenOrders fallback.
+
+============================================================
+8. HARD RULES
+============================================================
+
+HR-PM-001  O(1) symbol-keyed dict. No list, queue, or
+           ordered structure for main position store (AR-002).
+
+HR-PM-002  Record created at entry dispatch (BEFORE Kraken
+           fill ACK). cl_ord_id recorded at dispatch. No
+           async gap between dispatch and position tracking
+           (A-2, record-at-dispatch rule).
+
+HR-PM-003  entry_fill_price MUST use actual fill price
+           (avg_price from exec_type=filled). NOT the
+           limit price. All R:R calculations use actual
+           fill price. OTO was rejected because it uses
+           limit price (AR-008).
+
+HR-PM-004  All Decimal values from WS messages: Decimal(str())
+           immediately on receipt. No float arithmetic in
+           position tracking (AR-047).
+
+HR-PM-005  CIATS Trade Outcome Bus fires ONCE on full position
+           close with complete trade record (AR-066). Not on
+           partial fills.
+
+HR-PM-006  On mid-session reconnect: Position Mirror preserved
+           from pre-disconnect state. Reconciled against
+           snap_orders. portfolio_baseline_USD never reset.
+           drawdown_pct preserved (AR-056, AR-052).
+
+HR-PM-007  Unexpected open orders detected in snap_orders (not
+           in Position Mirror): logged and operator alerted.
+           Not auto-managed. Bill decides.
+
+HR-PM-008  One position per symbol maximum. Position Mirror
+           enforces this by construction (dict key = symbol).
+           Gate 5 SC-GATE-3 checks this before entry.
+
+HR-PM-009  WS Manager is the SOLE writer to Position Mirror.
+           No other component may directly modify it.
+
+============================================================
+9. WHAT TRIGGERS IT
+============================================================
+
+  Execution Engine entry dispatch   → record creation
+  exec_type=filled (entry)          → update entry_fill_price, qty
+  batch_add ACK (TP+emergSL)        → update order_ids
+  exec_type=trade (TP order)        → qty update (partial fill)
+  Exit Controller position close    → record deletion
+  snap_orders on startup/reconnect  → reconciliation
+
+============================================================
+10. WHAT IT LOGS
+============================================================
+
+  POSITION_RECORD_CREATED   — symbol, cl_ord_id, qty
+  POSITION_FILL_CONFIRMED   — symbol, avg_price, cum_qty
+  POSITION_ORDERS_SET       — symbol, tp_order_id, emgSL_id
+  POSITION_QTY_UPDATED      — symbol, new_qty (partial fill)
+  POSITION_CLOSED           — symbol, close source
+  GAP_CLOSED_POSITION       — symbol (reconnect detection)
+  UNEXPECTED_OPEN_ORDER     — order_id (WARN, operator alert)
+  RECONCILIATION_COMPLETE   — count of positions confirmed,
+                              count of gap-closed detected
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0511001  WS_Manager_Specification         (sole writer)
+  0511002  Signal_Pipeline_Specification    (reader — Gates 5, 7)
+  0511003  Execution_Engine_Specification   (creates records)
+  0511004  Exit_Controller_Specification    (reads + deletes)
+  0511006  Logger_Specification             (log recipient)
+  1011006  Position_Mirror_Coding_Spec      (AA=10 child — TBD)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Derived from 0500000
+                     dv1_18 Sections 2, 4, 8, 11. O(1) dict
+                     data structure specified (AR-002). Full
+                     PositionRecord field list defined. Write
+                     rules for all update scenarios specified
+                     including TP partial fill (AR-066) and
+                     entry partial fill protection (AR-054).
+                     Reconciliation at startup and reconnect
+                     specified (AR-003, AR-056). Hard rules
+                     HR-PM-001 through HR-PM-009 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================

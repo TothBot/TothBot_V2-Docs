@@ -1,0 +1,487 @@
+DocDCN:     0511006
+DocTitle:   Logger_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511006_Logger_Specification_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+LOGGER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+Logger component of TothBot V2. It defines what the Logger
+does, its interfaces, its hard rules, what triggers it, and
+what it logs (i.e., what data CIATS depends on). It is the
+authoritative parent document for 1011007 Logger_Coding_Spec.
+
+The Logger is the sole data interface between TothBot and
+CIATS. Everything CIATS knows about TothBot's operation,
+it knows from the Logger. The Logger must never block the
+trading hot path. Every logged event is a potential CIATS
+data point.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Receives log entries from all TothBot components via an
+  in-memory bounded queue. Writes entries asynchronously
+  to disk via a background thread. Provides real-time
+  data stream to CIATS (two streams: EWMA Monitor and
+  Trade Outcome Bus). Never blocks the trading hot path.
+  Provides operator alert routing for CRITICAL and HIGH
+  level events.
+
+Primary inputs:
+  Log call from any TothBot component (WS Manager, Signal
+  Pipeline, Execution Engine, Exit Controller, Position
+  Mirror, Regime Engine)
+
+Primary outputs:
+  Disk log file (structured — CIATS readable)
+  Operator alerts for CRITICAL and HIGH events
+
+============================================================
+3. IMPLEMENTATION ARCHITECTURE (AR-014, AR-063)
+============================================================
+
+3.1 Queue Implementation
+
+  CORRECT implementation (AR-063):
+    import queue
+    import logging.handlers
+
+    log_queue = queue.Queue(maxsize=10000)
+    queue_handler = logging.handlers.QueueHandler(log_queue)
+    log_listener = logging.handlers.QueueListener(
+        log_queue, file_handler)
+    log_listener.start()
+
+  NOT asyncio.Queue:
+    QueueListener runs in a separate non-asyncio thread
+    and is not compatible with asyncio.Queue. An asyncio
+    coroutine writer would compete with the event loop
+    for scheduling. stdlib queue.Queue is correct.
+
+  queue.Queue(maxsize=10000):
+    10,000 entries bounded queue (AR-014, FP/DP validated).
+    Derivation: 20 positions x 10 events/candle x 50-candle
+    buffer = 10,000 entries = 50-candle burst absorption.
+    (Source: 0500000 dv1_18 Section 6, I-5.)
+
+  QueueHandler: Non-blocking. Called on the asyncio event
+    loop — puts entry into queue and returns immediately.
+  QueueListener: Runs in its own background thread. Reads
+    from queue and writes to disk file handler. Never
+    blocks the asyncio event loop.
+
+3.2 On Queue Full
+
+  If log_queue.Full exception raised on put():
+    Write directly to sys.stderr: "LOG QUEUE FULL — entry
+    dropped: {timestamp} {event_type} {symbol}"
+    Alert operator HIGH immediately.
+    Skip the queued entry — NEVER block the caller.
+    NEVER raise an exception back to the trading hot path.
+
+3.3 Shutdown
+
+  log_listener.stop() on TothBot shutdown.
+  stop() drains remaining queue entries and joins the
+  background thread. No log entries lost on clean shutdown.
+
+============================================================
+4. LOG ENTRY FORMAT
+============================================================
+
+4.1 Minimum required fields on every entry:
+
+  timestamp_utc:  ISO 8601 string (UTC, nanosecond if available,
+                  millisecond minimum)
+  event_type:     str (see Section 5 — event type registry)
+  level:          str (DEBUG | INFO | WARN | ERROR | CRITICAL)
+  component:      str (WS_MGR | SIGNAL_PIPELINE |
+                       EXEC_ENG | EXIT_CTRL | POS_MIRROR |
+                       REGIME_ENG | LOGGER | CIATS)
+
+4.2 Additional fields per event type:
+
+  symbol:         str (where applicable)
+  connection_id:  uint64 (all WS connection events, AR-064)
+  req_id:         int (all outbound WS message events)
+  cl_ord_id:      str (all order events)
+  order_id:       str (all fill/cancel events)
+  All numeric values: Decimal (stored as string in log)
+
+4.3 Log file format:
+
+  Structured (newline-delimited JSON recommended).
+  Each line: one JSON object with all fields.
+  CIATS reads log file for all statistical computation.
+  File format governs CIATS data access.
+  Rotation: daily or size-based (define in AA=10 coding spec).
+
+============================================================
+5. EVENT TYPE REGISTRY (minimum required event types)
+============================================================
+
+5.1 WS Manager Events
+
+  WS_TOKEN_ACQUIRED
+  WS_CONNECTED                — connection_id, url
+  WS_DISCONNECTED             — connection_id, reason
+  INSTRUMENT_SNAPSHOT_COMPLETE — pair_count
+  SUBSCRIPTION_ACK            — channel, warnings (if any)
+  MAXRATECOUNT_SET            — value from ACK
+  PAIR_WARM_UP_STARTED        — symbol
+  PAIR_READY                  — symbol
+  ALL_PAIRS_WARM_UP_COMPLETE  — pair_count
+  PING_SENT                   — connection_id
+  PONG_RECEIVED               — connection_id, latency_ms
+  PING_TIMEOUT                — connection_id (CRITICAL)
+  ZOMBIE_CONNECTION_DETECTED  — connection_id, elapsed_seconds
+  RECONNECT_INITIATED         — connection_id, attempt_number
+  RECONNECT_COMPLETE          — connection_id
+  FATAL_RECONNECT_FAILURE     — attempt_count (CRITICAL)
+  KRAKEN_MAINTENANCE_SCHEDULED — within_hours
+  CONNECTION_ID_LOGGED        — connection_id (AR-064)
+  EXECUTIONS_SEQUENCE_GAP     — expected, received (CRITICAL)
+  BALANCES_SEQUENCE_GAP       — expected, received (HIGH)
+  CANDLE_CLOSE                — symbol, interval_begin, OHLC,
+                                 atr_14, rsi_14, ema_9, ema_21
+  EXEC_TRADE                  — order_id, cum_qty, avg_price,
+                                 last_qty, last_price (AR-061)
+  EXEC_FILLED                 — order_id, cum_qty, avg_price,
+                                 fees
+  EXEC_CANCELED               — order_id, reason
+  EXEC_EXPIRED                — order_id, cum_qty
+  EXEC_RESTATED               — order_id (warn if resting)
+  UNEXPECTED_ORDER_AMENDED    — order_id (CRITICAL, AR-057)
+  UNKNOWN_EXEC_TYPE           — raw_exec_type (WARN)
+  UNKNOWN_MESSAGE_TYPE        — raw_channel (WARN)
+  ENTRY_PARTIAL_FILL_PROTECTED — symbol, cum_qty, avg_price
+  GAP_CLOSED_POSITION         — symbol, estimated_PL
+  DRAWDOWN_UPDATE             — drawdown_pct, portfolio_USD
+  SESSION_PAUSE_TRIGGERED     — drawdown_pct
+  FULL_HALT_TRIGGERED         — drawdown_pct, open_count
+  BATCH_CANCEL_SENT           — count
+  BATCH_CANCEL_RESULT         — count_confirmed
+  RATE_COUNTER_UPDATE         — symbol, value, maxratecount
+
+5.2 Signal Pipeline Events
+
+  PIPELINE_START              — symbol, candle_ts
+  INSTRUMENT_STATUS_BLOCKED   — symbol, status
+  GATE_1_PASS/FAIL            — engine_state
+  GATE_2_PASS/FAIL            — volume_usd, threshold
+  GATE_3_PASS/FAIL            — regime, vol_regime
+  GATE_4_PASS/FAIL            — htf_ema_20, htf_ema_50
+  SSS_RESULT                  — rsi_14, ema_9, ema_21,
+                                 volume_ratio, sss_pass
+  GATE_5_RESULT               — sc_gate_failed (if any),
+                                 all 6 gate outcomes
+  GATE_6_RESULT               — sizing_modifier
+  GATE_7_RESULT               — drawdown_pct, semaphore,
+                                 available_USD
+  GATE_8_RESULT               — entry_qty, entry_price,
+                                 tp_price, sl_trigger,
+                                 mae_mult, sl_mult
+  PIPELINE_PASS               — symbol, all sizing params
+  PIPELINE_FAIL               — symbol, gate, rejection_code
+
+  Rejection codes:
+    INSTRUMENT_STATUS_BLOCKED, SYSTEM_STATE_BLOCKED,
+    LIQUIDITY_REJECTED, REGIME_BLOCKED, HTF_GATE_REJECTED,
+    SSS_SIGNAL_FAIL, WEAK_CANDLE_BODY, POSITION_ALREADY_OPEN,
+    PAIR_IN_COOLDOWN, POSITION_TOO_SMALL,
+    CONSECUTIVE_LOSSES_EXCEEDED, MAX_CONCURRENT_REACHED,
+    SESSION_PAUSE_DRAWDOWN, FULL_HALT_DRAWDOWN,
+    SKIP_INSUFFICIENT_USD
+
+5.3 Execution Engine Events
+
+  ENTRY_DISPATCHED            — symbol, limit_price, qty,
+                                 cl_ord_id, req_id, timeout_sec
+  ENTRY_ACCEPTED_ON_BOOK      — symbol, req_id
+  ENTRY_FILLED                — symbol, avg_price, cum_qty, fees
+  ENTRY_PARTIAL_TRADE         — symbol, cum_qty, avg_price
+  ENTRY_EXPIRED_NO_FILL       — symbol, cl_ord_id
+  ENTRY_EXPIRED_PARTIAL_FILL  — symbol, cl_ord_id, cum_qty
+  ENTRY_CANCELED_NO_FILL      — symbol
+  ENTRY_CANCELED_PARTIAL_FILL — symbol, cum_qty
+  ENTRY_POST_ONLY_REJECTED    — symbol, regime (for CIATS)
+  TP_EMGSL_DISPATCHED         — symbol, tp_price, sl_trigger,
+                                 tp_cl_ord_id, emgsl_cl_ord_id,
+                                 batch_add req_id
+  TP_EMGSL_CONFIRMED          — symbol, tp_order_id, emgsl_id
+  RATE_COUNTER_WARNING        — symbol, current_value
+
+5.4 Exit Controller Events
+
+  L1A_TRIGGERED               — symbol, trigger (L1A-001/002/003)
+  L1B_TP_FILL_DETECTED        — symbol, tp_order_id
+  L2_MAE_BREACH_DETECTED      — symbol, bid, entry, ATR, threshold
+  CANCEL_TP_SENT              — symbol, tp_order_id, req_id
+  CANCEL_EMGSL_SENT           — symbol, emgsl_order_id, req_id
+  CANCEL_CONFIRMED            — symbol, req_id, order_id
+  CANCEL_TIMEOUT_HOLD         — symbol, req_id (CRITICAL)
+  MARKET_SELL_SENT            — symbol, qty, req_id
+  MARKET_SELL_FILLED          — symbol, exit_price, fees
+  MPP_REJECTION               — symbol, retry_count
+  MAE_HOLD_AMBIGUOUS          — symbol (CRITICAL)
+  POSITION_CLOSED             — symbol, exit_reason, net_PL_USD
+  PAIR_LIMIT_ONLY_EXIT        — symbol
+  PAIR_CANCEL_ONLY_HOLD       — symbol (CRITICAL)
+  PAIR_MAINTENANCE_HOLD       — symbol (CRITICAL)
+  EMERGENCY_SL_FIRED          — symbol (CRITICAL — restart detect)
+
+5.5 Position Mirror Events
+
+  POSITION_RECORD_CREATED     — symbol, cl_ord_id, qty
+  POSITION_FILL_CONFIRMED     — symbol, avg_price, cum_qty
+  POSITION_ORDERS_SET         — symbol, tp_order_id, emgsl_id
+  POSITION_QTY_UPDATED        — symbol, new_qty
+  POSITION_CLOSED             — symbol, close_source
+  GAP_CLOSED_POSITION         — symbol
+  UNEXPECTED_OPEN_ORDER       — order_id (WARN)
+  RECONCILIATION_COMPLETE     — confirmed_count, gap_closed_count
+
+5.6 Regime Engine Events
+
+  REGIME_COMPUTATION_STARTED  — pair_count
+  REGIME_COMPUTED             — symbol, asset_regime, vol_regime
+  REGIME_COMPUTATION_COMPLETE — pair_count, elapsed_ms
+  REGIME_STALE_WARNING        — symbol (if data gap detected)
+
+============================================================
+6. CIATS DATA STREAMS
+============================================================
+
+6.1 Stream 1 — EWMA Monitor
+
+  CIATS reads these fields for the EWMA Monitor:
+  (288 candle evals/day, valid at 50 evals, lambda=0.2)
+
+  Signal 1: rejection_rate_by_regime (F6)
+    Source: GATE_5_RESULT events + regime from GATE_3_RESULT
+    Fields needed: symbol, rejection_code, regime,
+                   vol_regime, timestamp_utc
+
+  Signal 2: rate_counter_by_pair (A-1)
+    Source: RATE_COUNTER_UPDATE events
+    Fields needed: symbol, value, maxratecount, timestamp_utc
+
+  Signal 3: ws_roundtrip_latency_ms (A-3)
+    Source: PONG_RECEIVED event — latency_ms field
+    Fields needed: connection_id, latency_ms, timestamp_utc
+    WS v2 responses include time_in and time_out to
+    nanosecond precision. Logger MUST capture both fields
+    where present (A-3).
+
+  All three are MONITORING SIGNALS ONLY. The EWMA Monitor
+  never drives parameter changes. It is a fast warning
+  stream. Valid at 50 candle evals (~4 hours).
+
+6.2 Stream 2 — Trade Outcome Bus
+
+  CIATS reads these fields for statistical analysis.
+  Fires ONCE on each complete position close.
+  Source: POSITION_CLOSED or MARKET_SELL_FILLED events
+  combined with entry data.
+
+  Required fields (all mandatory — no optional):
+    symbol:               str
+    entry_fill_price:     Decimal (actual avg_price)
+    exit_price:           Decimal (fill price of close)
+    entry_timestamp_utc:  ISO 8601
+    exit_timestamp_utc:   ISO 8601
+    hold_candle_count:    int (number of 5m candles held)
+    MAE_pct_reached:      Decimal (max adverse move as pct)
+    fees_entry_usd:       Decimal (maker fee on entry)
+    fees_exit_usd:        Decimal (taker fee on exit)
+    fees_total_usd:       Decimal
+    exit_reason:          str (TP_FILL | MAE_THRESHOLD_BREACH |
+                               HTF_REGIME_REVERSAL |
+                               DAILY_REGIME_DOWNGRADE |
+                               TIME_EXPIRY | SIGNAL_DECAY |
+                               TP_PARTIAL_FILL_REMAINDER |
+                               PAIR_LIMIT_ONLY_EXIT)
+    asset_regime:         str (regime at entry)
+    vol_regime:           str (NORMAL_VOL | ELEVATED_VOL)
+    market_regime:        str (BTC/USD regime at entry)
+    signal_params:        dict {rsi_14, ema_9, ema_21,
+                               volume_ratio, sss_pass}
+    actual_RR:            Decimal (net_PL / net_loss)
+    net_PL_USD:           Decimal (after all fees)
+    net_gain_usd:         Decimal (if win)
+    net_loss_usd:         Decimal (if loss)
+
+  Feed: Statistical Engine → Proposal Engine (at 200 trades)
+        Regime Library (at 600 trades, 100+ per bucket)
+        Half-Kelly computation (at 200+ trades)
+
+============================================================
+7. ALERT ROUTING
+============================================================
+
+  Level CRITICAL:
+    Events: PING_TIMEOUT, ZOMBIE_CONNECTION_DETECTED,
+    FATAL_RECONNECT_FAILURE, EXECUTIONS_SEQUENCE_GAP,
+    UNEXPECTED_ORDER_AMENDED, CANCEL_TIMEOUT_HOLD,
+    MAE_HOLD_AMBIGUOUS, FULL_HALT_TRIGGERED,
+    PAIR_CANCEL_ONLY_HOLD, PAIR_MAINTENANCE_HOLD,
+    EMERGENCY_SL_FIRED, any unhandled exception
+    Routing: alert@tothbot.com (immediate email alert)
+
+  Level HIGH:
+    Events: BALANCES_SEQUENCE_GAP, SESSION_PAUSE_TRIGGERED,
+            BATCH_CANCEL_SENT, LOG_QUEUE_FULL,
+            UNEXPECTED_OPEN_ORDER
+    Routing: alert@tothbot.com
+
+  Level WARN:
+    Events: UNKNOWN_EXEC_TYPE, UNKNOWN_MESSAGE_TYPE,
+            RATE_COUNTER_WARNING, REGIME_STALE_WARNING
+    Routing: log file only (no email)
+
+  All CRITICAL and HIGH: also written to stderr as fallback
+  in case Logger queue is unavailable.
+
+============================================================
+8. INTERFACES
+============================================================
+
+8.1 From all TothBot components
+  All components call Logger. Logger is the universal
+  output sink. Non-blocking from caller perspective.
+
+8.2 To disk
+  QueueListener background thread writes to log file.
+  Never involves asyncio event loop.
+
+8.3 To CIATS
+  CIATS reads from log file directly. Logger does not
+  push to CIATS. CIATS is fully asynchronous and reads
+  only from Logger output. CIATS never blocks TothBot.
+
+8.4 To operator
+  CRITICAL and HIGH events: email to alert@tothbot.com.
+  Routing implementation in AA=10 coding spec.
+
+============================================================
+9. HARD RULES
+============================================================
+
+HR-LG-001  Logger NEVER blocks the trading hot path under
+           any condition (AR-014). Queue full → drop entry
+           → alert → continue. NEVER block caller.
+
+HR-LG-002  MUST use queue.Queue (stdlib), NOT asyncio.Queue.
+           QueueListener runs in its own non-asyncio thread
+           (AR-063). asyncio.Queue is incompatible with
+           QueueListener thread model.
+
+HR-LG-003  maxsize=10,000 (AR-014). Derived from FP/DP:
+           20 positions x 10 events/candle x 50-candle buffer.
+           Queue size is CIATS-owned starting value.
+
+HR-LG-004  log_listener.stop() called on clean shutdown.
+           Drains and joins background thread. No log loss.
+
+HR-LG-005  Trade Outcome Bus: ALL fields in Section 6.2 are
+           mandatory on every position close event. No
+           optional fields. Missing fields break CIATS
+           statistical computation.
+
+HR-LG-006  Trade Outcome Bus fires ONCE per complete position
+           close. Not on each partial fill (AR-066).
+
+HR-LG-007  EWMA Monitor Signal 3 (ws_roundtrip_latency_ms):
+           time_in and time_out fields from WS v2 responses
+           captured on Logger where present (A-3).
+
+HR-LG-008  connection_id (AR-064) logged on every WS
+           connection event and included in all reconnect,
+           disconnect, and gap log entries.
+
+HR-LG-009  All numeric values stored as string representation
+           of Decimal in log. No float storage.
+
+HR-LG-010  Log file format must be structured (JSON preferred)
+           and machine-readable. CIATS reads it directly.
+           Human-readable format secondary to CIATS readability.
+
+HR-LG-011  Queue full event: write to stderr AND alert HIGH.
+           The trade that was dropped must be recoverable
+           from other sources if possible. Alert is the signal
+           that queue sizing needs to be reviewed.
+
+============================================================
+10. WHAT TRIGGERS IT
+============================================================
+
+  Any TothBot component log() call:
+    WS Manager (highest volume — every event)
+    Signal Pipeline (every gate evaluation)
+    Execution Engine (order dispatch and fills)
+    Exit Controller (exit sequences)
+    Position Mirror (state changes)
+    Regime Engine (daily computation)
+
+============================================================
+11. WHAT IT LOGS
+============================================================
+
+  The Logger logs everything. It is the audit trail of the
+  entire system. Every event from every component passes
+  through it. The full event type registry is in Section 5.
+
+  Volume estimate:
+    288 candle evals/day x 20 pairs = 5,760 pipeline evals
+    Each eval: ~8-15 log entries = ~60,000 entries/day
+    Plus: WS events, fills, pings, heartbeats
+    Total: ~80,000-120,000 entries/day (estimate)
+    Queue absorption: 10,000 entries = ~10-minute burst buffer
+
+============================================================
+12. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0511001  WS_Manager_Specification         (primary caller)
+  0511002  Signal_Pipeline_Specification    (caller)
+  0511003  Execution_Engine_Specification   (caller)
+  0511004  Exit_Controller_Specification    (CIATS TOB source)
+  0511005  Position_Mirror_Specification    (caller)
+  0200000  Operations                       (CIATS domain)
+  0211001  CIATS_Specification              (reads Logger)
+  1011007  Logger_Coding_Spec               (AA=10 child)
+
+============================================================
+13. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Derived from 0500000
+                     dv1_18 Sections 2, 6, 8, 9, 11. Logger
+                     architecture specified: queue.Queue
+                     (not asyncio.Queue, AR-063), maxsize=
+                     10,000 (AR-014), QueueHandler +
+                     QueueListener pattern. Complete event
+                     type registry Section 5 defined. CIATS
+                     two-stream data model specified (EWMA
+                     Monitor + Trade Outcome Bus). All
+                     mandatory Trade Outcome Bus fields listed.
+                     Alert routing defined. Hard rules
+                     HR-LG-001 through HR-LG-011 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================

@@ -1,0 +1,392 @@
+DocDCN:     0511003
+DocTitle:   Execution_Engine_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511003_Execution_Engine_Specification_dv1_0.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+EXECUTION ENGINE SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+Execution Engine component of TothBot V2. It defines what
+the Execution Engine does, its interfaces, its hard rules,
+what triggers it, and what it logs. It is the authoritative
+parent document for 1011004 Execution_Engine_Coding_Spec.
+
+The Execution Engine owns all order dispatch to Kraken
+for position entry and TP/emergSL placement. It receives
+the sizing output from Gate 8 of the Signal Pipeline and
+translates it into precisely-constructed WS v2 messages.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Receives Gate 8 sizing output. Assigns cl_ord_id to the
+  entry order. Constructs and sends add_order (entry) via
+  Private WS v2. On execution fill confirmation, constructs
+  and sends batch_add (TP limit + emergSL stop-market atomic)
+  via Private WS v2. Updates Position Mirror at dispatch.
+  Populates Pending Order Registry. Handles entry rejection
+  and expiry. Transfers rate counter cost to CIATS monitor.
+
+Primary inputs:
+  Gate 8 output dict from Signal Pipeline (0511002):
+    {symbol, entry_limit_price, entry_qty,
+     tp_price, sl_trigger_price, entry_timeout_sec,
+     regime_context, signal_params}
+  executions channel fill/expiry events (via WS Manager)
+
+Primary outputs:
+  WS v2 add_order message (entry)
+  WS v2 batch_add message (TP + emergSL, on fill)
+  Position Mirror update (0511005)
+  Pending Order Registry update (via WS Manager)
+  Logger calls (0511006)
+
+============================================================
+3. PHASE 1 — ENTRY ORDER DISPATCH
+============================================================
+
+3.1 cl_ord_id Assignment
+
+  Assigned at dispatch before Kraken response.
+  Format: up to 18 characters. Must be unique per order.
+  Suggested format: symbol prefix + timestamp in ms.
+  Example: "BTCUSD1712230000001"
+  cl_ord_id is recorded in Position Mirror immediately at
+  dispatch — no async gap (A-2). Pending Order Registry
+  populated at same time.
+
+3.2 req_id Assignment
+
+  Each outbound message carries req_id (unique integer).
+  WS Manager req_id_registry tracks: {method, timestamp,
+  symbol} keyed by req_id. Used for cancel timeout
+  fallback (I-6) and response correlation.
+
+3.3 add_order Construction (AR-006)
+
+  All fields required. No optional fields omitted.
+
+  {
+    "method": "add_order",
+    "params": {
+      "order_type": "limit",
+      "side":       "buy",
+      "symbol":     <symbol>,
+      "limit_price": <entry_limit_price>,
+      "order_qty":  <entry_qty_quantized>,
+      "post_only":  true,
+      "time_in_force": "gtd",
+      "expire_time":   <ISO 8601 UTC now + entry_timeout_sec>,
+      "cl_ord_id":  <assigned cl_ord_id>,
+      "stp_type":   "cancel_newest",
+      "deadline":   <ISO 8601 UTC now + 5s>
+    },
+    "req_id": <assigned req_id>
+  }
+
+  Field notes:
+    time_in_force = "gtd" (Good Til Date) — self-expiring.
+    entry_timeout_sec: 30-60s (CIATS-owned starting range).
+    stp_type: "cancel_newest" WITH UNDERSCORE (AR-032).
+              REST API uses "cancel-newest" (hyphen).
+              WS v2 ALWAYS uses underscore. Never confuse.
+    deadline: UTC now + 5 seconds ISO 8601 string (AR-033).
+    post_only: true — guarantees maker fill or rejection.
+               No fill on spread crossing — NEVER taker.
+
+3.4 Pending Order Registry Population (AR-053)
+
+  On add_order dispatch:
+    estimated_cost = entry_qty * entry_limit_price *
+                     (1 + maker_fee_rate)
+    pending_orders[entry_cl_ord_id] = estimated_cost
+  Gate 7 available_USD uses this registry to prevent
+  capital overcommitment when multiple pairs fire
+  simultaneously.
+
+3.5 Entry Rate Counter Cost
+
+  add_order fixed cost: +1 rate counter unit.
+  Rate counter monitored via executions channel (A-1).
+  If rate counter near ceiling (approaching maxratecount
+  from subscription ACK): log RATE_COUNTER_WARNING.
+
+============================================================
+4. ENTRY ORDER OUTCOMES
+============================================================
+
+4.1 exec_type = filled (full fill at entry)
+
+  Trigger Phase 2 (TP + emergSL placement).
+  Extract: qty = Decimal(str(cum_qty)),
+           entry_fill_price = Decimal(str(avg_price)).
+  Clear pending_orders[entry_cl_ord_id].
+  Log ENTRY_FILLED.
+
+4.2 exec_type = trade (partial fill while open)
+
+  Order is still active — partially filled.
+  Update Pending Order Registry: hold entry (do NOT clear).
+  No TP/emergSL dispatch yet. Wait for filled or expiry.
+  Log ENTRY_PARTIAL_TRADE (cum_qty, avg_price).
+
+4.3 exec_type = expired (GTD window elapsed)
+
+  If cum_qty == 0: no fill. Clear registry. Log
+    ENTRY_EXPIRED_NO_FILL. No position opened.
+  If cum_qty > 0: partial fill exists. No TP/emergSL.
+    CRITICAL: unprotected position. Partial fill
+    protection triggered per AR-054 (handled by
+    WS Manager dispatch — see 0511001 Section 8.2).
+    Log ENTRY_EXPIRED_PARTIAL_FILL.
+
+4.4 exec_type = canceled
+
+  Same handling as expired (AR-054 applies).
+  Log ENTRY_CANCELED_PARTIAL_FILL or ENTRY_CANCELED_NO_FILL.
+
+4.5 exec_type = new (order accepted on book)
+
+  No action. Log ENTRY_ACCEPTED_ON_BOOK.
+
+4.6 post_only rejection (exec_type = canceled, reason = post_only)
+
+  Order hit spread — post_only prevented taker fill.
+  Clear pending_orders. Log ENTRY_POST_ONLY_REJECTED.
+  CIATS EWMA Monitor: rejection_rate_by_regime increments
+  (signal 1 — Finding 6 of dv1_10).
+
+============================================================
+5. PHASE 2 — TP + EMERGENCY SL PLACEMENT (batch_add)
+============================================================
+
+5.1 batch_add Construction (AR-007, AR-046, AR-032, AR-033)
+
+  Dispatched atomically on confirmed full entry fill.
+  Two legs: TP limit order + emergSL stop-market order.
+
+  {
+    "method": "batch_add",
+    "params": [
+      {
+        "order_type":  "limit",
+        "side":        "sell",
+        "symbol":      <symbol>,
+        "limit_price": <tp_price>,
+        "order_qty":   <entry_fill_qty>,
+        "post_only":   true,
+        "cl_ord_id":   <tp_cl_ord_id>,
+        "stp_type":    "cancel_newest",
+        "deadline":    <ISO 8601 UTC now + 5s>
+      },
+      {
+        "order_type":  "stop-loss",
+        "side":        "sell",
+        "symbol":      <symbol>,
+        "order_qty":   <entry_fill_qty>,
+        "cl_ord_id":   <emg_sl_cl_ord_id>,
+        "stp_type":    "cancel_newest",
+        "deadline":    <ISO 8601 UTC now + 5s>,
+        "triggers":    {
+          "reference":  "last",
+          "price":      <sl_trigger_price>,
+          "price_type": "static"
+        }
+      }
+    ],
+    "req_id": <assigned req_id>
+  }
+
+  Field notes:
+    TP order: post_only=true → resting limit on book.
+    emergSL: stop-market. Fires on match with trigger price.
+    triggers.reference = "last" (AR-046). MANDATORY.
+      Uses Kraken internal last-traded price — always
+      available. reference="index" uses external feeds
+      that may be unavailable during crash scenarios.
+      NEVER rely on API defaults for crash protection.
+    stp_type: "cancel_newest" (underscore, WS v2, AR-032).
+    deadline: UTC now + 5s on BOTH legs (AR-033).
+    batch_add rate cost: +(n/2) = +(2/2) = +1 unit.
+
+5.2 Position Mirror Update (0511005)
+
+  Position Mirror updated with actual fill data:
+    symbol (key), entry_fill_price (avg_price),
+    qty (cum_qty), tp_order_id, tp_cl_ord_id,
+    emergSL_order_id, emergSL_cl_ord_id.
+  All recorded immediately at batch_add dispatch —
+  no async gap (A-2). This is the record-at-dispatch
+  rule: TothBot knows the orders exist before Kraken
+  confirms them.
+
+5.3 BoundedSemaphore Acquisition (AR-043)
+
+  Execution Engine acquires asyncio.BoundedSemaphore
+  before entry dispatch. Released by Exit Controller
+  on position close. On CIATS max_concurrent update:
+  recreate semaphore, re-acquire for all open positions.
+  BoundedSemaphore raises ValueError on over-release
+  (bug detection).
+
+============================================================
+6. RATE COUNTER SUMMARY (per action type)
+============================================================
+
+  add_order (entry):          +1 fixed
+  batch_add (TP + emergSL):   +1 fixed (n/2 = 1)
+  cancel_order (< 300s old):  +1 per cancel
+  cancel_order (< 10s old):   +6 per cancel
+  cancel_order (< 5s old):    +8 per cancel
+  amend_order (< 5s old):     +1 fixed + 3 = +4 total
+  amend_order (< 10s old):    +1 fixed + 2 = +3 total
+  amend_order (< 15s old):    +1 fixed + 1 = +2 total
+  amend_order (>= 15s old):   +1 fixed
+  Rate counter ceiling: maxratecount from subscription ACK.
+  Decay: 2.34 units/second.
+
+============================================================
+7. INTERFACES
+============================================================
+
+7.1 From Signal Pipeline (0511002)
+  Receives Gate 8 output dict.
+  Triggered on full 8-gate pipeline pass.
+
+7.2 From WS Manager (0511001)
+  Receives executions fill events routed from dispatch
+  table. Execution Engine handlers called by WS Manager.
+
+7.3 To WS Manager (0511001)
+  Returns constructed WS v2 messages for dispatch.
+  WS Manager sends them on Private WS v2 connection.
+
+7.4 To Position Mirror (0511005)
+  Updates Position Mirror on batch_add dispatch.
+  WS Manager is the physical writer — Execution Engine
+  provides data.
+
+7.5 To Logger (0511006)
+  All dispatch events, fill confirmations, rejections,
+  and rate counter data logged (non-blocking).
+
+7.6 To CIATS EWMA Monitor
+  rejection_rate_by_regime updated on post_only rejection.
+  rate_counter_by_pair updated on each order action.
+
+============================================================
+8. HARD RULES
+============================================================
+
+HR-EE-001  post_only=true on ALL entry add_order. No entry
+           may be placed as a taker order.
+
+HR-EE-002  stp_type="cancel_newest" (underscore) on ALL WS
+           v2 add_order and batch_add (AR-032). REST uses
+           hyphen. Never confuse the two.
+
+HR-EE-003  deadline = UTC now + 5 seconds (ISO 8601) on ALL
+           add_order and batch_add (AR-033).
+
+HR-EE-004  triggers.reference = "last" on ALL emergSL
+           stop orders in batch_add (AR-046). MANDATORY.
+           Never use reference="index". Never omit.
+
+HR-EE-005  TP and emergSL placed via batch_add atomic on
+           fill. OTO conditional orders: REJECTED (AR-008).
+           OTO uses limit price not fill price — violates
+           sacred R:R.
+
+HR-EE-006  cl_ord_id assigned at dispatch BEFORE Kraken
+           response. Position Mirror cl_ord_id recorded
+           at same moment — no async gap (A-2).
+
+HR-EE-007  Pending Order Registry populated on every
+           add_order dispatch. Cleared on filled, expired,
+           or canceled (with cum_qty == 0) (AR-053).
+
+HR-EE-008  All Decimal values: Decimal(str()) conversion
+           on all WS message numeric fields (AR-047).
+
+HR-EE-009  net_gain = net_loss * 1.5 is HARDCODED in Phase 1
+           Gate 8 sizing. Not a parameter. Not CIATS-owned.
+
+HR-EE-010  entry_qty_quantized >= qty_min AND
+           entry_qty * price >= cost_min MUST be validated
+           before dispatch. Failure: log, skip pair (AR-028).
+
+HR-EE-011  amend_order is the primary order amendment method.
+           edit_order is DEPRECATED and MUST NOT be used
+           (AR-018).
+
+HR-EE-012  Execution Engine does NOT send cancel_all_orders
+           _after under any circumstance (AR-055).
+
+============================================================
+9. WHAT TRIGGERS IT
+============================================================
+
+  Gate 8 output from Signal Pipeline on 8-gate pass.
+  exec_type=filled from executions channel on entry fill.
+
+============================================================
+10. WHAT IT LOGS
+============================================================
+
+  ENTRY_DISPATCHED   — symbol, entry_limit_price,
+                       entry_qty, cl_ord_id, req_id,
+                       entry_timeout_sec, regime_context
+  ENTRY_ACCEPTED     — Kraken ACK (req_id matched)
+  ENTRY_FILLED       — cum_qty, avg_price, fees
+  ENTRY_PARTIAL_TRADE — cum_qty, avg_price (order still open)
+  ENTRY_EXPIRED_NO_FILL
+  ENTRY_EXPIRED_PARTIAL_FILL (triggers AR-054)
+  ENTRY_CANCELED_NO_FILL
+  ENTRY_CANCELED_PARTIAL_FILL (triggers AR-054)
+  ENTRY_POST_ONLY_REJECTED — regime context for CIATS
+  TP_EMGSL_DISPATCHED — tp_price, sl_trigger_price,
+                         tp_cl_ord_id, emgSL_cl_ord_id,
+                         batch_add req_id
+  TP_EMGSL_CONFIRMED — Kraken ACK on batch_add
+  RATE_COUNTER_WARNING — when approaching maxratecount
+  All entries: timestamp_utc, symbol, component=EXEC_ENG
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0411001  Kraken_WS_v2_Specification       (wire contract)
+  0511001  WS_Manager_Specification         (WS dispatch)
+  0511002  Signal_Pipeline_Specification    (input source)
+  0511005  Position_Mirror_Specification    (output target)
+  0511006  Logger_Specification             (log recipient)
+  1011004  Execution_Engine_Coding_Spec     (AA=10 child)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-04-2026  Initial document. Derived from
+                     0500000 dv1_18 Sections 2, 4, 8, 9,
+                     11. add_order and batch_add fully
+                     specified including all required fields.
+                     All AR entries assigned to Execution
+                     Engine included. Hard rules HR-EE-001
+                     through HR-EE-012 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================

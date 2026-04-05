@@ -1,0 +1,522 @@
+DocDCN:     0511004
+DocTitle:   Exit_Controller_Specification
+DocVersion: dv1_2
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511004_Exit_Controller_Specification_dv1_2.txt
+DocDate:    04-04-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+EXIT CONTROLLER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+Exit Controller component of TothBot V2. It defines what
+the Exit Controller does, its interfaces, its hard rules,
+what triggers it, and what it logs. It is the authoritative
+parent document for 1011005 Exit_Controller_Coding_Spec.
+
+The Exit Controller owns all normal position exits.
+It is a three-layer architecture. Layer 3 (emergency SL)
+is crash protection only — it NEVER fires in normal
+operation. All normal exits are Layer 1 or Layer 2.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Monitors all open positions continuously. Detects exit
+  conditions and executes the appropriate cancel and sell
+  sequence. Manages Full Halt via batch_cancel. Handles
+  pair status changes for open positions. Enforces cancel
+  timeout fallback. Handles MPP IOC limit retries. Reports
+  closed position data to CIATS via Logger.
+
+Primary inputs:
+  Ticker bbo events (continuous price monitoring, I-7)
+  ohlc(60) close events (HTF regime check L1a-001)
+  ohlc(5m) close events (max hold counter L1a-003)
+  00:00 UTC trigger (daily regime check L1a-002)
+  executions fills (TP fills, cancel confirmations)
+  Position Mirror reads (current position state)
+  Instrument status events (AR-040)
+
+Primary outputs:
+  WS v2 cancel_order (per-order cancel, Layer 1/2)
+  WS v2 batch_cancel (Full Halt)
+  WS v2 add_order market sell (Layer 1a, 1b aftermath, 2)
+  Position Mirror update (position close)
+  CIATS Trade Outcome Bus data (Logger)
+  Operator alerts
+
+============================================================
+3. THREE-LAYER EXIT ARCHITECTURE
+============================================================
+
+============================================================
+3.1 LAYER 1a — SIGNAL-BASED EXITS
+============================================================
+
+Three trigger conditions. Any one fires the Layer 1a exit
+sequence for the affected symbol.
+
+EC-L1A-001: HTF Regime Reversal
+  Trigger: ohlc(60) close detected by WS Manager.
+           1H EMA(20) crosses BELOW 1H EMA(50) while
+           long position is open in that symbol.
+  Gate 4 symmetry — same condition that blocked entry
+  now triggers exit.
+  Exit sequence:
+    1. cancel_order: cancel TP resting order (req_id tracked).
+    2. cancel_order: cancel emergSL stop order (req_id tracked).
+       SEQUENCE CRITICAL: both cancels BEFORE market sell.
+    3. Cancel timeout fallback (I-6) applied to both cancels.
+    4. add_order: market sell of position qty.
+  exit_reason: HTF_REGIME_REVERSAL
+
+EC-L1A-002: Daily Regime Downgrade
+  Trigger: 00:00 UTC regime refresh. After Regime Engine
+           computes new daily regime classifications, if
+           any open-position pair reclassifies from
+           TRENDING_POSITIVE → TRENDING_NEGATIVE or
+           NON_DIR + ELEVATED_VOL.
+  Gate 3 symmetry — same condition that blocks entries
+  now exits open positions.
+  Exit sequence: same as EC-L1A-001.
+  Cancel timeout fallback (I-6) applied.
+  exit_reason: DAILY_REGIME_DOWNGRADE
+
+EC-L1A-003: Max Hold Time
+  Trigger: ohlc(5m) candle close. WS Manager maintains
+           hold_candle_count per open position symbol.
+           Increments on each ohlc(5m) close for that symbol.
+  Condition: hold_candle_count[symbol] >= max_hold_candles
+  max_hold_candles: 24 (2 hours at 5-min cadence). CIATS-owned.
+  FP/DP derivation: 5-minute momentum trades resolve within
+  6-24 candles in TRENDING_POS (validated dv1_15 AR-071,
+  TB00020 Search 3, 10 sources).
+  EC-L1A-001 and EC-L1A-002 catch higher-timeframe failure.
+  max_hold_candles is the backstop for stalled positions.
+  Exit sequence: same as EC-L1A-001.
+  Cancel timeout fallback (I-6) applied.
+  exit_reason: TIME_EXPIRY
+
+============================================================
+3.2 LAYER 1b — TP FILL
+============================================================
+
+EC-L1B-001: TP Fill Confirmation
+  Trigger: exec_type=filled on TP order (identified by
+           order_id matching tp_order_id in Position Mirror).
+  Action:
+    1. cancel_order: cancel emergSL stop order.
+       (TP has filled — crash protection no longer needed)
+    2. Track cancel with req_id for confirmation.
+    3. On cancel confirm: clear Position Mirror for symbol.
+    4. Fire CIATS Trade Outcome Bus.
+  exit_reason: TP_FILL
+
+EC-L1B-002: TP Partial Fill (AR-066)
+  See 0511001 Section 8.1. WS Manager handles routing.
+  Exit Controller receives instruction when remaining_qty
+  < qty_min or remaining_qty * bid < cost_min:
+    cancel emergSL → market sell remainder → clear Mirror.
+  exit_reason: TP_PARTIAL_FILL_REMAINDER
+
+============================================================
+3.3 LAYER 2 — MAE THRESHOLD EXIT
+============================================================
+
+EC-L2-001: MAE Threshold Detection
+  Trigger: ticker bbo event for pair with open position.
+           bbo event provides bid price for realizable exit.
+  Condition: (entry_fill_price - bid_price) >=
+             ATR(14) * mae_mult (1.5x starting)
+  ATR(14) value from pre-computation cache (incremental).
+  Uses bid price (conservative — realizable sell value).
+  On condition true:
+
+  SEQUENCE CRITICAL (AR-001 architecture preserved):
+    Step 1: cancel_order: cancel TP resting limit.
+            req_id tracked in req_id_registry.
+    Step 2: cancel_order: cancel emergSL stop-market.
+            req_id tracked in req_id_registry.
+    BOTH cancels MUST complete (or be confirmed cancelled)
+    BEFORE market sell is dispatched.
+    NEVER issue market sell with ambiguous order state.
+
+  CANCEL TIMEOUT FALLBACK (I-6):
+    Each cancel tracked by req_id with timestamp.
+    On timeout (no ACK within configurable window):
+      Check executions channel for order state.
+      Confirmed cancelled: proceed.
+      State unknown: retry cancel once.
+      Second timeout: ALERT operator (CRITICAL) +
+        HOLD POSITION. Do NOT market sell.
+        Operator must resolve.
+
+  Step 3 (after confirmed dual cancel):
+    add_order: market sell at market (taker 0.26%).
+
+  MPP HANDLING (C-1, 0411001 WS-MPP-001 through -004):
+    Market sell may reject on wide spread (Market Price
+    Protection). no_mpp is deprecated Sep 2025 — always
+    active. On MPP rejection:
+    Retry with IOC limit at best_bid - 0.2% (NOT a
+    repeated market sell). IOC fills immediately if
+    best_bid - 0.2% matches the book, or cancels — no
+    resting order left open.
+    Retry count: deferred to 0811003
+    Exit_Controller_Specification (Phase 6).
+    If all retries fail: ALERT operator CRITICAL +
+      HOLD POSITION. emergSL on Kraken engine is only
+      protection if sell fails.
+    Log MPP_REJECTION on each retry (include bid price,
+    limit price attempted, retry number).
+
+  On successful sell: clear Position Mirror. Fire CIATS.
+  exit_reason: MAE_THRESHOLD_BREACH
+
+============================================================
+3.4 LAYER 3 — EMERGENCY SL (CRASH PROTECTION ONLY)
+============================================================
+
+  THIS LAYER IS NOT EC. THIS IS KRAKEN MATCHING ENGINE.
+
+  The emergSL stop-market order rests on the Kraken
+  matching engine. It fires autonomously when TothBot
+  is unreachable (VPS crash, process kill, internet
+  severance, unrecoverable WS disconnect).
+
+  FIRING CONDITION: ONLY when TothBot cannot intervene.
+  SHOULD NEVER FIRE IN NORMAL OPERATION.
+  If emergSL fires: this is a SYSTEM FAILURE EVENT.
+
+  Detection on restart (not during normal EC operation):
+    Restart reconciliation compares Position Mirror state
+    vs snap_orders. If position shows as closed but TothBot
+    did not execute the close: EMERGENCY_SL_FIRED event.
+    Log CRITICAL. Alert operator.
+
+  emergSL distance: ATR(14) * emergency_sl_mult (3.0x).
+  This is 2x the MAE threshold — large buffer. Normal
+  Layer 2 exit fires first in normal operation.
+
+  MPP NOTE (C-1): Triggered stop-market subject to MPP on
+  wide spread. No retry possible — matching engine fires.
+  Layer 2 buffer (3x vs 1.5x) provides spread absorption.
+
+============================================================
+4. CONTINUOUS DRAWDOWN MONITORING (I-7)
+============================================================
+
+  Drawdown check fires on EVERY bbo ticker event for any
+  pair with an open position (not only at Gate 7).
+
+  Formula (AR-052):
+    current_portfolio_USD = spot_usd_balance
+        + sum(bid_price[sym] * qty[sym]
+              for sym in position_mirror)
+    drawdown_pct = max(0,
+        (portfolio_baseline_USD - current_portfolio_USD)
+        / portfolio_baseline_USD)
+
+  Uses bid price — conservative (realizable exit value).
+  portfolio_baseline_USD: set once at startup, never reset.
+
+  Thresholds (CIATS-owned starting values):
+    session_pause_drawdown (5%):
+      No new entries. system_state = SESSION_PAUSE.
+      Alert operator. Existing positions monitored normally.
+      Resumes when drawdown < 5%.
+    full_halt_drawdown (10%):
+      No new entries. system_state = FULL_HALT.
+      Alert operator (CRITICAL).
+      Does NOT auto-close positions. Bill decides.
+
+  Full Halt + batch_cancel (AR-019, AR-041):
+    On FULL_HALT: Exit Controller cancels ALL open
+    entry orders (not yet filled) via batch_cancel.
+    batch_cancel chosen because:
+      - Returns single count response (sufficient)
+      - Bypasses rate counter maximum (critical when halting)
+      - All open entries must be cancelled in minimum messages
+    batch_cancel does NOT cancel resting TP or emergSL.
+    Open positions continue to be monitored.
+
+============================================================
+5. PAIR STATUS ADAPTATION FOR OPEN POSITIONS (AR-040)
+============================================================
+
+  When instrument channel fires a status change for a pair
+  that has an open position:
+
+  status = limit_only:
+    Cancel TP (if resting). Place IOC limit sell at best_bid.
+    Do NOT use market sell in limit_only state.
+    exit_reason: PAIR_LIMIT_ONLY_EXIT
+
+  status = cancel_only:
+    HOLD position. CRITICAL alert to operator.
+    No new orders possible in cancel_only.
+    Resting TP and emergSL are the only protection.
+    Log PAIR_CANCEL_ONLY_HOLD.
+
+  status = maintenance (pair level):
+    HOLD position. CRITICAL alert to operator.
+    Same as cancel_only. Resting orders remain active.
+    Log PAIR_MAINTENANCE_HOLD.
+
+  Validates AR-001: resting emergSL is the correct crash
+  protection for exactly these pair-level disruption
+  scenarios.
+
+============================================================
+6. CANCEL TIMEOUT FALLBACK (I-6) — SPECIFICATION
+============================================================
+
+  Applies to all cancel_order calls in Layer 1a, 1b, and 2.
+
+  Mechanism:
+    On cancel_order dispatch: record {req_id, timestamp,
+    symbol, order_id} in req_id_registry.
+    Start timeout timer.
+
+  On ACK received:
+    Match by req_id. Mark confirmed. Proceed.
+
+  On timeout (window value deferred to 0811003
+    Exit_Controller_Specification — Phase 6):
+    1. Check executions channel for order state.
+       If exec_type=canceled for this order_id: proceed.
+       If order not in executions (state unknown):
+         Retry cancel_order once.
+         If second timeout: ALERT CRITICAL + HOLD POSITION.
+         Log CANCEL_TIMEOUT_HOLD. Do NOT proceed to sell.
+
+  NEVER issue market sell with ambiguous order state.
+  An uncancelled TP or emergSL during market sell creates
+  duplicate position risk and R:R violation.
+
+============================================================
+7. INTERFACES
+============================================================
+
+7.1 From WS Manager (0511001)
+  Receives: ticker bbo events for open-position pairs.
+  Receives: ohlc(60) and ohlc(5m) close events.
+  Receives: executions fills routed by WS Manager dispatch.
+  Receives: instrument status change events.
+  Receives: 00:00 UTC regime refresh trigger.
+
+7.2 To WS Manager (0511001)
+  Returns: cancel_order and batch_cancel instructions.
+  Returns: market sell add_order instructions.
+  WS Manager dispatches on Private WS v2.
+
+7.3 To Position Mirror (0511005)
+  Instructs Position Mirror clear on position close.
+  Reads Position Mirror for tp_order_id, emergSL_order_id,
+  qty, entry_fill_price during exit sequence.
+
+7.4 To Logger (0511006)
+  All exit events, layer triggers, cancel outcomes, and
+  CIATS Trade Outcome Bus data logged (non-blocking).
+
+7.5 To CIATS (via Logger)
+  Trade Outcome Bus fires on each COMPLETE position close.
+  Fields per position: symbol, entry_fill_price, exit_price,
+  hold_candle_count, MAE_reached, fees_total, exit_reason,
+  asset_regime, market_regime, signal_params_at_entry,
+  actual_RR, net_PL_USD.
+
+7.6 To Selection Controller state (via WS Manager, AR-073)
+  On position close: WS Manager updates exit_cooldown_log
+  and consecutive_loss_count based on exit_reason.
+
+============================================================
+8. HARD RULES
+============================================================
+
+HR-EC-001  Layer 3 (emergSL stop-market) MUST NEVER fire in
+           normal operation. Layer 3 is crash protection
+           only. If it fires: this is a system failure event
+           requiring CRITICAL alert and operator review.
+
+HR-EC-002  Layer 2 exit cancel sequence is SEQUENCE CRITICAL:
+           cancel TP THEN cancel emergSL THEN market sell.
+           NEVER market sell with ambiguous cancel state.
+
+HR-EC-003  Cancel timeout fallback (I-6) MUST be implemented
+           on ALL cancel_order calls in all exit layers.
+           No cancel is assumed successful without ACK or
+           executions confirmation.
+
+HR-EC-004  MPP rejections on market sell MUST be retried
+           using IOC limit at best_bid - 0.2% per 0411001
+           WS-MPP-001 through -004 (C-1). NOT a repeated
+           market sell. Retry count specified in 0811003.
+           If all retries fail: ALERT CRITICAL + HOLD.
+
+HR-EC-005  batch_cancel for Full Halt: cancel ALL open
+           entry orders. Does not cancel resting TP or
+           emergSL. Uses batch_cancel (not cancel_order)
+           for rate bypass (AR-041).
+
+HR-EC-006  Drawdown computed on EVERY bbo ticker event for
+           open-position pairs. Gate 7 alone is insufficient.
+
+HR-EC-007  FULL_HALT does NOT auto-close positions. System
+           halts new entries. Bill decides on open positions.
+
+HR-EC-008  pair status=cancel_only or maintenance while long
+           open: HOLD + CRITICAL alert. No automated close
+           in cancel_only state (AR-040).
+
+HR-EC-009  CIATS Trade Outcome Bus fires ONCE per complete
+           position close with ALL required fields. Not on
+           each partial fill (AR-066).
+
+HR-EC-010  hold_candle_count per open position maintained in
+           WS Manager state. Increments on each ohlc(5m)
+           close for that symbol. Reset to 0 on position close.
+
+HR-EC-011  IOC limit at best_bid for limit_only state exit.
+           Market sell is PROHIBITED in limit_only (AR-040).
+
+HR-EC-012  R:R violation: sacred net_gain = net_loss * 1.5
+           applies to TP placement only. emergSL distance
+           (3.0x ATR) is NOT in the R:R formula. emergSL is
+           crash protection — its distance is separate.
+
+============================================================
+9. WHAT TRIGGERS IT
+============================================================
+
+  ticker bbo event (open-position pair)    → drawdown check,
+                                             MAE check (L2)
+  ohlc(60) candle close                   → HTF check (L1a-001)
+  ohlc(5m) candle close                   → hold count (L1a-003)
+  00:00 UTC regime refresh                → regime check (L1a-002)
+  exec_type=filled (TP order_id match)    → L1b
+  instrument status change (open position) → pair adaptation
+  drawdown >= full_halt threshold         → batch_cancel
+
+============================================================
+10. WHAT IT LOGS
+============================================================
+
+  LAYER 1a:
+    L1A_TRIGGERED        — layer, trigger (L1a-001/002/003),
+                           symbol, exit sequence start
+    CANCEL_TP_SENT       — symbol, tp_order_id, req_id
+    CANCEL_EMGSL_SENT    — symbol, emgSL_order_id, req_id
+    CANCEL_CONFIRMED     — req_id, order_id
+    CANCEL_TIMEOUT_HOLD  — req_id, symbol (CRITICAL)
+    MARKET_SELL_SENT     — symbol, qty, req_id
+    MARKET_SELL_FILLED   — symbol, exit_price, fees
+    POSITION_CLOSED      — symbol, exit_reason, net_PL_USD
+
+  LAYER 1b:
+    TP_FILL_DETECTED     — symbol, tp_order_id
+    EMGSL_CANCEL_SENT    — symbol, emgSL_order_id
+    POSITION_CLOSED      — symbol, exit_reason=TP_FILL
+
+  LAYER 2:
+    MAE_BREACH_DETECTED  — symbol, bid, entry, ATR, mae_threshold
+    (same cancel/sell sequence as L1a)
+    MPP_REJECTION        — symbol, bid_price, attempt_number
+    IOC_LIMIT_RETRY_SENT — symbol, limit_price (best_bid-0.2%),
+                           qty, req_id, attempt_number
+    IOC_LIMIT_FILLED     — symbol, fill_price, qty, fees
+    IOC_LIMIT_EXPIRED    — symbol, attempt_number (no fill)
+    MAE_HOLD_AMBIGUOUS   — symbol (CRITICAL — all retries failed)
+
+  DRAWDOWN:
+    DRAWDOWN_UPDATE      — drawdown_pct, current_portfolio_USD
+    SESSION_PAUSE        — drawdown_pct threshold crossed
+    FULL_HALT            — drawdown_pct, open_positions count
+    BATCH_CANCEL_SENT    — count of entry orders cancelled
+    BATCH_CANCEL_RESULT  — count confirmed
+
+  PAIR STATUS:
+    PAIR_LIMIT_ONLY_EXIT — symbol, IOC limit dispatched
+    PAIR_CANCEL_ONLY_HOLD — symbol (CRITICAL)
+    PAIR_MAINTENANCE_HOLD — symbol (CRITICAL)
+
+  EMERGENCY SL (detected on restart):
+    EMERGENCY_SL_FIRED   — symbol, position data (CRITICAL)
+
+  CIATS TRADE OUTCOME BUS (on every complete close):
+    symbol, entry_fill_price, exit_price, hold_candles,
+    MAE_pct_reached, fees_entry, fees_exit, exit_reason,
+    asset_regime, market_regime, signal_params_at_entry,
+    actual_RR, net_PL_USD, entry_timestamp_utc,
+    exit_timestamp_utc
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0411001  Kraken_WS_v2_Specification       (wire contract)
+  0511001  WS_Manager_Specification         (triggers EC)
+  0511002  Signal_Pipeline_Specification    (Gate 7 drawdown)
+  0511005  Position_Mirror_Specification    (position data)
+  0511006  Logger_Specification             (log recipient)
+  1011005  Exit_Controller_Coding_Spec      (AA=10 child)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_2  04-04-2026  Two additional defects from dv1_0
+                     corrected. (1) Section 2 Component
+                     Summary: "MPP sell retries" corrected
+                     to "MPP IOC limit retries." (2) Section
+                     10 WHAT IT LOGS Layer 2: added
+                     IOC_LIMIT_RETRY_SENT, IOC_LIMIT_FILLED,
+                     IOC_LIMIT_EXPIRED events to match the
+                     MPP IOC retry strategy specified in
+                     Section 3.3. Replaced MPP_REJECTION
+                     field from retry_count to bid_price +
+                     attempt_number. MAE_HOLD_AMBIGUOUS
+                     description corrected to "all retries
+                     failed."
+
+  dv1_1  04-04-2026  Two defects corrected from dv1_0.
+                     (1) MPP retry strategy: replaced
+                     "retry market sell N times" with
+                     correct mechanism: IOC limit at
+                     best_bid - 0.2% per 0411001
+                     WS-MPP-001 through -004 (C-1).
+                     Retry count deferred to 0811003.
+                     (2) Cancel timeout window: removed
+                     fabricated "10 seconds" default.
+                     Timeout window value deferred to
+                     0811003 Exit_Controller_Specification
+                     (Phase 6). HR-EC-004 updated to
+                     reflect correct MPP retry strategy.
+
+  dv1_0  04-04-2026  Initial document. Derived from
+                     0500000 dv1_18 Sections 2, 4, 8, 9,
+                     11. Three-layer exit architecture fully
+                     specified. EC-L1A-001/002/003 defined.
+                     Cancel timeout fallback (I-6) specified.
+                     MPP handling (C-1) specified. batch_cancel
+                     for Full Halt (AR-019, AR-041) specified.
+                     Continuous drawdown monitoring (I-7)
+                     specified. Pair status adaptation (AR-040)
+                     specified. TP partial fill (AR-066)
+                     referenced. Hard rules HR-EC-001 through
+                     HR-EC-012 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================
