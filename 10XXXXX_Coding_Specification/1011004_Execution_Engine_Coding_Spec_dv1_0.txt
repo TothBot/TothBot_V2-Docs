@@ -1,0 +1,343 @@
+DocDCN:     1011004
+DocTitle:   Execution_Engine_Coding_Spec
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011004_Execution_Engine_Coding_Spec_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    14:00:00 UTC
+
+============================================================
+EXECUTION ENGINE CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Execution Engine. It owns all order
+dispatch to Kraken for position entry and TP/emergSL
+placement. No code for order dispatch is written from
+any other document.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011004  This document
+  Parent specification: 0511003 Execution_Engine_Specification dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Execution Engine DO?
+    Receives Gate 8 output from Signal Pipeline. Assigns
+    cl_ord_id to entry order. Constructs and sends add_order
+    (entry limit/post_only/GTD) via Private WS v2. Creates
+    Position Mirror record at dispatch. Populates Pending
+    Order Registry. On entry fill, constructs and sends
+    batch_add (TP resting limit + emergSL stop-market, atomic)
+    via Private WS v2. Updates Position Mirror with order IDs
+    on batch_add ACK. Handles post_only rejection and GTD expiry.
+
+(2) Interfaces?
+    IN:  Gate 8 output dict from Signal Pipeline
+         executions channel fills/expiry (via WS Manager)
+         pair_cache[symbol] (price_increment, qty_increment,
+           qty_min, cost_min)
+    OUT: WS v2 add_order message (entry)
+         WS v2 batch_add message (TP + emergSL on fill)
+         Position Mirror record (via WS Manager write path)
+         Pending Order Registry update
+         Logger records
+
+(3) Hard rules?
+    post_only=true on ALL entry add_order.
+    stp_type="cancel_newest" (underscore) on ALL WS v2 orders.
+    deadline = UTC now + 5 seconds (ISO 8601) on ALL orders.
+    triggers.reference="last" on ALL emergSL stop orders.
+    TP and emergSL placed via batch_add atomic on fill. Never OTO.
+    cl_ord_id assigned at dispatch BEFORE Kraken response.
+    Position Mirror record created at dispatch (no async gap).
+    Pending Order Registry populated on every add_order dispatch.
+    All Decimal values: Decimal(str()) on all WS numeric fields.
+    net_gain = net_loss * 1.5 HARDCODED. Not a parameter.
+    entry_qty >= qty_min AND entry_qty * price >= cost_min before dispatch.
+    amend_order is primary amendment. edit_order DEPRECATED — never use.
+    Never send cancel_all_orders_after under any circumstance.
+
+(4) What triggers it?
+    Gate 8 output from Signal Pipeline (8-gate pass).
+    exec_type=filled from executions channel (triggers batch_add).
+
+(5) What does it log?
+    ENTRY_DISPATCHED: symbol, cl_ord_id, entry_price, qty, deadline
+    ENTRY_REJECTED_POST_ONLY: symbol, cl_ord_id, reason
+    ENTRY_REJECTED_RATE_LIMIT: symbol, req_id
+    ENTRY_FILLED: symbol, cl_ord_id, fill_price, qty, fees
+    TP_PLACED: symbol, cl_ord_id, tp_price
+    EMERG_SL_PLACED: symbol, cl_ord_id, sl_trigger
+    ENTRY_EXPIRED: symbol, cl_ord_id, cum_qty
+
+============================================================
+4. CL_ORD_ID ASSIGNMENT
+============================================================
+
+EE-ID-001  cl_ord_id format: up to 18 characters, unique per order.
+           TothBot format: symbol_prefix(6) + timestamp_ms(12)
+           Example: "BTCUSD1712230000001"
+           Assigned in code:
+             import time
+             ts_ms = int(time.time() * 1000)
+             cl_ord_id = f"{symbol[:6].replace('/',''')}{ts_ms}"
+
+EE-ID-002  cl_ord_id assigned at dispatch BEFORE Kraken response.
+           Position Mirror record created with this cl_ord_id
+           at the same moment — no async gap (A-2 rule).
+
+EE-ID-003  req_id: unique integer per outbound WS message.
+           WS Manager req_id_registry tracks:
+             {req_id: {"method": str, "ts": float, "symbol": str}}
+           Used for cancel timeout fallback and response correlation.
+
+============================================================
+5. ENTRY ORDER DISPATCH (PHASE 1)
+============================================================
+
+------------------------------------------------------------
+5.1 add_order Construction (AR-006)
+------------------------------------------------------------
+
+EE-ADD-001  All fields required. No optional fields omitted.
+
+              entry_msg = {
+                  "method": "add_order",
+                  "params": {
+                      "order_type":   "limit",
+                      "side":         "buy",
+                      "symbol":       symbol,
+                      "limit_price":  str(entry_limit_price),  # Decimal → str
+                      "order_qty":    str(entry_qty),           # Decimal → str
+                      "post_only":    True,
+                      "time_in_force": "gtd",
+                      "expire_time":  _gtd_expire_time(),       # see 5.2
+                      "cl_ord_id":    cl_ord_id,
+                      "stp_type":     "cancel_newest",          # underscore
+                      "deadline":     _deadline_now_plus_5s(),  # see 5.3
+                  },
+                  "req_id": req_id
+              }
+              await ws_private.send(orjson.dumps(entry_msg).decode())
+
+EE-ADD-002  entry_limit_price = candle close price (AR-069),
+            quantized DOWN to price_increment (BP-DEC-003).
+
+EE-ADD-003  entry_qty must pass minimum validation before dispatch:
+              assert entry_qty >= pair_cache[symbol]["qty_min"]
+              assert entry_qty * entry_limit_price >= pair_cache[symbol]["cost_min"]
+            If either fails: log GATE_8_SIZE_BELOW_MIN, abort dispatch.
+
+------------------------------------------------------------
+5.2 GTD Expire Time
+------------------------------------------------------------
+
+EE-ADD-004  entry_timeout_sec: CIATS-owned starting value = 45s.
+
+              def _gtd_expire_time():
+                  from datetime import datetime, timezone, timedelta
+                  expire = (datetime.now(timezone.utc)
+                            + timedelta(seconds=entry_timeout_sec))
+                  return expire.strftime("%Y-%m-%dT%H:%M:%S")
+
+------------------------------------------------------------
+5.3 Deadline (AR-033)
+------------------------------------------------------------
+
+EE-ADD-005  deadline = UTC now + 5 seconds on ALL WS v2 orders.
+
+              def _deadline_now_plus_5s():
+                  from datetime import datetime, timezone, timedelta
+                  dl = (datetime.now(timezone.utc)
+                        + timedelta(seconds=5))
+                  return dl.strftime("%Y-%m-%dT%H:%M:%S")
+
+------------------------------------------------------------
+5.4 At-Dispatch Actions
+------------------------------------------------------------
+
+EE-ADD-006  Immediately after send (before any Kraken response):
+              (a) Create Position Mirror record (PM-CREATE-001)
+              (b) Add to Pending Order Registry:
+                    pending_orders[cl_ord_id] = entry_qty * entry_limit_price
+              (c) Log ENTRY_DISPATCHED
+
+------------------------------------------------------------
+5.5 Post_only Rejection Handling
+------------------------------------------------------------
+
+EE-REJ-001  On exec_type=canceled AND reason indicates post_only:
+            (The entry limit price was aggressive — would take.)
+            Log ENTRY_REJECTED_POST_ONLY.
+            Remove from Pending Order Registry.
+            Clear Position Mirror record for symbol.
+            Release BoundedSemaphore slot.
+            DO NOT retry. Pipeline will re-evaluate at next candle.
+
+EE-REJ-002  On exec_type=expired (GTD timeout, no fill):
+            Log ENTRY_EXPIRED with cum_qty.
+            If cum_qty == 0: Remove from Pending Order Registry.
+                             Clear Position Mirror record.
+                             Release BoundedSemaphore slot.
+            If cum_qty > 0: Partial fill — treat as entry fill.
+                             See 1011011 Risk Engine for partial
+                             fill protection (AR-054).
+
+============================================================
+6. TP + EMERGSL PLACEMENT (PHASE 2 — ON FILL)
+============================================================
+
+------------------------------------------------------------
+6.1 Trigger
+------------------------------------------------------------
+
+EE-BA-001   TRIGGER: exec_type=filled for entry cl_ord_id.
+            avg_price from fill event = entry_fill_price (actual).
+            NOT the limit price used for sizing. AR-008.
+
+            entry_fill_price = Decimal(str(fill_event["avg_price"]))
+            Update Position Mirror: on_entry_filled(symbol, avg_price, cum_qty, ts)
+
+------------------------------------------------------------
+6.2 Recompute TP and emergSL at Actual Fill Price
+------------------------------------------------------------
+
+EE-BA-002   TP and emergSL MUST be recomputed using
+            entry_fill_price (actual avg_price). NOT entry_limit_price.
+            The R:R constraint is evaluated at actual fill price.
+
+            TP recomputation:
+              from decimal import Decimal, ROUND_UP
+              gross_target = compute_gross_target(
+                  mae_pct=entry_atr_14 * mae_mult / entry_fill_price,
+                  entry_fee_pct=Decimal("0.0016"),
+                  tp_fee_pct=Decimal("0.0016")
+              )
+              raw_tp = entry_fill_price * (Decimal("1") + gross_target)
+              tp_price = raw_tp.quantize(
+                  pair_cache[symbol]["price_increment"],
+                  rounding=ROUND_UP
+              )
+
+            emergSL recomputation:
+              from decimal import Decimal, ROUND_DOWN
+              raw_sl = entry_fill_price - (entry_atr_14 * emergsl_mult)
+              emergsl_price = raw_sl.quantize(
+                  pair_cache[symbol]["price_increment"],
+                  rounding=ROUND_DOWN
+              )
+
+------------------------------------------------------------
+6.3 batch_add Construction (AR-007)
+------------------------------------------------------------
+
+EE-BA-003   TP and emergSL dispatched as single atomic batch_add.
+            OTO conditional orders: REJECTED (AR-008).
+
+              ba_msg = {
+                  "method": "batch_add",
+                  "params": {
+                      "orders": [
+                          {
+                              "order_type":   "limit",
+                              "side":         "sell",
+                              "symbol":       symbol,
+                              "limit_price":  str(tp_price),
+                              "order_qty":    str(entry_qty),
+                              "post_only":    False,
+                              "time_in_force": "gtc",
+                              "cl_ord_id":    tp_cl_ord_id,
+                              "stp_type":     "cancel_newest",
+                              "deadline":     _deadline_now_plus_5s(),
+                          },
+                          {
+                              "order_type":   "stop-market",
+                              "side":         "sell",
+                              "symbol":       symbol,
+                              "order_qty":    str(entry_qty),
+                              "trigger_price": str(emergsl_price),
+                              "triggers": {
+                                  "price":     str(emergsl_price),
+                                  "reference": "last",       # MANDATORY AR-046
+                              },
+                              "time_in_force": "gtc",
+                              "cl_ord_id":    emgsl_cl_ord_id,
+                              "deadline":     _deadline_now_plus_5s(),
+                          }
+                      ],
+                      "token": ws_token,
+                  },
+                  "req_id": req_id
+              }
+              await ws_private.send(orjson.dumps(ba_msg).decode())
+
+EE-BA-004   triggers.reference = "last" is MANDATORY on emergSL.
+            Never "index". Never omit. AR-046.
+
+EE-BA-005   stp_type = "cancel_newest" on TP (underscore — WS v2).
+            REST API uses hyphen. Never confuse. AR-032.
+
+------------------------------------------------------------
+6.4 On batch_add ACK
+------------------------------------------------------------
+
+EE-BA-006   WS Manager receives batch_add ACK with Kraken-assigned
+            order_ids for TP and emergSL.
+            Call Position Mirror: on_batch_add_ack(symbol,
+                                    tp_order_id, emgsl_order_id)
+            Log TP_PLACED and EMERG_SL_PLACED.
+            Remove entry cl_ord_id from Pending Order Registry.
+
+============================================================
+7. HARD RULES
+============================================================
+
+HR-EE-001  post_only=True on ALL entry add_order.
+HR-EE-002  stp_type="cancel_newest" (underscore) WS v2. REST uses hyphen.
+HR-EE-003  deadline = UTC now + 5s on ALL add_order and batch_add.
+HR-EE-004  triggers.reference="last" on ALL emergSL stop orders.
+HR-EE-005  TP+emergSL via batch_add atomic on fill. Never OTO.
+HR-EE-006  cl_ord_id assigned at dispatch BEFORE Kraken response.
+HR-EE-007  Pending Order Registry populated on every add_order dispatch.
+HR-EE-008  All Decimal: Decimal(str()) on all WS numeric fields.
+HR-EE-009  Net 1:1.5 R:R HARDCODED. Not a parameter.
+HR-EE-010  entry_qty >= qty_min AND cost_min checked before dispatch.
+HR-EE-011  amend_order is primary amendment. edit_order PROHIBITED.
+HR-EE-012  Never send cancel_all_orders_after.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     Written from 0511003 Execution_Engine_
+                     Specification dv1_0. Full coding contract
+                     for entry dispatch (Phase 1) and TP+emergSL
+                     placement (Phase 2). cl_ord_id assignment.
+                     add_order construction with all mandatory
+                     fields. GTD expire time and deadline helpers.
+                     At-dispatch Position Mirror and Pending Order
+                     Registry actions. Post_only rejection and GTD
+                     expiry handling. batch_add construction with
+                     TP limit and emergSL stop-market. Fill-price
+                     recomputation for R:R at actual price.
+                     triggers.reference="last" requirement.
+                     Hard rules HR-EE-001 through -012.
+                     Five coding-readiness questions answered.
+                     Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
