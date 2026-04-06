@@ -1,0 +1,313 @@
+DocDCN:     1011008
+DocTitle:   Long_Module_Coding_Spec
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011008_Long_Module_Coding_Spec_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    15:00:00 UTC
+
+============================================================
+LONG MODULE CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Long Module — the entry dispatch and
+position protection orchestration engine. It covers the
+entry order lifecycle, all fill outcomes, partial fill
+protection, and position opening. Order construction
+mechanics are in 1011004 Execution_Engine_Coding_Spec.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011008  This document
+  Parent specification: 0811001 Long_Module_Specification dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Long Module DO?
+    Receives Gate 8 authorized dispatch. Orchestrates the
+    entry order lifecycle from dispatch through fill or
+    no-fill. On full fill: triggers TP+emergSL batch_add.
+    On partial fill: applies entry protection (AR-054).
+    Manages all position Mirror writes. Handles post_only
+    rejection, GTD expiry, and all entry order outcomes.
+
+(2) Interfaces?
+    IN:  Gate 8 output dict (symbol, entry_qty,
+           entry_limit_price, tp_price, emergsl_price,
+           entry_atr_14, asset_regime, market_regime,
+           signal_params)
+         executions channel events (via WS Manager)
+         pair_cache (qty_min, cost_min, qty_increment,
+           price_increment)
+    OUT: add_order dispatch (via Execution Engine)
+         batch_add dispatch (via Execution Engine, on fill)
+         Position Mirror writes (create, fill, orders set)
+         Pending Order Registry (via WS Manager)
+         BoundedSemaphore acquire/release (Risk Engine)
+         Logger records
+
+(3) Hard rules?
+    cl_ord_id assigned at dispatch BEFORE Kraken response.
+    Position Mirror record created at dispatch (no async gap).
+    batch_add dispatched ONLY on exec_type=filled (full fill).
+    Entry partial fill (exec_type=trade): protect then close.
+    On GTD expiry with zero fill: clear state, release semaphore.
+    On GTD expiry with partial fill: protect partial as position.
+    post_only rejection: clear state, release semaphore, no retry.
+    Net 1:1.5 R:R hardcoded. Never a parameter.
+    All arithmetic: Decimal. No float.
+    DMS (cancel_all_orders_after) PROHIBITED. AR-055.
+
+(4) What triggers it?
+    Gate 8 pass from Signal Pipeline (entry authorized).
+    executions channel events for entry cl_ord_id.
+
+(5) What does it log?
+    ENTRY_ACCEPTED_ON_BOOK, ENTRY_FILLED, ENTRY_PARTIAL_TRADE
+    ENTRY_EXPIRED_NO_FILL, ENTRY_CANCELED_NO_FILL
+    ENTRY_EXPIRED_PARTIAL_FILL, ENTRY_CANCELED_PARTIAL_FILL
+    ENTRY_POST_ONLY_REJECTED
+    ENTRY_PARTIAL_FILL_PROTECTED (partial fill protected)
+    PARTIAL_FILL_BELOW_MINIMUM (below-min emergency sell)
+    TP_PLACED, EMGSL_PLACED, POSITION_OPENED
+
+============================================================
+4. ENTRY LIFECYCLE STATE MACHINE
+============================================================
+
+LM-SM-001  Entry order state per symbol:
+
+              IDLE          → no pending entry
+              DISPATCHED    → add_order sent, awaiting ACK
+              ON_BOOK       → exec_type=new confirmed
+              PARTIAL_FILL  → exec_type=trade (partial)
+              FILLED        → exec_type=filled
+              EXPIRED       → exec_type=expired
+              REJECTED      → post_only cancel received
+
+LM-SM-002  One entry state machine per symbol. Only one
+           concurrent entry attempt per symbol allowed.
+           Enforced by Selection Controller SC-GATE-3.
+
+============================================================
+5. PHASE 1 — ENTRY DISPATCH AND MONITORING
+============================================================
+
+LM-DISPATCH-001  On Gate 8 pass:
+                 (a) Acquire BoundedSemaphore slot (Gate 7 already
+                     checked but acquire here — holds slot through
+                     entire position lifecycle)
+                 (b) Assign cl_ord_id (EE-ID-001 in 1011004)
+                 (c) Call Execution Engine dispatch_entry_order()
+                 (d) Create Position Mirror record (PM-CREATE-001)
+                 (e) Add to Pending Order Registry
+                 (f) Set entry state = DISPATCHED
+                 (g) Log ENTRY_DISPATCHED
+
+LM-DISPATCH-002  On exec_type=new for entry cl_ord_id:
+                 Set entry state = ON_BOOK.
+                 Log ENTRY_ACCEPTED_ON_BOOK.
+
+LM-DISPATCH-003  On exec_type=trade for entry cl_ord_id
+                 (partial fill during GTD window):
+                 Set entry state = PARTIAL_FILL.
+                 Update Position Mirror qty = cum_qty.
+                 Log ENTRY_PARTIAL_TRADE with cum_qty, avg_price.
+
+LM-DISPATCH-004  On exec_type=filled for entry cl_ord_id
+                 (full fill — normal path):
+                 Set entry state = FILLED.
+                 Go to Phase 2 (TP+emergSL placement).
+
+============================================================
+6. PHASE 1 — ENTRY OUTCOME HANDLING
+============================================================
+
+------------------------------------------------------------
+6.1 Post_only Rejection
+------------------------------------------------------------
+
+LM-OUT-001  On exec_type=canceled where reason indicates
+            post_only rejection (order would have taken):
+            Log ENTRY_POST_ONLY_REJECTED with regime.
+            Clear Position Mirror record for symbol.
+            Remove from Pending Order Registry.
+            Release BoundedSemaphore slot.
+            Set entry state = IDLE.
+            DO NOT retry. Pipeline re-evaluates at next candle.
+
+------------------------------------------------------------
+6.2 GTD Expiry — Zero Fill
+------------------------------------------------------------
+
+LM-OUT-002  On exec_type=expired with cum_qty == 0:
+            Order sat on book for full GTD window, no fill.
+            Log ENTRY_EXPIRED_NO_FILL.
+            Clear Position Mirror record.
+            Remove from Pending Order Registry.
+            Release BoundedSemaphore slot.
+            Set entry state = IDLE.
+
+------------------------------------------------------------
+6.3 GTD Expiry — Partial Fill (AR-054)
+------------------------------------------------------------
+
+LM-OUT-003  On exec_type=expired with cum_qty > 0:
+            Entry partially filled. Position partially open.
+            Must protect or exit.
+
+            Log ENTRY_EXPIRED_PARTIAL_FILL with cum_qty, avg_price.
+            entry_fill_price = Decimal(str(avg_price))
+            partial_qty = Decimal(str(cum_qty))
+
+            Protection eligibility check:
+              if partial_qty >= qty_min AND
+                 partial_qty * entry_fill_price >= cost_min:
+                  → LM-PARTIAL-PROTECT (Section 7)
+              else:
+                  → LM-PARTIAL-BELOW-MIN (Section 8)
+
+------------------------------------------------------------
+6.4 Cancel During GTD — Partial Fill
+------------------------------------------------------------
+
+LM-OUT-004  On exec_type=canceled with cum_qty > 0:
+            (Rare — e.g., post_only triggered after partial)
+            Log ENTRY_CANCELED_PARTIAL_FILL.
+            Apply same logic as LM-OUT-003 (AR-054 path).
+
+============================================================
+7. PARTIAL FILL PROTECTION (AR-054)
+============================================================
+
+LM-PARTIAL-PROTECT-001  Partial fill above minimums.
+                        Protect by placing TP+emergSL on partial qty.
+
+                        Recompute TP and emergSL at actual partial fill price:
+                          entry_fill_price = partial avg_price
+                          tp_price = recompute at entry_fill_price (EE-BA-002)
+                          emergsl_price = recompute at entry_fill_price
+
+                        Dispatch batch_add with partial_qty:
+                          TP qty = partial_qty
+                          emergSL qty = partial_qty
+
+LM-PARTIAL-PROTECT-002  Update Position Mirror:
+                          position_mirror[symbol].qty = partial_qty
+                          position_mirror[symbol].entry_fill_price = avg_price
+
+LM-PARTIAL-PROTECT-003  Log ENTRY_PARTIAL_FILL_PROTECTED with:
+                          symbol, cum_qty, avg_price, tp_price, emergsl_price.
+
+LM-PARTIAL-PROTECT-004  On batch_add ACK: update Position Mirror order IDs.
+                         Log POSITION_OPENED with all fields.
+                         BoundedSemaphore slot HELD (open position).
+
+============================================================
+8. PARTIAL FILL BELOW MINIMUM (AR-054)
+============================================================
+
+LM-PARTIAL-BELOW-MIN-001  Partial fill below qty_min or cost_min.
+                          Position too small to protect with resting orders.
+                          Must exit immediately.
+
+                          Log PARTIAL_FILL_BELOW_MINIMUM.
+                          Issue IOC market sell for partial_qty:
+                            add_order: side=sell, order_type=market,
+                            time_in_force=ioc, order_qty=partial_qty
+                          Clear Position Mirror record.
+                          Remove from Pending Order Registry.
+                          Release BoundedSemaphore slot.
+                          No CIATS Trade Outcome Bus for below-min exits
+                          (insufficient trade data).
+
+============================================================
+9. PHASE 2 — TP + EMERGSL PLACEMENT (ON FULL FILL)
+============================================================
+
+LM-PHASE2-001  TRIGGER: exec_type=filled for entry cl_ord_id.
+               Full fill confirmed.
+
+               entry_fill_price = Decimal(str(avg_price_from_fill))
+               Update Position Mirror fill price and timestamp.
+               Remove from Pending Order Registry.
+               Log ENTRY_FILLED with entry_fill_price, qty, fees.
+
+LM-PHASE2-002  Dispatch batch_add (TP + emergSL):
+               Call Execution Engine dispatch_batch_add() with:
+                 symbol, entry_fill_price, entry_qty,
+                 entry_atr_14, mae_mult, emergsl_mult,
+                 price_increment, qty_increment, ws_token
+
+               Execution Engine computes TP and emergSL at
+               actual fill price (EE-BA-002 in 1011004).
+
+LM-PHASE2-003  On batch_add ACK received:
+               Update Position Mirror: on_batch_add_ack()
+               Log TP_PLACED and EMGSL_PLACED.
+               Log POSITION_OPENED with all fields:
+                 symbol, entry_fill_price, qty,
+                 tp_price, emergsl_trigger,
+                 asset_regime, market_regime, signal_params
+
+               BoundedSemaphore slot HELD (position is open).
+
+============================================================
+10. SEMAPHORE LIFECYCLE
+============================================================
+
+LM-SEM-001  Semaphore acquired at dispatch (Step LM-DISPATCH-001).
+            Held through entire position lifecycle.
+            Released ONLY on position close (Exit Controller calls
+            release after CIATS Trade Outcome Bus and Mirror clear).
+            Also released on: post_only rejection, zero-fill expiry,
+            below-minimum emergency sell.
+
+LM-SEM-002  BoundedSemaphore ValueError = CRITICAL BUG.
+            Log INVARIANT_BREACH, alert operator, halt system.
+
+============================================================
+11. HARD RULES
+============================================================
+
+HR-LM-001  cl_ord_id assigned at dispatch. No async gap.
+HR-LM-002  Position Mirror created at dispatch (not on fill).
+HR-LM-003  batch_add dispatched on exec_type=filled ONLY.
+           Exception: AR-054 partial fill protection.
+HR-LM-004  post_only=True on all entry orders. No taker entries.
+HR-LM-005  stp_type="cancel_newest" (underscore, WS v2).
+HR-LM-006  emergSL triggers.reference="last". Never "index".
+HR-LM-007  All Decimal arithmetic. No float.
+HR-LM-008  DMS (cancel_all_orders_after) PROHIBITED. AR-055.
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     Written from 0811001 Long_Module_
+                     Specification dv1_0. Entry lifecycle
+                     state machine. Dispatch and monitoring.
+                     All 4 entry outcomes (rejection, zero
+                     expiry, partial expiry, full fill).
+                     Partial fill protection (AR-054) above
+                     and below minimum. Phase 2 batch_add
+                     orchestration. Semaphore lifecycle.
+                     Hard rules HR-LM-001 through -008.
+                     Five coding-readiness questions answered.
+                     Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
