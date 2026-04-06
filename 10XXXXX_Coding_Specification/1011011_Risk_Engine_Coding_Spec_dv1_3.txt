@@ -1,0 +1,431 @@
+DocDCN:     1011011
+DocTitle:   Risk_Engine_Coding_Spec
+DocVersion: dv1_3
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011011_Risk_Engine_Coding_Spec_dv1_3.txt
+DocDate:    04-05-2026
+DocTime:    12:00:00 UTC
+
+============================================================
+RISK ENGINE CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Risk Engine. It implements Gate 7
+(Risk Guard) and Gate 8 (Position Sizer) of the 8-gate
+trading pipeline. It is the final filter before order
+dispatch. No code is written from any other document.
+
+The Risk Engine enforces three circuit breakers:
+  full_halt_drawdown:      10% of portfolio (HALT)
+  session_pause_drawdown:  5% of portfolio (PAUSE)
+  max_concurrent:          20 positions (BLOCK entry)
+
+All values are CIATS-owned starting values. The only
+hardcoded constraint is net 1:1.5 R:R (AR-011).
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011011  This document
+  Parent specifications:
+    0611001  Position_Sizing_Rules          dv1_0
+    0611002  Drawdown_and_Halt_Rules        dv1_0
+    0611003  Concentration_and_Exposure_Rules dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Risk Engine DO?
+    Gate 7 (Risk Guard): Checks drawdown, concentration,
+    and exposure. Enforces max_concurrent via BoundedSemaphore.
+    Checks available_USD vs per_trade_USD. Continuously
+    monitors drawdown on bbo ticker events. Blocks entries
+    or halts system on threshold breach. Never blocks.
+    Gate 8 (Position Sizer): Calculates position size,
+    TP price, emergSL price. All values Decimal. Validates
+    qty_min and cost_min. Output: order parameters dict.
+
+(2) Interfaces?
+    Inputs:
+      Position Mirror: open position count (semaphore)
+      Parameter Store: all CIATS-owned thresholds
+      WS Manager: spot_usd_balance, pending_orders sum,
+                  bid prices (via bbo ticker events)
+      Portfolio baseline: set once at startup by 1011014
+    Outputs:
+      Gate 7: PASS | BLOCK | SESSION_PAUSE | FULL_HALT
+      Gate 8: {entry_qty, tp_price, emergsl_price, net_RR}
+
+(3) Hard rules?
+    Net 1:1.5 R:R SACRED. Hardcoded. Never changes.
+    portfolio_USD = spot_usd_balance only. Never MTM.
+    All financial values: Python Decimal. Never float.
+    All rounding: Decimal.quantize() only. Never math.floor/ceil.
+    max_concurrent enforced by asyncio.BoundedSemaphore.
+    BoundedSemaphore ValueError = critical bug, halt.
+    Drawdown uses bid price (realizable exit for longs).
+    Drawdown baseline = startup cash. Never reset mid-session.
+    Full halt requires operator restart to resume.
+    Gate 7 uses available_USD (cash minus pending orders).
+    emergSL remains active in all halt states.
+    batch_cancel on full halt cancels ENTRY GTD only.
+
+(4) What triggers it?
+    Gate 7/8: each pipeline evaluation (5m candle close).
+    Drawdown: every bbo ticker event for open positions.
+    (Ticker-driven — continuous, not just candle-driven.)
+
+(5) What does it log?
+    Every Gate 7 decision with drawdown_pct, semaphore count.
+    Every Gate 8 calculation: qty, tp_price, emergsl_price, RR.
+    Every halt/pause with threshold and drawdown values.
+    FULL_HALT_TRIGGERED, SESSION_PAUSE_TRIGGERED (Logger).
+    portfolio_baseline_USD at startup (INFO).
+    available_USD on every Gate 7 USD check.
+    BoundedSemaphore state on every acquire/release.
+
+============================================================
+4. GATE 7 — RISK GUARD IMPLEMENTATION
+============================================================
+
+------------------------------------------------------------
+4.1 Concurrent Position Limit (max_concurrent)
+------------------------------------------------------------
+
+RE-SEM-001  Use asyncio.BoundedSemaphore for max_concurrent:
+              max_concurrent = 20  # CIATS-owned starting value
+              position_semaphore = asyncio.BoundedSemaphore(
+                  max_concurrent)
+
+RE-SEM-002  Gate 7 acquires semaphore before any new entry:
+              if position_semaphore.locked():
+                  # All slots full — block entry
+                  log("GATE_7_RESULT", level="INFO",
+                      reason="MAX_CONCURRENT_REACHED",
+                      semaphore_count=max_concurrent)
+                  return GateResult.BLOCK
+
+              # Try to acquire (non-blocking check):
+              if not position_semaphore._value > 0:
+                  return GateResult.BLOCK
+
+RE-SEM-003  CORRECT pattern for semaphore acquire:
+              async with position_semaphore:
+                  # Semaphore held during order dispatch
+                  # and until fill confirmed in Position Mirror
+                  await dispatch_entry_order(...)
+            Do NOT release semaphore until fill confirmed
+            OR GTD expiry confirmed.
+
+RE-SEM-004  Release semaphore on:
+            (a) Entry fill confirmed (position added to Mirror).
+                Semaphore held until Mirror is updated. This
+                is the only guaranteed state.
+            (b) GTD order expired (no fill).
+            (c) Post-only rejection (no fill).
+            (d) Any error path that prevents a fill.
+
+RE-SEM-005  NEVER call release() directly. Use async with.
+            BoundedSemaphore raises ValueError if released
+            more times than acquired. This is a CRITICAL BUG.
+            If it occurs: log INVARIANT_BREACH, halt system.
+
+RE-SEM-006  On FULL_HALT: do NOT call semaphore.acquire().
+            Gate 7 returns FULL_HALT immediately, before
+            semaphore check. Semaphore is not involved
+            in halt enforcement — only in concurrency.
+
+------------------------------------------------------------
+4.2 Drawdown Continuous Monitoring
+------------------------------------------------------------
+
+RE-DD-001   Drawdown monitoring runs on every bbo ticker
+            event for pairs with open positions. It is
+            NOT limited to candle-close events.
+
+            async def on_bbo_ticker(symbol, bid, ask):
+                bid_decimal = Decimal(str(bid))
+                await update_drawdown(symbol, bid_decimal)
+
+RE-DD-002   Drawdown computation (RE-FORM-001 — authoritative):
+
+              # BASELINE (set once at startup — never changed):
+              portfolio_baseline_USD: Decimal
+              # = spot_usd_balance at Step 6 of 1011014 startup
+
+              # CURRENT (includes unrealized for monitoring):
+              current_portfolio_USD = spot_usd_balance + sum(
+                  bid_price[sym] * position_qty[sym]
+                  for sym in position_mirror.keys()
+              )
+
+              # DRAWDOWN:
+              drawdown_pct = max(
+                  Decimal("0"),
+                  (portfolio_baseline_USD - current_portfolio_USD)
+                  / portfolio_baseline_USD
+              )
+
+RE-DD-003   Peak portfolio tracking (for CIATS):
+              if current_portfolio_USD > peak_portfolio_USD:
+                  peak_portfolio_USD = current_portfolio_USD
+            Used by CIATS for max drawdown tracking only.
+            Does NOT affect circuit breaker thresholds.
+
+RE-DD-004   Circuit breaker check after every update:
+              await check_circuit_breakers(drawdown_pct)
+
+RE-DD-005   Full halt behavior:
+              if drawdown_pct >= full_halt_drawdown:
+                  system_state = FULL_HALT
+                  await batch_cancel_entry_gtd_orders()
+                  log("FULL_HALT_TRIGGERED", level="CRITICAL",
+                      drawdown_pct=drawdown_pct,
+                      open_count=semaphore_slots_used)
+                  await alert_operator(CRITICAL,
+                      f"FULL HALT: drawdown {drawdown_pct:.2%}")
+                  # TP and emergSL remain active — not cancelled
+
+RE-DD-006   Session pause behavior:
+              elif drawdown_pct >= session_pause_drawdown:
+                  system_state = SESSION_PAUSED
+                  log("SESSION_PAUSE_TRIGGERED", level="HIGH",
+                      drawdown_pct=drawdown_pct)
+                  await alert_operator(HIGH,
+                      f"SESSION PAUSE: drawdown {drawdown_pct:.2%}")
+                  # Resume when drawdown recovers AND
+                  # operator acknowledges
+
+RE-DD-007   EMERGSL remains active in BOTH halt states.
+            batch_cancel in FULL_HALT cancels ENTRY GTD only:
+              async def batch_cancel_entry_gtd_orders():
+                  for cl_ord_id in list(pending_orders.keys()):
+                      await batch_cancel([cl_ord_id], token)
+                  # pending_orders contains only un-filled GTD entries
+
+RE-DD-008   Manual operator restart required to lift full halt.
+            No automatic recovery from FULL_HALT.
+            SESSION_PAUSED recovers automatically when
+            drawdown_pct drops below session_pause_drawdown
+            AND operator acknowledges via restart.
+
+------------------------------------------------------------
+4.3 Gate 7 Decision Logic
+------------------------------------------------------------
+
+RE-G7-001   Gate 7 executes in this order for each pipeline
+            evaluation. Returns immediately on any BLOCK/HALT.
+
+              async def gate_7_risk_guard(symbol, entry_price):
+                  """
+                  Returns: PASS | BLOCK | SESSION_PAUSE | FULL_HALT
+                  """
+
+                  # Check 1: System state
+                  if system_state == FULL_HALT:
+                      log("GATE_7_RESULT", reason="FULL_HALT")
+                      return FULL_HALT
+
+                  if system_state == SESSION_PAUSED:
+                      log("GATE_7_RESULT", reason="SESSION_PAUSED")
+                      return SESSION_PAUSED
+
+                  # Check 2: Max concurrent
+                  if position_semaphore._value <= 0:
+                      log("GATE_7_RESULT",
+                          reason="MAX_CONCURRENT_REACHED")
+                      return BLOCK
+
+                  # Check 3: Drawdown (current snapshot)
+                  if drawdown_pct >= full_halt_drawdown:
+                      await check_circuit_breakers(drawdown_pct)
+                      return FULL_HALT
+
+                  if drawdown_pct >= session_pause_drawdown:
+                      await check_circuit_breakers(drawdown_pct)
+                      return SESSION_PAUSED
+
+                  # Check 4: Available USD
+                  per_trade_usd = compute_per_trade_usd()
+                  available_usd = (spot_usd_balance
+                                   - sum(pending_orders.values()))
+                  if available_usd < per_trade_usd:
+                      log("GATE_7_RESULT",
+                          reason="INSUFFICIENT_USD",
+                          available_usd=available_usd,
+                          per_trade_usd=per_trade_usd)
+                      return BLOCK
+
+                  log("GATE_7_RESULT", level="INFO",
+                      reason="PASS",
+                      drawdown_pct=drawdown_pct,
+                      semaphore_value=position_semaphore._value,
+                      available_usd=available_usd)
+                  return PASS
+
+============================================================
+5. GATE 8 — POSITION SIZER IMPLEMENTATION
+============================================================
+
+------------------------------------------------------------
+5.1 Portfolio and Sizing Definitions
+------------------------------------------------------------
+
+RE-SZ-001  portfolio_USD = spot_usd_balance
+           REALIZED CAPITAL ONLY. Never MTM of open positions.
+
+RE-SZ-002  tradeable_USD = portfolio_USD × tradeable_pct
+           tradeable_pct starting value: 0.50 (CIATS-owned)
+
+RE-SZ-003  per_trade_USD:
+           Before 200 closed trades (fixed):
+             per_trade_USD = tradeable_USD × per_trade_pct
+             per_trade_pct starting value: 0.05
+
+           At 200+ closed trades (Half-Kelly, CIATS activates):
+             K_full = W - ((1 - W) / R)
+             # W = win_rate (from CIATS Trade Outcome Bus)
+             # R = avg_reward_risk_ratio
+             K_half = K_full * Decimal("0.5")
+             per_trade_USD = min(
+                 K_half * tradeable_USD,
+                 tradeable_USD / max_concurrent
+             )
+             # Cap: no single trade exceeds its proportional share
+
+RE-SZ-004  POSITION SIZE (base currency quantity):
+             from decimal import Decimal, ROUND_DOWN
+             raw_qty = per_trade_USD / entry_limit_price
+             order_qty = raw_qty.quantize(
+                 pair_cache[sym]["qty_increment"],
+                 rounding=ROUND_DOWN
+             )
+
+RE-SZ-005  AVAILABLE USD CHECK (Gate 7 uses this):
+             available_USD = spot_usd_balance
+                 - sum(pending_orders.values())
+           Gate 7 checks available_USD >= per_trade_USD.
+           This prevents overcommitting cash with concurrent
+           pipeline activations.
+
+------------------------------------------------------------
+5.2 R:R Formula (Gate 8 Output)
+------------------------------------------------------------
+
+RE-SIZER-001  Gate 8 operates on actual fill price, NOT the
+              limit price used for sizing. TP and emergSL are
+              computed from actual avg_price at fill (AR-007):
+                entry_fill_price = Decimal(str(
+                    execution_event["avg_price"]))
+              The sizing qty was computed at limit price.
+              The R:R is validated at actual fill price.
+
+RE-SIZER-002  GROSS TARGET (to achieve NET 1:1.5 after fees):
+              Fee rates: Maker 0.16%, Taker 0.26% (AR-012).
+              Both entry (maker) and TP (maker) fees apply.
+              emergSL exit is taker (stop-market).
+
+              gross_target = (Decimal("1.5") × mae_pct
+                  + entry_fee_pct + tp_fee_pct)
+                  / (Decimal("1") - tp_fee_pct)
+
+              Where:
+                mae_pct = atr_14 × mae_mult / entry_fill_price
+                mae_mult = 1.5 (CIATS-owned starting value)
+                entry_fee_pct = Decimal("0.0016")
+                tp_fee_pct    = Decimal("0.0016")
+
+RE-SIZER-003  TP PRICE:
+              from decimal import Decimal, ROUND_UP
+              raw_tp = entry_fill_price * (Decimal("1") + gross_target)
+              tp_price = raw_tp.quantize(
+                  pair_cache[sym]["price_increment"],
+                  rounding=ROUND_UP
+              )
+
+RE-SIZER-004  EMERGSL TRIGGER PRICE:
+              from decimal import Decimal, ROUND_DOWN
+              raw_sl = entry_fill_price - (atr_14 * emergsl_mult)
+              # emergsl_mult = 3.0 (CIATS-owned starting value)
+              emergsl_price = raw_sl.quantize(
+                  pair_cache[sym]["price_increment"],
+                  rounding=ROUND_DOWN
+              )
+
+RE-SIZER-005  MIN SIZE VALIDATION:
+              Before dispatching, verify:
+                order_qty >= pair_cache[sym]["qty_min"]
+                order_qty * entry_limit_price >= pair_cache[sym]["cost_min"]
+              If either fails: log GATE_8_SIZE_BELOW_MIN, return BLOCK.
+              Do NOT round up to meet minimums — that violates sizing.
+
+RE-SIZER-006  Gate 8 never blocks pipeline. It sizes or fails.
+              If sizing produces below-minimum qty, it blocks
+              that pair for this candle (returns BLOCK).
+              The pipeline continues for other pairs.
+
+RE-SIZER-007  Gate 8 output (pass case):
+              return {
+                  "entry_qty":    order_qty,     # Decimal
+                  "tp_price":     tp_price,       # Decimal
+                  "emergsl_price": emergsl_price, # Decimal
+                  "net_RR":       Decimal("1.5"), # hardcoded target
+              }
+
+------------------------------------------------------------
+5.3 CIATS Parameter Interface
+------------------------------------------------------------
+
+RE-CIATS-001  Risk Engine reads ALL parameters from the
+              Parameter Store (frozen snapshot at pipeline start).
+              Parameters accessed:
+                tradeable_pct, per_trade_pct, max_concurrent,
+                mae_mult, emergsl_mult,
+                full_halt_drawdown, session_pause_drawdown
+
+RE-CIATS-002  At 200 closed trades, CIATS writes Half-Kelly
+              fraction to Parameter Store. Risk Engine reads
+              on next pipeline evaluation. No restart required.
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  dv1_3  04-05-2026  Phase 8 completion. WD → full spec.
+                     Parent chain updated (1000000, 1010000,
+                     and 0611001/2/3 now exist). WD status
+                     removed. Sections 3.1-3.3 from dv1_0
+                     (BoundedSemaphore, drawdown, Gate 8 R:R)
+                     absorbed and expanded into full Sections
+                     4 and 5. Five coding-readiness questions
+                     answered (Section 3). Gate 7 decision
+                     logic fully specified (RE-G7-001).
+                     RE-SEM-001 through -006 complete.
+                     RE-DD-001 through -008 complete.
+                     RE-SZ-001 through -005 carry forward
+                     from dv1_1/dv1_2. RE-SIZER-001 through
+                     -007 complete with min-size validation.
+                     RE-CIATS-001 through -002 added.
+                     Document is coding-ready.
+
+  dv1_2  04-04-2026  DocPath correction.
+
+  dv1_1  03-26-2026  RE-SZ-001 through -005 (portfolio def).
+                     RE-FORM-001 through -005 (drawdown formula).
+                     RE-RR-001 (Decimal rounding update).
+
+  dv1_0  03-25-2026  Initial WD. BoundedSemaphore, drawdown
+                     tracking, Gate 8 R:R formula.
+
+============================================================
+END OF DOCUMENT
+============================================================
