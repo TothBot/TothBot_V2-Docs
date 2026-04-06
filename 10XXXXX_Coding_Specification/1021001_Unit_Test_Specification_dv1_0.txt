@@ -1,0 +1,230 @@
+DocDCN:     1021001
+DocTitle:   Unit_Test_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021001_Unit_Test_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    15:00:00 UTC
+
+============================================================
+UNIT TEST SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the unit test requirements for all
+TothBot V2 Pathway 2 modules. A module is not complete
+until its unit tests pass. All Kraken WS and REST
+interactions are mocked. No live API calls in tests.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1020000  Testing_Coding_Anchor
+  1021001  This document
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does unit testing DO?
+    Verifies each module in isolation. Every rule in every
+    coding spec has a corresponding test. All external
+    dependencies mocked.
+
+(2) Interfaces?
+    Input: source code modules under test.
+    Mock: Kraken WS v2 events (orjson messages),
+          REST responses, time functions.
+    Output: pass/fail per test. 100% of coding spec
+    hard rules must be covered.
+
+(3) Hard rules?
+    No live Kraken API calls in any unit test.
+    Do NOT use uvloop in unit tests (standard asyncio).
+    Sacred 1:1.5 R:R tested in EVERY order test.
+    stp_type underscore verified in all WS v2 order tests.
+    Decimal round-trip tested in Logger tests.
+    Queue full behavior tested without blocking hot path.
+    All tests deterministic — no random inputs.
+
+(4) What triggers it?
+    Manually during Phase 9 code development.
+    Automatically on GitHub push (future Pathway 1).
+
+(5) What does it log?
+    pytest output. All failures must include rule reference
+    from coding spec (e.g., HR-EE-002, BP-DEC-003).
+
+============================================================
+4. TEST REQUIREMENTS BY MODULE
+============================================================
+
+------------------------------------------------------------
+4.1 Logger (1011007)
+------------------------------------------------------------
+
+UT-LG-001  queue.Queue (not asyncio.Queue) is used.
+UT-LG-002  put_nowait() does not block on full queue.
+UT-LG-003  Queue full: stderr write + alert triggered.
+UT-LG-004  Decimal values: round-trip Decimal → JSON → Decimal
+           preserves exact value (orjson callback).
+UT-LG-005  Every TRADE_CLOSE record has all mandatory fields.
+UT-LG-006  log_listener.stop() drains queue on shutdown.
+
+------------------------------------------------------------
+4.2 Engineering Best Practices (1011001)
+------------------------------------------------------------
+
+UT-BP-001  Decimal(str()) tested for all 4 Kraken numeric types.
+UT-BP-002  round_qty rounds DOWN for all boundary inputs.
+UT-BP-003  round_tp_price rounds UP for all boundary inputs.
+UT-BP-004  round_emergsl_price rounds DOWN.
+UT-BP-005  math.floor/ceil not called anywhere in production
+           code (static analysis check via grep).
+UT-BP-006  orjson used for all JSON ops (grep check).
+
+------------------------------------------------------------
+4.3 Position Mirror (1011006)
+------------------------------------------------------------
+
+UT-PM-001  Record created at dispatch (dict key = symbol).
+UT-PM-002  entry_fill_price updated on fill event (not limit).
+UT-PM-003  qty decrements correctly on TP partial fill.
+UT-PM-004  Record deleted on close (symbol not in dict).
+UT-PM-005  hold_candle_count increments on every candle event.
+UT-PM-006  Reconciliation: gap-closed position detected and deleted.
+
+------------------------------------------------------------
+4.4 Regime Engine (1011012)
+------------------------------------------------------------
+
+UT-RE-001  response[-1] excluded from all computations.
+UT-RE-002  ADX batch computation on 719 candles matches
+           known reference value ±1% tolerance.
+UT-RE-003  TRENDING_POSITIVE classification: ADX>25, EMA20>EMA50.
+UT-RE-004  NORMAL_VOL: ATR at or below 67th percentile.
+UT-RE-005  Stale regime fallback: prior day value used on error.
+UT-RE-006  1.1s stagger enforced (mock asyncio.sleep, verify called).
+UT-RE-007  asyncio.gather() NOT used for regime OHLC calls (verify).
+
+------------------------------------------------------------
+4.5 Risk Engine (1011011)
+------------------------------------------------------------
+
+UT-RK-001  BoundedSemaphore: max_concurrent enforced.
+UT-RK-002  drawdown_pct = (baseline - current) / baseline.
+           Tested with known baseline, cash, and bid values.
+UT-RK-003  drawdown_pct >= 0 always (max(0, ...) enforced).
+UT-RK-004  FULL_HALT fires at drawdown_pct >= 0.10.
+UT-RK-005  SESSION_PAUSE fires at drawdown_pct >= 0.05.
+UT-RK-006  batch_cancel called for entry GTD orders on FULL_HALT.
+UT-RK-007  emergSL NOT cancelled on halt (positions protected).
+UT-RK-008  Gate 7 uses available_USD (cash - pending_orders).
+UT-RK-009  Net 1:1.5 R:R confirmed in every Gate 8 output.
+UT-RK-010  entry_qty * entry_price >= cost_min before dispatch.
+UT-RK-011  Half-Kelly: negative Kelly → no update, CRITICAL log.
+
+------------------------------------------------------------
+4.6 Signal Pipeline (1011003)
+------------------------------------------------------------
+
+UT-SP-001  RSI uses Wilder's SMMA (alpha=1/14), not std EMA.
+           Test: compare RSI output against known reference.
+UT-SP-002  SSS PASS: all 3 conditions true → PASS.
+UT-SP-003  SSS FAIL: any 1 condition false → FAIL.
+UT-SP-004  Gate 3 TRENDING_NEG: pipeline stops, SSS not run.
+UT-SP-005  Gate 4 NON_DIR+NORMAL: Gate 4 skipped.
+UT-SP-006  Gate 4 TRENDING_POS + EMA(20) < EMA(50): rejected.
+UT-SP-007  signal_params logged on every SSS evaluation.
+UT-SP-008  Parameter Store snapshot frozen at pipeline start.
+UT-SP-009  Pipeline does not fire during reconnect.
+
+------------------------------------------------------------
+4.7 Execution Engine (1011004)
+------------------------------------------------------------
+
+UT-EE-001  post_only=True in all entry add_order messages.
+UT-EE-002  stp_type="cancel_newest" (underscore) in all WS v2
+           add_order and batch_add messages. (HR-EE-002)
+UT-EE-003  deadline = now+5s in all add_order and batch_add.
+UT-EE-004  triggers.reference="last" in all emergSL orders.
+UT-EE-005  batch_add dispatched ONLY on exec_type=filled.
+UT-EE-006  TP price computed from actual fill price (not limit).
+UT-EE-007  emergSL price computed from actual fill price.
+UT-EE-008  Net 1:1.5 R:R: verify tp_price satisfies formula.
+UT-EE-009  cl_ord_id recorded in Position Mirror at dispatch
+           (before Kraken response).
+UT-EE-010  Pending Order Registry populated at dispatch.
+
+------------------------------------------------------------
+4.8 Exit Controller (1011005)
+------------------------------------------------------------
+
+UT-EC-001  HTF reversal: ema_20 < ema_50 → L1a exit triggered.
+UT-EC-002  Regime downgrade: TRENDING_NEG → L1a exit triggered.
+UT-EC-003  Time expiry: candle_count >= max_hold_candles → exit.
+UT-EC-004  TP full fill: emergSL cancel → Mirror clear → TOB.
+UT-EC-005  TP partial fill: emergSL amended (not canceled+resubmit).
+UT-EC-006  Below-min partial: emergSL canceled, market sell issued.
+UT-EC-007  Layer 2 MAE: bid_price breach → cancel TP → cancel SL → sell.
+UT-EC-008  NEVER market sell with ambiguous cancel state.
+UT-EC-009  CIATS Trade Outcome Bus fires ONCE per position.
+UT-EC-010  exit_reason set on every TRADE_CLOSE record.
+
+------------------------------------------------------------
+4.9 Selection Controller (1011009)
+------------------------------------------------------------
+
+UT-SC-001  SC-GATE-2 passes: candle body > ATR * threshold.
+UT-SC-002  SC-GATE-2 fails: candle body <= ATR * threshold.
+UT-SC-003  SC-GATE-3: open position → POSITION_ALREADY_OPEN.
+UT-SC-004  SC-GATE-4: within cooldown window → PAIR_IN_COOLDOWN.
+UT-SC-005  SC-GATE-4: cooldown expired → PASS.
+UT-SC-006  SC-GATE-6: consecutive_loss_count >= limit → block.
+UT-SC-007  on_position_closed(win=True): count resets to 0.
+UT-SC-008  on_position_closed(win=False): count increments.
+UT-SC-009  State dicts preserved across reconnect simulation.
+
+------------------------------------------------------------
+4.10 Startup Sequence (1011014)
+------------------------------------------------------------
+
+UT-SS-001  No pipeline evaluation fires during startup sequence.
+UT-SS-002  portfolio_baseline_USD set exactly once at Step 5.
+UT-SS-003  Pair stays WARM_UP until all 3 seed criteria met.
+UT-SS-004  Reconnect: portfolio_baseline_USD not reset.
+UT-SS-005  Reconnect: gap-closed position detected and fired to TOB.
+UT-SS-006  websockets.asyncio.client.connect used (not legacy API).
+UT-SS-007  max_queue=None and ping_interval=None on all connections.
+
+============================================================
+5. TEST FRAMEWORK
+============================================================
+
+UT-FW-001  pytest is the test runner.
+UT-FW-002  pytest-asyncio for async test functions.
+UT-FW-003  unittest.mock for all mocking.
+UT-FW-004  Do NOT use uvloop in tests (standard asyncio).
+UT-FW-005  Test file naming: test_{module_name}.py
+UT-FW-006  Test class naming: Test{ModuleName}
+UT-FW-007  Test method naming: test_{rule_id}_{description}
+           Example: test_HR_EE_002_stp_type_underscore
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     Unit test requirements for all 10
+                     Pathway 2 modules. Test framework.
+                     Five coding-readiness questions answered.
+                     Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
