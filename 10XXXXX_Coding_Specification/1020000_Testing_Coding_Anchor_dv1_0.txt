@@ -1,0 +1,125 @@
+DocDCN:     1020000
+DocTitle:   Testing_Coding_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1020000_Testing_Coding_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    12:00:00 UTC
+
+============================================================
+TESTING CODING ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for all AA=10
+Testing Specification documents governing TothBot V2.
+It anchors Sub-Domain 2 (DCN 102XXXX) to the AA=10
+Domain Document (1000000).
+
+Testing specifications govern how TothBot V2 code is
+validated before deployment. All testing must be
+completed and passed before paper trading begins.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification        (Domain Document)
+  1020000  This document               (Sub-Domain Anchor)
+
+============================================================
+3. TESTING PHILOSOPHY
+============================================================
+
+3.1 Testing verifies that code matches specification.
+A test suite is complete when every rule, constraint,
+and behavior defined in the corresponding AA=10 coding
+spec has a test that confirms correct implementation.
+
+3.2 Testing scope excludes market validation.
+Testing verifies code correctness, not trading strategy
+profitability. Strategy validation is paper trading (Phase
+10). Code correctness is unit and integration testing
+(Phase 9).
+
+3.3 Tests are deterministic.
+Every test produces a pass or fail with no ambiguity.
+Test outcomes do not depend on live market data.
+Kraken WS and REST responses are mocked in all unit and
+integration tests.
+
+3.4 Testing is mandatory before paper trading.
+No TothBot V2 code is deployed to live paper trading
+without passing all unit tests and integration tests.
+This is a hard gate per 0311002.
+
+============================================================
+4. INSTANCE DOCUMENTS — THIS SUB-DOMAIN
+============================================================
+
+------------------------------------------------------------
+4.1  1021001  Unit_Test_Specification
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Scope: Per-module unit tests. Every module in 101XXXX
+has corresponding unit tests. Kraken WS and REST mocked.
+Tests verify all hard rules, edge cases, and error paths
+defined in each coding spec.
+
+------------------------------------------------------------
+4.2  1021002  Integration_Test_Specification
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Scope: Cross-module integration tests. Verifies correct
+behavior of module interactions: WS Manager → Signal
+Pipeline → Long Module → Execution Engine → Exit Controller.
+Position Mirror consistency. Logger completeness. CIATS
+data flow. Mocked Kraken throughout.
+
+------------------------------------------------------------
+4.3  1021003  Paper_Trading_Test_Specification
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Scope: Paper trading validation procedure. Governs the
+paper trading phase before live capital deployment.
+Defines success criteria, minimum trade count, and
+conditions under which paper trading concludes and live
+trading begins.
+
+============================================================
+5. TESTING SEQUENCE
+============================================================
+
+  Phase 9 (Code Development):
+    Unit tests written alongside each module.
+    Module is not complete until its unit tests pass.
+
+  Phase 9 completion gate:
+    All unit tests pass. 100% of coding spec rules covered.
+
+  Phase 10 (Integration Testing):
+    Integration test suite executed.
+    Full pipeline from WS event to order dispatch mocked.
+    All integration tests pass before paper trading.
+
+  Phase 11 (Paper Trading):
+    Paper trading per 1021003 Paper_Trading_Test_Spec.
+    Minimum 200 closed trades before live capital.
+    CIATS activates at 200 closed trades.
+    Per-regime analysis valid at 600 closed trades.
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 8
+                     Sub-Domain 2 anchor. Three instance
+                     documents defined. Testing philosophy
+                     and sequence established.
+
+============================================================
+END OF DOCUMENT
+============================================================
