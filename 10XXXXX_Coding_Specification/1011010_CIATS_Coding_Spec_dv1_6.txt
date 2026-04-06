@@ -1,0 +1,397 @@
+DocDCN:     1011010
+DocTitle:   CIATS_Coding_Spec
+DocVersion: dv1_6
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011010_CIATS_Coding_Spec_dv1_6.txt
+DocDate:    04-05-2026
+DocTime:    13:00:00 UTC
+
+============================================================
+CIATS CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for CIATS (Continuous Improvement and Autonomous Trading
+System) — TothBot V2's self-improvement engine. CIATS is
+fully asynchronous. It reads only from the Logger and writes
+only to the Parameter Store. It never blocks the trading
+hot path. Deming PDCA governs every change.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011010  This document
+  Parent specification: 0211001  CIATS_Specification  dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does CIATS DO?
+    Reads Logger output (Trade Outcome Bus and candle eval
+    events). Runs two parallel streams: Stream 1 (EWMA Monitor,
+    valid at 50 candle evals) for real-time anomaly detection
+    and Stream 2 (Trade Outcome Bus, valid at 200 closed trades)
+    for statistical inference. Computes Half-Kelly at 200+
+    trades. Runs per-regime analysis at 600+ trades. Generates
+    parameter proposals via Proposal Engine. Executes PDCA
+    cycle (Plan→Do→Check→Act). Writes approved parameter
+    changes to Parameter Store at inter-trade boundaries.
+    Never blocks the trading hot path. Never makes changes
+    without PDCA validation and Bill approval.
+
+(2) Interfaces?
+    IN:  Logger log files (sole data source — reads files only)
+         Event codes: CANDLE_EVAL, PIPELINE_GATE_*, TRADE_CLOSE,
+         WS_ROUNDTRIP_*, RATE_COUNTER_UPDATE
+    OUT: Parameter Store (all CIATS-owned parameters)
+    CIATS does not call any TothBot component directly.
+    CIATS does not have access to live market data.
+    CIATS does not know the current time or positions.
+
+(3) Hard rules?
+    200-trade HARD FLOOR for inference and parameter changes.
+    50-candle-eval floor for EWMA Monitor (monitoring only).
+    600-trade floor for per-regime analysis.
+    PDCA min 50-trade interval between parameter changes.
+    Mann-Whitney alpha=0.01 (one-sided).
+    Spearman: |rho|>0.3 AND p<0.05 required.
+    CUSUM: k=0.5sigma, h=4sigma (relative to metric sigma).
+    All CPU-bound stats: run_in_executor() mandatory.
+    Logger hot path: put_nowait() only.
+    Half-Kelly MUST be normalized by concurrent position cap.
+    Kelly inputs W and R MUST use realized NET P/L.
+    Negative Kelly: CRITICAL alert, no parameter update.
+    Parameter Store writes ONLY at inter-trade boundaries.
+    CIATS never modifies the hardcoded 1:1.5 R:R constraint.
+
+(4) What triggers it?
+    Stream 1: every candle close event (CANDLE_EVAL in Logger)
+    Stream 2: every TRADE_CLOSE event in Logger
+    PDCA: when CUSUM signals or Proposal Engine threshold met
+
+(5) What does it log?
+    CIATS_EWMA_UPDATE: signal, value, lambda (every update)
+    CIATS_CUSUM_SIGNAL: metric, k, h, cusum_s (when triggered)
+    CIATS_PROPOSAL_GENERATED: parameter, old_value, new_value,
+      confidence, test_type
+    CIATS_KELLY_UPDATE: K_full, K_half, applied_pct, W, R,
+      wins, losses, normalization_binding
+    CIATS_PARAMETER_WRITE: parameter, old_value, new_value
+    KELLY_NEGATIVE: K_full, W, R, trades (CRITICAL)
+    KELLY_NO_LOSSES: trades (INFO)
+
+============================================================
+4. STATISTICAL THRESHOLDS
+============================================================
+
+CIATS-ST-001  EWMA Monitor valid at 50 candle evals.
+              Fast warning stream. Monitoring only.
+              NEVER drives parameter changes.
+
+CIATS-ST-002  200 closed trades: HARD FLOOR.
+              Statistical inference valid.
+              Proposal Engine activates.
+              Half-Kelly replaces fixed per_trade_pct.
+              This is the threshold for ALL parameter decisions.
+
+CIATS-ST-003  600 closed trades: per-regime analysis valid.
+              Requires 100+ trades per regime bucket.
+              Full regime-segmented optimization active.
+
+============================================================
+5. STATISTICAL METHODS
+============================================================
+
+------------------------------------------------------------
+5.1 EWMA Monitor (Stream 1)
+------------------------------------------------------------
+
+CIATS-EW-001  EWMA lambda=0.2. Validated by FP/DP.
+              Half-life = ln(0.5)/ln(1-lambda) = 3.1 evaluations.
+              Detects drift within ~22 observations (~27 minutes).
+              Monitoring signals (not inference):
+                (1) rejection_rate_by_regime (F6)
+                (2) rate_counter_by_pair (A-1)
+                (3) ws_roundtrip_latency_ms (A-3)
+
+              Implementation:
+                ewma_t = lambda * x_t + (1 - lambda) * ewma_{t-1}
+                # lambda = Decimal("0.2")
+                # x_t = new observation value (Decimal)
+
+CIATS-EW-002  EWMA runs on every candle close event.
+              Valid from observation 50 onward.
+              Feeds CUSUM for drift detection.
+
+------------------------------------------------------------
+5.2 CUSUM (Cumulative Sum Control Chart)
+------------------------------------------------------------
+
+CIATS-CU-001  Parameters: k=0.5sigma, h=4sigma.
+              sigma = rolling std of the monitored metric.
+              Both k and h scale with metric's current sigma.
+              NOT fixed absolute values.
+
+              Implementation:
+                import statistics
+
+                metric_values = deque(maxlen=200)
+                S_pos = Decimal("0")
+                S_neg = Decimal("0")
+
+                def update_cusum(new_value):
+                    metric_values.append(new_value)
+                    if len(metric_values) < 30:
+                        return  # Insufficient for sigma
+                    sigma = Decimal(str(
+                        statistics.stdev(metric_values)))
+                    k = Decimal("0.5") * sigma
+                    h = Decimal("4.0") * sigma
+                    x = new_value - Decimal(str(
+                        statistics.mean(metric_values)))
+                    S_pos = max(Decimal("0"), S_pos + x - k)
+                    S_neg = max(Decimal("0"), S_neg - x - k)
+                    if S_pos > h or S_neg > h:
+                        # Drift detected — trigger PDCA PLAN
+                        return True  # Signal
+                    return False
+
+CIATS-CU-002  CUSUM signal triggers PDCA PLAN phase only.
+              Not an automatic parameter change.
+              Three downstream gates filter false signals:
+                (a) Spearman correlation test
+                (b) Mann-Whitney U test
+                (c) Bill approval
+
+------------------------------------------------------------
+5.3 Mann-Whitney U (PDCA CHECK phase)
+------------------------------------------------------------
+
+CIATS-MW-001  Alpha = 0.01 (one-sided). Confirmed by FP/DP.
+              Applied in PDCA CHECK phase to validate that
+              a proposed parameter change produces statistically
+              significant improvement.
+              Run in ThreadPoolExecutor (CPU-bound).
+
+              from scipy.stats import mannwhitneyu
+              stat, p = mannwhitneyu(group_a, group_b,
+                                     alternative='greater')
+              if p < 0.01:
+                  # Significant — proceed to ACT
+
+------------------------------------------------------------
+5.4 Spearman Correlation (PDCA PLAN phase)
+------------------------------------------------------------
+
+CIATS-SP-001  |rho| > 0.3 AND p < 0.05 required.
+              Used in PDCA PLAN to validate that a parameter
+              change is actually correlated with performance.
+              Run in ThreadPoolExecutor (CPU-bound).
+
+              from scipy.stats import spearmanr
+              rho, p = spearmanr(param_values, perf_values)
+              if abs(rho) > 0.3 and p < 0.05:
+                  # Correlation confirmed — generate proposal
+
+------------------------------------------------------------
+5.5 Half-Kelly (Proposal Engine)
+------------------------------------------------------------
+
+CIATS-KE-001  Formula: K_full = W - ((1-W) / R), apply 50%.
+
+CIATS-KE-002  W and R from NET realized P/L (not gross):
+                W = count(net_gain_usd > 0) / total_trades
+                R = mean(net_gain) / mean(|net_loss|)
+              Both from Trade Outcome Bus records.
+
+CIATS-KE-003  Half-Kelly normalization:
+                max_per_trade = tradeable_pct / max_concurrent
+                applied_pct = min(K_half, max_per_trade)
+
+CIATS-KE-004  Normalization applied on every Kelly update.
+
+CIATS-KE-005  Floor: applied_pct >= minimum viable trade size.
+
+CIATS-KE-006  Negative Kelly (K_full <= 0): CRITICAL alert.
+              Do not update per_trade_pct. Log KELLY_NEGATIVE.
+
+CIATS-KE-007  Complete Kelly procedure: see Section 6.2.
+
+============================================================
+6. CIATS ARCHITECTURE
+============================================================
+
+------------------------------------------------------------
+6.1 Isolation Contract
+------------------------------------------------------------
+
+CIATS-ISO-001  CIATS reads ONLY from Logger output files.
+               CIATS writes ONLY to Parameter Store.
+               No direct calls to TothBot components.
+               No in-memory shared state with hot path.
+
+CIATS-ISO-002  Parameter Store writes happen ONLY at
+               inter-trade boundaries (between position
+               opens and closes). Never mid-pipeline.
+               This prevents parameter inconsistency within
+               a single pipeline evaluation (I-4 rule).
+
+CIATS-ISO-003  CIATS runs as an asyncio.Task in the same
+               event loop. CPU-bound computations delegated
+               to ThreadPoolExecutor:
+                 loop = asyncio.get_event_loop()
+                 result = await loop.run_in_executor(
+                     None, compute_mann_whitney, data)
+
+------------------------------------------------------------
+6.2 Stream 1 — EWMA Monitor
+------------------------------------------------------------
+
+CIATS-MON-001  Reads CANDLE_EVAL and related events from Logger.
+               Fires on every 5m candle close.
+               Valid from eval 50 onward (~4 hours).
+               THREE monitoring signals only (never parameter changes):
+                 (1) rejection_rate_by_regime
+                 (2) rate_counter_by_pair
+                 (3) ws_roundtrip_latency_ms
+
+CIATS-MON-002  EWMA update on each signal observation.
+               CUSUM applied to EWMA output.
+               CUSUM signal → PDCA PLAN phase initiated.
+
+------------------------------------------------------------
+6.3 Stream 2 — Trade Outcome Bus
+------------------------------------------------------------
+
+CIATS-TOB-001  Reads TRADE_CLOSE events from Logger.
+               One record per closed position.
+               Valid from trade 200 onward.
+
+CIATS-TOB-002  On each TRADE_CLOSE:
+                 (a) Update rolling trade corpus
+                 (b) If corpus >= 200: run Proposal Engine
+                 (c) If corpus >= 600: run regime-segmented analysis
+
+CIATS-TOB-003  PDCA cycle (minimum 50-trade interval):
+                 PLAN:  CUSUM signals drift or Spearman confirms
+                        correlation between parameter and performance.
+                 DO:    Apply proposed change to Parameter Store
+                        at next inter-trade boundary.
+                 CHECK: Mann-Whitney U on pre vs post change
+                        performance (alpha=0.01).
+                 ACT:   If CHECK passes: keep change.
+                        If CHECK fails: revert. Document finding.
+
+------------------------------------------------------------
+6.4 Parameter Store
+------------------------------------------------------------
+
+CIATS-PS-001  Parameter Store holds all CIATS-owned values.
+              TothBot reads a frozen snapshot at pipeline start.
+              CIATS writes at inter-trade boundaries only.
+
+CIATS-PS-002  All parameters tracked with history:
+                parameter_name, old_value, new_value,
+                change_timestamp, trade_count_at_change,
+                statistical_basis (test results)
+
+CIATS-PS-003  EXCEPTION — never in Parameter Store:
+                net 1:1.5 R:R constraint — hardcoded, not CIATS.
+
+------------------------------------------------------------
+6.5 Kelly Computation Procedure
+------------------------------------------------------------
+
+              def compute_kelly(closed_trades: list):
+                  from decimal import Decimal
+                  if len(closed_trades) < 200:
+                      return None  # Below hard floor
+
+                  wins   = [t for t in closed_trades
+                             if t["net_gain_usd"] > Decimal("0")]
+                  losses = [t for t in closed_trades
+                             if t["net_gain_usd"] <= Decimal("0")]
+
+                  W = Decimal(len(wins)) / Decimal(len(closed_trades))
+
+                  if not losses:
+                      log("KELLY_NO_LOSSES", level="INFO")
+                      return None
+
+                  avg_win  = (sum(t["net_gain_usd"] for t in wins)
+                              / Decimal(len(wins)))
+                  avg_loss = (sum(abs(t["net_gain_usd"]) for t in losses)
+                              / Decimal(len(losses)))
+
+                  if avg_loss == Decimal("0"):
+                      return None
+
+                  R      = avg_win / avg_loss
+                  K_full = W - ((Decimal("1") - W) / R)
+
+                  if K_full <= Decimal("0"):
+                      log("KELLY_NEGATIVE", level="CRITICAL",
+                          K_full=K_full, W=W, R=R)
+                      alert(CRITICAL, f"Kelly negative: {K_full}")
+                      return None
+
+                  K_half = K_full * Decimal("0.5")
+                  max_pt = (parameter_store["tradeable_pct"]
+                            / Decimal(str(
+                                parameter_store["max_concurrent"])))
+                  applied = min(K_half, max_pt)
+
+                  log("CIATS_KELLY_UPDATE", K_full=K_full,
+                      K_half=K_half, applied_pct=applied,
+                      W=W, R=R, wins=len(wins),
+                      losses=len(losses),
+                      total=len(closed_trades),
+                      normalization_binding=(applied < K_half))
+                  return applied
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_6  04-05-2026  Phase 8 completion. WD → full spec.
+                     Parent chain updated (1000000/1010000
+                     now exist). WD status removed. Five
+                     coding-readiness questions answered
+                     (Section 3). Section 4: statistical
+                     thresholds table. Section 5: all
+                     statistical methods with implementation
+                     code (EWMA, CUSUM, Mann-Whitney, Spearman,
+                     Half-Kelly). Section 6: CIATS architecture
+                     — isolation contract, Stream 1, Stream 2,
+                     PDCA cycle, Parameter Store rules, complete
+                     Kelly procedure. All prior "must be included"
+                     content carried forward and integrated.
+                     CUSUM correction from dv1_5 carried forward.
+                     Kelly net P/L clarification from dv1_3/dv1_5
+                     carried forward. Document is coding-ready.
+
+  dv1_5  04-05-2026  CUSUM defect corrected: h=4sigma (not
+                     h=5.0 unitless). Full FP/DP rationale.
+
+  dv1_4  04-04-2026  DocPath correction.
+
+  dv1_3  03-26-2026  Kelly net P/L clarification. CIATS-KE-006
+                     through -009.
+
+  dv1_2  03-25-2026  Half-Kelly normalization. CIATS-KE-002-005.
+
+  dv1_1  03-25-2026  ThreadPoolExecutor. Logger put_nowait.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+
+============================================================
+END OF DOCUMENT
+============================================================
