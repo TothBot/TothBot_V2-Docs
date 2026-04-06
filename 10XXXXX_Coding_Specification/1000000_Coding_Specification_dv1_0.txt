@@ -1,0 +1,188 @@
+DocDCN:     1000000
+DocTitle:   Coding_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1000000_Coding_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    12:00:00 UTC
+
+============================================================
+CODING SPECIFICATION — DOMAIN DOCUMENT
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the AA=10 Domain Document for the
+Coding Specification domain of TothBot V2. It defines
+the purpose, scope, structure, and governing rules of
+all AA=10 Coding Specification documents.
+
+The Coding Specification domain contains the complete,
+unambiguous coding contracts from which all TothBot V2
+code is written. No code is written from any other
+document. AA=10 is the sole direct input to code.
+
+============================================================
+2. DOMAIN SCOPE
+============================================================
+
+AA=10 Coding Specification contains two independent
+coding pathways and one testing sub-domain:
+
+  PATHWAY 1 — GitHub Document Control Automation
+    Repository: github.com/TothBot/TothBot_V2-Docs
+    Runtime: GitHub Actions (Python 3.11+)
+    Anchored by: 1030000 GitHub_Automation_Coding_Anchor
+
+  PATHWAY 2 — TothBot V2 Trading System
+    Repository: github.com/TothBot/TothBot_V2-Code
+    Runtime: Hetzner VPS, Python 3.12.3
+    Anchored by: 1010000 Trading_System_Coding_Anchor
+
+  TESTING — All test specifications
+    Anchored by: 1020000 Testing_Coding_Anchor
+
+The two pathways are permanently independent. No code,
+configuration, or dependency is shared between them.
+This is a hard architectural constraint. See TB00000
+Section 3.4.3 for full pathway separation rules.
+
+============================================================
+3. CODING READINESS STANDARD
+============================================================
+
+Every AA=10 document must satisfy the five-question
+coding-readiness test (TB00000 Section 3.2):
+
+  (1) What does this component DO? (inputs → outputs)
+  (2) What are its interfaces to other components?
+  (3) What are its hard rules? (must / must not)
+  (4) What triggers it and what does it trigger?
+  (5) What does it log?
+
+A document that cannot answer all five questions for
+every component it defines is not coding-ready and is
+not complete. No exceptions.
+
+No vague terms are permitted in any AA=10 document:
+approximately, generally, as needed, usually, typically.
+All values are explicit. All conditions are deterministic.
+All behaviors are unambiguous.
+
+============================================================
+4. WORKING DRAFT EXCEPTION
+============================================================
+
+Working Draft (dv) AA=10 documents may be created before
+their parent specifications reach approved (v) state.
+WD documents carry a "Must be Included From Previous
+Analysis" section capturing requirements from FP/DP
+and validation sessions. WD documents are completed and
+elevated only after parent specifications are in approved
+(v) state. This prevents requirement loss.
+
+All WD AA=10 documents active at Phase 8 start are
+listed in 1010000 Trading_System_Coding_Anchor and
+1030000 GitHub_Automation_Coding_Anchor.
+
+============================================================
+5. PARENT CHAIN RULE
+============================================================
+
+Every AA=10 instance document must chain to this
+Domain Document through its Sub-Domain Anchor:
+
+  Instance Document → Sub-Domain Anchor → 1000000
+
+No AA=10 instance document may be approved or committed
+without both 1000000 and its Anchor existing in
+approved (v) state on GitHub.
+
+============================================================
+6. SUB-DOMAIN STRUCTURE
+============================================================
+
+  DCN 1000000  Coding_Specification          (This document)
+
+  Sub-Domain 1 — Trading System Coding:
+    DCN 1010000  Trading_System_Coding_Anchor
+    DCN 1011001  Engineering_Best_Practices
+    DCN 1011002  WS_Manager_Coding_Spec
+    DCN 1011003  Signal_Pipeline_Coding_Spec
+    DCN 1011004  Execution_Engine_Coding_Spec
+    DCN 1011005  Exit_Controller_Coding_Spec
+    DCN 1011006  Position_Mirror_Coding_Spec
+    DCN 1011007  Logger_Coding_Spec
+    DCN 1011008  Long_Module_Coding_Spec
+    DCN 1011009  Selection_Controller_Coding_Spec
+    DCN 1011010  CIATS_Coding_Spec
+    DCN 1011011  Risk_Engine_Coding_Spec
+    DCN 1011012  Regime_Engine_Coding_Spec
+    DCN 1011013  VPS_Deployment_Coding_Spec
+    DCN 1011014  Startup_Sequence_Coding_Spec
+
+  Sub-Domain 2 — Testing:
+    DCN 1020000  Testing_Coding_Anchor
+    DCN 1021001  Unit_Test_Specification
+    DCN 1021002  Integration_Test_Specification
+    DCN 1021003  Paper_Trading_Test_Specification
+
+  Sub-Domain 3 — GitHub Automation Coding:
+    DCN 1030000  GitHub_Automation_Coding_Anchor
+    DCN 1031001  GitHub_Automation_Coding_Spec
+    DCN 1031002  Document_Control_Automation_Test_Spec
+    DCN 1031003  Approval_Workflow_Coding_Spec
+
+============================================================
+7. GOVERNING DOCUMENTS
+============================================================
+
+This domain is governed by:
+  TB00000  TothBot_V2_Project_Instructions_for_Claude
+           Section 3.4 — AA=10 Coding Specification rules
+           Section 3.4.3 — Pathway Separation Rules
+
+  0311002  Document_Creation_Workflow
+           Section 12 — Phase 8 sequence
+
+  0500000  System_Architecture_Overview
+           All architectural decisions and locked ARs
+           that AA=10 Pathway 2 documents must honor.
+
+  0300000  Governance (via 0310000)
+           All AA=10 Pathway 1 documents must honor the
+           governance rules for document control automation.
+
+============================================================
+8. LIFECYCLE STATE RULES
+============================================================
+
+  dv (Working Draft):  Active during document creation.
+                       May be created before parent specs
+                       reach approved state (WD Exception).
+
+  rv (Review):         Bill review in progress.
+
+  v (Approved):        Bill-approved. Governs coding.
+                       Instance documents require 1000000
+                       and their Anchor in v state.
+
+  rt (Retired):        Superseded. Archived. Not in force.
+
+Claude does not self-approve. Bill approves only.
+
+============================================================
+9. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 8
+                     domain document. Defines AA=10 domain
+                     scope, coding readiness standard, WD
+                     exception, sub-domain structure, and
+                     governing documents.
+
+============================================================
+END OF DOCUMENT
+============================================================
