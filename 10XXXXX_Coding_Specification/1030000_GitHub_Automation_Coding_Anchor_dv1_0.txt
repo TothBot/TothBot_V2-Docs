@@ -1,0 +1,140 @@
+DocDCN:     1030000
+DocTitle:   GitHub_Automation_Coding_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1030000_GitHub_Automation_Coding_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    12:00:00 UTC
+
+============================================================
+GITHUB AUTOMATION CODING ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for all AA=10
+Coding Specification documents governing TothBot V2
+GitHub Document Control Automation (Pathway 1). It
+anchors Sub-Domain 3 (DCN 103XXXX) to the AA=10 Domain
+Document (1000000).
+
+Pathway 1 automates enforcement of TothBot V2 document
+control procedures via GitHub Actions. It is deferred
+until after Pathway 2 reaches paper trading readiness
+(PL-003).
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification        (Domain Document)
+  1030000  This document               (Sub-Domain Anchor)
+
+============================================================
+3. PATHWAY 1 — SCOPE
+============================================================
+
+Execution environment:
+  Platform:    GitHub Actions
+  Trigger:     push and pull_request events on
+               TothBot-V2-Docs repository
+  Runtime:     GitHub-hosted runners
+  Language:    Python 3.11+
+  Repository:  github.com/TothBot/TothBot_V2-Docs
+
+Pathway 1 runs ONLY in GitHub Actions on TothBot-V2-Docs.
+It never runs on the VPS. It has no awareness of trading
+system state. See TB00000 Section 3.4.3.
+
+Pathway 1 does NOT:
+  - Connect to Kraken or any exchange API
+  - Read market data
+  - Execute trades
+  - Run on the VPS
+
+============================================================
+4. PATHWAY 1 FUNCTIONS
+============================================================
+
+  P1-F001  Validate 7-field document headers on every commit.
+  P1-F002  Enforce DCN namespace compliance per 0311001.
+  P1-F003  Enforce version increment rules per 0311003.
+  P1-F004  Auto-correct correctable header violations.
+  P1-F005  Enforce document lifecycle states (dv/rv/v/rt).
+  P1-F006  Run approval workflow (Bill approval rv → v).
+  P1-F007  Write document control audit logs.
+  P1-F008  Reject non-compliant documents at commit time.
+
+============================================================
+5. INSTANCE DOCUMENTS — THIS SUB-DOMAIN
+============================================================
+
+------------------------------------------------------------
+5.1  1031001  GitHub_Automation_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written when Pathway 1 begins
+(deferred — PL-003)
+Scope: Complete coding contract for all P1-F001 through
+P1-F008 functions. GitHub Actions workflow YAML.
+Python validation logic. Header parsing. DCN validation.
+Version enforcement. Auto-correction rules.
+
+------------------------------------------------------------
+5.2  1031002  Document_Control_Automation_Test_Spec
+------------------------------------------------------------
+Status: NEW — to be written when Pathway 1 begins
+(deferred — PL-003)
+Scope: Test specifications for all Pathway 1 functions.
+Covers valid/invalid header tests, DCN compliance tests,
+version increment tests, lifecycle state tests, and
+approval workflow tests.
+
+------------------------------------------------------------
+5.3  1031003  Approval_Workflow_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written when Pathway 1 begins
+(deferred — PL-003)
+Scope: Bill approval workflow for rv → v state transition.
+GitHub Actions integration. Approval trigger mechanism.
+Audit log format.
+
+============================================================
+6. GOVERNING DOCUMENTS
+============================================================
+
+Pathway 1 coding specs are governed by:
+  0300000  Governance
+  0310000  Governance_Procedures_Anchor
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+  0311003  Versioning_Procedure
+  0311004  Document_Creation_and_Approval_Procedure
+
+============================================================
+7. DEFERRAL STATUS
+============================================================
+
+Pathway 1 coding and deployment is deferred to after
+Pathway 2 reaches paper trading readiness.
+
+Parking Lot item: PL-003.
+
+During the deferral period, Claude performs all document
+control functions manually. This is the pre-GitHub-
+automation phase defined in TB00000 Section 10.1.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 8
+                     Sub-Domain 3 anchor. Three deferred
+                     instance documents defined. Pathway 1
+                     scope and functions documented.
+                     PL-003 deferral status recorded.
+
+============================================================
+END OF DOCUMENT
+============================================================
