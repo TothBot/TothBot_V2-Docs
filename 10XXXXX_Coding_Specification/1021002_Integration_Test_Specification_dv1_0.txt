@@ -1,0 +1,212 @@
+DocDCN:     1021002
+DocTitle:   Integration_Test_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021002_Integration_Test_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    15:00:00 UTC
+
+============================================================
+INTEGRATION TEST SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines integration test requirements for
+TothBot V2. Integration tests verify correct behavior of
+module interactions across the full pipeline. All Kraken
+WS and REST interactions are mocked. No live API calls.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1020000  Testing_Coding_Anchor
+  1021002  This document
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does integration testing DO?
+    Verifies cross-module interactions are correct end-to-end.
+    Simulates the full pipeline from WS candle event to
+    order dispatch and position management. All Kraken
+    interactions mocked with realistic WS v2 message sequences.
+
+(2) Interfaces?
+    Input: fully integrated module stack (no live Kraken).
+    Mock: WS v2 message sequences, fill events, executions.
+    Output: pass/fail. All integration contracts verified.
+
+(3) Hard rules?
+    No live Kraken API calls.
+    Do NOT use uvloop in integration tests.
+    Tests must be deterministic and repeatable.
+    Full pipeline must complete without error in happy path.
+
+(4) What triggers it?
+    Manually after unit tests pass.
+    Required gate before paper trading begins.
+
+(5) What does it log?
+    pytest output with full trace on failure.
+
+============================================================
+4. INTEGRATION TEST SCENARIOS
+============================================================
+
+------------------------------------------------------------
+IT-001: Happy Path — Full Trade Lifecycle
+------------------------------------------------------------
+
+Setup:
+  - Mock WS Manager with 1 pair (BTC/USD) in READY state
+  - Regime: TRENDING_POSITIVE + NORMAL_VOL
+  - 1H EMA(20) > EMA(50), ADX > 25
+  - SSS conditions: all 3 true
+  - No open positions. No cooldown.
+  - Risk Engine: below all thresholds
+
+Steps:
+  1. Inject ohlc(5m) candle close event
+  2. Signal Pipeline evaluates all 8 gates
+  3. All gates PASS
+  4. Execution Engine dispatches add_order
+  5. Verify: Position Mirror record created at dispatch
+  6. Verify: Pending Order Registry populated
+  7. Inject exec_type=filled with avg_price
+  8. Execution Engine dispatches batch_add
+  9. Verify: TP limit and emergSL stop-market in batch_add
+  10. Inject batch_add ACK with tp_order_id, emgsl_order_id
+  11. Verify: Position Mirror order IDs updated
+  12. Inject exec_type=filled for TP order_id
+  13. Verify: Exit Controller cancels emergSL
+  14. Verify: CIATS Trade Outcome Bus fired (TRADE_CLOSE)
+  15. Verify: Position Mirror cleared
+  16. Verify: BoundedSemaphore released
+
+Expected outcome: Complete trade lifecycle with no errors.
+
+Assertions:
+  - Net R:R in TRADE_CLOSE record >= 1.5 after fees
+  - stp_type = "cancel_newest" in all WS v2 orders
+  - triggers.reference = "last" in emergSL order
+  - entry_fill_price in Position Mirror = actual avg_price
+  - TRADE_CLOSE has all mandatory fields
+
+------------------------------------------------------------
+IT-002: Post_only Rejection Path
+------------------------------------------------------------
+
+Steps:
+  1. Dispatch entry as in IT-001 Steps 1-5
+  2. Inject exec_type=canceled (post_only rejection)
+  3. Verify: Position Mirror record cleared
+  4. Verify: Pending Order Registry cleared
+  5. Verify: BoundedSemaphore released
+  6. Verify: No batch_add sent
+  7. Verify: ENTRY_POST_ONLY_REJECTED logged
+
+------------------------------------------------------------
+IT-003: GTD Expiry — Zero Fill
+------------------------------------------------------------
+
+Steps:
+  1. Dispatch entry as in IT-001 Steps 1-5
+  2. Inject exec_type=expired with cum_qty=0
+  3. Verify: Position Mirror cleared. Registry cleared.
+  4. Verify: Semaphore released. No batch_add sent.
+
+------------------------------------------------------------
+IT-004: Layer 2 MAE Exit
+------------------------------------------------------------
+
+Setup: Open position via IT-001. Record entry_fill_price.
+
+Steps:
+  1. Compute MAE threshold: entry_fill_price - atr_14 * 1.5
+  2. Inject bbo ticker with bid < MAE threshold
+  3. Verify: Exit Controller fires Layer 2 sequence
+  4. Verify: cancel_order sent for TP (first)
+  5. Inject exec_type=canceled for TP
+  6. Verify: cancel_order sent for emergSL (second)
+  7. Inject exec_type=canceled for emergSL
+  8. Verify: market sell dispatched
+  9. Inject sell fill
+  10. Verify: TRADE_CLOSE with exit_reason=MAE_THRESHOLD_BREACH
+
+------------------------------------------------------------
+IT-005: Drawdown Circuit Breaker
+------------------------------------------------------------
+
+Setup: Set drawdown_pct to 0.10 (10%).
+
+Steps:
+  1. Inject bbo ticker event triggering drawdown check
+  2. Verify: system_state = FULL_HALT
+  3. Verify: batch_cancel sent for pending entry GTD orders
+  4. Verify: emergSL orders NOT cancelled
+  5. Inject ohlc(5m) candle close
+  6. Verify: Pipeline terminates at Gate 7 (FULL_HALT)
+  7. Verify: FULL_HALT_TRIGGERED logged (CRITICAL)
+  8. Verify: alert sent to alert@tothbot.com
+
+------------------------------------------------------------
+IT-006: Logger Non-Blocking Verification
+------------------------------------------------------------
+
+Steps:
+  1. Fill Logger queue to maxsize (10,000)
+  2. Inject one more log event
+  3. Verify: hot path does NOT block (returns < 1ms)
+  4. Verify: queue full event written to stderr
+  5. Verify: alert sent to operator
+
+------------------------------------------------------------
+IT-007: Reconnect — Position Closed During Gap
+------------------------------------------------------------
+
+Setup: Open position. Simulate disconnect.
+
+Steps:
+  1. Pre-disconnect state: position in Mirror
+  2. Simulate mid-session reconnect
+  3. snap_orders response: position NOT present (closed during gap)
+  4. Verify: GAP_CLOSED_POSITION detected
+  5. Verify: CIATS Trade Outcome Bus fired with available data
+  6. Verify: Position Mirror cleared for symbol
+  7. Verify: portfolio_baseline_USD unchanged
+  8. Verify: drawdown_pct unchanged
+
+------------------------------------------------------------
+IT-008: CIATS Kelly Update at 200 Trades
+------------------------------------------------------------
+
+Steps:
+  1. Inject 200 TRADE_CLOSE events to Logger (via Trade Outcome Bus)
+  2. Verify: CIATS activates Proposal Engine
+  3. Verify: Kelly computation runs (win_rate, avg_R from net P/L)
+  4. Verify: applied_pct <= tradeable_pct / max_concurrent
+  5. Inject negative-Kelly scenario (all losses)
+  6. Verify: KELLY_NEGATIVE logged CRITICAL
+  7. Verify: per_trade_pct NOT updated
+
+============================================================
+5. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     8 integration test scenarios covering
+                     full trade lifecycle, all rejection paths,
+                     Layer 2 MAE exit, drawdown circuit breaker,
+                     Logger non-blocking, reconnect gap detection,
+                     CIATS Kelly activation. Five coding-readiness
+                     questions answered. Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
