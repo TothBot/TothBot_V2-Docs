@@ -1,0 +1,283 @@
+DocDCN:     1010000
+DocTitle:   Trading_System_Coding_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    12:00:00 UTC
+
+============================================================
+TRADING SYSTEM CODING ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for all AA=10
+Coding Specification documents governing the TothBot V2
+Trading System (Pathway 2). It anchors Sub-Domain 1
+(DCN 101XXXX) to the AA=10 Domain Document (1000000).
+
+All trading system coding specification documents descend
+from this anchor. No 101XXXX instance document may be
+committed without this anchor in the repository.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification        (Domain Document)
+  1010000  This document               (Sub-Domain Anchor)
+
+============================================================
+3. PATHWAY 2 — TRADING SYSTEM SCOPE
+============================================================
+
+Pathway 2 governs the TothBot V2 automated cryptocurrency
+spot trading system running on Kraken exchange.
+
+Execution environment:
+  Platform:    Hetzner VPS (87.99.141.44)
+  OS:          Ubuntu 24.04.4 LTS
+  Python:      3.12.3
+  Exchange:    Kraken Spot (WebSocket v2 + REST)
+  Clock:       Kraken OHLC 5-minute candle close (WS push)
+  Repository:  github.com/TothBot/TothBot_V2-Code
+
+Pathway 2 runs ONLY on the VPS. It never runs in GitHub
+Actions. It has no awareness of document control state.
+See TB00000 Section 3.4.3 — Pathway Separation Rules.
+
+============================================================
+4. INSTANCE DOCUMENTS — THIS SUB-DOMAIN
+============================================================
+
+------------------------------------------------------------
+4.1  1011001  Engineering_Best_Practices
+------------------------------------------------------------
+Status: WD dv1_5 (as of Phase 8 start)
+Parent spec: 0500000 System_Architecture_Overview
+Scope: Cross-cutting engineering standards that apply
+to all Pathway 2 modules. Every module must comply.
+Key requirements from WD: orjson (3-5x faster JSON),
+uvloop (asyncio event loop on Linux), TCP_NODELAY on
+WS socket, async-first design, no blocking on hot path.
+
+------------------------------------------------------------
+4.2  1011002  WS_Manager_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_11 (as of Phase 8 start)
+Parent spec: 0511001 WS_Manager_Specification
+Scope: WebSocket Manager — manages all Kraken WS v2
+public and private connections, subscriptions, dispatch.
+Key requirements from WD: WS ping strategy (GAP-01),
+zombie detection 9s (GAP-08), per-pair status cache
+(GAP-07), balances sequence monitoring (IMP-05),
+batch_cancel for Full Halt (GAP-05), TCP_NODELAY (IMP-03),
+snap_orders/snap_trades corrected params (GAP-09).
+
+------------------------------------------------------------
+4.3  1011003  Signal_Pipeline_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Parent spec: 0511002 Signal_Pipeline_Specification
+Scope: 8-gate signal evaluation pipeline. Fires on every
+5-minute OHLC candle close. Produces trade signals or
+rejection codes for all tradeable pairs.
+
+------------------------------------------------------------
+4.4  1011004  Execution_Engine_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Parent spec: 0511003 Execution_Engine_Specification
+Scope: Order dispatch. WS add_order (limit/post_only/GTD).
+cl_ord_id assignment. TP + emergSL batch_add on fill.
+Position Mirror write. Logger write.
+
+------------------------------------------------------------
+4.5  1011005  Exit_Controller_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_1 (as of Phase 8 start)
+Parent spec: 0811003 Exit_Controller_Specification
+Scope: Three-layer exit architecture.
+  Layer 1: signal-based and TP exits
+  Layer 2: MAE threshold breach (ATR(14) x 1.5x)
+  Layer 3: emergSL — Kraken resting stop — emergency only
+cancel_timeout_window = 5.0s. mpp_retry_count = 3.
+
+------------------------------------------------------------
+4.6  1011006  Position_Mirror_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Parent spec: 0511005 Position_Mirror_Specification
+Scope: In-memory position state registry. Symbol-keyed
+dict. O(1) lookup. Reconciled at startup and reconnect.
+
+------------------------------------------------------------
+4.7  1011007  Logger_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_1 (as of Phase 8 start)
+Parent spec: 0511006 Logger_Specification
+Scope: CIATS sole data source. Async bounded queue
+(10,000 entries). Never blocks trading hot path.
+Records every event: time_in/time_out, rate_counter_by_pair,
+rejection codes. Queue alert if full — operator notified.
+
+------------------------------------------------------------
+4.8  1011008  Long_Module_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Parent spec: 0811001 Long_Module_Specification
+Scope: Long Module orchestration. Invokes Selection
+Controller, Risk Guard, Position Sizer. Manages entry
+state machine per pair.
+
+------------------------------------------------------------
+4.9  1011009  Selection_Controller_Coding_Spec
+------------------------------------------------------------
+Status: NEW — to be written in Phase 8
+Parent spec: 0811002 Selection_Controller_Specification
+Scope: 6-gate Selection Controller. All gate definitions.
+Per-pair status check required (GAP-07).
+
+------------------------------------------------------------
+4.10  1011010  CIATS_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_5 (as of Phase 8 start)
+Parent spec: 0210000 Operations_CIATS_Anchor
+Scope: CIATS continuous improvement engine.
+Mann-Whitney U (alpha=0.01), Spearman rho (threshold=0.3),
+EWMA (lambda=0.2), CUSUM (k=0.5, h=4.0), Half-Kelly.
+Active at 200 closed trades. Per-regime at 600 trades.
+Async. Never blocks hot path.
+
+------------------------------------------------------------
+4.11  1011011  Risk_Engine_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_2 (as of Phase 8 start)
+Parent spec: 0611001, 0611002, 0611003 (Risk domain)
+Scope: Gate 7 (Risk Guard) and Gate 8 (Position Sizer).
+BoundedSemaphore for max_concurrent (20).
+Drawdown tracking. Half-Kelly at 200 trades.
+portfolio_value definition and exact drawdown formula.
+
+------------------------------------------------------------
+4.12  1011012  Regime_Engine_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_3 (as of Phase 8 start)
+Parent spec: 0711002 Regime_Taxonomy_Specification
+Scope: Daily regime computation. 6 regimes.
+GetOHLCData exclusion requirement (GAP-03).
+ADX(14), EMA(20/50), ATR percentile.
+
+------------------------------------------------------------
+4.13  1011013  VPS_Deployment_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_3 (as of Phase 8 start)
+Parent spec: 0500000 System_Architecture_Overview
+Scope: VPS setup, environment, Python dependencies,
+service configuration, deployment procedures.
+
+------------------------------------------------------------
+4.14  1011014  Startup_Sequence_Coding_Spec
+------------------------------------------------------------
+Status: WD dv1_2 (as of Phase 8 start)
+Parent spec: 0500000 System_Architecture_Overview
+Scope: Full startup sequence (10 steps, AR-049) and
+mid-session WS reconnect sequence (AR-056).
+ATR/EMA warm-up via REST GetOHLCData at startup.
+No pipeline until READY state.
+
+============================================================
+5. CODING SEQUENCE — PATHWAY 2
+============================================================
+
+Modules must be coded in dependency order:
+
+  TIER 1 — Foundation (no dependencies on other modules):
+    1011001  Engineering_Best_Practices    (standards)
+    1011013  VPS_Deployment_Coding_Spec   (environment)
+    1011007  Logger_Coding_Spec           (data sink)
+
+  TIER 2 — Infrastructure:
+    1011002  WS_Manager_Coding_Spec       (WS layer)
+    1011006  Position_Mirror_Coding_Spec  (state)
+    1011012  Regime_Engine_Coding_Spec    (daily compute)
+
+  TIER 3 — Pipeline:
+    1011003  Signal_Pipeline_Coding_Spec  (8-gate pipeline)
+    1011011  Risk_Engine_Coding_Spec      (Gates 7-8)
+    1011009  Selection_Controller_Coding_Spec (gates)
+
+  TIER 4 — Trade Execution:
+    1011008  Long_Module_Coding_Spec      (orchestration)
+    1011004  Execution_Engine_Coding_Spec (order dispatch)
+    1011005  Exit_Controller_Coding_Spec  (exit management)
+    1011014  Startup_Sequence_Coding_Spec (startup/reconnect)
+
+  TIER 5 — Improvement Engine:
+    1011010  CIATS_Coding_Spec            (PDCA engine)
+
+============================================================
+6. ENGINEERING CONSTRAINTS — ALL MODULES
+============================================================
+
+All Pathway 2 modules MUST comply with 1011001
+Engineering_Best_Practices. Key constraints:
+
+  EC-001  Python 3.12.3. No other version.
+  EC-002  uvloop replaces default asyncio event loop.
+  EC-003  orjson replaces stdlib json for all JSON ops.
+  EC-004  TCP_NODELAY set on all WebSocket connections.
+  EC-005  Async-first. No blocking calls on hot path.
+  EC-006  Logger is the ONLY write path to disk.
+          No module writes directly to disk.
+  EC-007  CIATS reads ONLY from Logger output.
+          CIATS writes ONLY to Parameter Store.
+  EC-008  Parameter Store snapshot frozen at pipeline
+          start. CIATS writes at inter-trade boundaries.
+  EC-009  Net 1:1.5 R:R is HARDCODED. Not configurable.
+          Not CIATS-owned. Never changes.
+  EC-010  All prices and quantities rounded before
+          order dispatch per AR-047 rounding rules.
+
+============================================================
+7. LOCKED ARCHITECTURAL REQUIREMENTS
+============================================================
+
+All 0500000 Architectural Requirements (AR-001 through
+AR-012+) are binding on all Pathway 2 coding specs.
+Key ARs:
+
+  AR-001  No Dead Man Switch. No DMS/FIX cancel-on-disconnect.
+  AR-002  Position Mirror: symbol-keyed dict, O(1) lookup.
+  AR-003  Restart reconciliation: snap_orders:true PREFERRED.
+  AR-004  Two API key pairs — DATA and TRADE.
+          Nonce window 10,000ms.
+  AR-005  WS v2 only. No WS v1.
+  AR-006  Entry order: limit/post_only/GTD/cancel_newest/
+          deadline:now+5s. WS v2 uses underscore format.
+  AR-007  TP: resting limit via batch_add on fill.
+          Actual fill price for R:R computation.
+  AR-008  emergSL: stop-market via batch_add atomic with TP.
+          ATR(14) x 3.0x. OTO. Not conditional order.
+  AR-009  Short module deferred.
+  AR-010  24/7/365. CIATS adds stand-down via PDCA.
+  AR-011  Net 1:1.5 R:R SACRED. Hardcoded. Not CIATS.
+  AR-012  Fee baseline: Maker 0.16% / Taker 0.26%.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial working draft. Phase 8
+                     Sub-Domain 1 anchor. Full inventory
+                     of 14 instance documents with status,
+                     parent specs, and scope. Coding
+                     sequence by tier. Engineering
+                     constraints. Locked ARs.
+
+============================================================
+END OF DOCUMENT
+============================================================
