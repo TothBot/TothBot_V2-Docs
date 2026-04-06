@@ -1,0 +1,177 @@
+DocDCN:     1021003
+DocTitle:   Paper_Trading_Test_Specification
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021003_Paper_Trading_Test_Specification_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    15:00:00 UTC
+
+============================================================
+PAPER TRADING TEST SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the paper trading phase requirements
+for TothBot V2 (Phase 10 of the Master Plan). Paper trading
+runs the full live system against live Kraken market data
+with no real capital at risk. It is the final validation
+gate before live trading authorization.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1020000  Testing_Coding_Anchor
+  1021003  This document
+  Governing procedure: 0211005 Paper_Trading_Operations_Procedure
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does paper trading DO?
+    Runs TothBot V2 against live Kraken market data using
+    real WS events and signals but with no real capital.
+    Validates system behavior end-to-end, accumulates the
+    200-trade CIATS statistical floor, and confirms all
+    operational procedures work before real money is at risk.
+
+(2) Interfaces?
+    Full live Kraken WS v2 and REST connections.
+    Real market data. Paper orders (or minimal test capital).
+    All alert channels active (alert@tothbot.com).
+    All Logger, CIATS, and Parameter Store systems active.
+
+(3) Hard rules?
+    Unit and integration tests MUST pass before paper trading.
+    Minimum 200 closed trades before go-live decision.
+    CIATS Proposal Engine must activate (200-trade floor).
+    All exit layers must fire at least once (validated).
+    Emergency SL must NEVER fire in paper trading (if it fires:
+      critical defect, must investigate before live trading).
+    All three drawdown circuit breakers tested.
+    No critical defects outstanding at go-live.
+
+(4) What triggers it?
+    Bill decision after all unit and integration tests pass.
+    Governed by 0211005 Paper_Trading_Operations_Procedure.
+
+(5) What does it log?
+    All normal Logger output. All CIATS events.
+    All parameter proposals and changes.
+    All alert events. Full audit trail.
+
+============================================================
+4. PAPER TRADING ENTRY CRITERIA
+============================================================
+
+PT-ENTRY-001  All unit tests pass (1021001) — 100% of rules covered.
+PT-ENTRY-002  All integration tests pass (1021002) — all 8 scenarios.
+PT-ENTRY-003  VPS deployed and configured per 1011013.
+PT-ENTRY-004  logrotate configured.
+PT-ENTRY-005  IP whitelist confirmed for both API keys.
+PT-ENTRY-006  Alert email confirmed working (test alert sent).
+PT-ENTRY-007  systemd service auto-restart confirmed.
+PT-ENTRY-008  Startup sequence confirmed: all pairs reach READY.
+
+============================================================
+5. PAPER TRADING MINIMUM DURATION AND TRADE COUNT
+============================================================
+
+PT-DUR-001   Minimum 200 closed trades before go-live decision.
+             This is the CIATS statistical inference hard floor.
+             No go-live decision before 200 closed trades.
+
+PT-DUR-002   At 200 closed trades: CIATS Proposal Engine activates.
+             Half-Kelly replaces fixed per_trade_pct.
+             First CIATS parameter proposals reviewed by Bill.
+
+PT-DUR-003   At 600 closed trades (preferred — not required):
+             Per-regime analysis valid. 100+ trades per bucket.
+             Full regime-segmented optimization available.
+
+PT-DUR-004   Minimum calendar duration: no floor specified.
+             Trade count governs. At the system's natural trade
+             frequency (5-minute candles, selective entry), 200
+             trades may take weeks or months. That is acceptable.
+             Do not artificially inflate trade count.
+
+============================================================
+6. VALIDATION CHECKLIST BEFORE GO-LIVE
+============================================================
+
+PT-VAL-001   Exit Controller Layer 1a: at least one of each
+             trigger type observed in paper trading:
+               □ HTF regime reversal exit fired
+               □ Daily regime downgrade exit fired
+               □ Time expiry (max_hold_candles) exit fired
+
+PT-VAL-002   Exit Controller Layer 1b: TP fill observed.
+               □ Full TP fill confirmed
+               □ Partial TP fill with emergSL amendment confirmed
+
+PT-VAL-003   Exit Controller Layer 2: MAE threshold exit observed.
+               □ Layer 2 cancel sequence completed correctly
+
+PT-VAL-004   Emergency SL: MUST NOT fire in paper trading.
+             If it fires: investigate immediately. Treat as
+             critical defect. Do NOT proceed to live trading
+             until root cause identified and resolved.
+
+PT-VAL-005   Drawdown circuit breakers observed:
+               □ SESSION_PAUSE fired and recovered
+               □ FULL_HALT fired and required operator restart
+
+PT-VAL-006   CIATS activation confirmed:
+               □ Proposal Engine active at 200+ trades
+               □ At least one parameter proposal generated
+               □ Half-Kelly replacing fixed per_trade_pct
+
+PT-VAL-007   Alert email confirmed for at least one CRITICAL
+             and one HIGH level event during paper trading.
+
+PT-VAL-008   Reconnect confirmed at least once during paper
+             trading period. System recovered correctly.
+             No positions lost. No duplicate positions created.
+
+PT-VAL-009   No critical defects outstanding (severity = CRITICAL
+             and unresolved).
+
+PT-VAL-010   Bill review and approval of go-live decision.
+
+============================================================
+7. GO-LIVE AUTHORIZATION
+
+PT-GOLIVE-001  Go-live requires explicit Bill authorization.
+               No automated go-live trigger. Bill decides.
+
+PT-GOLIVE-002  Initial live trading posture:
+               - 50% of portfolio tradeable (CIATS starting)
+               - 5% per trade OR Half-Kelly if 200+ trades reached
+               - Max 20 concurrent positions
+               - Full monitoring active
+               - alert@tothbot.com active
+
+PT-GOLIVE-003  Go-live date and conditions recorded in TB session log.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     Paper trading entry criteria. Minimum
+                     200-trade floor (CIATS hard floor).
+                     Validation checklist: all exit layers,
+                     circuit breakers, CIATS activation,
+                     reconnect validation, emergSL prohibition.
+                     Go-live authorization requirements.
+                     Five coding-readiness questions answered.
+                     Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
