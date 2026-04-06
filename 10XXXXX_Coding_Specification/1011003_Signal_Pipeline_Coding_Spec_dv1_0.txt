@@ -1,0 +1,352 @@
+DocDCN:     1011003
+DocTitle:   Signal_Pipeline_Coding_Spec
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011003_Signal_Pipeline_Coding_Spec_dv1_0.txt
+DocDate:    04-05-2026
+DocTime:    14:00:00 UTC
+
+============================================================
+SIGNAL PIPELINE CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Signal Pipeline — the 8-gate trading
+evaluation engine. It fires on every 5-minute OHLC candle
+close and evaluates each monitored pair for entry eligibility.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011003  This document
+  Parent specifications:
+    0511002  Signal_Pipeline_Specification  dv1_0
+    0711001  SSS_Signal_Model_Specification dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Signal Pipeline DO?
+    Evaluates one symbol through 8 sequential gates on
+    every 5-minute OHLC candle close. Each gate is pass/fail.
+    Full pass → hands off to Execution Engine. Any fail →
+    logs rejection code, terminates evaluation for that symbol,
+    no side effects, pipeline continues for other symbols.
+
+(2) Interfaces?
+    IN:  5-min OHLC candle close event (from WS Manager)
+         Parameter Store snapshot (frozen at pipeline start)
+         Pre-computation cache: regime, ATR(14), 1H EMA,
+           24h liquidity, per-pair status, SSS indicator state
+         Position Mirror (Gate 5 SC-GATE-3)
+         regime_cache (Gate 3, Gate 6)
+         Cooldown registry, consecutive loss counters (Gate 5)
+    OUT: Entry instruction to Execution Engine (on 8-gate pass)
+         Logger records (all gate decisions — ALWAYS)
+         CIATS EWMA data via Logger (rejection codes)
+
+(3) Hard rules?
+    Parameter Store snapshot frozen at start of EACH evaluation.
+    Pre-computation cache read-only during evaluation.
+    Gates strictly sequential 1 → 8. No skipping except Gate 4.
+    RSI(14) MUST use Wilder's SMMA (alpha=1/14). Standard EMA prohibited.
+    SSS runs ONLY when Gate 3 passes. No SSS on blocked regimes.
+    Gate 8 never blocks. Only sizes. Sizing issues caught at Gate 5.
+    Net 1:1.5 R:R HARDCODED in Gate 8. Never a parameter.
+    All arithmetic: Decimal. No float. No math.floor/ceil for rounding.
+    Pipeline DOES NOT fire during WS reconnect.
+    SSS signal_params always logged — pass or fail.
+
+(4) What triggers it?
+    WS Manager fires one pipeline evaluation per symbol per
+    5-minute OHLC candle close. Never concurrent for same symbol.
+
+(5) What does it log?
+    PIPELINE_START, STATUS_BLOCKED
+    GATE_1_PASS/FAIL through GATE_8_RESULT
+    SSS_RESULT (always, pass or fail)
+    PIPELINE_PASS (all 8 gates pass, entry dispatched)
+    PIPELINE_FAIL (gate number and rejection code)
+
+============================================================
+4. PRE-PIPELINE STEPS
+============================================================
+
+SP-PRE-001  PARAMETER STORE SNAPSHOT FREEZE (I-4):
+            At start of each pipeline evaluation for a symbol,
+            take frozen read-only snapshot of ALL CIATS params.
+            All gate evaluations use this snapshot.
+            CIATS Parameter Store writes queued at inter-trade
+            boundaries — never during pipeline evaluation.
+
+SP-PRE-002  PRE-COMPUTATION CACHE READ (I-2):
+            Hot path reads only — zero computation:
+              regime_cache[symbol]    — Gate 3, Gate 6
+              htf_ema_20[symbol]      — Gate 4
+              htf_ema_50[symbol]      — Gate 4
+              atr_14[symbol]          — Gate 8
+              liquidity_24h[symbol]   — Gate 2
+              pair_status[symbol]     — pre-Gate 1
+              sss_state[symbol]       — SSS Engine
+
+SP-PRE-003  PER-PAIR STATUS CHECK (dv1_6):
+            Before Gate 1, check instrument status:
+              if pair_status[symbol] in (
+                  "reduce_only", "work_in_progress",
+                  "delisted", "limit_only",
+                  "cancel_only", "maintenance"):
+                  log("STATUS_BLOCKED", symbol, pair_status)
+                  return  # skip — do not enter pipeline
+
+============================================================
+5. GATE 1 — STATE MACHINE
+============================================================
+
+SP-G1-001   Check global Kraken engine state from status channel.
+            PASS: engine state is "online".
+            FAIL: engine state is "maintenance" or "cancel_only".
+              Wait (do not skip — system is in WAIT state).
+              Log GATE_1_FAIL with engine_state.
+              No entries while engine is not online.
+
+============================================================
+6. GATE 2 — LIQUIDITY GATE
+============================================================
+
+SP-G2-001   Check 24h USD volume from liquidity cache.
+            threshold: min_volume_usd_daily = $500,000 USD
+              (CIATS-owned starting value)
+
+            PASS: liquidity_24h[symbol] >= threshold
+            FAIL: SKIP → log GATE_2_FAIL, rejection = LIQUIDITY_REJECTED
+
+============================================================
+7. GATE 3 — REGIME PRE-FILTER
+============================================================
+
+SP-G3-001   Read regime_cache[symbol].
+            If cache is None (no regime data):
+              Log GATE_3_FAIL, rejection = NO_REGIME_DATA
+              SKIP
+
+            FAIL (no entry): STOP + log REGIME_BLOCKED
+              if directional == TRENDING_NEGATIVE
+              if directional == NON_DIRECTIONAL AND vol == ELEVATED_VOL
+
+            PASS (continue to Gate 4):
+              directional == TRENDING_POSITIVE (any vol)
+              directional == NON_DIRECTIONAL AND vol == NORMAL_VOL
+
+            Gate 3 eliminates ALL SSS computation for no-trade regimes.
+
+============================================================
+8. GATE 4 — 1H HTF CONFIRMATION
+============================================================
+
+SP-G4-001   Gate 4 applies ONLY to TRENDING_POSITIVE pairs.
+            NON_DIR+NORMAL pairs: SKIP Gate 4, proceed to SSS.
+
+SP-G4-002   For TRENDING_POSITIVE pairs:
+            PASS: htf_ema_20[symbol] > htf_ema_50[symbol]
+            FAIL: htf_ema_20[symbol] <= htf_ema_50[symbol]
+              SKIP → log GATE_4_FAIL, rejection = HTF_GATE_REJECTED
+
+            Data source: pre-computation cache from ohlc(60) stream.
+            Cache updated by WS Manager on every ohlc(60) close.
+
+============================================================
+9. SSS SIGNAL ENGINE
+============================================================
+
+SP-SSS-001  SSS (Simple Signal System) fires ONLY after Gate 4 pass.
+            Three conditions — ALL must be true for SSS PASS.
+
+SP-SSS-002  CONDITION 1 — RSI(14):
+            rsi_entry_low (50) < RSI(14) < rsi_entry_high (70)
+
+            RSI uses Wilder's SMMA ONLY (AR-076):
+              alpha = Decimal("1") / Decimal("14")
+              avg_gain = (prev_avg_gain * 13 + gain) / 14
+              avg_loss = (prev_avg_loss * 13 + loss) / 14
+              RS  = avg_gain / avg_loss
+              RSI = 100 - (100 / (1 + RS))
+
+            DO NOT use standard EMA (alpha=2/15) for RSI.
+            Standard EMA is PROHIBITED for RSI calculation.
+
+            Per-symbol RSI state maintained in sss_state[symbol]:
+              {"avg_gain": Decimal, "avg_loss": Decimal,
+               "rsi_14": Decimal}
+            Updated on every 5m candle close.
+
+SP-SSS-003  CONDITION 2 — EMA crossover:
+            ema_9[symbol] > ema_21[symbol]
+
+            EMA(9):  alpha = 2/10 = Decimal("2")/Decimal("10")
+            EMA(21): alpha = 2/22 = Decimal("2")/Decimal("22")
+            Standard EMA (NOT Wilder's SMMA) for these.
+
+            Per-symbol EMA state in sss_state[symbol]:
+              {"ema_9": Decimal, "ema_21": Decimal}
+
+SP-SSS-004  CONDITION 3 — Volume confirmation:
+            current_volume > volume_ma_20 * volume_sss_threshold (1.0x)
+
+            volume_ma_20: 20-period SMA of 5-min candle volume.
+            volume_sss_threshold: CIATS-owned starting value = 1.0
+
+            Per-symbol: {"volume_ma_20": Decimal}
+
+SP-SSS-005  SSS output (always logged — pass or fail):
+              signal_params = {
+                  "rsi_14":       Decimal,
+                  "ema_9":        Decimal,
+                  "ema_21":       Decimal,
+                  "volume_ratio": current_volume / volume_ma_20,
+                  "sss_pass":     bool
+              }
+              log("SSS_RESULT", **signal_params)
+
+SP-SSS-006  SSS FAIL → SKIP → rejection = SSS_SIGNAL_FAIL
+            SSS PASS → proceed to Gate 5.
+
+============================================================
+10. GATE 5 — SELECTION CONTROLLER
+============================================================
+
+SP-G5-001   Six sequential quality gates. First FAIL exits.
+            FAIL = SKIP + log GATE_5_RESULT with failed gate.
+
+SC-GATE-1   SSS all three conditions true (already confirmed — pass).
+
+SC-GATE-2   Candle body strength:
+            abs(candle_close - candle_open) >
+            atr_14[symbol] * sc_body_threshold (0.3 CIATS starting)
+            Reject: WEAK_CANDLE_BODY
+
+SC-GATE-3   No open position on symbol:
+            symbol NOT in position_mirror
+            Reject: POSITION_ALREADY_OPEN
+
+SC-GATE-4   Post-exit cooldown:
+            symbol NOT in cooldown_registry
+            OR (time.monotonic() - cooldown_registry[symbol])
+            >= sc_cooldown_seconds (300s CIATS starting)
+            Reject: PAIR_IN_COOLDOWN
+
+SC-GATE-5   Minimum size pre-validation:
+            entry_qty_est >= qty_min AND
+            entry_qty_est * entry_limit_price >= cost_min
+            where entry_qty_est = preview_gate8_qty(symbol)
+            Reject: POSITION_TOO_SMALL
+
+SC-GATE-6   Consecutive loss limit:
+            consecutive_loss_count[symbol] <
+            sc_consecutive_limit (3 CIATS starting)
+            Reject: CONSECUTIVE_LOSSES_EXCEEDED
+
+SP-G5-002   On SC-GATE-4 exit (cooldown entry):
+            Write cooldown_registry[symbol] = time.monotonic()
+            On subsequent win for symbol: clear both cooldown
+            and consecutive_loss_count[symbol] = 0.
+
+============================================================
+11. GATE 6 — REGIME GATE (SIZING MODIFIER)
+============================================================
+
+SP-G6-001   Gate 6 NEVER blocks. Only adjusts sizing.
+            TRENDING_POS (any vol): sizing_modifier = Decimal("1.0")
+            NON_DIR+NORMAL: sizing_modifier = Decimal("0.5")
+            Pass sizing_modifier to Gate 8.
+            Log GATE_6_RESULT with sizing_modifier and regime.
+
+============================================================
+12. GATE 7 — RISK GUARD
+============================================================
+
+SP-G7-001   Delegates to Risk Engine (1011011).
+            Returns: PASS | BLOCK | SESSION_PAUSE | FULL_HALT
+            On anything except PASS: log GATE_7_RESULT and
+            terminate pipeline for this symbol.
+            FULL_HALT: terminate pipeline for ALL symbols.
+
+============================================================
+13. GATE 8 — POSITION SIZER
+============================================================
+
+SP-G8-001   Gate 8 NEVER blocks. Only computes sizing.
+            Delegates to Risk Engine gate_8_position_sizer().
+
+SP-G8-002   Output from Gate 8:
+              entry_qty:    Decimal (quantized DOWN to qty_increment)
+              tp_price:     Decimal (quantized UP to price_increment)
+              emergsl_price: Decimal (quantized DOWN to price_increment)
+              net_RR:       Decimal (Decimal("1.5") — hardcoded)
+
+SP-G8-003   PIPELINE_PASS: log with all Gate 8 params.
+            Hand off to Execution Engine with Gate 8 output dict.
+
+============================================================
+14. SSS INDICATOR SEEDING
+============================================================
+
+SP-SEED-001 At startup (GetOHLCData interval=5, per 1011014):
+            Seed RSI(14) avg_gain/avg_loss from last 14 candles.
+            Seed EMA(9) and EMA(21) from committed candles.
+            Seed volume_ma_20 from last 20 candle volumes.
+            Per AR-068 — SSS seeding uses same GetOHLCData
+            call as ATR seeding. Zero additional REST calls.
+
+SP-SEED-002 All seed values in sss_state[symbol]:
+              avg_gain, avg_loss, rsi_14,
+              ema_9, ema_21, volume_ma_20
+            Pair transitions WARM_UP → READY only after SSS
+            indicators seeded (in addition to ATR and EMA).
+
+============================================================
+15. HARD RULES
+============================================================
+
+HR-SP-001  Parameter Store snapshot frozen at pipeline start.
+HR-SP-002  Pre-computation cache read-only during evaluation.
+HR-SP-003  Gates strictly sequential 1 → 8.
+HR-SP-004  RSI(14): Wilder's SMMA. Standard EMA prohibited.
+HR-SP-005  SSS runs ONLY when Gate 3 passes.
+HR-SP-006  Gate 8 never blocks — only sizes.
+HR-SP-007  Net 1:1.5 R:R hardcoded in Gate 8. Never a parameter.
+HR-SP-008  All arithmetic: Decimal. No float. No math.floor/ceil.
+HR-SP-009  GetOHLCData response[-1] excluded (uncommitted candle).
+HR-SP-010  Pipeline does not fire during WS reconnect.
+
+============================================================
+16. REVISION HISTORY
+============================================================
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     Written from 0511002 Signal_Pipeline_
+                     Specification dv1_0 and 0711001 SSS_
+                     Signal_Model_Specification dv1_0. Full
+                     8-gate pipeline implementation contract.
+                     Pre-pipeline steps. All gate conditions
+                     with explicit pass/fail/reject codes.
+                     SSS Engine: RSI Wilder's SMMA, EMA(9/21),
+                     volume confirmation — all with per-symbol
+                     state structures. Selection Controller
+                     SC-GATE-1 through SC-GATE-6. Sizing
+                     modifier. Risk Guard delegation. Position
+                     Sizer delegation. SSS seeding at startup.
+                     Hard rules HR-SP-001 through -010.
+                     Five coding-readiness questions answered.
+                     Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
