@@ -1,0 +1,287 @@
+DocDCN:     0311004
+DocTitle:   Document_Creation_and_Approval_Procedure
+DocVersion: v1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311004_Document_Creation_and_Approval_Procedure_v1_1.txt
+DocDate:    04-11-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+DOCUMENT CREATION AND APPROVAL PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the procedure for creating, reviewing,
+approving, and retiring controlled documents in the TothBot
+V2 document control system. It governs how all documents
+progress through their lifecycle and defines the standard
+template for all new documents.
+
+This procedure applies to ALL controlled documents in both
+TothBot_V2-Docs (specification documents) and
+TothBot_V2-Code (code and configuration files). All files
+in TothBot_V2-Code are controlled documents per
+0311001 HR-DC-001.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0300000  Governance            (Domain Document)
+  0310000  Governance_Procedures_Anchor (Sub-Domain Anchor)
+  0311004  This document         (Instance)
+
+============================================================
+3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+============================================================
+
+------------------------------------------------------------
+3.1 STANDARD DOCUMENT TEMPLATE — TothBot_V2-Docs [PL-001 RESOLVED]
+------------------------------------------------------------
+
+DC-TMPL-001  All controlled documents in TothBot_V2-Docs
+             MUST begin with the 7-field header in exactly
+             this order:
+
+===== MANDATORY HEADER FORMAT — TothBot_V2-Docs =====
+
+DocDCN:     [7-digit DCN, format AABCDDD, no spaces]
+DocTitle:   [Title_With_Underscores_No_Spaces]
+DocVersion: [dv/rv/v/rt + major_minor, e.g., dv1_0]
+DocOwner:   [Bill]
+DocPath:    [GitHub.com/TothBot/TothBot_V2-Docs/FOLDER/FILENAME_VERSION.txt]
+DocDate:    [MM-DD-YYYY]
+DocTime:    [HH:MM:SS UTC, 24-hour]
+
+======================================================
+
+DC-TMPL-002  Following the 7-field header, the standard
+             document body structure for TothBot_V2-Docs
+             documents is:
+
+             ============================================================
+             [DOCUMENT TITLE — ALL CAPS]
+             ============================================================
+
+             ============================================================
+             1. PURPOSE
+             ============================================================
+             [Why this document exists. What it governs.]
+
+             ============================================================
+             2. PARENT CHAIN
+             ============================================================
+             [Explicit trace to Domain Document via Anchor.]
+
+             ============================================================
+             3. MUST BE INCLUDED FROM PREVIOUS ANALYSIS
+             ============================================================
+             [Present when applicable. See Section 4 of this doc.]
+
+             [Additional sections as required by document type]
+
+             ============================================================
+             N. REVISION HISTORY
+             ============================================================
+             [Complete change history. No entry ever removed.]
+
+------------------------------------------------------------
+3.2 CODE FILE DOCUMENT TEMPLATE — TothBot_V2-Code
+------------------------------------------------------------
+
+DC-TMPL-003  All files in TothBot_V2-Code are controlled
+             documents. They use the same 7-field header
+             as TothBot_V2-Docs documents, adapted for
+             embedding as a comment block.
+
+===== MANDATORY HEADER FORMAT — TothBot_V2-Code (Python) =====
+
+# DocDCN:     [DCN of governing AA=10 coding spec]
+# DocTitle:   [Descriptive_File_Title_Underscores]
+# DocVersion: [dv/rv/v + major_minor, e.g., dv1_0]
+# DocOwner:   [Bill]
+# DocPath:    [github.com/TothBot/TothBot_V2-Code/path/filename]
+# DocDate:    [MM-DD-YYYY]
+# DocTime:    [HH:MM:SS UTC, 24-hour]
+
+==============================================================
+
+DC-TMPL-003A  FIELD RULES FOR CODE FILE HEADERS:
+
+             DocDCN:
+               The DCN of the governing AA=10 coding
+               specification for this file.
+               Example: ws_manager.py → 1011002
+               Example: .gitignore → 1011001
+               Example: pytest.ini → 1011001
+               Example: requirements.txt → 1011001
+
+             DocTitle:
+               Descriptive title of the file.
+               Underscores only. No spaces.
+               Example: WS_Manager, Git_Ignore_Configuration,
+               TothBot_Systemd_Service_Unit
+
+             DocVersion:
+               Follows same rules as all controlled docs.
+               Starts at dv1_0. Increments on every change.
+               Version NOT embedded in filename (unlike
+               TothBot_V2-Docs). Git history tracks versions.
+
+             DocPath:
+               Full repository path:
+               github.com/TothBot/TothBot_V2-Code/[path/file]
+               NOT the VPS deploy path (e.g., not
+               /etc/systemd/system/tothbot.service).
+               NOT the Windows local path.
+
+             DocDate / DocTime:
+               Same rules as all controlled documents.
+               Update on every version increment.
+
+DC-TMPL-003B  NON-PYTHON FILE HEADERS:
+             For non-Python files, use the file's native
+             comment syntax. Examples:
+
+             .gitignore (# prefix):
+               # DocDCN:     1011001
+               # DocTitle:   Git_Ignore_Configuration
+               [... remaining fields ...]
+
+             .ini files (# or ; prefix):
+               # DocDCN:     1011001
+               [... remaining fields ...]
+
+             .service files (# prefix):
+               # DocDCN:     1011013
+               [... remaining fields ...]
+
+             README.md (no native comment syntax):
+               Place the 7-field header as HTML comments
+               at the top of the file:
+               <!-- DocDCN:     1011001 -->
+               <!-- DocTitle:   TothBot_V2_Code_README -->
+               [... remaining fields ...]
+
+DC-TMPL-003C  REVISION HISTORY IN CODE FILES:
+             Every code file MUST include a Revision
+             History section in comment format:
+
+             # ============================================================
+             # REVISION HISTORY
+             # ============================================================
+             #
+             #   dv1_0  MM-DD-YYYY  Initial. [brief summary]
+             #   dv1_1  MM-DD-YYYY  [what changed]
+
+             The Revision History is cumulative. No entry
+             is ever removed.
+
+DC-TMPL-003D  GOVERNING RULES REFERENCE:
+             Code file header implementation is further
+             governed by 1011001 Engineering_Best_Practices
+             BP-HDR-001 through BP-HDR-006. Both this
+             document (0311004) and 1011001 apply.
+             0311001 Sections 5.1-5.4 define the namespace
+             rules. This section defines the template rules.
+
+DC-WD-001    WD Exception documents MUST include the
+             standard 7-field header.
+
+           (a) DocVersion must be dv1_0 on creation.
+
+           (b) "Must be Included From Previous Analysis"
+               section required:
+               This section is authoritative and must be
+               fully implemented in the final approved
+               version.
+
+           (c) All other standard template sections, with
+               "TBD in Phase X" markers for content not
+               yet derivable.
+
+DC-WD-002  WD documents do not require Bill approval for
+           creation. They are working documents. Bill
+           approves when promoting dv → v (direct approval)
+           or rv → v (approval after revision).
+
+============================================================
+4. DOCUMENT LIFECYCLE (TBD IN FINAL SPEC)
+============================================================
+
+  4.1  Creation procedure
+  4.2  Review procedure (rv state)
+  4.3  Approval procedure (v state) — Bill approves
+  4.4  Retirement procedure (rt state)
+  4.5  Version increment rules (governed by 0311003)
+  4.6  Parent chain validation before commit
+
+============================================================
+5. RELATED DOCUMENTS
+============================================================
+
+  0300000  Governance
+  0310000  Governance_Procedures_Anchor
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+  0311003  Versioning_Procedure
+  1011001  Engineering_Best_Practices (BP-HDR code file rules)
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  rv1_1  04-11-2026  Added DC-TMPL-003 Code File Document
+                     Template for TothBot_V2-Code files.
+                     DC-TMPL-003A: field rules for code file
+                     headers (DocDCN, DocTitle, DocVersion,
+                     DocPath, DocDate/DocTime).
+                     DC-TMPL-003B: non-Python file header
+                     formats (.gitignore, .ini, .service,
+                     README.md).
+                     DC-TMPL-003C: Revision History in code
+                     file comment format.
+                     DC-TMPL-003D: governing rules reference
+                     to 1011001 BP-HDR-001 through -006 and
+                     0311001 Sections 5.1-5.4.
+                     Section 1 Purpose updated to explicitly
+                     state procedure applies to BOTH repos.
+                     Related Documents updated to include
+                     1011001. Corrective action from TB00079
+                     governance gap (code files are controlled
+                     documents per 0311001 HR-DC-001).
+                     Approved by Bill.
+
+  rv1_0  04-11-2026  Section 3 template body text corrected:
+                     "23:59:59 UTC UTC, 24-hour]" fixed to
+                     "23:59:59 UTC, 24-hour]". Duplicate UTC
+                     suffix was a typographic error introduced
+                     at document creation. Corrected per
+                     TB00074 document control audit. Pending
+                     Bill approval to promote to v1_1.
+
+  v1_0   04-04-2026  Promoted from dv to v. Removed WD
+                     placeholder status line. Resolved TBD
+                     markers in Parent Chain and Related
+                     Documents. Corrected DC-WD-002: Bill
+                     approves via dv → v or rv → v.
+                     Approved by Bill.
+
+  dv1_1  04-04-2026  DocPath correction: TothBot-V2-Docs
+                     corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-24-2026  Initial WD placeholder. Created under
+                     WD Exception. Captures document
+                     template standard (PL-001 RESOLVED)
+                     in Section 3. Defines mandatory 7-field
+                     header format, standard body structure,
+                     DocPath format, DocVersion lifecycle
+                     states, and WD Exception document
+                     requirements.
+
+============================================================
+END OF DOCUMENT
+============================================================

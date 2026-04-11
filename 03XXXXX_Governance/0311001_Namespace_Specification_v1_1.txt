@@ -1,0 +1,633 @@
+DocDCN:     0311001
+DocTitle:   Namespace_Specification
+DocVersion: v1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_1.txt
+DocDate:    04-11-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+NAMESPACE SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the complete namespace model for
+TothBot V2. It governs how Document Control Numbers (DCNs)
+are assigned, interpreted, and validated across all
+controlled documents in the TothBot V2 document control
+system.
+
+This is a clean-slate specification. It shares no legacy
+constraints with any prior TothBot namespace. All decisions
+in this document are derived from first principles using
+FP/DP analysis. Where this document conflicts with any
+prior TothBot namespace document, this document governs.
+
+============================================================
+2. SCOPE
+============================================================
+
+This specification applies to ALL controlled documents and
+code files in the TothBot V2 system, across BOTH repositories:
+
+  TothBot_V2-Docs (github.com/TothBot/TothBot_V2-Docs)
+    Scope: All specification and governance documents.
+    File format: .txt (Claude project compatible).
+    DC header format: Standalone 7-field header block.
+
+  TothBot_V2-Code (github.com/TothBot/TothBot_V2-Code)
+    Scope: All code files, configuration files, and
+    deployment files in the trading system repository.
+    File format: .py, .txt, .ini, .service, and others.
+    DC header format: 7-field header embedded as a comment
+    block at the top of each file, using the file's native
+    comment syntax (# for Python, etc.).
+
+HR-DC-001  ALL files in TothBot_V2-Code are controlled
+           documents. There are no uncontrolled files
+           in TothBot_V2-Code.
+
+HR-DC-002  Every file in TothBot_V2-Code MUST have a
+           7-field DC header. This is not optional.
+           Missing or malformed headers are document
+           control violations.
+
+HR-DC-003  Every file in TothBot_V2-Code MUST be
+           registered in 1010000 Section 5 Code File
+           Registry. Unregistered files are violations.
+
+HR-DC-004  Every file in TothBot_V2-Code MUST have a
+           Revision History section in comment format.
+
+Corrective action: This scope expansion corrects the
+governance gap documented in TB00079 where the scope
+limitation to TothBot_V2-Docs only was found to be
+incorrect and was causing document control violations.
+
+Any document outside both repositories is an uncontrolled
+working copy and has no governing authority.
+
+This specification does not apply to TothBot-Docs or
+TothBot-Code (the original TothBot system). Those
+repositories are permanent read-only archives governed
+by their own namespace.
+
+============================================================
+3. GOVERNING REPOSITORIES
+============================================================
+
+TothBot V2 has exactly two repositories:
+
+  TothBot_V2-Docs
+    URL:    github.com/TothBot/TothBot_V2-Docs
+    Local:  C:\Users\wstot\GitHub\TothBot\TothBot_V2-Docs\
+    VPS:    ~/TothBot_V2-Docs
+    Purpose: All controlled specification and governance
+             documents. Pathway 1 (GitHub document control
+             automation) runs here.
+    Header: Standalone 7-field header block.
+
+  TothBot_V2-Code
+    URL:    github.com/TothBot/TothBot_V2-Code
+    Local:  C:\Users\wstot\GitHub\TothBot\TothBot_V2-Code\
+    VPS:    ~/TothBot_V2-Code
+    Purpose: All trading system code and configuration
+             files. Pathway 2 (TothBot trading system)
+             runs here. All files are controlled documents.
+    Header: 7-field header in comment block. See Section 5.
+
+HR-001  The two repositories are completely independent.
+        No code, configuration, or dependency is shared.
+
+HR-002  TothBot_V2-Code contains only trading system
+        code and configuration. No document control
+        logic permitted.
+
+HR-003  TothBot_V2-Docs contains only controlled
+        specification documents and document control
+        automation code. No trading system logic
+        permitted.
+
+============================================================
+4. DCN STRUCTURE
+============================================================
+
+All DCNs follow the format: AABCDDD
+
+  AA  = Domain (2 digits, 00–11)
+  B   = Sub-Domain level (1 digit, 0–9)
+  C   = Instance level (1 digit, 0–1)
+  DDD = Sequential instance number within sub-domain
+
+------------------------------------------------------------
+4.1 DOCUMENT TIER DEFINITIONS
+------------------------------------------------------------
+
+  Tier 1 — Domain Document (B=0, C=0, DDD=000)
+    IS the domain. One per domain. Anchors all sub-domains.
+    Example: 0300000 Governance
+
+  Tier 2 — Sub-Domain Anchor (B=1-9, C=0, DDD=000)
+    Anchors a governance family to its Domain Document.
+    Example: 0310000 Governance_Procedures_Anchor
+
+  Tier 3 — Instance Document (B=1-9, C=1, DDD=001+)
+    Elaborates one specific component within the sub-domain.
+    Example: 0311001 Namespace_Specification
+
+------------------------------------------------------------
+4.2 PARENT CHAIN RULE
+------------------------------------------------------------
+
+Every document must have an unbroken parent chain:
+
+  Instance → Sub-Domain Anchor → Domain Document
+
+The parent chain must be explicitly declared in every
+document's Section 2 (Parent Chain). No document may be
+committed to GitHub without its complete parent chain
+already committed.
+
+============================================================
+5. CODE FILE DOCUMENT CONTROL HEADER FORMAT
+============================================================
+
+Code files in TothBot_V2-Code are controlled documents.
+They use the same 7-field header as TothBot_V2-Docs
+documents, embedded as a comment block at the top of
+the file.
+
+------------------------------------------------------------
+5.1 MANDATORY CODE FILE HEADER FORMAT
+------------------------------------------------------------
+
+For Python files:
+
+  # DocDCN:     [DCN of governing AA=10 coding spec]
+  # DocTitle:   [Descriptive_File_Title_Underscores]
+  # DocVersion: [dv/rv/v + major_minor, e.g., dv1_0]
+  # DocOwner:   [Bill]
+  # DocPath:    [github.com/TothBot/TothBot_V2-Code/path]
+  # DocDate:    [MM-DD-YYYY]
+  # DocTime:    [HH:MM:SS UTC, 24-hour]
+
+For non-Python files (.ini, .txt, .service, etc.):
+  Use the file's native comment syntax.
+  If no comment syntax exists, place the header as the
+  first 7 lines of the file in the same key: value format.
+
+The header MUST appear on the first lines of every file.
+No code, imports, or content may precede the header block.
+
+------------------------------------------------------------
+5.2 CODE FILE HEADER FIELD RULES
+------------------------------------------------------------
+
+DocDCN:
+  References the governing AA=10 coding specification DCN.
+  For files governed by Engineering_Best_Practices: 1011001.
+  For component .py files: the DCN of their governing spec
+  (e.g., ws_manager.py → 1011002 WS_Manager_Coding_Spec).
+
+DocTitle:
+  Descriptive title of the file or configuration.
+  Underscores only. No spaces.
+  Example: Git_Ignore_Configuration, WS_Manager
+
+DocPath:
+  Full path in the repository:
+  github.com/TothBot/TothBot_V2-Code/[relative/path/file]
+  NOT the VPS deploy path. NOT the local Windows path.
+
+DocVersion:
+  Follows the same rules as all controlled documents.
+  Starts at dv1_0. Increments on every change.
+
+------------------------------------------------------------
+5.3 CODE FILE REVISION HISTORY REQUIREMENT
+------------------------------------------------------------
+
+Every code file MUST include a Revision History section
+in comment format. Format:
+
+  # ============================================================
+  # REVISION HISTORY
+  # ============================================================
+  #
+  #   dv1_0  MM-DD-YYYY  Initial. [brief summary]
+  #   dv1_1  MM-DD-YYYY  [what changed]
+
+The Revision History grows with the file. No entry is
+ever removed. The complete change history is retained.
+
+------------------------------------------------------------
+5.4 GOVERNING RULE DOCUMENT
+------------------------------------------------------------
+
+The detailed coding standards for code file headers are
+defined in 1011001 Engineering_Best_Practices
+(BP-HDR-001 through BP-HDR-006). Section 5 of this
+document defines the namespace-level rules. 1011001
+defines the implementation-level rules. Both apply.
+
+============================================================
+6. DOMAIN ASSIGNMENTS
+============================================================
+
+  AA=00  Ethics_and_Safety
+  AA=01  Management
+  AA=02  Operations
+  AA=03  Governance
+  AA=04  Exchange_Interface
+  AA=05  System_Architecture
+  AA=06  Risk
+  AA=07  Strategy
+  AA=08  Trading_System
+  AA=09  Plans
+  AA=10  Coding_Specification
+  AA=11  Compliance
+
+============================================================
+7. FOLDER STRUCTURE — TothBot_V2-Docs
+============================================================
+
+  00XXXXX_Ethics_and_Safety/
+  01XXXXX_Management/
+  02XXXXX_Operations/
+  03XXXXX_Governance/
+  04XXXXX_Exchange_Interface/
+  05XXXXX_System_Architecture/
+  06XXXXX_Risk/
+  07XXXXX_Strategy/
+  08XXXXX_Trading_System/
+  09XXXXX_Plans/
+  10XXXXX_Coding_Specification/
+  11XXXXX_Compliance/
+  _Archive/
+
+============================================================
+8. DOCUMENT HEADER FORMAT — TothBot_V2-Docs FILES
+============================================================
+
+All controlled documents in TothBot_V2-Docs MUST begin
+with the 7-field header in exactly this order:
+
+  DocDCN:     [7-digit DCN, format AABCDDD, no spaces]
+  DocTitle:   [Title_With_Underscores_No_Spaces]
+  DocVersion: [dv/rv/v/rt + version, e.g. dv1_0]
+  DocOwner:   [Bill]
+  DocPath:    [GitHub.com/TothBot/TothBot_V2-Docs/folder/file]
+  DocDate:    [MM-DD-YYYY]
+  DocTime:    [HH:MM:SS UTC, 24-hour]
+
+All seven fields are mandatory. Order is mandatory.
+No field may be omitted or reordered.
+
+DocDate and DocTime are auto-filled at every version
+update in UTC. They reflect the moment of version
+creation, not the moment of GitHub commit.
+
+============================================================
+9. LIFECYCLE STATES
+============================================================
+
+Every document exists in exactly one lifecycle state.
+The state is encoded in DocVersion.
+
+  dv  — Draft Version
+        Active development. Under constant review. Bill may
+        approve directly (dv → v). Not yet authoritative.
+        Example: dv1_0, dv1_1, dv2_0
+
+  rv  — Revision Version
+        An approved document requiring changes returns to
+        rv state. Not used for initial document development.
+        Bill re-approves after revision is complete.
+        Example: rv1_0
+
+  v   — Approved Version
+        Bill-approved. Authoritative. Governs the system.
+        Changes require v → rv before returning to v.
+        Example: v1_0, v2_0
+
+  rt  — Retired
+        No longer authoritative. Moved to _Archive/.
+        DCN permanently reserved. Never reused.
+        Example: rt1_0
+
+State transitions:
+  dv → v   (Bill approves working draft directly)
+  v  → rv  (approved document requires changes)
+  rv → v   (Bill re-approves after revision)
+  v  → rt  (document retired)
+
+============================================================
+10. VERSIONING
+============================================================
+
+Version numbers follow the pattern: state + major_minor
+
+  dv1_0   First draft, first minor version
+  dv1_1   First draft, second minor version
+  rv1_0   Review of first major version
+  v1_0    First approved version
+  v2_0    Second approved version (major revision)
+
+Minor version: corrections, clarifications, additions
+that do not change scope or governing decisions.
+
+Major version: changes to scope, governing decisions,
+structural changes, or any change requiring full
+re-approval.
+
+Every change increments the version. No exceptions.
+
+============================================================
+11. DCN ASSIGNMENT RULES
+============================================================
+
+11.1 Assignment Authority
+Only Bill may assign DCNs. DCNs are registered in this
+document (Section 12) at the time of assignment. A
+document cannot exist without a registered DCN.
+
+11.2 Assignment Sequence
+Within any sub-domain, Instance Document DCNs are
+assigned sequentially from DDD=001. The next available
+DDD is the only valid choice. DCNs are not pre-reserved.
+
+11.3 Permanent Reservation
+Once assigned, a DCN is permanently associated with that
+document title. Retired document DCNs are permanently
+reserved and may never be reassigned.
+
+============================================================
+12. DCN REGISTER
+============================================================
+
+All assigned DCNs are recorded here. A DCN not in this
+register is not a valid TothBot V2 DCN.
+
+DCNs shown with current status and governing document
+version as of 04-11-2026.
+
+------------------------------------------------------------
+DOMAIN DOCUMENTS (Tier 1)
+------------------------------------------------------------
+
+  0000000  Ethics_and_Safety                       v1_0
+  0100000  Management                              v1_0
+  0200000  Operations                              v1_0
+  0300000  Governance                              v1_0
+  0400000  Exchange_Interface                      v1_0
+  0500000  System_Architecture_Overview           dv1_19
+  0600000  Risk                                    v1_0
+  0700000  Strategy                                v1_0
+  0800000  Trading_System                          v1_0
+  0900000  Plans                                   v1_0
+  1000000  Coding_Specification                   dv1_0
+  1100000  Compliance                              [TBD]
+
+------------------------------------------------------------
+GOVERNANCE (AA=03)
+------------------------------------------------------------
+
+  0310000  Governance_Procedures_Anchor            v1_0
+  0311001  Namespace_Specification                rv1_0
+  0311002  Document_Creation_Workflow             rv1_1
+  0311003  Versioning_Procedure                    v1_0
+  0311004  Document_Creation_and_Approval         rv1_1
+  0311005  System_Definitions_and_Terminology      v1_0
+
+------------------------------------------------------------
+EXCHANGE INTERFACE (AA=04)
+------------------------------------------------------------
+
+  0410000  Exchange_Interface_Kraken_Anchor        v1_0
+  0411001  Kraken_WS_v2_Specification             dv1_0
+  0411002  Kraken_REST_API_Specification           [TBD]
+  0411003  Kraken_Fee_Rate_Limit_Specification     [TBD]
+
+------------------------------------------------------------
+SYSTEM ARCHITECTURE (AA=05)
+------------------------------------------------------------
+
+  0510000  System_Components_Anchor               dv1_0
+  0511001  WS_Manager_Specification               dv1_1
+  0511002  Signal_Pipeline_Specification          dv1_0
+  0511003  Execution_Engine_Specification         dv1_0
+  0511004  Exit_Controller_Specification           [TBD]
+  0511005  Position_Mirror_Specification          dv1_0
+  0511006  Logger_Specification                   dv1_0
+
+------------------------------------------------------------
+CODING SPECIFICATION (AA=10)
+------------------------------------------------------------
+
+  1010000  Trading_System_Coding_Anchor           dv1_2
+  1011001  Engineering_Best_Practices             dv1_7
+  1011002  WS_Manager_Coding_Spec                dv1_13
+  1011003  Signal_Pipeline_Coding_Spec            dv1_0
+  1011004  Execution_Engine_Coding_Spec           dv1_0
+  1011005  Exit_Controller_Coding_Spec            dv1_2
+  1011006  Position_Mirror_Coding_Spec            dv1_0
+  1011007  Logger_Coding_Spec                     dv1_2
+  1011008  Long_Module_Coding_Spec                dv1_0
+  1011009  Selection_Controller_Coding_Spec       dv1_0
+  1011010  CIATS_Coding_Spec                      dv1_6
+  1011011  Risk_Engine_Coding_Spec                dv1_3
+  1011012  Regime_Engine_Coding_Spec              dv1_4
+  1011013  VPS_Deployment_Coding_Spec             dv1_4
+  1011014  Startup_Sequence_Coding_Spec           dv1_3
+  1020000  Testing_Coding_Anchor                  [TBD]
+  1021001  Unit_Test_Specification                dv1_0
+  1021002  Integration_Test_Specification         dv1_0
+  1021003  Paper_Trading_Test_Specification       [TBD]
+  1030000  GitHub_Automation_Coding_Anchor        [TBD]
+  1031001  GitHub_Automation_Coding_Spec          [TBD]
+  1031002  Document_Control_Automation_Test_Spec  [TBD]
+  1031003  Approval_Workflow_Coding_Spec          [TBD]
+
+============================================================
+13. VALIDATION RULES
+============================================================
+
+V-001  DocDCN must be exactly 7 digits, format AABCDDD.
+V-002  DocTitle must use underscores, no spaces.
+V-003  DocVersion must match format: [state][MAJOR]_[MINOR].
+V-004  DocOwner must be "Bill".
+V-005  DocPath must match actual file location in repo.
+V-006  DocDate must be MM-DD-YYYY format.
+V-007  DocTime must be HH:MM:SS UTC, 24-hour format.
+V-008  All seven fields are mandatory. None may be omitted.
+V-009  Field order is mandatory. No reordering permitted.
+V-010  DocDCN must be registered in Section 12.
+V-011  Domain Document must exist before Sub-Domain Anchor.
+V-012  Sub-Domain Anchor must exist before Instance Document.
+V-013  No document may be committed without complete
+       parent chain committed to GitHub.
+V-014  DocVersion must increment on every change.
+V-015  DocDate/DocTime must update on every change.
+V-016  DocPath must reference TothBot_V2-Docs for
+       specification documents.
+V-017  DocPath must reference TothBot_V2-Code for
+       code and configuration files.
+V-018  Version state must be one of: dv, rv, v, rt.
+V-019  DCN AABCDDD where B=0, C=0, DDD=000 = Domain Doc.
+V-020  Diagram asset filename begins with parent DCN.
+V-021  Diagram asset uses .svg extension.
+V-022  Diagram asset lives in same folder as parent doc.
+V-023  Every diagram reference has a corresponding SVG file.
+V-024  Diagram N+1 does not exist without Diagram N.
+V-025  All files in TothBot_V2-Code must have a
+       7-field DC header in comment format. (HR-DC-002)
+V-026  All files in TothBot_V2-Code must be registered
+       in 1010000 Section 5 Code File Registry. (HR-DC-003)
+V-027  All files in TothBot_V2-Code must have a Revision
+       History section in comment format. (HR-DC-004)
+
+============================================================
+14. FILENAME CONVENTION
+============================================================
+
+All controlled documents in TothBot_V2-Docs use this
+filename format:
+
+  [DCN]_[DocTitle]_[DocVersion].[ext]
+
+Example:
+  0311001_Namespace_Specification_v1_0.txt
+  0311001_Namespace_Specification_rv1_0.txt
+
+For code files in TothBot_V2-Code:
+  Standard filenames per Python and system conventions.
+  No version in the filename. Version is in the header.
+  Git history provides version tracking.
+
+============================================================
+15. DIAGRAM ASSET SPECIFICATION
+============================================================
+
+------------------------------------------------------------
+15.1 Why Diagrams Are Separate Files
+------------------------------------------------------------
+
+Controlled documents are stored as .txt files (Claude
+project folder compatible format). Binary image formats
+cannot be embedded in .txt files. SVG files provide
+structured vector graphics storable as text alongside
+the parent document.
+
+------------------------------------------------------------
+15.2 Diagram Storage Location
+------------------------------------------------------------
+
+Each diagram asset is stored in the SAME folder as its
+parent controlled document in TothBot_V2-Docs.
+
+Example: 0500000 diagrams live in 05XXXXX_System_Architecture/.
+
+------------------------------------------------------------
+15.3 Diagram Filename Convention
+------------------------------------------------------------
+
+  [ParentDCN]_Diagram[N]_[ShortTitle].svg
+
+Example:
+  0500000_Diagram1_Kraken_API_Connection_Architecture.svg
+  0500000_Diagram2_Trading_Pipeline.svg
+
+A document that references a diagram that does not exist
+as an SVG file is incomplete.
+
+------------------------------------------------------------
+15.4 Referencing Diagrams in Controlled Documents
+------------------------------------------------------------
+
+Within a .txt controlled document, each diagram is
+referenced by its exact filename:
+
+  [Diagram file: 0500000_Diagram1_Kraken_API_Connection_Architecture.svg]
+
+------------------------------------------------------------
+15.5 Validation Rules for Diagram Assets
+------------------------------------------------------------
+
+  V-020  Diagram asset filename begins with parent DCN
+  V-021  Diagram asset uses .svg extension
+  V-022  Diagram asset lives in same folder as parent doc
+  V-023  Every diagram reference in a .txt document has
+         a corresponding SVG file in the folder
+  V-024  Diagram N+1 does not exist without Diagram N
+         for the same parent DCN
+
+============================================================
+16. RELATED DOCUMENTS
+============================================================
+
+  0300000  Governance           (parent Domain Document)
+  0310000  Governance_Procedures_Anchor  (parent Anchor)
+  0311002  Document_Creation_Workflow
+  0311003  Versioning_Procedure
+  0311004  Document_Creation_and_Approval_Procedure
+  1011001  Engineering_Best_Practices (BP-HDR code file rules)
+
+============================================================
+17. REVISION HISTORY
+============================================================
+
+  rv1_0  04-11-2026  Section 2 Scope expanded to include
+                     TothBot_V2-Code as a governed repository.
+                     Added HR-DC-001 through HR-DC-004:
+                     all files in TothBot_V2-Code are
+                     controlled documents requiring 7-field
+                     headers, Revision History, and Code File
+                     Registry entries. Section 3 updated with
+                     header format note for both repos.
+                     Section 5 (new) added: code file DC
+                     header format, field rules, and Revision
+                     History requirement. Section 7 updated:
+                     renamed from "Folder Structure" to
+                     clarify TothBot_V2-Docs scope. V-025,
+                     V-026, V-027 added to Section 13. Related
+                     Documents updated to include 1011001.
+                     Corrective action from TB00079 governance
+                     gap (Claude error: DC applies to code
+                     files). Approved by Bill.
+
+  v1_0   04-04-2026  Promoted from dv to v. Corrected
+                     Section 9 lifecycle states and
+                     transitions: dv → v valid (direct
+                     promotion); rv is for revising approved
+                     documents only; removed incorrect
+                     dv → rv, rv → dv, v → dv paths.
+                     Approved by Bill.
+
+  dv1_3  04-04-2026  DocPath correction: TothBot-V2-Docs
+                     corrected to TothBot_V2-Docs throughout.
+
+  dv1_0  03-23-2026  Initial document. Clean-slate
+                     namespace specification for TothBot
+                     V2. 12-domain structure. Three-tier
+                     document hierarchy. Key innovations:
+                     AA=04 Exchange_Interface, AA=02
+                     Operations unifying Quality/Ops/CIATS,
+                     AA=01 Management (Deming), AA=08
+                     Trading_System. B=0 defined as
+                     categorically distinct Domain Document
+                     level vs B=1-9 Sub-Domain levels.
+
+  dv1_1  03-23-2026  Reduced from 12 domains to 11 domains.
+                     AA=09 Master_Plan and AA=10 Business_Plan
+                     merged into AA=09 Plans.
+
+  dv1_2  03-24-2026  Added Section 15 Diagram Asset
+                     Specification. Five validation rules
+                     added (V-020 through V-024).
+
+============================================================
+END OF DOCUMENT
+============================================================
