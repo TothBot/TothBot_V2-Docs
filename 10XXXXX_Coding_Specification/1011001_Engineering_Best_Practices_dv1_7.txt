@@ -1,0 +1,714 @@
+DocDCN:     1011001
+DocTitle:   Engineering_Best_Practices
+DocVersion: dv1_7
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011001_Engineering_Best_Practices_dv1_7.txt
+DocDate:    04-11-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+ENGINEERING BEST PRACTICES
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines non-negotiable engineering standards
+that apply to ALL TothBot V2 Pathway 2 code. Every coding
+spec (1011002 through 1011014) must conform to these
+standards without exception. Quality is built in — not
+inspected in (Deming Principle 1).
+
+Primary mission lens: every engineering decision serves
+maximizing profit and minimizing loss, with emphasis on
+minimizing loss. Slow, imprecise, or unreliable code is
+a loss event.
+
+This document is a pre-requisite for all other AA=10
+Pathway 2 instance documents. All coding must comply.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011001  This document
+
+Parent specification: 0500000 System_Architecture_Overview
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does this component DO?
+    Defines non-negotiable standards for all TothBot V2
+    Python code. Does not execute at runtime. Governs
+    how all other components are written.
+
+(2) Interfaces to other components?
+    This document is referenced by all 1011002–1011014
+    coding specs. All modules must implement every rule
+    defined here. No module-specific exceptions.
+
+(3) Hard rules?
+    Every rule in Sections 4–12 is a hard rule.
+    No exceptions. Code review must reject violations.
+
+(4) What triggers it?
+    Applied at code authoring time. Enforced at code
+    review. Verified by test suite (1021001).
+
+(5) What does it log?
+    Rounding operations: value, increment, direction,
+    result. Library version violations. Test failures.
+    Engineering Best Practices is a standards document —
+    violations surface in tests and code review, not
+    at runtime.
+
+============================================================
+4. RUNTIME ENVIRONMENT
+============================================================
+
+BP-ENV-001  Python version: 3.12.3 EXACTLY.
+            No other version is permitted.
+            Runtime: Hetzner VPS, Ubuntu 24.04.4 LTS.
+
+BP-ENV-002  Single Python process. asyncio-based.
+            All I/O-bound operations use async/await.
+            No multiprocessing. No threading except
+            Logger's QueueListener (explicitly permitted).
+
+BP-ENV-003  uvloop MANDATORY on Linux deployment:
+              import asyncio
+              import uvloop
+
+              # Python 3.11+ pattern (required):
+              asyncio.run(main(), loop_factory=uvloop.new_event_loop)
+
+              # Alternative using asyncio.Runner:
+              with asyncio.Runner(
+                  loop_factory=uvloop.new_event_loop) as runner:
+                  runner.run(main())
+
+            uvloop replaces the default asyncio event loop.
+            Provides ~2-4x asyncio performance improvement.
+            Required on all Linux VPS deployments.
+            DO NOT use uvloop in unit tests (compatibility).
+
+BP-ENV-004  TCP_NODELAY on all WebSocket connections.
+            Eliminates Nagle's algorithm delay on small
+            packets. Required for low-latency WS messaging.
+
+              import websockets
+              # In websockets library: use create_connection
+              # with sock option or set at OS level.
+              # Implementation detail: set
+              # socket.TCP_NODELAY = True on the underlying
+              # socket after connection establishment.
+
+BP-ENV-005  All code runs in UTC. No local timezone.
+            All timestamps: ISO 8601, UTC, with microseconds.
+              from datetime import datetime, timezone
+              ts = datetime.now(timezone.utc).isoformat()
+
+============================================================
+5. JSON HANDLING — orjson
+============================================================
+
+BP-JSON-001  All JSON parsing: orjson.loads()
+             3-5x faster than stdlib json.loads().
+             Required on all Kraken WS and REST message
+             parsing (high-volume hot path).
+
+BP-JSON-002  All JSON serialization:
+               orjson.dumps(data, default=_json_default).decode()
+             orjson.dumps() returns bytes. .decode() converts
+             to str where str is required.
+
+BP-JSON-003  DO NOT use stdlib json module anywhere
+             in Pathway 2 code. orjson is the sole
+             JSON library.
+
+BP-JSON-004  Financial values from JSON must be converted
+             to Python Decimal from string, NEVER from float:
+               price = Decimal(str(msg["price"]))
+             See Section 8 (Decimal Precision) for full rules.
+
+BP-JSON-005  orjson Decimal serialization callback — MANDATORY:
+             orjson does not natively serialize Decimal.
+             All serializers MUST provide this callback:
+
+               def _json_default(obj):
+                   if isinstance(obj, Decimal):
+                       return str(obj)
+                   raise TypeError(
+                       f"Object of type {type(obj)} is not"
+                       f" JSON serializable"
+                   )
+
+               # Usage:
+               data = orjson.dumps(
+                   record, default=_json_default).decode()
+
+             Without this callback, orjson will raise
+             TypeError on any Decimal value.
+
+BP-JSON-006  All log records serialized via orjson with
+             _json_default. No other serializer in Logger.
+
+============================================================
+6. ASYNC DESIGN RULES
+============================================================
+
+BP-ASYNC-001  Async-first design. All I/O operations use
+              async/await. No synchronous blocking calls
+              on the asyncio event loop thread.
+
+BP-ASYNC-002  NEVER use time.sleep() on the event loop.
+              Use await asyncio.sleep() instead.
+
+BP-ASYNC-003  NEVER use requests library. Use aiohttp
+              for all HTTP operations (async HTTP client).
+
+BP-ASYNC-004  All aiohttp.ClientSession: explicit timeout
+              and connector. NEVER bare ClientSession():
+
+                timeout = aiohttp.ClientTimeout(
+                    total=10,
+                    connect=5,
+                    sock_read=8
+                )
+                connector = aiohttp.TCPConnector(
+                    limit=10,
+                    limit_per_host=5,
+                    force_close=False
+                )
+                session = aiohttp.ClientSession(
+                    timeout=timeout,
+                    connector=connector
+                )
+
+BP-ASYNC-005  Logger QueueListener is the ONLY permitted
+              non-asyncio thread. No other thread creation
+              permitted in Pathway 2.
+
+BP-ASYNC-006  asyncio.Queue for inter-coroutine communication.
+              queue.Queue (stdlib) for Logger QueueHandler/
+              QueueListener pattern ONLY (non-asyncio thread
+              boundary). These are distinct use cases with
+              different queue types — do not substitute.
+
+BP-ASYNC-007  Graceful shutdown: cancel all running tasks
+              before closing event loop:
+                tasks = asyncio.all_tasks(loop)
+                for task in tasks:
+                    task.cancel()
+                await asyncio.gather(*tasks,
+                                     return_exceptions=True)
+
+============================================================
+7. HTTP CLIENT RULES
+============================================================
+
+BP-HTTP-001  All aiohttp.ClientSession requires explicit
+             timeout and connector per BP-ASYNC-004.
+
+BP-HTTP-002  ClientTimeout values:
+               total=10    (full request timeout)
+               connect=5   (connection timeout)
+               sock_read=8 (read timeout)
+
+BP-HTTP-003  TCPConnector values:
+               limit=10          (total connections)
+               limit_per_host=5  (per-host connections)
+               force_close=False (reuse connections)
+
+BP-HTTP-004  All REST API calls: retry on 429 and 5xx
+             with exponential backoff. Max 3 retries.
+             Do not retry on 4xx (client errors).
+
+BP-HTTP-005  All REST responses: parse via orjson.loads()
+             per BP-JSON-001. Never stdlib json.
+
+============================================================
+8. DECIMAL PRECISION FOR PRICE AND QUANTITY ROUNDING
+============================================================
+
+BACKGROUND (AR-047 amendment):
+Python float arithmetic produces binary representation
+errors for decimal increments:
+  math.floor(42350.15 / 0.1) * 0.1
+    = 42350.099999999985  ← WRONG
+Kraken matching engine requires prices that are exact
+multiples of price_increment. A float-rounded price
+is rejected with EOrder:Invalid price. This is a loss
+event. All rounding uses Decimal.quantize().
+
+BP-DEC-001  ALL Kraken-sourced numeric values MUST be
+            converted to Decimal using the STRING constructor
+            immediately on receipt:
+
+              price = Decimal(str(msg["price"]))
+              qty   = Decimal(str(msg["qty"]))
+
+            NEVER use the float constructor:
+              WRONG: Decimal(msg["price"])   # float error
+              WRONG: Decimal(0.1)            # float error
+              CORRECT: Decimal(str(0.1))     # exact
+
+            Applies to ALL Kraken-sourced values:
+              - ticker bid, ask prices
+              - executions avg_price, last_price, cum_cost
+              - instrument price_increment, qty_increment,
+                qty_min, cost_min
+              - balances channel balance, amount
+              - GetOHLCData OHLC candle values
+
+BP-DEC-002  ROUNDING FOR ORDER QUANTITY:
+            Round DOWN (toward zero). Conservative size.
+
+              from decimal import Decimal, ROUND_DOWN
+              def round_qty(raw_qty: Decimal,
+                            qty_increment: Decimal) -> Decimal:
+                  return raw_qty.quantize(
+                      qty_increment,
+                      rounding=ROUND_DOWN
+                  )
+
+BP-DEC-003  ROUNDING FOR ENTRY LIMIT PRICE:
+            Round DOWN (toward zero for buy limit).
+            Ensures limit buy rests on book as maker order.
+
+              def round_entry_price(raw_price: Decimal,
+                                    price_increment: Decimal
+                                    ) -> Decimal:
+                  return raw_price.quantize(
+                      price_increment,
+                      rounding=ROUND_DOWN
+                  )
+
+BP-DEC-004  ROUNDING FOR TP LIMIT PRICE:
+            Round UP (toward positive infinity).
+            TP is a SELL limit. Higher price preserves R:R.
+
+              from decimal import Decimal, ROUND_UP
+              def round_tp_price(raw_tp: Decimal,
+                                 price_increment: Decimal
+                                 ) -> Decimal:
+                  return raw_tp.quantize(
+                      price_increment,
+                      rounding=ROUND_UP
+                  )
+
+BP-DEC-005  ROUNDING FOR EMERGSL TRIGGER PRICE:
+            Round DOWN (toward zero).
+            Lower trigger fires earlier — limits loss.
+
+              def round_emergsl_price(raw_sl: Decimal,
+                                      price_increment: Decimal
+                                      ) -> Decimal:
+                  return raw_sl.quantize(
+                      price_increment,
+                      rounding=ROUND_DOWN
+                  )
+
+BP-DEC-006  ROUNDING DIRECTION SUMMARY:
+
+            Value                  Round   Rationale
+            ─────────────────────  ──────  ──────────────────
+            order_qty (entry)      DOWN    Conservative size
+            entry limit_price      DOWN    Rest on book (maker)
+            tp_price (sell limit)  UP      Better exit, R:R
+            emergSL trigger price  DOWN    Earlier fire, safer
+            qty (partial fill TP)  DOWN    Conservative exit
+
+BP-DEC-007  INSTRUMENT INCREMENT CONVERSION:
+            All instrument channel snapshot values converted
+            to Decimal at parse time (once, at startup):
+
+              for pair in instrument_snapshot["pairs"]:
+                  pair_cache[pair["symbol"]] = {
+                      "price_increment": Decimal(
+                          str(pair["price_increment"])),
+                      "qty_increment": Decimal(
+                          str(pair["qty_increment"])),
+                      "qty_min": Decimal(str(pair["qty_min"])),
+                      "cost_min": Decimal(str(pair["cost_min"])),
+                      "status": pair["status"],
+                  }
+
+BP-DEC-008  PROHIBITION:
+            math.floor() and math.ceil() MUST NOT be used
+            for any price or quantity rounding.
+            Code review MUST reject any use of math.floor/
+            math.ceil for financial value rounding.
+
+            Permitted uses of math.floor/ceil:
+              - Non-financial array indexing
+              - Statistical computations (EWMA, CUSUM)
+                where float precision is acceptable
+
+============================================================
+9. ERROR HANDLING
+============================================================
+
+BP-ERR-001  No bare except clauses:
+              WRONG: except:
+              CORRECT: except Exception as e:
+              CORRECT: except (ValueError, KeyError) as e:
+
+BP-ERR-002  All exceptions must be logged before re-raising
+            or handling. Use Logger (never print() on hot path).
+
+BP-ERR-003  Unhandled exceptions in asyncio tasks:
+            Attach exception handler to event loop:
+              loop.set_exception_handler(handle_exception)
+            All unhandled exceptions: log CRITICAL + alert.
+
+BP-ERR-004  Never suppress exceptions silently. If an
+            exception cannot be handled, log it and let
+            it propagate. Suppressed exceptions hide
+            system failures.
+
+BP-ERR-005  KeyError on Kraken message parsing: log WARN
+            with the raw message. Do not crash the hot path.
+            Continue processing next message.
+
+============================================================
+10. LOGGING RULES
+============================================================
+
+BP-LOG-001  All logging through the Logger component.
+            No print() statements in production code.
+            No direct file writes from non-Logger modules.
+
+BP-LOG-002  Logger is never blocked by callers.
+            Callers fire-and-forget via QueueHandler.
+
+BP-LOG-003  All log records: structured JSON via orjson
+            with _json_default per BP-JSON-005.
+
+BP-LOG-004  All financial values in log records: store as
+            string representation of Decimal. Never float.
+
+BP-LOG-005  All log event codes: SCREAMING_SNAKE_CASE.
+            All registered in 1011007 Logger_Coding_Spec
+            Section 5. No undocumented event codes.
+
+============================================================
+11. TESTING REQUIREMENTS
+============================================================
+
+BP-TEST-001  Every module has a corresponding unit test file.
+             Module complete = tests pass.
+
+BP-TEST-002  All Kraken WS and REST interactions mocked
+             in unit and integration tests. No live API
+             calls in tests.
+
+BP-TEST-003  Sacred 1:1.5 R:R tested in EVERY order test.
+             Any order sequence that violates net 1:1.5 R:R
+             must fail the test.
+
+BP-TEST-004  stp_type underscore format verified in all
+             WS v2 order tests (cancel_newest not
+             cancel-newest — WS v2 uses underscore).
+
+BP-TEST-005  orjson Decimal serialization tested in Logger
+             unit tests. Round-trip: Decimal → JSON → Decimal
+             must preserve exact value.
+
+BP-TEST-006  Decimal rounding tested for all four order
+             value types (qty, entry, TP, emergSL).
+             Test both boundary and non-boundary increments.
+
+BP-TEST-007  Queue full behavior tested: verify hot path
+             does not block when Logger queue is at maxsize.
+
+BP-TEST-008  Do not use uvloop in unit tests. Use standard
+             asyncio event loop for test compatibility.
+
+============================================================
+12. LIBRARY VERSION PINNING (requirements.txt)
+============================================================
+
+BP-LIB-001  ALL library versions pinned in requirements.txt.
+            No unpinned dependencies. No ranges unless
+            a security vulnerability forces an update.
+
+BP-LIB-002  websockets>=14.0
+            WS v2 requires websockets 14+.
+
+BP-LIB-003  uvloop>=0.21.0
+
+BP-LIB-004  orjson>=3.10.0
+            3.10+ required for stable Decimal callback.
+
+BP-LIB-005  aiohttp>=3.9.0
+
+BP-LIB-006  numpy>=1.26.0
+            Required for ATR, EMA, ADX computation.
+
+BP-LIB-007  pandas>=2.1.0
+            Required for CIATS regime analysis.
+
+BP-LIB-008  cryptography>=42.0.0
+            Required for Kraken API signature generation.
+
+BP-LIB-009  requirements.txt pinning format:
+              websockets==14.x.x
+              uvloop==0.21.x
+              orjson==3.10.x
+              aiohttp==3.9.x
+              numpy==1.26.x
+              pandas==2.1.x
+              cryptography==42.x.x
+
+            Pin to exact minor.patch version after
+            confirming compatibility on VPS.
+
+============================================================
+14. PYTHON FILE HEADER AND REVISION HISTORY REQUIREMENTS
+============================================================
+
+Every Pathway 2 Python file (.py) in TothBot_V2-Code
+MUST contain a compliant document control header and a
+complete Revision History. No exceptions. These requirements
+apply to every .py file without exception: modules, test
+files, configuration files, and support scripts.
+
+This is not optional. This is how CIATS and PDCA track
+every code change. Without this, parameter optimization
+is impossible because the change history that drove each
+parameter change cannot be reconstructed. Every period
+added, every line modified, every defect fixed is tracked
+here. No change goes unrecorded.
+
+------------------------------------------------------------
+BP-HDR-001  MANDATORY 7-FIELD HEADER
+------------------------------------------------------------
+
+Every Python file MUST begin with a docstring containing
+the 7-field document control header in this exact format
+and order:
+
+  """
+  DocDCN:     [Governing coding spec DCN]
+  DocTitle:   [Component_Name_No_Spaces]
+  DocVersion: [Governing spec version at last code change]
+  DocOwner:   Bill
+  DocPath:    github.com/TothBot/TothBot_V2-Code/tothbot/[filename].py
+  DocDate:    [MM-DD-YYYY of last change to this file]
+  DocTime:    [HH:MM:SS UTC of last change]
+
+The DocDCN is the DCN of the governing coding specification
+(e.g., 1011002 for ws_manager.py). Python files in
+TothBot_V2-Code do not carry their own DCNs — they are
+identified by their governing spec DCN. This links every
+code file directly into the document control chain.
+
+DocVersion tracks with the governing spec version. When
+the code changes, the governing spec MUST be updated to
+document the change, and DocVersion reflects the new spec
+version. Code and spec always change together.
+
+------------------------------------------------------------
+BP-HDR-002  MANDATORY REVISION HISTORY
+------------------------------------------------------------
+
+Every Python file MUST contain a Revision History section
+immediately following the 7-field header, within the same
+opening docstring, before the module description. Format:
+
+  ============================================================
+  REVISION HISTORY
+  ============================================================
+
+    dv1_N  MM-DD-YYYY  [Summary of changes in this version.
+                        What changed. Why it changed. Which
+                        defect fixed or which spec change
+                        drove the code change.]
+
+    dv1_0  MM-DD-YYYY  Initial implementation. Written to
+                       [DCN] [Title] [version].
+
+The most recent entry is first. All prior entries follow
+in reverse chronological order. No entry is ever removed.
+
+------------------------------------------------------------
+BP-HDR-003  EVERY CHANGE REQUIRES A REVISION HISTORY ENTRY
+------------------------------------------------------------
+
+Every change to any Python file — no matter how small —
+MUST add a new Revision History entry. There is no such
+thing as a trivial change that does not require an entry.
+If the file changed, the Revision History changes.
+DocDate and DocTime MUST be updated on every change.
+DocVersion MUST be updated to match the new governing
+spec version.
+
+This is identical to VP-003 of 0311003 Versioning_Procedure
+applied to Python files.
+
+------------------------------------------------------------
+BP-HDR-004  GOVERNING SPEC MUST BE UPDATED WITH CODE
+------------------------------------------------------------
+
+A Python file and its governing coding specification
+(AA=10) MUST always be at the same version. When code
+changes:
+  Step 1: Update the governing coding spec (new version).
+  Step 2: Update the Python file header (DocVersion,
+          DocDate, DocTime, Revision History entry).
+  Step 3: Update the Code File Registry in 1010000.
+  Step 4: Commit all three changes in the same session.
+
+Code and spec are NEVER out of sync. A code change
+without a spec update is a document control violation.
+A spec update without a code change (that describes the
+change) is also a violation.
+
+------------------------------------------------------------
+BP-HDR-005  DOCPATH FOR PYTHON FILES
+------------------------------------------------------------
+
+DocPath for Python files uses the TothBot_V2-Code GitHub
+URL:
+
+  github.com/TothBot/TothBot_V2-Code/tothbot/[filename].py
+
+Note lowercase "github.com" (not "GitHub.com") to match
+the actual repository URL format. This distinguishes
+Python file DocPaths from TothBot_V2-Docs document paths.
+
+------------------------------------------------------------
+BP-HDR-006  COMPLETE HEADER FORMAT EXAMPLE
+------------------------------------------------------------
+
+  """
+  DocDCN:     1011002
+  DocTitle:   WS_Manager_Component
+  DocVersion: dv1_13
+  DocOwner:   Bill
+  DocPath:    github.com/TothBot/TothBot_V2-Code/tothbot/ws_manager.py
+  DocDate:    04-11-2026
+  DocTime:    23:59:59 UTC
+
+  ============================================================
+  REVISION HISTORY
+  ============================================================
+
+    dv1_13  04-11-2026  DEFECT-WM-OHLC-001: ohlc subscription
+                        requires symbol list. Removed ohlc from
+                        _subscribe_public(). Added
+                        _subscribe_ohlc_channels() triggered
+                        from _handle_instrument() after universe
+                        built. Governed by 1011002 dv1_13.
+
+    dv1_12  04-10-2026  DEFECT-WM-ZOM-001: zombie timer reset
+                        moved from __init__ to end of
+                        _startup_connect_and_subscribe() both
+                        paths. Commit: 4241bf3.
+                        Governed by 1011002 dv1_12.
+
+    dv1_11  04-05-2026  Initial Phase 8 implementation.
+                        Written to 1011002 WS_Manager_Coding_Spec
+                        dv1_11.
+
+  ============================================================
+  TothBot's sole interface to all Kraken WebSocket v2...
+  ============================================================
+  """
+
+============================================================
+15. CODE REVIEW CHECKLIST
+============================================================
+
+Every code submission for Pathway 2 must pass this
+checklist before merge:
+
+  CR-001  uvloop imported and active on VPS deployment.
+  CR-002  orjson used for all JSON ops. No stdlib json.
+  CR-003  Decimal(str(value)) for all Kraken API numerics.
+  CR-004  No math.floor/ceil for financial rounding.
+  CR-005  Decimal.quantize() for all price/qty rounding.
+          Direction: DOWN for qty, entry, emergSL;
+                     UP for TP.
+  CR-006  No bare except clauses.
+  CR-007  All exceptions logged before handling.
+  CR-008  No print() statements.
+  CR-009  No synchronous blocking on asyncio event loop.
+  CR-010  All aiohttp.ClientSession: explicit timeout
+          and connector.
+  CR-011  Sacred 1:1.5 R:R tested in order tests.
+  CR-012  stp_type uses underscore format in WS v2 orders.
+  CR-013  All timestamps UTC with microseconds.
+  CR-014  No undocumented event codes in Logger calls.
+  CR-015  Requirements pinned to exact version.
+  CR-016  7-field header present in opening docstring,
+          all fields correct per BP-HDR-001.
+  CR-017  Revision History updated with this session's
+          changes per BP-HDR-003. DocDate, DocTime, and
+          DocVersion all updated.
+
+============================================================
+16. REVISION HISTORY
+============================================================
+
+  dv1_7  04-11-2026  Section 14 added: Python File Header
+                     and Revision History Requirements.
+                     BP-HDR-001 through BP-HDR-006 define
+                     the mandatory 7-field header format for
+                     all Pathway 2 Python files. BP-HDR-003
+                     establishes that every code change
+                     requires a Revision History entry —
+                     identical to VP-003 applied to code
+                     files. BP-HDR-004 mandates that code
+                     and governing spec always change
+                     together. CR-016 and CR-017 added to
+                     Section 15 Code Review Checklist.
+                     Old Section 13 Code Review Checklist
+                     renumbered to Section 15. Old Section
+                     14 Revision History renumbered to
+                     Section 16. Corrective action from
+                     TB00074 document control audit.
+
+  dv1_6  04-05-2026  Phase 8 completion. WD → full spec.
+                     Parent chain updated (1000000/1010000
+                     now exist). Five coding-readiness
+                     questions answered (Section 3). WD
+                     status removed. Section 4 (Runtime)
+                     completed. Section 5 (JSON) finalized.
+                     Section 6 (Async) completed including
+                     BP-ASYNC-005 through -007. Section 7
+                     (HTTP) finalized. Section 8 (Decimal)
+                     carries forward all dv1_5 rules.
+                     Section 9 (Error handling) added.
+                     Section 10 (Logging) added.
+                     Section 11 (Testing) completed.
+                     Section 12 (Libraries) finalized.
+                     Section 13 (Code Review Checklist)
+                     added — new in dv1_6. STATUS line
+                     removed. Document is coding-ready.
+
+  dv1_5  04-04-2026  DocPath correction.
+
+  dv1_4  03-26-2026  Section 3.11: BP-DEC-001 through -008.
+                     Decimal.quantize() mandatory. Float
+                     rounding prohibited. math.floor/ceil
+                     prohibited for financial rounding.
+
+  dv1_3  03-25-2026  Section 3.10: BP-LIB-001 through -008.
+                     requirements.txt version pinning.
+
+  dv1_2  03-25-2026  BP-TEST-005. BP-HTTP-001 through -004.
+
+  dv1_1  03-25-2026  BP-JSON-005. BP-UVL-006.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+
+============================================================
+END OF DOCUMENT
+============================================================
