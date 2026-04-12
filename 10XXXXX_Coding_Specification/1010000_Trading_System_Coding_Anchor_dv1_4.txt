@@ -1,9 +1,9 @@
 DocDCN:     1010000
 DocTitle:   Trading_System_Coding_Anchor
-DocVersion: dv1_3
+DocVersion: dv1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_3.txt
-DocDate:    04-11-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_4.txt
+DocDate:    04-12-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -305,8 +305,12 @@ Each entry contains:
   File:        position_mirror.py
   DCN:         1011006
   Spec:        Position_Mirror_Coding_Spec
-  SpecVer:     dv1_0
-  RegDate:     04-11-2026
+  SpecVer:     dv1_1
+  RegDate:     04-12-2026
+  Note:        SpecVer corrected dv1_0 → dv1_1. Spec updated
+               04-07-2026 to match actual implementation (field
+               names, method names). Code unchanged. DC header
+               added TB00084.
 
   File:        logger.py
   DCN:         1011007
@@ -355,6 +359,22 @@ Each entry contains:
   Spec:        Startup_Sequence_Coding_Spec
   SpecVer:     dv1_3
   RegDate:     04-11-2026
+
+  File:        tothbot/__init__.py
+  DCN:         1011001
+  Spec:        Engineering_Best_Practices
+  SpecVer:     dv1_7
+  RegDate:     04-12-2026
+  Note:        Package init file. DC header added TB00084.
+               First DC-compliant version.
+
+  File:        tothbot/__main__.py
+  DCN:         1011001
+  Spec:        Engineering_Best_Practices
+  SpecVer:     dv1_7
+  RegDate:     04-12-2026
+  Note:        Package entry point. Invokes startup_sequence.run().
+               DC header added TB00084. First DC-compliant version.
 
 ------------------------------------------------------------
 5.3 REGISTRY — TESTING MODULES
@@ -508,7 +528,7 @@ Engineering_Best_Practices. Key constraints:
           documents with 7-field DC headers, Revision
           History, and Code File Registry entries.
           Per 0311001 HR-DC-001 through HR-DC-004 and
-          0311002 rv1_1 STEP 8.2.2.
+          0311002 v1_2 STEP 8.2.2.
 
 ============================================================
 9. LOCKED ARCHITECTURAL REQUIREMENTS
@@ -538,6 +558,17 @@ Key ARs:
 ============================================================
 6. REVISION HISTORY
 ============================================================
+
+  dv1_4  04-12-2026  Section 5.2 registry updated: position_mirror.py
+                     SpecVer corrected dv1_0 → dv1_1 (governing spec
+                     updated 04-07-2026 to match actual implementation;
+                     registry was stale). __init__.py and __main__.py
+                     added to registry — both required per HR-DC-003
+                     (all TothBot_V2-Code files must be registered).
+                     EC-011 reference corrected: 0311002 rv1_1 → v1_2.
+                     All 15 tothbot/ subfolder .py files received
+                     DC-compliant 7-field headers per 0311001 v1_1,
+                     0311004 v1_1, 1011001 dv1_7. TB00084.
 
   dv1_3  04-11-2026  CommitHash field removed from all
                      Section 5 registry entries and from
