@@ -1,9 +1,9 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_12
+DocVersion: dv1_13
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_12.txt
-DocDate:    04-05-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_13.txt
+DocDate:    04-11-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -32,7 +32,7 @@ This document supersedes and retires all prior WD versions
 
   1000000  Coding_Specification          dv1_0
   1010000  Trading_System_Coding_Anchor  dv1_0
-  1011002  This document                 dv1_12
+  1011002  This document                 dv1_13
   Parent specification:
     0511001  WS_Manager_Specification    dv1_0
 
@@ -216,7 +216,10 @@ Section 3. All hard rules are consolidated in Section 16.
       instrument  — per-pair specs + status cache (startup)
       status      — global engine state + connection_id
       ohlc(5)     — 5-minute candle events (SYSTEM CLOCK)
+                    NOTE: subscribed AFTER instrument snapshot
+                    builds monitored_universe (WM-OHLC-SUB-001)
       ohlc(60)    — 1H HTF cache for Gate 4
+                    NOTE: same deferred subscription as ohlc(5)
       ticker      — price data (per-pair, event_trigger mode
                     managed per position state — Section 12)
 
@@ -395,6 +398,13 @@ handle_instrument(msg):
   - On startup snapshot: populate monitored_universe
     (Section 9.1). Build price_increment, qty_min,
     cost_min, qty_increment per pair (AR-028).
+  - On startup snapshot: after monitored_universe is
+    built, schedule _subscribe_ohlc_channels() via
+    asyncio.create_task() (WM-OHLC-SUB-001).
+    ohlc(5) and ohlc(60) subscribed with explicit
+    symbol list = monitored_universe. This is the
+    ONLY correct time to subscribe ohlc — Kraken WS v2
+    rejects ohlc subscription without a symbol list.
 
 handle_status(msg):
   - Update last_real_data_time for this connection.
@@ -1746,6 +1756,40 @@ HR-WM-020  Both DATA and TRADE keys IP-whitelisted. Update
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_13  04-11-2026  Two defects fixed. Both found during
+                      Phase 11 paper trading deployment.
+                      DEFECT 1: ohlc subscription failure.
+                      Kraken WS v2 ohlc channel requires a
+                      symbol list. Prior code subscribed without
+                      symbols causing "Symbol(s) not found" error
+                      on both ohlc(5) and ohlc(60). Without ohlc
+                      data, _last_real_data_public never updated
+                      after instrument snapshot. Zombie fired at
+                      90s. System crash-looped indefinitely.
+                      Fix: removed ohlc from _subscribe_public().
+                      Added _subscribe_ohlc_channels() method.
+                      Called via asyncio.create_task() from
+                      _handle_instrument() after instrument
+                      snapshot builds monitored_universe.
+                      New rules: WM-OHLC-SUB-001 through -003
+                      (Section 7.6).
+                      DEFECT 2: zombie timer starts at __init__.
+                      _last_real_data_public initialized at
+                      WSManager.__init__() but zombie clock must
+                      start when connection is live. Startup
+                      overhead consumed zombie budget before recv
+                      loop started. Fix: reset
+                      _last_real_data_public at end of
+                      _startup_connect_and_subscribe() in both
+                      paper and live paths (WM-OHLC-SUB-003).
+                      Section 4.1 updated: ohlc subscription
+                      sequencing noted.
+                      Section 5.2 updated: handle_instrument ohlc
+                      subscription trigger documented.
+                      Section 7.6 added: ohlc subscription
+                      sequencing rules WM-OHLC-SUB-001 through
+                      -003.
 
   dv1_12  04-05-2026  WD complete. Sections 4 and 5 (TBD
                       in dv1_11) fully specified. WD status
