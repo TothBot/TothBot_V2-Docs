@@ -1,0 +1,538 @@
+DocDCN:     0711003
+DocTitle:   Asset_Selection_Specification
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711003_Asset_Selection_Specification_dv1_1.txt
+DocDate:    04-13-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+ASSET_SELECTION_SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete specification for TothBot V2
+asset selection: which Kraken spot pairs TothBot monitors,
+how the monitored universe is populated at startup, how it
+is updated in real time, and how BTC/USD is anchored as a
+permanent member.
+
+This document is the sole authoritative specification for
+the monitored pair universe. It is a direct coding contract.
+Claude must be able to implement the Selection Controller
+universe logic from this document without asking any
+questions.
+
+============================================================
+2. GOVERNING DOCUMENTS
+============================================================
+
+  0700000  Strategy               (Domain Document)
+  0710000  Strategy_Signals_Anchor (Sub-Domain Anchor)
+  0500000  System_Architecture_Overview
+           Primary source: AR-070, AR-074
+  0411001  Kraken_WS_v2_Specification (instrument channel)
+  0411002  Kraken_REST_API_Specification (REST-TKR-001)
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  1011009  Selection_Controller_Coding_Spec (AA=10 — SC-UNI-*)
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+
+============================================================
+3. MONITORED PAIR UNIVERSE — DEFINITION
+============================================================
+
+------------------------------------------------------------
+AS-001  Universe Definition
+------------------------------------------------------------
+
+The monitored pair universe is the set of Kraken spot
+pairs that TothBot evaluates on every 5-minute OHLC candle
+close. A pair must satisfy ALL three criteria to qualify:
+
+  Criterion 1 — Quote Currency:
+    Quote currency must be USD or USDC.
+    Reason: USD pairs have the highest liquidity on Kraken
+    (BTC/USD ~$196M daily volume at validation, TB00014
+    Search 8). USD/USDC standardizes the quote currency
+    for sizing computations.
+
+  Criterion 2 — Instrument Status:
+    Instrument status must be ONLINE.
+    Determined from the Kraken instrument channel cache
+    (see AS-004). Pairs with status post_only, cancel_only,
+    limit_only, or delisted are excluded.
+    Reason: non-online status means the pair is not
+    available for full order execution.
+
+  Criterion 3 — Minimum Volume:
+    24h volume in USD >= min_volume_usd_daily ($500k starting).
+    Reason: pairs below $500k daily volume have insufficient
+    liquidity for reliable limit order execution at the
+    position sizes TothBot uses. Thin pairs increase
+    slippage risk and execution failure rate.
+
+  Parameters (CIATS-owned starting values):
+    min_volume_usd_daily: $500,000 USD
+
+------------------------------------------------------------
+AS-002  Universe Size — Top N by Volume
+------------------------------------------------------------
+
+From all qualifying pairs (meeting AS-001 criteria),
+TothBot monitors the top N by 24h USD volume.
+
+  Starting universe size: N = 50 pairs
+  CIATS-owned parameter: monitored_universe_n = 50
+
+  Selection rule: rank all qualifying pairs by 24h USD
+  volume descending. Take the top 50. If a pair qualifies
+  under AS-001 but does not rank in the top 50, it is not
+  monitored. If a top-50 pair fails AS-001 criteria, the
+  next qualifying pair by volume fills the slot.
+
+  Rationale: Top 50 by volume gives a diverse but liquid
+  universe without extending into illiquid territory.
+  CIATS validates universe size after 200 trades and may
+  adjust N via PDCA.
+
+------------------------------------------------------------
+AS-003  BTC/USD — Permanent Anchor (AR-074)
+------------------------------------------------------------
+
+BTC/USD is ALWAYS in the monitored universe regardless of
+its volume ranking. BTC/USD cannot be removed by CIATS
+parameter updates or universe rebalancing.
+
+  Rule: BTC/USD is added to the monitored set before the
+  top-N volume ranking is applied. The top-50 slots are
+  filled from the remaining qualifying pairs after BTC/USD
+  is guaranteed its position.
+
+  Reason: BTC/USD is the market_regime proxy for all
+  trades. Its regime must be computed daily (RE-015 in
+  0711002). If BTC/USD fell outside the top 50 (unlikely
+  given its volume) or had a transient status event,
+  market_regime would be unavailable. BTC/USD is anchored
+  to guarantee market_regime data continuity.
+
+  BTC/USD also serves as the most liquid USD pair on
+  Kraken and is a reliable CIATS reference benchmark for
+  all regime analysis.
+
+============================================================
+4. UNIVERSE POPULATION — STARTUP PROCEDURE
+============================================================
+
+------------------------------------------------------------
+AS-004  Startup Universe Population
+------------------------------------------------------------
+
+The monitored universe is populated at system startup
+using the Kraken instrument channel (for pair metadata
+and status) and the Kraken REST Ticker endpoint (for 24h
+volume data). Both sources are required. Neither alone
+is sufficient.
+
+NOTE: The instrument channel snapshot does NOT contain
+volume data. Volume MUST come from REST Ticker.
+See AS-005 and 0411002 REST-TKR-010.
+
+  Step 1: Subscribe to the instrument channel (WS v2
+          public, no auth required) per 0411001.
+
+  Step 2: Receive the initial instrument channel snapshot.
+          This snapshot contains all Kraken spot pairs with
+          their current status, price_increment, qty_min,
+          cost_min, qty_increment, and other metadata.
+          IMPORTANT: The instrument channel does NOT provide
+          24h volume data. Do NOT attempt to read volume
+          from this snapshot. (DEFECT-SS-006 root cause)
+
+  Step 3: Build the raw candidate list from the instrument
+          snapshot. A pair is a candidate if:
+            (a) Quote currency = USD or USDC
+            (b) Instrument status = online
+          This produces the set of all tradeable USD/USDC
+          pairs currently online on Kraken. Volume filter
+          is NOT applied yet — all online USD/USDC pairs
+          are candidates for the REST Ticker call.
+
+  Step 4: Call REST Ticker (0411002 Section 4.8) for all
+          candidate pairs from Step 3. This is a single
+          GET /0/public/Ticker?pair=[all candidates]
+          request. Parse response to compute USD volume
+          per pair: Decimal(v[1]) * Decimal(p[1]).
+          Store results in liquidity_24h cache.
+
+  Step 5: Apply volume filter (AS-001 Criterion 3):
+          Retain only candidates where
+          liquidity_24h[pair] >= min_volume_usd_daily.
+          Pairs below the threshold are excluded from
+          further consideration.
+
+  Step 6: Anchor BTC/USD (AS-003):
+          Add BTC/USD to the universe unconditionally,
+          regardless of whether it passed Step 5 filtering
+          or would rank in the top 50.
+
+  Step 7: Rank remaining volume-qualified pairs by 24h USD
+          volume descending. Take top (N-1) pairs if
+          BTC/USD was added in Step 6, or top N if BTC/USD
+          was already in the volume-qualified set.
+
+  Step 8: Final monitored universe = BTC/USD union top N.
+          Store universe as a set for O(1) membership tests.
+
+  Step 9: For each pair in the monitored universe:
+          (a) Cache instrument metadata: price_increment,
+              qty_min, cost_min, qty_increment, status.
+          (b) Subscribe to ohlc(5) WS stream.
+              NOTE: ohlc(60) is NOT subscribed via WS.
+              Kraken WS v2 rejects a second ohlc interval
+              per symbol (OI-NEW-001 / HR-WM-021). 1H HTF
+              cache is seeded from REST only via
+              seed_indicators_from_rest().
+          (c) Subscribe to ticker channel (for drawdown
+              monitoring bbo — pairs with open positions).
+          (d) Begin WARM_UP indicator seeding per 0711001
+              SSS-009 through SSS-012.
+
+Universe is not tradeable until indicator WARM_UP completes
+for each pair (all five indicators seeded per HR-STRAT-007).
+
+------------------------------------------------------------
+AS-005  24h Volume Data Source
+------------------------------------------------------------
+
+24h USD volume is obtained exclusively from the Kraken
+REST Ticker endpoint (0411002 Section 4.8, REST-TKR-001).
+
+The REST Ticker endpoint is called at startup (Step 4 of
+AS-004) for all candidate pairs. It returns 24h rolling
+volume data (v[1], base currency) and 24h VWAP (p[1],
+USD). USD volume per pair is computed as:
+
+  usd_volume_24h = Decimal(v[1]) * Decimal(p[1])
+
+This value is stored in the liquidity_24h cache (keyed by
+WS v2 pair name, e.g., "BTC/USD") and is the value read
+by Pipeline Gate 2 (SP-G2-001 in 1011003).
+
+For USDC pairs where p[1] is USDC-denominated: treat
+USDC as equivalent to USD for filtering purposes. No
+exchange rate conversion is applied (USDC ≈ $1.00).
+
+The liquidity_24h cache is refreshed periodically every
+liquidity_refresh_hours (CIATS-owned starting value: 4h)
+by a background asyncio task in WS Manager. This ensures
+volume data reflects current market conditions throughout
+the trading session, not stale startup data.
+
+On refresh failure: existing liquidity_24h values are
+preserved. Gate 2 continues using prior values. The system
+does NOT zero out the cache on a refresh error.
+
+CIATS parameter (starting value):
+  liquidity_refresh_hours: 4 hours
+
+DEPRECATED DATA SOURCE (DEFECT-SS-006):
+  The prior version of this document (dv1_0) stated that
+  24h volume was obtained from the "instrument channel
+  snapshot." This was INCORRECT. The instrument channel
+  does not provide volume data. This error caused
+  liquidity_24h to remain empty (all zeros), causing
+  Gate 2 to permanently reject all entries. Corrected
+  in this version. See TB00093 Section 2.5 for FP/DP
+  analysis of the correct data source.
+
+============================================================
+5. UNIVERSE UPDATES — LIVE PROCEDURE
+============================================================
+
+------------------------------------------------------------
+AS-006  Runtime Universe Updates
+------------------------------------------------------------
+
+The monitored universe is updated in real time when the
+instrument channel delivers status updates for pairs.
+
+    (a) If a monitored pair's status changes to anything
+        other than online:
+        Apply open position protection per AS-007.
+        If no open position: remove pair immediately.
+        Stop ohlc(5) subscription for removed pair.
+        Log: PAIR_REMOVED pair=X reason=status_change
+             new_status=Y.
+
+    (b) If a previously non-online pair's status changes
+        to online AND the pair meets AS-001 criteria AND
+        the monitored universe has a free slot:
+        Add pair to the monitored universe.
+        Subscribe to ohlc(5).
+        Begin WARM_UP seeding.
+        Log: PAIR_ADDED reason=status_restored.
+
+    (c) If instrument data changes (price_increment,
+        qty_min, cost_min): update metadata cache.
+        Log: INSTRUMENT_METADATA_UPDATED pair=X.
+
+Universe rebalancing (adding/removing pairs to maintain
+top-N by volume) is a CIATS function, not a real-time
+function. CIATS may propose universe changes via PDCA
+after 200 trades. Real-time updates respond to status
+events only.
+
+------------------------------------------------------------
+AS-007  Open Position Protection on Removal
+------------------------------------------------------------
+
+A pair is NEVER removed from the monitored universe while
+TothBot holds an open position in it. If a status change
+removes a pair from the universe while a position is open:
+
+  (1) Block new entries for that pair immediately.
+  (2) Allow the existing position to complete normally.
+      Exit Controller continues monitoring and exits
+      on its normal L1/L2 logic.
+  (3) Alert Bill with the pair name and status.
+  (4) Remove pair from universe after position closes.
+
+============================================================
+6. UNIVERSE ADJUSTMENT BY CIATS
+============================================================
+
+------------------------------------------------------------
+AS-008  CIATS Universe Adjustment Procedure
+------------------------------------------------------------
+
+CIATS may propose changes to the monitored universe after
+the 200-trade floor is reached via PDCA. Adjustable
+parameters:
+
+  - monitored_universe_n: expand or contract top-N size
+  - min_volume_usd_daily: raise or lower volume filter
+
+CIATS cannot remove BTC/USD. The anchor is permanent.
+
+Universe adjustments are applied at inter-trade boundaries
+only, consistent with all CIATS parameter updates. No
+universe change occurs mid-pipeline-evaluation.
+
+The universe adjustment procedure:
+  (1) CIATS proposes new N or new min_volume via PDCA.
+  (2) Bill approves (or CIATS auto-applies per 0211001).
+  (3) At next inter-trade boundary, rebuild universe:
+      Re-apply AS-001 criteria with updated parameters.
+      Re-rank and re-select top-N.
+      Add/remove subscriptions as needed.
+      Log: UNIVERSE_REBALANCED pairs_added=X pairs_removed=Y.
+
+============================================================
+7. HARD RULES — ASSET SELECTION
+============================================================
+
+HR-AS-001  BTC/USD is always in the monitored universe.
+           No CIATS parameter update, rebalancing, or
+           status event removes BTC/USD from monitoring.
+           It is a permanent anchor. (AR-074)
+
+HR-AS-002  A pair with an open position is NEVER removed
+           from the monitored universe. Removal is deferred
+           until the position closes. (AS-007)
+
+HR-AS-003  All three AS-001 criteria must be satisfied
+           for a pair to qualify for monitoring. Any one
+           failing criterion excludes the pair.
+
+HR-AS-004  Universe membership check is O(1) (set lookup).
+           The monitored universe is stored as a set.
+           Never perform linear search through a list.
+
+HR-AS-005  CIATS universe changes are applied at inter-
+           trade boundaries only. No mid-pipeline universe
+           changes are permitted.
+
+HR-AS-006  24h USD volume is obtained ONLY from the REST
+           Ticker endpoint (0411002 REST-TKR-001). The
+           instrument channel does NOT provide volume data.
+           Any implementation reading volume from the
+           instrument channel is a defect. (DEFECT-SS-006)
+
+HR-AS-007  CIATS may not change the three qualifying
+           criteria (AS-001) — only the threshold values
+           (min_volume_usd_daily, monitored_universe_n).
+           The criteria structure is an architectural
+           decision, not a CIATS-owned parameter.
+
+HR-AS-008  Universe changes (additions and removals) are
+           logged with reason codes. Silent universe
+           changes are a defect.
+
+============================================================
+8. CIATS PARAMETER REGISTRY — ASSET SELECTION PARAMETERS
+============================================================
+
+All asset selection parameters are CIATS-owned starting
+values subject to PDCA optimization after 200 trades.
+
+  monitored_universe_n:     50      (top N pairs by volume)
+  min_volume_usd_daily:     $500k   (minimum 24h USD volume)
+  liquidity_refresh_hours:  4       (REST Ticker refresh cycle)
+
+Evidence base for starting values:
+  $500k USD daily volume: ensures adequate liquidity for
+  TothBot position sizes (tradeable_pct=50%, per_trade_pct
+  =5% of portfolio). At any reasonable portfolio size,
+  5% of tradeable capital is well under 1% of daily volume.
+  (FP/DP analysis — TB00020 Search 4, 5+ sources.)
+
+  Top 50 by volume: diverse universe covering all major
+  Kraken spot USD pairs with meaningful liquidity while
+  excluding illiquid long-tail pairs. CIATS validates
+  whether 50 is optimal after 200 trades.
+
+  liquidity_refresh_hours = 4: 24h volume is a rolling
+  window that changes gradually. A 4-hour refresh ensures
+  data remains representative without excessive REST calls.
+  CIATS validates after 200 trades whether shorter/longer
+  interval is optimal.
+
+============================================================
+9. WHAT DOES THIS COMPONENT DO?
+============================================================
+
+(Five coding-readiness questions per TB00000 Section 3.2)
+
+  (1) What does asset selection DO? (inputs → outputs)
+      Inputs: Kraken instrument channel snapshot and status
+      updates (pair metadata, status). REST Ticker endpoint
+      response (24h volume data). Parameter Store
+      (min_volume_usd_daily, monitored_universe_n,
+      liquidity_refresh_hours).
+      Outputs: monitored_universe (set of pair strings),
+      per-pair instrument metadata cache (price_increment,
+      qty_min, cost_min, status), liquidity_24h cache
+      (24h USD volume per pair).
+
+  (2) What are its interfaces to other components?
+      Reads from: WS Manager instrument channel cache
+      (0411001, 0511001). REST Ticker endpoint via WS
+      Manager REST session (0411002 REST-TKR-001).
+      Parameter Store snapshot (I-4).
+      Writes to: WS Manager subscription list (new pairs
+      added trigger subscribe actions). WS Manager
+      liquidity_24h cache (populated during universe build
+      and periodic refresh). Pipeline Gate 2 (Liquidity
+      Gate) reads liquidity_24h. Regime Engine reads
+      monitored_universe for daily computation. Logger
+      records all adds, removes, rebalances.
+
+  (3) What are its hard rules?
+      HR-AS-001 through HR-AS-008 above.
+
+  (4) What triggers it and what does it trigger?
+      Startup trigger: instrument channel snapshot →
+      candidate list built → REST Ticker called for volume
+      → universe filtered and ranked → subscriptions
+      initiated → warm-up begins.
+      Runtime trigger: instrument channel status update
+      → evaluate add/remove per AS-006.
+      CIATS trigger: PDCA proposal at inter-trade boundary
+      → universe rebalanced per AS-008.
+      Periodic trigger: liquidity_refresh_hours timer →
+      REST Ticker re-called → liquidity_24h updated.
+
+  (5) What does it log?
+      At startup: UNIVERSE_BUILT pairs=N (list of pairs).
+      On addition: PAIR_ADDED pair=X reason=Y.
+      On removal: PAIR_REMOVED pair=X reason=Y new_status=Z.
+      On deferral: PAIR_REMOVAL_DEFERRED pair=X
+        reason=open_position.
+      On CIATS rebalance: UNIVERSE_REBALANCED
+        pairs_added=X pairs_removed=Y.
+      Liquidity: LIQUIDITY_SEEDED (pairs, volumes).
+      Liquidity: LIQUIDITY_REFRESHED (pairs, timestamp).
+      Liquidity: LIQUIDITY_REFRESH_FAILED (timestamp).
+
+============================================================
+10. RELATED DOCUMENTS
+============================================================
+
+  0700000  Strategy               (Domain Document)
+  0710000  Strategy_Signals_Anchor (Sub-Domain Anchor)
+  0711001  SSS_Signal_Model_Specification
+  0711002  Regime_Taxonomy_Specification
+  0500000  System_Architecture_Overview (AR-070, AR-074)
+  0411001  Kraken_WS_v2_Specification  (instrument channel)
+  0411002  Kraken_REST_API_Specification dv1_1
+           (REST-TKR-001 — Ticker endpoint for 24h volume)
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  0511001  WS_Manager_Specification    (subscription manager)
+  1011002  WS_Manager_Coding_Spec      dv1_15
+  1011003  Signal_Pipeline_Coding_Spec dv1_0
+           (Gate 2 reads liquidity_24h from WM cache)
+  1011009  Selection_Controller_Coding_Spec (SC-UNI-*)
+
+============================================================
+11. REVISION HISTORY
+============================================================
+
+  dv1_1  04-13-2026  DEFECT-SS-006 correction. AS-004
+                     rewritten: 9-step startup procedure
+                     (was 7 steps). Step 2 corrected:
+                     instrument snapshot does NOT contain
+                     volume data. Step 3 NEW: build raw
+                     candidate list from instrument (USD/USDC
+                     + ONLINE only). Step 4 NEW: REST Ticker
+                     call for all candidates to obtain 24h
+                     volume. Step 5 corrected: volume filter
+                     applied after REST Ticker data received.
+                     Step 9b corrected: ohlc(5) only subscribed
+                     via WS — ohlc(60) NOT subscribed per
+                     OI-NEW-001 / HR-WM-021.
+                     AS-005 completely rewritten: data source
+                     is REST Ticker (0411002 REST-TKR-001),
+                     not the instrument channel. USD volume
+                     formula documented. Periodic refresh
+                     documented. liquidity_refresh_hours CIATS
+                     parameter added. Fail-safe behavior on
+                     refresh failure documented. Prior dv1_0
+                     incorrect claim (instrument channel has
+                     volume) explicitly marked DEPRECATED with
+                     root cause reference.
+                     HR-AS-006 corrected: volume source is
+                     REST Ticker only. Instrument channel
+                     prohibition made explicit.
+                     Section 9 Q1: inputs updated (REST Ticker
+                     added). Q2: interfaces updated (REST Ticker
+                     and liquidity_24h cache added). Q4: trigger
+                     chain updated (REST Ticker call and periodic
+                     refresh added). Q5: liquidity log events
+                     added.
+                     Section 8 CIATS registry: liquidity_refresh_
+                     hours added (starting value: 4 hours).
+                     Related documents: 0411002 dv1_1 and
+                     1011002 dv1_15 added with explicit context.
+                     FP/DP analysis: TB00093 Section 2.5.
+
+  dv1_0  04-05-2026  Initial document. Complete asset
+                     selection specification. Universe
+                     definition (AS-001 through AS-003),
+                     startup population procedure (AS-004,
+                     AS-005), live update procedure (AS-006,
+                     AS-007), CIATS adjustment procedure
+                     (AS-008), 8 hard rules (HR-AS-001
+                     through HR-AS-008), CIATS parameter
+                     registry (2 parameters), 5 coding-
+                     readiness questions answered.
+                     BTC/USD permanent anchor rule (AR-074).
+                     All content derived from 0500000 dv1_18
+                     AR-070 and AR-074.
+
+============================================================
+END OF DOCUMENT
+============================================================
