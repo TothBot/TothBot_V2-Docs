@@ -1,9 +1,9 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_13
+DocVersion: dv1_16
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_13.txt
-DocDate:    04-11-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_16.txt
+DocDate:    04-14-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -32,7 +32,7 @@ This document supersedes and retires all prior WD versions
 
   1000000  Coding_Specification          dv1_0
   1010000  Trading_System_Coding_Anchor  dv1_0
-  1011002  This document                 dv1_13
+  1011002  This document                 dv1_16
   Parent specification:
     0511001  WS_Manager_Specification    dv1_0
 
@@ -51,15 +51,21 @@ Section 3. All hard rules are consolidated in Section 16.
     inbound messages to correct handlers via O(1) dispatch
     table (AR-015). Manages per-symbol state: pair status
     cache, indicator state (ATR, RSI, EMA9, EMA21, VolMA20),
-    HTF cache (EMA20, EMA50), warm-up state machine
-    (WARM_UP → READY). Fires pipeline trigger on each
-    5-minute candle close. Fires Exit Controller on ohlc(60)
-    close, daily regime check (00:00 UTC), ticker bbo events
-    for open positions. Executes all WS outbound messages
-    (add_order, batch_add, cancel_order, amend_order,
-    batch_cancel). Manages token acquisition (startup and
-    every reconnect). Manages startup indicator warm-up
-    (REST GetOHLCData per pair). Tracks portfolio_baseline_USD
+    HTF cache (EMA20, EMA50 — seeded from REST only, no WS
+    ohlc(60) subscription per HR-WM-021), warm-up state
+    machine (WARM_UP → READY), 24h liquidity cache
+    (liquidity_24h — populated from REST Ticker at startup
+    and refreshed periodically per WM-LIQ-001 through
+    WM-LIQ-010). Fires pipeline trigger on each
+    5-minute candle close. Fires Exit Controller on ticker bbo
+    events for open positions, daily regime check (00:00 UTC),
+    and 5m candle close for max hold count. Executes all WS
+    outbound messages (add_order, batch_add, cancel_order,
+    amend_order, batch_cancel). Manages token acquisition
+    (startup and every reconnect). Manages startup indicator
+    warm-up via _warm_up_all_pairs() — triggered from
+    _subscribe_ohlc_channels() after ohlc(5) subscription
+    sent (WM-WARMUP-001). Tracks portfolio_baseline_USD
     (set once at startup Step 6, never reset). Updates
     spot_usd_balance from balances channel. Computes
     drawdown_pct from mark-to-market. Enforces SESSION_PAUSE
@@ -144,7 +150,6 @@ Section 3. All hard rules are consolidated in Section 16.
 
     TRIGGERS WS MANAGER:
       Kraken ohlc(5m) close event    → Pipeline trigger
-      Kraken ohlc(60) close event    → L1a HTF check
       Kraken ticker bbo event        → Drawdown check (EC)
       Kraken executions event        → Dispatch table handler
       Kraken balances event          → Balance update, seq check
@@ -158,7 +163,7 @@ Section 3. All hard rules are consolidated in Section 16.
 
     TRIGGERS WS MANAGER FIRES:
       Signal Pipeline                → on each 5m candle close
-      Exit Controller                → on bbo, ohlc(60), 00:00, fills
+      Exit Controller                → on bbo, 00:00, fills
       Execution Engine               → on Gate 8 output
       Logger                         → on all events (async queue)
       CIATS Trade Outcome Bus        → on full position close
@@ -173,7 +178,8 @@ Section 3. All hard rules are consolidated in Section 16.
                     connection_id), INSTRUMENT_SNAPSHOT_COMPLETE,
                     SUBSCRIPTION_ACK (warnings if any),
                     MAXRATECOUNT_SET, WARM_UP_STARTED,
-                    PAIR_READY, ALL_PAIRS_WARM_UP_COMPLETE,
+                    LIQUIDITY_SEEDED, PAIR_READY,
+                    ALL_PAIRS_WARM_UP_COMPLETE,
                     KRAKEN_MAINTENANCE_SCHEDULED,
                     PORTFOLIO_BASELINE_SET
     CONNECTION:     PING_SENT, PONG_RECEIVED, PING_TIMEOUT,
@@ -201,6 +207,14 @@ Section 3. All hard rules are consolidated in Section 16.
                     FULL_HALT_TRIGGERED,
                     DRAWDOWN_RECOVERED
     RATE COUNTER:   RATE_COUNTER_UPDATE (per pair, per eval)
+    LIQUIDITY:      LIQUIDITY_SEEDED (pairs_count, usd_volume
+                    per pair logged at startup)
+                    LIQUIDITY_REFRESHED (pairs_count, timestamp)
+                    LIQUIDITY_REFRESH_FAILED (timestamp)
+                    LIQUIDITY_PAIR_NOT_FOUND (pair, classic_name)
+                    LIQUIDITY_SEED_FAILED (timestamp, reason)
+                    PAIR_MAPS_BUILT (pairs_mapped=N)
+                    PAIR_MAP_BUILD_FAILED (reason=str)
     ERRORS:         UNKNOWN_MESSAGE_TYPE (WARN), any exception
 
 ============================================================
@@ -218,8 +232,12 @@ Section 3. All hard rules are consolidated in Section 16.
       ohlc(5)     — 5-minute candle events (SYSTEM CLOCK)
                     NOTE: subscribed AFTER instrument snapshot
                     builds monitored_universe (WM-OHLC-SUB-001)
-      ohlc(60)    — 1H HTF cache for Gate 4
-                    NOTE: same deferred subscription as ohlc(5)
+      ohlc(60)    — NOT subscribed via WS. Kraken WS v2 rejects
+                    a second ohlc interval per symbol (OI-NEW-001):
+                    "Already subscribed to one ohlc interval on
+                    this symbol." 1H HTF cache sourced from REST
+                    only via seed_indicators_from_rest() at startup
+                    and after reconnect gap > 15 min.
       ticker      — price data (per-pair, event_trigger mode
                     managed per position state — Section 12)
 
@@ -341,10 +359,10 @@ WM-STARTUP-001  The complete TothBot startup sequence is
 
                 All WS connections use websockets.asyncio.client
                 import connect (SS-STARTUP-006, SS-STARTUP-013,
-                SS-RECON-006 in 1011014 dv1_3).
+                SS-RECON-006 in 1011014 dv1_4).
 
                 max_queue=None and ping_interval=None on all
-                connections (1011014 dv1_3, AR-058/059).
+                connections (1011014 dv1_4, AR-058/059).
 
                 portfolio_baseline_USD set ONCE at Step 6
                 (snap_orders reconcile complete). NEVER updated
@@ -401,10 +419,16 @@ handle_instrument(msg):
   - On startup snapshot: after monitored_universe is
     built, schedule _subscribe_ohlc_channels() via
     asyncio.create_task() (WM-OHLC-SUB-001).
-    ohlc(5) and ohlc(60) subscribed with explicit
-    symbol list = monitored_universe. This is the
-    ONLY correct time to subscribe ohlc — Kraken WS v2
-    rejects ohlc subscription without a symbol list.
+    ohlc(5) subscribed with explicit symbol list =
+    monitored_universe. NOTE: ohlc(60) NOT subscribed
+    via WS (OI-NEW-001 — Kraken one-interval-per-symbol
+    constraint). This is the ONLY correct time to
+    subscribe ohlc — Kraken WS v2 rejects ohlc
+    subscription without a symbol list.
+  - _subscribe_ohlc_channels() triggers REST warm-up
+    immediately after subscription via
+    asyncio.create_task(_warm_up_all_pairs())
+    (WM-WARMUP-001).
 
 handle_status(msg):
   - Update last_real_data_time for this connection.
@@ -1077,6 +1101,47 @@ WM-ZOM-007  Zombie detection remains active throughout
   Applies equally to initial subscription and
   reconnect subscriptions.
 
+------------------------------------------------------------
+7.7 REST Warm-Up — Startup Indicator Seeding (AR-044)
+------------------------------------------------------------
+
+WM-WARMUP-001  _subscribe_ohlc_channels() triggers REST
+               warm-up immediately after sending the ohlc(5)
+               subscription message:
+                 asyncio.create_task(self._warm_up_all_pairs())
+               This fires as a concurrent asyncio task.
+               The WS receive loop continues without blocking.
+               Paper mode: identical path. No difference.
+
+WM-WARMUP-002  _warm_up_all_pairs() implementation:
+               1. Log WARMUP_REST_STARTED with pair count.
+               2. asyncio.gather(
+                    *[seed_indicators_from_rest(s)
+                      for s in monitored_universe],
+                    return_exceptions=True
+                  )
+                  return_exceptions=True: one pair failure
+                  does not abort warm-up for other pairs.
+               3. After gather: count READY pairs.
+               4. If ready_count > 0: log SYSTEM_OPERATIONAL
+                  (SS-STARTUP-022).
+
+WM-WARMUP-003  seed_indicators_from_rest(symbol) per pair:
+               Call A: GetOHLCData(symbol, interval=5)
+                 Seeds: ATR(14), RSI(14) Wilder SMMA,
+                 EMA(9), EMA(21), VolMA(20).
+                 Initializes last_interval_begin[symbol].
+               asyncio.sleep(1.1)  [AR-036 stagger]
+               Call B: GetOHLCData(symbol, interval=60)
+                 Seeds: htf_ema_20, htf_ema_50.
+                 Initializes last_interval_begin_60[symbol].
+               On success: warm_up_state[symbol] = READY.
+               Log PAIR_READY.
+               On HTTP 429: backoff 2s/4s/8s, max 3 retries.
+               On failure: pair stays WARM_UP. Log
+               WARMUP_REST_FAILED. Pair seeds organically
+               from WS 5m candle events.
+
 ============================================================
 8. OHLC CANDLE CLOSE DETECTION (AR-045)
 ============================================================
@@ -1140,7 +1205,11 @@ WM-PS-002  Populate monitored_universe from instrument
            snapshot per criteria:
              (1) quote_currency: "USD" or "USDC"
              (2) status: "online"
-             (3) 24h volume >= min_volume_usd_daily ($500k)
+             (3) 24h volume >= min_volume_usd_daily —
+                 obtained from REST Ticker (WM-LIQ-001),
+                 NOT from instrument channel. Instrument
+                 channel provides NO volume data.
+                 (DEFECT-SS-006 / HR-WM-022)
            All three criteria must pass.
 
 WM-PS-003  Top N=50 pairs by 24h volume (N is CIATS-owned).
@@ -1244,6 +1313,12 @@ Read by pipeline at Gate 4 (HTF Confirmation):
 Cache reads from live ohlc(60) WS subscription —
 NOT from periodic REST polling.
 
+NOTE dv1_15: The above sentence is STALE and incorrect.
+ohlc(60) WS subscription was removed in dv1_14 (OI-NEW-001
+fix / HR-WM-021). HTF EMAs are seeded from REST only at
+startup via seed_indicators_from_rest() and do NOT receive
+incremental WS updates within a session.
+
 ------------------------------------------------------------
 9.4 Cooldown and Consecutive Loss State (AR-073)
 ------------------------------------------------------------
@@ -1284,6 +1359,210 @@ WM-SC-004  Exposed to Selection Controller (Gate 5) via
   Regime computation runs daily at 00:00 UTC.
   Regime Engine is called by WS Manager at 00:00 UTC
   and on ohlc(60) close (for HTF regime check via EC).
+
+------------------------------------------------------------
+9.6 24h Liquidity Cache (DEFECT-SS-006)
+------------------------------------------------------------
+
+WM-LIQ-001  liquidity_24h: dict[str, Decimal] — maps WS v2
+            pair name (e.g., "BTC/USD") to 24-hour rolling
+            USD volume. Initialized empty at __init__.
+            Populated by _rest_get_ticker() at startup.
+            Read by Signal Pipeline Gate 2 (SP-G2-001).
+            This is the SOLE source of 24h volume data in
+            TothBot V2. The instrument channel does NOT
+            provide volume data. (HR-WM-022)
+
+WM-LIQ-002  _rest_get_ticker(candidates: list[str]) method:
+            Input: list of WS v2 pair names (all online
+            USD/USDC candidates from instrument snapshot —
+            NOT limited to monitored_universe).
+            Process:
+              (a) Map WS pair names to Kraken classic names
+                  using wsname_to_classic map (WM-LIQ-003).
+              (b) Build comma-separated pair string.
+              (c) Call GET /0/public/Ticker?pair=[list]
+                  via shared aiohttp ClientSession.
+              (d) Parse response: for each classic pair key
+                  in result, compute:
+                    usd_vol = Decimal(v[1]) * Decimal(p[1])
+                  where v[1] = 24h base volume (string),
+                        p[1] = 24h VWAP in USD (string).
+                  Convert BOTH via Decimal(str()) — no float.
+              (e) Map classic pair key back to WS name using
+                  classic_to_wsname map (WM-LIQ-003).
+              (f) Store in self.liquidity_24h[ws_name].
+            Returns: dict[str, Decimal] (WS name → USD vol).
+            On error: log LIQUIDITY_REFRESH_FAILED, return
+            empty dict. Do not raise — caller handles.
+
+WM-LIQ-003  Kraken pair name mapping:
+            Kraken WS v2 uses slash format with BTC prefix:
+            "BTC/USD". Kraken REST Ticker response uses classic
+            names: "XXBTZUSD". These are different strings.
+            The instrument channel snapshot does NOT contain
+            an altname or classic REST name field. The correct
+            data source is REST AssetPairs.
+            Call GET /0/public/AssetPairs at startup via
+            _rest_build_pair_maps() (WM-LIQ-011).
+            Response fields used:
+              altname:  Kraken REST classic short name
+                        (e.g. "XBTUSD")
+              wsname:   Kraken WS name, uses XBT prefix
+                        (e.g. "XBT/USD")
+            WS v2 pair names use BTC prefix (e.g. "BTC/USD").
+            Normalization required: replace "XBT/" with "BTC/"
+            and "/XBT" with "/BTC" in wsname to match WS v2.
+            Build TWO maps from REST AssetPairs response:
+              wsname_to_classic: dict[str, str]
+                "BTC/USD" → "XBTUSD"
+              classic_to_wsname: dict[str, str]
+                "XBTUSD" → "BTC/USD"
+                normalized classic key → "BTC/USD"
+                  (handles XXBTZUSD → XBTUSD via
+                   _normalize_classic_key())
+            If a WS pair name has no classic mapping: log
+            LIQUIDITY_PAIR_NOT_FOUND(pair, reason=no_mapping)
+            and exclude from liquidity_24h (fail-safe: Gate
+            2 blocks entries for that pair).
+
+WM-LIQ-004  Startup call sequence:
+            _rest_build_pair_maps() is called FIRST from
+            within _warm_up_all_pairs(), BEFORE the call to
+            _rest_get_ticker(). It populates _wsname_to_classic
+            and _classic_to_wsname from REST AssetPairs
+            (WM-LIQ-003, WM-LIQ-011).
+            _rest_get_ticker() is then called after maps are
+            built, and is called BEFORE SYSTEM_OPERATIONAL is
+            declared. All online USD/USDC pairs from pair_cache
+            are passed as candidates (not just the top-N
+            monitored_universe — universe ranking requires
+            volume data, so all candidates are fetched).
+            After _rest_get_ticker() returns:
+              Store results in self.liquidity_24h.
+              Log LIQUIDITY_SEEDED(pairs=N, volumes=dict).
+              Proceed to universe ranking and then to
+              seed_indicators_from_rest() per pair.
+
+WM-LIQ-005  _liquidity_refresh_loop() async task:
+            Runs as a long-lived asyncio task for the
+            lifetime of the TothBot process.
+            Loop behavior:
+              await asyncio.sleep(
+                  liquidity_refresh_hours * 3600)
+              result = await _rest_get_ticker(
+                  list(self.monitored_universe))
+              if result:
+                  self.liquidity_24h.update(result)
+                  log LIQUIDITY_REFRESHED(
+                      pairs=len(result), timestamp=UTC)
+              else:
+                  log LIQUIDITY_REFRESH_FAILED(timestamp)
+                  # existing cache values preserved
+
+WM-LIQ-006  Task launch:
+            _liquidity_refresh_loop() launched as
+            asyncio.create_task() from _warm_up_all_pairs()
+            immediately after initial population via
+            _rest_get_ticker() completes successfully.
+            If initial population failed: task still
+            launched — it will populate on first refresh
+            cycle (liquidity_refresh_hours).
+
+WM-LIQ-007  CIATS parameter:
+              liquidity_refresh_hours: 4  (starting value)
+            Governs the sleep interval between periodic
+            REST Ticker refresh calls. CIATS-owned and
+            subject to PDCA optimization after 200 trades.
+
+WM-LIQ-008  Error handling:
+            (a) On _rest_get_ticker() error: return empty
+                dict. Log LIQUIDITY_REFRESH_FAILED.
+                Do NOT zero out existing liquidity_24h
+                values. Preserve prior cached values
+                until next successful call.
+            (b) On startup failure (retry once after 2s):
+                If both attempts fail: log
+                LIQUIDITY_SEED_FAILED. liquidity_24h
+                remains empty. Gate 2 blocks all entries
+                (fail-safe). System remains OPERATIONAL —
+                trading resumes automatically when
+                liquidity_refresh_loop succeeds.
+            (c) Never raise exceptions out of
+                _liquidity_refresh_loop() — catch all
+                exceptions, log, sleep, retry next cycle.
+
+WM-LIQ-009  Log events:
+              LIQUIDITY_SEEDED:
+                pairs_count=N, threshold=min_volume_usd_daily
+                Log usd_volume per pair at INFO level.
+              LIQUIDITY_REFRESHED:
+                pairs_count=N, timestamp=UTC
+              LIQUIDITY_REFRESH_FAILED:
+                timestamp=UTC, error=str(e)
+              LIQUIDITY_SEED_FAILED:
+                timestamp=UTC, reason=startup_failure
+              LIQUIDITY_PAIR_NOT_FOUND:
+                pair=ws_name, classic_name=attempted
+              PAIR_MAPS_BUILT:
+                level=INFO, pairs_mapped=N
+              PAIR_MAP_BUILD_FAILED:
+                level=WARN, reason=str(error_or_exception)
+
+WM-LIQ-010  Fail-safe guarantee:
+            If liquidity_24h is empty or a pair has no
+            entry, Gate 2 (SP-G2-001 in 1011003) returns
+            liquidity_24h.get(symbol, Decimal("0")).
+            Decimal("0") < min_volume_usd_daily → GATE_2_FAIL.
+            System is safe by default. No entry is possible
+            until liquidity data is populated. This is the
+            correct fail-safe behavior.
+
+WM-LIQ-011  _rest_build_pair_maps() method:
+            Signature: async def _rest_build_pair_maps(
+                self) -> None
+            Called from: _warm_up_all_pairs() BEFORE the
+            first call to _rest_get_ticker(candidates).
+            Purpose: Populate _wsname_to_classic and
+            _classic_to_wsname from REST AssetPairs.
+            Calls: GET /0/public/AssetPairs (public, no auth).
+            Uses: self._make_http_session() — same pattern as
+            _rest_get_open_orders() and other public REST calls.
+            Behavior:
+              On API error (data["error"] non-empty):
+                Log PAIR_MAP_BUILD_FAILED(
+                    level=WARN, reason=str(errors)).
+                Return immediately. Gate 2 blocks all entries
+                (fail-safe). _rest_get_ticker() will return {}
+                because maps are empty.
+              On success:
+                count = 0
+                For each classic_key, info in
+                    data["result"].items():
+                  altname = info.get("altname", "")
+                  wsname_raw = info.get("wsname", "")
+                  Skip if either empty.
+                  ws_v2_name = wsname_raw
+                      .replace("XBT/", "BTC/")
+                      .replace("/XBT", "/BTC")
+                  if ws_v2_name in self.pair_cache:
+                    _wsname_to_classic[ws_v2_name] = altname
+                    _classic_to_wsname[altname] = ws_v2_name
+                    norm = _normalize_classic_key(classic_key)
+                    _classic_to_wsname[norm] = ws_v2_name
+                    count += 1
+                  elif wsname_raw in self.pair_cache:
+                    (fallback — no XBT/BTC substitution needed)
+                    _wsname_to_classic[wsname_raw] = altname
+                    _classic_to_wsname[altname] = wsname_raw
+                    count += 1
+                Log PAIR_MAPS_BUILT(level=INFO,
+                    pairs_mapped=count).
+              On any exception:
+                Log PAIR_MAP_BUILD_FAILED(
+                    level=WARN, reason=str(exc)).
+                Return. Gate 2 blocks (fail-safe).
+            Never raises.
 
 ============================================================
 10. BALANCES AND PORTFOLIO TRACKING
@@ -1572,7 +1851,9 @@ WM-RECONNECT-004  Step 2: Connect public and private WS
 
 WM-RECONNECT-005  Step 3: Subscribe all channels with same
                   parameters as startup Steps 2-5:
-                    instrument, status, ohlc(5), ohlc(60),
+                    instrument, status, ohlc(5) [NOT ohlc(60) —
+                    OI-NEW-001 constraint applies on reconnect
+                    equally],
                     ticker (per-pair mode as before),
                     executions (with all flags including
                     order_status:true), balances.
@@ -1726,6 +2007,20 @@ HR-WM-019  Subscription ACK warnings[] parsed and logged
 HR-WM-020  Both DATA and TRADE keys IP-whitelisted. Update
            on any VPS migration (AR-037).
 
+HR-WM-021  1H HTF cache (htf_ema_20, htf_ema_50) sourced
+           from REST only. ohlc(60) WS subscription is
+           PROHIBITED. Kraken WS v2 rejects a second ohlc
+           interval per symbol (OI-NEW-001). HTF EMAs are
+           seeded by seed_indicators_from_rest() at startup
+           and after reconnect gap > 15 min. They do NOT
+           receive incremental WS updates within a session.
+
+HR-WM-022  liquidity_24h populated ONLY from REST Ticker
+           (0411002 REST-TKR-001). The instrument channel
+           provides NO volume data. Any code reading volume
+           from the instrument channel is a defect.
+           (DEFECT-SS-006 — corrected in dv1_15)
+
 ============================================================
 18. RELATED DOCUMENTS
 ============================================================
@@ -1734,16 +2029,17 @@ HR-WM-020  Both DATA and TRADE keys IP-whitelisted. Update
   1010000  Trading_System_Coding_Anchor  dv1_0
   0511001  WS_Manager_Specification      dv1_0  (parent spec)
   0510000  System_Components_Anchor      dv1_0
-  0500000  System_Architecture_Overview  dv1_18
+  0500000  System_Architecture_Overview  dv1_19
   0411001  Kraken_WS_v2_Specification    dv1_11
-  0411002  Kraken_REST_API_Specification dv1_0
+  0411002  Kraken_REST_API_Specification dv1_1
+  0711003  Asset_Selection_Specification dv1_1
   0411003  Kraken_Fee_Rate_Limit_Spec    dv1_0
   0511002  Signal_Pipeline_Specification dv1_0
   0511003  Execution_Engine_Specification dv1_0
   0511004  Exit_Controller_Specification  dv1_2
   0511005  Position_Mirror_Specification  dv1_0
   0511006  Logger_Specification           dv1_0
-  1011001  Engineering_Best_Practices     dv1_6
+  1011001  Engineering_Best_Practices     dv1_7
   1011003  Signal_Pipeline_Coding_Spec    dv1_0
   1011004  Execution_Engine_Coding_Spec   dv1_0
   1011005  Exit_Controller_Coding_Spec    dv1_2
@@ -1751,11 +2047,92 @@ HR-WM-020  Both DATA and TRADE keys IP-whitelisted. Update
   1011007  Logger_Coding_Spec             dv1_2
   1011011  Risk_Engine_Coding_Spec        dv1_3
   1011012  Regime_Engine_Coding_Spec      dv1_4
-  1011014  Startup_Sequence_Coding_Spec   dv1_3
+  1011014  Startup_Sequence_Coding_Spec   dv1_4
 
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_16  04-14-2026  DEFECT-SS-007 spec correction.
+                      WM-LIQ-003: Corrected data source for
+                      pair name mapping. Instrument snapshot
+                      does NOT contain altname field — spec
+                      was wrong. Correct source is REST
+                      AssetPairs (GET /0/public/AssetPairs).
+                      Removed "instrument snapshot provides
+                      both formats" — replaced with REST
+                      AssetPairs as authoritative source.
+                      Added XBT/BTC normalization rule:
+                      wsname "XBT/USD" → WS v2 "BTC/USD"
+                      via replace("XBT/","BTC/").
+                      WM-LIQ-004: Updated call sequence —
+                      _rest_build_pair_maps() called BEFORE
+                      _rest_get_ticker() in
+                      _warm_up_all_pairs().
+                      WM-LIQ-009: Added PAIR_MAPS_BUILT and
+                      PAIR_MAP_BUILD_FAILED log events.
+                      WM-LIQ-011 added: Complete specification
+                      for _rest_build_pair_maps() method.
+                      Section 3 Q5: PAIR_MAPS_BUILT and
+                      PAIR_MAP_BUILD_FAILED added to LIQUIDITY
+                      log event list.
+
+  dv1_15  04-13-2026  DEFECT-SS-006 spec correction.
+                      Section 9.6 added: WM-LIQUIDITY —
+                      24h Liquidity Cache. WM-LIQ-001
+                      through WM-LIQ-010. Documents
+                      _rest_get_ticker() method, liquidity_24h
+                      cache population, Kraken REST pair name
+                      mapping (XXBTZUSD vs BTC/USD),
+                      _liquidity_refresh_loop() asyncio task,
+                      liquidity_refresh_hours CIATS parameter
+                      (starting value: 4h), error handling,
+                      fail-safe behavior, log events
+                      (LIQUIDITY_SEEDED, LIQUIDITY_REFRESHED,
+                      LIQUIDITY_REFRESH_FAILED, LIQUIDITY_SEED_
+                      FAILED, LIQUIDITY_PAIR_NOT_FOUND).
+                      Section 3 Q1: liquidity_24h cache added
+                      to component description.
+                      Section 3 Q5: LIQUIDITY_SEEDED,
+                      LIQUIDITY_REFRESHED, LIQUIDITY_REFRESH_
+                      FAILED, LIQUIDITY_PAIR_NOT_FOUND added
+                      to startup log events.
+                      WM-PS-002: corrected — instrument channel
+                      has NO volume data. Volume from REST
+                      Ticker only (DEFECT-SS-006 / HR-WM-022).
+                      Section 9.3: stale ohlc(60) WS sentence
+                      corrected — HTF EMAs are REST-only per
+                      HR-WM-021 (fixed in dv1_14, noted here).
+                      HR-WM-022 added: liquidity_24h from REST
+                      Ticker only. Instrument channel volume
+                      prohibition made explicit.
+                      Related documents: 0411002 → dv1_1,
+                      0711003 dv1_1 added.
+
+  dv1_14  04-13-2026  DEFECT-SS-004 fix + OI-NEW-001 fix.
+                      Section 4.1: ohlc(60) removed from public
+                      WS subscriptions. Kraken WS v2 rejects
+                      second ohlc interval per symbol. 1H HTF
+                      cache is now REST-only (HR-WM-021 added).
+                      Section 3 Q1: ohlc(60) WS trigger removed
+                      from trigger list. Q4: Exit Controller
+                      ohlc(60) trigger removed.
+                      Section 5.2 handle_instrument: updated to
+                      document _warm_up_all_pairs() trigger from
+                      _subscribe_ohlc_channels().
+                      Section 7.7 added: WM-WARMUP-001 through
+                      -003. Specifies _warm_up_all_pairs() method
+                      and seed_indicators_from_rest() per pair.
+                      This is the DEFECT-SS-004 fix: REST warm-up
+                      was never called during startup (paper or
+                      live). _subscribe_ohlc_channels() now
+                      triggers asyncio.create_task(
+                      _warm_up_all_pairs()) after ohlc(5)
+                      subscription sent.
+                      WM-RECONNECT-005: ohlc(60) removed from
+                      reconnect re-subscription list.
+                      HR-WM-021 added: 60m HTF from REST only.
+                      Related documents updated to current versions.
 
   dv1_13  04-11-2026  Two defects fixed. Both found during
                       Phase 11 paper trading deployment.
