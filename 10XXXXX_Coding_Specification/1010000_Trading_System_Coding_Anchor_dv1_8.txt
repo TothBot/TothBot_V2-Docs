@@ -1,9 +1,9 @@
 DocDCN:     1010000
 DocTitle:   Trading_System_Coding_Anchor
-DocVersion: dv1_6
+DocVersion: dv1_8
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_6.txt
-DocDate:    04-12-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_8.txt
+DocDate:    04-14-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -281,8 +281,8 @@ Each entry contains:
   File:        ws_manager.py
   DCN:         1011002
   Spec:        WS_Manager_Coding_Spec
-  SpecVer:     dv1_13
-  RegDate:     04-11-2026
+  SpecVer:     dv1_18
+  RegDate:     04-14-2026
 
   File:        signal_pipeline.py
   DCN:         1011003
@@ -357,8 +357,8 @@ Each entry contains:
   File:        startup_sequence.py
   DCN:         1011014
   Spec:        Startup_Sequence_Coding_Spec
-  SpecVer:     dv1_3
-  RegDate:     04-11-2026
+  SpecVer:     dv1_5
+  RegDate:     04-14-2026
 
   File:        tothbot/__init__.py
   DCN:         1011001
@@ -602,6 +602,22 @@ TothBot_V2-Docs. No further action required.
 ============================================================
 6. REVISION HISTORY
 ============================================================
+
+  dv1_8  04-14-2026  Section 5.2 registry updated:
+                     startup_sequence.py SpecVer updated
+                     dv1_3 → dv1_5. Governing spec 1011014
+                     incremented dv1_4 → dv1_5 this session
+                     (SS-WIRE-001: _regime_wrapper must pass
+                     wm.monitored_universe to
+                     run_daily_computation). DEFECT-SS-009
+                     fix. TB00102.
+
+  dv1_7  04-14-2026  Section 5.2 registry updated: ws_manager.py
+                     SpecVer updated dv1_13 → dv1_18. Governing
+                     spec 1011002 incremented dv1_17 → dv1_18
+                     this session (WM-RUN-001 ExceptionGroup
+                     extraction rule; WM-WARMUP-004 regime
+                     startup seed rule). TB00101.
 
   dv1_6  04-12-2026  Section 5.3 registry updated: three
                      test subpackage init files added:

@@ -1,0 +1,791 @@
+DocDCN:     1011014
+DocTitle:   Startup_Sequence_Coding_Spec
+DocVersion: dv1_5
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011014_Startup_Sequence_Coding_Spec_dv1_5.txt
+DocDate:    04-14-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+STARTUP SEQUENCE CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document specifies:
+  Section 1 — The complete 10-step startup sequence for
+               TothBot V2. No pipeline evaluation is
+               permitted until at least one pair reaches
+               READY state.
+  Section 2 — The 11-step mid-session WS reconnect sequence.
+               Distinct from startup. Preserves all baseline
+               state. No pipeline evaluation during reconnect.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011014  This document  dv1_5
+  Parent specification: 0500000 System_Architecture_Overview
+
+Governing ARs: AR-049 (startup), AR-056 (reconnect)
+
+============================================================
+3. GOVERNING ARCHITECTURAL REQUIREMENTS
+============================================================
+
+All of the following ARs must be satisfied before READY:
+  AR-003  Restart reconciliation: snap_orders preferred
+  AR-004  Two API key pairs (DATA + TRADE)
+  AR-017  Regime Engine GetOHLCData at startup
+  AR-020  Per-pair instrument status cache populated
+  AR-025  aiohttp, asyncio TaskManager, systemd watchdog
+  AR-029  WS connect max_size=10MB + open_timeout=10
+  AR-031  Subscription ACK warnings[] parsed
+  AR-034  Ticker event_trigger per position state
+  AR-035  aiohttp ClientSession timeout + connector config
+  AR-036  GetOHLCData stagger 1.1s between pairs
+  AR-037  API keys IP-whitelisted to VPS
+  AR-038  Kraken Status API check at startup
+  AR-044  ATR(14) and EMA warm-up via GetOHLCData
+  AR-045  OHLC candle-close detection initialization
+  AR-046  emergSL triggers.reference explicit
+  AR-047  Price and quantity rounding initialized
+  AR-048  Exit Controller bid price for MAE
+  AR-055  DMS (cancel_all_orders_after) PROHIBITED
+  AR-058  max_queue=None on all WS connections
+  AR-059  ping_interval=None — disable library TCP ping
+  AR-060  Use websockets.asyncio.client import connect
+
+============================================================
+4. PAIR STATES
+============================================================
+
+  WARM_UP   ATR or EMA cache not yet seeded. No entries
+            permitted. Gates 4 and 8 block. Pair exits
+            WARM_UP after seed + first candle-close event.
+
+  READY     All caches seeded. Pair eligible for pipeline
+            evaluation. Gates 4 and 8 can operate.
+
+  BLOCKED   Pair excluded by instrument status check.
+            reduce_only / work_in_progress / delisted /
+            limit_only / cancel_only / maintenance.
+
+  WARM_UP is the initial state for ALL pairs on startup.
+  Transition to READY is defined in Section 7.
+
+============================================================
+5. PRE-CONDITIONS FOR STARTUP
+============================================================
+
+SS-PRE-001  Python 3.12.3 on Ubuntu 24.04.4 LTS.
+SS-PRE-002  API key pair DATA: valid, IP-whitelisted.
+            API key pair TRADE: valid, IP-whitelisted.
+SS-PRE-003  systemd service configured with:
+            WatchdogSec=120, Type=notify.
+            asyncio watchdog ping task active within
+            30 seconds of process start.
+SS-PRE-004  aiohttp.ClientSession created at startup.
+            ClientTimeout(total=10, connect=5, sock_read=8)
+            TCPConnector(limit=10, limit_per_host=5,
+            force_close=False)
+SS-PRE-005  asyncio event loop: uvloop.new_event_loop()
+            via asyncio.Runner(loop_factory=uvloop.new_event_loop)
+
+============================================================
+6. SECTION 1 — STARTUP SEQUENCE (10 STEPS)
+============================================================
+
+Steps execute in this order. No step is skipped.
+Each step must complete successfully before proceeding
+to the next (unless explicitly noted as non-blocking).
+
+------------------------------------------------------------
+STEP 1 — Kraken Status API Check (AR-038)
+------------------------------------------------------------
+
+SS-STARTUP-001  Query:
+  GET https://status.kraken.com/api/v2/
+      scheduled-maintenances/upcoming.json
+  No authentication required.
+  aiohttp ClientSession. ClientTimeout applies.
+
+SS-STARTUP-002  If scheduled maintenance within 2 hours:
+  Log: KRAKEN_MAINTENANCE_SCHEDULED (CRITICAL)
+  Alert: alert@tothbot.com with maintenance details.
+  Action: Non-blocking. Continue startup.
+
+SS-STARTUP-003  If request fails:
+  Log: STATUS_API_UNAVAILABLE (INFO)
+  Action: Non-blocking. Continue startup.
+
+------------------------------------------------------------
+STEP 2 — Acquire WebSocket Token (AR-004)
+------------------------------------------------------------
+
+SS-STARTUP-004  Call GetWebSocketsToken (REST, TRADE key).
+  Token valid 15 minutes from creation.
+
+SS-STARTUP-005  On failure: retry up to 3 times with 2s
+  delay. If all fail: log FATAL_TOKEN_ACQUISITION_FAILED
+  (CRITICAL), halt startup.
+
+------------------------------------------------------------
+STEP 3 — Connect Public WS and Subscribe (AR-029)
+------------------------------------------------------------
+
+SS-STARTUP-006  Connect: wss://ws.kraken.com/v2
+
+  ★ MANDATORY (AR-058, AR-059, AR-060):
+    from websockets.asyncio.client import connect
+
+    conn = await connect(
+        "wss://ws.kraken.com/v2",
+        max_size=10 * 1024 * 1024,
+        open_timeout=10,
+        max_queue=None,
+        ping_interval=None,
+    )
+
+  NOT the deprecated API:
+    websockets.connect()  ← DEPRECATED, DO NOT USE
+
+SS-STARTUP-007  Subscribe (single message, all channels):
+  - instrument (snapshot=true)
+  - status (snapshot=true)
+  - ohlc (interval=5, snapshot=true, all monitored pairs)
+  NOTE: Do NOT subscribe ohlc interval=60 via WS.
+  Kraken WS v2 rejects a second ohlc interval subscription
+  with "Already subscribed to one ohlc interval on this
+  symbol." OI-NEW-001 confirmed. 1H HTF cache (htf_ema_20,
+  htf_ema_50) is sourced from REST only (SS-WARMUP-003).
+  NOTE: Do NOT subscribe ticker yet. Managed in Step 7.
+
+SS-STARTUP-008  Parse all subscription ACK warnings[].
+  Log any non-empty warnings (AR-031).
+
+SS-STARTUP-009  Start ping task (30s interval — JSON ping,
+  not library TCP ping). Start zombie detection task
+  (90s threshold). Only real channel events reset timer.
+
+------------------------------------------------------------
+STEP 4 — Process Instrument Snapshot (AR-020)
+------------------------------------------------------------
+
+SS-STARTUP-010  Wait for instrument snapshot message.
+  Timeout: 10 seconds. On timeout: reconnect + retry.
+
+SS-STARTUP-011  For each pair in snapshot:
+  Populate per-pair instrument cache:
+    price_increment: Decimal(str(pair["price_increment"]))
+    qty_increment:   Decimal(str(pair["qty_increment"]))
+    qty_min:         Decimal(str(pair["qty_min"]))
+    cost_min:        Decimal(str(pair["cost_min"]))
+    status:          str
+  Use price_increment (NOT deprecated tick_size). AR-028.
+  All values converted to Decimal(str()) immediately.
+
+SS-STARTUP-012  Set pair state:
+  online / post_only → WARM_UP (eligible for seeding)
+  All other statuses → BLOCKED
+
+------------------------------------------------------------
+STEP 5 — Connect Private WS and Subscribe (AR-003)
+------------------------------------------------------------
+
+SS-STARTUP-013  Connect: wss://ws-auth.kraken.com/v2
+
+  ★ MANDATORY (AR-058, AR-059, AR-060):
+    conn = await connect(
+        "wss://ws-auth.kraken.com/v2",
+        max_size=10 * 1024 * 1024,
+        open_timeout=10,
+        max_queue=None,
+        ping_interval=None,
+    )
+
+SS-STARTUP-014  Subscribe executions:
+  {
+    "method": "subscribe",
+    "params": {
+      "channel": "executions",
+      "token": <token>,
+      "snap_orders": true,
+      "snap_trades": true,
+      "order_status": true,
+      "ratecounter": true
+    }
+  }
+  Extract maxratecount from ACK (AR-019).
+  Parse ACK warnings[] and log.
+
+SS-STARTUP-015  Subscribe balances:
+  {
+    "method": "subscribe",
+    "params": {
+      "channel": "balances",
+      "token": <token>,
+      "snapshot": true
+    }
+  }
+  Parse initial snapshot: use wallets[type=spot][id=main].
+  Set portfolio_baseline_USD = spot_usd_balance. AR-050.
+  This is set ONCE here. Never reset during live operation.
+
+SS-STARTUP-016  Start ping task on private WS connection.
+  Start zombie detection on private WS connection.
+
+------------------------------------------------------------
+STEP 6 — Reconcile Open Positions (AR-003)
+------------------------------------------------------------
+
+SS-STARTUP-017  Process snap_orders snapshot from
+  executions channel. Identify all open orders.
+
+SS-STARTUP-018  Restore Position Mirror from snapshot:
+  For each open position found:
+    symbol, entry_fill_price (avg_price), qty,
+    TP order_id, emergSL order_id, cl_ord_id
+  If position has TP but no emergSL (or vice versa):
+    Log INCOMPLETE_PROTECTION (CRITICAL). Alert operator.
+    Do NOT auto-repair without operator confirmation.
+
+SS-STARTUP-019  On reconciliation gap (executions seq gap):
+  Fall back to REST GetOpenOrders. AR-021.
+  GetAccountBalance for balance check.
+
+------------------------------------------------------------
+STEP 7 — Restore Ticker for Open Positions (AR-034)
+------------------------------------------------------------
+
+SS-STARTUP-020  For each pair with open position in
+  Position Mirror:
+  Subscribe ticker with event_trigger:bbo.
+  Activates real-time MAE monitoring (bid price).
+
+SS-STARTUP-021  For all other monitored pairs:
+  Subscribe ticker with event_trigger:trades.
+  Provides data for Gate 2 (24h volume) and
+  pre-computation cache.
+
+------------------------------------------------------------
+STEP 8 — REST Warm-Up: GetOHLCData (AR-044)
+------------------------------------------------------------
+
+SS-WARMUP-001  REST warm-up is triggered from within
+  _subscribe_ohlc_channels() immediately after the ohlc(5)
+  subscription message is sent:
+    asyncio.create_task(_warm_up_all_pairs())
+  This fires concurrently with the running WS receive loop.
+  Pairs remain in WARM_UP state until seeding completes.
+  The pipeline gate (WARMUP_READY check) blocks any pair
+  that has not yet completed seeding.
+
+  Paper mode: identical warm-up path. No difference.
+  The same _warm_up_all_pairs() call executes in both live
+  and paper mode. Private WS absence does not affect
+  REST warm-up.
+
+  For all WARM_UP pairs, execute 2 GetOHLCData calls
+  per pair (interval=5 and interval=60). Use
+  asyncio.gather() to parallelize ACROSS pairs. Stagger
+  1.1s WITHIN the same pair (Call A → sleep(1.1) → Call B).
+
+SS-WARMUP-002  Per pair — Call A: interval=5 (ATR seed)
+  GetOHLCData(pair, interval=5)
+  Use response[:-1] (exclude uncommitted candle).
+  Take last 14+ committed candles. All values: Decimal(str()).
+  ATR seed (Wilder's method):
+    prev_close = ohlc[-15].close
+    TR = [max(h-l, |h-prev_c|, |l-prev_c|) for each candle]
+    ATR_seed = sum(TR[-14:]) / 14
+
+SS-WARMUP-003  Per pair — Call B: interval=60 (HTF EMA seed)
+  GetOHLCData(pair, interval=60)
+  1.1s AFTER Call A for the same pair.
+  Use response[:-1]. Take last 100+ candles.
+  All values: Decimal(str()).
+  EMA(20) seed: SMA of first 20 closes, then forward compute
+    alpha_20 = 2/21
+    EMA_n = alpha_20 * close_n + (1-alpha_20) * EMA_n-1
+  EMA(50) seed: SMA of first 50 closes, then forward compute
+    alpha_50 = 2/51
+  Store current EMA(20) and EMA(50) in 1H HTF cache.
+  NOTE: No WS ohlc(60) subscription. This REST call is the
+  sole source of 1H HTF data. htf_ema_20 and htf_ema_50
+  are seeded here and updated incrementally on each 60m
+  WS REST-derived candle via _update_htf_ema when
+  _process_ohlc_60m fires — but ohlc(60) WS subscription
+  is absent (OI-NEW-001). HTF EMAs are static after startup
+  seed in this session. This is acceptable: EMAs change
+  slowly (100+ candle lookback). CIATS will evaluate.
+  Call C (interval=1440 regime) is not part of per-pair
+  warm-up. Regime Engine runs independently at startup
+  and at 00:00 UTC via daily refresh.
+
+SS-WARMUP-004  On rate limit (HTTP 429) for any call:
+  Backoff: 2s, 4s, 8s. Max 3 retries.
+  ATR/EMA failure: pair stays WARM_UP (seeds via WS events).
+  Log WARMUP_REST_FAILED for affected pair.
+
+SS-WARMUP-005  Stagger enforcement:
+  asyncio.sleep(1.1) between Call A→B for pair X.
+  Calls for pair Y run concurrently with pair X.
+
+SS-WARMUP-006  OHLC interval_begin initialization (AR-045):
+  After Call A: last_interval_begin[pair] = response[-2].interval_begin
+  After Call B: last_interval_begin_60[pair] = response[-2].interval_begin
+  WS OHLC messages compared against these to detect candle-close.
+  NOTE: last_interval_begin_60 is initialized here from REST even
+  though no WS ohlc(60) subscription exists. Preserved for
+  compatibility if WS 60m subscription is restored in future.
+
+SS-WARMUP-007  Pair transitions WARM_UP → READY when:
+  (a) ATR(14) seeded
+  (b) EMA(20) and EMA(50) seeded
+  (c) Regime available
+  System does NOT wait for all pairs. READY pairs start
+  trading immediately. WARM_UP pairs seed organically.
+
+SS-WARMUP-008  After all asyncio.gather() tasks complete,
+  _warm_up_all_pairs() logs SYSTEM_OPERATIONAL with
+  ready_pairs count if at least one pair is READY.
+  Pairs that failed (HTTP 429 exhausted or exception) remain
+  in WARM_UP and seed organically from WS candle events.
+
+------------------------------------------------------------
+STEP 9 — At Least One READY Pair: Begin Pipeline
+------------------------------------------------------------
+
+SS-STARTUP-022  System enters OPERATIONAL state when
+  at least one pair is in READY state.
+  Log: SYSTEM_OPERATIONAL.
+
+SS-STARTUP-023  WARM_UP pairs continue seeding via
+  WS candle events. Enter READY organically.
+
+SS-STARTUP-024  BLOCKED pairs re-evaluated on each
+  instrument channel update. Status change to online/
+  post_only → transition to WARM_UP.
+
+SS-STARTUP-025  Pipeline is per-symbol. READY pairs
+  proceed through full 8-gate pipeline.
+  WARM_UP pairs skipped at per-pair status check (pre-Gate 1).
+
+SS-STARTUP-026  Send sd_notify READY=1 to systemd.
+  Log: VPS_STARTUP_COMPLETE.
+
+------------------------------------------------------------
+STEP 10 — Continuous Operation
+------------------------------------------------------------
+
+SS-STARTUP-027  At 00:00 UTC: Regime Engine re-runs
+  GetOHLCData(interval=1440) for all pairs. 1.1s stagger.
+  Refreshes daily regime classification.
+
+SS-STARTUP-028  systemd watchdog: asyncio task sends
+  sd_notify WATCHDOG=1 every 30 seconds.
+  If event loop freezes → systemd restarts TothBot.
+  On restart: full startup sequence from Step 1.
+
+============================================================
+7. SECTION 1 — ERROR HANDLING MATRIX
+============================================================
+
+  FAILURE                  ACTION
+  ──────────────────────────────────────────────────────────
+  Token failure            Retry 3x. FATAL halt if all fail.
+  WS connect fail          Retry 5x. FATAL halt if all fail.
+  Instrument timeout       Reconnect + resubscribe.
+  snap_orders gap          Fall back REST GetOpenOrders.
+  GetOHLCData 429          Backoff 3x. Pair stays WARM_UP.
+  GetOHLCData fail         Log. Pair stays WARM_UP. Continue.
+  Incomplete position      Log + Alert. No auto-repair.
+  Status API fail          Log. Non-blocking. Continue.
+  Private WS connect fail  Retry 5x. FATAL halt if all fail.
+
+============================================================
+8. SECTION 1 — TIMING EXPECTATIONS
+============================================================
+
+Best case (50 pairs, all REST succeed, asyncio.gather):
+  Steps 1-7:          ~5 seconds
+  Step 8 (parallel):  ~3-5 seconds total
+  Total startup:      ~8-10 seconds before first READY pair
+
+Worst case (no asyncio.gather — DO NOT DO THIS):
+  50 pairs x 3 calls x 1.1s = 165 seconds. Unacceptable.
+
+Target: All pairs READY within 15 seconds.
+asyncio.gather() across pairs is MANDATORY.
+
+============================================================
+9. SECTION 2 — MID-SESSION WS RECONNECT (AR-056)
+============================================================
+
+------------------------------------------------------------
+9.1 PURPOSE AND DISTINCTION FROM STARTUP
+------------------------------------------------------------
+
+SS-RECON-001  Mid-session reconnect is DISTINCT from startup.
+              Do NOT execute Section 1 on a mid-session
+              reconnect.
+
+              TRIGGER: WS connection drops during live operation.
+              WS Manager detects via asyncio exception or timeout.
+
+              KEY DISTINCTIONS FROM STARTUP:
+              (a) portfolio_baseline_USD: NEVER reset.
+              (b) ATR/EMA caches: PRESERVED unless stale (>15min gap).
+              (c) Positions may have closed during gap.
+              (d) Pending Order Registry: reconcile.
+              (e) system_state (halt/pause): PRESERVED.
+
+SS-RECON-002  INVARIANTS — preserved across all reconnects:
+                portfolio_baseline_USD:    NEVER reset
+                drawdown_pct:              PRESERVED
+                ATR cache per pair:        PRESERVED (unless stale)
+                EMA cache per pair:        PRESERVED (unless stale)
+                Position Mirror:           Updated by reconciliation
+                system_state (halt/pause): PRESERVED
+                regime_cache:              PRESERVED
+
+------------------------------------------------------------
+9.2 RECONNECT STEPS (11 STEPS)
+------------------------------------------------------------
+
+SS-RECON-003  STEP R1: Close broken connection.
+              Close WS cleanly (suppress errors).
+              Cancel all pending asyncio tasks for connection.
+              Reset per-connection sequence numbers.
+              Log WS_DISCONNECT_DETECTED with timestamp.
+
+SS-RECON-004  STEP R2: Wait.
+              Normal: retry instantly up to 5 attempts.
+              After 5 failures or confirmed maintenance:
+                Wait 5 seconds between attempts.
+
+SS-RECON-005  STEP R3: Fetch fresh WebSocket token.
+              Call GetWebSocketsToken (REST, TRADE key).
+              Retry 3x with 2s delay.
+              Failure: log FATAL_TOKEN_RECONNECT_FAILED.
+              Systemd watchdog handles restart.
+
+SS-RECON-006  STEP R4: Reconnect private WS.
+
+  ★ MANDATORY (AR-058, AR-059, AR-060):
+    conn = await connect(
+        "wss://ws-auth.kraken.com/v2",
+        max_size=10 * 1024 * 1024,
+        open_timeout=10,
+        max_queue=None,
+        ping_interval=None,
+    )
+
+SS-RECON-007  STEP R5: Re-subscribe executions.
+              {
+                "method": "subscribe",
+                "params": {
+                  "channel": "executions",
+                  "token": <fresh_token>,
+                  "snap_orders": true,
+                  "snap_trades": true,
+                  "order_status": true,
+                  "ratecounter": true
+                }
+              }
+              Extract maxratecount from ACK.
+              Parse ACK warnings[] and log.
+
+SS-RECON-008  STEP R6: Position Mirror reconciliation.
+              Compare pre-disconnect Position Mirror vs
+              snap_orders from new subscription.
+
+              For each symbol in Mirror but NOT in snap_orders:
+                Position closed during gap (TP or emergSL fired).
+                Find in snap_trades (last 50 fills).
+                Fire CIATS Trade Outcome Bus with trade data.
+                Remove from Position Mirror.
+                Log POSITION_CLOSED_DURING_GAP (HIGH).
+
+              For each order in snap_orders but NOT in Mirror:
+                Alert operator only. Do not auto-trade.
+                Log UNEXPECTED_ORDER_FOUND (HIGH).
+
+              Pending Order Registry reconciliation:
+                cl_ord_id in pending_orders but NOT in snap_orders:
+                  Clear from registry.
+                  Log PENDING_ORDER_LOST.
+                cl_ord_id in pending_orders AND in snap_orders:
+                  Keep in registry (order confirmed live).
+
+SS-RECON-009  STEP R7: Re-subscribe balances.
+              {
+                "method": "subscribe",
+                "params": {
+                  "channel": "balances",
+                  "token": <fresh_token>,
+                  "snapshot": true
+                }
+              }
+              Update spot_asset_balances from spot/main wallet.
+              AR-050. Do NOT reset portfolio_baseline_USD.
+              Log BALANCES_RESYNCED.
+
+SS-RECON-010  STEP R8: Re-subscribe public channels.
+              Re-subscribe: instrument, status, ohlc(5m), ohlc(60m).
+              Update pair cache from new instrument snapshot.
+              If pair status changed during gap: update state.
+              Log PUBLIC_CHANNELS_RESUBSCRIBED.
+
+SS-RECON-011  STEP R9: Restore ticker subscriptions.
+              For each pair with open position in (updated) Mirror:
+                Subscribe ticker with event_trigger:bbo.
+              For all other monitored pairs:
+                Subscribe ticker with event_trigger:trades.
+              Log TICKER_RESTORED.
+
+SS-RECON-012  STEP R10: Cache staleness check.
+              gap_duration = reconnect_time - disconnect_time.
+
+              If gap_duration <= 15 minutes:
+                ATR/EMA caches valid. Skip REST warm-up.
+                Regime cache valid (daily — not stale intraday).
+                Log CACHE_VALID_NO_WARMUP.
+
+              If gap_duration > 15 minutes:
+                Re-run GetOHLCData(interval=5) and (interval=60)
+                for affected pairs.
+                Do NOT re-run GetOHLCData(interval=1440) unless
+                date has changed.
+                asyncio.gather() across pairs. 1.1s stagger
+                within pair. AR-036.
+                Log CACHE_REWARM_STARTED.
+
+SS-RECON-013  STEP R11: Resume operations.
+              Pairs with fresh caches: remain READY.
+              Pairs with stale caches (rewarm in progress):
+                Set to WARM_UP until rewarm completes.
+              BLOCKED pairs: unchanged.
+              Log RECONNECT_COMPLETE with gap_duration.
+              Resume pipeline at next candle-close.
+              Discard candle-close events that fired during
+              Steps R1-R11. Log CANDLE_DISCARDED_DURING_RECONNECT.
+
+------------------------------------------------------------
+9.3 PIPELINE DURING RECONNECT
+------------------------------------------------------------
+
+SS-RECON-014  No pipeline evaluations during Steps R1-R11.
+              Any candle-close events during reconnect:
+              DISCARDED after reconnect completes.
+              A missed evaluation is safer than a mis-fired entry.
+              Log CANDLE_DISCARDED_DURING_RECONNECT for each.
+
+------------------------------------------------------------
+9.4 FATAL RECONNECT FAILURE
+------------------------------------------------------------
+
+SS-RECON-015  If reconnect fails after 10 total attempts
+              spanning 120 seconds:
+              Log FATAL_RECONNECT_FAILED (CRITICAL).
+              Alert operator at alert@tothbot.com.
+              Stop retrying.
+              Systemd WatchdogSec=120 detects watchdog ping
+              has stopped → restarts TothBot automatically.
+              On restart: full startup sequence (Section 1).
+              Open positions protected by resting emergSL orders.
+
+------------------------------------------------------------
+9.5 RECONNECT INVARIANT VERIFICATION
+------------------------------------------------------------
+
+SS-RECON-016  After RECONNECT_COMPLETE, verify:
+              portfolio_baseline_USD unchanged (log value).
+              drawdown_pct unchanged (log value).
+              system_state (halt/pause/normal) unchanged.
+              If any invariant violated: log INVARIANT_BREACH,
+              alert operator CRITICAL. Do not resume pipeline.
+
+============================================================
+10. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does this document specify?
+    Section 1: 10-step startup sequence. Governs when
+    TothBot may begin pipeline evaluations. Defines
+    WARM_UP/READY/BLOCKED pair states.
+    Section 2: 11-step mid-session reconnect sequence.
+    Governs when TothBot may resume after WS disconnect.
+
+(2) Interfaces?
+    Section 1: WS Manager, Position Mirror, Pending Order
+    Registry, Regime Engine, ATR/EMA cache, ticker
+    subscription manager, systemd (sd_notify).
+    Section 2: WS Manager, Position Mirror, Pending Order
+    Registry, CIATS Trade Outcome Bus, ATR/EMA cache,
+    ticker subscription manager.
+
+(3) Hard rules?
+    NEVER begin pipeline without at least one READY pair.
+    portfolio_baseline_USD set ONCE at startup Step 5.
+    NEVER reset portfolio_baseline_USD on reconnect.
+    NEVER reset drawdown_pct on reconnect.
+    PRESERVE system_state across reconnect.
+    DISCARD candle events during reconnect.
+    DETECT positions closed during gap via reconciliation.
+    Fire CIATS Trade Outcome Bus for all gap-closed positions.
+    DMS (cancel_all_orders_after) PROHIBITED. AR-055.
+    Use websockets.asyncio.client connect (NOT legacy API).
+    max_queue=None and ping_interval=None on all connections.
+
+(4) Triggers?
+    Section 1: TothBot process start.
+    Section 2: WS disconnect detected during live operation.
+
+(5) Logs?
+    Section 1: KRAKEN_MAINTENANCE_SCHEDULED, STATUS_API_UNAVAILABLE,
+      FATAL_TOKEN_ACQUISITION_FAILED, INCOMPLETE_PROTECTION,
+      WARMUP_REST_STARTED, WARMUP_REST_FAILED,
+      PAIR_WARM_UP_STARTED, PAIR_READY,
+      SYSTEM_OPERATIONAL, VPS_STARTUP_COMPLETE.
+    Section 2: WS_DISCONNECT_DETECTED, POSITION_CLOSED_DURING_GAP,
+      PENDING_ORDER_LOST, UNEXPECTED_ORDER_FOUND,
+      CACHE_VALID_NO_WARMUP, CACHE_REWARM_STARTED,
+      RECONNECT_COMPLETE, FATAL_RECONNECT_FAILED,
+      CANDLE_DISCARDED_DURING_RECONNECT, INVARIANT_BREACH,
+      BALANCES_RESYNCED, PUBLIC_CHANNELS_RESUBSCRIBED,
+      TICKER_RESTORED.
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0411001  Kraken_WS_v2_Specification    dv1_11
+  0500000  System_Architecture_Overview  dv1_19
+  1011001  Engineering_Best_Practices    dv1_7
+  1011002  WS_Manager_Coding_Spec        dv1_18
+  1011007  Logger_Coding_Spec            dv1_2
+  1011010  CIATS_Coding_Spec             dv1_5
+  1011011  Risk_Engine_Coding_Spec       dv1_2
+  1011012  Regime_Engine_Coding_Spec     dv1_4
+  1011013  VPS_Deployment_Coding_Spec    dv1_4
+
+============================================================
+12. COMPONENT WIRING RULES
+============================================================
+
+SS-WIRE-001  The _regime_wrapper closure in startup_sequence.py
+             MUST pass wm.monitored_universe to
+             rge.run_daily_computation().
+
+             DEFECT-SS-009 root cause: _regime_wrapper called
+             rge.run_daily_computation() with no universe
+             argument. rge._universe is set at construction
+             from _load_universe(config) which returns
+             ["BTC/USD"] only. The full 50-pair universe is
+             built later by WSManager from the Kraken
+             instrument snapshot and is not known at
+             construction time. Result: regime computed for
+             BTC/USD only. All 49 other monitored pairs had
+             NO_REGIME_DATA. Gate 3 blocked all non-BTC
+             entries for the entire session until 00:00 UTC.
+
+             Required implementation:
+
+               async def _regime_wrapper(candles, symbol):
+                 universe = (
+                     list(wm.monitored_universe)
+                     if wm.monitored_universe else None
+                 )
+                 await rge.run_daily_computation(
+                     universe=universe
+                 )
+
+             Python closures capture variables by reference.
+             At call time (from _warm_up_all_pairs via
+             _trigger_daily_regime_refresh, or from the
+             00:00 UTC midnight loop), wm.monitored_universe
+             contains the fully ranked 50-pair universe.
+
+             This applies to BOTH call sites:
+               (a) Startup seed: WM-WARMUP-004 in ws_manager
+               (b) Daily 00:00 UTC refresh: midnight loop
+
+             Guard: if wm.monitored_universe else None.
+             When None, run_daily_computation() falls back to
+             rge._universe (["BTC/USD"]) — safe default.
+
+============================================================
+13. REVISION HISTORY
+============================================================
+
+  dv1_5  04-14-2026  SS-WIRE-001 (new, Section 12): _regime_
+                     wrapper MUST pass wm.monitored_universe to
+                     rge.run_daily_computation(). DEFECT-SS-009
+                     root cause: regime computed for BTC/USD
+                     only at startup and on daily refresh. All
+                     49 other monitored pairs had NO_REGIME_DATA.
+                     Gate 3 blocked all non-BTC entries.
+                     Related documents: 1011002 updated to
+                     dv1_18, 1011012 to dv1_4. Prior Section 11
+                     (Related Documents) renumbered to 13.
+
+  dv1_4  04-13-2026  DEFECT-SS-004 fix + OI-NEW-001 fix.
+                     SS-STARTUP-007: Removed ohlc interval=60
+                     WS subscription. Kraken WS v2 rejects
+                     second ohlc interval per symbol with
+                     "Already subscribed to one ohlc interval
+                     on this symbol." (OI-NEW-001 confirmed.)
+                     1H HTF cache now sourced from REST only.
+                     SS-WARMUP-001: Added explicit warm-up
+                     trigger mechanism: _subscribe_ohlc_channels()
+                     calls asyncio.create_task(_warm_up_all_pairs())
+                     after ohlc(5) subscription sent. Paper mode
+                     uses identical warm-up path. This is the
+                     DEFECT-SS-004 fix: REST warm-up was never
+                     called from startup in either mode.
+                     SS-WARMUP-003: Updated to document REST-only
+                     60m HTF sourcing. Removed Call C (interval=1440)
+                     from per-pair warm-up — Regime Engine handles
+                     daily independently.
+                     SS-WARMUP-004/005/006/007/008: Renumbered after
+                     removal of old SS-WARMUP-004 (interval=1440).
+                     SS-WARMUP-008 added: documents SYSTEM_OPERATIONAL
+                     log after warm-up complete.
+                     Related documents: 1011002 updated to dv1_14.
+
+  dv1_3  04-05-2026  Phase 8 completion. WD → full spec.
+                     Parent chain updated (1000000/1010000
+                     now exist). WD status removed.
+                     SS-STARTUP-006, SS-STARTUP-013,
+                     SS-RECON-006: updated to use mandatory
+                     websockets.asyncio.client import connect
+                     API per AR-060/WM-CONN-007.
+                     max_queue=None and ping_interval=None
+                     added to all WS connection calls.
+                     SS-STARTUP-026: sd_notify READY=1 added
+                     (was missing from dv1_2).
+                     AR-055 (DMS prohibition) and AR-058,
+                     AR-059, AR-060 added to Section 3 ARs.
+                     Five coding-readiness questions updated.
+                     Related documents updated to Phase 8
+                     versions. Document is coding-ready.
+
+  dv1_2  04-04-2026  DocPath correction.
+
+  dv1_1  03-26-2026  Section 2: Mid-Session WS Reconnect
+                     Sequence (AR-056). 11 steps.
+
+  dv1_0  03-26-2026  Initial WD. 10-step startup sequence.
+                     AR-044 through AR-049. WARM_UP/READY/
+                     BLOCKED pair states.
+
+============================================================
+END OF DOCUMENT
+============================================================
