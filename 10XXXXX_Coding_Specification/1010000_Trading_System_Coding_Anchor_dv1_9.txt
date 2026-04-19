@@ -1,10 +1,10 @@
 DocDCN:     1010000
 DocTitle:   Trading_System_Coding_Anchor
-DocVersion: dv1_8
+DocVersion: dv1_9
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_8.txt
-DocDate:    04-14-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_9.txt
+DocDate:    04-18-2026
+DocTime:    22:00:00 UTC
 
 ============================================================
 TRADING SYSTEM CODING ANCHOR
@@ -75,22 +75,35 @@ Governing code file: All Pathway 2 files (BP standard).
 ------------------------------------------------------------
 4.2  1011002  WS_Manager_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_13  (04-11-2026)
+Current version: dv1_19  (04-18-2026)
 Status: CODING-READY. Phase 8 complete. Post-deployment
 defects documented.
 Parent spec: 0511001 WS_Manager_Specification
 Scope: WebSocket Manager — all Kraken WS v2 connections,
 subscriptions, dispatch table, zombie detection, ohlc
-subscription sequencing.
-Key post-deployment defects documented in dv1_13:
+subscription sequencing, reconnect hardening for transient
+disconnects.
+Key post-deployment defects documented in dv1_13 through dv1_19:
   DEFECT-WM-ZOM-001: zombie timer initialized at __init__,
     not at connection-live. Fixed: commit 4241bf3.
   DEFECT-WM-OHLC-001: ohlc subscribed without symbol list.
     Fixed: _subscribe_ohlc_channels() triggered from
     _handle_instrument() after universe built. Documented
     in WM-OHLC-SUB-001 through -003.
-NOTE: dv1_13 fix (DEFECT-WM-OHLC-001) committed to
-TothBot_V2-Code. Commit hash: cd1de43 (see Section 5).
+  DEFECT-WM-CRASH-001: TaskGroup crash cause lost behind
+    ExceptionGroup wrapper. Fixed in dv1_19 (WM-RUN-001).
+  DEFECT-WM-RECONNECT-001: transient WS disconnects
+    (ConnectionClosedError / ConnectionClosedOK /
+    ConnectionResetError) propagated out of recv loops
+    and send helpers into the _main_loop TaskGroup,
+    crash-restarting the process ~1-2×/hour under
+    normal CloudFlare cycling. Fixed in dv1_19 spec /
+    ws_manager.py dv1_20 code (WM-RECONNECT-016/017/018):
+    local catch in _recv_loop_public, _recv_loop_private,
+    _send_public, _send_private; orderly reconnect via
+    existing N=10 / base=1s / cap=30s schedule;
+    _reconnect_done_event + _fatal_reconnect_failure
+    prevent concurrent-retry and post-fatal-retry races.
 Governing code file: ws_manager.py
 
 ------------------------------------------------------------
@@ -281,8 +294,8 @@ Each entry contains:
   File:        ws_manager.py
   DCN:         1011002
   Spec:        WS_Manager_Coding_Spec
-  SpecVer:     dv1_18
-  RegDate:     04-14-2026
+  SpecVer:     dv1_19
+  RegDate:     04-18-2026
 
   File:        signal_pipeline.py
   DCN:         1011003
@@ -602,6 +615,31 @@ TothBot_V2-Docs. No further action required.
 ============================================================
 6. REVISION HISTORY
 ============================================================
+
+  dv1_9  04-18-2026  Section 4.2 and Section 5.2 registry
+                     updated: ws_manager.py SpecVer dv1_18 →
+                     dv1_19. Governing spec 1011002 incremented
+                     dv1_18 → dv1_19 this session —
+                     DEFECT-WM-RECONNECT-001 fix. Three new
+                     rules added to 1011002 Section 15:
+                     WM-RECONNECT-016 (local catch of transient
+                     WS disconnect in recv loops and send
+                     helpers; no propagation to _main_loop
+                     TaskGroup), WM-RECONNECT-017 (retry
+                     schedule N=10, base=1s, cap=30s, factor
+                     2x — matches existing WM-RECONNECT-002),
+                     WM-RECONNECT-018 (TaskGroup receives only
+                     true fatals; _reconnect_done_event and
+                     _fatal_reconnect_failure prevent concurrent
+                     and post-fatal retry races). ws_manager.py
+                     incremented dv1_19 → dv1_20 implementing
+                     the fix. Root cause: transient CloudFlare
+                     WS disconnects crash-restarted the process
+                     ~1-2×/hour; the existing 10-attempt
+                     reconnect retry logic was never reached
+                     because the exception killed the
+                     TaskGroup before _initiate_reconnect
+                     was called.
 
   dv1_8  04-14-2026  Section 5.2 registry updated:
                      startup_sequence.py SpecVer updated

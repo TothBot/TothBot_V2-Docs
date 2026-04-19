@@ -1,10 +1,10 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_18
+DocVersion: dv1_19
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_18.txt
-DocDate:    04-14-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_19.txt
+DocDate:    04-18-2026
+DocTime:    22:00:00 UTC
 
 ============================================================
 WS MANAGER CODING SPECIFICATION
@@ -185,6 +185,8 @@ Section 3. All hard rules are consolidated in Section 16.
     CONNECTION:     PING_SENT, PONG_RECEIVED, PING_TIMEOUT,
                     ZOMBIE_CONNECTION_DETECTED,
                     RECONNECT_INITIATED, RECONNECT_COMPLETE,
+                    RECONNECT_TRIGGERED, SEND_DISCONNECT,
+                    RECONNECT_ATTEMPT_FAILED,
                     FATAL_RECONNECT_FAILURE,
                     CONNECTION_ID_LOGGED
     SEQUENCE GAPS:  EXECUTIONS_SEQUENCE_GAP,
@@ -1994,6 +1996,80 @@ WM-RECONNECT-015  exit_cooldown_log and consecutive_loss_count:
                   PRESERVED across reconnect (WM-SC-003).
                   NEVER discarded.
 
+WM-RECONNECT-016  Transient WS disconnect errors
+                    (ConnectionClosedError,
+                     ConnectionClosedOK,
+                     ConnectionResetError)
+                  raised by the WS iterator (async for in
+                  _recv_loop_public / _recv_loop_private) or by
+                  ws.send() in _send_public / _send_private MUST be
+                  caught LOCALLY at the point of raise. Each catch MUST:
+                    (a) log RECONNECT_TRIGGERED (component=WS_MGR,
+                        level=HIGH) with "source" and "error_type"
+                        context fields,
+                    (b) invoke _initiate_reconnect() — awaited in recv
+                        loops; scheduled via asyncio.create_task() in
+                        send helpers so the send caller is not blocked,
+                    (c) NOT propagate the exception to the _main_loop
+                        TaskGroup.
+                  Receive loops resume iteration on the new connection
+                  object after reconnect completes (self._ws_public and
+                  self._ws_private are reassigned inside
+                  _execute_reconnect_sequence). Send helpers swallow the
+                  failed send — the send is lost but the process does
+                  NOT terminate. This rule is the primary fix for
+                  DEFECT-WM-RECONNECT-001.
+
+                  A clean (non-exception) exit of the async-for in
+                  either recv loop is ALSO treated as a disconnect
+                  (reconnect triggered, loop resumes). This covers
+                  websockets-library edge cases where the server closes
+                  the connection without raising.
+
+WM-RECONNECT-017  _initiate_reconnect() retry schedule:
+                    attempts: MAX_RECONNECT_ATTEMPTS   = 10
+                    base:     RECONNECT_BACKOFF_BASE_SEC = 1.0 s
+                    cap:      RECONNECT_BACKOFF_CAP_SEC  = 30.0 s
+                    factor:   RECONNECT_BACKOFF_FACTOR   = 2.0
+                  Matches WM-RECONNECT-002 (10 attempts, cap 30s).
+                  Worst-case wall time across all attempts:
+                    1 + 2 + 4 + 8 + 16 + 30 + 30 + 30 + 30 + 30 = 181s
+                  (upper bound on sleep — actual attempt latency adds).
+                  FATAL_RECONNECT_FAILURE MUST be raised ONLY after all
+                  N attempts have been exhausted. Each failed attempt
+                  logs RECONNECT_ATTEMPT_FAILED (level=WARN, non-fatal).
+                  Each successful reconnect logs RECONNECT_COMPLETE
+                  (level=INFO) with "attempts" count. All four numbers
+                  are module-level constants declared at the top of
+                  ws_manager.py — no magic numbers (DC-4).
+
+WM-RECONNECT-018  The _main_loop() TaskGroup MUST receive only truly
+                  fatal conditions. The three transient types named in
+                  WM-RECONNECT-016 MUST be fully handled at loop level.
+                  If the TaskGroup ever observes any of the three
+                  transient types as a sub-exception, that is a
+                  WM-RECONNECT-016 defect (a loop-level catch is
+                  missing or broken).
+
+                  Implementation gate:
+                    self._reconnect_done_event: asyncio.Event
+                  Cleared by _initiate_reconnect on entry; set in its
+                  finally block on every exit path (success, fatal, or
+                  re-entry). Concurrent disconnect detection by both
+                  recv loops collapses to a single reconnect cycle:
+                  whichever loop reaches _initiate_reconnect first
+                  drives the retry schedule; the other awaits the
+                  event and returns without starting a second cycle.
+
+                  Terminal flag:
+                    self._fatal_reconnect_failure: bool
+                  Set by _initiate_reconnect immediately before raising
+                  the final RuntimeError. Prevents siblings that awaken
+                  from the event wait from starting a fresh retry cycle
+                  while TaskGroup teardown is in flight. Recv loops and
+                  send helpers check this flag and short-circuit when
+                  set.
+
 ============================================================
 16. TICKER EVENT_TRIGGER MANAGEMENT (AR-034)
 ============================================================
@@ -2139,6 +2215,32 @@ HR-WM-022  liquidity_24h populated ONLY from REST Ticker
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_19  04-18-2026  DEFECT-WM-RECONNECT-001 fix specification.
+                      Section 15 extended with three new rules:
+                      WM-RECONNECT-016 (local catch of
+                      ConnectionClosedError / ConnectionClosedOK /
+                      ConnectionResetError in _recv_loop_public,
+                      _recv_loop_private, _send_public, _send_private;
+                      transients MUST NOT propagate to the _main_loop
+                      TaskGroup; recv loops resume on the new
+                      connection; send helpers swallow and schedule
+                      reconnect), WM-RECONNECT-017 (retry schedule
+                      formalised N=10, base=1s, cap=30s, factor=2x —
+                      matches WM-RECONNECT-002; all four values are
+                      module-level constants, no magic numbers per
+                      DC-4), WM-RECONNECT-018 (TaskGroup receives only
+                      true fatals; _reconnect_done_event asyncio.Event
+                      serialises concurrent disconnect detection to one
+                      reconnect cycle; _fatal_reconnect_failure flag
+                      prevents post-fatal retry race during TaskGroup
+                      teardown). Section 3 Q5 CONNECTION log list
+                      extended with RECONNECT_TRIGGERED and
+                      SEND_DISCONNECT event names; RECONNECT_ATTEMPT_
+                      FAILED also listed explicitly. Existing rules
+                      WM-RECONNECT-001 through WM-RECONNECT-015 and
+                      all HR-WM-* are unchanged — no existing rule
+                      weakened. Governs ws_manager.py dv1_19 → dv1_20.
 
   dv1_18  04-14-2026  Two defect-driven additions.
                       WM-RUN-001 (new): run() exception handler
