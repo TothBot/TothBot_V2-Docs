@@ -1,0 +1,687 @@
+DocDCN:     1011007
+DocTitle:   Logger_Coding_Spec
+DocVersion: dv1_3
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011007_Logger_Coding_Spec_dv1_3.txt
+DocDate:    04-20-2026
+DocTime:    23:00:00 UTC
+
+============================================================
+LOGGER CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Logger component. It is the sole direct
+input to Logger code. Code is written from this document
+and no other.
+
+The Logger is the sole data interface between TothBot and
+CIATS. It must never block the trading hot path. Every
+event logged is a potential CIATS data point. The Logger
+is Tier 1 in the coding sequence — it must exist before
+any other module can be tested.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011007  This document
+  Parent specification: 0511006  Logger_Specification dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Logger DO?
+    Receives log records from all TothBot components via
+    an in-memory bounded queue (queue.Queue, maxsize=10,000).
+    Enqueues without blocking (put_nowait). Writes to disk
+    via QueueListener in a background thread. Alerts
+    operator on CRITICAL and HIGH events. Handles queue
+    overflow without blocking the hot path.
+
+(2) Interfaces?
+    IN:  All TothBot components via logging.getLogger()
+         call to the "tothbot" logger instance.
+    OUT: Disk log files (RotatingFileHandler, NDJSON format)
+         Operator email alerts for CRITICAL and HIGH events
+         stderr for queue-full fallback (non-blocking)
+    CIATS reads log files directly. Logger does not push
+    to CIATS. Logger does not know CIATS exists.
+
+(3) Hard rules?
+    HR-LG-001: NEVER block hot path under any condition.
+    HR-LG-002: queue.Queue (stdlib), NOT asyncio.Queue.
+    HR-LG-003: maxsize=10,000 entries.
+    HR-LG-004: log_listener.stop() on clean shutdown.
+    HR-LG-005: All TRADE_CLOSE fields mandatory (Section 7).
+    HR-LG-006: TRADE_CLOSE fires ONCE per position close.
+    HR-LG-007: ws_roundtrip_latency_ms captured from WS v2
+               time_in/time_out fields.
+    HR-LG-008: connection_id logged on every WS event.
+    HR-LG-009: All numeric values: string representation
+               of Decimal in log. No float storage.
+    HR-LG-010: Log format: NDJSON (one JSON per line).
+    HR-LG-011: Queue full → stderr + HIGH alert. Do not block.
+
+(4) What triggers Logger?
+    Any TothBot component log() call:
+      WS Manager (highest volume)
+      Signal Pipeline (every gate evaluation)
+      Execution Engine (order dispatch and fills)
+      Exit Controller (exit sequences)
+      Position Mirror (state changes)
+      Regime Engine (daily computation)
+      CIATS (parameter updates)
+
+(5) What does Logger log?
+    Logger IS the logging component. It does not log to
+    itself. On queue.Full: writes to stderr (non-blocking).
+    Log volume estimate: ~80,000-120,000 entries/day.
+
+============================================================
+4. IMPLEMENTATION — QUEUE ARCHITECTURE
+============================================================
+
+------------------------------------------------------------
+4.1 Queue Setup
+------------------------------------------------------------
+
+LG-QUEUE-001  Use Python stdlib queue, NOT asyncio.Queue.
+              QueueListener runs in a non-asyncio thread
+              and is incompatible with asyncio.Queue.
+
+              import queue
+              import logging
+              import logging.handlers
+              from decimal import Decimal
+
+              log_queue = queue.Queue(maxsize=10_000)
+
+LG-QUEUE-002  Queue size derivation (FP/DP validated):
+              20 positions x 10 events/candle x 50-candle
+              buffer = 10,000 entries. CIATS-owned starting
+              value.
+
+------------------------------------------------------------
+4.2 QueueHandler — Hot Path (Non-blocking)
+------------------------------------------------------------
+
+LG-QUEUE-003  Attach TothBotQueueHandler to "tothbot" logger.
+              QueueHandler.emit() calls put_nowait() — returns
+              immediately. The hot path is never blocked.
+
+              class TothBotQueueHandler(
+                      logging.handlers.QueueHandler):
+                  """Non-blocking QueueHandler with overflow
+                  alert."""
+                  def enqueue(self, record):
+                      try:
+                          self.queue.put_nowait(record)
+                      except queue.Full:
+                          import sys
+                          print(
+                              f"LOGGER QUEUE FULL — record "
+                              f"dropped: {record.getMessage()}",
+                              file=sys.stderr
+                          )
+                          # Alert operator directly
+                          # (not via Logger — avoid circularity)
+                          _alert_operator_direct(
+                              "CRITICAL: Logger queue full. "
+                              "Records are being dropped. "
+                              "Investigate immediately."
+                          )
+
+              queue_handler = TothBotQueueHandler(log_queue)
+              tothbot_logger = logging.getLogger("tothbot")
+              tothbot_logger.addHandler(queue_handler)
+              tothbot_logger.setLevel(logging.DEBUG)
+              # Remove all other handlers from tothbot logger:
+              tothbot_logger.handlers = [queue_handler]
+              tothbot_logger.propagate = False
+
+------------------------------------------------------------
+4.3 QueueListener — Background Thread (Blocking writes OK)
+------------------------------------------------------------
+
+LG-QUEUE-004  QueueListener runs in its own background thread.
+              Reads from queue. Writes to RotatingFileHandler.
+              Never interacts with asyncio event loop.
+
+              file_handler = logging.handlers.RotatingFileHandler(
+                  filename="/home/tothbot/logs/tothbot.log",
+                  maxBytes=50 * 1024 * 1024,   # 50 MB per file
+                  backupCount=90,               # 90 files = ~90 days
+                  encoding="utf-8"
+              )
+              file_handler.setFormatter(
+                  logging.Formatter("%(message)s")
+              )
+              # %(message)s emits the pre-serialized JSON string.
+              # One log record = one JSON line.
+
+              log_listener = logging.handlers.QueueListener(
+                  log_queue,
+                  file_handler,
+                  respect_handler_level=True
+              )
+              log_listener.start()
+              # start() launches background thread internally.
+
+LG-QUEUE-005  SHUTDOWN ORDER (mandatory):
+              1. Signal TothBot to stop accepting new events
+              2. Call log_listener.stop()
+                 stop() drains remaining queue entries
+                 and joins the background thread.
+                 No log entries lost on clean shutdown.
+              3. Close file_handler
+              4. Shutdown asyncio event loop
+
+------------------------------------------------------------
+4.4 Queue Health Monitoring
+------------------------------------------------------------
+
+LG-QUEUE-006  Monitor queue fill level every 60 seconds:
+
+              async def monitor_log_queue():
+                  while True:
+                      qsize = log_queue.qsize()
+                      fill_pct = qsize / 10_000
+                      if fill_pct >= 0.80:
+                          # Direct alert (not via Logger)
+                          _alert_operator_direct(
+                              f"Logger queue at {fill_pct:.0%}. "
+                              f"Risk of overflow."
+                          )
+                      await asyncio.sleep(60)
+
+              Run monitor_log_queue() as an asyncio task.
+
+============================================================
+5. LOG RECORD FORMAT
+============================================================
+
+LG-FMT-001  Every log record MUST be a valid JSON object
+            on a single line (NDJSON format). CIATS reads
+            line by line. Do not pretty-print.
+
+LG-FMT-002  Mandatory fields on every record:
+
+              {
+                "ts":        "2026-04-05T12:00:00.000000Z",
+                "event":     "CANDLE_CLOSE",
+                "level":     "INFO",
+                "component": "WS_MGR",
+                ...event-specific fields...
+              }
+
+            ts:        ISO 8601 UTC with microseconds.
+                       from datetime import datetime, timezone
+                       datetime.now(timezone.utc).isoformat()
+            event:     SCREAMING_SNAKE_CASE event code.
+                       Must be registered in Section 6.
+            level:     DEBUG | INFO | HIGH | CRITICAL
+            component: WS_MGR | SIGNAL_PIPELINE | EXEC_ENG |
+                       EXIT_CTRL | POS_MIRROR | REGIME_ENG |
+                       LOGGER | CIATS
+
+LG-FMT-003  Serialization via orjson with Decimal callback:
+
+              import orjson
+              from decimal import Decimal
+
+              def _json_default(obj):
+                  if isinstance(obj, Decimal):
+                      return str(obj)
+                  raise TypeError(type(obj))
+
+              def log_record(event_dict: dict) -> str:
+                  """Returns a single NDJSON line."""
+                  return orjson.dumps(
+                      event_dict,
+                      default=_json_default
+                  ).decode()
+
+              # Usage:
+              record = {
+                  "ts": datetime.now(timezone.utc).isoformat(),
+                  "event": "ENTRY_DISPATCHED",
+                  "level": "INFO",
+                  "component": "EXEC_ENG",
+                  "symbol": "BTC/USD",
+                  "cl_ord_id": "tb_20260405_120000_BTC",
+                  "entry_price": Decimal("42350.1"),
+                  "qty": Decimal("0.001"),
+              }
+              logger.info(log_record(record))
+
+LG-FMT-004  Decimal values in log: stored as JSON string
+            (e.g., "42350.1"). CIATS reads and parses back
+            to Decimal. Never store as JSON number (float).
+
+LG-FMT-005  connection_id (AR-064): uint64 included in all
+            WS connection, reconnect, disconnect, gap,
+            ping/pong, and zombie detection log entries.
+
+============================================================
+6. EVENT CODE REGISTRY
+============================================================
+
+LG-EVT-001  All event codes used in TothBot MUST be
+            registered here. No undocumented event codes.
+            Code review must reject any unregistered event.
+
+------------------------------------------------------------
+6.1 WS Manager Events
+------------------------------------------------------------
+
+  Event Code                   Level     Key Fields
+  ────────────────────────────  ────────  ─────────────────
+  WS_TOKEN_ACQUIRED             INFO      token_expiry
+  WS_CONNECTED                  INFO      connection_id, url
+  WS_DISCONNECTED               HIGH      connection_id, reason
+  WS_RECONNECTED                INFO      connection_id
+  INSTRUMENT_SNAPSHOT_COMPLETE  INFO      pair_count
+  SUBSCRIPTION_ACK              INFO      channel, warnings
+  MAXRATECOUNT_SET              INFO      value
+  PAIR_WARM_UP_STARTED          DEBUG     symbol
+  PAIR_READY                    INFO      symbol
+  ALL_PAIRS_WARM_UP_COMPLETE    INFO      pair_count
+  PING_SENT                     DEBUG     connection_id, req_id
+  PONG_RECEIVED                 DEBUG     connection_id,
+                                          latency_ms,
+                                          time_in, time_out
+  PING_TIMEOUT                  CRITICAL  connection_id
+  ZOMBIE_CONNECTION_DETECTED    CRITICAL  connection_id,
+                                          elapsed_seconds
+  RECONNECT_INITIATED           HIGH      connection_id,
+                                          attempt_number
+  RECONNECT_COMPLETE            INFO      connection_id
+  FATAL_RECONNECT_FAILURE       CRITICAL  attempt_count
+  KRAKEN_MAINTENANCE_SCHEDULED  HIGH      within_hours
+  CONNECTION_ID_LOGGED          INFO      connection_id
+  EXECUTIONS_SEQUENCE_GAP       CRITICAL  expected, received
+  BALANCES_SEQUENCE_GAP         HIGH      expected, received
+  CANDLE_CLOSE                  INFO      symbol,
+                                          interval_begin,
+                                          open, high, low,
+                                          close, volume,
+                                          atr_14
+  EXEC_TRADE                    INFO      order_id, cl_ord_id,
+                                          cum_qty, avg_price,
+                                          last_qty, last_price
+  EXEC_FILLED                   INFO      order_id, cl_ord_id,
+                                          cum_qty, avg_price,
+                                          fees_usd
+  EXEC_CANCELED                 INFO      order_id, cl_ord_id,
+                                          reason
+  EXEC_EXPIRED                  INFO      order_id, cl_ord_id,
+                                          cum_qty
+  EXEC_RESTATED                 HIGH      order_id (if resting)
+  UNEXPECTED_ORDER_AMENDED      CRITICAL  order_id
+  UNKNOWN_EXEC_TYPE             WARN      raw_exec_type
+  UNKNOWN_MESSAGE_TYPE          WARN      raw_channel
+  ENTRY_PARTIAL_FILL_PROTECTED  HIGH      symbol, cum_qty,
+                                          avg_price
+  GAP_CLOSED_POSITION           HIGH      symbol, estimated_PL
+  DRAWDOWN_UPDATE               DEBUG     drawdown_pct,
+                                          portfolio_USD
+  SESSION_PAUSE_TRIGGERED       HIGH      drawdown_pct
+  FULL_HALT_TRIGGERED           CRITICAL  drawdown_pct,
+                                          open_count
+  BATCH_CANCEL_SENT             HIGH      count
+  BATCH_CANCEL_RESULT           INFO      count_confirmed
+  RATE_COUNTER_UPDATE           DEBUG     symbol, value,
+                                          maxratecount
+  RATE_COUNTER_WARNING          WARN      symbol, value,
+                                          maxratecount
+
+------------------------------------------------------------
+6.2 Signal Pipeline Events
+------------------------------------------------------------
+
+  PIPELINE_START                INFO      symbol, candle_ts
+  INSTRUMENT_STATUS_BLOCKED     INFO      symbol, status
+  GATE_1_PASS                   DEBUG     engine_state
+  GATE_1_FAIL                   INFO      engine_state
+  GATE_2_PASS                   DEBUG     volume_usd, threshold
+  GATE_2_FAIL                   INFO      volume_usd, threshold
+  GATE_3_PASS                   DEBUG     regime, vol_regime
+  GATE_3_FAIL                   INFO      regime, vol_regime
+  GATE_4_PASS                   DEBUG     htf_ema_20, htf_ema_50
+  GATE_4_FAIL                   INFO      htf_ema_20, htf_ema_50
+  SSS_RESULT                    DEBUG     rsi_14, ema_9, ema_21,
+                                          volume_ratio, sss_pass
+  GATE_5_RESULT                 INFO      sc_gate_failed (if any),
+                                          all 6 SC gate outcomes
+  GATE_6_RESULT                 DEBUG     sizing_modifier
+  GATE_7_RESULT                 INFO      drawdown_pct, semaphore,
+                                          available_USD
+  GATE_8_RESULT                 INFO      entry_qty, entry_price,
+                                          tp_price, sl_trigger,
+                                          net_RR_computed
+
+------------------------------------------------------------
+6.3 Execution Engine Events
+------------------------------------------------------------
+
+  ENTRY_DISPATCHED              INFO      symbol, cl_ord_id,
+                                          entry_price, qty,
+                                          deadline
+  ENTRY_REJECTED_POST_ONLY      INFO      symbol, cl_ord_id,
+                                          reason
+  ENTRY_REJECTED_RATE_LIMIT     WARN      symbol, req_id
+  ENTRY_FILLED                  INFO      symbol, cl_ord_id,
+                                          fill_price, qty, fees
+  TP_PLACED                     INFO      symbol, cl_ord_id,
+                                          tp_price
+  EMERG_SL_PLACED               INFO      symbol, cl_ord_id,
+                                          sl_trigger
+  TP_PARTIAL_FILL               INFO      symbol, cl_ord_id,
+                                          cum_qty, remaining_qty
+  EMERG_SL_AMENDED              HIGH      symbol, cl_ord_id,
+                                          new_qty
+
+------------------------------------------------------------
+6.4 Exit Controller Events
+------------------------------------------------------------
+
+  LAYER1A_EXIT_TRIGGERED        INFO      symbol, exit_reason
+  LAYER1B_TP_FILL               INFO      symbol, fill_price,
+                                          fees
+  LAYER2_EXIT_TRIGGERED         HIGH      symbol, mae_pct,
+                                          bid_price
+  LAYER2_CANCEL_SENT            INFO      symbol, cl_ord_id
+  LAYER2_MARKET_SELL_SENT       INFO      symbol, qty
+  EMERGENCY_SL_FIRED            CRITICAL  symbol
+  CANCEL_TIMEOUT_HOLD           CRITICAL  symbol, cl_ord_id,
+                                          elapsed_ms
+  MAE_HOLD_AMBIGUOUS            CRITICAL  symbol, state
+  PAIR_CANCEL_ONLY_HOLD         CRITICAL  symbol, status
+  PAIR_MAINTENANCE_HOLD         CRITICAL  symbol, status
+
+------------------------------------------------------------
+6.5 Position Mirror Events
+------------------------------------------------------------
+
+  POSITION_OPENED               INFO      symbol, cl_ord_id,
+                                          entry_price, qty
+  POSITION_CLOSED               INFO      symbol, exit_reason,
+                                          net_PL_USD
+  POSITION_RECONCILED           INFO      symbol, source
+  UNEXPECTED_OPEN_ORDER         HIGH      symbol, order_id
+
+------------------------------------------------------------
+6.6 Regime Engine Events
+------------------------------------------------------------
+
+  REGIME_COMPUTED               INFO      market_regime,
+                                          asset_regime,
+                                          adx_14, ema_20,
+                                          ema_50, atr_pct
+  REGIME_STALE_WARNING          WARN      hours_since_update
+
+------------------------------------------------------------
+6.7 CIATS Events
+------------------------------------------------------------
+
+  CIATS_EWMA_UPDATE             DEBUG     signal, value, lambda
+  CIATS_CUSUM_SIGNAL            HIGH      metric, k, h, cusum_s
+  CIATS_PROPOSAL_GENERATED      INFO      parameter, old_value,
+                                          new_value, confidence
+  CIATS_KELLY_UPDATE            INFO      kelly_fraction,
+                                          trade_count
+  CIATS_PARAMETER_WRITE         INFO      parameter, old_value,
+                                          new_value
+
+------------------------------------------------------------
+6.8 Trade Outcome Bus (CIATS primary data record)
+------------------------------------------------------------
+
+  TRADE_CLOSE                   INFO      (all fields mandatory)
+
+  This record fires ONCE on each complete position close.
+  It is the primary CIATS data record. All fields in
+  Section 7 are mandatory.
+
+============================================================
+7. TRADE OUTCOME BUS — TRADE_CLOSE RECORD
+============================================================
+
+LG-TOB-001  TRADE_CLOSE fires ONCE per position close.
+            Never on partial fills. Always on complete close.
+
+LG-TOB-002  All fields below are MANDATORY. Missing any
+            field breaks CIATS statistical computation.
+            No optional fields on this record.
+
+Required TRADE_CLOSE fields:
+
+  ts:                    ISO 8601 UTC with microseconds
+  event:                 "TRADE_CLOSE"
+  level:                 "INFO"
+  component:             "EXIT_CTRL"
+  symbol:                str (e.g., "BTC/USD")
+  entry_fill_price:      Decimal (actual avg_price on fill)
+  exit_price:            Decimal (fill price on close)
+  entry_timestamp_utc:   ISO 8601 UTC
+  exit_timestamp_utc:    ISO 8601 UTC
+  hold_candle_count:     int (5m candles held)
+  MAE_pct_reached:       Decimal (max adverse move as pct)
+  fees_entry_usd:        Decimal (maker fee on entry)
+  fees_exit_usd:         Decimal (taker fee on exit)
+  fees_total_usd:        Decimal (fees_entry + fees_exit)
+  exit_reason:           str — one of:
+                           TP_FILL
+                           MAE_THRESHOLD_BREACH
+                           HTF_REGIME_REVERSAL
+                           DAILY_REGIME_DOWNGRADE
+                           TIME_EXPIRY
+                           SIGNAL_DECAY
+                           TP_PARTIAL_FILL_REMAINDER
+                           PAIR_LIMIT_ONLY_EXIT
+  asset_regime:          str (regime of asset at entry)
+  vol_regime:            str (NORMAL_VOL | ELEVATED_VOL)
+  market_regime:         str (BTC/USD regime at entry)
+  signal_params:         dict {
+                           rsi_14: Decimal,
+                           ema_9:  Decimal,
+                           ema_21: Decimal,
+                           volume_ratio: Decimal,
+                           sss_pass: bool
+                         }
+  actual_RR:             Decimal (net_PL / risk_exposed)
+  net_PL_USD:            Decimal (positive=profit, negative=loss)
+  net_gain_usd:          Decimal (0.0 if loss)
+  net_loss_usd:          Decimal (0.0 if gain, positive value)
+
+  Feed:
+    Statistical Engine → Proposal Engine (at 200 trades)
+    Regime Library analysis (at 600 trades)
+    Half-Kelly computation (at 200+ trades)
+
+============================================================
+8. ALERT ROUTING
+============================================================
+
+LG-ALERT-001  CRITICAL events: email to alerts@tothbot.com
+              immediately. Also write to stderr as fallback.
+              (OI-019: plural — real Proton mailbox. The
+              singular mailbox does not exist and cannot be
+              created; Proton catch-all reserves the namespace.)
+
+              CRITICAL event codes:
+                PING_TIMEOUT, ZOMBIE_CONNECTION_DETECTED,
+                FATAL_RECONNECT_FAILURE,
+                EXECUTIONS_SEQUENCE_GAP,
+                UNEXPECTED_ORDER_AMENDED,
+                CANCEL_TIMEOUT_HOLD, MAE_HOLD_AMBIGUOUS,
+                FULL_HALT_TRIGGERED, PAIR_CANCEL_ONLY_HOLD,
+                PAIR_MAINTENANCE_HOLD, EMERGENCY_SL_FIRED,
+                any unhandled exception
+
+LG-ALERT-002  HIGH events: email to alerts@tothbot.com. (OI-019)
+
+              HIGH event codes:
+                WS_DISCONNECTED, RECONNECT_INITIATED,
+                BALANCES_SEQUENCE_GAP,
+                SESSION_PAUSE_TRIGGERED, BATCH_CANCEL_SENT,
+                KRAKEN_MAINTENANCE_SCHEDULED,
+                ENTRY_PARTIAL_FILL_PROTECTED,
+                GAP_CLOSED_POSITION, LOG_QUEUE_FULL,
+                EXEC_RESTATED, EMERG_SL_AMENDED,
+                LAYER2_EXIT_TRIGGERED, UNEXPECTED_OPEN_ORDER
+
+LG-ALERT-003  WARN events: log file only. No email.
+
+LG-ALERT-004  Alert email implementation is separate from
+              Logger queue to avoid circularity. CRITICAL
+              and HIGH events alert via direct SMTP call
+              that bypasses the Logger queue.
+
+              Alert implementation:
+                def _alert_operator_direct(message: str):
+                    """Send alert email directly, bypassing
+                    Logger queue. For use on CRITICAL/HIGH
+                    events and queue-full conditions."""
+                    import smtplib
+                    # Implementation: send to alerts@tothbot.com
+                    # (OI-019 — plural: real Proton mailbox).
+                    # SMTP credentials from environment variables.
+                    # Never hardcode credentials.
+                    # Timeout: 5 seconds. Fire-and-forget.
+                    # On failure: write to stderr only.
+
+============================================================
+9. LOG FILE MANAGEMENT
+============================================================
+
+LG-FILE-001  Log directory: /home/tothbot/logs/
+             Create at startup if it does not exist.
+
+LG-FILE-002  RotatingFileHandler configuration:
+               filename:    /home/tothbot/logs/tothbot.log
+               maxBytes:    50 * 1024 * 1024  (50 MB)
+               backupCount: 90                (90 rotated files)
+               encoding:    utf-8
+             90 files x 50 MB = 4.5 GB maximum disk usage.
+             At ~80,000 entries/day x ~200 bytes/entry =
+             ~16 MB/day. 90 files ≈ ~280 days of logs.
+
+LG-FILE-003  Logrotate integration per 1011013 VPS spec:
+             /etc/logrotate.d/tothbot configures daily
+             rotation with compression and retention.
+             QueueListener's RotatingFileHandler handles
+             in-process rotation. Logrotate handles
+             OS-level archival and compression.
+
+LG-FILE-004  Log file format: NDJSON (newline-delimited JSON).
+             One JSON object per line. No pretty-printing.
+             CIATS reads line by line using Python's
+             standard file iteration.
+
+============================================================
+10. COMPLETE LOGGER INITIALIZATION CODE
+============================================================
+
+def initialize_logger() -> tuple[
+        queue.Queue,
+        logging.handlers.QueueListener,
+        logging.Logger]:
+    """
+    Initialize TothBot Logger. Call once at startup.
+    Returns (log_queue, log_listener, logger).
+    Caller must call log_listener.stop() on shutdown.
+    """
+    import os
+    import queue
+    import logging
+    import logging.handlers
+
+    # Ensure log directory exists
+    os.makedirs("/home/tothbot/logs", exist_ok=True)
+
+    # Bounded queue — 10,000 entries
+    log_queue = queue.Queue(maxsize=10_000)
+
+    # File handler — rotating 50 MB, 90 files
+    file_handler = logging.handlers.RotatingFileHandler(
+        filename="/home/tothbot/logs/tothbot.log",
+        maxBytes=50 * 1024 * 1024,
+        backupCount=90,
+        encoding="utf-8"
+    )
+    file_handler.setFormatter(logging.Formatter("%(message)s"))
+
+    # QueueListener — background thread
+    log_listener = logging.handlers.QueueListener(
+        log_queue, file_handler, respect_handler_level=True
+    )
+    log_listener.start()
+
+    # TothBot logger — non-blocking, queue-backed
+    queue_handler = TothBotQueueHandler(log_queue)
+    tothbot_logger = logging.getLogger("tothbot")
+    tothbot_logger.handlers = [queue_handler]
+    tothbot_logger.setLevel(logging.DEBUG)
+    tothbot_logger.propagate = False
+
+    return log_queue, log_listener, tothbot_logger
+
+============================================================
+11. REVISION HISTORY
+============================================================
+
+  dv1_3  04-20-2026  OI-019 DEFECT-ALERT-ROUTING-001 fix.
+                     Section 8 Alert Routing: LG-ALERT-001,
+                     LG-ALERT-002, and LG-ALERT-004 updated
+                     from singular alert@tothbot.com to plural
+                     alerts@tothbot.com. Rationale: the real
+                     Proton Mail mailbox exists only at the
+                     plural address; the singular mailbox
+                     does not exist and cannot be created
+                     because the domain catch-all reserves
+                     the namespace (Proton returns "Address
+                     is already taken" on every create
+                     attempt). All post-deploy CRITICAL/HIGH
+                     alerts bounced with "550 5.1.1 Recipient
+                     address rejected" until this fix (TB00105
+                     Query 9). Code change companion:
+                     logger.py dv1_2 → dv1_3 (ALERT_EMAIL
+                     module constant updated). Governs
+                     logger.py dv1_3.
+
+  dv1_2  04-05-2026  Phase 8 completion. WD → full spec.
+                     Parent chain updated (1000000/1010000
+                     now exist). Five coding-readiness
+                     questions answered (Section 3). WD
+                     status removed. Section 4 expanded:
+                     LG-QUEUE-006 (health monitoring added).
+                     Section 5 (Format): LG-FMT-005 added
+                     (connection_id requirement). Section 6
+                     (Event Registry): complete registry for
+                     all 6 components — expanded from partial
+                     WD list. Section 7 (TRADE_CLOSE): all
+                     mandatory fields from 0511006 Section 6.
+                     Section 8 (Alert Routing): complete with
+                     all event codes and SMTP implementation
+                     guidance. Section 9 (File Management):
+                     disk sizing calculation, logrotate note.
+                     Section 10: complete initialization code.
+                     Document is coding-ready.
+
+  dv1_1  04-04-2026  DocPath correction.
+
+  dv1_0  03-26-2026  Initial WD. LG-ARCH, LG-QUEUE, LG-FMT,
+                     LG-CIATS, LG-EVT (partial).
+
+============================================================
+END OF DOCUMENT
+============================================================
