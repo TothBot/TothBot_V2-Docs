@@ -1,10 +1,10 @@
 DocDCN:     1010000
 DocTitle:   Trading_System_Coding_Anchor
-DocVersion: dv1_7
+DocVersion: dv1_11
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_7.txt
-DocDate:    04-14-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_11.txt
+DocDate:    04-21-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 TRADING SYSTEM CODING ANCHOR
@@ -54,7 +54,7 @@ See TB00000 Section 3.4.3 — Pathway Separation Rules.
 ============================================================
 
 This section reflects current document status as of
-04-12-2026. Updated per 0311002 v1_2 STEP 8.2.1
+04-21-2026. Updated per 0311002 v1_2 STEP 8.2.1
 Code File Registry maintenance rule. All documents
 reached CODING-READY status in Phase 8 (04-05-2026).
 
@@ -75,22 +75,41 @@ Governing code file: All Pathway 2 files (BP standard).
 ------------------------------------------------------------
 4.2  1011002  WS_Manager_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_13  (04-11-2026)
+Current version: dv1_20  (04-20-2026)
 Status: CODING-READY. Phase 8 complete. Post-deployment
 defects documented.
 Parent spec: 0511001 WS_Manager_Specification
 Scope: WebSocket Manager — all Kraken WS v2 connections,
 subscriptions, dispatch table, zombie detection, ohlc
-subscription sequencing.
-Key post-deployment defects documented in dv1_13:
+subscription sequencing, reconnect hardening for transient
+disconnects.
+Key post-deployment defects documented in dv1_13 through dv1_20:
   DEFECT-WM-ZOM-001: zombie timer initialized at __init__,
     not at connection-live. Fixed: commit 4241bf3.
   DEFECT-WM-OHLC-001: ohlc subscribed without symbol list.
     Fixed: _subscribe_ohlc_channels() triggered from
     _handle_instrument() after universe built. Documented
     in WM-OHLC-SUB-001 through -003.
-NOTE: dv1_13 fix (DEFECT-WM-OHLC-001) committed to
-TothBot_V2-Code. Commit hash: cd1de43 (see Section 5).
+  DEFECT-WM-CRASH-001: TaskGroup crash cause lost behind
+    ExceptionGroup wrapper. Fixed in dv1_19 (WM-RUN-001).
+  DEFECT-WM-RECONNECT-001 — OI-018 REOPENED 2026-04-21:
+    Initially closed in TB00106 based on TB00105 42.5h
+    observation. REOPENED in TB00107 after 6 overnight
+    crashes with the same signature invalidated that
+    close. Mitigated by dv1_21 AI-3 (MAX_RECONNECT_
+    ATTEMPTS 10 -> 20). Close pending post-TB00108
+    observation evidence (TB00109).
+  DEFECT-KRAKEN-TRANSIENT-API-001 — OI-020 OPEN→ADDRESSED:
+    Observed Kraken REST `EAPI:Invalid key` outages of
+    ~2m 32s (2026-04-20 06:25:46–06:28:18 UTC) and ~2m 33s
+    (2026-04-19 02:49:21–02:51:54 UTC) each exceeded the
+    prior N=10 / ~181s retry window, producing WS_MGR_FATAL
+    + systemd restart. Fix in dv1_20 spec / ws_manager.py
+    dv1_21 code: WM-RECONNECT-017 attempts 10 → 20;
+    WM-RECONNECT-002 harmonized. Worst-case wall time
+    481s (~8 min). Base / cap / factor unchanged; same
+    exponential curve, no behavior regression. Bundled
+    with OI-019 per TB00105 Section 4.
 Governing code file: ws_manager.py
 
 ------------------------------------------------------------
@@ -142,13 +161,28 @@ Governing code file: position_mirror.py
 ------------------------------------------------------------
 4.7  1011007  Logger_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_2  (04-05-2026)
+Current version: dv1_4  (04-21-2026)
 Status: CODING-READY. Phase 8 complete.
-Parent spec: 0511006 Logger_Specification
+Parent spec: 0511006 Logger_Specification dv1_1
 Scope: CIATS sole data source. Async bounded queue
 (10,000 entries). Never blocks trading hot path.
-Complete event registry for all 6 components.
-TRADE_CLOSE mandatory fields. Alert routing. File mgmt.
+Complete event registry for all 6 components plus
+Logger self-observability events. TRADE_CLOSE mandatory
+fields. Alert routing. File mgmt. Two-stream record
+architecture: diagnostic (rotating tothbot.log) plus
+permanent (append-only annual trades_<YYYY>.jsonl).
+OI-019 (dv1_3): alert-routing target plural
+alerts@tothbot.com (real Proton Mail mailbox).
+OI-023 (dv1_4): NEW Section 11 Permanent Trade Record
+File. TRADE_CLOSE records written to BOTH tothbot.log
+and /home/tothbot/records/trades_<YYYY>.jsonl.
+Append-only, no rotation, no size cap. 0o644 hard-pinned
+via os.open. fsync per write. Parent architectural spec
+0511006 bumped dv1_0 -> dv1_1 this session.
+OI-022 (dv1_4): NEW Section 6.9 Logger self-observability
+events — ALERT_SENT, ALERT_SMTP_FAILED,
+TRADE_RECORD_WRITE_FAILED. LG-ALERT-005 anti-recursion
+guard on AlertHandler.
 Governing code file: logger.py
 
 ------------------------------------------------------------
@@ -189,6 +223,29 @@ Mann-Whitney U (alpha=0.01), Spearman |rho|>0.3 p<0.05,
 EWMA (lambda=0.2), CUSUM (k=0.5sigma, h=4sigma),
 Half-Kelly. Active at 200 closed trades.
 Per-regime analysis at 600 trades.
+
+PARKING LOT — NEW TB00108 (OI-024):
+  CIATS currently derives its 200-trade statistical
+  corpus by tailing tothbot.log. With 1011007 dv1_4
+  landing the permanent trade record file
+  (/home/tothbot/records/trades_<YYYY>.jsonl), the
+  authoritative long-term source for TRADE_CLOSE
+  records is no longer tothbot.log. The practical
+  consequence today is benign (both files currently
+  carry identical TRADE_CLOSE payloads — enforced by
+  1011007 dv1_4 LG-TOB-003). The structural consequence
+  is that once tothbot.log rotates past retention, the
+  CIATS read path loses access to older trades while
+  the permanent file still has them — defeating the
+  OI-023 fix for CIATS's own purposes. Migrate CIATS's
+  corpus read from tothbot.log tail to
+  trades_<YYYY>.jsonl (plus prior-year files for
+  cross-year spans) in a future session. Out of TB00108
+  scope per TB00107 NSI Section 6. Address when paper-
+  trading throughput begins to surface the corpus-
+  truncation risk in practice, or at the next CIATS
+  spec revision — whichever comes first.
+
 Governing code file: ciats.py
 
 ------------------------------------------------------------
@@ -219,20 +276,47 @@ Governing code file: regime_engine.py
 ------------------------------------------------------------
 4.13  1011013  VPS_Deployment_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_4  (04-05-2026)
+Current version: dv1_5  (04-20-2026)
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0500000 System_Architecture_Overview
 Scope: VPS specification, Python environment setup,
 systemd service configuration, logrotate, alert routing
 (aiosmtplib), status monitoring, complete deployment
 sequence (VD-DEPLOY-001, VD-DEPLOY-002).
+OI-019 (dv1_5): alert-routing target plural
+alerts@tothbot.com (real Proton Mail mailbox).
+
+PARKING LOT — NEW TB00108 (OI-025):
+  VD-LOG-002 logrotate configuration targets
+  /root/TothBot_V2-Code/logs/tothbot.log, but the
+  live log path (per logger.py dv1_3/dv1_4 LOG_FILE
+  constant and 1011007 dv1_4 LG-FILE-001/002) is
+  /home/tothbot/logs/tothbot.log. The two paths do
+  not match. Consequence: the logrotate rule has no
+  matching file on disk and is therefore a silent
+  no-op. tothbot.log rotation on the VPS is currently
+  provided exclusively by Python's in-process
+  RotatingFileHandler (90 files x 50 MB per LG-FILE-002);
+  no OS-level archival or compression occurs.
+  Observable evidence: TB00107 Section 3.6 noted 4
+  rotated files (tothbot.log + .1/.2/.3) on VPS —
+  consistent with in-process rotation only, not
+  logrotate. Fix requires aligning VD-LOG-002 to
+  /home/tothbot/logs/tothbot.log (or, alternatively,
+  aligning LOG_FILE to /root/TothBot_V2-Code/logs/
+  tothbot.log — but the former is less disruptive
+  given live production state). Bundle this fix in
+  a dedicated session after TB00108 observation
+  closes (TB00109 or later). Out of TB00108 scope
+  per TB00107 NSI Section 6.
+
 Governing code file: vps_deployment.py
 Also governs: tothbot_service.txt (systemd unit file)
 
 ------------------------------------------------------------
 4.14  1011014  Startup_Sequence_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_3  (04-05-2026)
+Current version: dv1_7  (04-21-2026)
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0500000 System_Architecture_Overview
 Scope: Full startup sequence (10 steps, AR-049),
@@ -240,10 +324,21 @@ mid-session WS reconnect sequence (AR-056). sd_notify
 READY=1. DMS prohibition (AR-055). Mandatory
 websockets.asyncio.client import (AR-060). ATR/EMA
 warm-up via REST GetOHLCData at startup.
+OI-019 (dv1_6): alert-routing targets plural
+alerts@tothbot.com in SS-STARTUP-002 and SS-RECON-015.
+OI-020 (dv1_6): SS-RECON-015 attempt count and window
+harmonized with 1011002 dv1_20 WM-RECONNECT-002 /
+WM-RECONNECT-017 — 20 attempts / ~481s worst-case.
+OI-014 (dv1_7): Section 11 Related Documents refreshed
+end-to-end. Prior stale-version parking-lot item
+(dv1_1 anchor note) discharged by this refresh.
+Companion code change: startup_sequence.py dv1_8 ->
+dv1_9 updates four docstring cross-references (three
+spec-version bumps plus one live log path correction
+from /root/TothBot_V2-Code/logs/tothbot.log to the
+canonical /home/tothbot/logs/tothbot.log).
 Governing code file: startup_sequence.py
-PARKING LOT: Related Documents section references
-1011002 dv1_11, 1011010 dv1_5, 1011011 dv1_2,
-1011012 dv1_3 — all superseded. Also review whether
+PARKING LOT (carried forward): review whether
 DEFECT-WM-OHLC-001 ohlc sequence change requires
 content update to startup sequence steps. Address at
 next natural boundary (post paper-trading stable).
@@ -281,8 +376,16 @@ Each entry contains:
   File:        ws_manager.py
   DCN:         1011002
   Spec:        WS_Manager_Coding_Spec
-  SpecVer:     dv1_18
-  RegDate:     04-14-2026
+  SpecVer:     dv1_20
+  RegDate:     04-20-2026
+  Note:        OI-020 DEFECT-KRAKEN-TRANSIENT-API-001 fix —
+               MAX_RECONNECT_ATTEMPTS 10 → 20, worst-case
+               wall time 181s → 481s. Code dv1_20 → dv1_21.
+               OI-018 REOPENED in TB00107 after 6 overnight
+               crashes with the same signature invalidated
+               the TB00106 close. Mitigation via dv1_21
+               AI-3. Close pending post-TB00108 observation
+               (TB00109).
 
   File:        signal_pipeline.py
   DCN:         1011003
@@ -315,8 +418,24 @@ Each entry contains:
   File:        logger.py
   DCN:         1011007
   Spec:        Logger_Coding_Spec
-  SpecVer:     dv1_2
-  RegDate:     04-11-2026
+  SpecVer:     dv1_4
+  RegDate:     04-21-2026
+  Note:        TB00108 bundled — OI-023 DEFECT-TRADE-
+               RECORD-001 (CRITICAL) and OI-022 DEFECT-
+               OBSERVABILITY-ALERT-SENT-001 (LOW). Code
+               dv1_3 → dv1_4. AI-1: new
+               TothBotTradeRecordHandler writes TRADE_CLOSE
+               events to /home/tothbot/records/
+               trades_<YYYY>.jsonl in addition to
+               tothbot.log. Append-only, permanent,
+               fsync per write, 0o644 hard-pinned via
+               os.open. AI-2: _alert_operator_direct now
+               emits ALERT_SENT (INFO) on success and
+               ALERT_SMTP_FAILED (HIGH) on failure;
+               TothBotAlertHandler skips ALERT_SMTP_FAILED
+               (LG-ALERT-005 anti-recursion). New
+               TRADE_RECORD_WRITE_FAILED (HIGH) event on
+               permanent-file write failure.
 
   File:        long_module.py
   DCN:         1011008
@@ -351,14 +470,30 @@ Each entry contains:
   File:        vps_deployment.py
   DCN:         1011013
   Spec:        VPS_Deployment_Coding_Spec
-  SpecVer:     dv1_4
-  RegDate:     04-11-2026
+  SpecVer:     dv1_5
+  RegDate:     04-20-2026
+  Note:        OI-019 DEFECT-ALERT-ROUTING-001 fix —
+               send_alert() ALERT_EMAIL_TO default singular
+               → plural. Code dv1_4 → dv1_5.
 
   File:        startup_sequence.py
   DCN:         1011014
   Spec:        Startup_Sequence_Coding_Spec
-  SpecVer:     dv1_3
-  RegDate:     04-11-2026
+  SpecVer:     dv1_7
+  RegDate:     04-21-2026
+  Note:        TB00108 AI-3 — OI-014 stale xrefs (LOW).
+               Code dv1_8 → dv1_9. Docstring-only change
+               (no behavior, no imports, no signatures):
+               three "1011014 dv1_3" -> "1011014 dv1_7"
+               xref bumps, plus live log path corrected
+               from /root/TothBot_V2-Code/logs/tothbot.log
+               to /home/tothbot/logs/tothbot.log
+               (canonical per logger.py LOG_FILE and
+               1011007 dv1_4 LG-FILE-001/002). The
+               logrotate-path mismatch observed during
+               this cleanup is filed separately as
+               OI-025 in Section 4.13 — out of scope
+               for AI-3.
 
   File:        tothbot/__init__.py
   DCN:         1011001
@@ -603,6 +738,161 @@ TothBot_V2-Docs. No further action required.
 6. REVISION HISTORY
 ============================================================
 
+  dv1_11 04-21-2026  TB00108 bundled AI-1 + AI-2 + AI-3.
+
+                     AI-1 — OI-023 DEFECT-TRADE-RECORD-001
+                     (CRITICAL). logger.py dv1_3 -> dv1_4.
+                     New TothBotTradeRecordHandler writes
+                     TRADE_CLOSE events to
+                     /home/tothbot/records/trades_<YYYY>.jsonl
+                     (annual append-only JSONL, no
+                     rotation, no size cap, fsync per
+                     write, 0o644 hard-pinned via os.open).
+                     1011007 dv1_3 -> dv1_4: new Section 11
+                     (Permanent Trade Record File) plus
+                     Section 6.9, Section 7, Section 10
+                     updates. 0511006 dv1_0 -> dv1_1
+                     captures the two-stream record
+                     architecture at the architectural
+                     level.
+
+                     AI-2 — OI-022 DEFECT-OBSERVABILITY-
+                     ALERT-SENT-001 (LOW). Same logger.py
+                     dv1_3 -> dv1_4 bump. _alert_operator_
+                     direct now emits ALERT_SENT (INFO) on
+                     SMTP success and ALERT_SMTP_FAILED
+                     (HIGH) on SMTP failure via the
+                     standard Logger path. 1011007 dv1_4
+                     Section 6.9 registers both events and
+                     TRADE_RECORD_WRITE_FAILED. LG-ALERT-005
+                     anti-recursion guard added:
+                     AlertHandler skips
+                     event=="ALERT_SMTP_FAILED" so a
+                     persistent SMTP outage does not
+                     self-trigger.
+
+                     AI-3 — OI-014 startup_sequence stale
+                     xrefs (LOW). startup_sequence.py
+                     dv1_8 -> dv1_9 (docstring-only
+                     change). 1011014 dv1_6 -> dv1_7
+                     Section 11 Related Documents
+                     refreshed end-to-end. Prior parking-
+                     lot item in Section 4.14 discharged.
+
+                     Section 4 per-spec status notes
+                     updated: 4.2 (OI-018 REOPENED
+                     record), 4.7 (1011007 dv1_4 scope),
+                     4.14 (dv1_7 record and discharged
+                     parking item). New parking-lot items
+                     filed this session:
+                       OI-024 (Section 4.10): CIATS
+                         corpus migration from tothbot.log
+                         tail to permanent
+                         trades_<YYYY>.jsonl.
+                       OI-025 (Section 4.13): VD-LOG-002
+                         logrotate path
+                         /root/TothBot_V2-Code/logs/
+                         tothbot.log mismatches live
+                         /home/tothbot/logs/tothbot.log;
+                         logrotate is a no-op.
+                     Both are out of TB00108 scope per
+                     TB00107 NSI Section 6.
+
+                     Section 5.2 registry updated for
+                     logger.py (dv1_3 -> dv1_4) and
+                     startup_sequence.py (dv1_6 -> dv1_7
+                     SpecVer).
+
+  dv1_10 04-20-2026  Bundled AI-1 + AI-2 + AI-3 deploy per
+                     TB00105 Section 2.4 / TB00106.
+
+                     AI-1 — OI-018 DEFECT-WM-RECONNECT-001
+                     formally CLOSED. Evidence: TB00105 42.5-
+                     hour observation (2026-04-19 01:09:41 →
+                     2026-04-20 19:45:00 UTC) — zero novel
+                     fatal signatures, ~25-50× crash reduction
+                     vs. pre-deploy baseline, Gate 3 /
+                     DEFECT-SS-009 stable across all restarts,
+                     market-data pipeline uninterrupted, stop
+                     condition never tripped. Section 4.2 note
+                     updated to record CLOSED status.
+                     Governance only — no code change for AI-1.
+                     NOTE: this close was invalidated in
+                     TB00107 after 6 overnight crashes with
+                     the same signature; OI-018 REOPENED.
+
+                     AI-2 — OI-019 DEFECT-ALERT-ROUTING-001
+                     fix. Code default ALERT_EMAIL_TO changed
+                     from singular to plural across all three
+                     call sites:
+                       logger.py        dv1_2  → dv1_3
+                         ALERT_EMAIL module constant.
+                       startup_sequence.py dv1_7 → dv1_8
+                         _load_config() default.
+                       vps_deployment.py dv1_4 → dv1_5
+                         send_alert() to_addr default.
+                     Spec targets updated: 1011007 dv1_2 →
+                     dv1_3 (LG-ALERT-001/002/004), 1011013
+                     dv1_4 → dv1_5 (VD-ALT-001 + env template),
+                     1011014 dv1_5 → dv1_6 (SS-STARTUP-002,
+                     SS-RECON-015), 1011002 dv1_19 → dv1_20
+                     (Section 3 Q4 Triggers text), TB00000
+                     v2_9 → v2_10 (Section 9.7).
+
+                     AI-3 — OI-020 DEFECT-KRAKEN-TRANSIENT-
+                     API-001 fix. ws_manager.py dv1_20 →
+                     dv1_21: MAX_RECONNECT_ATTEMPTS 10 → 20;
+                     worst-case wall time 181s → 481s
+                     (~8 minutes). Spec target: 1011002
+                     dv1_19 → dv1_20 (WM-RECONNECT-002 and
+                     WM-RECONNECT-017 harmonized to N=20 /
+                     481s). 1011014 dv1_6 SS-RECON-015 also
+                     updated to mirror the authoritative
+                     rule (content-only; no startup_sequence.py
+                     code change for AI-3).
+
+                     Section 5.2 registry updated for all
+                     four changed code files. Section 4
+                     per-spec status notes added for OI-019
+                     (1011007, 1011013, 1011014) and OI-020
+                     (1011002). Section 4.2 ws_manager entry
+                     records both AI-1 closure verification
+                     and AI-3 extension rationale.
+
+  dv1_9  04-18-2026  Section 4.2 and Section 5.2 registry
+                     updated: ws_manager.py SpecVer dv1_18 →
+                     dv1_19. Governing spec 1011002 incremented
+                     dv1_18 → dv1_19 this session —
+                     DEFECT-WM-RECONNECT-001 fix. Three new
+                     rules added to 1011002 Section 15:
+                     WM-RECONNECT-016 (local catch of transient
+                     WS disconnect in recv loops and send
+                     helpers; no propagation to _main_loop
+                     TaskGroup), WM-RECONNECT-017 (retry
+                     schedule N=10, base=1s, cap=30s, factor
+                     2x — matches existing WM-RECONNECT-002),
+                     WM-RECONNECT-018 (TaskGroup receives only
+                     true fatals; _reconnect_done_event and
+                     _fatal_reconnect_failure prevent concurrent
+                     and post-fatal retry races). ws_manager.py
+                     incremented dv1_19 → dv1_20 implementing
+                     the fix. Root cause: transient CloudFlare
+                     WS disconnects crash-restarted the process
+                     ~1-2×/hour; the existing 10-attempt
+                     reconnect retry logic was never reached
+                     because the exception killed the
+                     TaskGroup before _initiate_reconnect
+                     was called.
+
+  dv1_8  04-14-2026  Section 5.2 registry updated:
+                     startup_sequence.py SpecVer updated
+                     dv1_3 → dv1_5. Governing spec 1011014
+                     incremented dv1_4 → dv1_5 this session
+                     (SS-WIRE-001: _regime_wrapper must pass
+                     wm.monitored_universe to
+                     run_daily_computation). DEFECT-SS-009
+                     fix. TB00102.
+
   dv1_7  04-14-2026  Section 5.2 registry updated: ws_manager.py
                      SpecVer updated dv1_13 → dv1_18. Governing
                      spec 1011002 incremented dv1_17 → dv1_18
@@ -760,7 +1050,10 @@ Engineering_Best_Practices. Key constraints:
   EC-004  TCP_NODELAY set on all WebSocket connections.
   EC-005  Async-first. No blocking calls on hot path.
   EC-006  Logger is the ONLY write path to disk.
-          No module writes directly to disk.
+          No module writes directly to disk. Logger
+          itself writes to two sinks (tothbot.log and
+          trades_<YYYY>.jsonl) from the single
+          QueueListener background thread.
   EC-007  CIATS reads ONLY from Logger output.
           CIATS writes ONLY to Parameter Store.
   EC-008  Parameter Store snapshot frozen at pipeline

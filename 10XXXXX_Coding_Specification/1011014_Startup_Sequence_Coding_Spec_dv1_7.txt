@@ -1,10 +1,10 @@
 DocDCN:     1011014
 DocTitle:   Startup_Sequence_Coding_Spec
-DocVersion: dv1_6
+DocVersion: dv1_7
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011014_Startup_Sequence_Coding_Spec_dv1_6.txt
-DocDate:    04-20-2026
-DocTime:    23:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011014_Startup_Sequence_Coding_Spec_dv1_7.txt
+DocDate:    04-21-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 STARTUP SEQUENCE CODING SPECIFICATION
@@ -29,7 +29,7 @@ This document specifies:
 
   1000000  Coding_Specification
   1010000  Trading_System_Coding_Anchor
-  1011014  This document  dv1_5
+  1011014  This document
   Parent specification: 0500000 System_Architecture_Overview
 
 Governing ARs: AR-049 (startup), AR-056 (reconnect)
@@ -668,15 +668,21 @@ SS-RECON-016  After RECONNECT_COMPLETE, verify:
 11. RELATED DOCUMENTS
 ============================================================
 
-  0411001  Kraken_WS_v2_Specification    dv1_11
+(Refreshed dv1_7 — TB00108 AI-3 xref cleanup. All
+versions verified against 1010000 dv1_11 Section 4 /
+Section 5 and 0311001 v1_1 Section 12 as of
+04-21-2026.)
+
+  0411001  Kraken_WS_v2_Specification    dv1_0
   0500000  System_Architecture_Overview  dv1_19
+  0511006  Logger_Specification          dv1_1
   1011001  Engineering_Best_Practices    dv1_7
-  1011002  WS_Manager_Coding_Spec        dv1_18
-  1011007  Logger_Coding_Spec            dv1_2
-  1011010  CIATS_Coding_Spec             dv1_5
-  1011011  Risk_Engine_Coding_Spec       dv1_2
+  1011002  WS_Manager_Coding_Spec        dv1_20
+  1011007  Logger_Coding_Spec            dv1_4
+  1011010  CIATS_Coding_Spec             dv1_6
+  1011011  Risk_Engine_Coding_Spec       dv1_3
   1011012  Regime_Engine_Coding_Spec     dv1_4
-  1011013  VPS_Deployment_Coding_Spec    dv1_4
+  1011013  VPS_Deployment_Coding_Spec    dv1_5
 
 ============================================================
 12. COMPONENT WIRING RULES
@@ -726,6 +732,49 @@ SS-WIRE-001  The _regime_wrapper closure in startup_sequence.py
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_7  04-21-2026  TB00108 AI-3 — OI-014 startup_sequence
+                     stale xrefs (LOW). Spec-side cleanup
+                     only (companion code change:
+                     startup_sequence.py dv1_8 -> dv1_9
+                     updates four docstring cross-
+                     references; see that file's Revision
+                     History for detail).
+
+                     Section 11 Related Documents refreshed
+                     end-to-end to current state. Specific
+                     corrections vs. dv1_6 list:
+                       0411001 dv1_11 -> dv1_0   (dv1_6
+                         listed a non-existent version;
+                         current per 0311001 v1_1 register
+                         is dv1_0)
+                       1011002 dv1_18 -> dv1_20
+                       1011007 dv1_2  -> dv1_4   (bumped
+                         this session for OI-023 + OI-022)
+                       1011010 dv1_5  -> dv1_6
+                       1011011 dv1_2  -> dv1_3
+                       1011013 dv1_4  -> dv1_5
+                     0511006 added to the list and set to
+                     dv1_1 — the architectural parent
+                     specification was omitted from the
+                     dv1_6 list; now bumped to dv1_1 this
+                     session to capture the two-stream
+                     record architecture.
+                     0500000 dv1_19, 1011001 dv1_7, and
+                     1011012 dv1_4 carried forward
+                     unchanged (already current).
+
+                     Remaining parking-lot item in 1010000
+                     Section 4.14 ("whether DEFECT-WM-OHLC-
+                     001 ohlc sequence change requires
+                     content update to startup sequence
+                     steps") is out of scope for this
+                     cleanup pass and carries forward.
+
+                     No content change to Sections 1-10 or
+                     Section 12. No behavior change
+                     implied. Governs startup_sequence.py
+                     dv1_9.
 
   dv1_6  04-20-2026  Two updates (OI-019 + OI-020).
 
