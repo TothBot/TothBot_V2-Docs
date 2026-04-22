@@ -1,10 +1,10 @@
 DocDCN:     0311004
 DocTitle:   Document_Creation_and_Approval_Procedure
-DocVersion: v1_1
+DocVersion: v1_2
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311004_Document_Creation_and_Approval_Procedure_v1_1.txt
-DocDate:    04-11-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311004_Document_Creation_and_Approval_Procedure_v1_2.txt
+DocDate:    04-22-2026
+DocTime:    23:45:00 UTC
 
 ============================================================
 DOCUMENT CREATION AND APPROVAL PROCEDURE
@@ -233,6 +233,40 @@ DC-WD-002  WD documents do not require Bill approval for
 ============================================================
 6. REVISION HISTORY
 ============================================================
+
+  v1_2   04-22-2026  Revision History backfill.
+                     Added missing v1_1 promotion entry
+                     (the rv1_1 → v1_1 transition was
+                     executed but the corresponding
+                     revision-history entry was never
+                     written). No content changes beyond
+                     the backfill.
+                     Minor correction per VP-004
+                     (v1_1 → v1_2 with Bill approval;
+                     rv state not required). Approved
+                     by Bill. Identified during TB00114
+                     discrepancy audit.
+
+  v1_1   04-11-2026  Promoted from rv1_1 to v1_1. Content
+                     changes were delivered under rv1_1
+                     (DC-TMPL-003 Code File Document
+                     Template for TothBot_V2-Code files
+                     added; DC-TMPL-003A field rules for
+                     code file headers; DC-TMPL-003B
+                     non-Python file header formats;
+                     DC-TMPL-003C Revision History in
+                     code file comment format; DC-TMPL-003D
+                     governing rules reference to 1011001
+                     BP-HDR-001 through -006 and 0311001
+                     Sections 5.1-5.4; Section 1 Purpose
+                     updated to state procedure applies to
+                     BOTH repos; Related Documents updated
+                     to include 1011001; corrective action
+                     from TB00079). Approved by Bill.
+                     This promotion entry was omitted from
+                     the Revision History at time of
+                     promotion — backfilled in v1_2 per
+                     TB00114 discrepancy audit.
 
   rv1_1  04-11-2026  Added DC-TMPL-003 Code File Document
                      Template for TothBot_V2-Code files.

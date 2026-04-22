@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_1
+DocVersion: v1_2
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_1.txt
-DocDate:    04-11-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_2.txt
+DocDate:    04-22-2026
+DocTime:    23:45:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -110,6 +110,89 @@ HR-003  TothBot_V2-Docs contains only controlled
         specification documents and document control
         automation code. No trading system logic
         permitted.
+
+------------------------------------------------------------
+3.1 PATH GOVERNANCE FOR CONTROLLED DOCUMENTS (HR-PATH)
+------------------------------------------------------------
+
+HR-PATH-001  The ONLY authoritative local filesystem
+             paths for controlled documents are the two
+             governed local repositories listed in
+             Section 3:
+
+               C:\Users\wstot\GitHub\TothBot\TothBot_V2-Docs\
+               C:\Users\wstot\GitHub\TothBot\TothBot_V2-Code\
+
+             No other local path may be used to stage,
+             edit, or transfer any controlled document.
+
+HR-PATH-002  "Controlled document" means any file
+             governed under this Namespace Specification.
+             This includes but is not limited to:
+               - All files in TothBot_V2-Docs (.txt)
+               - All files in TothBot_V2-Code (.py,
+                 .gitignore, .ini, .service, README.md,
+                 and all others per HR-DC-001)
+               - All diagram assets (.svg) per Section 15
+               - All controlled-document source files
+                 (e.g., 0500000 Claude_Source.txt, .docx,
+                 .pdf)
+
+HR-PATH-003  Controlled code files (any file in
+             TothBot_V2-Code) MUST NEVER be staged via
+             any path outside the governed local repo.
+             In particular, scp from the VPS to Desktop
+             (or any Desktop-redirected path such as
+             C:\Users\wstot\OneDrive\Desktop\) is
+             PROHIBITED for controlled code files.
+             The authoritative source for all code is
+             GitHub, mirrored into the governed local
+             repo via git pull.
+
+HR-PATH-004  OPERATIONAL-SCRIPT EXCEPTION.
+             Non-controlled operational scripts that do
+             NOT live in either Git repo MAY be staged
+             via the user's Desktop path during a
+             specific deploy operation. The exception
+             applies ONLY when all of the following are
+             true:
+               (a) The script is not a controlled document.
+               (b) The script does not live in either
+                   TothBot V2 repo (neither Docs nor Code).
+               (c) The staged copy is transient and is
+                   deleted or superseded on the next deploy.
+               (d) The staging path used is documented in
+                   the session log of the session that
+                   uses it.
+
+             The current applicable example under this
+             exception is `/root/tothbot_sweep.sh`
+             (VPS monitoring script, not committed to
+             either repo). It may be staged at
+             `C:\Users\wstot\OneDrive\Desktop\
+             tothbot_sweep.sh` for scp to the VPS.
+
+HR-PATH-005  The OPERATIONAL-SCRIPT EXCEPTION does NOT
+             extend to any controlled document. Any
+             attempt to use the exception path for a
+             controlled document is a document control
+             violation.
+
+HR-PATH-006  If Claude is uncertain whether a given file
+             is a controlled document under HR-PATH-002,
+             Claude MUST treat the file as controlled.
+             Only Bill may declare a file non-controlled,
+             and only if the file meets all four criteria
+             of HR-PATH-004.
+
+Corrective action: Rules HR-PATH-001 through HR-PATH-006
+close the path-governance gap identified as OI-033
+(DEFECT-CLAUDE-DESKTOP-STAGING-PATH-001, originating
+TB00112). Prior to v1_2, TB00111 NSI §9 documented the
+OneDrive Desktop redirection as an operational note
+without governance anchor. v1_2 ratifies the exception
+scope explicitly and prohibits its extension to
+controlled code files.
 
 ============================================================
 4. DCN STRUCTURE
@@ -372,7 +455,7 @@ All assigned DCNs are recorded here. A DCN not in this
 register is not a valid TothBot V2 DCN.
 
 DCNs shown with current status and governing document
-version as of 04-11-2026.
+version as of 04-22-2026.
 
 ------------------------------------------------------------
 DOMAIN DOCUMENTS (Tier 1)
@@ -382,12 +465,12 @@ DOMAIN DOCUMENTS (Tier 1)
   0100000  Management                              v1_0
   0200000  Operations                              v1_0
   0300000  Governance                              v1_0
-  0400000  Exchange_Interface                      v1_0
-  0500000  System_Architecture_Overview           dv1_19
-  0600000  Risk                                    v1_0
-  0700000  Strategy                                v1_0
-  0800000  Trading_System                          v1_0
-  0900000  Plans                                   v1_0
+  0400000  Exchange_Interface                     dv1_0
+  0500000  System_Architecture_Overview          dv1_19
+  0600000  Risk                                   dv1_0
+  0700000  Strategy                               dv1_0
+  0800000  Trading_System                         dv1_0
+  0900000  Plans                                  dv1_0
   1000000  Coding_Specification                   dv1_0
   1100000  Compliance                              [TBD]
 
@@ -396,20 +479,31 @@ GOVERNANCE (AA=03)
 ------------------------------------------------------------
 
   0310000  Governance_Procedures_Anchor            v1_0
-  0311001  Namespace_Specification                rv1_0
-  0311002  Document_Creation_Workflow             rv1_1
+  0311001  Namespace_Specification                 v1_2
+  0311002  Document_Creation_Workflow              v1_3
   0311003  Versioning_Procedure                    v1_0
-  0311004  Document_Creation_and_Approval         rv1_1
+  0311004  Document_Creation_and_Approval          v1_2
   0311005  System_Definitions_and_Terminology      v1_0
+
+------------------------------------------------------------
+OPERATIONS (AA=02)
+------------------------------------------------------------
+
+  0210000  Operations_CIATS_Anchor                dv1_0
+  0211001  CIATS_Specification                    dv1_0
+  0211002  Operations_Infrastructure_Specification dv1_0
+  0211003  Startup_Shutdown_Procedure             dv1_0
+  0211004  Incident_Response_Procedure            dv1_0
+  0211005  Paper_Trading_Operations_Procedure     dv1_0
 
 ------------------------------------------------------------
 EXCHANGE INTERFACE (AA=04)
 ------------------------------------------------------------
 
-  0410000  Exchange_Interface_Kraken_Anchor        v1_0
-  0411001  Kraken_WS_v2_Specification             dv1_0
-  0411002  Kraken_REST_API_Specification           [TBD]
-  0411003  Kraken_Fee_Rate_Limit_Specification     [TBD]
+  0410000  Exchange_Interface_Kraken_Anchor       dv1_0
+  0411001  Kraken_WS_v2_Specification            dv1_11
+  0411002  Kraken_REST_API_Specification          dv1_1
+  0411003  Kraken_Fee_Rate_Limit_Specification    dv1_0
 
 ------------------------------------------------------------
 SYSTEM ARCHITECTURE (AA=05)
@@ -419,37 +513,80 @@ SYSTEM ARCHITECTURE (AA=05)
   0511001  WS_Manager_Specification               dv1_1
   0511002  Signal_Pipeline_Specification          dv1_0
   0511003  Execution_Engine_Specification         dv1_0
-  0511004  Exit_Controller_Specification           [TBD]
+  0511004  Exit_Controller_Specification          dv1_2
   0511005  Position_Mirror_Specification          dv1_0
-  0511006  Logger_Specification                   dv1_0
+  0511006  Logger_Specification                   dv1_1
+
+------------------------------------------------------------
+RISK (AA=06)
+------------------------------------------------------------
+
+  0610000  Risk_Rules_Anchor                      dv1_0
+  0611001  Position_Sizing_Rules                  dv1_0
+  0611002  Drawdown_and_Halt_Rules                dv1_0
+  0611003  Concentration_and_Exposure_Rules       dv1_0
+  0611004  Safety_Parameter_Framework             dv1_0
+
+------------------------------------------------------------
+STRATEGY (AA=07)
+------------------------------------------------------------
+
+  0710000  Strategy_Signals_Anchor                dv1_0
+  0711001  SSS_Signal_Model_Specification         dv1_0
+  0711002  Regime_Taxonomy_Specification          dv1_0
+  0711003  Asset_Selection_Specification          dv1_1
+
+------------------------------------------------------------
+TRADING SYSTEM (AA=08)
+------------------------------------------------------------
+
+  0810000  Trading_System_Modules_Anchor          dv1_0
+  0811001  Long_Module_Specification              dv1_0
+  0811002  Selection_Controller_Specification     dv1_0
+  0811003  Exit_Controller_Specification          dv1_0
+  0811004  Entry_Limit_Placement_Specification    dv1_0
+
+------------------------------------------------------------
+PLANS (AA=09)
+------------------------------------------------------------
+
+  0910000  Master_Plan_Anchor                     dv1_0
+  0911001  TothBot_V2_Master_Plan                 dv1_0
+  0920000  Business_Plan_Anchor                   dv1_0
+  0921001  TothBot_V2_Business_Plan               dv1_0
 
 ------------------------------------------------------------
 CODING SPECIFICATION (AA=10)
 ------------------------------------------------------------
 
-  1010000  Trading_System_Coding_Anchor           dv1_2
+  1010000  Trading_System_Coding_Anchor          dv1_11
   1011001  Engineering_Best_Practices             dv1_7
-  1011002  WS_Manager_Coding_Spec                dv1_13
+  1011002  WS_Manager_Coding_Spec                dv1_19
   1011003  Signal_Pipeline_Coding_Spec            dv1_0
-  1011004  Execution_Engine_Coding_Spec           dv1_0
+  1011004  Execution_Engine_Coding_Spec            [TBD]
   1011005  Exit_Controller_Coding_Spec            dv1_2
-  1011006  Position_Mirror_Coding_Spec            dv1_0
-  1011007  Logger_Coding_Spec                     dv1_2
+  1011006  Position_Mirror_Coding_Spec            dv1_1
+  1011007  Logger_Coding_Spec                     dv1_4
   1011008  Long_Module_Coding_Spec                dv1_0
   1011009  Selection_Controller_Coding_Spec       dv1_0
   1011010  CIATS_Coding_Spec                      dv1_6
   1011011  Risk_Engine_Coding_Spec                dv1_3
   1011012  Regime_Engine_Coding_Spec              dv1_4
   1011013  VPS_Deployment_Coding_Spec             dv1_4
-  1011014  Startup_Sequence_Coding_Spec           dv1_3
-  1020000  Testing_Coding_Anchor                  [TBD]
+  1011014  Startup_Sequence_Coding_Spec           dv1_7
+  1020000  Testing_Coding_Anchor                  dv1_0
   1021001  Unit_Test_Specification                dv1_0
   1021002  Integration_Test_Specification         dv1_0
-  1021003  Paper_Trading_Test_Specification       [TBD]
-  1030000  GitHub_Automation_Coding_Anchor        [TBD]
+  1021003  Paper_Trading_Test_Specification       dv1_0
+  1030000  GitHub_Automation_Coding_Anchor        dv1_0
   1031001  GitHub_Automation_Coding_Spec          [TBD]
   1031002  Document_Control_Automation_Test_Spec  [TBD]
   1031003  Approval_Workflow_Coding_Spec          [TBD]
+
+Note: 1011004 Execution_Engine_Coding_Spec is marked
+[TBD] in v1_2. Prior register entries listed dv1_0 but
+no such file exists in the project folder. A physical
+file is required before the entry changes from [TBD].
 
 ============================================================
 13. VALIDATION RULES
@@ -578,6 +715,54 @@ referenced by its exact filename:
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_2   04-22-2026  Three changes.
+                     (1) Section 3.1 PATH GOVERNANCE FOR
+                     CONTROLLED DOCUMENTS added. HR-PATH-001
+                     through HR-PATH-006 define the two
+                     governed local repository paths as the
+                     sole authoritative locations for
+                     controlled documents. OPERATIONAL-SCRIPT
+                     EXCEPTION (HR-PATH-004) formally scopes
+                     Desktop-path staging to non-controlled
+                     operational scripts only (example:
+                     /root/tothbot_sweep.sh). Controlled
+                     code files are explicitly prohibited
+                     from Desktop staging. Closes OI-033
+                     (DEFECT-CLAUDE-DESKTOP-STAGING-PATH-001,
+                     originating TB00112).
+                     (2) Section 12 DCN Register refreshed
+                     to actual current versions across all
+                     entries. Full sweep performed in TB00114
+                     cold load. New sub-sections added for
+                     OPERATIONS (AA=02), RISK (AA=06),
+                     STRATEGY (AA=07), TRADING SYSTEM (AA=08),
+                     and PLANS (AA=09) — these domains
+                     previously had no register entries
+                     despite active documents existing.
+                     Governance register entries corrected:
+                     0311001 v1_2, 0311002 v1_3, 0311004 v1_2
+                     (corrected from rv states to approved v
+                     per VP-004 v → v minor correction).
+                     (3) Revision History backfilled with
+                     v1_1 promotion entry (previously missing)
+                     and this v1_2 entry added.
+                     Minor correction per VP-004 (v1_1 → v1_2
+                     with Bill approval; rv state not
+                     required). Approved by Bill.
+
+  v1_1   04-11-2026  Promoted from rv1_0 to v1_1. Content
+                     changes were delivered under rv1_0
+                     (Section 2 Scope expanded to include
+                     TothBot_V2-Code; HR-DC-001 through
+                     HR-DC-004 added; Section 5 Code File
+                     Header format added; V-025 through
+                     V-027 added; Related Documents updated
+                     to include 1011001). Approved by Bill.
+                     This promotion entry was omitted from
+                     the Revision History at time of
+                     promotion — backfilled in v1_2 per
+                     TB00114 discrepancy audit.
 
   rv1_0  04-11-2026  Section 2 Scope expanded to include
                      TothBot_V2-Code as a governed repository.

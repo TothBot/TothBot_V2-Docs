@@ -1,10 +1,10 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_2
+DocVersion: v1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_2.txt
-DocDate:    04-11-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_3.txt
+DocDate:    04-22-2026
+DocTime:    23:45:00 UTC
 
 ============================================================
 DOCUMENT CREATION WORKFLOW
@@ -725,6 +725,163 @@ not apply to code files in TothBot_V2-Code. Bill confirmed
 this was wrong. All code files are controlled documents.
 
 ------------------------------------------------------------
+STEP 8.2.3  POST-COMMIT PROJECT-FOLDER SYNC — MANDATORY RULE
+------------------------------------------------------------
+
+This step applies to EVERY git commit that touches any
+controlled document or code file. No exceptions.
+
+DC-SYNC-001  AUTHORITATIVE SOURCE HIERARCHY
+             GitHub is the authoritative source of truth
+             for all controlled documents and code files.
+             The Claude.ai project folder is a secondary
+             reference that MUST be kept in sync with
+             GitHub master so that Claude reads from the
+             correct version during mandatory-reading at
+             session start.
+
+DC-SYNC-002  MANDATORY POST-COMMIT UPLOAD
+             Every git commit to master in either
+             TothBot_V2-Docs or TothBot_V2-Code MUST be
+             followed by upload of every changed file
+             to the Claude.ai project folder before
+             session close.
+
+             Applies to:
+               - All .txt files in TothBot_V2-Docs
+               - All .py files in TothBot_V2-Code
+               - All other controlled files in either repo
+                 (.gitignore, .ini, .service, README.md,
+                 diagram .svg assets, 0500000 .docx/.pdf
+                 copies, and any others)
+
+DC-SYNC-003  NSI PRE-FLIGHT VERSION SWEEP — MANDATORY
+             Every Next Session Instructions (NSI)
+             document MUST include a pre-flight
+             checklist section requiring the next
+             session to execute a complete
+             project-folder-vs-GitHub version sweep
+             before any other work.
+
+             Recommended sweep commands:
+
+               Project folder side (Claude session,
+                 bash_tool):
+                 cd /mnt/project && for f in *.py; do
+                   v=$(grep -m1 "DocVersion" "$f" | \
+                        awk '{print $NF}')
+                   echo "$f: $v"
+                 done
+
+               VPS side (Bill executes via ssh):
+                 ssh root@87.99.141.44 \
+                   "cd /root/TothBot_V2-Code/tothbot && \
+                    grep -H DocVersion *.py"
+
+               Governance / spec side (Claude session,
+                 bash_tool):
+                 cd /mnt/project && grep -H DocVersion \
+                   03*.txt 05*.txt 10*.txt
+
+             Each sweep output MUST be compared to the
+             GitHub HEAD commit referenced in the NSI.
+             Any drift halts the session and is resolved
+             before any other work proceeds.
+
+DC-SYNC-004  DRIFT RESOLUTION SEQUENCE
+             If the NSI pre-flight sweep reveals drift
+             between the project folder and GitHub
+             master, the next-session Claude MUST:
+
+             (a) Instruct Bill to run:
+                   cd C:\Users\wstot\GitHub\TothBot\
+                     TothBot_V2-Code
+                   git pull origin master
+
+                   cd C:\Users\wstot\GitHub\TothBot\
+                     TothBot_V2-Docs
+                   git pull origin master
+
+             (b) Instruct Bill to upload each stale file
+                 from the governed local repo to the
+                 Claude.ai project folder, replacing the
+                 stale copy.
+
+             (c) Defer verification of the upload to the
+                 next cold-load session per DC-SYNC-005.
+
+             Session work does not proceed until drift
+             is resolved.
+
+DC-SYNC-005  MID-SESSION INDEX UNCERTAINTY RULE
+             The Claude.ai project-knowledge index and
+             /mnt/project snapshot are NOT guaranteed to
+             refresh on mid-session file upload. Any file
+             replacement or deletion performed during a
+             session is considered applied only at the
+             next cold-load session, unless Claude
+             demonstrates a working fresh-read mechanism
+             for the specific file at that moment.
+
+             Practical consequence: When drift is
+             discovered mid-session, the fix chain is:
+               - Bill performs git pull and upload/delete
+                 actions during the current session.
+               - Verification that Claude sees the new
+                 state is deferred to the next
+                 cold-loaded session.
+               - The current session's Next Session
+                 Instructions document MUST include a
+                 cold-load verification step.
+
+             This rule closes OI-035
+             (CLAUDE-AI-MID-SESSION-INDEX-UNCERTAINTY-001,
+             originating TB00113).
+
+DC-SYNC-006  VIOLATION IS A DOCUMENT CONTROL DEFECT
+             Failure to upload a committed file to the
+             Claude.ai project folder before session
+             close is a document control defect. It
+             causes the next session to reason from a
+             stale version and produces downstream
+             analytical errors.
+
+             Historical reference: OI-032
+             (DEFECT-PROJECT-SYNC-DRIFT-001, originating
+             TB00112) resulted from this exact failure
+             mode. TB00111 NSI §6.4 was written against
+             logger.py dv1_3 when the actual committed
+             version at that HEAD was dv1_4, and all
+             TB00111 NSI SMTP diagnosis line-number
+             references were therefore anchored to the
+             wrong version of the code.
+
+Corrective action: STEP 8.2.3 closes OI-032
+(DEFECT-PROJECT-SYNC-DRIFT-001) by establishing
+mandatory post-commit upload and mandatory NSI
+pre-flight version sweep. Combined with the mid-session
+index uncertainty rule (DC-SYNC-005 closing OI-035),
+the complete drift-prevention chain is:
+
+  (1) Bill commits to GitHub.
+  (2) Bill uploads changed files to Claude.ai project
+      folder before session close (DC-SYNC-002).
+  (3) Session author writes NSI with mandatory pre-
+      flight version sweep (DC-SYNC-003).
+  (4) Next-session Claude executes sweep first and
+      halts on any drift (DC-SYNC-003, DC-SYNC-004).
+  (5) Any mid-session fix is verified at next cold
+      load (DC-SYNC-005).
+
+Governing documents:
+  0311001  Namespace_Specification (HR-001 through -003,
+           HR-PATH-001 through -006)
+  0311003  Versioning_Procedure (version increment rules)
+  TB00000  Project Instructions for Claude Section 11
+           (GitHub authoritative source, Claude.ai
+           project secondary reference)
+
+------------------------------------------------------------
 STEP 8.3  1020000  Testing_Coding_Anchor
 ------------------------------------------------------------
   1021001  Unit_Test_Specification
@@ -998,6 +1155,71 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_3   04-22-2026  Two changes plus rev-history backfill.
+                     (1) STEP 8.2.3 POST-COMMIT PROJECT-
+                     FOLDER SYNC MANDATORY RULE added.
+                     Establishes DC-SYNC-001 through
+                     DC-SYNC-006: every git commit
+                     touching any controlled document or
+                     code file MUST be followed by upload
+                     of the changed file to the Claude.ai
+                     project folder before session close.
+                     Every NSI MUST include a mandatory
+                     pre-flight project-folder-vs-GitHub
+                     version sweep. Any drift halts the
+                     next session until resolved.
+                     Mid-session index uncertainty (OI-035)
+                     formalized under DC-SYNC-005: file
+                     replacements during a session are
+                     verified at the next cold-load
+                     session. Corrective action from
+                     OI-032 (DEFECT-PROJECT-SYNC-DRIFT-001,
+                     originating TB00112) which resulted
+                     from this exact drift failure mode
+                     — TB00111 NSI §6.4 was anchored to
+                     logger.py dv1_3 while HEAD committed
+                     dv1_4, producing downstream analytical
+                     errors. Closes OI-032 and OI-035.
+                     (2) Revision History backfilled with
+                     v1_1 and v1_2 promotion entries
+                     (previously missing) and this v1_3
+                     entry added. Minor correction per
+                     VP-004 (v1_2 → v1_3 with Bill approval;
+                     rv state not required). Approved by
+                     Bill.
+
+  v1_2   04-11-2026  Promoted from rv1_1 to v1_2. Content
+                     changes were delivered under rv1_1
+                     (STEP 8.2.2 CODING FILES ARE
+                     CONTROLLED DOCUMENTS rule added;
+                     DC-CODE-001 through DC-CODE-006
+                     established; scope covers all file
+                     types .py, .gitignore, .ini, README.md,
+                     .txt, .service, and all others;
+                     corrective action from TB00079;
+                     governing documents 0311001, 0311004,
+                     1011001 referenced). Approved by Bill.
+                     This promotion entry was omitted from
+                     the Revision History at time of
+                     promotion — backfilled in v1_3 per
+                     TB00114 discrepancy audit.
+
+  v1_1   04-11-2026  Promoted from rv1_0 to v1_1. Content
+                     changes were delivered under rv1_0
+                     (STEP 8.2.1 CODE FILE REGISTRY
+                     MANDATORY MAINTENANCE RULE added;
+                     formal requirement to update 1010000
+                     Section 5 Code File Registry after
+                     every session that creates or modifies
+                     any Pathway 2 code file .py; four
+                     registry fields specified; corrective
+                     action from TB00073 document control
+                     audit). Approved by Bill.
+                     This promotion entry was omitted from
+                     the Revision History at time of
+                     promotion — backfilled in v1_3 per
+                     TB00114 discrepancy audit.
 
   rv1_1  04-11-2026  Added STEP 8.2.2 Coding Files Are
                      Controlled Documents rule. Establishes
