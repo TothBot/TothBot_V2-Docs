@@ -1,0 +1,1210 @@
+DocDCN:     1011007
+DocTitle:   Logger_Coding_Spec
+DocVersion: dv1_5
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011007_Logger_Coding_Spec_dv1_5.txt
+DocDate:    04-23-2026
+DocTime:    04:30:00 UTC
+
+============================================================
+LOGGER CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Logger component. It is the sole direct
+input to Logger code. Code is written from this document
+and no other.
+
+The Logger is the sole data interface between TothBot and
+CIATS. It must never block the trading hot path. Every
+event logged is a potential CIATS data point. The Logger
+is Tier 1 in the coding sequence — it must exist before
+any other module can be tested.
+
+From dv1_4: the Logger operates a two-stream record
+architecture (diagnostic + permanent). Section 11 governs
+the permanent trade record file that satisfies the CIATS
+200-trade statistical floor, IRS Form 8949 / 26 CFR 1.6001-1
+recordkeeping, and the audit trail. The two-stream
+architectural basis is documented in 0511006 dv1_1.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011007  This document
+  Parent specification: 0511006  Logger_Specification dv1_1
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Logger DO?
+    Receives log records from all TothBot components via
+    an in-memory bounded queue (queue.Queue, maxsize=10,000).
+    Enqueues without blocking (put_nowait). Writes to disk
+    via QueueListener in a background thread. Dispatches
+    to two persistent sinks (diagnostic RotatingFileHandler
+    and permanent TothBotTradeRecordHandler) plus the SMTP
+    alert handler. Alerts operator on CRITICAL and HIGH
+    events. Handles queue overflow without blocking the
+    hot path.
+
+(2) Interfaces?
+    IN:  All TothBot components via logging.getLogger()
+         call to the "tothbot" logger instance.
+    OUT: Diagnostic log file (RotatingFileHandler, NDJSON)
+           /home/tothbot/logs/tothbot.log
+         Permanent trade record file (append-only JSONL)
+           /home/tothbot/records/trades_<YYYY>.jsonl
+         Operator email alerts for CRITICAL and HIGH events
+         stderr for queue-full fallback (non-blocking)
+    CIATS reads log files directly. Logger does not push
+    to CIATS. Logger does not know CIATS exists.
+
+(3) Hard rules?
+    HR-LG-001: NEVER block hot path under any condition.
+    HR-LG-002: queue.Queue (stdlib), NOT asyncio.Queue.
+    HR-LG-003: maxsize=10,000 entries.
+    HR-LG-004: log_listener.stop() on clean shutdown.
+    HR-LG-005: All TRADE_CLOSE fields mandatory (Section 7).
+    HR-LG-006: TRADE_CLOSE fires ONCE per position close.
+    HR-LG-007: ws_roundtrip_latency_ms captured from WS v2
+               time_in/time_out fields.
+    HR-LG-008: connection_id logged on every WS event.
+    HR-LG-009: All numeric values: string representation
+               of Decimal in log. No float storage.
+    HR-LG-010: Log format: NDJSON (one JSON per line).
+    HR-LG-011: Queue full → stderr + HIGH alert. Do not block.
+
+(4) What triggers Logger?
+    Any TothBot component log() call:
+      WS Manager (highest volume)
+      Signal Pipeline (every gate evaluation)
+      Execution Engine (order dispatch and fills)
+      Exit Controller (exit sequences)
+      Position Mirror (state changes)
+      Regime Engine (daily computation)
+      CIATS (parameter updates)
+
+(5) What does Logger log?
+    Logger IS the logging component. It does not log to
+    itself except for the structured observability events
+    it owns: ALERT_SENT, ALERT_SMTP_FAILED,
+    TRADE_RECORD_WRITE_FAILED (Section 6.9). These are
+    emitted via the standard Logger path. On queue.Full:
+    writes to stderr (non-blocking). Log volume estimate:
+    ~80,000-120,000 entries/day.
+
+============================================================
+4. IMPLEMENTATION — QUEUE ARCHITECTURE
+============================================================
+
+------------------------------------------------------------
+4.1 Queue Setup
+------------------------------------------------------------
+
+LG-QUEUE-001  Use Python stdlib queue, NOT asyncio.Queue.
+              QueueListener runs in a non-asyncio thread
+              and is incompatible with asyncio.Queue.
+
+              import queue
+              import logging
+              import logging.handlers
+              from decimal import Decimal
+
+              log_queue = queue.Queue(maxsize=10_000)
+
+LG-QUEUE-002  Queue size derivation (FP/DP validated):
+              20 positions x 10 events/candle x 50-candle
+              buffer = 10,000 entries. CIATS-owned starting
+              value.
+
+------------------------------------------------------------
+4.2 QueueHandler — Hot Path (Non-blocking)
+------------------------------------------------------------
+
+LG-QUEUE-003  Attach TothBotQueueHandler to "tothbot" logger.
+              QueueHandler.emit() calls put_nowait() — returns
+              immediately. The hot path is never blocked.
+
+              class TothBotQueueHandler(
+                      logging.handlers.QueueHandler):
+                  """Non-blocking QueueHandler with overflow
+                  alert."""
+                  def enqueue(self, record):
+                      try:
+                          self.queue.put_nowait(record)
+                      except queue.Full:
+                          import sys
+                          print(
+                              f"LOGGER QUEUE FULL — record "
+                              f"dropped: {record.getMessage()}",
+                              file=sys.stderr
+                          )
+                          # Alert operator directly
+                          # (not via Logger — avoid circularity).
+                          # emit_structured=False here: queue is
+                          # already full; re-enqueue would fail.
+                          _alert_operator_direct(
+                              "CRITICAL: Logger queue full. "
+                              "Records are being dropped. "
+                              "Investigate immediately.",
+                              triggering_event="LOG_QUEUE_FULL",
+                              emit_structured=False,
+                          )
+
+              queue_handler = TothBotQueueHandler(log_queue)
+              tothbot_logger = logging.getLogger("tothbot")
+              tothbot_logger.addHandler(queue_handler)
+              tothbot_logger.setLevel(logging.DEBUG)
+              # Remove all other handlers from tothbot logger:
+              tothbot_logger.handlers = [queue_handler]
+              tothbot_logger.propagate = False
+
+------------------------------------------------------------
+4.3 QueueListener — Background Thread (Blocking writes OK)
+------------------------------------------------------------
+
+LG-QUEUE-004  QueueListener runs in its own background thread.
+              Reads from queue. Dispatches each record to all
+              attached handlers: file_handler (tothbot.log),
+              alert_handler (SMTP), and trade_record_handler
+              (Section 11). Exceptions in any one handler are
+              isolated by logging.Handler.handleError — the
+              other handlers still run for the same record.
+              Never interacts with asyncio event loop.
+
+              file_handler = logging.handlers.RotatingFileHandler(
+                  filename="/home/tothbot/logs/tothbot.log",
+                  maxBytes=50 * 1024 * 1024,   # 50 MB per file
+                  backupCount=90,               # 90 files = ~90 days
+                  encoding="utf-8"
+              )
+              file_handler.setFormatter(
+                  logging.Formatter("%(message)s")
+              )
+              # %(message)s emits the pre-serialized JSON string.
+              # One log record = one JSON line.
+
+              alert_handler        = TothBotAlertHandler()
+              trade_record_handler = TothBotTradeRecordHandler()
+
+              log_listener = logging.handlers.QueueListener(
+                  log_queue,
+                  file_handler,
+                  alert_handler,
+                  trade_record_handler,
+                  respect_handler_level=True
+              )
+              log_listener.start()
+              # start() launches background thread internally.
+
+LG-QUEUE-005  SHUTDOWN ORDER (mandatory):
+              1. Signal TothBot to stop accepting new events
+              2. Call log_listener.stop()
+                 stop() drains remaining queue entries
+                 and joins the background thread.
+                 No log entries lost on clean shutdown —
+                 including any queued TRADE_CLOSE records,
+                 which are dispatched to BOTH file_handler
+                 and trade_record_handler during drain.
+              3. Close file_handler
+              4. Shutdown asyncio event loop
+
+------------------------------------------------------------
+4.4 Queue Health Monitoring
+------------------------------------------------------------
+
+LG-QUEUE-006  Monitor queue fill level every 60 seconds:
+
+              async def monitor_log_queue():
+                  while True:
+                      await asyncio.sleep(60)
+                      qsize = log_queue.qsize()
+                      fill_pct = qsize / 10_000
+                      if fill_pct >= 0.80:
+                          _alert_operator_direct(
+                              f"Logger queue at {fill_pct:.0%}. "
+                              f"Risk of overflow.",
+                              triggering_event="LOG_QUEUE_WARN",
+                          )
+
+              Run monitor_log_queue() as an asyncio task.
+
+============================================================
+5. LOG RECORD FORMAT
+============================================================
+
+LG-FMT-001  Every log record MUST be a valid JSON object
+            on a single line (NDJSON format). CIATS reads
+            line by line. Do not pretty-print.
+
+LG-FMT-002  Mandatory fields on every record:
+
+              {
+                "ts":        "2026-04-05T12:00:00.000000Z",
+                "event":     "CANDLE_CLOSE",
+                "level":     "INFO",
+                "component": "WS_MGR",
+                ...event-specific fields...
+              }
+
+            ts:        ISO 8601 UTC with microseconds.
+                       from datetime import datetime, timezone
+                       datetime.now(timezone.utc).isoformat()
+            event:     SCREAMING_SNAKE_CASE event code.
+                       Must be registered in Section 6.
+            level:     DEBUG | INFO | HIGH | CRITICAL
+            component: WS_MGR | SIGNAL_PIPELINE | EXEC_ENG |
+                       EXIT_CTRL | POS_MIRROR | REGIME_ENG |
+                       LOGGER | CIATS
+
+LG-FMT-003  Serialization via orjson with Decimal callback:
+
+              import orjson
+              from decimal import Decimal
+
+              def _json_default(obj):
+                  if isinstance(obj, Decimal):
+                      return str(obj)
+                  raise TypeError(type(obj))
+
+              def log_record(event_dict: dict) -> str:
+                  """Returns a single NDJSON line."""
+                  return orjson.dumps(
+                      event_dict,
+                      default=_json_default
+                  ).decode()
+
+              # Usage:
+              record = {
+                  "ts": datetime.now(timezone.utc).isoformat(),
+                  "event": "ENTRY_DISPATCHED",
+                  "level": "INFO",
+                  "component": "EXEC_ENG",
+                  "symbol": "BTC/USD",
+                  "cl_ord_id": "tb_20260405_120000_BTC",
+                  "entry_price": Decimal("42350.1"),
+                  "qty": Decimal("0.001"),
+              }
+              logger.info(log_record(record))
+
+LG-FMT-004  Decimal values in log: stored as JSON string
+            (e.g., "42350.1"). CIATS reads and parses back
+            to Decimal. Never store as JSON number (float).
+
+LG-FMT-005  connection_id (AR-064): uint64 included in all
+            WS connection, reconnect, disconnect, gap,
+            ping/pong, and zombie detection log entries.
+
+============================================================
+6. EVENT CODE REGISTRY
+============================================================
+
+LG-EVT-001  All event codes used in TothBot MUST be
+            registered here. No undocumented event codes.
+            Code review must reject any unregistered event.
+
+------------------------------------------------------------
+6.1 WS Manager Events
+------------------------------------------------------------
+
+  Event Code                   Level     Key Fields
+  ────────────────────────────  ────────  ─────────────────
+  WS_TOKEN_ACQUIRED             INFO      token_expiry
+  WS_CONNECTED                  INFO      connection_id, url
+  WS_DISCONNECTED               HIGH      connection_id, reason
+  WS_RECONNECTED                INFO      connection_id
+  INSTRUMENT_SNAPSHOT_COMPLETE  INFO      pair_count
+  SUBSCRIPTION_ACK              INFO      channel, warnings
+  MAXRATECOUNT_SET              INFO      value
+  PAIR_WARM_UP_STARTED          DEBUG     symbol
+  PAIR_READY                    INFO      symbol
+  ALL_PAIRS_WARM_UP_COMPLETE    INFO      pair_count
+  PING_SENT                     DEBUG     connection_id, req_id
+  PONG_RECEIVED                 DEBUG     connection_id,
+                                          latency_ms,
+                                          time_in, time_out
+  PING_TIMEOUT                  CRITICAL  connection_id
+  ZOMBIE_CONNECTION_DETECTED    CRITICAL  connection_id,
+                                          elapsed_seconds
+  RECONNECT_INITIATED           HIGH      connection_id,
+                                          attempt_number
+  RECONNECT_COMPLETE            INFO      connection_id
+  FATAL_RECONNECT_FAILURE       CRITICAL  attempt_count
+  KRAKEN_MAINTENANCE_SCHEDULED  HIGH      within_hours
+  CONNECTION_ID_LOGGED          INFO      connection_id
+  EXECUTIONS_SEQUENCE_GAP       CRITICAL  expected, received
+  BALANCES_SEQUENCE_GAP         HIGH      expected, received
+  CANDLE_CLOSE                  INFO      symbol,
+                                          interval_begin,
+                                          open, high, low,
+                                          close, volume,
+                                          atr_14
+  EXEC_TRADE                    INFO      order_id, cl_ord_id,
+                                          cum_qty, avg_price,
+                                          last_qty, last_price
+  EXEC_FILLED                   INFO      order_id, cl_ord_id,
+                                          cum_qty, avg_price,
+                                          fees_usd
+  EXEC_CANCELED                 INFO      order_id, cl_ord_id,
+                                          reason
+  EXEC_EXPIRED                  INFO      order_id, cl_ord_id,
+                                          cum_qty
+  EXEC_RESTATED                 HIGH      order_id (if resting)
+  UNEXPECTED_ORDER_AMENDED      CRITICAL  order_id
+  UNKNOWN_EXEC_TYPE             WARN      raw_exec_type
+  UNKNOWN_MESSAGE_TYPE          WARN      raw_channel
+  ENTRY_PARTIAL_FILL_PROTECTED  HIGH      symbol, cum_qty,
+                                          avg_price
+  GAP_CLOSED_POSITION           HIGH      symbol, estimated_PL
+  DRAWDOWN_UPDATE               DEBUG     drawdown_pct,
+                                          portfolio_USD
+  SESSION_PAUSE_TRIGGERED       HIGH      drawdown_pct
+  FULL_HALT_TRIGGERED           CRITICAL  drawdown_pct,
+                                          open_count
+  BATCH_CANCEL_SENT             HIGH      count
+  BATCH_CANCEL_RESULT           INFO      count_confirmed
+  RATE_COUNTER_UPDATE           DEBUG     symbol, value,
+                                          maxratecount
+  RATE_COUNTER_WARNING          WARN      symbol, value,
+                                          maxratecount
+
+------------------------------------------------------------
+6.2 Signal Pipeline Events
+------------------------------------------------------------
+
+  PIPELINE_START                INFO      symbol, candle_ts
+  INSTRUMENT_STATUS_BLOCKED     INFO      symbol, status
+  GATE_1_PASS                   DEBUG     engine_state
+  GATE_1_FAIL                   INFO      engine_state
+  GATE_2_PASS                   DEBUG     volume_usd, threshold
+  GATE_2_FAIL                   INFO      volume_usd, threshold
+  GATE_3_PASS                   DEBUG     regime, vol_regime
+  GATE_3_FAIL                   INFO      regime, vol_regime
+  GATE_4_PASS                   DEBUG     htf_ema_20, htf_ema_50
+  GATE_4_FAIL                   INFO      htf_ema_20, htf_ema_50
+  SSS_RESULT                    DEBUG     rsi_14, ema_9, ema_21,
+                                          volume_ratio, sss_pass
+  GATE_5_RESULT                 INFO      sc_gate_failed (if any),
+                                          all 6 SC gate outcomes
+  GATE_6_RESULT                 DEBUG     sizing_modifier
+  GATE_7_RESULT                 INFO      drawdown_pct, semaphore,
+                                          available_USD
+  GATE_8_RESULT                 INFO      entry_qty, entry_price,
+                                          tp_price, sl_trigger,
+                                          net_RR_computed
+
+------------------------------------------------------------
+6.3 Execution Engine Events
+------------------------------------------------------------
+
+  ENTRY_DISPATCHED              INFO      symbol, cl_ord_id,
+                                          entry_price, qty,
+                                          deadline
+  ENTRY_REJECTED_POST_ONLY      INFO      symbol, cl_ord_id,
+                                          reason
+  ENTRY_REJECTED_RATE_LIMIT     WARN      symbol, req_id
+  ENTRY_FILLED                  INFO      symbol, cl_ord_id,
+                                          fill_price, qty, fees
+  TP_PLACED                     INFO      symbol, cl_ord_id,
+                                          tp_price
+  EMERG_SL_PLACED               INFO      symbol, cl_ord_id,
+                                          sl_trigger
+  TP_PARTIAL_FILL               INFO      symbol, cl_ord_id,
+                                          cum_qty, remaining_qty
+  EMERG_SL_AMENDED              HIGH      symbol, cl_ord_id,
+                                          new_qty
+
+------------------------------------------------------------
+6.4 Exit Controller Events
+------------------------------------------------------------
+
+  LAYER1A_EXIT_TRIGGERED        INFO      symbol, exit_reason
+  LAYER1B_TP_FILL               INFO      symbol, fill_price,
+                                          fees
+  LAYER2_EXIT_TRIGGERED         HIGH      symbol, mae_pct,
+                                          bid_price
+  LAYER2_CANCEL_SENT            INFO      symbol, cl_ord_id
+  LAYER2_MARKET_SELL_SENT       INFO      symbol, qty
+  EMERGENCY_SL_FIRED            CRITICAL  symbol
+  CANCEL_TIMEOUT_HOLD           CRITICAL  symbol, cl_ord_id,
+                                          elapsed_ms
+  MAE_HOLD_AMBIGUOUS            CRITICAL  symbol, state
+  PAIR_CANCEL_ONLY_HOLD         CRITICAL  symbol, status
+  PAIR_MAINTENANCE_HOLD         CRITICAL  symbol, status
+
+------------------------------------------------------------
+6.5 Position Mirror Events
+------------------------------------------------------------
+
+  POSITION_OPENED               INFO      symbol, cl_ord_id,
+                                          entry_price, qty
+  POSITION_CLOSED               INFO      symbol, exit_reason,
+                                          net_PL_USD
+  POSITION_RECONCILED           INFO      symbol, source
+  UNEXPECTED_OPEN_ORDER         HIGH      symbol, order_id
+
+------------------------------------------------------------
+6.6 Regime Engine Events
+------------------------------------------------------------
+
+  REGIME_COMPUTED               INFO      market_regime,
+                                          asset_regime,
+                                          adx_14, ema_20,
+                                          ema_50, atr_pct
+  REGIME_STALE_WARNING          WARN      hours_since_update
+
+------------------------------------------------------------
+6.7 CIATS Events
+------------------------------------------------------------
+
+  CIATS_EWMA_UPDATE             DEBUG     signal, value, lambda
+  CIATS_CUSUM_SIGNAL            HIGH      metric, k, h, cusum_s
+  CIATS_PROPOSAL_GENERATED      INFO      parameter, old_value,
+                                          new_value, confidence
+  CIATS_KELLY_UPDATE            INFO      kelly_fraction,
+                                          trade_count
+  CIATS_PARAMETER_WRITE         INFO      parameter, old_value,
+                                          new_value
+
+------------------------------------------------------------
+6.8 Trade Outcome Bus (CIATS primary data record)
+------------------------------------------------------------
+
+  TRADE_CLOSE                   INFO      (all fields mandatory)
+
+  This record fires ONCE on each complete position close.
+  It is the primary CIATS data record. All fields in
+  Section 7 are mandatory. Also the sole record written
+  to the permanent trade record file (Section 11).
+
+------------------------------------------------------------
+6.9 Logger Self-Observability Events (dv1_4)
+------------------------------------------------------------
+
+These events are emitted BY the Logger itself. They land
+in tothbot.log via the standard Logger path. They exist
+because the Logger is TothBot's only observability surface
+and must provide positive confirmation signals for its
+own internal state transitions (OI-022) and record-keeping
+operations (OI-023).
+
+  Event Code                   Level     Key Fields
+  ────────────────────────────  ────────  ─────────────────
+  LOG_QUEUE_FULL                HIGH      (stderr-only — see
+                                          LG-ALERT-004 note)
+  ALERT_SENT                    INFO      to, subject,
+                                          triggering_event
+  ALERT_SMTP_FAILED             HIGH      to, subject,
+                                          triggering_event,
+                                          error
+                                          (ALERT-EXEMPT per
+                                          LG-ALERT-005)
+  TRADE_RECORD_WRITE_FAILED     HIGH      path, error
+
+Notes:
+  (a) ALERT_SENT is emitted after SMTP sendmail returns
+      without exception. Confirms operator alert delivery.
+      Introduced dv1_4 (OI-022 / TB00108 AI-2).
+  (b) ALERT_SMTP_FAILED is emitted after SMTP raises.
+      Carries the exception string. Introduced dv1_4
+      (OI-022 / TB00108 AI-2). Exempt from alert routing
+      per LG-ALERT-005 to prevent recursive alerting on
+      persistent SMTP outage.
+  (c) TRADE_RECORD_WRITE_FAILED is emitted when the
+      permanent trade record file (Section 11) fails to
+      write. Carries the attempted file path and the
+      exception string. Introduced dv1_4 (OI-023 /
+      TB00108 AI-1). Triggers operator alert HIGH per
+      LG-ALERT-002. Does not block tothbot.log write.
+
+============================================================
+7. TRADE OUTCOME BUS — TRADE_CLOSE RECORD
+============================================================
+
+LG-TOB-001  TRADE_CLOSE fires ONCE per position close.
+            Never on partial fills. Always on complete close.
+
+LG-TOB-002  All fields below are MANDATORY. Missing any
+            field breaks CIATS statistical computation.
+            No optional fields on this record.
+
+LG-TOB-003  Every TRADE_CLOSE record is also the sole
+            record type written to the permanent trade
+            record file (Section 11). The two sinks receive
+            the SAME JSON payload — no field divergence.
+            This is enforced by the QueueListener
+            architecture: both handlers consume the same
+            LogRecord.
+
+Required TRADE_CLOSE fields:
+
+  ts:                    ISO 8601 UTC with microseconds
+  event:                 "TRADE_CLOSE"
+  level:                 "INFO"
+  component:             "EXIT_CTRL"
+  symbol:                str (e.g., "BTC/USD")
+  entry_fill_price:      Decimal (actual avg_price on fill)
+  exit_price:            Decimal (fill price on close)
+  entry_timestamp_utc:   ISO 8601 UTC
+  exit_timestamp_utc:    ISO 8601 UTC
+  hold_candle_count:     int (5m candles held)
+  MAE_pct_reached:       Decimal (max adverse move as pct)
+  fees_entry_usd:        Decimal (maker fee on entry)
+  fees_exit_usd:         Decimal (taker fee on exit)
+  fees_total_usd:        Decimal (fees_entry + fees_exit)
+  exit_reason:           str — one of:
+                           TP_FILL
+                           MAE_THRESHOLD_BREACH
+                           HTF_REGIME_REVERSAL
+                           DAILY_REGIME_DOWNGRADE
+                           TIME_EXPIRY
+                           SIGNAL_DECAY
+                           TP_PARTIAL_FILL_REMAINDER
+                           PAIR_LIMIT_ONLY_EXIT
+  asset_regime:          str (regime of asset at entry)
+  vol_regime:            str (NORMAL_VOL | ELEVATED_VOL)
+  market_regime:         str (BTC/USD regime at entry)
+  signal_params:         dict {
+                           rsi_14: Decimal,
+                           ema_9:  Decimal,
+                           ema_21: Decimal,
+                           volume_ratio: Decimal,
+                           sss_pass: bool
+                         }
+  actual_RR:             Decimal (net_PL / risk_exposed)
+  net_PL_USD:            Decimal (positive=profit, negative=loss)
+  net_gain_usd:          Decimal (0.0 if loss)
+  net_loss_usd:          Decimal (0.0 if gain, positive value)
+
+  Feed:
+    Statistical Engine → Proposal Engine (at 200 trades)
+    Regime Library analysis (at 600 trades)
+    Half-Kelly computation (at 200+ trades)
+    Permanent trade record file (Section 11) — authoritative
+    long-term source for the above plus tax / audit purposes.
+
+============================================================
+8. ALERT ROUTING
+============================================================
+
+LG-ALERT-001  CRITICAL events: email to alerts@tothbot.com
+              immediately. Also write to stderr as fallback.
+              (OI-019: plural — real Proton mailbox. The
+              singular mailbox does not exist and cannot be
+              created; Proton catch-all reserves the namespace.)
+
+              CRITICAL event codes:
+                PING_TIMEOUT, ZOMBIE_CONNECTION_DETECTED,
+                FATAL_RECONNECT_FAILURE,
+                EXECUTIONS_SEQUENCE_GAP,
+                UNEXPECTED_ORDER_AMENDED,
+                CANCEL_TIMEOUT_HOLD, MAE_HOLD_AMBIGUOUS,
+                FULL_HALT_TRIGGERED, PAIR_CANCEL_ONLY_HOLD,
+                PAIR_MAINTENANCE_HOLD, EMERGENCY_SL_FIRED,
+                any unhandled exception
+
+LG-ALERT-002  HIGH events: email to alerts@tothbot.com. (OI-019)
+
+              HIGH event codes:
+                WS_DISCONNECTED, RECONNECT_INITIATED,
+                BALANCES_SEQUENCE_GAP,
+                SESSION_PAUSE_TRIGGERED, BATCH_CANCEL_SENT,
+                KRAKEN_MAINTENANCE_SCHEDULED,
+                ENTRY_PARTIAL_FILL_PROTECTED,
+                GAP_CLOSED_POSITION, LOG_QUEUE_FULL,
+                EXEC_RESTATED, EMERG_SL_AMENDED,
+                LAYER2_EXIT_TRIGGERED, UNEXPECTED_OPEN_ORDER,
+                TRADE_RECORD_WRITE_FAILED,         (dv1_4)
+                ALERT_SMTP_FAILED                  (dv1_4;
+                  ALERT-EXEMPT per LG-ALERT-005 — written
+                  to tothbot.log but does not trigger email)
+
+LG-ALERT-003  WARN events: log file only. No email.
+
+LG-ALERT-004  Alert email implementation is separate from
+              Logger queue to avoid circularity. CRITICAL
+              and HIGH events alert via direct SMTP call
+              that bypasses the Logger queue.
+
+              Module-level constants (dv1_5 — OI-029):
+                ALERT_EMAIL                 = "alerts@tothbot.com"
+                ALERT_SMTP_TIMEOUT_SEC      = 20   (was 5 in dv1_4)
+                ALERT_SMTP_MAX_ATTEMPTS     = 2    (new in dv1_5)
+                ALERT_SMTP_RETRY_BACKOFF_SEC = 1   (new in dv1_5)
+
+              Alert implementation:
+                def _alert_operator_direct(
+                        message: str,
+                        *,
+                        subject: str | None = None,
+                        triggering_event: str = "",
+                        emit_structured: bool = True,
+                ) -> None:
+                    """Send alert email directly, bypassing
+                    Logger queue. For use on CRITICAL/HIGH
+                    events and queue-full conditions."""
+                    import smtplib
+                    import time
+                    # Implementation: send to alerts@tothbot.com
+                    # (OI-019 — plural: real Proton mailbox).
+                    # SMTP credentials from environment variables.
+                    # Never hardcode credentials.
+                    # Per-attempt timeout: ALERT_SMTP_TIMEOUT_SEC
+                    # (20s — covers connect + starttls + login +
+                    # sendmail; each stage blocks within that
+                    # ceiling).
+                    # Retry: ALERT_SMTP_MAX_ATTEMPTS (2) with
+                    # ALERT_SMTP_RETRY_BACKOFF_SEC (1s) sleep
+                    # between attempts. Worst-case wall time:
+                    # 20 + 1 + 20 = 41s. Off the trading hot
+                    # path (HR-LG-001 preserved — this function
+                    # runs on the QueueListener background
+                    # thread, not the asyncio event loop).
+                    # Synchronous time.sleep is correct; do NOT
+                    # use asyncio.sleep here.
+                    # On success (dv1_4 / OI-022):
+                    #   If emit_structured: emit ALERT_SENT
+                    #   (INFO) via the standard Logger path.
+                    # On all-attempts-fail (dv1_5 / OI-029):
+                    #   Write to stderr.
+                    #   If emit_structured: emit ONE
+                    #   ALERT_SMTP_FAILED (HIGH) via the
+                    #   standard Logger path. Event surface
+                    #   unchanged — still one event per alert,
+                    #   not one per attempt. Preserves
+                    #   LG-ALERT-005 anti-recursion semantics.
+
+              Call-site guidance:
+                (a) From TothBotQueueHandler queue-full path:
+                    pass emit_structured=False. The queue is
+                    already full — re-enqueue would fail.
+                (b) From TothBotAlertHandler.emit: default
+                    (emit_structured=True). QueueListener
+                    thread is actively draining; put_nowait
+                    succeeds.
+                (c) From monitor_log_queue: default
+                    (emit_structured=True). Fill is <=80%
+                    when threshold first trips; queue has
+                    room.
+
+              Hot-path impact (dv1_5):
+                The retry loop raises worst-case wall time
+                from ~5s (dv1_4) to 41s (dv1_5). This is
+                acceptable because _alert_operator_direct is
+                explicitly off the trading hot path — it runs
+                on the QueueListener background thread after
+                the hot-path caller has already returned from
+                put_nowait(). No signal-evaluation or
+                execution-engine latency is affected.
+
+LG-ALERT-005  ANTI-RECURSION GUARD (dv1_4).
+              TothBotAlertHandler.emit MUST skip records
+              with event=="ALERT_SMTP_FAILED". Rationale:
+              ALERT_SMTP_FAILED exists precisely because
+              alerting has broken; a persistent SMTP
+              outage would otherwise cause each failed
+              alert to emit another HIGH event which would
+              re-trigger the alert handler which would
+              re-attempt SMTP which would re-fail,
+              indefinitely. Stderr remains the ultimate
+              observability surface for SMTP failure.
+
+              Required implementation (snippet):
+
+                def emit(self, record):
+                    try:
+                        parsed = orjson.loads(record.getMessage())
+                        level = parsed.get("level", "")
+                        event = parsed.get("event", "")
+                        if level not in ALERT_LEVELS:
+                            return
+                        # LG-ALERT-005 anti-recursion guard:
+                        if event == "ALERT_SMTP_FAILED":
+                            return
+                        _alert_operator_direct(
+                            ...,
+                            triggering_event=event,
+                            emit_structured=True,
+                        )
+                    except Exception as exc:
+                        # Never crash the QueueListener thread.
+                        ...
+
+============================================================
+9. LOG FILE MANAGEMENT
+============================================================
+
+LG-FILE-001  Log directory: /home/tothbot/logs/
+             Create at startup if it does not exist.
+
+LG-FILE-002  RotatingFileHandler configuration:
+               filename:    /home/tothbot/logs/tothbot.log
+               maxBytes:    50 * 1024 * 1024  (50 MB)
+               backupCount: 90                (90 rotated files)
+               encoding:    utf-8
+             90 files x 50 MB = 4.5 GB maximum disk usage.
+             At ~80,000 entries/day x ~200 bytes/entry =
+             ~16 MB/day. 90 files ≈ ~280 days of logs.
+
+LG-FILE-003  Logrotate integration per 1011013 VPS spec:
+             /etc/logrotate.d/tothbot configures daily
+             rotation with compression and retention.
+             QueueListener's RotatingFileHandler handles
+             in-process rotation. Logrotate handles
+             OS-level archival and compression.
+
+LG-FILE-004  Log file format: NDJSON (newline-delimited JSON).
+             One JSON object per line. No pretty-printing.
+             CIATS reads line by line using Python's
+             standard file iteration.
+
+============================================================
+10. COMPLETE LOGGER INITIALIZATION CODE
+============================================================
+
+def initialize_logger() -> tuple[
+        queue.Queue,
+        logging.handlers.QueueListener,
+        logging.Logger]:
+    """
+    Initialize TothBot Logger. Call once at startup.
+    Returns (log_queue, log_listener, logger).
+    Caller must call log_listener.stop() on shutdown.
+    """
+    import os
+    import queue
+    import logging
+    import logging.handlers
+
+    # Ensure log directory exists
+    os.makedirs("/home/tothbot/logs", exist_ok=True)
+
+    # LG-TREC-001: permanent trade record directory
+    os.makedirs("/home/tothbot/records", exist_ok=True)
+
+    # Bounded queue — 10,000 entries
+    log_queue = queue.Queue(maxsize=10_000)
+
+    # File handler — rotating 50 MB, 90 files
+    file_handler = logging.handlers.RotatingFileHandler(
+        filename="/home/tothbot/logs/tothbot.log",
+        maxBytes=50 * 1024 * 1024,
+        backupCount=90,
+        encoding="utf-8"
+    )
+    file_handler.setFormatter(logging.Formatter("%(message)s"))
+
+    # Alert handler — background thread
+    alert_handler        = TothBotAlertHandler()
+
+    # Permanent trade record handler — background thread
+    # (Section 11, LG-TREC-001 through LG-TREC-005)
+    trade_record_handler = TothBotTradeRecordHandler()
+
+    # QueueListener — background thread.
+    # respect_handler_level=True honours per-handler filters.
+    log_listener = logging.handlers.QueueListener(
+        log_queue,
+        file_handler,
+        alert_handler,
+        trade_record_handler,
+        respect_handler_level=True
+    )
+    log_listener.start()
+
+    # TothBot logger — non-blocking, queue-backed
+    queue_handler = TothBotQueueHandler(log_queue)
+    tothbot_logger = logging.getLogger("tothbot")
+    tothbot_logger.handlers = [queue_handler]
+    tothbot_logger.setLevel(logging.DEBUG)
+    tothbot_logger.propagate = False
+
+    return log_queue, log_listener, tothbot_logger
+
+============================================================
+11. PERMANENT TRADE RECORD FILE (dv1_4 — OI-023 FIX)
+============================================================
+
+LG-TREC-001  PURPOSE AND RATIONALE.
+             TRADE_CLOSE records are CIATS's primary data
+             record, the basis for IRS Form 8949 /
+             26 CFR 1.6001-1 tax recordkeeping, and the
+             authoritative audit trail for every closed
+             position. tothbot.log is managed by
+             RotatingFileHandler with finite retention
+             (50 MB / 90 files, approximately 280 days at
+             current throughput; observed ~6 days on the
+             live VPS during TB00107 investigation due to
+             write rate plus in-progress growth). ANY
+             trade closed before tothbot.log's oldest
+             retained record is permanently lost unless
+             also written to a permanent sink.
+
+             Fix: a second persistent sink, independent of
+             tothbot.log, receiving TRADE_CLOSE records
+             only, append-only, no rotation, no size cap,
+             segmented by UTC calendar year for tractable
+             per-year tax / audit retrieval.
+
+             File:      /home/tothbot/records/trades_<YYYY>.jsonl
+             Directory: /home/tothbot/records/
+             Created at startup via os.makedirs(..., exist_ok=True).
+
+             Parent architectural statement: 0511006 dv1_1
+             Section 3.x (two-stream record architecture).
+
+LG-TREC-002  ANNUAL SEGMENTATION.
+             <YYYY> = current UTC calendar year at time of
+             write. Year is computed from
+             datetime.now(timezone.utc).strftime("%Y")
+             on each TRADE_CLOSE event.
+
+             Rollover: at the first TRADE_CLOSE of the
+             following UTC calendar year, a new file
+             trades_<YYYY+1>.jsonl is opened and appended
+             to. The prior year's file is closed
+             (after_the_fact — no open handle is held
+             across events). No special rollover handling
+             required; filesystem semantics suffice.
+
+             Example (TB00108 commit date):
+               2026 records -> /home/tothbot/records/trades_2026.jsonl
+               2027 records -> /home/tothbot/records/trades_2027.jsonl
+                                 (first write at
+                                  2027-01-01T00:00:00Z
+                                  or later, UTC)
+
+LG-TREC-003  FILE PERMISSIONS (0o644) — HARD-PINNED.
+             File permissions are hard-pinned in source via
+             the mode argument to os.open with O_CREAT,
+             independent of the runtime umask. Rationale:
+             umask is external state and can drift between
+             deployments. Per Deming 6.1 and TB00000
+             Section 3.3 (no ambiguity), the permission
+             contract is explicit.
+
+             Implementation:
+
+               TRADES_RECORD_FILE_MODE: int = 0o644
+
+               fd = os.open(
+                   path,
+                   os.O_WRONLY | os.O_APPEND | os.O_CREAT,
+                   TRADES_RECORD_FILE_MODE,
+               )
+
+             Permissions apply on CREATE only; an existing
+             file's mode is unchanged by this call.
+
+LG-TREC-004  WRITE CONTRACT.
+             (a) Filter: emit writes only for records where
+                 event == "TRADE_CLOSE". All other events
+                 are a no-op for this handler.
+             (b) Payload: the exact pre-serialized NDJSON
+                 line from log_record(), followed by "\\n".
+                 Byte-for-byte identical to the payload
+                 written to tothbot.log by file_handler.
+                 TB00107 §3.6 FP/DP lock requires this
+                 identity — no divergent serialization.
+             (c) Mode: append only. Mode "a" equivalent via
+                 os.open(O_WRONLY|O_APPEND|O_CREAT). Never
+                 truncate. Never seek. Never rewrite.
+             (d) Atomicity: single os.write per record.
+                 Record size (~500-800 bytes) is well under
+                 PIPE_BUF (4096) so writes are atomic on
+                 all supported filesystems. Single writer
+                 (the QueueListener thread) — no lock
+                 required.
+
+LG-TREC-005  DURABILITY — fsync PER WRITE.
+             os.fsync(fd) is called after each os.write
+             BEFORE os.close. Compliance-grade records
+             must survive VPS power loss and kernel panic.
+             fsync cost is negligible:
+               (i)  TRADE_CLOSE frequency is low
+                    (tens per day in target throughput).
+               (ii) fsync executes in the QueueListener
+                    background thread — HR-LG-001 unaffected.
+               (iii) Kernel flushes one block; typical cost
+                     ~1-10ms on commodity SSD.
+             Decision locked by Bill in TB00108 Q1 response.
+             No partial or periodic fsync schemes are
+             permitted.
+
+LG-TREC-006  FAILURE PATH.
+             On any exception during path construction,
+             os.open, os.write, os.fsync, or os.close:
+               (a) Catch locally — never raise out of emit.
+                   (Raising would only crash the
+                   QueueListener thread, which is worse
+                   than a missed record.)
+               (b) Emit TRADE_RECORD_WRITE_FAILED (HIGH)
+                   via the standard Logger path.
+                   Fields: path (attempted), error (str(exc)).
+                   The record lands in tothbot.log via
+                   file_handler and triggers operator email
+                   via alert_handler (LG-ALERT-002).
+               (c) Write the same detail to stderr as
+                   ultimate fallback (journalctl will
+                   capture it even if the Logger queue
+                   itself is broken).
+               (d) tothbot.log's write for the original
+                   TRADE_CLOSE record is UNAFFECTED. The
+                   QueueListener calls each handler
+                   independently with handler-local error
+                   isolation via
+                   logging.Handler.handleError. tothbot.log
+                   remains an operational fallback for the
+                   trade record until the permanent file
+                   is restored.
+
+LG-TREC-007  INDEPENDENCE FROM DIAGNOSTIC LOG.
+             The permanent trade record file is not
+             subject to:
+               - RotatingFileHandler rotation
+               - logrotate
+               - size caps
+               - TTL / age policies
+             Operator-side archival (e.g., yearly move to
+             cold storage after tax return completion) is
+             the only permitted lifecycle action, and
+             must be documented separately in 0511006
+             and/or 1011013.
+
+LG-TREC-008  CSV EXPORT IS DEFERRED.
+             This session (TB00108) does not include a
+             CSV export tool. The annual JSONL is the
+             authoritative source. Any CSV (for tax
+             software, accountant, dashboard) is a
+             read-only transform, implemented in a
+             future session (Operator Observer Dashboard
+             scope).
+
+LG-TREC-009  CLASS REFERENCE.
+
+             class TothBotTradeRecordHandler(logging.Handler):
+                 """Append TRADE_CLOSE records to
+                 /home/tothbot/records/trades_<YYYY>.jsonl.
+                 Runs in QueueListener background thread —
+                 never on hot path. Failure path emits
+                 TRADE_RECORD_WRITE_FAILED (HIGH) via the
+                 standard Logger path plus stderr."""
+
+                 def emit(self, record):
+                     path = ""
+                     try:
+                         message_str = record.getMessage()
+                         parsed = orjson.loads(message_str)
+                         if parsed.get("event") != "TRADE_CLOSE":
+                             return
+                         year = datetime.now(
+                             timezone.utc
+                         ).strftime("%Y")
+                         path = (
+                             f"/home/tothbot/records/"
+                             f"trades_{year}.jsonl"
+                         )
+                         fd = os.open(
+                             path,
+                             os.O_WRONLY | os.O_APPEND | os.O_CREAT,
+                             0o644,
+                         )
+                         try:
+                             os.write(fd, (message_str + "\\n")
+                                          .encode("utf-8"))
+                             os.fsync(fd)
+                         finally:
+                             os.close(fd)
+                     except Exception as exc:
+                         try:
+                             logging.getLogger("tothbot").info(
+                                 log_record({
+                                     "event": "TRADE_RECORD_WRITE_FAILED",
+                                     "level": "HIGH",
+                                     "component": "LOGGER",
+                                     "path":  path,
+                                     "error": str(exc),
+                                 })
+                             )
+                         except Exception:
+                             pass
+                         print(
+                             f"[TRADE_RECORD_WRITE_FAILED "
+                             f"({exc}) path={path}]",
+                             file=sys.stderr,
+                             flush=True,
+                         )
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_5  04-23-2026  OI-029 DEFECT-ALERT-SMTP-TIMEOUT-001 fix
+                     specification.
+
+                     LG-ALERT-004 updated to specify the
+                     bounded SMTP retry loop:
+
+                       ALERT_SMTP_TIMEOUT_SEC raised 5 → 20.
+                       New ALERT_SMTP_MAX_ATTEMPTS = 2.
+                       New ALERT_SMTP_RETRY_BACKOFF_SEC = 1.
+
+                     Prior dv1_4 behavior: a single SMTP
+                     conversation (connect, starttls, login,
+                     sendmail) governed by a 5s per-stage
+                     timeout. Any one transient stage >5s
+                     produced "The read operation timed out"
+                     on the TB00105 / TB00111 / TB00117
+                     Proton SMTP link, and the alert was
+                     permanently lost (stderr only).
+
+                     New dv1_5 behavior: SMTP conversation
+                     wrapped in a for-attempt loop of length
+                     ALERT_SMTP_MAX_ATTEMPTS. On exception,
+                     sleep ALERT_SMTP_RETRY_BACKOFF_SEC and
+                     retry. ALERT_SMTP_FAILED emits only if
+                     every attempt fails — preserving the
+                     existing single-event surface and
+                     LG-ALERT-005 anti-recursion semantics.
+
+                     Worst-case wall time bounded at 41s
+                     (20 + 1 + 20). Off the trading hot
+                     path; no signal or execution latency
+                     impact. Confirmed by the
+                     `_alert_operator_direct` docstring (line
+                     391 of dv1_5 source) and by the
+                     LG-ALERT-004 call-site guidance —
+                     every caller either runs on the
+                     QueueListener background thread or on
+                     the queue-full handler path, never on
+                     an asyncio event loop.
+
+                     Synchronous time.sleep is specified
+                     rather than asyncio.sleep because
+                     the surrounding thread is not an asyncio
+                     loop. asyncio.sleep in a non-loop
+                     context is a category error.
+
+                     Closes OI-029 at T+48h observation
+                     window with zero ALERT_SMTP_FAILED
+                     events AND at least one successful
+                     ALERT_SENT (per TB00118 session plan).
+
+  dv1_4  04-21-2026  TB00108 bundled — AI-1 (OI-023
+                     CRITICAL) and AI-2 (OI-022 LOW).
+
+                     AI-1 (OI-023 DEFECT-TRADE-RECORD-001):
+                     Section 11 NEW — Permanent Trade
+                     Record File. LG-TREC-001 through
+                     LG-TREC-009. Specifies
+                     /home/tothbot/records/trades_<YYYY>.jsonl
+                     (annual JSONL, append-only, no
+                     rotation, 0o644 hard-pinned via
+                     os.open, fsync per write). Parent
+                     chain updated: 0511006 dv1_0 ->
+                     dv1_1 (two-stream record architecture
+                     captured at architectural level).
+                     Section 2 updated. Section 3 Q1/Q2/Q5
+                     updated to cover the new output stream
+                     and Logger's self-observability
+                     events. Section 4.3 updated to list
+                     trade_record_handler in the
+                     QueueListener wiring and document
+                     per-handler exception isolation.
+                     Section 4.4 (monitor_log_queue)
+                     updated to pass triggering_event.
+                     Section 7 LG-TOB-003 added: same JSON
+                     payload on both sinks (no field
+                     divergence). Section 8 LG-ALERT-002
+                     HIGH list extended with
+                     TRADE_RECORD_WRITE_FAILED. Section
+                     10 initialize_logger updated with
+                     os.makedirs for records dir and
+                     trade_record_handler wiring.
+                     Companion code change: logger.py
+                     dv1_3 -> dv1_4.
+
+                     AI-2 (OI-022 DEFECT-OBSERVABILITY-
+                     ALERT-SENT-001): Section 6.9 NEW —
+                     Logger Self-Observability Events.
+                     Registers ALERT_SENT (INFO),
+                     ALERT_SMTP_FAILED (HIGH),
+                     TRADE_RECORD_WRITE_FAILED (HIGH).
+                     Also registers LOG_QUEUE_FULL here
+                     (cross-linked with Section 8). Section
+                     8 LG-ALERT-002 HIGH list extended
+                     with ALERT_SMTP_FAILED (ALERT-EXEMPT).
+                     Section 8 LG-ALERT-004 expanded: new
+                     _alert_operator_direct signature with
+                     keyword-only subject /
+                     triggering_event / emit_structured
+                     parameters; success path emits
+                     ALERT_SENT; failure path emits
+                     ALERT_SMTP_FAILED. Call-site guidance
+                     added for the three internal callers.
+                     Section 8 LG-ALERT-005 NEW —
+                     anti-recursion guard: AlertHandler
+                     skips event=="ALERT_SMTP_FAILED" so a
+                     persistent SMTP outage does not
+                     self-trigger. Companion code change:
+                     logger.py dv1_3 -> dv1_4 (same bump
+                     as AI-1; one code file version carries
+                     both fixes).
+
+                     Governs logger.py dv1_4.
+
+  dv1_3  04-20-2026  OI-019 DEFECT-ALERT-ROUTING-001 fix.
+                     Section 8 Alert Routing: LG-ALERT-001,
+                     LG-ALERT-002, and LG-ALERT-004 updated
+                     from singular alert@tothbot.com to plural
+                     alerts@tothbot.com. Rationale: the real
+                     Proton Mail mailbox exists only at the
+                     plural address; the singular mailbox
+                     does not exist and cannot be created
+                     because the domain catch-all reserves
+                     the namespace (Proton returns "Address
+                     is already taken" on every create
+                     attempt). All post-deploy CRITICAL/HIGH
+                     alerts bounced with "550 5.1.1 Recipient
+                     address rejected" until this fix (TB00105
+                     Query 9). Code change companion:
+                     logger.py dv1_2 → dv1_3 (ALERT_EMAIL
+                     module constant updated). Governs
+                     logger.py dv1_3.
+
+  dv1_2  04-05-2026  Phase 8 completion. WD → full spec.
+                     Parent chain updated (1000000/1010000
+                     now exist). Five coding-readiness
+                     questions answered (Section 3). WD
+                     status removed. Section 4 expanded:
+                     LG-QUEUE-006 (health monitoring added).
+                     Section 5 (Format): LG-FMT-005 added
+                     (connection_id requirement). Section 6
+                     (Event Registry): complete registry for
+                     all 6 components — expanded from partial
+                     WD list. Section 7 (TRADE_CLOSE): all
+                     mandatory fields from 0511006 Section 6.
+                     Section 8 (Alert Routing): complete with
+                     all event codes and SMTP implementation
+                     guidance. Section 9 (File Management):
+                     disk sizing calculation, logrotate note.
+                     Section 10: complete initialization code.
+                     Document is coding-ready.
+
+  dv1_1  04-04-2026  DocPath correction.
+
+  dv1_0  03-26-2026  Initial WD. LG-ARCH, LG-QUEUE, LG-FMT,
+                     LG-CIATS, LG-EVT (partial).
+
+============================================================
+END OF DOCUMENT
+============================================================
