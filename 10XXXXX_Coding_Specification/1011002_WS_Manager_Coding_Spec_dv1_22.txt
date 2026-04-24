@@ -1,10 +1,10 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_21
+DocVersion: dv1_22
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_21.txt
-DocDate:    04-23-2026
-DocTime:    04:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_22.txt
+DocDate:    04-24-2026
+DocTime:    02:00:00 UTC
 
 ============================================================
 WS MANAGER CODING SPECIFICATION
@@ -32,7 +32,7 @@ This document supersedes and retires all prior WD versions
 
   1000000  Coding_Specification          dv1_0
   1010000  Trading_System_Coding_Anchor  dv1_0
-  1011002  This document                 dv1_20
+  1011002  This document                 dv1_21
   Parent specification:
     0511001  WS_Manager_Specification    dv1_0
 
@@ -336,12 +336,13 @@ WM-CONN-007  Use websockets.asyncio.client.connect (AR-060).
   (AR-036 — stagger rule, prevents Kraken rate rejection).
 
 ------------------------------------------------------------
-4.4 Token Management
+4.4 Token Management and REST Private-Call Signing
 ------------------------------------------------------------
 
 WM-TOKEN-001  WS auth token valid 900 seconds (15 minutes).
               Acquire fresh token at startup (Step 1) and
               on EVERY reconnect via REST GetWebSocketsToken.
+              Call MUST be signed per WM-REST-SIGN-001.
 
 WM-TOKEN-002  Use TRADE API key (not DATA key) for token
               acquisition. Token grants private WS access.
@@ -349,6 +350,86 @@ WM-TOKEN-002  Use TRADE API key (not DATA key) for token
 WM-TOKEN-003  Token stored as instance variable. Never
               persisted to disk. Regenerate on every
               reconnect — do not reuse expired tokens.
+
+WM-REST-SIGN-001  Every private Kraken REST call made by
+                  WS Manager MUST carry both the API-Key
+                  header and the API-Sign header. Attaching
+                  only API-Key (without API-Sign) is a
+                  defect and MUST fail code review. Kraken
+                  rejects every such request with
+                  EAPI:Invalid key. Authoritative contract:
+                  0411002 Kraken_REST_API_Specification
+                  dv1_1 REST-AUTH-001 and REST-AUTH-003.
+                  Private endpoints currently called by
+                  WS Manager under this rule:
+                    /0/private/GetWebSocketsToken
+                      (WM-TOKEN-001)
+                    /0/private/OpenOrders
+                      (executions gap fallback, AR-035)
+                    /0/private/Balance
+                      (balances gap fallback, AR-035)
+                  Any private endpoint added in future
+                  versions MUST go through the same
+                  signing path.
+
+WM-REST-SIGN-002  The signature MUST be computed per the
+                  exact formula mandated by 0411002
+                  REST-AUTH-001:
+                    message   = URI_path +
+                                SHA256(nonce +
+                                       POST_data_string)
+                    signature = HMAC-SHA512(
+                                  message,
+                                  base64_decode(api_secret))
+                    API-Sign  = base64_encode(signature)
+                  URI_path is the path segment only
+                  (e.g. "/0/private/GetWebSocketsToken"),
+                  not the full URL. POST_data_string is
+                  the urlencoded body (e.g.
+                  "nonce=1700000000000"). nonce is a
+                  millisecond epoch string, monotonically
+                  increasing per the constraint in
+                  REST-AUTH-007.
+                  Implementation MUST live in a single
+                  private helper on WSManager:
+                    _sign_rest_request(
+                      url_path: str,
+                      data: dict,
+                      api_secret: str,
+                    ) -> tuple[str, str]
+                  returning (post_data_string,
+                  signature_b64). The helper is the ONLY
+                  place in the code base where Kraken
+                  REST signing is implemented. Call sites
+                  invoke the helper; they do not inline
+                  the algorithm.
+
+WM-REST-SIGN-003  The body transmitted to Kraken MUST be
+                  the exact post_data_string returned by
+                  _sign_rest_request — not the source
+                  dict. Any drift between the signed
+                  body and the transmitted body (e.g.
+                  re-urlencoding the dict a second time,
+                  re-ordering keys, re-typing nonce)
+                  breaks the signature and Kraken returns
+                  EAPI:Invalid key. Call-site pattern:
+                    data = {"nonce": str(int(
+                             time.time() * 1000))}
+                    post_data, signature = \
+                        self._sign_rest_request(
+                            url_path, data, trade_secret)
+                    resp = await session.post(
+                        f"{REST_BASE_URL}{url_path}",
+                        headers={
+                            "API-Key": trade_key,
+                            "API-Sign": signature,
+                            "Content-Type":
+                              "application/x-www-form-urlencoded",
+                        },
+                        data=post_data,
+                    )
+                  All three call sites MUST follow this
+                  pattern verbatim. Deviation is a defect.
 
 ------------------------------------------------------------
 4.5 Startup Sequence Reference
@@ -2246,6 +2327,18 @@ HR-WM-022  liquidity_24h populated ONLY from REST Ticker
            from the instrument channel is a defect.
            (DEFECT-SS-006 — corrected in dv1_15)
 
+HR-WM-023  Every private Kraken REST call MUST be signed
+           with both API-Key AND API-Sign headers per
+           WM-REST-SIGN-001 / WM-REST-SIGN-002 /
+           WM-REST-SIGN-003. Shipping only API-Key
+           (without API-Sign) is a defect. Kraken rejects
+           every unsigned private request with
+           EAPI:Invalid key. Signing implementation MUST
+           use the single _sign_rest_request helper on
+           WSManager; inline signing at call sites is a
+           defect. (DEFECT-WM-REST-SIGN-001 — corrected
+           in dv1_23)
+
 ============================================================
 18. RELATED DOCUMENTS
 ============================================================
@@ -2277,6 +2370,98 @@ HR-WM-022  liquidity_24h populated ONLY from REST Ticker
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_22  04-24-2026  OI-041 DEFECT-WM-REST-SIGN-001
+                      specification. Three private Kraken
+                      REST call sites in ws_manager.py
+                      (_rest_get_ws_token,
+                      _rest_get_open_orders,
+                      _rest_get_account_balance) were
+                      shipping only the API-Key header and
+                      a nonce; no API-Sign HMAC-SHA512
+                      signature was attached. The
+                      authoritative signing contract has
+                      always been 0411002 REST-AUTH-001
+                      and REST-AUTH-003, but this coding
+                      spec did not previously enumerate
+                      those requirements at the
+                      WS-Manager-rule level. Kraken
+                      correctly rejected every such
+                      request with EAPI:Invalid key. In
+                      paper mode impact was zero because
+                      WM-RECONNECT-019 (dv1_21) and
+                      FIX-WM-PT-001 (dv1_14) gate all
+                      three call sites to no-op; at live-
+                      mode transition every token
+                      acquisition, executions-gap fallback,
+                      and balances-gap fallback would have
+                      failed.
+
+                      Section 4.4 renamed to "Token
+                      Management and REST Private-Call
+                      Signing". Three new rules added:
+
+                        WM-REST-SIGN-001
+                          Every private REST call MUST
+                          carry both API-Key AND API-Sign
+                          headers. Enumerates current
+                          call sites (GetWebSocketsToken,
+                          OpenOrders, Balance) and
+                          requires the same treatment for
+                          any private endpoint added in
+                          future versions.
+
+                        WM-REST-SIGN-002
+                          Mandates the exact 0411002
+                          REST-AUTH-001 signature formula
+                          (message = URI_path +
+                          SHA256(nonce +
+                          POST_data_string); signature =
+                          HMAC-SHA512(message,
+                          base64_decode(secret))) and
+                          requires a single helper
+                          _sign_rest_request on WSManager
+                          as the ONLY place the algorithm
+                          appears in the code base.
+
+                        WM-REST-SIGN-003
+                          Mandates that the body
+                          transmitted to Kraken is the
+                          exact post_data_string returned
+                          by _sign_rest_request, not the
+                          source dict. Defines the
+                          verbatim call-site pattern all
+                          three sites must follow.
+
+                      HR-WM-023 added to Section 17
+                      Consolidated Hard Rules summarizing
+                      the signing mandate and pointing at
+                      WM-REST-SIGN-001/002/003.
+
+                      WM-TOKEN-001 annotated to reference
+                      WM-REST-SIGN-001 signing requirement.
+
+                      Code change: ws_manager.py dv1_22 →
+                      dv1_23 adds the _sign_rest_request
+                      helper, imports (base64, hashlib,
+                      hmac, urllib.parse.urlencode), and
+                      rewrites all three call sites to
+                      attach API-Sign. Paper-mode skip
+                      branches are unchanged and continue
+                      to keep all three sites at zero
+                      calls in paper mode. Governed by
+                      WM-REST-SIGN-001/002/003. Fix
+                      closes OI-041 on 48-hour
+                      observation window following deploy.
+
+                      No architectural change. 0411002
+                      dv1_1 signing contract is unchanged.
+                      0511001 functional spec unchanged —
+                      this is a code-to-spec conformance
+                      fix. 1010000 Trading_System_Coding_
+                      Anchor bumped dv1_13 → dv1_14 to
+                      register the new ws_manager.py
+                      SpecVer.
 
   dv1_21  04-23-2026  OI-028 fix specification.
 

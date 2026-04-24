@@ -1,10 +1,10 @@
 DocDCN:     1010000
 DocTitle:   Trading_System_Coding_Anchor
-DocVersion: dv1_13
+DocVersion: dv1_14
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_13.txt
-DocDate:    04-23-2026
-DocTime:    04:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_14.txt
+DocDate:    04-24-2026
+DocTime:    02:00:00 UTC
 
 ============================================================
 TRADING SYSTEM CODING ANCHOR
@@ -105,15 +105,15 @@ Governing code file: All Pathway 2 files (BP standard).
 ------------------------------------------------------------
 4.2  1011002  WS_Manager_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_21  (04-23-2026)
+Current version: dv1_22  (04-24-2026)
 Status: CODING-READY. Phase 8 complete. Post-deployment
 defects documented.
 Parent spec: 0511001 WS_Manager_Specification
 Scope: WebSocket Manager — all Kraken WS v2 connections,
 subscriptions, dispatch table, zombie detection, ohlc
 subscription sequencing, reconnect hardening for transient
-disconnects.
-Key post-deployment defects documented in dv1_13 through dv1_21:
+disconnects, REST private-call HMAC-SHA512 signing.
+Key post-deployment defects documented in dv1_13 through dv1_22:
   DEFECT-WM-ZOM-001: zombie timer initialized at __init__,
     not at connection-live. Fixed: commit 4241bf3.
   DEFECT-WM-OHLC-001: ohlc subscribed without symbol list.
@@ -140,6 +140,21 @@ Key post-deployment defects documented in dv1_13 through dv1_21:
     481s (~8 min). Base / cap / factor unchanged; same
     exponential curve, no behavior regression. Bundled
     with OI-019 per TB00105 Section 4.
+  DEFECT-WM-REST-SIGN-001 — OI-041 CLOSED pending T+48h
+    observation (TB00125 deploy). Three private REST call
+    sites (_rest_get_ws_token, _rest_get_open_orders,
+    _rest_get_account_balance) were shipping only the
+    API-Key header and nonce — no API-Sign signature
+    attached. Kraken correctly rejected every such request
+    with EAPI:Invalid key. Paper-mode impact zero (gated
+    by WM-RECONNECT-019 / FIX-WM-PT-001 skip branches);
+    live-mode entry, balance, and order-query calls would
+    have failed 100%. Fix in dv1_22 spec / ws_manager.py
+    dv1_23: new _sign_rest_request helper computes
+    HMAC-SHA512 per REST-AUTH-001; all three call sites
+    attach API-Key + API-Sign + Content-Type headers.
+    Governed by WM-REST-SIGN-001 / WM-REST-SIGN-002 /
+    WM-REST-SIGN-003 and HR-WM-023.
 Governing code file: ws_manager.py
 
 ------------------------------------------------------------
@@ -406,19 +421,33 @@ Each entry contains:
   File:        ws_manager.py
   DCN:         1011002
   Spec:        WS_Manager_Coding_Spec
-  SpecVer:     dv1_21
-  RegDate:     04-23-2026
-  Note:        OI-028 FIX-WM-RECONNECT-019 — paper-mode
-               reconnect-path gating added to
-               _execute_reconnect_sequence. Code dv1_21 →
-               dv1_22. Spec dv1_20 (local-disk orphan,
-               never uploaded) → dv1_21 (TB00118 authored,
-               uploaded). Closes OI-018 / OI-020 / OI-028
-               together at T+48h observation window.
-               Prior note (dv1_20 / dv1_21 baseline): OI-020
-               DEFECT-KRAKEN-TRANSIENT-API-001 fix —
-               MAX_RECONNECT_ATTEMPTS 10 → 20, worst-case
-               wall time 181s → 481s.
+  SpecVer:     dv1_22
+  RegDate:     04-24-2026
+  Note:        OI-041 DEFECT-WM-REST-SIGN-001 fix — three
+               private Kraken REST call sites
+               (_rest_get_ws_token, _rest_get_open_orders,
+               _rest_get_account_balance) were shipping only
+               the API-Key header and a nonce; no API-Sign
+               HMAC-SHA512 signature was attached. Per
+               0411002 REST-AUTH-001 / REST-AUTH-003 every
+               private REST call MUST carry both API-Key
+               AND API-Sign. Fix: new _sign_rest_request
+               helper on WSManager computes the mandated
+               signature; all three call sites rewritten
+               to use it. New hard rules WM-REST-SIGN-001 /
+               WM-REST-SIGN-002 / WM-REST-SIGN-003 added
+               to spec dv1_22 Section 4.4. HR-WM-023 added
+               to consolidated hard rules. Code dv1_22 →
+               dv1_23. Spec dv1_21 → dv1_22. Paper-mode
+               impact zero (WM-RECONNECT-019 /
+               FIX-WM-PT-001 already gate all three sites
+               to no-op in paper mode); fix unblocks live-
+               mode transition. Closes OI-041 on T+48h
+               observation window.
+               Prior note (dv1_22 / dv1_23 baseline): OI-028
+               FIX-WM-RECONNECT-019 — paper-mode reconnect-
+               path gating added to
+               _execute_reconnect_sequence.
 
   File:        signal_pipeline.py
   DCN:         1011003
@@ -832,6 +861,37 @@ TothBot_V2-Docs. No further action required.
 ============================================================
 6. REVISION HISTORY
 ============================================================
+
+  dv1_14 04-24-2026  OI-041 DEFECT-WM-REST-SIGN-001
+                     registry bump.
+
+                     Section 5.2 registry updated:
+                     ws_manager.py SpecVer dv1_21 →
+                     dv1_22, RegDate 04-24-2026, Note
+                     rewritten to record the OI-041
+                     signing fix and retain the prior
+                     OI-028 context. No other registry
+                     entries changed.
+
+                     Governing spec: 1011002 dv1_22
+                     WM-REST-SIGN-001 / WM-REST-SIGN-002
+                     / WM-REST-SIGN-003.
+
+                     Governing code: ws_manager.py dv1_23
+                     — adds _sign_rest_request helper and
+                     rewrites all three private REST call
+                     sites to sign per the 0411002
+                     REST-AUTH-001 contract.
+
+                     No architectural change. 0411002
+                     signing contract unchanged. 0511001
+                     functional spec unchanged (code-to-
+                     spec conformance fix). Paper-mode
+                     impact zero (WM-RECONNECT-019 /
+                     FIX-WM-PT-001 already gate all three
+                     sites). Live-mode transition
+                     unblocked. Closes OI-041 on T+48h
+                     observation window following deploy.
 
   dv1_13 04-23-2026  OI-028 / OI-029 / OI-030 bundled
                      remediation. Three changes.
