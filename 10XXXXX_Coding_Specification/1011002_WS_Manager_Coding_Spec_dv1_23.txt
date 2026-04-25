@@ -1,10 +1,10 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_22
+DocVersion: dv1_23
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_22.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_23.txt
 DocDate:    04-24-2026
-DocTime:    02:00:00 UTC
+DocTime:    23:59:59 UTC
 
 ============================================================
 WS MANAGER CODING SPECIFICATION
@@ -31,10 +31,10 @@ This document supersedes and retires all prior WD versions
 ============================================================
 
   1000000  Coding_Specification          dv1_0
-  1010000  Trading_System_Coding_Anchor  dv1_0
-  1011002  This document                 dv1_21
+  1010000  Trading_System_Coding_Anchor  dv1_16
+  1011002  This document                 dv1_23
   Parent specification:
-    0511001  WS_Manager_Specification    dv1_0
+    0511001  WS_Manager_Specification    dv1_3
 
 All five coding-readiness questions are answered in
 Section 3. All hard rules are consolidated in Section 16.
@@ -1346,12 +1346,18 @@ WM-PS-001  Build pair_status cache from instrument channel
 
 WM-PS-002  Populate monitored_universe from instrument
            snapshot per criteria:
-             (1) quote_currency: "USD" or "USDC"
+             (1) quote_currency: "USD", "USDC", or "USDT"
+                 (D-03: full universe, no quote-currency
+                 exclusions. Cascaded from 0511001 dv1_3
+                 §3 AS-001 / 0711003 dv1_3 AS-001 /
+                 0500000 dv1_21 §8 AR-070.)
                  DERIVED from symbol name: symbol.split("/")[1]
                  Kraken WS v2 instrument snapshot does NOT
                  provide a reliable quote_currency field.
                  Do NOT read from instrument snapshot field.
                  Derivation: "BTC/USD".split("/")[1] → "USD"
+                 Derivation: "ETH/USDC".split("/")[1] → "USDC"
+                 Derivation: "BTC/USDT".split("/")[1] → "USDT"
                  (WM-PS-006, DEFECT-SS-008)
              (2) status: "online"
              (3) 24h volume >= min_volume_usd_daily —
@@ -1361,10 +1367,21 @@ WM-PS-002  Populate monitored_universe from instrument
                  (DEFECT-SS-006 / HR-WM-022)
            All three criteria must pass.
 
-WM-PS-003  Top N=50 pairs by 24h volume (N is CIATS-owned).
-           BTC/USD ALWAYS included regardless of ranking
-           (AR-074). If BTC/USD does not meet volume
-           threshold: include anyway.
+WM-PS-003  Universe size: NO Top-N CAP. ALL pairs satisfying
+           WM-PS-002 criteria (1)+(2)+(3) become members of
+           monitored_universe. (D-08 LOCKED: Top-N universe
+           cap RETIRED. Cascaded from 0500000 dv1_21 §8
+           AR-070 / 0711003 dv1_3 AS-002 / 0511001 dv1_3 §3
+           AS-002.)
+           BTC/USD ALWAYS included regardless of volume
+           ranking (AR-074). If BTC/USD does not meet
+           min_volume_usd_daily threshold: include anyway.
+           Volume ranking is preserved for downstream
+           consumers (e.g., Selection Controller volume
+           tiers) but is NOT used to truncate the universe.
+           CIATS parameter `monitored_universe_n` is RETIRED
+           and MUST NOT appear in code, config, or
+           pair_cache logic.
 
 WM-PS-004  Per-pair capture from instrument snapshot (AR-028):
              price_increment: dict[str, Decimal]
@@ -1388,15 +1405,17 @@ WM-PS-006  quote_currency in pair_cache MUST be derived
            (confirmed DEFECT-SS-008). pair.get(
            "quote_currency", "") always returns "" causing
            candidates = [] in _warm_up_all_pairs() and
-           _build_monitored_universe() — both USD/USDC
-           filters silently produce no results.
+           _build_monitored_universe() — all three USD,
+           USDC, and USDT (D-03) filters silently produce
+           no results.
            Consequence: LIQUIDITY_SEED_FAILED on every
            startup. Gate 2 blocks all entries.
            Required derivation:
              symbol.split("/")[1] if "/" in symbol else ""
            All Kraken WS v2 symbols are "BASE/QUOTE"
-           format (e.g., "BTC/USD", "ETH/USDC"). The
-           quote asset is ALWAYS the right side of "/".
+           format (e.g., "BTC/USD", "ETH/USDC",
+           "BTC/USDT"). The quote asset is ALWAYS the
+           right side of "/".
            pair_cache stores this derived value under
            key "quote_currency" for downstream use.
 
@@ -1545,7 +1564,7 @@ WM-LIQ-001  liquidity_24h: dict[str, Decimal] — maps WS v2
 
 WM-LIQ-002  _rest_get_ticker(candidates: list[str]) method:
             Input: list of WS v2 pair names (all online
-            USD/USDC candidates from instrument snapshot —
+            USD/USDC/USDT candidates from instrument snapshot —
             NOT limited to monitored_universe).
             Process:
               (a) Map WS pair names to Kraken classic names
@@ -1604,14 +1623,15 @@ WM-LIQ-004  Startup call sequence:
             (WM-LIQ-003, WM-LIQ-011).
             _rest_get_ticker() is then called after maps are
             built, and is called BEFORE SYSTEM_OPERATIONAL is
-            declared. All online USD/USDC pairs from pair_cache
-            are passed as candidates (not just the top-N
-            monitored_universe — universe ranking requires
-            volume data, so all candidates are fetched).
+            declared. All online USD/USDC/USDT pairs from
+            pair_cache are passed as candidates (all
+            qualifying pairs — D-08 retires Top-N cap;
+            volume data is fetched for the full universe).
             After _rest_get_ticker() returns:
               Store results in self.liquidity_24h.
               Log LIQUIDITY_SEEDED(pairs=N, volumes=dict).
-              Proceed to universe ranking and then to
+              Proceed to universe membership determination
+              per WM-PS-002 / WM-PS-003 and then to
               seed_indicators_from_rest() per pair.
 
 WM-LIQ-005  _liquidity_refresh_loop() async task:
@@ -2370,6 +2390,216 @@ HR-WM-023  Every private Kraken REST call MUST be signed
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_23  04-24-2026  D-03 + D-08 AA=10 CASCADE COMPLETION.
+                      Major-omission corrective per TB00135
+                      FP/DP analysis. The TB00131 §4.3
+                      5-phase plan (declared COMPLETE in
+                      TB00134 Thread A) updated the AA=05
+                      WS Manager parent spec (0511001
+                      dv1_3) and the 0500000 architecture
+                      (dv1_21) for both D-03 (universe =
+                      USD + USDC + USDT) and D-08 (Top-N
+                      cap retired) — but DID NOT cascade
+                      the change into 1011002 (this AA=10
+                      coding spec). This violated TB00000
+                      §3.4 ("AA=10 is the coding layer.
+                      It is not optional. AA=10 is not a
+                      summary of other documents — it is
+                      the direct input to code.") and
+                      silently broke the AA=05 → AA=10
+                      coupling.
+
+                      Effect prior to dv1_23: the WS
+                      Manager (the gateway component that
+                      builds pair_cache and
+                      monitored_universe at startup)
+                      filtered candidates to "USD" or
+                      "USDC" only and capped the universe
+                      at the top 50 pairs by 24h volume.
+                      USDT pairs never entered
+                      monitored_universe regardless of
+                      Selection Controller's correct
+                      USD+USDC+USDT logic; downstream
+                      D-03 enforcement was short-
+                      circuited. Universe size was
+                      capped at 50 regardless of D-08
+                      LOCKED retirement of the cap.
+                      Both LOCKED decisions silently
+                      violated by the deployed code
+                      (ws_manager.py, last deploy
+                      5d44292, TB00125) which
+                      faithfully implemented the
+                      stale dv1_22 spec.
+
+                      Edits this version (six surgical
+                      edits, no architectural change):
+
+                        Header (DocVersion, DocPath,
+                          DocDate, DocTime, DocTime
+                          updated to 23:59:59 UTC for
+                          TB00135 cascade event).
+
+                        Section 2 Parent Chain
+                          1010000 reference dv1_0 →
+                          dv1_16 (cascade target).
+                          1011002 self-reference
+                          dv1_21 → dv1_23 (corrects
+                          accumulated drift; dv1_22
+                          had stale dv1_21 self-
+                          reference).
+                          0511001 parent reference
+                          dv1_0 → dv1_3 (corrects
+                          accumulated drift across
+                          Phase 1 of TB00131 §4.3 cascade).
+
+                        WM-PS-002 (Section 9.1)
+                          Criterion (1) quote_currency
+                          enumeration extended from
+                          {"USD", "USDC"} to {"USD",
+                          "USDC", "USDT"}. Three
+                          derivation examples added
+                          (BTC/USD, ETH/USDC,
+                          BTC/USDT). Cross-references
+                          added to 0511001 dv1_3 §3
+                          AS-001, 0711003 dv1_3
+                          AS-001, 0500000 dv1_21 §8
+                          AR-070.
+
+                        WM-PS-003 (Section 9.1)
+                          Rule fully rewritten. Was:
+                          "Top N=50 pairs by 24h
+                          volume (N is CIATS-owned)".
+                          Now: "Universe size: NO
+                          Top-N CAP. ALL pairs
+                          satisfying WM-PS-002
+                          criteria become members of
+                          monitored_universe."
+                          BTC/USD always-include
+                          carve-out preserved (AR-074).
+                          Volume ranking preserved as
+                          informational signal for
+                          downstream consumers but
+                          MUST NOT truncate the
+                          universe. CIATS parameter
+                          monitored_universe_n
+                          declared RETIRED. Cross-
+                          references added to 0500000
+                          dv1_21 §8 AR-070, 0711003
+                          dv1_3 AS-002, 0511001
+                          dv1_3 §3 AS-002.
+
+                        WM-PS-006 (Section 9.1)
+                          Narrative updated: filter
+                          set referenced as "all
+                          three USD, USDC, and USDT
+                          (D-03) filters" in place
+                          of "both USD/USDC".
+                          Symbol example list
+                          expanded to include
+                          "BTC/USDT".
+
+                        WM-LIQ-002 (Section 9.6)
+                          _rest_get_ticker candidate
+                          set updated from
+                          "USD/USDC candidates" to
+                          "USD/USDC/USDT
+                          candidates".
+
+                        WM-LIQ-004 (Section 9.6)
+                          Startup call sequence
+                          narrative updated. Was:
+                          "All online USD/USDC pairs
+                          from pair_cache are passed
+                          as candidates (not just
+                          the top-N monitored_universe
+                          — universe ranking requires
+                          volume data, so all
+                          candidates are fetched)".
+                          Now: "All online
+                          USD/USDC/USDT pairs from
+                          pair_cache are passed as
+                          candidates (all qualifying
+                          pairs — D-08 retires Top-N
+                          cap; volume data is
+                          fetched for the full
+                          universe)". Trailing prose
+                          updated to point at the
+                          new WM-PS-002 / WM-PS-003
+                          pair instead of "universe
+                          ranking".
+
+                      No content changes outside the
+                      six surgical edits. No new rules
+                      introduced. No rule-IDs
+                      retired beyond the one
+                      explicitly retired
+                      (monitored_universe_n CIATS
+                      parameter, already retired in
+                      0500000 dv1_21 §9 — this
+                      cascade simply removes the
+                      shadow normative reference
+                      that survived in 1011002).
+                      Hard Rules section (§17) NOT
+                      touched — no Top-N rule was
+                      ever lifted to HR-WM-* status.
+
+                      Code change required: ws_manager.py
+                      (last deploy 5d44292, TB00125;
+                      currently dv1_23 source per
+                      OI-041 fix). New dv1_24 cascade
+                      required to:
+                        (i) Replace the line ~1702
+                            filter `if quote not in
+                            ("USD", "USDC")` with
+                            `if quote not in ("USD",
+                            "USDC", "USDT")`.
+                        (ii) Remove the
+                             `UNIVERSE_TOP_N: int = 50`
+                             constant (line ~446) and
+                             the `top_n =
+                             candidates[:UNIVERSE_TOP_N]`
+                             slice at lines ~1711–1715.
+                        (iii) Update the line ~1695
+                              header comment from
+                              "Filter: USD/USDC,
+                              online, volume >=
+                              $500k. Top N=50.
+                              BTC/USD always in."
+                              to reflect the new
+                              cascade.
+                      Code authoring is Claude Code
+                      scope per Bill directive
+                      carried from TB00130; not
+                      authored in this chat.
+
+                      1010000 dv1_15 → dv1_16 cascade
+                      registers the new 1011002
+                      version and captures the
+                      cascade event as OI-056-CAND
+                      closure.
+
+                      Bill override: document control
+                      constraints for direct dv1_22 →
+                      dv1_23 increment without rv
+                      state are explicitly overridden
+                      per Bill's standing directive
+                      continuing the override scope
+                      established TB00115 / TB00116 /
+                      TB00120 / TB00130 / TB00134.
+
+                      Closes the TB00135 major-
+                      omission finding identified
+                      this turn. OI-046 (Top-N cap
+                      retired) AA=10 spec coverage
+                      now COMPLETE (was previously
+                      claimed COMPLETE TB00134 but
+                      AA=10 was missed). OI-045
+                      (USDT inclusion) AA=10 spec
+                      coverage now COMPLETE (was
+                      previously claimed COMPLETE
+                      TB00134 but AA=10 was missed).
+                      Both close at code deploy.
 
   dv1_22  04-24-2026  OI-041 DEFECT-WM-REST-SIGN-001
                       specification. Three private Kraken

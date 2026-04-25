@@ -1,0 +1,555 @@
+DocDCN:     1011009
+DocTitle:   Selection_Controller_Coding_Spec
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011009_Selection_Controller_Coding_Spec_dv1_1.txt
+DocDate:    04-24-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+SELECTION CONTROLLER CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for the TothBot V2 Selection Controller — Gate 5 of the
+8-gate trading pipeline. It applies 6 quality gates to
+every SSS PASS signal and manages cooldown and consecutive
+loss state across evaluations.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011009  This document
+
+  Primary parent specification:
+    0811002  Selection_Controller_Specification  dv1_0
+             (gate rules, state management, interfaces)
+
+  Secondary parent specification (universe scope):
+    0711003  Asset_Selection_Specification        dv1_3
+             (AS-001 Criterion 1, AS-003 BTC/USD rule,
+             HR-AS-001..010 asset-selection hard rules)
+
+  Architectural authority:
+    0500000  System_Architecture_Overview         dv1_20
+             AR-070 Asset selection universe (scope amended
+             TB00130 Ratified Decision D-03: quote currency
+             USD + USDC + USDT, no top-N cap) assigns
+             SC-UNI-001 through SC-UNI-006 to 1011009.
+             AR-072 assigns SC-GATE-1 through SC-GATE-6.
+             AR-074 BTC/USD market_regime proxy commitment.
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does Selection Controller DO?
+    Applies 6 quality gates in strict sequence to every
+    SSS PASS signal. Returns PASS or FAIL with reject code.
+    Manages two persistent in-memory state dicts: cooldown
+    registry and consecutive loss counters. FAIL = skip
+    (log reject code, continue pipeline for other pairs).
+    Never halts pipeline. Operates only on pairs that are
+    members of tradeable_universe per §7 SC-UNI-* rules.
+
+(2) Interfaces?
+    IN:  SSS PASS signal + candle data (close, open, volume)
+         Pre-computation cache: atr_14[symbol], pair_cache
+           (qty_min, cost_min)
+         Position Mirror (SC-GATE-3: is symbol open?)
+         Parameter Store snapshot: sc_body_threshold,
+           sc_cooldown_seconds, sc_consecutive_limit
+         Gate 8 preview: quantized qty estimate (SC-GATE-5)
+         tradeable_universe membership handle (WS Manager,
+           populated per 0711003 dv1_3 AS-004 and
+           maintained per AS-006; Selection Controller
+           neither populates nor filters the universe)
+    OUT: PASS → Long Module dispatch
+         FAIL → Logger (reject code), pipeline skip
+
+(3) Hard rules?
+    Gates in strict sequence 1 → 6. First FAIL exits immediately.
+    FAIL = SKIP. Never HALT. Pipeline continues for other pairs.
+    sc_body_threshold applied to ATR(14) — not raw candle range.
+    Cooldown uses time.monotonic() — never time.time().
+    State dicts preserved across WS reconnect.
+    sc_body_threshold, sc_cooldown_seconds, sc_consecutive_limit
+      all read from Parameter Store snapshot (I-4).
+    Consecutive loss count resets on win for that symbol.
+    Consecutive loss count resets on CIATS instruction.
+    Selection Controller operates ONLY on pairs in
+      tradeable_universe per §7 SC-UNI-*. Any code path
+      that invokes SC for a non-member pair is a defect.
+    BTC/USD is CIATS-owned default-disabled at Gate 1 per
+      0711003 dv1_3 HR-AS-009 / AR-074 / §7 SC-UNI-003.
+      If SC is invoked for BTC/USD while BTC/USD pipeline
+      evaluation is default-disabled, that is a defect
+      upstream (Gate 1 failed to exclude) — SC treats it
+      per normal gate sequence (no special handling).
+
+(4) What triggers it?
+    SSS PASS signal from Signal Pipeline SSS Engine on
+    every 5-minute candle evaluation, scoped to
+    tradeable_universe pairs that passed Gates 1-4.
+
+(5) What does it log?
+    GATE5_PASS: symbol, all 6 gates passed
+    WEAK_CANDLE_BODY: symbol, body_size, threshold, atr_14
+    POSITION_ALREADY_OPEN: symbol
+    PAIR_IN_COOLDOWN: symbol, elapsed_seconds, remaining_seconds
+    POSITION_TOO_SMALL: symbol, computed_qty, qty_min,
+      computed_cost, cost_min
+    CONSECUTIVE_LOSSES_EXCEEDED: symbol, count, limit
+
+============================================================
+4. IN-MEMORY STATE
+============================================================
+
+SC-STATE-001  Cooldown registry:
+              cooldown_registry: dict[str, float] = {}
+              # Key: symbol. Value: time.monotonic() of last exit.
+
+SC-STATE-002  Consecutive loss counter:
+              consecutive_loss_count: dict[str, int] = {}
+              # Key: symbol. Default: 0 if not present.
+
+SC-STATE-003  Both dicts preserved across WS reconnect.
+              Not reset on reconnect or session restart.
+              Only reset by win (cooldown+loss count reset)
+              or CIATS instruction (loss count reset only).
+
+SC-STATE-004  On position close — EXIT CONTROLLER calls back:
+
+              def on_position_closed(symbol, was_win: bool):
+                  """Called by Exit Controller on every close."""
+                  # Update cooldown
+                  cooldown_registry[symbol] = time.monotonic()
+                  if was_win:
+                      consecutive_loss_count[symbol] = 0
+                  else:
+                      consecutive_loss_count[symbol] = (
+                          consecutive_loss_count.get(symbol, 0) + 1
+                      )
+
+============================================================
+5. SIX QUALITY GATES
+============================================================
+
+SC-GATE-1  SSS Signal Pass
+           All three SSS conditions confirmed true.
+           (Already verified by Signal Pipeline SSS Engine
+           before calling Selection Controller.)
+           This gate is implicit — passes by arrival.
+
+SC-GATE-2  Candle Body Strength
+           Condition:
+             candle_body = abs(candle_close - candle_open)
+             threshold = atr_14[symbol] * sc_body_threshold
+             # sc_body_threshold = 0.3 (CIATS-owned starting)
+             PASS: candle_body > threshold
+             FAIL: WEAK_CANDLE_BODY
+
+           Implementation:
+             candle_body = abs(Decimal(str(candle_close))
+                               - Decimal(str(candle_open)))
+             threshold = atr_14[symbol] * Decimal(str(
+                 snapshot["sc_body_threshold"]))
+             if candle_body <= threshold:
+                 log("WEAK_CANDLE_BODY", symbol=symbol,
+                     body=candle_body, threshold=threshold,
+                     atr_14=atr_14[symbol])
+                 return FAIL
+
+SC-GATE-3  One Position Per Symbol
+           Condition:
+             PASS: symbol NOT in position_mirror
+             FAIL: POSITION_ALREADY_OPEN
+
+           Implementation:
+             if symbol in position_mirror:
+                 log("POSITION_ALREADY_OPEN", symbol=symbol)
+                 return FAIL
+
+SC-GATE-4  Post-Exit Cooldown
+           Condition:
+             PASS: symbol not in cooldown_registry
+                   OR (time.monotonic() - cooldown_registry[symbol])
+                   >= sc_cooldown_seconds
+             FAIL: PAIR_IN_COOLDOWN
+             # sc_cooldown_seconds = 300 (CIATS-owned starting = 1 candle)
+
+           Implementation:
+             if symbol in cooldown_registry:
+                 elapsed = time.monotonic() - cooldown_registry[symbol]
+                 remaining = snapshot["sc_cooldown_seconds"] - elapsed
+                 if remaining > 0:
+                     log("PAIR_IN_COOLDOWN", symbol=symbol,
+                         elapsed_seconds=elapsed,
+                         remaining_seconds=remaining)
+                     return FAIL
+
+SC-GATE-5  Minimum Position Size Pre-Validation
+           Condition:
+             PASS: quantized_qty >= qty_min
+                   AND quantized_qty * entry_limit_price >= cost_min
+             FAIL: POSITION_TOO_SMALL
+
+           Implementation:
+             # Preview Gate 8 sizing without committing
+             entry_limit_price = Decimal(str(current_close))
+             per_trade_usd = compute_per_trade_usd(snapshot)
+             raw_qty = per_trade_usd / entry_limit_price
+             quantized_qty = raw_qty.quantize(
+                 pair_cache[symbol]["qty_increment"],
+                 rounding=ROUND_DOWN
+             )
+             if quantized_qty < pair_cache[symbol]["qty_min"]:
+                 log("POSITION_TOO_SMALL", symbol=symbol,
+                     computed_qty=quantized_qty,
+                     qty_min=pair_cache[symbol]["qty_min"])
+                 return FAIL
+             computed_cost = quantized_qty * entry_limit_price
+             if computed_cost < pair_cache[symbol]["cost_min"]:
+                 log("POSITION_TOO_SMALL", symbol=symbol,
+                     computed_cost=computed_cost,
+                     cost_min=pair_cache[symbol]["cost_min"])
+                 return FAIL
+
+SC-GATE-6  Consecutive Loss Limit
+           Condition:
+             count = consecutive_loss_count.get(symbol, 0)
+             PASS: count < sc_consecutive_limit
+             FAIL: CONSECUTIVE_LOSSES_EXCEEDED
+             # sc_consecutive_limit = 3 (CIATS-owned starting)
+
+           Implementation:
+             count = consecutive_loss_count.get(symbol, 0)
+             if count >= snapshot["sc_consecutive_limit"]:
+                 log("CONSECUTIVE_LOSSES_EXCEEDED",
+                     symbol=symbol,
+                     count=count,
+                     limit=snapshot["sc_consecutive_limit"])
+                 return FAIL
+
+SC-PASS    All 6 gates passed.
+           log("GATE5_PASS", symbol=symbol)
+           return PASS  # → Long Module dispatch
+
+============================================================
+6. HARD RULES
+============================================================
+
+HR-SC-001  Gates in strict sequence 1 → 6. No skipping.
+HR-SC-002  FAIL = SKIP. Never HALT. Pipeline continues.
+HR-SC-003  sc_body_threshold applied to ATR(14) multiple.
+HR-SC-004  Cooldown uses time.monotonic(). Never time.time().
+HR-SC-005  State dicts preserved across reconnect.
+HR-SC-006  All CIATS params from Parameter Store snapshot.
+HR-SC-007  Consecutive loss count resets on win. Never auto-clears on loss.
+HR-SC-008  Selection Controller operates ONLY on pairs that
+           are members of tradeable_universe per §7 SC-UNI-001
+           and satisfy 0711003 dv1_3 AS-001 criteria.
+           Universe membership is maintained upstream by WS
+           Manager (0511001 dv1_3 HR-WM-027) and populated
+           per 0711003 dv1_3 AS-004 / AS-006. Selection
+           Controller NEITHER populates NOR filters the
+           universe. Any code path that invokes SC for a
+           non-member pair is a defect in the caller
+           (Signal Pipeline Gate 1 state machine or upstream
+           scheduler), not in SC. SC applies its 6 gates
+           regardless and will reject at Gate 3 or Gate 5 if
+           the pair is not viable; the defect is that SC
+           should never have been reached for a non-member.
+
+============================================================
+7. UNIVERSE SCOPE
+============================================================
+
+This section fulfills the 0500000 dv1_20 AR-070 assignment
+of SC-UNI-001 through SC-UNI-006 to 1011009. Universe
+definition, population, and maintenance are OWNED by
+0711003 Asset_Selection_Specification and enforced by
+0511001 WS Manager. The Selection Controller is a
+consumer of tradeable_universe membership, not a producer.
+
+SC-UNI-001  TRADEABLE UNIVERSE SCOPE.
+            The Selection Controller operates only on pairs
+            in tradeable_universe. tradeable_universe
+            comprises ALL Kraken spot pairs with quote
+            currency USD, USDC, OR USDT that satisfy all
+            three 0711003 dv1_3 AS-001 criteria:
+              Criterion 1: Quote currency in {USD, USDC, USDT}
+              Criterion 2: Instrument status == online
+              Criterion 3: 24h USD volume >= min_volume_usd_daily
+                           ($500k starting, CIATS-owned)
+            No top-N cap. No ranking cutoff. Every pair
+            satisfying all three criteria is a universe
+            member. Per 0500000 dv1_20 AR-070 (amended
+            TB00130 Ratified Decision D-03) and TB00128
+            Ratified Decision D-08 (top-N cap retired).
+
+SC-UNI-002  UNIVERSE MAINTENANCE IS UPSTREAM.
+            The Selection Controller does NOT:
+              - populate tradeable_universe at startup
+              - add pairs on Kraken instrument-status
+                transitions to online
+              - remove pairs on status changes away from
+                online
+              - re-evaluate the volume filter
+              - reconcile CIATS parameter changes
+            Universe population is owned by 0711003 dv1_3
+            AS-004 (startup procedure) and AS-006 (runtime
+            universe updates), executed by 0511001 dv1_3
+            §4.2 Steps 3-8 (Startup Sequence) and the
+            Kraken instrument-channel handler. Universe
+            changes are applied ONLY at inter-trade
+            boundaries per 0711003 dv1_3 HR-AS-005. SC
+            reacts to per-signal pair identity only.
+
+SC-UNI-003  BTC/USD HANDLING.
+            BTC/USD is a member of tradeable_universe under
+            D-03 amended (USD quote in scope), AND is the
+            regime_anchor handle for regime computation per
+            AR-074 and 0711003 dv1_3 AS-003. BTC/USD
+            pipeline evaluation for entry is CIATS-OWNED
+            and DISABLED BY DEFAULT per 0711003 dv1_3
+            HR-AS-009 / AR-074.
+            Enforcement point: Signal Pipeline Gate 1
+            (State Machine pre-filter) default-excludes
+            BTC/USD from the entry-evaluation set unless
+            CIATS has explicitly enabled BTC/USD pipeline
+            evaluation via a Parameter Store update.
+            Selection Controller consequence: under default
+            CIATS state, SC is NEVER invoked for BTC/USD
+            (Gate 1 upstream excludes). If CIATS enables
+            BTC/USD pipeline evaluation (post-200-trade
+            PDCA per AR-074), SC applies its 6 gates to
+            BTC/USD signals with no special handling —
+            BTC/USD is treated identically to any other
+            tradeable_universe member at SC. Per 0511001
+            dv1_3 HR-WM-027.
+
+SC-UNI-004  PAPER-MODE PARITY.
+            The Selection Controller executes IDENTICALLY
+            in paper mode and live mode. No paper-mode
+            bypass of any gate. No paper-mode modification
+            of universe-membership check. Per 0711003 dv1_3
+            HR-AS-010 and TB00128 Ratified Decision D-06
+            (paper-to-live parity EXACT). OI-044 root-cause
+            scope: paper-mode selection behavior must mirror
+            live-mode selection behavior exactly — same
+            gates, same reject codes, same cooldown state,
+            same consecutive-loss state, same state-dict
+            preservation across reconnect. Universe scope
+            per SC-UNI-001 is identical in both modes.
+
+SC-UNI-005  O(1) MEMBERSHIP CHECK.
+            Any universe-membership check reachable from
+            Selection Controller MUST be O(1) set lookup,
+            per 0711003 dv1_3 HR-AS-004. Selection
+            Controller itself does not perform universe
+            iteration; upstream Signal Pipeline delivers
+            a single (symbol, signal) pair. If future code
+            introduces any reachable universe iteration
+            from SC, it MUST use the set-backed
+            tradeable_universe handle (WS Manager state
+            §5.1) and NEVER linear-search a list.
+
+SC-UNI-006  QUOTE-CURRENCY ENUMERATION IS ARCHITECTURAL.
+            The {USD, USDC, USDT} quote-currency enumeration
+            is an ARCHITECTURAL DECISION per 0500000 dv1_20
+            AR-070 / TB00130 Ratified Decision D-03 (amended)
+            and is NOT a CIATS-owned parameter. Per 0711003
+            dv1_3 HR-AS-007, CIATS may NOT change the
+            quote-currency enumeration or the online-status
+            requirement. CIATS may only tune the
+            min_volume_usd_daily threshold (Criterion 3).
+            Any code path in the Selection Controller, its
+            upstream callers, or its downstream consumers
+            that treats the quote-currency enumeration as
+            a CIATS parameter is a defect.
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_1  04-24-2026  AR-070 / AR-074 SC-UNI-* assignment
+                     fulfilled. Phase 2 Step 3 of TB00131
+                     5-phase spec cascade plan executed.
+
+                     PRIMARY CHANGE — §7 UNIVERSE SCOPE ADDED:
+                     New Section 7 adds SC-UNI-001 through
+                     SC-UNI-006 rules defining the Selection
+                     Controller's relationship to
+                     tradeable_universe. These rule IDs
+                     were ASSIGNED by 0500000 dv1_20 AR-070
+                     but were absent from the coding spec
+                     (latent governance gap). dv1_1 closes
+                     the gap.
+
+                       SC-UNI-001  tradeable_universe scope
+                                   (USD/USDC/USDT per
+                                   0711003 dv1_3 AS-001; no
+                                   top-N cap per D-08).
+                       SC-UNI-002  Universe maintenance is
+                                   upstream (WS Manager +
+                                   Kraken instrument
+                                   channel). SC is consumer
+                                   only.
+                       SC-UNI-003  BTC/USD is a universe
+                                   member but pipeline
+                                   evaluation is CIATS-
+                                   owned / default-disabled
+                                   per AR-074 and
+                                   HR-AS-009.
+                       SC-UNI-004  Paper-mode parity: SC
+                                   executes identically in
+                                   paper and live (D-06,
+                                   HR-AS-010).
+                       SC-UNI-005  O(1) membership check
+                                   (HR-AS-004).
+                       SC-UNI-006  Quote-currency
+                                   enumeration is
+                                   architectural (D-03,
+                                   HR-AS-007) — NOT CIATS-
+                                   owned.
+
+                     CHANGE 2 — PARENT CHAIN EXTENDED:
+                     Section 2 extended with secondary
+                     parent citation for 0711003
+                     Asset_Selection_Specification dv1_3
+                     (universe-scope parent alongside the
+                     existing 0811002 Selection_Controller_
+                     Specification dv1_0 gate-rules parent).
+                     Architectural authority block cites
+                     0500000 dv1_20 AR-070, AR-072, AR-074
+                     explicitly.
+
+                     CHANGE 3 — HR-SC-008 ADDED:
+                     New hard rule HR-SC-008 formalizes SC
+                     as universe-consumer (not universe-
+                     producer) and defines defect ownership
+                     when SC is invoked for a non-member
+                     pair (defect in upstream caller, not
+                     in SC).
+
+                     CHANGE 4 — §3 Q(2) / Q(3) / Q(4)
+                     UPDATED:
+                     Interfaces question lists
+                     tradeable_universe membership handle
+                     as an implicit input. Hard rules
+                     question cites SC-UNI-* and BTC/USD
+                     default-disabled behavior. Triggers
+                     question scopes signals to
+                     tradeable_universe pairs that passed
+                     Gates 1-4.
+
+                     NO TOP-N CAP REFERENCES.
+                     Pre-edit state: 1011009 dv1_0 had no
+                     monitored_universe_n / top-N / top_n
+                     references. Post-edit state: no such
+                     references introduced. D-08 state
+                     preserved. grep -nE
+                     "top.?n|monitored_universe_n" on dv1_1
+                     returns zero matches.
+
+                     ARCHITECTURAL AUTHORITY:
+                     0500000 dv1_20 AR-070 (amended D-03,
+                     universe scope), AR-072 (gate rules,
+                     unchanged), AR-074 (BTC/USD
+                     market_regime proxy, unchanged).
+                     TB00130 Ratified Decision D-03 amended
+                     (USD + USDC + USDT, no cap; supersedes
+                     TB00128 D-03 USDC+USDT-only and
+                     TB00001 OI-002 original USDT/USDC-
+                     only). TB00128 Ratified Decision D-08
+                     (top-N cap retired).
+
+                     SECTIONS UNCHANGED:
+                     §1 Purpose. §4 In-Memory State. §5
+                     Six Quality Gates (SC-GATE-1 through
+                     SC-GATE-6 + SC-PASS). HR-SC-001
+                     through HR-SC-007 text preserved.
+
+                     FIVE CODING-READINESS QUESTIONS —
+                     ALL FIVE ANSWERED:
+                     (1) DO — applies 6 gates, scoped to
+                     tradeable_universe. (2) INTERFACES —
+                     upstream SSS + cache + mirror + Gate
+                     8 + universe handle; downstream Long
+                     Module dispatch + Logger. (3) HARD
+                     RULES — strict gate sequence, no halt,
+                     state preserved, monotonic clock,
+                     CIATS snapshot, loss-count reset on
+                     win only, universe-consumer role.
+                     (4) TRIGGERS — SSS PASS from Signal
+                     Pipeline Gate 4 per 5m candle. (5)
+                     LOGS — GATE5_PASS plus six reject
+                     codes. Document remains coding-ready.
+
+                     FP/DP ANALYSIS (SC-UNI-* content):
+                     Options considered:
+                       Option A — Mirror 0711003 AS-001
+                         criteria verbatim. REJECTED —
+                         creates duplication risk if AS-001
+                         changes; violates single-source-
+                         of-truth (FP6 coding-readiness
+                         principle: cite parent, do not
+                         duplicate).
+                       Option B — Cite AS-001 by reference
+                         and define SC's consumer role
+                         only. ACCEPTED — SC-UNI-001 names
+                         the universe scope for operator/
+                         coder clarity but references
+                         0711003 AS-001 as the authority;
+                         SC-UNI-002 formalizes SC as
+                         consumer-only; SC-UNI-003 through
+                         -006 handle SC-specific
+                         consequences of universe
+                         architecture (BTC/USD, paper
+                         parity, O(1) lookup, CIATS-
+                         parameter boundary).
+                     Decision: Option B.
+                     Cross-cite discipline: every SC-UNI-*
+                     rule cites its governing parent
+                     (0711003 dv1_3 AS-* / HR-AS-*, 0500000
+                     AR-*, or TB ratified decision D-*).
+
+                     BILL OVERRIDE:
+                     Document-control constraints for
+                     1011009 (dv1_0 → dv1_1 minor increment
+                     via repair cascade, no rv state) are
+                     governed by Bill's standing directive
+                     continuing the override scope
+                     established TB00115 (04-22-2026) and
+                     extended through TB00116, TB00128,
+                     TB00129, TB00130, TB00131. Phase 2 of
+                     the TB00131 §4.3 5-phase plan executes
+                     under this override in TB00132.
+
+                     No patches. No real money. Paper
+                     trading must mimic all aspects of live
+                     trading exactly. Document is coding-
+                     ready.
+
+  dv1_0  04-05-2026  Initial document. Phase 8 new spec.
+                     Written from 0811002 Selection_
+                     Controller_Specification dv1_0.
+                     In-memory state dicts (cooldown,
+                     consecutive loss). on_position_closed()
+                     callback. SC-GATE-1 through SC-GATE-6
+                     with full implementation code. PASS
+                     path. Hard rules HR-SC-001 through
+                     -007. Five coding-readiness questions
+                     answered. Document is coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================

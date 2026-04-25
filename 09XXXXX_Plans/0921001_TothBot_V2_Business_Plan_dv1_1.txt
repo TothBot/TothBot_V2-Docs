@@ -1,0 +1,637 @@
+DocDCN:     0921001
+DocTitle:   TothBot_V2_Business_Plan
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0921001_TothBot_V2_Business_Plan_dv1_1.txt
+DocDate:    04-24-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+TOTHBOT V2 BUSINESS PLAN
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the business case for TothBot V2.
+It records the capital model, performance targets, paper
+trading thresholds, go-live decision criteria, and ongoing
+operational success metrics.
+
+All parameter values in this document are CIATS-owned
+starting values. They will be validated, corrected, or
+confirmed by real market data during paper trading.
+The only value that never changes is net 1:1.5 R:R.
+
+This is a living document. It is updated when capital
+parameters, performance targets, or criteria change.
+
+============================================================
+2. BUSINESS OBJECTIVE
+============================================================
+
+Objective: Generate consistent, risk-managed profit
+from automated cryptocurrency spot trading on Kraken.
+
+Operator: Bill (sole operator, sole beneficiary).
+Exchange: Kraken Spot.
+Instrument: Cryptocurrency spot pairs with quote currency
+            USD, USDC, or USDT per 0711003 dv1_3 AS-001
+            Criterion 1 (0500000 dv1_20 AR-070, amended
+            TB00130 Ratified Decision D-03). No top-N cap
+            per TB00128 Ratified Decision D-08.
+Trading style: Systematic, signal-driven, long-only.
+               Short Module deferred.
+
+Primary constraint: Net 1:1.5 R:R on every trade.
+                    HARDCODED. CIATS does not own this.
+                    Never changes. Sacred.
+
+Operating principle: Maximize profit. Minimize loss.
+                     Loss prevention takes priority over
+                     profit generation at all times.
+
+============================================================
+3. CAPITAL MODEL
+============================================================
+
+3.0 Starting Capital
+
+  Starting portfolio: $1,000 USD.
+  Authority: TB00128 Ratified Decision D-05 (LOCKED).
+
+  This is the total USD capital allocated to TothBot V2
+  at the beginning of paper trading (as portfolio_baseline_
+  USD per 0211005 dv1_1 PT-MODE-004) and at live
+  transition (PT-BASE-001 capture).
+
+  Rationale:
+    - $1,000 is sufficient to produce meaningful trade
+      sizes under the 5% per-trade starting value
+      ($50 per trade) against the $500k/day liquidity
+      filter (0.01% of daily volume per 0711003 dv1_3 §8
+      evidence-base validation chain TB00012 Search 5).
+    - $1,000 is bounded enough that drawdown circuit
+      breakers (5% session-pause at $50, 10% full-halt
+      at $100) fire on operationally meaningful thresholds.
+    - $1,000 allows the system to run for a statistically
+      valid observation period (200+ trades) without
+      requiring additional capital commitment.
+
+  Relationship to Section 3.1:
+    total portfolio (§3.1) = $1,000 starting
+    tradeable_pct × total = 50% × $1,000 = $500 tradeable
+    per_trade_pct × tradeable = 5% × $500 = $25 per trade
+    max_concurrent × per_trade = 20 × $25 = $500 max
+      concurrent deployment (= 100% of tradeable)
+
+  NOTE: The per-trade sizing arithmetic above reflects
+  starting values. At 200 closed trades, Half-Kelly
+  replaces fixed per_trade_pct per §3.3.
+
+3.1 Portfolio Definition
+
+  Total portfolio: All capital allocated to TothBot V2.
+  Tradeable capital: 50% of total portfolio (starting).
+  Reserve (50%): Not deployed. Drawdown buffer.
+                 Protects against catastrophic loss.
+
+  tradeable_pct = 0.50 (CIATS-owned starting value)
+
+3.2 Position Sizing
+
+  Per-trade allocation: 5% of tradeable capital (starting).
+  Max concurrent positions: 20 (starting).
+  Maximum theoretical deployment: 100% of tradeable
+    (20 positions x 5% each).
+
+  per_trade_pct = 0.05 (CIATS-owned starting value)
+  max_concurrent = 20 (CIATS-owned starting value)
+
+3.3 Position Sizing Transition
+
+  At 200 closed trades: Fixed 5% per trade replaced by
+  Half-Kelly position sizing.
+
+  Half-Kelly: K% = W - (1-W)/R, apply 50%.
+    W = win rate (from Logger trade outcomes).
+    R = average win / average loss ratio.
+  This is the CIATS statistical inference floor.
+  No position sizing changes before 200 closed trades.
+
+3.4 Fee Model
+
+  Maker fee: 0.16% (entry via limit/post_only).
+  Taker fee: 0.26% (emergency exits only).
+  Fee tier baseline. CIATS monitors volume-tier changes.
+  All R:R calculations use ACTUAL fill price.
+  Net 1:1.5 R:R = net of all fees and slippage.
+
+============================================================
+4. RISK MODEL
+============================================================
+
+4.1 Per-Trade Risk
+
+  MAE threshold (Layer 2 exit): ATR(14) x 1.5x (starting).
+  Emergency SL (Layer 3): ATR(14) x 3.0x (starting).
+
+  Emergency SL fires ONLY on VPS/TothBot/internet failure.
+  Must NEVER fire in normal operation.
+  If emergency SL fires in normal operation: critical
+  defect. Full investigation required before trading resumes.
+
+  mae_mult = 1.5 (CIATS-owned starting value)
+  emergency_sl_mult = 3.0 (CIATS-owned starting value)
+
+4.2 Portfolio-Level Risk (Circuit Breakers)
+
+  Session pause drawdown: 5% of total portfolio (starting).
+    Action: Pause new entries for remainder of session.
+    Existing positions managed to close normally.
+
+  Full halt drawdown: 10% of total portfolio (starting).
+    Action: Close all positions. Cancel all orders.
+    No new trading until Bill manually reviews and restarts.
+
+  session_pause_drawdown = 0.05 (CIATS-owned starting value)
+  full_halt_drawdown = 0.10 (CIATS-owned starting value)
+
+4.3 Concentration Limits
+
+  Max single-asset exposure: 3 concurrent positions
+    per symbol (starting).
+  Max correlated exposure: governed by Regime Engine
+    regime classification.
+
+4.4 Risk Architecture Reference
+
+  Governing documents: 0600000, 0611001, 0611002,
+  0611003, 0611004.
+
+============================================================
+5. PERFORMANCE TARGETS
+============================================================
+
+5.1 Primary Target
+
+  Positive risk-adjusted returns over rolling 90-day
+  windows after all fees, with:
+    - Sharpe Ratio > 1.0 (annualized, 90-day window)
+    - Maximum drawdown < 10% of total portfolio
+    - Net 1:1.5 R:R maintained on every trade
+
+5.2 Secondary Targets
+
+  - Win rate: FP/DP-derived baseline, regime-segmented.
+    No fixed target — CIATS optimizes from data.
+
+  - Average hold duration: Signal-driven. No fixed target.
+    max_hold_candles = 24 (CIATS-owned starting value).
+
+  - Order fill rate: Post_only limit entry. CIATS monitors
+    rejection_rate_by_regime to optimize entry.
+
+5.3 Statistical Validation Thresholds
+
+  50 candle evals:  EWMA Monitor valid. Monitoring only.
+                    Not for inference. Not for decisions.
+
+  200 closed trades: HARD FLOOR. All statistical inference
+                     valid. CIATS Proposal Engine activates.
+                     Half-Kelly replaces fixed per_trade_pct.
+                     All parameter change decisions start here.
+
+  600 closed trades: Per-regime analysis valid.
+                     100+ trades per regime bucket.
+                     Full regime-segmented optimization.
+
+5.4 Performance Review Cadence
+
+  CIATS: Continuous. Every 50 candle evals (monitoring).
+         Every closed trade (Trade Outcome Bus).
+  PDCA cycles: Inter-trade boundaries only.
+  Bill review: After circuit breaker events. After 200
+               closed trades. After 600 closed trades.
+               As needed by CIATS recommendations.
+
+============================================================
+6. PAPER TRADING BUSINESS RULES
+============================================================
+
+6.1 Purpose of Paper Trading
+
+  Paper trading validates the complete TothBot V2 system
+  against live Kraken market data before real capital is
+  at risk. It is not optional. Real capital is not deployed
+  until all go-live criteria are met.
+
+6.2 Paper Trading Parameters
+
+  All parameters: Identical to live trading starting values.
+  Capital: Simulated (no real orders executed).
+  Market data: Live Kraken WS v2 and REST feeds.
+  Duration: Until go-live criteria are met (Section 7).
+
+6.3 Governed by
+
+  0211005 Paper_Trading_Operations_Procedure dv1_1.
+
+6.4 Paper-to-Live Parity Requirement
+
+  Business-plan invariant: Paper trading MUST mimic all
+  aspects of live trading EXACTLY.
+  Authority: TB00128 Ratified Decision D-06 (LOCKED).
+
+  What parity means at the business-plan level:
+    (a) Same universe (USD, USDC, or USDT quoted Kraken
+        spot pairs per AS-001 Criterion 1; no top-N cap
+        per D-08).
+    (b) Same startup sequence (0511001 dv1_3 §4.2 Steps
+        2-8 identical in paper and live, per PT-MODE-005
+        and HR-PT-008 in 0211005 dv1_1).
+    (c) Same pipeline, same gates, same CIATS functions,
+        same Exit Controller layers.
+    (d) Same drawdown circuit breakers firing against
+        the same portfolio_baseline_USD.
+    (e) Same Logger records (distinguished only by the
+        paper_trade: bool tag on Trade Outcome Bus
+        entries per 0211005 dv1_1 PT-MODE-002).
+
+  What parity allows to differ:
+    Only the Step 7 private WS subscription set and the
+    order dispatch interception (paper intercepts,
+    simulates fills per 0211005 dv1_1 PT-MODE-001).
+
+  Business-plan rationale:
+    Paper trading is the mandatory validation gate before
+    real capital is deployed (§6.1). The validation is
+    only meaningful if paper behavior is predictive of
+    live behavior. Any paper-mode shortcut invalidates
+    the 200-trade statistical floor as a go-live gate,
+    because the paper data no longer reflects the
+    distribution the live system will produce. D-06
+    establishes EXACT parity as a business-plan
+    requirement, not an implementation preference.
+
+  Recurrence-risk reference:
+    OI-044 root cause was paper-mode bypassing startup
+    Steps 2-8. 0211005 dv1_1 HR-PT-008 elevates the
+    parity binding to a hard rule. This Section 6.4
+    elevates the same binding to a business-plan
+    invariant — parity is a prerequisite for the
+    business case TothBot V2 is building toward, not
+    merely an engineering constraint.
+
+  Acceptance-criteria linkage:
+    A paper-mode startup that skips any Step 2-8
+    requirement is a Critical defect per 0211005 dv1_1
+    PT-AC-002 and blocks go-live per §7(b) of this
+    business plan.
+
+============================================================
+7. GO-LIVE DECISION CRITERIA
+============================================================
+
+All criteria must be met. No exceptions. Bill approves
+the go-live decision.
+
+7.1 Quantitative Criteria (minimum thresholds)
+
+  (a) 200 closed trades completed.
+      Rationale: CIATS statistical inference floor. Below
+      200 trades, no reliable inference is possible.
+
+  (b) No critical defects outstanding.
+      A critical defect is any condition that could result
+      in: unauthorized orders, incorrect position sizing,
+      failed emergency SL placement, failed circuit breaker
+      execution, or silent failures (no alert, no log).
+
+  (c) CIATS Proposal Engine has produced at least one
+      actionable parameter recommendation.
+      Rationale: Confirms CIATS is functioning correctly
+      as the continuous improvement engine.
+
+  (d) Half-Kelly position sizing is active and producing
+      results consistent with FP/DP expectations.
+
+7.2 System Validation Criteria
+
+  (e) All three Exit Controller layers validated:
+      Layer 1: Signal-based and TP exits confirmed firing
+               correctly on known conditions.
+      Layer 2: MAE threshold breach (ATR x 1.5x) confirmed
+               firing correctly.
+      Layer 3: Emergency SL confirmed to be on matching
+               engine. Confirmed it has never fired in
+               normal operation during paper trading.
+
+  (f) Both drawdown circuit breakers validated:
+      Session pause at 5% confirmed triggering correctly.
+      Full halt at 10% confirmed triggering correctly.
+
+  (g) All alert channels confirmed operational:
+      alert@tothbot.com receiving all expected notifications.
+      No silent failures observed.
+
+  (h) Logger confirmed writing complete trade records.
+      CIATS confirmed reading Logger output correctly.
+      All CIATS data streams producing valid output.
+
+7.3 Qualitative Criteria
+
+  (i) Bill reviews paper trading results and is satisfied
+      with system behavior, including:
+      - Regime classification accuracy
+      - Signal quality (confirmed by trade outcomes)
+      - Exit behavior across all regimes
+      - CIATS recommendations appear reasonable
+
+7.4 Go-Live Capital
+
+  Initial live deployment: Full capital model as defined
+  in Section 3. No additional conservatism required beyond
+  the built-in 50% tradeable capital reserve.
+  Rationale: Paper trading validated the system at these
+  parameters. No reason to under-deploy.
+
+============================================================
+8. ONGOING OPERATIONAL GOALS
+============================================================
+
+8.1 Near-Term (0-200 live trades)
+
+  - System runs continuously. No manual intervention
+    in normal operation.
+  - CIATS monitoring active. No parameter changes yet
+    (below statistical inference floor).
+  - First parameter change decision at 200 live trades.
+
+8.2 Mid-Term (200-600 live trades)
+
+  - CIATS Proposal Engine active.
+  - Half-Kelly in operation.
+  - Parameter optimization cycles running.
+  - First per-regime analysis possible after 600 trades.
+
+8.3 Long-Term (600+ live trades)
+
+  - Full regime-segmented optimization active.
+  - CIATS runs autonomously. PDCA governs all changes.
+  - Pathway 1 GitHub automation deployed (PL-003).
+  - System approaches full autonomous operation.
+
+8.4 Continuous Goal
+
+  Every day: Maximize profit. Minimize loss.
+             Loss prevention takes priority.
+             This never changes.
+
+============================================================
+9. RELATED DOCUMENTS
+============================================================
+
+  0900000  Plans                          dv1_0
+  0920000  Business_Plan_Anchor           dv1_0
+  0911001  TothBot_V2_Master_Plan         dv1_0
+  0600000  Risk                           dv1_0
+  0611001  Position_Sizing_Rules          dv1_0
+  0611002  Drawdown_and_Halt_Rules        dv1_0
+  0611003  Concentration_and_Exposure_Rules
+                                          dv1_0
+  0611004  Safety_Parameter_Framework     dv1_1
+  0211005  Paper_Trading_Operations_Procedure
+                                          dv1_1
+  0500000  System_Architecture_Overview   dv1_20
+  0711003  Asset_Selection_Specification  dv1_3
+           (universe scope authority per AS-001 under
+           D-03 amended; min_volume_usd_daily $500k
+           liquidity filter per AS-001 Criterion 3;
+           HR-AS-010 paper parity)
+  0511001  WS_Manager_Specification       dv1_3
+           (startup sequence §4.2 Steps 2-8; HR-WM-026
+           paper-parity binding; HR-WM-027 universe
+           scope)
+
+============================================================
+10. REVISION HISTORY
+============================================================
+
+  dv1_1  04-24-2026  R-12 $1,000 starting capital + D-06
+                     paper-to-live parity + D-03 universe
+                     scope. Phase 3 Step 7 of TB00131
+                     5-phase spec cascade plan executed.
+
+                     CHANGE 1 — §2 BUSINESS OBJECTIVE
+                     UNIVERSE SCOPE UPDATED:
+                     Instrument line changed from
+                     "Cryptocurrency spot pairs (USDT/USDC
+                     quoted)" to the D-03 amended scope:
+                     "Cryptocurrency spot pairs with quote
+                     currency USD, USDC, or USDT per
+                     0711003 dv1_3 AS-001 Criterion 1
+                     (0500000 dv1_20 AR-070, amended
+                     TB00130 Ratified Decision D-03). No
+                     top-N cap per TB00128 Ratified
+                     Decision D-08." Brings business-plan
+                     universe-scope language into
+                     alignment with current architecture
+                     (previously stale per TB00001 OI-002
+                     original "USDT/USDC only").
+
+                     CHANGE 2 — §3.0 STARTING CAPITAL
+                     ADDED:
+                     New subsection §3.0 documents $1,000
+                     starting portfolio capital per
+                     TB00128 Ratified Decision D-05
+                     (LOCKED). Previously the business
+                     plan §3 Capital Model described
+                     tradeable_pct, per_trade_pct, and
+                     max_concurrent in percentage terms
+                     only — the absolute starting-capital
+                     figure was not stated in the business
+                     plan. R-12 scope of TB00129 NSI
+                     flagged this gap.
+                     §3.0 includes:
+                       (a) Starting amount and D-05
+                           citation.
+                       (b) Role as portfolio_baseline_USD
+                           in paper mode (0211005 dv1_1
+                           PT-MODE-004) and at live
+                           transition (PT-BASE-001).
+                       (c) Rationale: meaningful trade
+                           sizes against the $500k/day
+                           liquidity filter (0.01% daily
+                           volume per TB00012 Search 5);
+                           operationally meaningful
+                           drawdown thresholds ($50 / $100);
+                           sufficient for 200+ trade
+                           statistical floor without
+                           additional capital commitment.
+                       (d) Starting-value arithmetic
+                           relating $1,000 to §3.1
+                           tradeable_pct, §3.2
+                           per_trade_pct, and
+                           max_concurrent.
+                       (e) NOTE that arithmetic reflects
+                           starting values only; Half-
+                           Kelly replaces fixed sizing at
+                           200 trades per §3.3.
+
+                     CHANGE 3 — §6.4 PAPER-TO-LIVE PARITY
+                     REQUIREMENT ADDED:
+                     New subsection §6.4 documents D-06
+                     (paper-to-live parity EXACT, LOCKED)
+                     as a business-plan invariant.
+                     Previously the business-plan §6 Paper
+                     Trading Business Rules deferred all
+                     parity handling to 0211005. That was
+                     an operational-procedure delegation;
+                     §6.4 elevates parity to a business-
+                     plan requirement.
+                     §6.4 includes:
+                       (a) What parity means at the
+                           business-plan level (universe,
+                           startup sequence, pipeline,
+                           drawdown, Logger — all
+                           identical except paper-mode
+                           dispatch interception + Step 7
+                           subscription set).
+                       (b) What parity allows to differ
+                           (Step 7 subscription set; order
+                           dispatch interception).
+                       (c) Business-plan rationale:
+                           validation is only meaningful
+                           if paper behavior is predictive
+                           of live behavior; any shortcut
+                           invalidates the 200-trade
+                           statistical floor as a go-live
+                           gate.
+                       (d) OI-044 recurrence-risk
+                           reference. Cross-reference to
+                           0211005 dv1_1 HR-PT-008 and
+                           PT-MODE-005.
+                       (e) Acceptance-criteria linkage:
+                           paper-mode Step 2-8 skip is
+                           Critical per 0211005 dv1_1
+                           PT-AC-002 and blocks go-live
+                           per §7(b) of this business
+                           plan.
+
+                     CHANGE 4 — §6.3 CITATION PINNED:
+                     Governed-by citation pinned to
+                     "0211005 Paper_Trading_Operations_
+                     Procedure dv1_1" (was unversioned).
+
+                     CHANGE 5 — §9 RELATED DOCUMENTS
+                     VERSION-PINNED:
+                     All cited documents now carry
+                     explicit version numbers per
+                     TB00128 §3.7 citation-hygiene
+                     scope:
+                       0900000 dv1_0, 0920000 dv1_0,
+                       0911001 dv1_0, 0600000 dv1_0,
+                       0611001 dv1_0, 0611002 dv1_0,
+                       0611003 dv1_0, 0611004 dv1_1
+                       (from this cascade), 0211005 dv1_1
+                       (from this cascade), 0500000 dv1_20.
+                     NEW citations added:
+                       0711003 Asset_Selection_Specification
+                         dv1_3 — universe scope authority
+                         (AS-001 Criterion 1, HR-AS-010
+                         paper parity, AS-001 Criterion 3
+                         $500k liquidity filter cited in
+                         §3.0 rationale).
+                       0511001 WS_Manager_Specification
+                         dv1_3 — startup sequence §4.2
+                         Steps 2-8, HR-WM-026 paper-parity
+                         binding, HR-WM-027 universe
+                         scope.
+
+                     SECTIONS UNCHANGED:
+                     §1 Purpose (unchanged). §3.1-§3.4
+                     capital-model subsections other than
+                     the new §3.0 (unchanged). §4 Risk
+                     Model (unchanged). §5 Performance
+                     Targets (unchanged). §6.1-§6.2
+                     paper-trading subsections (unchanged).
+                     §7 Go-Live Decision Criteria
+                     (unchanged content; reference from
+                     §6.4(e) now provides additional
+                     linkage to PT-AC-002 via business-plan
+                     language). §8 Ongoing Operational
+                     Goals (unchanged).
+
+                     INTERNAL CONSISTENCY VERIFIED:
+                     §3.0 $1,000 starting capital
+                     consistent with:
+                       - 0211005 dv1_1 PT-MODE-004
+                         portfolio_baseline_USD defined
+                         from actual Kraken USD balance.
+                       - 0711003 dv1_3 AS-001 Criterion 3
+                         $500k/day volume filter; 0.01%
+                         of daily volume for $50 starting
+                         trade size.
+                       - 0611004 dv1_1 §6 Parameter
+                         Registry tradeable_pct,
+                         per_trade_pct, max_concurrent
+                         starting values.
+                     §6.4 paper-parity language
+                     consistent with:
+                       - 0211005 dv1_1 PT-MODE-005 step
+                         binding.
+                       - 0211005 dv1_1 HR-PT-008 hard
+                         rule.
+                       - 0511001 dv1_3 HR-WM-026.
+                       - 0711003 dv1_3 HR-AS-010.
+                       - TB00128 Ratified Decision D-06.
+
+                     FP/DP ANALYSIS:
+                     TB00129 NSI §4 R-12 flagged $1,000
+                     starting capital as undocumented at
+                     the business-plan level. NSI TB00131
+                     §4.3 Phase 3 authorized the addition.
+                     D-05 and D-06 are LOCKED decisions
+                     (TB00128, TB00131 NSI §2). No
+                     decision re-opening. Minimum-scope
+                     edit principle applied: add two
+                     subsections (§3.0, §6.4) documenting
+                     the two LOCKED decisions; update one
+                     existing subsection (§2 Instrument
+                     line) for D-03 universe scope; pin
+                     all Related Documents versions per
+                     citation-hygiene scope. No content
+                     restructuring.
+
+                     BILL OVERRIDE:
+                     Document-control constraints for
+                     0921001 (dv1_0 → dv1_1 minor
+                     increment via repair cascade, no rv
+                     state) are governed by Bill's
+                     standing directive continuing the
+                     override scope established TB00115
+                     (04-22-2026) and extended through
+                     TB00116, TB00128, TB00129, TB00130,
+                     TB00131. Phase 3 of the TB00131 §4.3
+                     5-phase plan executes under this
+                     override in TB00132.
+
+                     No patches. No real money. Paper
+                     trading must mimic all aspects of
+                     live trading exactly. Document is
+                     business-plan-ready.
+
+  dv1_0  04-05-2026  Initial working draft. Phase 7 of
+                     Document Creation Workflow. Full
+                     business plan including capital model,
+                     risk model, performance targets,
+                     paper trading rules, and go-live
+                     decision criteria. All parameter
+                     values are CIATS-owned starting values
+                     except net 1:1.5 R:R (HARDCODED).
+
+============================================================
+END OF DOCUMENT
+============================================================

@@ -1,10 +1,10 @@
 DocDCN:     0700000
 DocTitle:   Strategy
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0700000_Strategy_dv1_0.txt
-DocDate:    04-05-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0700000_Strategy_dv1_1.txt
+DocDate:    04-25-2026
+DocTime:    03:50:00 UTC
 
 ============================================================
 STRATEGY
@@ -138,11 +138,14 @@ TothBot V2 strategy operates on three layers:
 
 Determines WHICH pairs TothBot monitors. Populated at
 startup from the Kraken instrument channel. Criteria:
-  (1) Quote currency: USD or USDC
+  (1) Quote currency: USD, USDC, or USDT
+      (per TB00128 Ratified Decision D-03 LOCKED)
   (2) Instrument status: online
   (3) 24h volume: >= min_volume_usd_daily ($500k starting)
 
-Starting universe size: top 50 by 24h USD volume.
+Starting universe: ALL Kraken USD/USDC/USDT pairs that
+satisfy criteria (1)–(3). NO Top-N cap (per TB00128
+Ratified Decision D-08 LOCKED — top-N cap retired).
 BTC/USD always included regardless of volume ranking.
 Universe is live: updated when instrument channel fires
 status changes. CIATS may adjust universe after 200 trades.
@@ -276,7 +279,8 @@ after the 200-trade floor is reached.
     atr_rolling_window:     50   (days for percentile rank)
 
   Asset Universe Parameters (0711003):
-    monitored_universe_n:   50   (top N by 24h volume)
+    monitored_universe_n:   RETIRED per TB00128 D-08 LOCKED
+                            (no top-N cap; full universe)
     min_volume_usd_daily:   $500k (minimum 24h volume filter)
 
 The one non-CIATS strategy decision: three-factor SSS
@@ -341,12 +345,13 @@ The Strategy domain contains one sub-domain:
 
 0711003  Asset_Selection_Specification
   Complete specification of the monitored pair universe.
-  Covers selection criteria (USD/USDC quote, online
-  status, volume threshold), universe size (top 50),
-  BTC/USD anchor rule (AR-074), startup population
-  procedure (instrument channel snapshot), live update
-  procedure (instrument channel status events), and
-  CIATS universe adjustment procedure.
+  Covers selection criteria (USD/USDC/USDT quote, online
+  status, volume threshold), full-universe inclusion
+  (no top-N cap per D-08 LOCKED), BTC/USD anchor rule
+  (AR-074), startup population procedure (instrument
+  channel snapshot), live update procedure (instrument
+  channel status events), and CIATS universe adjustment
+  procedure.
 
 ------------------------------------------------------------
 8.2 Document Chain Requirement
@@ -431,6 +436,86 @@ and 0700000 already present and approved on GitHub.
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_1  04-25-2026  TB00136 D-03 + D-08 CASCADE CLOSURE.
+                     Surgical update closing missed cascade
+                     to AA=07 Domain Document. Three content
+                     edits + revhist entry.
+
+                     ROOT CAUSE: TB00131 §4.3 5-phase plan
+                     cascaded D-03 (universe = USD + USDC +
+                     USDT) and D-08 (Top-N cap retired) into
+                     0711003 Asset_Selection_Specification
+                     dv1_3 (AA=07 Instance Document). The
+                     parent Sub-Domain Anchor (0710000) and
+                     grandparent Domain Document (this
+                     document, 0700000) were never updated.
+                     Inverted-cascade defect: descendants
+                     correct while ancestors stale. Same
+                     root-cause pattern as TB00135 finding
+                     (AA=05 → AA=10 missed cascade for WS
+                     Manager pathway), but UP one tier in
+                     the document hierarchy.
+
+                     DISCOVERY: TB00136 turn 3 audit. Bill
+                     asked "Are there any more specification
+                     documents that need to be updated?"
+                     Comprehensive corpus-wide grep for
+                     USDC-without-USDT and Top-N references
+                     identified three documents with real
+                     gaps: 0700000 (this document), 0710000
+                     (Sub-Domain Anchor), 0311002 (governance
+                     stale OI status text). Closure executed
+                     same-session per RR-SCOPE-005 carry-
+                     forward directive.
+
+                     CHANGE 1 — §4.1 ASSET UNIVERSE LAYER:
+                     Quote currency criterion (1) updated
+                     from "USD or USDC" to "USD, USDC, or
+                     USDT" with citation to TB00128 D-03
+                     LOCKED.
+                     "Starting universe size: top 50 by 24h
+                     USD volume" replaced with "Starting
+                     universe: ALL Kraken USD/USDC/USDT
+                     pairs that satisfy criteria (1)-(3).
+                     NO Top-N cap (per TB00128 Ratified
+                     Decision D-08 LOCKED — top-N cap
+                     retired)."
+
+                     CHANGE 2 — §6 STRATEGY PARAMETERS:
+                     Asset Universe Parameters
+                     monitored_universe_n value changed
+                     from "50 (top N by 24h volume)" to
+                     "RETIRED per TB00128 D-08 LOCKED (no
+                     top-N cap; full universe)".
+
+                     CHANGE 3 — §7 0711003 DESCRIPTION:
+                     "Covers selection criteria (USD/USDC
+                     quote, online status, volume threshold),
+                     universe size (top 50)" replaced with
+                     "Covers selection criteria (USD/USDC/
+                     USDT quote, online status, volume
+                     threshold), full-universe inclusion
+                     (no top-N cap per D-08 LOCKED)".
+
+                     COMPANION DELIVERABLES THIS SESSION:
+                     0710000 dv1_0 → dv1_1 (Sub-Domain
+                     Anchor cascade closure — partner
+                     document; same root cause).
+                     0311002 v1_3 → v1_4 (governance OI
+                     status text correction — same root
+                     cause's downstream documentation).
+                     TB00136 Session Log v1_0 → v1_1
+                     (extended scope record).
+                     TB00136 NSI v1_0 → v1_1 (TB00137 scope
+                     update — finding closed; gap removed
+                     from forward-scope).
+
+                     OPEN ITEMS UPDATED:
+                     None for this document. Cascade gap
+                     closed. AA=07 Domain → Sub-Domain →
+                     Instance chain now consistent under
+                     D-03 + D-08 LOCKED decisions.
 
   dv1_0  04-05-2026  Initial document. Strategy Domain
                      Document for TothBot V2. Defines

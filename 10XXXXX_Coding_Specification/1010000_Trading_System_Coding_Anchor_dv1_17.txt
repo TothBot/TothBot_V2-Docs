@@ -1,10 +1,10 @@
 DocDCN:     1010000
 DocTitle:   Trading_System_Coding_Anchor
-DocVersion: dv1_14
+DocVersion: dv1_17
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_14.txt
-DocDate:    04-24-2026
-DocTime:    02:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_17.txt
+DocDate:    04-25-2026
+DocTime:    03:30:00 UTC
 
 ============================================================
 TRADING SYSTEM CODING ANCHOR
@@ -84,9 +84,13 @@ entries in Section 5 below.
 ============================================================
 
 This section reflects current document status as of
-04-21-2026. Updated per 0311002 v1_2 STEP 8.2.1
+04-24-2026 (dv1_15 — TB00133 Phase 5 CIATS registry
+reconciliation). Updated per 0311002 v1_3 STEP 8.2.1
 Code File Registry maintenance rule. All documents
 reached CODING-READY status in Phase 8 (04-05-2026).
+TB00132 cascade incremented 1011009 dv1_0 → dv1_1 and
+1011012 dv1_4 → dv1_5. Prior listings updated this
+revision (dv1_15) to reflect the cascade-current state.
 
 ------------------------------------------------------------
 4.1  1011001  Engineering_Best_Practices
@@ -105,10 +109,11 @@ Governing code file: All Pathway 2 files (BP standard).
 ------------------------------------------------------------
 4.2  1011002  WS_Manager_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_22  (04-24-2026)
+Current version: dv1_23  (04-24-2026)
 Status: CODING-READY. Phase 8 complete. Post-deployment
-defects documented.
-Parent spec: 0511001 WS_Manager_Specification
+defects documented. D-03 + D-08 AA=10 cascade completed
+TB00135 (this version).
+Parent spec: 0511001 WS_Manager_Specification dv1_3
 Scope: WebSocket Manager — all Kraken WS v2 connections,
 subscriptions, dispatch table, zombie detection, ohlc
 subscription sequencing, reconnect hardening for transient
@@ -196,7 +201,7 @@ Governing code file: exit_controller.py
 ------------------------------------------------------------
 4.6  1011006  Position_Mirror_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_0  (04-05-2026)
+Current version: dv1_1
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0511005 Position_Mirror_Specification
 Scope: In-memory position state registry. Symbol-keyed
@@ -206,7 +211,7 @@ Governing code file: position_mirror.py
 ------------------------------------------------------------
 4.7  1011007  Logger_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_4  (04-21-2026)
+Current version: dv1_5
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0511006 Logger_Specification dv1_1
 Scope: CIATS sole data source. Async bounded queue
@@ -244,12 +249,17 @@ Governing code file: long_module.py
 ------------------------------------------------------------
 4.9  1011009  Selection_Controller_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_0  (04-05-2026)
+Current version: dv1_1
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0811002 Selection_Controller_Specification
 Scope: 6-gate Selection Controller. All gate definitions.
 Per-pair status check (GAP-07). SC state management
 (AR-073). Consecutive loss limit.
+TB00132 dv1_1 (Phase 2 Priority 2): §7 SC-UNI-001
+through SC-UNI-006 added per 0500000 dv1_20 AR-070
+assignment fulfillment. Tradeable universe scope and
+BTC/USD CIATS-owned pipeline-evaluation rules
+specified. HR-SC-008 added.
 Governing code file: selection_ctrl.py
 
 ------------------------------------------------------------
@@ -308,7 +318,7 @@ Governing code file: risk_engine.py
 ------------------------------------------------------------
 4.12  1011012  Regime_Engine_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_4  (04-05-2026)
+Current version: dv1_5
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0711002 Regime_Taxonomy_Specification
 Scope: Daily regime computation. 6 regimes. Full
@@ -316,12 +326,16 @@ indicator computation code (ATR, ADX, EMA) with Wilder
 batch implementation. GetOHLCData response[-1] exclusion
 (GAP-03 — CRITICAL). Scheduling and rate limiting.
 ADX convergence confirmation.
+TB00132 dv1_5 (Phase 2 Priority 2): §10 RE-MKT-001
+through RE-MKT-003 added per 0500000 dv1_20 AR-074
+assignment fulfillment. BTC/USD market_regime proxy
+commitment specified. Parent chain extended.
 Governing code file: regime_engine.py
 
 ------------------------------------------------------------
 4.13  1011013  VPS_Deployment_Coding_Spec
 ------------------------------------------------------------
-Current version: dv1_5  (04-20-2026)
+Current version: dv1_4
 Status: CODING-READY. Phase 8 complete.
 Parent spec: 0500000 System_Architecture_Overview
 Scope: VPS specification, Python environment setup,
@@ -421,9 +435,50 @@ Each entry contains:
   File:        ws_manager.py
   DCN:         1011002
   Spec:        WS_Manager_Coding_Spec
-  SpecVer:     dv1_22
+  SpecVer:     dv1_23
   RegDate:     04-24-2026
-  Note:        OI-041 DEFECT-WM-REST-SIGN-001 fix — three
+  Note:        D-03 + D-08 AA=10 CASCADE COMPLETION (TB00135).
+               Major-omission corrective. The TB00131 §4.3
+               5-phase plan (declared COMPLETE in TB00134
+               Thread A) cascaded D-03 (universe = USD +
+               USDC + USDT) and D-08 (Top-N cap retired)
+               through the AA=05 parent (0511001 dv1_3) and
+               the 0500000 architecture (dv1_21) but DID
+               NOT cascade into 1011002 (the AA=10 coding
+               spec). Spec dv1_22 retained "USD or USDC"
+               filter at WM-PS-002 and "Top N=50" rule at
+               WM-PS-003, in conflict with both LOCKED
+               decisions and TB00000 §3.4 ("AA=10 is the
+               coding layer. AA=10 is not a summary of
+               other documents — it is the direct input
+               to code.").
+               Spec dv1_22 → dv1_23 fixes the omission:
+               WM-PS-002 quote_currency set extended to
+               {USD, USDC, USDT}; WM-PS-003 rewritten to
+               retire Top-N cap entirely (BTC/USD always-
+               include preserved); WM-PS-006 narrative
+               updated; WM-LIQ-002 and WM-LIQ-004
+               candidate-set narrative updated. Six
+               surgical edits, no architectural change,
+               Hard Rules section §17 not touched.
+               Code dv1_23 (last deploy 5d44292, TB00125
+               OI-041 fix) is STALE under dv1_23 spec —
+               a code dv1_24 cascade is required in
+               Claude Code scope to:
+                 (i)   Replace the line ~1702 quote
+                       filter to include "USDT".
+                 (ii)  Remove UNIVERSE_TOP_N constant
+                       and top-N slice.
+                 (iii) Update line ~1695 header comment.
+               Code authoring is Claude Code scope per
+               Bill directive carried from TB00130.
+               OI-045 (USDT inclusion) AA=10 spec
+               coverage now COMPLETE; closes at code
+               deploy. OI-046 (Top-N cap retired) AA=10
+               spec coverage now COMPLETE; closes at code
+               deploy.
+               Prior note (dv1_22 baseline): OI-041
+               DEFECT-WM-REST-SIGN-001 fix — three
                private Kraken REST call sites
                (_rest_get_ws_token, _rest_get_open_orders,
                _rest_get_account_balance) were shipping only
@@ -861,6 +916,363 @@ TothBot_V2-Docs. No further action required.
 ============================================================
 6. REVISION HISTORY
 ============================================================
+
+  dv1_17 04-25-2026  TB00136 OI-055-CAND CLOSURE AT SPEC
+                     LEVEL via Option (iii) resolution
+                     policy. Single-spec edit. No content
+                     change to 0500000. No content change
+                     to AA=10 implementation specs. Pure
+                     governance/traceability deliverable.
+
+                     ROOT CAUSE: TB00133 Phase 4 citation-
+                     hygiene audit identified five AR-*
+                     assignment fulfillment defects (D1-D5)
+                     plus one cosmetic flag (F1) — all
+                     parallel-notation cases between
+                     0500000 architectural-intent rule-IDs
+                     and AA=10 implementation rule-IDs.
+                     ALL pre-date the TB00130 → TB00132
+                     cascade. Zero defects introduced by
+                     the cascade itself. Per TB00133 Bill
+                     directive, OI-055-CAND remediation
+                     was DEFERRED to a dedicated future
+                     session.
+
+                     DISCOVERY: TB00136 turn 1. Bill issued
+                     "Next item in the plan" directive.
+                     Per TB00135 NSI §8 carry-forward
+                     directive (RR-SCOPE-005 application
+                     after seventh consecutive recurrence)
+                     and Bill's prior-chat instruction "if
+                     FP/DP says execute, execute it",
+                     Claude executed STREAM 2 Option (iii)
+                     without gate question. STREAM 1
+                     (ws_manager.py code cascade) is
+                     Claude Code scope per Bill's "do not
+                     do any coding in chat" directive.
+
+                     CHANGE 1 — §10.5 FOOTER UPDATE:
+                     Resolution-policy paragraph rewritten
+                     to record Option (iii) selection and
+                     to forward-reference §10.6.
+
+                     CHANGE 2 — NEW §10.6 SECTION:
+                     "AR-* to Implementation Rule-ID
+                     Cross-Reference" added as the Option
+                     (iii) traceability deliverable. Six
+                     entries:
+
+                       D1 (HIGH)     WM-* prefix non-
+                                     correspondence between
+                                     0500000 (8 prefixes)
+                                     and 1011002 dv1_23
+                                     (24 prefixes). Approxi-
+                                     mate 1-to-N mapping
+                                     table provided.
+                                     Resolution: parallel
+                                     notation preserved.
+                       D2 (LOW)      BP-HTTP-005 over-
+                                     implementation in
+                                     1011001 dv1_7 vs
+                                     0500000 line 356
+                                     range. Resolution:
+                                     parallel notation
+                                     preserved.
+                       D3 (MEDIUM)   VD-WD-006 unfulfilled
+                                     in 1011013 dv1_4 vs
+                                     0500000 line 412.
+                                     One genuine ID gap.
+                                     Resolution options
+                                     R-D3-i/-ii/-iii
+                                     documented; deferred
+                                     as OI-055-CAND-D3.
+                       D4 (MEDIUM)   WM-EXE numerical
+                                     range divergence:
+                                     0500000 -002..-012
+                                     (11 IDs) vs 1011002
+                                     dv1_23 -013..-016
+                                     (4 IDs). Same prefix
+                                     family. Resolution:
+                                     parallel notation
+                                     preserved.
+                       D5 (LOW)      SC-GATE format +
+                                     count divergence:
+                                     0500000 -001..-018
+                                     zero-padded vs
+                                     1011009 dv1_1 -1..-6
+                                     single-digit. 18-slot
+                                     reservation explained.
+                                     Resolution: parallel
+                                     notation preserved.
+                       F1 (COSMETIC) 0500000 §12 OI-008
+                                     "as of dv1_16"
+                                     snapshot pointer
+                                     stale on casual read.
+                                     Resolution: no action
+                                     at spec level.
+
+                     SUMMARY TABLE: tabulated severity,
+                     spec-coverage status, and resolution
+                     for all six entries.
+
+                     OI-055-CAND STATUS: CLOSED at SPEC
+                     level via §10.6. Five groups have
+                     SATISFIED or PARTIAL coverage with
+                     parallel notation preserved. One
+                     group (D3) has true ID gap and
+                     remains as parking-lot OI-055-CAND-D3
+                     for future Bill direction.
+
+                     COMPANION DELIVERABLES THIS SESSION:
+                     None. TB00136 is single-spec edit per
+                     TB00134 NSI §4.4 Option (iii). No
+                     content change to 0500000. No content
+                     change to AA=10 implementation specs.
+
+                     CARRY-FORWARD INTO TB00137:
+                     ws_manager.py dv1_23 → dv1_24 still
+                     pending in Claude Code scope.
+                     OI-055-CAND-D3 (VD-WD-006 disposition)
+                     deferred. STREAM 3 Thread C optional
+                     governance items remain untouched.
+
+                     OPEN ITEMS UPDATED:
+                     OI-055-CAND  AA=10 SPEC corpus
+                                  closure achieved this
+                                  version. Sub-defect
+                                  OI-055-CAND-D3 carried
+                                  forward.
+
+  dv1_16 04-24-2026  TB00135 D-03 + D-08 AA=10 CASCADE
+                     COMPLETION. Major-omission corrective.
+
+                     ROOT CAUSE: TB00131 §4.3 5-phase plan
+                     (declared COMPLETE in TB00134 Thread
+                     A) updated AA=05 parent specs and
+                     0500000 architecture for both D-03
+                     (universe = USD + USDC + USDT) and
+                     D-08 (Top-N cap retired) but DID NOT
+                     cascade into 1011002 (AA=10 coding
+                     spec). The AA=05 → AA=10 coupling
+                     for the WS Manager pathway was
+                     missed. TB00000 §3.4 violated:
+                     "AA=10 is the coding layer. AA=10
+                     is not a summary of other documents
+                     — it is the direct input to code."
+
+                     DISCOVERY: TB00135 turn 1. Bill
+                     opened TB00135 with explicit
+                     emphasis on three triad
+                     requirements (paper trading only,
+                     paper-live parity exact, full
+                     USD+USDC+USDT universe) and stated
+                     "we are correcting a major omission
+                     and I have no idea where we are now
+                     — use FP/DP to create the best,
+                     most effective plan to go forward."
+                     Claude executed comprehensive
+                     audit across all AA=10 specs and
+                     .py files. Single-file defect
+                     localized to 1011002 dv1_22 spec
+                     and ws_manager.py code.
+
+                     CHANGE 1 — §4.2 1011002 ENTRY:
+                     Current version dv1_22 → dv1_23.
+                     Status note expanded to record
+                     D-03 + D-08 AA=10 cascade
+                     completion. Parent spec
+                     reference dv1_0 → dv1_3
+                     (corrects accumulated drift
+                     across Phase 1 cascade).
+
+                     CHANGE 2 — §5.2 REGISTRY ENTRY:
+                     ws_manager.py SpecVer dv1_22 →
+                     dv1_23. Note expanded with full
+                     D-03 + D-08 cascade narrative
+                     including the six surgical
+                     edits applied to 1011002 dv1_23
+                     and the three edits required in
+                     ws_manager.py dv1_24 (Claude
+                     Code scope).
+
+                     CHANGE 3 — §10.4 STATUS UPDATE +
+                     NEW FINDING:
+                     FINDING-P5-001 status updated
+                     from OPEN to CLOSED (TB00134
+                     Thread A 0500000 dv1_21 corrective).
+                     New FINDING-TB00135-001 added
+                     documenting the AA=10 cascade
+                     gap, its discovery, the resolution
+                     applied this version, and the
+                     closing of OI-045 / OI-046 AA=10
+                     spec coverage. §10.4 section
+                     header updated from "REQUIRE
+                     UPSTREAM AMENDMENT (FUTURE
+                     CORRECTIVE CASCADE)" to "UPSTREAM
+                     AMENDMENT CASCADE STATUS" to
+                     reflect both findings now have
+                     active or completed cascades.
+
+                     COMPANION DELIVERABLE:
+                     1011002 dv1_22 → dv1_23 authored
+                     this session (TB00135 Phase B).
+                     Six surgical edits, no architectural
+                     change. See 1011002 dv1_23 §19
+                     revhist for full edit list.
+
+                     OPEN ITEMS UPDATED:
+                     OI-045  USDT inclusion. AA=10
+                             spec coverage now
+                             COMPLETE (was claimed
+                             COMPLETE TB00134 but
+                             AA=10 was missed).
+                             Closes at code deploy.
+                     OI-046  Top-N cap retired. AA=10
+                             spec coverage now
+                             COMPLETE (was claimed
+                             COMPLETE TB00134 but
+                             AA=10 was missed).
+                             Closes at code deploy.
+                     OI-056-CAND (NEW) AA=10 cascade
+                             omission discovered and
+                             closed within this
+                             session. SPEC scope
+                             CLOSED at this dv1_16.
+                             CODE scope deferred to
+                             Claude Code (ws_manager.py
+                             dv1_23 → dv1_24).
+
+                     FIVE CODING-READINESS QUESTIONS:
+                     ALL FIVE answered (unchanged from
+                     dv1_15 — anchor scope and rule
+                     framework not modified). Document
+                     remains coding-ready.
+
+                     Bill override: document control
+                     constraints for direct dv1_15 →
+                     dv1_16 increment without rv state
+                     are explicitly overridden per
+                     Bill's standing directive
+                     continuing the override scope
+                     established TB00115 / TB00116 /
+                     TB00120 / TB00130 / TB00134.
+
+  dv1_15 04-24-2026  TB00133 Phase 5 CIATS Parameter
+                     Registry Reconciliation. Phase 5 of
+                     TB00131 §4.3 5-phase spec cascade
+                     plan executed. Closes the cascade
+                     began in TB00130 (D-03 amendment) and
+                     continued through TB00131 (Phase 1)
+                     and TB00132 (Phase 2 + Phase 3).
+
+                     CHANGE 1 — §4 INSTANCE DOCUMENTS
+                     VERSION RECONCILIATION:
+                     Five §4 entries updated to actual
+                     project-folder versions:
+                       §4.6  1011006 dv1_0 → dv1_1
+                       §4.7  1011007 dv1_4 → dv1_5
+                       §4.9  1011009 dv1_0 → dv1_1
+                       §4.12 1011012 dv1_4 → dv1_5
+                       §4.13 1011013 dv1_5 → dv1_4
+                             (correction — listing dv1_5
+                             was not the actual file
+                             version; file remains dv1_4)
+                     Scope notes for §4.9 and §4.12
+                     extended to record TB00132 Phase 2
+                     SC-UNI-* and RE-MKT-* additions.
+                     §4 intro reflects updated date and
+                     0311002 v1_3 reference.
+
+                     CHANGE 2 — NEW §10 CIATS PARAMETER
+                     CROSS-REFERENCE ADDED:
+                     New Section 10 enumerates all
+                     CIATS-owned parameters across the
+                     post-TB00132 cascade spec corpus,
+                     identifies 0500000 dv1_20 §9 as the
+                     master registry source-of-truth,
+                     cites secondary documenting specs
+                     (0611004 dv1_1 §6, 0711003 dv1_3 §8,
+                     0711002 dv1_0), and flags
+                     cross-spec parameter inconsistencies
+                     requiring upstream amendment.
+
+                     CHANGE 3 — PHASE 5 RECONCILIATION
+                     FINDINGS DOCUMENTED:
+
+                     FINDING-P5-001 (HIGH SEVERITY):
+                     0500000 dv1_20 §9 line 1293 STILL
+                     REGISTERS "monitored_universe_n:
+                     50 pairs (top N by 24h USD volume)"
+                     — directly contradicting TB00128
+                     Ratified Decision D-08 (LOCKED)
+                     "Top-N cap retired" and the cascade
+                     completed across 0711003 dv1_3 §8,
+                     0611004 dv1_1 §3, and AR-070
+                     amendment in 0500000 dv1_20 §11.
+                     The §9 master registry was not
+                     updated when AR-070 was amended
+                     (TB00130). 0500000 dv1_20 §9 is the
+                     LONE HOLDOUT in the D-08 cascade.
+                     RESOLUTION REQUIRED: Upstream
+                     amendment 0500000 dv1_20 → dv1_21
+                     to remove the monitored_universe_n
+                     entry from §9. Out of TB00133 scope
+                     (Phase 5 NSI scope is 1010000
+                     authoring + flagging cross-spec
+                     inconsistencies; upstream amendment
+                     is a future-session corrective
+                     cascade).
+
+                     CHANGE 4 — OI-055-CAND DOCUMENTATION:
+                     Phase 4 citation-hygiene audit (run
+                     prior to Phase 5 in this session)
+                     identified five AR-* assignment
+                     fulfillment defects + one cosmetic
+                     flag. ALL pre-date the TB00130 →
+                     TB00132 cascade. ZERO defects
+                     introduced by the cascade itself.
+                     Per Bill directive in TB00133 turn 3,
+                     OI-055-CAND remediation is DEFERRED
+                     to a dedicated future session.
+                     Findings preserved in TB00133 Session
+                     Log §X and TB00133 NSI parking-lot
+                     for future action. Phase 5 proceeded
+                     because the OI-055-CAND defect
+                     dimension (rule-ID assignments) is
+                     orthogonal to the Phase 5 dimension
+                     (CIATS parameter registry).
+
+                     FIVE CODING-READINESS QUESTIONS —
+                     ALL FIVE ANSWERED:
+                     (1) DO — anchors the AA=10 sub-domain
+                     trading-system coding spec set,
+                     tracks per-spec dv versions, and
+                     cross-references the CIATS parameter
+                     master registry. (2) INTERFACES —
+                     reads from 0500000 §9, 0611004 §6,
+                     0711003 §8, 0711002 (master sources);
+                     consumed by all Pathway 2 coding
+                     sessions for parameter sourcing.
+                     (3) HARD RULES — EC-001..011
+                     (engineering constraints), AR-001..012
+                     (locked architectural requirements),
+                     §10 master-registry citation rule.
+                     (4) TRIGGERS — every cascade update to
+                     a parameter-bearing spec triggers
+                     Section 10 reconciliation review at
+                     next 1010000 increment. (5) LOGS —
+                     not directly logged; downstream
+                     consumers log per their own specs.
+                     Document remains coding-ready.
+
+                     Bill override: Phase 5 authoring
+                     under standing TB00133 directive
+                     "Continue with update. Session
+                     hand off." Document control
+                     constraints (rv state) explicitly
+                     overridden for this dv increment
+                     per Bill's standing project
+                     override scope.
 
   dv1_14 04-24-2026  OI-041 DEFECT-WM-REST-SIGN-001
                      registry bump.
@@ -1380,6 +1792,653 @@ Key ARs:
   AR-010  24/7/365. CIATS adds stand-down via PDCA.
   AR-011  Net 1:1.5 R:R SACRED. Hardcoded. Not CIATS.
   AR-012  Fee baseline: Maker 0.16% / Taker 0.26%.
+
+============================================================
+10. CIATS PARAMETER CROSS-REFERENCE
+============================================================
+
+This section is added in dv1_15 (TB00133 Phase 5
+reconciliation) to provide a Pathway 2 anchor-level
+cross-reference of all CIATS-owned parameters across
+the post-TB00132 cascade spec corpus.
+
+------------------------------------------------------------
+10.1 MASTER REGISTRY SOURCE-OF-TRUTH
+------------------------------------------------------------
+
+  0500000 dv1_20 §9 "Complete CIATS Parameter Registry"
+  is the AUTHORITATIVE master registry. All Pathway 2
+  coding specs source CIATS-owned starting values from
+  this registry.
+
+  Secondary documenting specs (per-domain detail):
+    0611004 dv1_1 §6  Risk-domain registry (sizing,
+                      drawdowns, exit distances)
+    0711003 dv1_3 §8  Asset-Selection registry
+                      (liquidity, refresh)
+    0711002 dv1_0     Strategy-Signals registry
+                      (regime thresholds, indicators)
+
+  Per-module CIATS consumption documented in:
+    1011002, 1011009, 1011010, 1011011, 1011012
+
+------------------------------------------------------------
+10.2 CIATS-OWNED PARAMETER INVENTORY (post-TB00132)
+------------------------------------------------------------
+
+Capital allocation:
+  tradeable_pct           50% (Decimal 0.50)
+  per_trade_pct           5% (Decimal 0.05; Half-Kelly
+                          replaces at 200 closed trades)
+  max_concurrent          20 positions
+
+Exit distances:
+  mae_mult                1.5x ATR(14) (Decimal 1.5)
+  emergency_sl_mult       3.0x ATR(14) (Decimal 3.0)
+
+Entry timing:
+  entry_timeout_sec       30-60s GTD
+
+Circuit breakers:
+  session_pause_drawdown  5% portfolio (Decimal 0.05)
+  full_halt_drawdown      10% portfolio (Decimal 0.10)
+
+Regime thresholds (Strategy-Signals):
+  adx_threshold           25
+  atr_percentile_thresh   67th
+  htf_ema_periods         20/50 daily
+
+SSS Signal Engine:
+  rsi_entry_low           50
+  rsi_entry_high          70
+  sss_ema_short           9
+  sss_ema_long            21
+  volume_sss_threshold    1.0x
+
+Selection Controller:
+  sc_body_threshold       0.3
+  sc_cooldown_seconds     300
+  sc_consecutive_limit    3
+
+Exit Controller:
+  max_hold_candles        24
+
+Asset Selection:
+  min_volume_usd_daily    $500,000 USD
+  liquidity_refresh_hours 4
+
+HARDCODED — NOT CIATS-OWNED — SACRED:
+  net 1:1.5 R:R           HARDCODED — NEVER CHANGES
+
+------------------------------------------------------------
+10.3 RETIRED PARAMETERS
+------------------------------------------------------------
+
+  monitored_universe_n    RETIRED per TB00128 D-08.
+                          Top-N cap concept eliminated.
+                          Universe is every Kraken pair
+                          satisfying AS-001 criteria
+                          (USD/USDC/USDT quote per D-03,
+                          ONLINE status, ≥$500k 24h
+                          volume). No ranking cutoff.
+                          See 0711003 dv1_3 §8 for
+                          retirement context. 0611004
+                          dv1_1 §3 confirms removal
+                          from Strategy-domain
+                          parameter scope-exclusion.
+
+------------------------------------------------------------
+10.4 CROSS-SPEC INCONSISTENCIES — UPSTREAM AMENDMENT
+     CASCADE STATUS
+------------------------------------------------------------
+
+FINDING-P5-001  D-08 cascade incompleteness — HIGH
+
+  Source spec:    0500000 dv1_20
+  Location:       §9 line 1293
+  Defect text:    "monitored_universe_n: 50 pairs
+                  (top N by 24h USD volume)"
+  Conflict with:  TB00128 D-08 (LOCKED), 0711003 dv1_3
+                  §8 line 507 retirement statement,
+                  0611004 dv1_1 §3 scope-exclusion
+                  removal, AR-070 amendment in 0500000
+                  dv1_20 §11 (no top-N cap).
+  Impact:         §9 master registry inconsistency.
+                  Code reading from §9 would assume
+                  monitored_universe_n=50 active.
+                  Cascade integrity violated.
+  Resolution:     Upstream amendment 0500000 dv1_20 →
+                  dv1_21. Remove monitored_universe_n
+                  entry from §9. Three-format delivery
+                  per DR-002.
+  Status:         CLOSED — TB00134 Thread A. 0500000
+                  dv1_21 §9 line 1293 removed and
+                  retirement footnote added with cross-
+                  references to §8 AR-070, 0711003 §8,
+                  0611004 §3, TB00128 D-08. Three-format
+                  binary-real artifacts delivered (.txt,
+                  .docx 91 KB ZIP, .pdf 524 KB / 41 pages).
+                  D-08 cascade COMPLETE across the 0*
+                  spec corpus as of TB00134 Thread A.
+
+FINDING-TB00135-001  D-03 + D-08 AA=10 CASCADE GAP — HIGH
+
+  Source spec:    1011002 dv1_22  (AA=10 coding spec)
+  Locations:      WM-PS-002 (line 1349)
+                  WM-PS-003 (line 1364)
+                  WM-PS-006 (line 1391)
+                  WM-LIQ-002 (line 1548)
+                  WM-LIQ-004 (lines 1607-1608)
+  Defect text:    quote_currency filter set = "USD" or
+                  "USDC" (USDT excluded);
+                  Top N=50 pairs by 24h volume rule
+                  retained as normative coding contract.
+  Conflict with:  TB00128 D-03 (LOCKED — universe =
+                  USD + USDC + USDT, no quote-currency
+                  exclusions), TB00128 D-08 (LOCKED —
+                  Top-N cap retired), 0500000 dv1_21 §8
+                  AR-070, 0511001 dv1_3 (parent AA=05
+                  spec — Phase 1 of TB00131 §4.3 plan),
+                  0711003 dv1_3 §3 AS-001 / §8 AS-002,
+                  0611004 dv1_1 §3, TB00000 §3.4
+                  ("AA=10 is the coding layer. AA=10
+                  is not a summary of other documents
+                  — it is the direct input to code.").
+  Impact:         CRITICAL silent violation of two
+                  LOCKED decisions. Phase 1 of TB00131
+                  §4.3 plan updated 0511001 dv1_0 →
+                  dv1_3 (AA=05 parent) for D-03 + D-08
+                  but DID NOT cascade into 1011002
+                  (AA=10 child). Phase 5 / TB00134
+                  Thread A claimed plan COMPLETE but
+                  the AA=05 → AA=10 coupling for the
+                  WS Manager pathway was never
+                  closed.
+                  WS Manager is the gateway component:
+                  it builds pair_cache and
+                  monitored_universe at startup. The
+                  stale dv1_22 spec — and the deployed
+                  ws_manager.py code matching it (last
+                  deploy 5d44292, TB00125) — filtered
+                  candidates to USD + USDC only and
+                  capped the universe at 50 pairs.
+                  USDT pairs never entered
+                  monitored_universe regardless of
+                  Selection Controller's correct
+                  USD+USDC+USDT logic; downstream D-03
+                  enforcement was short-circuited at
+                  the source. Universe size capped at
+                  50 regardless of D-08.
+  Discovery:      TB00135 turn 1. FP/DP audit of all
+                  AA=10 specs and .py files for D-03
+                  cascade completeness identified
+                  1011002 as the sole AA=10 spec and
+                  ws_manager.py as the sole .py file
+                  with USDC references but zero USDT
+                  references. All other AA=10 specs
+                  (1011009, 1011012) and .py files are
+                  clean.
+  Resolution:     1011002 dv1_22 → dv1_23 (TB00135 Phase
+                  B). Six surgical edits cascading D-03
+                  and D-08 into the AA=10 coding
+                  contracts. No architectural change.
+                  Hard Rules section (§17) unchanged —
+                  no Top-N rule was ever lifted to
+                  HR-WM-* status.
+                  Code cascade required: ws_manager.py
+                  dv1_23 → dv1_24 in Claude Code scope.
+                  Three edits: line ~1702 quote filter
+                  to include "USDT"; remove
+                  UNIVERSE_TOP_N constant (line ~446)
+                  and top-N slice (lines ~1711-1715);
+                  update line ~1695 header comment.
+  Status:         AA=10 SPEC COVERAGE COMPLETE per this
+                  document version (1010000 dv1_16 /
+                  1011002 dv1_23). Code cascade pending
+                  in Claude Code scope. Closes at code
+                  deploy.
+                  Closes OI-045 (USDT inclusion) AA=10
+                  spec coverage.
+                  Closes OI-046 (Top-N cap retired)
+                  AA=10 spec coverage.
+                  Both close fully at code deploy.
+
+------------------------------------------------------------
+10.5 OI-055-CAND DEFERRAL (TB00133 PHASE 4 FINDINGS)
+------------------------------------------------------------
+
+Phase 4 citation-hygiene audit (TB00133) identified
+five AR-* assignment fulfillment defects + one cosmetic
+flag. ALL pre-date the TB00130 → TB00132 cascade.
+ZERO defects introduced by the cascade itself.
+
+Per Bill directive in TB00133, OI-055-CAND remediation
+is DEFERRED to a dedicated future session. Phase 5
+proceeded because the rule-ID-assignment dimension
+is orthogonal to the CIATS parameter registry
+dimension. Findings carried in TB00133 NSI parking-lot
+for future action.
+
+Defects deferred (full detail in TB00133 Session Log):
+
+  D1  0500000 → 1011002  HIGH      Eight WM-* rule-ID
+                                   group assignments
+                                   reference prefixes
+                                   not present in
+                                   1011002 dv1_22
+                                   (parallel notation
+                                   pattern).
+  D2  0500000 → 1011001  LOW       BP-HTTP-005
+                                   over-implementation
+                                   or 0500000 stale
+                                   assignment range.
+  D3  0500000 → 1011013  MEDIUM    VD-WD-006 unfulfilled
+                                   in 1011013 dv1_4.
+  D4  0500000 → 1011002  MEDIUM    WM-EXE-002..012
+                                   range partially
+                                   fulfilled (4 of 11
+                                   present).
+  D5  0500000 → 1011009  LOW       SC-GATE-001..-018
+                                   (zero-padded) vs
+                                   SC-GATE-1..-6
+                                   (single-digit)
+                                   parallel notation.
+
+  F1  0500000 dv1_20     COSMETIC  §12 OI-008 entry
+                                   "Current as of
+                                   dv1_16" snapshot
+                                   reads stale to
+                                   casual reader.
+
+Resolution policy applied per TB00135 NSI carry-forward
++ TB00136 turn 1 RR-SCOPE-005 carry-forward execution:
+Option (iii) — preserve all existing rule-ID identity
+choices in mature implementations; add cross-reference
+mapping table at §10.6 below. No content change to
+0500000. No content change to AA=10 implementation
+specs. Pure governance/traceability deliverable. See
+§10.6 for full mapping.
+
+------------------------------------------------------------
+10.6 AR-* TO IMPLEMENTATION RULE-ID CROSS-REFERENCE
+------------------------------------------------------------
+
+This section closes OI-055-CAND at SPEC level via the
+Option (iii) resolution policy authored TB00136. It maps
+0500000 dv1_21 AR-* architectural-intent rule-ID
+assignments to actual rule-IDs implemented in AA=10
+coding specs. Five defect groups (D1-D5) plus one
+cosmetic flag (F1), all from TB00133 Phase 4 citation-
+hygiene audit.
+
+AUTHORITATIVE READING RULE
+==========================
+
+When 0500000 AR-* assignment text references a rule-ID
+prefix or count not present in the implementation spec,
+both notations are valid:
+
+  - 0500000 AR-*  is authoritative for ARCHITECTURAL
+                  INTENT — the design-level statement
+                  of what the system must do.
+
+  - Implementation spec rule-ID  is authoritative for
+                  IMPLEMENTED BEHAVIOR — the coding-
+                  level contract the .py file conforms
+                  to.
+
+Where the two notations diverge, the divergence is
+documented in the per-group entries below. No spec
+edits are made to either side. This document records
+the parallel notation for traceability and CIATS
+audit support.
+
+PER-GROUP ENTRIES
+=================
+
+------------------------------------------------------------
+GROUP D1 — WM-* PREFIX NON-CORRESPONDENCE      SEVERITY: HIGH
+------------------------------------------------------------
+
+0500000 dv1_21 AR Reference Sites (8 lines, 8 prefixes):
+
+  line 304  WS-INST-001..-007  + 1011002 WM-INST-001..-005
+  line 310  WS-LIB-001..-003   + 1011002 WM-LIB-001..-003
+  line 317  WS-RL-003 / EXEC-001a + 1011002 WM-RATE-001..-003
+  line 327  WS-STP-001..-003   + 1011002 WM-STP-001..-003
+  line 341  WS-DL-001..-004    + 1011002 WM-DL-001..-004
+  line 372  WS-TKR-001..-004   + 1011002 WM-TKR-001..-004
+  line 395                       1011002 WM-REST-001..-005
+  line 404                       1011002 WM-TASK-001..-004
+  line 419  cross-ref            1011002 WM-REST-006..-011
+  line 426  cross-ref            1011002 WM-REST-009..-011
+
+0500000 architectural-intent prefixes assigned to 1011002
+under the WM-* namespace (8 distinct prefixes):
+
+  WM-INST-, WM-LIB-, WM-RATE-, WM-STP-, WM-DL-,
+  WM-REST-, WM-TASK-, WM-TKR-
+
+1011002 dv1_23 implementation prefixes under WM-*
+(24 distinct prefixes):
+
+  WM-BAL-, WM-CAN-, WM-CONN-, WM-CRASH-, WM-DD-,
+  WM-DISP-, WM-DMS-, WM-EC-, WM-EXE-, WM-LIQ-,
+  WM-OHLC-, WM-POR-, WM-PS-, WM-PT-, WM-RECONNECT-,
+  WM-ROUND-, WM-RUN-, WM-SC-, WM-STARTUP-, WM-STATUS-,
+  WM-SZ-, WM-TOKEN-, WM-WARMUP-, WM-ZOM-
+
+DEFECT: Zero of the 8 architectural-intent prefixes are
+present in 1011002 dv1_23. Implementation organizes the
+WM-* namespace by functional area (connection lifecycle,
+dispatch, exits, ohlc, etc.) rather than by 0500000 sub-
+cluster (instrument, library, rate, stop, deposit/list,
+REST, task, ticker).
+
+SEMANTIC COVERAGE: SATISFIED via parallel notation. The
+architectural intents identified by the 0500000 prefixes
+ARE implemented in 1011002 dv1_23 — under different
+prefix names. Approximate mapping:
+
+  AR INTENT (0500000)          IMPLEMENTATION (1011002 dv1_23)
+  ───────────────────────────  ───────────────────────────────
+  WM-INST-001..-005            WM-CONN- / WM-STARTUP- /
+  (instrument cache)           WM-DISP- (instrument channel
+                               handling, pair_cache build,
+                               status routing)
+  WM-LIB-001..-003             1011001 BP-* (package-level
+  (library imports / orjson    engineering standards apply
+  / uvloop / TCP_NODELAY)      to all Pathway 2 modules)
+  WM-RATE-001..-003            WM-RUN- / WM-RECONNECT-
+  (rate-limit handling)        (run-loop pacing, reconnect
+                               backoff, executions ACK
+                               maxratecount per AR-030)
+  WM-STP-001..-003             WM-EC- / WM-EXE- (STP filter
+  (STP filter)                 handling on order events;
+                               stp_type:cancel_newest per
+                               AR-006 / AR-032)
+  WM-DL-001..-004              WM-DD- / WM-DMS- (disconnect
+  (disconnect / drop / late)   detection, dead-man switch,
+                               late-event handling)
+  WM-REST-001..-011            WM-CAN- / WM-EC- / private-
+  (REST private calls)         call HMAC helpers (WS_OPS,
+                               GetOpenOrders, batch_cancel,
+                               amend_order per AR-018-019)
+  WM-TASK-001..-004            WM-RUN- / WM-RECONNECT-
+  (task management)            (asyncio TaskManager pattern
+                               per AR-025)
+  WM-TKR-001..-004             WM-STATUS- / WM-WARMUP-
+  (ticker channel)             (ticker subscriptions, event
+                               trigger per AR-034)
+
+RESOLUTION: PRESERVE both notations. Architectural intent
+remains traceable via 0500000 AR-* lines. Implementation
+remains traceable via 1011002 dv1_23 WM-* rule-IDs. This
+entry is the bridge.
+
+OPTIONAL FUTURE ARCHITECTURAL ACTION: a 0500000 refresh
+cycle could rewrite the eight AR assignment lines above
+to reference the 1011002 dv1_23 implementation prefix
+scheme directly, eliminating the parallel notation. Cost:
+~8 AR text edits + three-format DR-002 delivery. Benefit:
+single-notation traceability across the spec corpus. Not
+authorized in TB00136 scope.
+
+------------------------------------------------------------
+GROUP D2 — BP-HTTP-005 OVER-IMPLEMENTATION  SEVERITY: LOW
+------------------------------------------------------------
+
+0500000 dv1_21 AR Reference Site:
+
+  line 356  "Assign to 1011002 WM-REST-006 through -011,
+             1011001 BP-HTTP-001 through -004."
+
+0500000 architectural-intent rule-IDs (4):
+  BP-HTTP-001, BP-HTTP-002, BP-HTTP-003, BP-HTTP-004
+
+1011001 dv1_7 implementation rule-IDs (5):
+  BP-HTTP-001, BP-HTTP-002, BP-HTTP-003, BP-HTTP-004,
+  BP-HTTP-005
+
+DEFECT: One implementation rule-ID (BP-HTTP-005) does
+not have a corresponding architectural-intent assignment
+in 0500000. Either:
+  (a) BP-HTTP-005 is over-implementation in 1011001
+      dv1_7 — implemented but not architecturally
+      authorized; or
+  (b) 0500000 line 356 is stale — its assignment range
+      should read "001 through -005" to match
+      implementation.
+
+SEMANTIC COVERAGE: SATISFIED via parallel notation. The
+BP-HTTP-* family is engineering best-practices for HTTP
+client behavior (aiohttp ClientSession config, retry
+semantics, timeout discipline). BP-HTTP-005 falls within
+the same architectural intent family as -001 through
+-004. No semantic gap.
+
+RESOLUTION: PRESERVE both notations. Implementation
+authoritative for BP-HTTP-005 behavior.
+
+OPTIONAL FUTURE ARCHITECTURAL ACTION: 0500000 refresh
+cycle could rewrite line 356 assignment range to "001
+through -005". Cost: 1 line edit + DR-002 delivery.
+Benefit: single-notation traceability. Not authorized
+in TB00136 scope.
+
+------------------------------------------------------------
+GROUP D3 — VD-WD-006 UNFULFILLED          SEVERITY: MEDIUM
+------------------------------------------------------------
+
+0500000 dv1_21 AR Reference Site:
+
+  line 412  "Assign to 1011013 VPS_Deployment_Coding_Spec
+             VD-WD-001 through VD-WD-006."
+
+0500000 architectural-intent rule-IDs (6):
+  VD-WD-001, VD-WD-002, VD-WD-003, VD-WD-004, VD-WD-005,
+  VD-WD-006
+
+1011013 dv1_4 implementation rule-IDs (5):
+  VD-WD-001, VD-WD-002, VD-WD-003, VD-WD-004, VD-WD-005
+
+DEFECT: One architectural-intent rule-ID (VD-WD-006) is
+NOT implemented in 1011013 dv1_4. This is a true
+under-implementation gap — 0500000 architectural intent
+exceeds 1011013 implementation by one rule-ID.
+
+SEMANTIC COVERAGE: PARTIAL. The VD-WD-* family covers
+VPS deployment watchdog rules (script invocation, cron
+schedule, log rotation, alert routing, retry semantics).
+Five of six architectural intents are realized in
+implementation. The sixth (VD-WD-006) cannot be
+characterized without reading the 0500000 dv1_21 line
+412 surrounding context for what -006 was intended to
+cover.
+
+RESOLUTION OPTIONS (deferred to future architectural
+attention OR retirement):
+
+  (R-D3-i)  Implement VD-WD-006 in 1011013 dv1_4 →
+            dv1_5. Requires architectural review of
+            what VD-WD-006 was intended to cover and
+            authoring of the corresponding rule.
+            Cascade through 0211003 (Operations
+            Infrastructure) if the new rule changes
+            VPS deployment behavior.
+
+  (R-D3-ii) Retire VD-WD-006 in 0500000 dv1_22+.
+            Rewrite line 412 assignment to "VD-WD-001
+            through VD-WD-005". Add §12 OI entry
+            documenting the retirement rationale.
+            Cost: 1 line edit + §12 entry + DR-002
+            three-format delivery.
+
+  (R-D3-iii) DEFER until 0211003 (Operations
+            Infrastructure) is updated for any
+            unrelated reason — fold VD-WD-006
+            disposition into that update cycle.
+            Lowest cost, longest open-item duration.
+
+Not authorized for action in TB00136 scope. Carried as
+parking-lot OI-055-CAND-D3 for future Bill direction.
+
+------------------------------------------------------------
+GROUP D4 — WM-EXE PARTIAL FULFILLMENT     SEVERITY: MEDIUM
+------------------------------------------------------------
+
+0500000 dv1_21 AR Reference Sites:
+
+  line 256  "Assign to 1011002 WM-EXE-002 through
+             WM-EXE-004."
+  line 265  "Assign to 1011002 WM-EXE-005 through
+             WM-EXE-007."
+  line 274  "Assign to 1011002 WM-EXE-008 through
+             WM-EXE-010."
+  line 290  "Assign to 0411001 WS-OSTA-001 through
+             WS-OSTA-003, 1011002 WM-EXE-011/-012."
+
+0500000 architectural-intent WM-EXE rule-IDs (11):
+  WM-EXE-002, WM-EXE-003, WM-EXE-004, WM-EXE-005,
+  WM-EXE-006, WM-EXE-007, WM-EXE-008, WM-EXE-009,
+  WM-EXE-010, WM-EXE-011, WM-EXE-012
+
+1011002 dv1_23 implementation WM-EXE rule-IDs (4):
+  WM-EXE-013, WM-EXE-014, WM-EXE-015, WM-EXE-016
+
+DEFECT: 0500000 assigns 11 WM-EXE-* rule-IDs (-002
+through -012). 1011002 dv1_23 implements 4 unique
+WM-EXE-* rule-IDs (-013 through -016). NO numerical
+overlap. The implementation prefix matches the
+architectural-intent prefix, but the numbers do not.
+
+SEMANTIC COVERAGE: SATISFIED via parallel notation
+within the same prefix family. The WM-EXE-* family
+covers executions-channel handling (exec_type dispatch
+per AR-022/-023/-024, fill processing, cancellation
+processing, sequence-gap detection per AR-021,
+executions ACK per AR-026/-030/-031). Architectural
+intent is implemented; the numbering scheme diverged.
+
+RESOLUTION: PRESERVE both notations. The WM-EXE-013..016
+rule-IDs in 1011002 dv1_23 implement the executions-
+channel architectural intent. The 0500000 -002..-012
+range identifies the same architectural intent family
+but does not match the implementation numbering.
+
+OPTIONAL FUTURE ARCHITECTURAL ACTION: 0500000 refresh
+cycle could rewrite the four AR assignment lines (256,
+265, 274, 290) to reference the actual implemented
+range. Cost: 4 line edits + DR-002 delivery. Benefit:
+numerical alignment within the prefix family. Not
+authorized in TB00136 scope.
+
+------------------------------------------------------------
+GROUP D5 — SC-GATE PARALLEL NOTATION         SEVERITY: LOW
+------------------------------------------------------------
+
+0500000 dv1_21 AR Reference Site:
+
+  AR-072 (Selection Controller 7-gate pipeline):
+    Assigns 1011009 SC-GATE-001 through SC-GATE-018.
+
+0500000 architectural-intent rule-IDs (18, zero-padded):
+  SC-GATE-001, SC-GATE-002, SC-GATE-003, SC-GATE-004,
+  SC-GATE-005, SC-GATE-006, SC-GATE-007, SC-GATE-008,
+  SC-GATE-009, SC-GATE-010, SC-GATE-011, SC-GATE-012,
+  SC-GATE-013, SC-GATE-014, SC-GATE-015, SC-GATE-016,
+  SC-GATE-017, SC-GATE-018
+
+1011009 dv1_1 implementation rule-IDs (6, single-digit):
+  SC-GATE-1, SC-GATE-2, SC-GATE-3, SC-GATE-4,
+  SC-GATE-5, SC-GATE-6
+
+DEFECT: Two parallel-notation defects in one group.
+First, format mismatch: zero-padded three-digit
+(0500000) vs single-digit (1011009). Second, count
+mismatch: 18 architectural-intent IDs vs 6
+implementation IDs.
+
+SEMANTIC COVERAGE: SATISFIED via parallel notation.
+The Selection Controller pipeline implements 6 logical
+gates (Universe, Liquidity, Concentration, Regime,
+Strategy, Risk). 0500000 AR-072 architectural intent
+allocated 18 rule-ID slots in anticipation of finer-
+grained gate sub-rules. Implementation collapsed the
+gate model to 6 single-digit IDs (one per gate); sub-
+rules within each gate are encoded as gate-internal
+logic rather than as separate SC-GATE-* rule-IDs.
+
+RESOLUTION: PRESERVE both notations. The 6 implemented
+gates ARE the realization of the architectural intent.
+The 18-slot allocation reserves namespace for future
+expansion if gate-level sub-rules are ever externalized.
+
+OPTIONAL FUTURE ARCHITECTURAL ACTION: 0500000 refresh
+cycle could rewrite AR-072 to reference SC-GATE-1
+through SC-GATE-6 with note that 18-slot reservation
+is retired. Cost: 1 AR text edit + DR-002 delivery.
+Benefit: single-notation alignment. Not authorized in
+TB00136 scope.
+
+------------------------------------------------------------
+F1 — 0500000 §12 OI-008 STALE SNAPSHOT  SEVERITY: COSMETIC
+------------------------------------------------------------
+
+0500000 dv1_21 §12 OI-008 entry references "Current as
+of dv1_16" snapshot text. The snapshot is internally
+consistent within 0500000 dv1_21 but reads as stale to
+a casual reader who assumes the snapshot pointer should
+match the document's own version (now dv1_21).
+
+DEFECT: Cosmetic only. No semantic impact on
+architecture, behavior, traceability, or any rule-ID
+assignment. Stylistic inconsistency only.
+
+RESOLUTION: NO ACTION required at SPEC level. Carried
+as forensic note for any future 0500000 refresh cycle.
+A natural-boundary 0500000 increment (e.g., from any
+future architectural change) would update §12 OI-008
+snapshot text incidentally.
+
+------------------------------------------------------------
+SUMMARY
+------------------------------------------------------------
+
+  Group | Severity  | Spec Coverage    | Resolution
+  ──────┼───────────┼──────────────────┼─────────────────────
+  D1    | HIGH      | SATISFIED        | Parallel notation
+        |           | (parallel)       | preserved
+  D2    | LOW       | SATISFIED        | Parallel notation
+        |           | (one extra ID)   | preserved
+  D3    | MEDIUM    | PARTIAL          | Future arch
+        |           | (1 ID gap)       | attention OR
+        |           |                  | retirement
+  D4    | MEDIUM    | SATISFIED        | Parallel notation
+        |           | (range diverge)  | preserved
+  D5    | LOW       | SATISFIED        | Parallel notation
+        |           | (format + count) | preserved
+  F1    | COSMETIC  | N/A              | No action
+
+OI-055-CAND STATUS: CLOSED at SPEC level via this section.
+Five defect groups documented with parallel-notation
+preservation per Option (iii) resolution policy. One
+cosmetic flag noted as forensic only. Three groups (D1,
+D2, D5) have semantic coverage SATISFIED with no further
+architectural action required. One group (D4) has
+semantic coverage SATISFIED at the prefix family level
+with optional future numerical alignment available.
+One group (D3) has semantic coverage PARTIAL with one
+rule-ID gap (VD-WD-006) requiring future architectural
+attention OR retirement — DEFERRED as parking-lot
+OI-055-CAND-D3 for future Bill direction.
+
+No content change to 0500000. No content change to AA=10
+implementation specs. Pure governance/traceability
+deliverable per TB00134 NSI §4.4 Option (iii) and
+TB00135 NSI §4 (carried forward).
+
+Closes OI-055-CAND at the AA=10 SPEC corpus level.
 
 ============================================================
 END OF DOCUMENT

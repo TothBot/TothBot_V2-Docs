@@ -1,9 +1,9 @@
 DocDCN:     0611004
 DocTitle:   Safety_Parameter_Framework
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0611004_Safety_Parameter_Framework_dv1_0.txt
-DocDate:    04-05-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0611004_Safety_Parameter_Framework_dv1_1.txt
+DocDate:    04-24-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -11,9 +11,9 @@ SAFETY PARAMETER FRAMEWORK
 ============================================================
 
 All content derived from FP/DP validated sources.
-Primary sources: 0500000 dv1_18 Section 9, AR-011,
+Primary sources: 0500000 dv1_20 Section 9, AR-011,
 AR-051, AR-052, AR-053, 0200000 v1_0 OP-006, TB00000
-v2_7 Section 9.16-9.17. Validated across 430+ unique
+v2_13 Section 9.16-9.17. Validated across 430+ unique
 sources over 10 validation sessions (TB00006 through
 TB00019). All starting values are CIATS-owned unless
 explicitly designated HARDCODED.
@@ -74,8 +74,11 @@ This document owns:
 This document does NOT own:
   - Strategy-domain parameters (adx_threshold,
     atr_percentile_threshold, htf_ema_periods,
-    min_volume_usd_daily, monitored_universe_n,
-    SSS signal parameters — governed by AA=07)
+    min_volume_usd_daily, SSS signal parameters —
+    governed by AA=07). NOTE: monitored_universe_n
+    is RETIRED per TB00128 Ratified Decision D-08;
+    no top-N cap applies. See 0711003 dv1_3 AS-002
+    (RETIRED per D-08) and 0500000 dv1_20 AR-070.
   - Trading system parameters (Selection Controller,
     Exit Controller, max_hold_candles — governed by AA=08)
   - CIATS implementation (0211001)
@@ -83,7 +86,7 @@ This document does NOT own:
   - Parameter Store implementation (0511002, 0211001)
 
 NOTE: The complete TothBot V2 parameter registry spanning
-all domains lives in 0500000 dv1_18 Section 9. This
+all domains lives in 0500000 dv1_20 Section 9. This
 document is the Risk-domain subset. Strategy and Trading
 System parameters are documented in their respective
 Phase 5 and Phase 6 documents.
@@ -596,27 +599,163 @@ Format per entry:
 13. RELATED DOCUMENTS
 ============================================================
 
-  0600000  Risk                         (Domain Document)
-  0610000  Risk_Rules_Anchor            (Sub-Domain Anchor)
-  0611001  Position_Sizing_Rules        (sizing params)
-  0611002  Drawdown_and_Halt_Rules      (circuit breaker
-                                         params)
-  0611003  Concentration_Exposure_Rules (concentration
-                                         params)
-  0500000  System_Architecture_Overview (Section 9 —
-                                         complete registry)
-  0200000  Operations                   (OP-006 param
-                                         ownership)
-  0211001  CIATS_Specification          (PDCA, statistical
-                                         thresholds)
-  1011010  CIATS_Coding_Spec            (implementation)
-  1011011  Risk_Engine_Coding_Spec      (consumes params)
-  0511002  Signal_Pipeline_Specification (Parameter Store
-                                          snapshot pattern)
+  0600000  Risk                          dv1_0  (Domain Doc)
+  0610000  Risk_Rules_Anchor             dv1_0  (Anchor)
+  0611001  Position_Sizing_Rules         dv1_0  (sizing params)
+  0611002  Drawdown_and_Halt_Rules       dv1_0  (circuit
+                                                 breaker params)
+  0611003  Concentration_and_Exposure_Rules
+                                         dv1_0  (concentration
+                                                 params)
+  0500000  System_Architecture_Overview  dv1_20 (Section 9 —
+                                                 complete registry)
+  0200000  Operations                    v1_0   (OP-006 param
+                                                 ownership)
+  0211001  CIATS_Specification           dv1_0  (PDCA,
+                                                 statistical
+                                                 thresholds)
+  1011010  CIATS_Coding_Spec             dv1_6  (implementation)
+  1011011  Risk_Engine_Coding_Spec       dv1_3  (consumes
+                                                 params)
+  0511002  Signal_Pipeline_Specification dv1_0  (Parameter Store
+                                                 snapshot pattern)
+  0711003  Asset_Selection_Specification dv1_3  (min_volume_
+                                                 usd_daily
+                                                 Strategy
+                                                 parameter;
+                                                 D-08 top-N cap
+                                                 retirement
+                                                 context)
 
 ============================================================
 14. REVISION HISTORY
 ============================================================
+
+  dv1_1  04-24-2026  Citation-hygiene pass per TB00128 §3.7
+                     finding. Phase 3 Step 6 of TB00131
+                     5-phase spec cascade plan executed.
+                     NO SCOPE EXPANSION — citation hygiene
+                     only per TB00131 NSI §4.3.
+
+                     CHANGE 1 — PREAMBLE SOURCE CITATIONS
+                     UPDATED:
+                       "0500000 dv1_18 Section 9"
+                         → "0500000 dv1_20 Section 9"
+                       "TB00000 v2_7 Section 9.16-9.17"
+                         → "TB00000 v2_13 Section 9.16-9.17"
+                     dv1_20 AR-070 is the current
+                     authority for universe scope (D-03
+                     amended USD/USDC/USDT) and AR-074
+                     for BTC/USD market_regime proxy.
+                     TB00000 v2_13 Section 9.16-9.17
+                     preserves the parameter philosophy
+                     and registry unchanged since v2_7.
+
+                     CHANGE 2 — §3 SCOPE EXCLUSION LIST
+                     UPDATED:
+                     Removed "monitored_universe_n" from
+                     the Strategy-domain parameter
+                     exclusion list. Per TB00128 Ratified
+                     Decision D-08, monitored_universe_n
+                     is RETIRED — no top-N cap applies.
+                     Cross-references added to 0711003
+                     dv1_3 AS-002 (which documents the
+                     retirement) and 0500000 dv1_20
+                     AR-070 (which established the amended
+                     universe scope without top-N cap).
+
+                     CHANGE 3 — §3 NOTE UPDATED:
+                     "0500000 dv1_18 Section 9" updated to
+                     "0500000 dv1_20 Section 9" for the
+                     complete-registry cross-reference.
+
+                     CHANGE 4 — §13 RELATED DOCUMENTS
+                     VERSION-PINNED:
+                     Per TB00128 §3.7 citation-hygiene
+                     scope, every cited document now
+                     carries an explicit version number:
+                       0600000 dv1_0, 0610000 dv1_0,
+                       0611001 dv1_0, 0611002 dv1_0,
+                       0611003 dv1_0, 0500000 dv1_20,
+                       0200000 v1_0, 0211001 dv1_0,
+                       1011010 dv1_6, 1011011 dv1_3,
+                       0511002 dv1_0.
+                     NEW citation added:
+                       0711003 Asset_Selection_Specification
+                       dv1_3 — referenced as the document
+                       that governs the min_volume_usd_
+                       daily Strategy parameter (which
+                       0611004 does NOT own) and documents
+                       the D-08 top-N retirement context.
+                     Related-documents list typo corrected:
+                       "0611003 Concentration_Exposure_
+                       Rules" → "0611003 Concentration_
+                       and_Exposure_Rules" (matches 0311001
+                       v1_3 canonical title).
+
+                     CHANGES 1-4 PRESERVE ALL PARAMETER
+                     VALUES, RULE IDS, AND CONTENT. No
+                     parameter values changed. No rule
+                     IDs renamed. No hard-rule
+                     modifications. No section re-ordering.
+                     All SPF-HC-*, SPF-OWN-*, §6
+                     Parameter Registry, SPF-INIT-*,
+                     SPF-CHG-*, SPF-PL004-*, §10
+                     Interfaces, §11 Hard Rules (HR-SPF-
+                     001..010), §12 five coding-readiness
+                     questions body text all preserved
+                     verbatim.
+
+                     HISTORICAL REFERENCE PRESERVATION:
+                     The dv1_0 revision-history entry
+                     statement "All content derived from
+                     FP/DP validated 0500000 dv1_18
+                     Section 9" is preserved unchanged.
+                     This is an accurate historical
+                     statement about dv1_0's derivation
+                     source at the time of its creation
+                     (04-05-2026). It is not a citation
+                     of current authority. Historical
+                     revision-history entries are
+                     preserved verbatim per project
+                     convention.
+
+                     FP/DP ANALYSIS:
+                     TB00128 §3.7 flagged citation-hygiene
+                     drift across multiple specs. The
+                     remediation policy is: update
+                     current-state citations (preamble
+                     source, scope NOTE, Related
+                     Documents); preserve historical
+                     citations in revision-history
+                     narrative. This policy follows from
+                     FP3 in the TB00131 §4.3 plan (content
+                     changes must precede citation-hygiene
+                     passes — current citation-hygiene
+                     reflects the updated state) and from
+                     the project convention of preserving
+                     prior revision-history entries
+                     verbatim (established in 0711003
+                     dv1_3 and 0511001 dv1_3). Decision:
+                     apply the policy.
+
+                     BILL OVERRIDE:
+                     Document-control constraints for
+                     0611004 (dv1_0 → dv1_1 minor
+                     increment via citation-hygiene pass,
+                     no rv state) are governed by Bill's
+                     standing directive continuing the
+                     override scope established TB00115
+                     (04-22-2026) and extended through
+                     TB00116, TB00128, TB00129, TB00130,
+                     TB00131. Phase 3 of the TB00131 §4.3
+                     5-phase plan executes under this
+                     override in TB00132.
+
+                     No patches. No real money. Paper
+                     trading must mimic all aspects of
+                     live trading exactly. Document
+                     remains coding-ready.
 
   dv1_0  04-05-2026  Initial document. Complete Risk-domain
                      CIATS parameter registry. Covers:

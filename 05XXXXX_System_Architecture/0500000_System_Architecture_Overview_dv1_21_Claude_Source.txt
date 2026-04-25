@@ -1,9 +1,9 @@
 DocDCN:     0500000
 DocTitle:   System_Architecture_Overview
-DocVersion: dv1_19
+DocVersion: dv1_21
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_19_Claude_Source.txt
-DocDate:    04-11-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_21_Claude_Source.txt
+DocDate:    04-24-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -29,10 +29,10 @@ The Complete System — All Architectural Decisions + All Flow Diagrams
 
 DocDCN:     0500000
 DocTitle:   TothBot_Kraken_System_Architecture_Overview
-DocVersion: dv1_18
+DocVersion: dv1_21
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_18.docx
-DocDate:    04-04-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_21.docx
+DocDate:    04-24-2026
 DocTime:    23:59:59 UTC
 
 PURPOSE: This document captures all architectural decisions, FP/DP analyses, and system
@@ -1144,18 +1144,23 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     OI-004: CLOSED.
                     Assign: 0811004 ELP-001 through -006, 0411001 WS-ENTRY-001 through -004,
                             1011002 WM-ENTRY-001 through -004.
-  AR-070 (dv1_15) ★: Asset selection universe — OI-002 CLOSED.
+  AR-070 (dv1_20) ★: Asset selection universe — OI-002 CLOSED. Scope amended dv1_20.
                     Monitored pair set = Kraken spot pairs satisfying ALL conditions:
-                      (1) Quote currency: USD or USDC
+                      (1) Quote currency: USD, USDC, or USDT
                       (2) Instrument status = online (from instrument channel cache)
                       (3) 24h volume >= min_volume_usd_daily ($500k starting, CIATS-owned)
-                    Starting monitored universe size: top 50 by 24h USD volume (CIATS-owned).
+                    No top-N cap. No ranking cutoff. Every pair that satisfies conditions
+                    (1), (2), and (3) is in the monitored universe.
                     Universe populated at startup from instrument channel snapshot.
                     Updated when instrument channel fires status changes.
-                    BTC/USD always included regardless of ranking (see AR-074).
+                    BTC/USD always included as market_regime proxy (see AR-074).
                     CIATS may add/remove pairs via PDCA after 200 trades.
                     OI-002: CLOSED.
                     Assign: 0711003 AS-001 through -008, 1011009 SC-UNI-001 through -006.
+                    Scope authority: TB00130 Ratified Decision D-03 (amended, 04-24-2026).
+                    FP/DP basis: 3 sequential searches, 18 sources (TB00130).
+                    Supersedes: TB00128 D-03 (USDC+USDT only); TB00001 OI-002
+                    original (USDT/USDC only); dv1_15 AR-070 (USD+USDC + top 50 cap).
   AR-071 (dv1_15) ★: EC-L1A-003 max_hold_candles starting value — OI-003 CLOSED.
                     max_hold_candles = 24 (2 hours at 5-minute cadence). CIATS-owned starting value.
                     FP/DP derivation: 5-minute momentum trades in confirmed TRENDING_POS regimes
@@ -1285,8 +1290,13 @@ ALL PARAMETERS ARE CIATS-OWNED STARTING VALUES.
   atr_percentile_threshold: 67th
   htf_ema_periods:         20/50 daily
   min_volume_usd_daily:    $500k USD
-  monitored_universe_n:    50 pairs (top N by 24h USD volume)
   1:1.5 R:R net:           HARDCODED — SACRED — NOT CIATS-OWNED
+
+  Note: monitored_universe_n parameter RETIRED per TB00128 D-08 LOCKED.
+  No top-N cap. Universe = every Kraken spot pair satisfying AR-070
+  conditions (1) quote currency USD/USDC/USDT, (2) instrument status
+  online, (3) 24h volume >= min_volume_usd_daily.
+  See §8 AR-070, 0711003 dv1_3 §8, 0611004 dv1_1 §3.
 
   SSS Signal Engine parameters (★ dv1_15 — AR-067):
   rsi_entry_low:           50 (RSI lower bound for SSS Gate 1)
@@ -1410,8 +1420,9 @@ Finding 6: post_only Rejection Monitoring [CIATS]
   OI-001: Signal generation (SSS) — CLOSED (dv1_15, AR-067).
            Three-factor SSS: RSI(14) 50-70, EMA(9)>EMA(21) on 5m, volume > MA(20)x1.0x.
            Specify in 0711001 SSS_Signal_Model_Specification (Phase 5).
-  OI-002: Asset selection universe — CLOSED (dv1_15, AR-070).
-           Top 50 USD/USDC pairs by 24h volume. BTC/USD always included (AR-074).
+  OI-002: Asset selection universe — CLOSED (dv1_15, AR-070; amended dv1_20).
+           All Kraken USD/USDC/USDT pairs passing liquidity + status filters. No cap.
+           BTC/USD always included as market_regime proxy (AR-074).
            Specify in 0711003 Asset_Selection_Specification (Phase 5).
   OI-003: Exit Controller full specification — CLOSED (dv1_15, AR-071).
            EC-L1A-001/002 specified dv1_14. EC-L1A-003 max_hold_candles=24 specified dv1_15.
@@ -1435,6 +1446,84 @@ Finding 6: post_only Rejection Monitoring [CIATS]
 ============================================================
 13. Revision History
 ============================================================
+
+  dv1_21 04-24-2026  Text-only. No diagram changes. FINDING-P5-001
+                     remediation per TB00134 Thread A (HIGH severity).
+                     §9 Complete CIATS Parameter Registry: removed
+                     stale `monitored_universe_n: 50 pairs` line that
+                     conflicted with D-08 LOCKED (Top-N cap retired).
+                     Added retirement footnote at end of §9 registry
+                     block with cross-reference to §8 AR-070 (already
+                     amended in dv1_20), 0711003 dv1_3 §8 (asset
+                     selection retirement statement), 0611004 dv1_1
+                     §3 (safety parameter framework retirement
+                     statement), and TB00128 D-08 source decision.
+                     Footnote makes §9 self-documenting so a code
+                     author reading §9 alone understands the
+                     retirement without cross-document chase.
+                     D-08 cascade now COMPLETE across the entire
+                     0* spec corpus. Closes FINDING-P5-001 identified
+                     by TB00133 Phase 5 reconciliation (1010000
+                     dv1_15 §10.4).
+                     No other content changes. AR-070 unchanged
+                     (already amended dv1_20). All other ARs
+                     unchanged. Outer Claude Source revision history
+                     updated with matching dv1_21 entry.
+                     FP/DP basis: TB00134 explicit chat analysis
+                     confirmed HIGH severity + low remediation cost
+                     + master-registry source-of-truth defect +
+                     immediately precedes Claude Code authoring +
+                     loss-prevention mission alignment per TB00000
+                     §3 Primary Mission. Deferral had no FP/DP-
+                     defensible upside.
+                     Bill override: TB00134 continues the standing
+                     document control override scope established in
+                     TB00115 (v2_10 → v2_11), TB00116 (v2_11 → v2_12),
+                     TB00120 (v2_12 → v2_13), and TB00130 (dv1_19 →
+                     dv1_20). Direct increment dv1_20 → dv1_21; no
+                     rv state. VP-004 dv → dv lifecycle transition.
+
+  dv1_20 04-24-2026  Text-only. No diagram changes. AR-070 Asset Selection
+                     Universe scope amended per TB00130 Ratified Decision
+                     D-03 (04-24-2026). Three changes to AR-070:
+                       (1) Quote currency scope: "USD or USDC" amended to
+                           "USD, USDC, or USDT".
+                       (2) Top-N cap retired ("top 50 by 24h USD volume"
+                           line removed). Universe is now every pair that
+                           passes conditions (1), (2), and (3) — liquidity
+                           and status filters only.
+                       (3) BTC/USD inclusion clarified as market_regime
+                           proxy commitment (see AR-074).
+                     OI-002 summary line updated to match new AR-070.
+                     No diagrams changed. No other ARs changed. AR-074
+                     unchanged (USD back in universe so BTC/USD proxy
+                     commitment remains valid).
+                     FP/DP basis: 3 sequential searches, 18 sources
+                     (TB00130 session) confirming no basis to exclude USD.
+                     Supersedes: TB00128 Ratified Decision D-03
+                     (USDC+USDT only); TB00001 OI-002 original text
+                     (USDT/USDC only); dv1_15 AR-070 (USD+USDC + top 50
+                     cap).
+                     Inner DC header brought current from dv1_18 to
+                     dv1_20 (dv1_19 was Claude Source outer-header-only
+                     update; no inner content changes occurred at dv1_19).
+                     Bill override: TB00130 continues the standing document
+                     control override scope established in TB00115 /
+                     TB00116 / TB00120. Direct increment dv1_19 → dv1_20;
+                     no rv state.
+
+  dv1_19 04-11-2026  Claude Source outer header only (no inner document
+                     content or diagram changes). DocTitle corrected:
+                     was "TothBot_Kraken_System_Architecture_Overview",
+                     corrected to "System_Architecture_Overview" per
+                     DCN 0500000 title assignment. DocPath corrected
+                     (was pointing to .docx, now points to Claude Source
+                     .txt). Claude Source outer Revision History section
+                     added (was missing). "END OF CLAUDE SOURCE FILE"
+                     corrected to "END OF DOCUMENT" per document
+                     standard. Corrective action from TB00074 audit.
+                     (This entry backfilled in dv1_20 — was previously
+                     only in the outer Claude Source revision history.)
 
   dv1_18 04-04-2026  Header-only update. No content or diagram changes.
                      Parent chain (0400000 Exchange_Interface) committed to GitHub.
@@ -2361,6 +2450,45 @@ SVG SOURCE: Diagram 6 — Complete System: One CIATS-Owned Organism
 ============================================================
 REVISION HISTORY
 ============================================================
+
+  dv1_21  04-24-2026  Content change. FINDING-P5-001 remediation
+                      per TB00134 Thread A (HIGH severity). §9
+                      master CIATS parameter registry: removed
+                      stale `monitored_universe_n: 50 pairs` line
+                      that conflicted with D-08 LOCKED (Top-N cap
+                      retired). Added inline retirement footnote
+                      with cross-reference to §8 AR-070, 0711003
+                      dv1_3 §8, 0611004 dv1_1 §3, and TB00128 D-08.
+                      §9 is now self-documenting on the retirement.
+                      D-08 cascade COMPLETE across the entire 0*
+                      spec corpus. No diagram changes. No other
+                      content changes. Outer + inner revision
+                      histories updated with matching dv1_21
+                      entries.
+                      Bill override: TB00134 continues the document
+                      control override scope established in TB00115
+                      (v2_10 → v2_11), TB00116 (v2_11 → v2_12),
+                      TB00120 (v2_12 → v2_13), and TB00130 (dv1_19
+                      → dv1_20). Direct increment dv1_20 → dv1_21;
+                      no rv state.
+
+  dv1_20  04-24-2026  Content change. AR-070 Asset Selection
+                      Universe scope amended per TB00130 Ratified
+                      Decision D-03 (04-24-2026). Quote currency
+                      scope now "USD, USDC, or USDT" (was "USD or
+                      USDC"). Top-N cap retired. OI-002 summary
+                      line updated to match. Inner DC header
+                      brought current from dv1_18 to dv1_20
+                      (dv1_19 had no inner changes). Inner
+                      revision history backfilled with dv1_19
+                      entry. No diagram changes. No other ARs
+                      changed.
+                      Bill override: TB00130 continues the
+                      document control override scope established
+                      in TB00115 (v2_10 → v2_11), TB00116 (v2_11
+                      → v2_12), and TB00120 (v2_12 → v2_13).
+                      Direct increment dv1_19 → dv1_20; no rv
+                      state.
 
   dv1_19  04-11-2026  DocTitle corrected: was
                       "TothBot_Kraken_System_Architecture_Overview",

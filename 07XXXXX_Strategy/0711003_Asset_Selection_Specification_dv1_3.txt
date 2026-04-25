@@ -1,0 +1,994 @@
+DocDCN:     0711003
+DocTitle:   Asset_Selection_Specification
+DocVersion: dv1_3
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711003_Asset_Selection_Specification_dv1_3.txt
+DocDate:    04-24-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+ASSET_SELECTION_SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete specification for TothBot V2
+asset selection: which Kraken spot pairs TothBot monitors,
+how the monitored universe is populated at startup, how it
+is updated in real time, and how BTC/USD is anchored as the
+market_regime proxy subscription.
+
+This document is the sole authoritative specification for
+the monitored pair universe. It is a direct coding contract.
+Claude must be able to implement the Selection Controller
+universe logic from this document without asking any
+questions.
+
+============================================================
+2. GOVERNING DOCUMENTS
+============================================================
+
+  0700000  Strategy               (Domain Document)
+  0710000  Strategy_Signals_Anchor (Sub-Domain Anchor)
+  0500000  System_Architecture_Overview
+           Primary source: AR-070 (amended dv1_20), AR-074
+  0411001  Kraken_WS_v2_Specification (instrument channel)
+  0411002  Kraken_REST_API_Specification (REST-TKR-001)
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  1011009  Selection_Controller_Coding_Spec (AA=10 — SC-UNI-*)
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+
+Ratified decisions governing this document (TB00128, D-03
+amended TB00130):
+  D-03  Universe = ALL Kraken spot pairs with quote
+        currency USD, USDC, OR USDT, passing the liquidity
+        filter, online status. NO top-N cap.
+        (AMENDED TB00130 via Bill directive + FP/DP 3-
+        sequential-search / 18-source analysis. Supersedes
+        TB00128 D-03 "USDC+USDT only" and TB00001 OI-002
+        original "USDT/USDC". 0500000 dv1_20 AR-070 is the
+        amended authority.)
+  D-04  Liquidity filter = $500k/day minimum 24h USD
+        volume. CIATS-owned starting value.
+  D-06  Paper-to-live parity EXACT.
+  D-08  Top-N universe cap retired.
+
+============================================================
+3. MONITORED PAIR UNIVERSE — DEFINITION
+============================================================
+
+------------------------------------------------------------
+AS-001  Universe Definition
+------------------------------------------------------------
+
+The monitored pair universe is the set of Kraken spot
+pairs that TothBot evaluates on every 5-minute OHLC candle
+close. A pair must satisfy ALL three criteria to qualify:
+
+  Criterion 1 — Quote Currency:
+    Quote currency must be USD, USDC, or USDT.
+    Per TB00130 Ratified Decision D-03 (amended from
+    TB00128 "USDC+USDT only") authorized by Bill directive
+    plus FP/DP 3-sequential-search / 18-source analysis.
+    0500000 dv1_20 AR-070 is the amended authority.
+    Rationale: USDT/USD is Kraken's dominant volume pair
+    (#1 spot volume ~ $239M/day); USD is not a minor quote
+    currency. Stablecoin fees apply only when stablecoin
+    is BASE — when USDC or USDT is QUOTE, standard spot
+    fees apply (identical to USD quote). USD carries no
+    depeg risk (USDC $0.94 Mar-2023 SVB; USDT $0.93
+    Nov-2022 FTX), USDC/USDT carry bounded depeg risk
+    monitored by CIATS. Bill portfolio is USD-denominated
+    ($1,000 starting), so USD pairs avoid conversion cost.
+    BTC/USD is retained in the universe as the
+    market_regime proxy subscription per AR-074; its
+    pipeline evaluation is CIATS-owned and disabled by
+    default (see AS-003).
+
+  Criterion 2 — Instrument Status:
+    Instrument status must be ONLINE.
+    Determined from the Kraken instrument channel cache
+    (see AS-004). Pairs with status post_only, cancel_only,
+    limit_only, work_in_progress, reduce_only, maintenance,
+    or delisted are excluded.
+    Reason: non-online status means the pair is not
+    available for full order execution.
+
+  Criterion 3 — Minimum Volume:
+    24h volume in USD >= min_volume_usd_daily ($500k starting).
+    Reason: pairs below $500k daily volume have insufficient
+    liquidity for reliable limit order execution. Thin
+    pairs increase slippage risk and execution failure rate.
+    Liquidity filter is an INDEPENDENT parameter —
+    separately derived from sizing parameters. See §8
+    Evidence Base for the distributed FP/DP chain.
+
+  Parameters (CIATS-owned starting values):
+    min_volume_usd_daily: $500,000 USD
+
+------------------------------------------------------------
+AS-002  (RETIRED per D-08)
+------------------------------------------------------------
+
+The prior dv1_1 AS-002 "Universe Size — Top N by Volume"
+specification is RETIRED in this version.
+
+Rationale (TB00128 §3.5 / D-08):
+  The prior monitored_universe_n = 50 cap was never
+  FP/DP-validated. It was asserted in 0500000 AR-070
+  rationale without dedicated research. TB00128 Ratified
+  Decision D-08 retires the cap. The universe now
+  comprises ALL pairs satisfying AS-001 criteria with
+  no top-N restriction.
+
+CIATS parameter `monitored_universe_n` is REMOVED from
+the Parameter Store (see §8).
+
+------------------------------------------------------------
+AS-003  BTC/USD — Regime Anchor + CIATS-Owned Pipeline
+        Evaluation (AR-074)
+------------------------------------------------------------
+
+BTC/USD is ALWAYS subscribed for regime computation. Under
+D-03 (amended, TB00130) BTC/USD's USD quote is now INCLUDED
+in the tradeable-universe quote-currency set (AS-001
+Criterion 1), so BTC/USD also qualifies as a universe member.
+AR-074 (unchanged dv1_20) governs its pipeline evaluation:
+BTC/USD pipeline evaluation for entry is CIATS-OWNED and
+DISABLED BY DEFAULT. BTC/USD is subscribed for regime
+computation only unless CIATS explicitly enables pipeline
+evaluation per AR-074.
+
+  Subscription rule: BTC/USD is subscribed to ohlc(5),
+  ohlc(60) cache seed (via REST), and daily-regime
+  GetOHLCData at system startup and maintained for the
+  life of the process.
+
+  Default pipeline rule: BTC/USD is NOT evaluated by the
+  Signal Pipeline for entry by default. Gate 1 (State
+  Machine) pre-filter excludes BTC/USD from the default
+  tradeable-evaluation set. CIATS may enable pipeline
+  evaluation for BTC/USD via an explicit parameter change
+  per AR-074 (post-200-trade PDCA). Until then, the
+  default-disabled regime-anchor-only behavior holds.
+
+  Reason: BTC/USD is the market_regime proxy for all
+  trades. Its regime must be computed daily (RE-015 in
+  0711002). market_regime anchors the regime tagging
+  applied to every trade record written by Logger for
+  CIATS regime-segmented analysis (0211001). BTC/USD
+  is the most liquid USD pair on Kraken and a reliable
+  reference benchmark. Keeping pipeline evaluation
+  CIATS-owned (not architecturally forbidden) preserves
+  the optionality AR-074 grants CIATS to enable BTC/USD
+  entries after statistical inference becomes valid.
+
+============================================================
+4. UNIVERSE POPULATION — STARTUP PROCEDURE
+============================================================
+
+------------------------------------------------------------
+AS-004  Startup Universe Population
+------------------------------------------------------------
+
+The tradeable monitored universe is populated at system
+startup using the Kraken instrument channel (for pair
+metadata and status) and the Kraken REST Ticker endpoint
+(for 24h volume data). Both sources are required. Neither
+alone is sufficient.
+
+This procedure is IDENTICAL in paper mode and live mode
+per D-06 (paper-to-live parity EXACT). Paper mode skips
+ONLY the private WS subscription and auth steps. Universe
+population, REST Ticker call, volume filtering, and pair
+subscriptions execute identically in both modes. (See
+0511001 §4.2 for the WS Manager startup path binding this
+rule.)
+
+NOTE: The instrument channel snapshot does NOT contain
+volume data. Volume MUST come from REST Ticker.
+See AS-005 and 0411002 REST-TKR-010.
+
+  Step 1: Subscribe to the instrument channel (WS v2
+          public, no auth required) per 0411001.
+
+  Step 2: Receive the initial instrument channel snapshot.
+          This snapshot contains all Kraken spot pairs with
+          their current status, price_increment, qty_min,
+          cost_min, qty_increment, and other metadata.
+          IMPORTANT: The instrument channel does NOT provide
+          24h volume data. Do NOT attempt to read volume
+          from this snapshot. (DEFECT-SS-006 root cause)
+
+  Step 3: Build the raw candidate list from the instrument
+          snapshot. A pair is a candidate if:
+            (a) Quote currency = USD, USDC, or USDT
+            (b) Instrument status = online
+          This produces the set of all tradeable USD/USDC/
+          USDT pairs currently online on Kraken. Volume
+          filter is NOT applied yet — all online USD/USDC/
+          USDT pairs are candidates for the REST Ticker
+          call. BTC/USD IS a candidate at this step
+          (USD-quoted, online). Its downstream treatment as
+          regime anchor with CIATS-owned pipeline evaluation
+          is handled in Step 7 and AS-003.
+
+  Step 4: Call REST Ticker (0411002 Section 4.8) for all
+          candidate pairs from Step 3. BTC/USD is already
+          included in Step 3's candidate list under the
+          USD quote criterion, so no separate BTC/USD
+          append is required. This is a single GET
+          /0/public/Ticker?pair=[all candidates] request.
+          Parse response to compute USD volume per pair:
+            Decimal(v[1]) * Decimal(p[1]).
+          Store results in liquidity_24h cache.
+
+  Step 5: Apply volume filter (AS-001 Criterion 3):
+          Retain only candidates where
+          liquidity_24h[pair] >= min_volume_usd_daily.
+          Pairs below the threshold are excluded from
+          further consideration. BTC/USD is NOT subject
+          to this filter — per AR-074 it is always retained
+          for regime computation regardless of volume (it
+          always exceeds $500k/day in practice, but the
+          rule holds architecturally).
+
+  Step 6: Finalize the tradeable monitored universe:
+          tradeable_universe = {pair for pair in
+              volume-qualified USD/USDC/USDT candidates}
+          No top-N cap is applied (D-08). Every pair
+          satisfying AS-001 criteria is monitored.
+          Store the set for O(1) membership tests.
+          BTC/USD membership: BTC/USD is in the
+          tradeable_universe SET (it passes AS-001) but
+          Gate 1 default-excludes it from pipeline
+          evaluation per AR-074 / AS-003 default-disabled
+          rule. This preserves regime-anchor subscription
+          while holding the CIATS-owned pipeline-evaluation
+          optionality open.
+
+  Step 7: Register BTC/USD as the regime anchor:
+          regime_anchor = "BTC/USD"
+          BTC/USD is now a member of tradeable_universe
+          (USD is in the quote-currency set per D-03
+          amended dv1_20) AND is also the regime_anchor.
+          Register regime_anchor separately from
+          tradeable_universe so Regime Engine has an
+          unambiguous handle. Pipeline Gate 1 applies the
+          AR-074 default-disabled exclusion to BTC/USD
+          pipeline evaluation — unless CIATS has enabled
+          BTC/USD pipeline evaluation via explicit
+          parameter update.
+
+  Step 8: For each pair in tradeable_universe (which
+          includes regime_anchor BTC/USD as a member under
+          D-03 amended):
+          (a) Cache instrument metadata: price_increment,
+              qty_min, cost_min, qty_increment, status.
+          (b) Subscribe to ohlc(5) WS stream.
+              NOTE: ohlc(60) is NOT subscribed via WS.
+              Kraken WS v2 rejects a second ohlc interval
+              per symbol (OI-NEW-001 / HR-WM-021). 1H HTF
+              cache is seeded from REST only via
+              seed_indicators_from_rest().
+          (c) Subscribe to ticker channel (for drawdown
+              monitoring bbo — pairs with open positions).
+          (d) Begin WARM_UP indicator seeding per 0711001
+              SSS-009 through SSS-012.
+
+Universe is not tradeable until indicator WARM_UP completes
+for each pair (all five indicators seeded per HR-STRAT-007).
+
+Paper-mode parity note: All eight steps above execute in
+paper mode IDENTICALLY to live mode. The paper-mode
+boundary in WS Manager is AFTER Step 8 (skip private WS
+subscription and auth only). See 0511001 §4.2 dv1_2.
+
+------------------------------------------------------------
+AS-005  24h Volume Data Source
+------------------------------------------------------------
+
+24h USD volume is obtained exclusively from the Kraken
+REST Ticker endpoint (0411002 Section 4.8, REST-TKR-001).
+
+The REST Ticker endpoint is called at startup (Step 4 of
+AS-004) for all candidate pairs. It returns 24h rolling
+volume data (v[1], base currency) and 24h VWAP (p[1],
+quote currency). USD volume per pair is computed as:
+
+  usd_volume_24h = Decimal(v[1]) * Decimal(p[1])
+
+This value is stored in the liquidity_24h cache (keyed by
+WS v2 pair name, e.g., "BTC/USDT" or "ETH/USDC") and is
+the value read by Pipeline Gate 2 (SP-G2-001 in 1011003).
+
+Quote-currency handling for USD-equivalent filtering:
+  USD pairs:  Native USD. No exchange rate conversion is
+              applied (USD is the reference currency).
+              No depeg monitoring required (USD is the
+              peg target, not pegged).
+  USDC pairs: treat USDC as equivalent to USD for
+              filtering. No exchange rate conversion is
+              applied (USDC ≈ $1.00 depeg deviation is
+              bounded by CIATS stability monitoring).
+  USDT pairs: treat USDT as equivalent to USD for
+              filtering. No exchange rate conversion is
+              applied (USDT ≈ $1.00 depeg deviation is
+              bounded by CIATS stability monitoring).
+
+The liquidity_24h cache is refreshed periodically every
+liquidity_refresh_hours (CIATS-owned starting value: 4h)
+by a background asyncio task in WS Manager. This ensures
+volume data reflects current market conditions throughout
+the trading session, not stale startup data.
+
+On refresh failure: existing liquidity_24h values are
+preserved. Gate 2 continues using prior values. The system
+does NOT zero out the cache on a refresh error.
+
+CIATS parameter (starting value):
+  liquidity_refresh_hours: 4 hours
+
+DEPRECATED DATA SOURCE (DEFECT-SS-006):
+  The prior version of this document (dv1_0) stated that
+  24h volume was obtained from the "instrument channel
+  snapshot." This was INCORRECT. The instrument channel
+  does not provide volume data. Corrected in dv1_1. Root
+  cause reference: TB00093 §2.5.
+
+============================================================
+5. UNIVERSE UPDATES — LIVE PROCEDURE
+============================================================
+
+------------------------------------------------------------
+AS-006  Runtime Universe Updates
+------------------------------------------------------------
+
+The monitored universe is updated in real time when the
+instrument channel delivers status updates for pairs.
+
+    (a) If a monitored pair's status changes to anything
+        other than online:
+        Apply open position protection per AS-007.
+        If no open position: remove pair immediately from
+        tradeable_universe.
+        Stop ohlc(5) subscription for removed pair.
+        Log: PAIR_REMOVED pair=X reason=status_change
+             new_status=Y.
+
+    (b) If a previously non-online pair's status changes
+        to online AND the pair meets AS-001 criteria
+        (USD, USDC, or USDT quote; online; liquidity
+        filter):
+        Add pair to tradeable_universe.
+        Subscribe to ohlc(5).
+        Begin WARM_UP seeding.
+        Log: PAIR_ADDED reason=status_restored.
+
+    (c) If an instrument channel adds a NEW pair (newly
+        listed on Kraken) that meets AS-001 criteria:
+        Wait for the next liquidity refresh cycle to
+        acquire REST Ticker volume data. Once
+        liquidity_24h[new_pair] is populated and meets
+        AS-001 Criterion 3: add pair to tradeable_universe
+        and subscribe per Step 8 of AS-004.
+        Log: PAIR_ADDED reason=new_listing.
+
+    (d) If instrument data changes (price_increment,
+        qty_min, cost_min): update metadata cache.
+        Log: INSTRUMENT_METADATA_UPDATED pair=X.
+
+Real-time updates respond to status events only. Volume-
+based additions/removals are applied at the periodic
+liquidity refresh boundary (not on every ticker tick).
+
+------------------------------------------------------------
+AS-007  Open Position Protection on Removal
+------------------------------------------------------------
+
+A pair is NEVER removed from the monitored universe while
+TothBot holds an open position in it. If a status change
+removes a pair from the universe while a position is open:
+
+  (1) Block new entries for that pair immediately.
+  (2) Allow the existing position to complete normally.
+      Exit Controller continues monitoring and exits
+      on its normal L1/L2 logic.
+  (3) Alert Bill with the pair name and status.
+  (4) Remove pair from universe after position closes.
+
+============================================================
+6. UNIVERSE ADJUSTMENT BY CIATS
+============================================================
+
+------------------------------------------------------------
+AS-008  CIATS Universe Adjustment Procedure
+------------------------------------------------------------
+
+CIATS may propose changes to the monitored universe after
+the 200-trade floor is reached via PDCA. Adjustable
+parameters:
+
+  - min_volume_usd_daily: raise or lower volume filter
+
+CIATS cannot remove BTC/USD (regime anchor per AR-074).
+CIATS cannot change the quote-currency criterion (USD,
+USDC, or USDT is an architectural decision per D-03
+amended TB00130, not a CIATS parameter — see HR-AS-007).
+
+Universe adjustments are applied at inter-trade boundaries
+only, consistent with all CIATS parameter updates. No
+universe change occurs mid-pipeline-evaluation.
+
+The universe adjustment procedure:
+  (1) CIATS proposes new min_volume via PDCA.
+  (2) Bill approves (or CIATS auto-applies per 0211001).
+  (3) At next inter-trade boundary, rebuild universe:
+      Re-apply AS-001 criteria with updated parameters.
+      Add/remove subscriptions as needed.
+      Log: UNIVERSE_REBALANCED pairs_added=X pairs_removed=Y.
+
+============================================================
+7. HARD RULES — ASSET SELECTION
+============================================================
+
+HR-AS-001  BTC/USD is always subscribed as the regime
+           anchor. No CIATS parameter update, rebalancing,
+           or status event removes BTC/USD from
+           subscription. It is a permanent anchor. BTC/USD
+           pipeline evaluation for entry is CIATS-OWNED and
+           DISABLED BY DEFAULT per AR-074. (AR-074, AS-003)
+
+HR-AS-002  A pair with an open position is NEVER removed
+           from the monitored universe. Removal is deferred
+           until the position closes. (AS-007)
+
+HR-AS-003  All three AS-001 criteria must be satisfied
+           for a pair to qualify for monitoring. Any one
+           failing criterion excludes the pair.
+
+HR-AS-004  Universe membership check is O(1) (set lookup).
+           The monitored universe is stored as a set.
+           Never perform linear search through a list.
+
+HR-AS-005  CIATS universe changes are applied at inter-
+           trade boundaries only. No mid-pipeline universe
+           changes are permitted.
+
+HR-AS-006  24h USD volume is obtained ONLY from the REST
+           Ticker endpoint (0411002 REST-TKR-001). The
+           instrument channel does NOT provide volume data.
+           Any implementation reading volume from the
+           instrument channel is a defect. (DEFECT-SS-006)
+
+HR-AS-007  CIATS may not change the three qualifying
+           criteria (AS-001) — only the threshold value
+           (min_volume_usd_daily). The quote-currency
+           enumeration (USD, USDC, USDT) and the online-
+           status requirement are architectural decisions
+           per D-03 amended TB00130, not CIATS-owned
+           parameters.
+
+HR-AS-008  Universe changes (additions and removals) are
+           logged with reason codes. Silent universe
+           changes are a defect.
+
+HR-AS-009  BTC/USD pipeline evaluation is CIATS-OWNED and
+           DISABLED BY DEFAULT per AR-074. Gate 1 state
+           machine MUST exclude BTC/USD from entry
+           evaluation unless CIATS has explicitly enabled
+           BTC/USD pipeline evaluation via a parameter
+           update. BTC/USD is subscribed for market_regime
+           computation ALWAYS. Any code path that dispatches
+           an entry order for BTC/USD while CIATS BTC/USD
+           pipeline evaluation is disabled is a defect.
+
+HR-AS-010  Paper mode executes AS-004 Steps 1 through 8
+           IDENTICALLY to live mode. Skipping any step in
+           paper mode is a defect (OI-044 root cause).
+           Only private WS subscription and auth are
+           skipped in paper mode. Universe population,
+           REST Ticker, volume filter, subscriptions, and
+           WARM_UP all execute. (D-06)
+
+============================================================
+8. CIATS PARAMETER REGISTRY — ASSET SELECTION PARAMETERS
+============================================================
+
+All asset selection parameters are CIATS-owned starting
+values subject to PDCA optimization after 200 trades.
+
+  min_volume_usd_daily:     $500k   (minimum 24h USD volume)
+  liquidity_refresh_hours:  4       (REST Ticker refresh cycle)
+
+(The prior monitored_universe_n parameter is RETIRED per
+D-08. No top-N cap is applied.)
+
+Evidence base for starting values:
+
+  min_volume_usd_daily = $500k USD daily volume
+  ----------------------------------------------
+  Source-of-record: TB00001 CIATS Parameter Registry
+  (pre-TB00001 FP/DP research passes per TB00001 line
+  95-96: "3 independent FP/DP research passes, 15+ total
+  sources per parameter"). The $500k starting value was
+  established during the pre-TB00001 architecture sessions
+  of 2026-03-23 (TB00001 line 14).
+
+  Distributed-evidence validation chain:
+    - TB00012 Search 5 (7+ sources): Partial-fill
+      probability analysis. $50 order on $500k/day pair
+      = 0.01% of daily volume. GTD 30-60s entry cancel
+      as layered control.
+    - TB00013 Search 9 (9 sources): Kraken MPP risk
+      analysis. Finding: "$500k/day liquidity gate
+      significantly reduces MPP risk on well-traded pairs"
+      (TB00013 lines 362-365). IOC retry at bid-0.2% as
+      layered exit control.
+    - TB00014 Search 8 (8+ sources): Kraken universe
+      adequacy validation. Finding: "CONFIRMED — $500k/day
+      filter adequate for Kraken universe" (TB00014 line
+      450). 700+/1500+ Kraken pairs exceed $500k/day.
+
+  This filter is an INDEPENDENT parameter. It is NOT
+  derived from position-sizing math. Position sizing
+  (tradeable_pct=50%, per_trade_pct=5%, max_concurrent=20)
+  and the liquidity filter ($500k) are separately derived.
+  The consistency relationship (small-order/daily-volume
+  ratio) is a SANITY-CHECK OBSERVATION, not the origin of
+  either parameter. Prior dv1_1 Section 8 text presenting
+  the relationship as a derivation was post-hoc
+  rationalization (TB00128 §3.7 / OI-049-CAND, corrected
+  per R-11/R-12).
+
+  Layered loss-control adequacy: the reduction from the
+  research-literature $1M+ floor to the $500k starting
+  value is compensated by layered controls documented
+  across the system:
+    - $500k/day liquidity filter: pair-quality floor
+    - Small order sizes (~0.01% of daily volume): partial-
+      fill risk floor
+    - GTD 30-60s entry cancel: expiry floor
+    - MPP + IOC retry bid-0.2%: exit rejection control
+    - MAE exit (ATR x 1.5x): Layer 2 loss cap
+    - Emergency SL (ATR x 3.0x): Layer 3 crash brake
+    - Regime gate (Gate 3): no-edge block
+    - 1H HTF confirmation: trend validation
+    - Net 1:1.5 R:R: sacred hardcoded constraint
+    - Half-Kelly at 200 trades: sizing optimization
+
+  CIATS validates and adjusts from the first trade.
+  Statistical inference activates at the 200-trade floor
+  per 0211001 §6.
+
+  liquidity_refresh_hours = 4
+  ----------------------------
+  Source: CIATS-owned starting value. 24h volume is a
+  rolling window that changes gradually; a 4-hour refresh
+  interval ensures volume data reflects current market
+  conditions without imposing excessive REST rate-counter
+  cost. Four calls per pair per 24h (once per 4h) * ~30
+  typical pairs = ~180 REST Ticker units per day, well
+  inside Kraken's 125/pair/sec rate ceiling for a 1-pair-
+  per-call request pattern.
+
+  Starting value: CIATS validates after 200 trades whether
+  a shorter or longer refresh interval is optimal. CIATS-
+  owned per 0211001.
+
+Prior dv1_1 Section 8 contained two defects now corrected:
+  (1) "TB00020 Search 4, 5+ sources" citation — TB00020
+      has only Search 1, 2, 3 per grep verification.
+      Citation was fabricated. Corrected to the real
+      distributed-evidence chain above (TB00128 §3.7 /
+      R-11).
+  (2) "$500k ensures adequate liquidity for TothBot
+      position sizes (tradeable_pct=50%, per_trade_pct
+      =5% of portfolio)" — presented the sizing math as
+      the derivation of $500k. In reality, $500k was
+      derived from pair-quality first principles (MPP
+      risk, partial-fill risk, execution reliability).
+      The sizing math is a consistency check, not the
+      origin. Rewritten above as an INDEPENDENT parameter
+      with distributed-evidence validation (TB00128 §3.7 /
+      R-12).
+
+============================================================
+9. WHAT DOES THIS COMPONENT DO?
+============================================================
+
+(Five coding-readiness questions per TB00000 Section 3.2)
+
+  (1) What does asset selection DO? (inputs → outputs)
+      Inputs: Kraken instrument channel snapshot and status
+      updates (pair metadata, status). REST Ticker endpoint
+      response (24h volume data). Parameter Store
+      (min_volume_usd_daily, liquidity_refresh_hours,
+      btc_usd_pipeline_enabled [CIATS-owned, default
+      FALSE]).
+      Outputs: tradeable_universe (set of pair strings,
+      USD/USDC/USDT quote), regime_anchor ("BTC/USD",
+      pipeline evaluation CIATS-owned per AR-074, default
+      disabled), per-pair instrument metadata cache
+      (price_increment, qty_min, cost_min, status),
+      liquidity_24h cache (24h USD volume per pair).
+
+  (2) What are its interfaces to other components?
+      Reads from: WS Manager instrument channel cache
+      (0411001, 0511001). REST Ticker endpoint via WS
+      Manager REST session (0411002 REST-TKR-001).
+      Parameter Store snapshot (I-4).
+      Writes to: WS Manager subscription list (new pairs
+      added trigger subscribe actions). WS Manager
+      liquidity_24h cache (populated during universe build
+      and periodic refresh). Pipeline Gate 1 reads
+      regime_anchor exclusion list. Pipeline Gate 2 reads
+      liquidity_24h. Regime Engine reads regime_anchor for
+      daily computation. Logger records all adds, removes,
+      rebalances.
+
+  (3) What are its hard rules?
+      HR-AS-001 through HR-AS-010 above.
+
+  (4) What triggers it and what does it trigger?
+      Startup trigger: instrument channel snapshot →
+      candidate list built (USD/USDC/USDT + online) →
+      REST Ticker called for volume → universe filtered
+      and assembled (no top-N) → regime_anchor registered
+      (BTC/USD, present in both tradeable_universe and
+      as regime_anchor handle) → subscriptions initiated
+      → warm-up begins.
+      Runtime trigger: instrument channel status update
+      → evaluate add/remove per AS-006.
+      CIATS trigger: PDCA proposal at inter-trade boundary
+      → universe rebalanced per AS-008.
+      Periodic trigger: liquidity_refresh_hours timer →
+      REST Ticker re-called → liquidity_24h updated.
+
+  (5) What does it log?
+      At startup: UNIVERSE_BUILT pairs=N (list of pairs).
+      On addition: PAIR_ADDED pair=X reason=Y.
+      On removal: PAIR_REMOVED pair=X reason=Y new_status=Z.
+      On deferral: PAIR_REMOVAL_DEFERRED pair=X
+        reason=open_position.
+      On CIATS rebalance: UNIVERSE_REBALANCED
+        pairs_added=X pairs_removed=Y.
+      Regime anchor: REGIME_ANCHOR_SUBSCRIBED pair=BTC/USD.
+      Liquidity: LIQUIDITY_SEEDED (pairs, volumes).
+      Liquidity: LIQUIDITY_REFRESHED (pairs, timestamp).
+      Liquidity: LIQUIDITY_REFRESH_FAILED (timestamp).
+
+============================================================
+10. RELATED DOCUMENTS
+============================================================
+
+  0700000  Strategy               (Domain Document)
+  0710000  Strategy_Signals_Anchor (Sub-Domain Anchor)
+  0711001  SSS_Signal_Model_Specification
+  0711002  Regime_Taxonomy_Specification
+  0500000  System_Architecture_Overview (AR-070 amended
+           dv1_20, AR-074)
+  0411001  Kraken_WS_v2_Specification  (instrument channel)
+  0411002  Kraken_REST_API_Specification dv1_1
+           (REST-TKR-001 — Ticker endpoint for 24h volume)
+  0411003  Kraken_Fee_Rate_Limit_Specification
+  0511001  WS_Manager_Specification    (subscription manager,
+           dv1_3 USD-inclusion cascade companion)
+  1011002  WS_Manager_Coding_Spec      (current dv)
+  1011003  Signal_Pipeline_Coding_Spec dv1_0
+           (Gate 1 reads regime_anchor; Gate 2 reads
+           liquidity_24h from WM cache)
+  1011009  Selection_Controller_Coding_Spec (SC-UNI-*)
+  0211005  Paper_Trading_Operations_Procedure
+           (paper-mode parity binding)
+
+============================================================
+11. REVISION HISTORY
+============================================================
+
+  dv1_3  04-24-2026  TB00131 Priority 1 cascade from 0500000
+                     dv1_20 AR-070 amendment. D-03 amended
+                     (TB00130) via Bill directive + FP/DP
+                     3-sequential-search / 18-source
+                     analysis. Scope: USD, USDC, or USDT
+                     quote currencies (supersedes TB00128
+                     D-03 "USDC+USDT only" and TB00001
+                     OI-002 original "USDT/USDC").
+
+                     CHANGE 1 (primary — AR-070 cascade):
+                     AS-001 Criterion 1 text changed from
+                     "USDC or USDT" to "USD, USDC, or USDT".
+                     Rationale rewritten with USD-inclusion
+                     basis: USDT/USD Kraken #1 volume pair,
+                     zero USD depeg risk vs bounded USDC/USDT
+                     risk, USD portfolio conversion-cost
+                     avoidance, stablecoin fees apply only
+                     when stablecoin is BASE (quote-side USDC/
+                     USDT pairs use standard spot fees
+                     identical to USD pairs).
+
+                     CHANGE 2 (AS-003 architectural
+                     consistency): BTC/USD was dv1_2-
+                     designated "non-tradeable" because its
+                     USD quote was excluded by AS-001
+                     Criterion 1. That rationale no longer
+                     holds under D-03 amended. AS-003
+                     rewritten: BTC/USD is a member of
+                     tradeable_universe (passes AS-001) AND
+                     the regime_anchor (AR-074). Per AR-074
+                     (unchanged dv1_20), BTC/USD pipeline
+                     evaluation is CIATS-OWNED and DISABLED
+                     BY DEFAULT. Default behavior preserved:
+                     BTC/USD is evaluated for regime only.
+                     CIATS may enable pipeline evaluation
+                     via explicit parameter update post-
+                     200-trade PDCA.
+
+                     CHANGE 3 (AS-004 propagation):
+                     Step 3 candidate criteria widened to
+                     USD/USDC/USDT. Step 4 BTC/USD append
+                     logic removed (BTC/USD now flows
+                     through Step 3 naturally). Step 5
+                     BTC/USD retention rule re-anchored on
+                     AR-074 (regime anchor) rather than
+                     non-tradeable designation. Step 6
+                     BTC/USD dual-set membership clarified.
+                     Step 7 regime_anchor registration
+                     rewritten to document dual membership.
+
+                     CHANGE 4 (AS-005 propagation):
+                     Quote-currency handling block extended
+                     with USD entry (native, no conversion,
+                     no depeg monitoring).
+
+                     CHANGE 5 (AS-006 propagation):
+                     Runtime status-restored rule (b)
+                     updated to widen quote-currency check
+                     to USD/USDC/USDT.
+
+                     CHANGE 6 (AS-008 propagation):
+                     CIATS architectural-constraint text
+                     updated to cite USD/USDC/USDT
+                     enumeration and D-03 amended authority.
+
+                     CHANGE 7 (HR-AS-007 propagation):
+                     Quote-currency enumeration text updated
+                     to USD/USDC/USDT per D-03 amended.
+
+                     CHANGE 8 (HR-AS-009 architectural
+                     consistency): Non-tradeable rule
+                     softened to CIATS-owned-disabled-by-
+                     default per AR-074. Default behavior
+                     equivalent to dv1_2 (no BTC/USD entry
+                     dispatch unless CIATS explicitly
+                     enables). Defect-detection rule added
+                     for the explicit-enable case.
+
+                     CHANGE 9 (§9 propagation): Q1 output
+                     text updated (USD/USDC/USDT quote,
+                     regime_anchor CIATS-owned default
+                     disabled). Q4 startup trigger chain
+                     updated with USD in candidate list
+                     and regime_anchor dual-membership
+                     note.
+
+                     CHANGE 10 (§2 Governing Documents):
+                     0500000 AR-070 amended dv1_20 explicitly
+                     noted. D-03 amendment authority (TB00130)
+                     added to ratified-decisions block.
+
+                     FP/DP analysis: TB00130 §4.1 (Bill
+                     directive + 3 sequential searches, 18
+                     sources); TB00130 NSI §4.1 (Priority 1
+                     cascade target definition); 0500000
+                     dv1_20 AR-070 (amended authority).
+
+                     Internal-consistency notes: The
+                     NSI §4.1 "minimum-scope edit; no other
+                     AS-* criteria changed" directive is
+                     respected for AS-002, AS-004 semantic
+                     structure, AS-006 (a)/(c)/(d), AS-007,
+                     HR-AS-001/002/003/004/005/006/008/010,
+                     and all §8 CIATS parameter registry
+                     content. Changes to AS-003 / Step 3-7
+                     body / AS-005 / AS-006(b) / AS-008 /
+                     HR-AS-007 / HR-AS-009 / §9 are internal-
+                     consistency propagations of the primary
+                     AS-001 Criterion 1 text change —
+                     required because those sections cite or
+                     depend on the Criterion 1 wording. Not
+                     expansions of scope.
+
+                     Bill override: document control
+                     constraints (dv → rv → v lifecycle) not
+                     applied this cascade per Bill's standing
+                     TothBot V2 Remediation override.
+                     Direct increment dv1_2 → dv1_3.
+
+  dv1_2  04-24-2026  TB00129 Phase 2 remediation — full
+                     rewrite implementing TB00128 Ratified
+                     Decisions D-03, D-04, D-06, D-08.
+
+                     CHANGE 1 (R-02): AS-001 Criterion 1
+                     changed from "USD or USDC" to "USDC
+                     or USDT". Restores TB00001 line 393
+                     original OI-002 intent ("Kraken
+                     USDT/USDC") + Bill directive
+                     (TB00128): "Programming MUST INCLUDE
+                     the entire universe of TOKEN/USDC and
+                     TOKEN/USDT trading pairs." USD pairs
+                     excluded from tradeable universe
+                     (OI-045 closure scope).
+
+                     CHANGE 2 (R-03): AS-002 "Universe
+                     Size — Top N by Volume" RETIRED per
+                     D-08. The prior monitored_universe_n
+                     = 50 cap was never FP/DP-validated
+                     (TB00128 §3.5: asserted in AR-070
+                     rationale without dedicated research).
+                     Universe now comprises ALL qualifying
+                     pairs. CIATS parameter
+                     monitored_universe_n REMOVED from §8
+                     (OI-046 closure scope).
+
+                     CHANGE 3 (R-01 / D-06): AS-004 opens
+                     with explicit paper-to-live parity
+                     statement. HR-AS-010 added to bind
+                     paper-mode execution of all eight
+                     startup steps identically to live mode.
+                     Paper-mode skip limited to private WS
+                     subscription and auth only. Companion
+                     change in 0511001 dv1_2 §4.2 rewrites
+                     the WS Manager paper-mode startup path
+                     (OI-044 closure scope).
+
+                     CHANGE 4 (AS-003 architecture): BTC/USD
+                     reclassified from tradeable universe
+                     member to NON-TRADEABLE regime anchor
+                     subscription. Required because USD
+                     quote is excluded from tradeable
+                     universe (Change 1). BTC/USD remains
+                     subscribed for market_regime
+                     computation only. HR-AS-009 added to
+                     prohibit entry dispatch on BTC/USD.
+                     Step 7 of AS-004 registers regime_anchor
+                     separately. Pipeline Gate 1 exclusion
+                     noted.
+
+                     CHANGE 5 (R-11): §8 Evidence base
+                     for min_volume_usd_daily REWRITTEN.
+                     Prior dv1_1 line 391 citation "TB00020
+                     Search 4, 5+ sources" FABRICATED —
+                     TB00020 has only Searches 1, 2, 3
+                     (TB00128 §3.7 grep verification).
+                     Replaced with the real distributed-
+                     evidence chain: pre-TB00001 architecture
+                     sessions (TB00001 line 95-96, line 14)
+                     plus TB00012 Search 5, TB00013 Search 9,
+                     TB00014 Search 8.
+
+                     CHANGE 6 (R-12): §8 Evidence base
+                     rewritten to present min_volume_usd_daily
+                     as an INDEPENDENT parameter. Prior dv1_1
+                     lines 386-391 presented the sizing math
+                     (5% of tradeable stays under 1% of daily
+                     volume) as the derivation of $500k;
+                     TB00127 §3 established this was post-hoc
+                     rationalization. The $500k filter and
+                     the sizing percentages are independently
+                     derived. Consistency relationship
+                     retained as a SANITY-CHECK OBSERVATION,
+                     not an origin claim. Layered loss-
+                     control adequacy documented as the
+                     rationale for the $500k starting value
+                     below the research-literature $1M+ floor
+                     (resolves OI-050-CAND).
+
+                     CHANGE 7 (R-11 expansion / FLAG-E):
+                     §8 liquidity_refresh_hours = 4 now
+                     carries explicit CIATS-owned-acceptance
+                     rationale and REST rate-counter
+                     cost analysis (prior dv1_1 had a generic
+                     "rolling window" note without quantitative
+                     support).
+
+                     CHANGE 8 (R-11 hygiene): §8 explicitly
+                     documents both prior-version defects
+                     (fabricated citation + post-hoc linkage)
+                     rather than silently overwriting. This
+                     preserves the audit trail for governance
+                     review.
+
+                     CHANGE 9 (AS-005): Quote-currency
+                     handling for USD-equivalent filtering
+                     extended from USDC only to USDC + USDT,
+                     each with depeg-monitoring note.
+
+                     CHANGE 10 (AS-006): Runtime update
+                     step (c) added for new Kraken pair
+                     listings. Previously dv1_1 only handled
+                     status transitions; new listings were
+                     unspecified.
+
+                     CHANGE 11 (§2 Governing documents):
+                     TB00128 Ratified Decisions D-03, D-04,
+                     D-06, D-08 explicitly listed.
+
+                     CHANGE 12 (§10 Related documents):
+                     0511001 annotated with dv1_2 companion
+                     change; 0211005 Paper_Trading_Operations
+                     added as paper-parity binding reference.
+
+                     FP/DP analysis: TB00128 §3.3 (distributed-
+                     evidence for $500k), TB00128 §3.4 (USDT
+                     restoration), TB00128 §3.5 (top-50 cap
+                     retired), TB00128 §3.7 (fabricated
+                     citation + post-hoc linkage), TB00129
+                     §3 (Phase 1 audit — no additional user-
+                     scope narrowings found in this spec).
+
+                     Bill override: document control
+                     constraints (dv → rv → v lifecycle) not
+                     applied this cascade per Bill's standing
+                     TothBot V2 Remediation override
+                     (TB00128 §4). Direct increment
+                     dv1_1 → dv1_2.
+
+  dv1_1  04-13-2026  DEFECT-SS-006 correction. AS-004
+                     rewritten: 9-step startup procedure
+                     (was 7 steps). Step 2 corrected:
+                     instrument snapshot does NOT contain
+                     volume data. Step 3 NEW: build raw
+                     candidate list from instrument (USD/USDC
+                     + ONLINE only). Step 4 NEW: REST Ticker
+                     call for all candidates to obtain 24h
+                     volume. Step 5 corrected: volume filter
+                     applied after REST Ticker data received.
+                     Step 9b corrected: ohlc(5) only subscribed
+                     via WS — ohlc(60) NOT subscribed per
+                     OI-NEW-001 / HR-WM-021.
+                     AS-005 completely rewritten: data source
+                     is REST Ticker (0411002 REST-TKR-001),
+                     not the instrument channel. USD volume
+                     formula documented. Periodic refresh
+                     documented. liquidity_refresh_hours CIATS
+                     parameter added. Fail-safe behavior on
+                     refresh failure documented. Prior dv1_0
+                     incorrect claim (instrument channel has
+                     volume) explicitly marked DEPRECATED with
+                     root cause reference.
+                     HR-AS-006 corrected: volume source is
+                     REST Ticker only. Instrument channel
+                     prohibition made explicit.
+                     Section 9 Q1: inputs updated (REST Ticker
+                     added). Q2: interfaces updated (REST Ticker
+                     and liquidity_24h cache added). Q4: trigger
+                     chain updated (REST Ticker call and periodic
+                     refresh added). Q5: liquidity log events
+                     added.
+                     Section 8 CIATS registry: liquidity_refresh_
+                     hours added (starting value: 4 hours).
+                     Related documents: 0411002 dv1_1 and
+                     1011002 dv1_15 added with explicit context.
+                     FP/DP analysis: TB00093 Section 2.5.
+
+  dv1_0  04-05-2026  Initial document. Complete asset
+                     selection specification. Universe
+                     definition (AS-001 through AS-003),
+                     startup population procedure (AS-004,
+                     AS-005), live update procedure (AS-006,
+                     AS-007), CIATS adjustment procedure
+                     (AS-008), 8 hard rules (HR-AS-001
+                     through HR-AS-008), CIATS parameter
+                     registry (2 parameters), 5 coding-
+                     readiness questions answered.
+                     BTC/USD permanent anchor rule (AR-074).
+                     All content derived from 0500000 dv1_18
+                     AR-070 and AR-074.
+
+============================================================
+END OF DOCUMENT
+============================================================

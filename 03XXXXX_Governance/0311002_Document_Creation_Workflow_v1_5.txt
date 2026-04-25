@@ -1,10 +1,10 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_3
+DocVersion: v1_5
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_3.txt
-DocDate:    04-22-2026
-DocTime:    23:45:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_5.txt
+DocDate:    04-25-2026
+DocTime:    05:30:00 UTC
 
 ============================================================
 DOCUMENT CREATION WORKFLOW
@@ -504,7 +504,9 @@ STEP 5.5  0711003  Asset_Selection_Specification
 ------------------------------------------------------------
 Tier: Instance Document
 Depends on: 0710000
-OI-002 CLOSED: Top 50 USD/USDC pairs by 24h volume (AR-070).
+OI-002 CLOSED: USD + USDC + USDT pairs by 24h volume,
+no top-N cap, BTC/USD always included (TB00128 D-03 +
+D-08 LOCKED; supersedes original AR-070 cap).
 
 ============================================================
 10. PHASE 6 — TRADING SYSTEM
@@ -882,6 +884,364 @@ Governing documents:
            project secondary reference)
 
 ------------------------------------------------------------
+STEP 8.2.4  SESSION-LOG ROLLING-WINDOW CLEANUP — MANDATORY RULE
+------------------------------------------------------------
+
+Closes OI-053-CAND (TB00130 origin) per TB00137
+Bill directive "Close out the following issues."
+
+Establishes the Claude.ai project-folder session-log
+cleanup procedure as a formal mandatory rule. Prior to
+this STEP, the cleanup was enforced by Bill discretion
+at each session close, with no governing rule. The
+absence of a formal rule produced two recurring defect
+classes:
+
+  (a) Project-folder drift accumulation (OI-043 — surfaced
+      TB00121 / TB00123 / TB00124 / TB00130) — session-log
+      and NSI files accumulating in the project folder
+      beyond the working window, slowing every project_
+      knowledge_search call and inflating Claude's per-
+      session cold-load context.
+
+  (b) Recurring-defect-fix history loss (OI-053-CAND —
+      surfaced TB00130) — session-log cleanup removing
+      logs that contained the only documented fix for a
+      recurring platform defect, leaving no source for
+      Claude or Bill to consult on next recurrence. The
+      .docx delivery failure + PDF workaround (TB00006-
+      era) is the canonical example: Bill stated TB00130
+      "I have no idea what session log it is in. You
+      keep telling me to remove the session logs."
+
+DC-CLEANUP-001  ROLLING-WINDOW DEFINITION
+                The Claude.ai project-folder session-log
+                window is the SEVEN MOST RECENT SESSIONS
+                plus the MUST-PRESERVE SET defined in
+                DC-CLEANUP-002. As a new session log
+                enters the window, the oldest non-MUST-
+                PRESERVE session log drops from the
+                window and is eligible for removal from
+                the project folder.
+
+                The 7-session window is calibrated to
+                carry one full week of typical session
+                pacing while keeping cold-load context
+                bounded. The window applies to BOTH
+                session logs (TBNNNNN_Session_Log_*)
+                AND next-session instructions
+                (TBNNNNN_NSI_*) for the same NNNNN.
+
+                GitHub retains permanent archival copies
+                of EVERY session log and NSI under their
+                committed paths. Cleanup applies only to
+                the Claude.ai project folder, not to
+                GitHub.
+
+DC-CLEANUP-002  MUST-PRESERVE SET
+                The following session logs (and their
+                NSIs) MUST be preserved in the Claude.ai
+                project folder regardless of age. They
+                are formative or canonical records that
+                Claude must read at every cold load:
+
+                  TB00001  Project genesis — original
+                           OI-001 through OI-005
+                           identification and AR seed
+                           set definition.
+                  TB00012  AR-070 / asset selection
+                           universe original seed.
+                  TB00013  Continuation of TB00012
+                           architectural seed set.
+                  TB00014  Phase 1 architecture seed
+                           closure.
+                  TB00020  Phase 2 architectural seed
+                           closure.
+
+                These five are the minimum MUST-PRESERVE
+                set carried forward from TB00128 §5.1
+                cleanup baseline. The set is updated
+                only by formal amendment to this STEP
+                via Bill-approved version increment of
+                this document.
+
+                MUST-PRESERVE entries are NEVER removed
+                from the project folder by routine
+                cleanup. They drop out only by formal
+                amendment.
+
+DC-CLEANUP-003  PRE-CLEANUP RECURRING-DEFECT-FIX
+                EXTRACTION — MANDATORY GATE
+                Before ANY session log is removed from
+                the project folder under DC-CLEANUP-001
+                rolling-window cleanup, Claude executes
+                a recurring-defect-fix extraction sweep:
+
+                (a) For each session log eligible for
+                    removal, scan for events of the
+                    following classes:
+                      - DEFECT-* labels (any).
+                      - ERROR-TBNNNNN-* labels (any).
+                      - "root-caused" or "first time
+                        in this project" annotations.
+                      - "platform limitation" or
+                        "unachievable through platform"
+                        annotations.
+                      - .docx / .pdf delivery defect
+                        diagnoses.
+                      - Recurring-defect-fix sequences
+                        (problem → corrective → verify).
+
+                (b) For every event found, verify the
+                    fix is captured in a controlled
+                    document under permanent retention:
+                      - Code-level fixes:    target
+                        AA=10 coding spec or .py
+                        revision history.
+                      - Procedure-level fixes: target
+                        AA=02 / AA=03 procedure or
+                        STEP rule.
+                      - Platform-limitation work-
+                        arounds: target the Known
+                        Platform Limitations document
+                        defined in DC-CLEANUP-004.
+
+                (c) If any extracted fix is NOT yet
+                    captured in a controlled document,
+                    cleanup is BLOCKED for that session
+                    log until the fix is migrated.
+                    Migration produces a controlled
+                    document version increment per
+                    0311003.
+
+                (d) After all extractable fixes are
+                    confirmed migrated, the session log
+                    becomes eligible for removal from
+                    the project folder.
+
+                Rationale: A session log removed before
+                its fixes are migrated leaves no source
+                for the system to consult on the next
+                recurrence of the same defect. This is
+                the OI-053-CAND failure mode.
+
+DC-CLEANUP-004  KNOWN PLATFORM LIMITATIONS DOCUMENT
+                A controlled document under DCN
+                0311006 (proposed; reserves the next
+                AA=03 instance slot) is established
+                as the permanent repository for
+                Claude.ai-platform / GitHub-platform /
+                Hetzner-platform / Kraken-platform
+                limitation findings and their
+                workarounds.
+
+                Until 0311006 is authored, the Known
+                Platform Limitations content is captured
+                in this STEP 8.2.4 under DC-CLEANUP-004
+                as an interim register. Each entry
+                includes:
+
+                  - Platform identification
+                    (Claude.ai / GitHub / Hetzner /
+                    Kraken / Other).
+                  - Defect description.
+                  - Originating session log
+                    (forensic reference only — log may
+                    be cleaned up after this entry is
+                    written).
+                  - Root cause (if known).
+                  - Workaround / corrective.
+                  - Status (ACTIVE / RESOLVED /
+                    SUPERSEDED).
+                  - Date last verified.
+
+                Initial entries (TB00137 baseline):
+
+                  KPL-001  PLATFORM: Claude.ai
+                           DEFECT: .docx delivery via
+                             python-docx produces files
+                             with settings.xml validation
+                             errors (missing w:percent
+                             attribute on w:zoom).
+                           ORIGIN: TB00006-era;
+                             root-caused TB00130.
+                           ROOT CAUSE: python-docx
+                             default settings.xml
+                             omits w:percent="100" on
+                             w:zoom element. Some
+                             validators (and Word
+                             versions) reject the file.
+                           WORKAROUND: Apply unpack →
+                             edit settings.xml →
+                             repack remediation cycle
+                             AND validate via
+                             /mnt/skills/public/docx/
+                             scripts/office/validate.py
+                             BEFORE delivery.
+                           STATUS: ACTIVE WORKAROUND.
+                           LAST VERIFIED: 04-24-2026
+                             (TB00130).
+
+                  KPL-002  PLATFORM: Claude.ai
+                           DEFECT: File rendered as
+                             "delivered" in chat may be
+                             plain text mislabeled with
+                             a binary extension (e.g.,
+                             .docx file containing
+                             plain text).
+                           ORIGIN: ERROR-PRE-001
+                             surfaced TB00134.
+                           ROOT CAUSE: present_files
+                             tool extension is taken
+                             from filename without
+                             content-type validation.
+                           WORKAROUND: Validate every
+                             produced binary artifact
+                             via `file <path>` and
+                             ZIP-extraction probe
+                             (.docx and .pdf are
+                             ZIP/PDF containers) before
+                             present_files. Fail
+                             closed: do not deliver
+                             unverified binary
+                             artifacts.
+                           STATUS: ACTIVE WORKAROUND.
+                           LAST VERIFIED: 04-24-2026
+                             (TB00134).
+
+                  KPL-003  PLATFORM: Claude.ai
+                           DEFECT: Project-folder file
+                             list mounted at
+                             /mnt/project/ is FROZEN
+                             at session start.
+                             Mid-session uploads by
+                             Bill are NOT visible to
+                             the current Claude session.
+                           ORIGIN: TB00121 §2.6.
+                           ROOT CAUSE: Mount-time
+                             snapshot semantics.
+                           WORKAROUND: Use
+                             project_knowledge_search
+                             (live index) for upload-
+                             state verification mid-
+                             session. Defer mount-based
+                             verification to next cold-
+                             load. Per DC-SYNC-005.
+                           STATUS: ACTIVE WORKAROUND.
+                           LAST VERIFIED: 04-23-2026
+                             (TB00121).
+
+                The KPL-* register grows by formal
+                amendment to this STEP via 0311002
+                version increment, OR migrates into
+                0311006 once that document is authored.
+
+DC-CLEANUP-005  CLEANUP MECHANICS
+                Bill performs the physical removal of
+                cleanup-eligible session logs and NSIs
+                from the Claude.ai project folder. Claude
+                does NOT remove files from the project
+                folder under any circumstance — Claude
+                lacks write access to /mnt/project/ and
+                lacks authority to alter Bill's project-
+                folder state.
+
+                Cleanup workflow:
+                  (1) NSI for the closing session lists
+                      session logs / NSIs eligible for
+                      removal (DC-CLEANUP-001 rolling
+                      window minus MUST-PRESERVE).
+                  (2) NSI confirms recurring-defect-fix
+                      extraction is complete per
+                      DC-CLEANUP-003 for every eligible
+                      file.
+                  (3) Bill reviews the list at session
+                      close.
+                  (4) Bill removes the listed files from
+                      the Claude.ai project folder.
+                  (5) Next session's STEP A pre-flight
+                      verifies the cleanup completed.
+                      Project-folder state matches NSI
+                      §9 expected state.
+
+DC-CLEANUP-006  NSI DOCUMENTATION REQUIREMENT
+                Every NSI authored at session close
+                MUST include explicit cleanup directives
+                in the project-folder expected-state
+                section. Required content:
+
+                (a) "KEPT" list — files that remain in
+                    the project folder for next session
+                    cold-load reading.
+
+                (b) "ABSENT" list — files that should
+                    no longer be in the project folder,
+                    with disposition (SUPERSEDED by /
+                    DROP per 7-session rolling window /
+                    Bill discretion).
+
+                (c) MUST-PRESERVE compliance statement
+                    confirming the DC-CLEANUP-002 set
+                    is intact in the KEPT list.
+
+                (d) Pre-cleanup recurring-defect-fix
+                    extraction confirmation per
+                    DC-CLEANUP-003 if any session log
+                    is on the ABSENT list.
+
+                Failure to include this content in an
+                NSI is a document control defect. The
+                NSI is rejected at next-session STEP A
+                pre-flight and must be reissued before
+                work proceeds.
+
+DC-CLEANUP-007  VIOLATION HANDLING
+                A session log removed from the Claude.ai
+                project folder without DC-CLEANUP-003
+                extraction is a document control defect.
+                If recurrence of a previously-fixed
+                defect is observed and the fix history
+                is found to have been lost via cleanup,
+                the corrective is:
+
+                  (1) Recover the relevant session log
+                      from GitHub permanent archive.
+                  (2) Migrate the fix to the appropriate
+                      controlled document (per
+                      DC-CLEANUP-003).
+                  (3) Log the loss as an OI for tracking
+                      future occurrence patterns.
+                  (4) If a third occurrence of the same
+                      class loss is observed, escalate
+                      to TB00000 §4.3-pattern absolute
+                      standing rule (pre-emit scan +
+                      self-catch signal) per RR-RAT-001.
+
+Corrective action: STEP 8.2.4 closes OI-053-CAND
+(SESSION-LOG-CLEANUP-LOSES-RECURRING-DEFECT-FIX-HISTORY,
+originating TB00130) by establishing mandatory
+recurring-defect-fix extraction before any session-log
+removal AND establishing the Known Platform Limitations
+register as the permanent home for platform-defect
+fixes that would otherwise be carried only in session
+logs.
+
+Governing documents:
+  TB00000  Project Instructions for Claude Section 11
+           (GitHub authoritative source, Claude.ai
+           project secondary reference).
+  0311001  Namespace_Specification.
+  0311003  Versioning_Procedure (KPL register
+           amendments require 0311002 version
+           increment per VP-* rules).
+
+Forward references:
+  0311006  Known_Platform_Limitations (PROPOSED — DCN
+           reserved; document not yet authored. KPL-*
+           register currently lives in this STEP under
+           DC-CLEANUP-004 as interim home).
+
+------------------------------------------------------------
 STEP 8.3  1020000  Testing_Coding_Anchor
 ------------------------------------------------------------
   1021001  Unit_Test_Specification
@@ -917,8 +1277,10 @@ Depends on: Phase 1-8 complete
           All thresholds CIATS-owned starting values.
           Document in: 0711001 SSS_Signal_Model_Specification (Phase 5).
 
-  OI-002  Asset selection universe — CLOSED (dv1_15, AR-070)
-          Top 50 USD/USDC pairs by 24h volume. BTC/USD always included.
+  OI-002  Asset selection universe — CLOSED (dv1_15, AR-070;
+          superseded TB00128 D-03 + D-08 LOCKED)
+          USD + USDC + USDT pairs by 24h volume, no top-N
+          cap, BTC/USD always included.
           Document in: 0711003 Asset_Selection_Specification (Phase 5).
 
   OI-003  Exit Controller full specification — CLOSED (dv1_15, AR-071)
@@ -1155,6 +1517,184 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_5   04-25-2026  TB00137 OI-053-CAND CLOSURE.
+
+                     Adds STEP 8.2.4 SESSION-LOG ROLLING-
+                     WINDOW CLEANUP MANDATORY RULE,
+                     establishing seven mandatory
+                     governance rules (DC-CLEANUP-001
+                     through DC-CLEANUP-007) and the
+                     Known Platform Limitations interim
+                     register (KPL-001 through KPL-003).
+
+                     ROOT CAUSE OF OI-053-CAND:
+                     Session-log cleanup at TB00128 §5.2
+                     removed logs that contained the only
+                     documented fix for the recurring
+                     .docx delivery defect (TB00006-era).
+                     When the same defect recurred at
+                     TB00130, Bill could not recall the
+                     prior fix; Claude could not consult
+                     the prior session log because it had
+                     been removed from the project folder.
+                     The fix had to be re-derived from
+                     scratch, costing TB00130 cycle time.
+
+                     REMEDIATION:
+                     STEP 8.2.4 establishes:
+
+                     DC-CLEANUP-001 — Formal definition
+                       of the seven-session rolling
+                       window plus MUST-PRESERVE set.
+
+                     DC-CLEANUP-002 — Codified
+                       MUST-PRESERVE set: TB00001,
+                       TB00012, TB00013, TB00014,
+                       TB00020. Carried forward from
+                       TB00128 §5.1.
+
+                     DC-CLEANUP-003 — MANDATORY pre-
+                       cleanup recurring-defect-fix
+                       extraction sweep. Cleanup of any
+                       session log is BLOCKED until all
+                       extracted fixes are confirmed
+                       migrated to controlled documents.
+
+                     DC-CLEANUP-004 — Known Platform
+                       Limitations interim register
+                       (KPL-001 through KPL-003 seeded:
+                       Claude.ai .docx defect, file-
+                       extension mislabel defect, mount-
+                       time snapshot defect). Migrates
+                       to a future 0311006 controlled
+                       document.
+
+                     DC-CLEANUP-005 — Cleanup mechanics:
+                       Bill performs physical removal;
+                       Claude has no write access to
+                       /mnt/project/.
+
+                     DC-CLEANUP-006 — Mandatory NSI
+                       cleanup directive content
+                       (KEPT, ABSENT, MUST-PRESERVE
+                       compliance, extraction
+                       confirmation).
+
+                     DC-CLEANUP-007 — Violation handling
+                       and OI escalation pattern. Third
+                       occurrence triggers TB00000 §4.3
+                       absolute standing rule pattern
+                       per RR-RAT-001.
+
+                     PARENT CHAIN COMPLIANCE:
+                     STEP 8.2.4 is governed by 0311001
+                     Namespace_Specification (HR-PATH-*,
+                     HR-DC-*) and 0311003
+                     Versioning_Procedure (VP-* version
+                     increment rules for KPL register
+                     amendments). No new domain or sub-
+                     domain document required for this
+                     change.
+
+                     COMPANION DELIVERABLES THIS SESSION:
+                     1011004 Execution_Engine_Coding_
+                     Spec dv1_0 (NEW — recovers long-
+                     carried gap; closes 1011004
+                     MISSING).
+                     TB00000 v2_13 → v2_14 (closes
+                     OI-054-CAND DR-002 governance
+                     refinement).
+                     TB00137 Session Log v1_0 (NEW).
+                     TB00137 NSI v1_0 (NEW).
+
+                     OPEN ITEMS UPDATED:
+                     OI-053-CAND CLOSED at SPEC level
+                       via STEP 8.2.4. Implementation
+                       at next session-log cleanup
+                       boundary.
+                     OI-043 (project-folder drift) —
+                       STEP 8.2.4 provides the
+                       governance basis to close
+                       OI-043 once next-cleanup-
+                       boundary verification confirms
+                       the rolling-window discipline
+                       holds.
+
+                     Bill override: TB00137 v1_4 → v1_5
+                     authoring under Bill's standing
+                     project document-control override
+                     continuing the scope established
+                     in TB00115 (TB00000 v2_10 → v2_11).
+                     Direct increment v1_4 → v1_5; no
+                     rv state required for content
+                     additions that close a tracked OI.
+                     Per Bill's TB00137 directive
+                     "Close out the following issues."
+
+  v1_4   04-25-2026  TB00136 OI-002 STATUS TEXT CASCADE
+                     CLOSURE. Two surgical edits correcting
+                     stale OI-002 description text that
+                     pre-dated TB00128 D-03 + D-08 LOCKED
+                     decisions.
+
+                     ROOT CAUSE: TB00131 §4.3 5-phase plan
+                     cascaded D-03 (universe = USD + USDC +
+                     USDT) and D-08 (Top-N cap retired) into
+                     0711003 Asset_Selection_Specification
+                     dv1_3, but the OI-002 status text in
+                     this governance document was never
+                     updated. Two locations carried the
+                     pre-cascade description ("Top 50
+                     USD/USDC pairs by 24h volume").
+
+                     DISCOVERY: TB00136 turn 3 corpus-wide
+                     audit. Bill asked "Are there any more
+                     specification documents that need to
+                     be updated?" Comprehensive grep for
+                     USDC-without-USDT and Top-N references
+                     identified two stale lines in this
+                     document at line 507 and line 921.
+                     Same root cause as 0700000 / 0710000
+                     missed cascade (closed in 0700000
+                     dv1_1 / 0710000 dv1_1 same session).
+
+                     CHANGE 1 — STEP 5.5 0711003 ENTRY
+                     (line 507):
+                     "OI-002 CLOSED: Top 50 USD/USDC pairs
+                     by 24h volume (AR-070)." replaced with
+                     "OI-002 CLOSED: USD + USDC + USDT
+                     pairs by 24h volume, no top-N cap,
+                     BTC/USD always included (TB00128 D-03
+                     + D-08 LOCKED; supersedes original
+                     AR-070 cap)."
+
+                     CHANGE 2 — OI-002 ENTRY IN OI REGISTRY
+                     (line 921):
+                     "OI-002 Asset selection universe —
+                     CLOSED (dv1_15, AR-070) / Top 50
+                     USD/USDC pairs by 24h volume. BTC/USD
+                     always included." replaced with full
+                     supersession note: "OI-002 Asset
+                     selection universe — CLOSED (dv1_15,
+                     AR-070; superseded TB00128 D-03 +
+                     D-08 LOCKED) / USD + USDC + USDT pairs
+                     by 24h volume, no top-N cap, BTC/USD
+                     always included."
+
+                     COMPANION DELIVERABLES THIS SESSION:
+                     0700000 dv1_0 → dv1_1 (AA=07 Domain
+                     Document — primary cascade closure).
+                     0710000 dv1_0 → dv1_1 (AA=07 Sub-Domain
+                     Anchor — cascade closure).
+                     TB00136 Session Log v1_0 → v1_1.
+                     TB00136 NSI v1_0 → v1_1.
+
+                     OPEN ITEMS UPDATED:
+                     None for this document. Stale OI status
+                     text corrected. AA=07 cascade gap
+                     (FINDING-TB00136-001) closed at
+                     governance-documentation level.
 
   v1_3   04-22-2026  Two changes plus rev-history backfill.
                      (1) STEP 8.2.3 POST-COMMIT PROJECT-
