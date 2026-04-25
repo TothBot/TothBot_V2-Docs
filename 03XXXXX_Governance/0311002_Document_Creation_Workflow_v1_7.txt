@@ -1,10 +1,10 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_5
+DocVersion: v1_7
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_5.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_7.txt
 DocDate:    04-25-2026
-DocTime:    05:30:00 UTC
+DocTime:    22:45:00 UTC
 
 ============================================================
 DOCUMENT CREATION WORKFLOW
@@ -1026,115 +1026,29 @@ DC-CLEANUP-003  PRE-CLEANUP RECURRING-DEFECT-FIX
                 the OI-053-CAND failure mode.
 
 DC-CLEANUP-004  KNOWN PLATFORM LIMITATIONS DOCUMENT
-                A controlled document under DCN
-                0311006 (proposed; reserves the next
-                AA=03 instance slot) is established
-                as the permanent repository for
+                The canonical Known Platform Limitations
+                repository is DCN 0311006
+                Known_Platform_Limitations (AA=03
+                instance, authored at TB00139). All
                 Claude.ai-platform / GitHub-platform /
                 Hetzner-platform / Kraken-platform
                 limitation findings and their
-                workarounds.
+                workarounds are recorded in 0311006.
 
-                Until 0311006 is authored, the Known
-                Platform Limitations content is captured
-                in this STEP 8.2.4 under DC-CLEANUP-004
-                as an interim register. Each entry
-                includes:
+                The interim KPL-* register formerly
+                housed in this STEP under v1_5 has been
+                RETIRED at v1_6 per 0311006 dv1_0 §6.4
+                migration plan. KPL-001 / KPL-002 /
+                KPL-003 are migrated to 0311006 §5
+                without content change. Refer to 0311006
+                for current entries, entry format,
+                lifecycle states, and amendment
+                procedure.
 
-                  - Platform identification
-                    (Claude.ai / GitHub / Hetzner /
-                    Kraken / Other).
-                  - Defect description.
-                  - Originating session log
-                    (forensic reference only — log may
-                    be cleaned up after this entry is
-                    written).
-                  - Root cause (if known).
-                  - Workaround / corrective.
-                  - Status (ACTIVE / RESOLVED /
-                    SUPERSEDED).
-                  - Date last verified.
-
-                Initial entries (TB00137 baseline):
-
-                  KPL-001  PLATFORM: Claude.ai
-                           DEFECT: .docx delivery via
-                             python-docx produces files
-                             with settings.xml validation
-                             errors (missing w:percent
-                             attribute on w:zoom).
-                           ORIGIN: TB00006-era;
-                             root-caused TB00130.
-                           ROOT CAUSE: python-docx
-                             default settings.xml
-                             omits w:percent="100" on
-                             w:zoom element. Some
-                             validators (and Word
-                             versions) reject the file.
-                           WORKAROUND: Apply unpack →
-                             edit settings.xml →
-                             repack remediation cycle
-                             AND validate via
-                             /mnt/skills/public/docx/
-                             scripts/office/validate.py
-                             BEFORE delivery.
-                           STATUS: ACTIVE WORKAROUND.
-                           LAST VERIFIED: 04-24-2026
-                             (TB00130).
-
-                  KPL-002  PLATFORM: Claude.ai
-                           DEFECT: File rendered as
-                             "delivered" in chat may be
-                             plain text mislabeled with
-                             a binary extension (e.g.,
-                             .docx file containing
-                             plain text).
-                           ORIGIN: ERROR-PRE-001
-                             surfaced TB00134.
-                           ROOT CAUSE: present_files
-                             tool extension is taken
-                             from filename without
-                             content-type validation.
-                           WORKAROUND: Validate every
-                             produced binary artifact
-                             via `file <path>` and
-                             ZIP-extraction probe
-                             (.docx and .pdf are
-                             ZIP/PDF containers) before
-                             present_files. Fail
-                             closed: do not deliver
-                             unverified binary
-                             artifacts.
-                           STATUS: ACTIVE WORKAROUND.
-                           LAST VERIFIED: 04-24-2026
-                             (TB00134).
-
-                  KPL-003  PLATFORM: Claude.ai
-                           DEFECT: Project-folder file
-                             list mounted at
-                             /mnt/project/ is FROZEN
-                             at session start.
-                             Mid-session uploads by
-                             Bill are NOT visible to
-                             the current Claude session.
-                           ORIGIN: TB00121 §2.6.
-                           ROOT CAUSE: Mount-time
-                             snapshot semantics.
-                           WORKAROUND: Use
-                             project_knowledge_search
-                             (live index) for upload-
-                             state verification mid-
-                             session. Defer mount-based
-                             verification to next cold-
-                             load. Per DC-SYNC-005.
-                           STATUS: ACTIVE WORKAROUND.
-                           LAST VERIFIED: 04-23-2026
-                             (TB00121).
-
-                The KPL-* register grows by formal
-                amendment to this STEP via 0311002
-                version increment, OR migrates into
-                0311006 once that document is authored.
+                Future KPL additions, modifications,
+                and retirements occur via 0311006
+                version increment per its own §6 entry-
+                maintenance procedure.
 
 DC-CLEANUP-005  CLEANUP MECHANICS
                 Bill performs the physical removal of
@@ -1236,10 +1150,257 @@ Governing documents:
            increment per VP-* rules).
 
 Forward references:
-  0311006  Known_Platform_Limitations (PROPOSED — DCN
-           reserved; document not yet authored. KPL-*
-           register currently lives in this STEP under
-           DC-CLEANUP-004 as interim home).
+  0311006  Known_Platform_Limitations (AUTHORED at
+           TB00139 — dv1_0). Canonical KPL repository
+           per §6.4 migration plan. The interim KPL
+           register formerly housed in this STEP under
+           DC-CLEANUP-004 has been RETIRED at 0311002
+           v1_6.
+
+STEP 8.2.5  STEP A — SESSION-OPEN PRE-FLIGHT VALIDATION
+            MANDATORY RULE
+
+Every session of Claude work on TothBot V2 begins with
+STEP A pre-flight. STEP A is the formally-defined
+session-open validation checkpoint. It runs before any
+substantive work is performed in the session. Its
+purpose is to detect and surface drift between the
+session's authorized starting state (as defined by the
+preceding session's NSI) and the actual observed state
+of the work environment. Drift detected at STEP A
+HALTS the session until resolved.
+
+STEP A consists of three sequential checks. ALL three
+MUST be executed before any substantive session work
+begins. ANY check that fails halts the session.
+
+------------------------------------------------------------
+DC-PREFLIGHT-001  CHECK 1 — PROJECT-FOLDER EXPECTED-STATE
+                  VALIDATION
+------------------------------------------------------------
+
+Claude executes a bash sweep of /mnt/project/ and
+compares the observed file set to the KEPT and ABSENT
+lists defined in the preceding NSI's project-folder
+expected-state section (DC-CLEANUP-006 paragraph (a)
+and (b)).
+
+Required validation:
+
+  (a) Every file in the NSI KEPT list MUST be present
+      in /mnt/project/. Missing KEPT files indicate
+      Bill's post-session upload step did not complete
+      (DC-SYNC-002 violation) or files were
+      inadvertently removed.
+
+  (b) No file in the NSI ABSENT list MAY be present
+      in /mnt/project/. Lingering ABSENT files
+      indicate Bill's post-session removal step did
+      not complete (cleanup workflow incomplete per
+      DC-CLEANUP-005).
+
+  (c) Files present in /mnt/project/ but neither in
+      KEPT nor ABSENT lists are FLAGGED as unexpected
+      drift. They do not necessarily halt the session,
+      but Claude reports them and asks Bill to confirm
+      whether they should be in the KEPT list.
+
+  (d) The DC-CLEANUP-002 MUST-PRESERVE set (TB00001,
+      TB00012, TB00013, TB00014, TB00020) is checked
+      independently of the NSI lists. Any MUST-PRESERVE
+      file missing from /mnt/project/ HALTS the
+      session immediately and is recovered from GitHub
+      archive before any other work proceeds.
+
+ROOT CAUSE ADDRESSED:
+OI-043 (PROJECT-FOLDER-DRIFT-ACCUMULATION, originating
+TB00121) — three consecutive DC packages (TB00118,
+TB00119, TB00120) had pending post-session Bill
+actions that accumulated into a state where the next
+session could not execute work without mid-session
+upload from Bill. The git-state component of OI-043
+was closed at TB00138 via a separate pre-flight
+check; the project-folder upload-drift component is
+closed by DC-PREFLIGHT-001.
+
+------------------------------------------------------------
+DC-PREFLIGHT-002  CHECK 2 — GIT-STATE PRE-FLIGHT
+------------------------------------------------------------
+
+Bill executes git-state verification on both repos:
+
+  cd C:\Users\wstot\GitHub\TothBot\TothBot_V2-Docs
+  git log -1 --oneline
+  git status
+
+  cd C:\Users\wstot\GitHub\TothBot\TothBot_V2-Code
+  git log -1 --oneline
+  git status
+
+Expected state is the HEAD hash and clean working tree
+referenced in the preceding NSI's git-state section.
+
+Drift between observed HEAD and NSI-expected HEAD
+HALTS the session. Resolution sequence is
+DC-SYNC-004 (a) Bill executes git pull on the drifted
+repo before session work proceeds.
+
+A non-clean working tree is flagged for Bill review.
+Stash, commit, or discard decisions are Bill's;
+Claude does not auto-resolve.
+
+ROOT CAUSE ADDRESSED:
+The git-state component of OI-043 originally surfaced
+across TB00121-TB00125. TB00138 corrective established
+the git-state pre-flight as a TB-by-TB practice. This
+DC-PREFLIGHT-002 entry formalizes that practice as a
+mandatory rule.
+
+------------------------------------------------------------
+DC-PREFLIGHT-003  CHECK 3 — NSI CODE-EDIT-LIST
+                  VALIDATION AGAINST DEPLOYED CODE
+------------------------------------------------------------
+
+When the preceding NSI specifies code edits to be
+performed in the upcoming session (per any STREAM,
+work item, or task that names a target file and
+specific line numbers, snippets, or edit
+descriptions), Claude MUST validate the edit list
+against the actual deployed code at session open
+BEFORE applying any edit.
+
+Required validation steps:
+
+  (a) For each NSI-specified target file, read the
+      file from the local working tree at the path
+      identified in the NSI.
+
+  (b) For each NSI-specified edit (line number,
+      pre-edit snippet, or condition), verify the
+      edit is still applicable as written. Common
+      drift conditions:
+        - Line numbers shifted due to upstream edits.
+        - Pre-edit snippet text changed.
+        - Edit already applied in a prior session.
+        - Multiple instances of the pre-edit snippet
+          exist where NSI assumes one.
+
+  (c) For each NSI-specified edit, scan the WHOLE
+      file for additional sites that match the
+      same edit pattern. The NSI edit list is
+      treated as a starting point, NOT an exhaustive
+      enumeration. Pattern: NSI-author may have
+      enumerated some sites and missed others;
+      pattern-match across the full file before
+      applying.
+
+  (d) For NSI-specified validation gates (e.g., "grep
+      X must return zero hits", "py_compile must
+      pass"), verify the gate semantics are
+      achievable given the actual file state. A gate
+      that requires zero hits of a token cannot pass
+      if the NSI edit list omits sites where the
+      token appears.
+
+DRIFT HANDLING:
+
+  Case 1 — Edit list complete and accurate:
+    Proceed with edits as NSI-specified.
+
+  Case 2 — Edit list incomplete (additional sites
+           found via pattern match):
+    HALT before any edit applied. RR-SCOPE-007 self-
+    catch fires. Report the additional sites to Bill
+    and request explicit scope authorization (full
+    enforcement OR NSI-literal partial enforcement OR
+    halt for NSI amendment).
+
+  Case 3 — Edit list inaccurate (line numbers wrong,
+           snippet text drifted, edit already
+           applied):
+    HALT before any edit applied. Report the drift
+    to Bill and request direction (resync to actual
+    state OR halt for NSI amendment).
+
+  Case 4 — Validation gate unachievable with NSI
+           edit list:
+    HALT before any edit applied. Report the gate
+    impossibility to Bill. This is the same class as
+    Case 2 — NSI under-enumerated edit sites.
+
+ROOT CAUSE ADDRESSED:
+TB00140 STREAM 1 RR-SCOPE-007 self-catch — the NSI
+three-edit list for ws_manager.py dv1_24 was carried
+forward verbatim through TB00136 NSI §4 -> TB00137
+NSI §1 -> TB00138 NSI §1 -> TB00139 NSI §1 without
+re-validation against deployed code. Three additional
+edit sites (L3098, L3165, L3168) were never
+enumerated. Claude Code self-caught the gap at
+STREAM 1 open, halted, and requested Bill direction
+before applying any edit. Bill authorized the
+six-site fix. Without DC-PREFLIGHT-003 as a formal
+mandatory rule, the next NSI carry-forward of an
+under-enumerated edit list could escape detection.
+
+This check supplements TB00000 v2_15 §4.3.1
+RR-SCOPE-007 (no silent narrowing of user-specified
+scope) by establishing a procedural pre-flight
+checkpoint where edit-list under-enumeration is
+detected systematically rather than by ad-hoc Claude
+Code self-catch alone.
+
+------------------------------------------------------------
+DC-PREFLIGHT-004  STEP A REPORTING
+------------------------------------------------------------
+
+At STEP A close, Claude emits a summary of the three
+checks:
+
+  CHECK 1 — Project-folder expected-state: PASS / FLAG
+            / FAIL. List any unexpected files (FLAG)
+            or missing files (FAIL).
+
+  CHECK 2 — Git-state: PASS / FAIL. List actual HEAD
+            hashes for both repos.
+
+  CHECK 3 — NSI code-edit-list (if applicable):
+            PASS / HALT (case 1, 2, 3, or 4). List
+            any drift detected.
+
+Session work proceeds only after all three checks
+report PASS (or FLAG with Bill acknowledgement).
+
+------------------------------------------------------------
+DC-PREFLIGHT-005  VIOLATION HANDLING
+------------------------------------------------------------
+
+Skipping STEP A and proceeding directly to session
+work is a document control defect. If a session
+defect is later traced to drift that STEP A would
+have caught, the next NSI MUST log the omission as
+a Claude error per TB00000 v2_15 §4.3.4 RR-VIOL-002
+recurrence tracking and the responsible STREAM is
+re-opened with the corrected starting state.
+
+Corrective action: STEP 8.2.5 closes OI-043
+(PROJECT-FOLDER-DRIFT-ACCUMULATION upload-drift
+component, originating TB00121) by formalizing the
+DC-PREFLIGHT-001 expected-state validation as a
+mandatory cold-load check. STEP 8.2.5 also closes
+the new TB00140 OI candidate (NSI carry-forward
+edit-list under-enumeration, originating TB00140
+STREAM 1 RR-SCOPE-007 self-catch) by establishing
+DC-PREFLIGHT-003 as a mandatory cold-load check
+when the NSI specifies code edits.
+
+Governing documents:
+  TB00000  Project Instructions for Claude
+           (RR-SCOPE-007, RR-SCOPE-008, RR-VIOL-002).
+  0311001  Namespace_Specification.
+  0311003  Versioning_Procedure.
+  0311006  Known_Platform_Limitations (KPL-003
+           mount-time snapshot semantics relevant
+           to CHECK 1 implementation).
 
 ------------------------------------------------------------
 STEP 8.3  1020000  Testing_Coding_Anchor
@@ -1517,6 +1678,233 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_7   04-25-2026  TB00140 STREAM 3-B FINDING 3 +
+                     STREAM 1 OI — STEP A PRE-FLIGHT
+                     FORMALIZATION.
+
+                     Adds STEP 8.2.5 STEP A — SESSION-
+                     OPEN PRE-FLIGHT VALIDATION
+                     MANDATORY RULE, establishing five
+                     mandatory governance rules
+                     (DC-PREFLIGHT-001 through
+                     DC-PREFLIGHT-005) that formally
+                     define the session-open pre-flight
+                     checkpoint previously referenced
+                     informally in DC-CLEANUP-005 and
+                     DC-CLEANUP-006.
+
+                     ROOT CAUSE OF v1_7:
+                     Two converging governance gaps
+                     surfaced by TB00140:
+
+                     Finding 3 (TB00139 NSI §1 STREAM
+                     3-B): OI-043 PROJECT-FOLDER-DRIFT-
+                     ACCUMULATION (TB00121 origin) had
+                     two components — git-state drift
+                     and project-folder upload-drift.
+                     The git-state component was closed
+                     at TB00138 via TB-by-TB practice
+                     but was never formalized as a
+                     mandatory rule. The project-folder
+                     upload-drift component was never
+                     formalized at all. Both
+                     components were referenced
+                     informally as "next session's
+                     STEP A pre-flight" in DC-CLEANUP-
+                     005 step 5 and DC-CLEANUP-006
+                     paragraph but STEP A was not
+                     formally defined anywhere in
+                     0311002 v1_6.
+
+                     STREAM 1 OI (TB00140 origin): the
+                     NSI three-edit list for
+                     ws_manager.py dv1_24 was carried
+                     forward verbatim through TB00136
+                     NSI §4 -> TB00137 NSI §1 ->
+                     TB00138 NSI §1 -> TB00139 NSI §1
+                     without re-validation against
+                     deployed code. Three additional
+                     edit sites (L3098, L3165, L3168)
+                     were never enumerated. Claude
+                     Code RR-SCOPE-007 self-catch
+                     fired at TB00140 STREAM 1 open,
+                     halted, and requested Bill
+                     direction before applying any
+                     edit. Bill authorized the
+                     six-site fix. Without a
+                     procedural pre-flight check, the
+                     next NSI carry-forward of an
+                     under-enumerated edit list could
+                     escape detection.
+
+                     REMEDIATION:
+                     STEP 8.2.5 establishes:
+
+                     DC-PREFLIGHT-001 — CHECK 1
+                       PROJECT-FOLDER EXPECTED-STATE
+                       VALIDATION. Closes OI-043
+                       upload-drift component.
+
+                     DC-PREFLIGHT-002 — CHECK 2
+                       GIT-STATE PRE-FLIGHT.
+                       Formalizes the TB00138 git-
+                       state corrective as a
+                       mandatory rule.
+
+                     DC-PREFLIGHT-003 — CHECK 3
+                       NSI CODE-EDIT-LIST
+                       VALIDATION AGAINST DEPLOYED
+                       CODE. Closes the new TB00140
+                       OI candidate (NSI carry-
+                       forward edit-list under-
+                       enumeration). Supplements
+                       TB00000 v2_15 RR-SCOPE-007
+                       with a procedural checkpoint.
+
+                     DC-PREFLIGHT-004 — STEP A
+                       reporting summary requirement.
+
+                     DC-PREFLIGHT-005 — Violation
+                       handling and OI escalation.
+
+                     CHANGE SCOPE:
+                     One new section added (§8.2.5).
+                     No edits to STEP 8.2.1 through
+                     STEP 8.2.4. No edits elsewhere
+                     in the document.
+
+                     PARENT CHAIN COMPLIANCE:
+                     STEP 8.2.5 is governed by 0311001
+                     Namespace_Specification, 0311003
+                     Versioning_Procedure, and TB00000
+                     v2_15 §4.3.1 RR-SCOPE-007 /
+                     RR-SCOPE-008. References 0311006
+                     KPL-003 for CHECK 1 mount-time
+                     snapshot considerations. No new
+                     domain or sub-domain document
+                     required.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00140 batch):
+                     0311002 v1_5 -> v1_6 (STREAM 3-A
+                       interim register retirement;
+                       precedes this v1_7 increment).
+                     TB00000 v2_15 -> v2_16 (STREAM 3-B
+                       Finding 4: DR-006 delivery-
+                       sequencing rule).
+                     TB00140 Session Log v1_0 (NEW).
+                     TB00140 NSI v1_0 (NEW).
+
+                     OPEN ITEMS UPDATED:
+                     OI-043 upload-drift component
+                       CLOSED at SPEC level via
+                       DC-PREFLIGHT-001. Implementation
+                       at next cold-load STEP A
+                       execution.
+                     OI-043 git-state component
+                       CLOSED at SPEC level via
+                       DC-PREFLIGHT-002 (formalizes
+                       TB00138 corrective).
+                     OI-058 (NEW) NSI-CARRY-FORWARD-
+                       EDIT-LIST-UNVALIDATED. Opened
+                       and closed same session at
+                       SPEC level via DC-PREFLIGHT-003.
+
+                     Bill override: TB00140 v1_6 -> v1_7
+                     authoring under Bill's standing
+                     project document-control override
+                     continuing the scope established
+                     in TB00115 (TB00000 v2_10 -> v2_11)
+                     and reaffirmed across subsequent
+                     sessions. Direct increment v1_6
+                     -> v1_7; no rv state required for
+                     content additions that close
+                     tracked OIs. Per Bill's TB00140
+                     directive "Option 3" authorizing
+                     STREAM 3-A + 3-B combined chat-
+                     scope batch under FP/DP analysis.
+
+  v1_6   04-25-2026  TB00140 STREAM 3-A — INTERIM REGISTER
+                     RETIREMENT.
+
+                     Single-purpose increment retiring
+                     the DC-CLEANUP-004 interim KPL
+                     register established in v1_5.
+                     KPL-001 / KPL-002 / KPL-003
+                     content is migrated without change
+                     to canonical AA=03 instance
+                     0311006 Known_Platform_Limitations
+                     dv1_0 (authored TB00139). The
+                     DC-CLEANUP-004 entry in §8.2.4 is
+                     replaced with a brief reference to
+                     0311006 as the canonical KPL
+                     repository.
+
+                     ROOT CAUSE OF RETIREMENT:
+                     v1_5 DC-CLEANUP-004 declared
+                     itself an INTERIM register pending
+                     authoring of 0311006. 0311006
+                     dv1_0 was authored TB00139 and
+                     §6.4 of that document specifies
+                     that future 0311002 increments
+                     replace the interim text with a
+                     single reference. This v1_6
+                     increment closes that migration
+                     dependency.
+
+                     CHANGE SCOPE:
+                     One section edited (§8.2.4
+                     DC-CLEANUP-004). All other
+                     §8.2.4 content (DC-CLEANUP-001
+                     through DC-CLEANUP-003 and
+                     DC-CLEANUP-005 through
+                     DC-CLEANUP-007) is unchanged.
+                     No other sections of 0311002
+                     are touched.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0311002 chain to 0310000 to
+                     0300000 unchanged. 0311006 is a
+                     sibling AA=03 instance (chains
+                     independently to 0310000 to
+                     0300000). No new dependency
+                     created.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00140 batch):
+                     0311002 v1_6 -> v1_7 (STREAM 3-B
+                       Finding 3 + STREAM 1 OI:
+                       formalizes STEP A pre-flight
+                       definition).
+                     TB00000 v2_15 -> v2_16 (STREAM 3-B
+                       Finding 4: DR-006 delivery-
+                       sequencing rule).
+                     TB00140 Session Log v1_0 (NEW).
+                     TB00140 NSI v1_0 (NEW).
+
+                     OPEN ITEMS UPDATED:
+                     0311006 §6.4 migration dependency
+                       CLOSED. Interim register
+                       retirement complete.
+                     KPL-001 / KPL-002 / KPL-003
+                       continue to govern from 0311006
+                       §5 without content change.
+
+                     Bill override: TB00140 v1_5 -> v1_6
+                     authoring under Bill's standing
+                     project document-control override
+                     continuing the scope established
+                     in TB00115 (TB00000 v2_10 -> v2_11)
+                     and reaffirmed across subsequent
+                     sessions. Direct increment v1_5
+                     -> v1_6; no rv state required for
+                     content changes that close a
+                     pre-declared interim-register
+                     migration. Per Bill's TB00140
+                     directive "Option 3" authorizing
+                     STREAM 3-A + 3-B combined chat-
+                     scope batch under FP/DP analysis.
 
   v1_5   04-25-2026  TB00137 OI-053-CAND CLOSURE.
 
