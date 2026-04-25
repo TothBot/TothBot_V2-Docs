@@ -1,0 +1,302 @@
+DocDCN:     0311006
+DocTitle:   Known_Platform_Limitations
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311006_Known_Platform_Limitations_dv1_0.txt
+DocDate:    04-25-2026
+DocTime:    21:30:00 UTC
+
+============================================================
+KNOWN PLATFORM LIMITATIONS
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the canonical permanent repository for
+TothBot V2 platform-limitation findings and their
+workarounds. Platform limitations are defects, gaps, or
+behaviors of the underlying execution platforms
+(Claude.ai, GitHub, Hetzner, Kraken, or Other) that are
+NOT bugs in TothBot V2 code or documents but constrain
+how TothBot V2 can be built, operated, or tested.
+
+A platform limitation captured here:
+
+  (a) Survives session-log cleanup. Session logs are
+      forensic source-of-record but are subject to
+      DC-CLEANUP-001 rolling-window removal per 0311002
+      STEP 8.2.4. KPL entries here are permanent.
+
+  (b) Provides the ACTIVE workaround Claude must apply
+      whenever the limitation is encountered.
+
+  (c) Provides the originating session-log reference for
+      forensic detail (the session log itself may have
+      been cleaned up; the reference is for the GitHub
+      archive lookup only).
+
+  (d) Provides a STATUS field so superseded or resolved
+      limitations can be retired without losing the
+      historical record.
+
+This document supersedes the interim KPL register
+maintained inside 0311002 v1_5 STEP 8.2.4 DC-CLEANUP-004.
+After 0311006 v1_0 is approved, future 0311002 increments
+remove the interim register text and reference 0311006
+as the canonical source.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety            (Domain)
+  0100000  Management                   (Domain)
+  0200000  Operations                   (Domain)
+  0300000  Governance                   (Domain Document)
+  0310000  Governance_Procedures_Anchor (Sub-Domain Anchor)
+  0311006  This document                (Instance)
+
+============================================================
+3. SCOPE
+============================================================
+
+3.1 IN SCOPE
+    Platform behaviors that constrain Claude's authoring,
+    Bill's operational workflow, the VPS runtime, the
+    Kraken connection, or the GitHub repository workflow,
+    and that cannot be unilaterally fixed inside TothBot
+    V2.
+
+3.2 OUT OF SCOPE
+    Code defects in TothBot V2 (target: AA=08 or AA=10
+    spec, .py revision history).
+    Procedural defects in TothBot V2 governance (target:
+    AA=03 procedure or 0311002 STEP rule).
+    Bill workflow preferences not tied to platform
+    behavior (target: TB00000 user preferences).
+
+3.3 PLATFORM CATEGORIES
+    Each entry's PLATFORM field MUST be one of:
+      Claude.ai
+      GitHub
+      Hetzner
+      Kraken
+      Python
+      Other
+
+============================================================
+4. ENTRY FORMAT
+============================================================
+
+Each KPL entry MUST contain the following fields, in this
+order, with field labels exactly as shown:
+
+  KPL-NNN
+    PLATFORM       Required. One of §3.3 categories.
+    DEFECT         Required. One-paragraph description
+                   of the observed behavior.
+    ORIGIN         Required. Originating session log
+                   reference (e.g., "TB00130"). Forensic
+                   reference only — log may have been
+                   cleaned up from the project folder.
+                   GitHub archive retains it.
+    ROOT CAUSE     Optional. Required if known. Explicit
+                   technical cause.
+    WORKAROUND     Required. The ACTIVE procedure Claude
+                   or Bill follows when this limitation
+                   is encountered. May reference
+                   procedural documents (AA=02 / AA=03)
+                   or coding specs (AA=10).
+    STATUS         Required. One of:
+                     ACTIVE WORKAROUND — limitation is
+                       still present; workaround
+                       applies on every encounter.
+                     RESOLVED — platform vendor fixed
+                       it; workaround retired.
+                     SUPERSEDED — replaced by a later
+                       KPL entry (cite the replacement).
+                     DEPRECATED — limitation no longer
+                       applies (e.g., TothBot stopped
+                       using the affected feature).
+    LAST VERIFIED  Required. Most recent date the
+                   workaround was confirmed to still
+                   apply. MM-DD-YYYY format. Update
+                   on every fresh confirmation.
+
+============================================================
+5. KPL REGISTER
+============================================================
+
+------------------------------------------------------------
+KPL-001
+------------------------------------------------------------
+
+  PLATFORM       Claude.ai
+  DEFECT         .docx delivery via python-docx produces
+                 files with word/settings.xml validation
+                 errors. python-docx writes
+                 <w:zoom w:val="bestFit"/> instead of the
+                 OOXML-schema-required
+                 <w:zoom w:val="none" w:percent="100"/>.
+                 The defect is invisible on file size or
+                 structure inspection but causes Word to
+                 reject the file as "cannot be opened" and
+                 causes browser download pipes to abort
+                 or mangle the transfer.
+  ORIGIN         TB00006-era surface; root-caused TB00130.
+  ROOT CAUSE     python-docx library default settings.xml
+                 omits the w:percent attribute on the
+                 w:zoom element. Some validators (and
+                 some Word versions) reject the file.
+                 Known upstream issue, not a Claude
+                 authoring error per se.
+  WORKAROUND     Apply the unpack -> edit settings.xml ->
+                 repack remediation cycle and validate
+                 via /mnt/skills/public/docx/scripts/
+                 office/validate.py BEFORE delivery.
+                 Codified at the governance layer in
+                 TB00000 v2_14 §4.1 DR-004.3 .docx
+                 settings.xml validation gate. Failure
+                 to pass the validate.py gate blocks
+                 delivery per DR-004.4.
+  STATUS         ACTIVE WORKAROUND.
+  LAST VERIFIED  04-24-2026 (TB00130).
+
+------------------------------------------------------------
+KPL-002
+------------------------------------------------------------
+
+  PLATFORM       Claude.ai
+  DEFECT         File rendered as "delivered" in chat
+                 may be plain text mislabeled with a
+                 binary extension (e.g., a .docx file
+                 containing plain text). Bill's
+                 download then fails to open in Word
+                 because the binary container expected
+                 by the extension is absent.
+  ORIGIN         ERROR-PRE-001 surfaced TB00134.
+  ROOT CAUSE     The present_files tool extension is
+                 taken from the filename without
+                 content-type validation. A plain-text
+                 file saved with a .docx extension is
+                 rendered and offered for download
+                 without complaint.
+  WORKAROUND     Validate every produced binary
+                 artifact via `file <path>` for type
+                 detection AND a container structural
+                 probe (ZIP-listing for .docx/.xlsx/
+                 .pptx, %PDF- header for .pdf) before
+                 calling present_files. Codified at
+                 the governance layer in TB00000 v2_14
+                 §4.1 DR-004.1 (file-type probe) and
+                 DR-004.2 (container structural probe).
+                 Fail-closed: do not deliver
+                 unverified binary artifacts. Failure
+                 logged as Claude error per RR-VIOL-002.
+  STATUS         ACTIVE WORKAROUND.
+  LAST VERIFIED  04-24-2026 (TB00134).
+
+------------------------------------------------------------
+KPL-003
+------------------------------------------------------------
+
+  PLATFORM       Claude.ai
+  DEFECT         Project-folder file list mounted at
+                 /mnt/project/ is FROZEN at session
+                 start. Mid-session uploads by Bill are
+                 NOT visible to the current Claude
+                 session via filesystem mount probe.
+                 Filesystem-mount-only verification of
+                 mid-session uploads returns false
+                 negatives.
+  ORIGIN         TB00121 §2.6.
+  ROOT CAUSE     Mount-time snapshot semantics. The
+                 /mnt/project/ filesystem is bound at
+                 session-creation time and not refreshed
+                 on subsequent uploads.
+  WORKAROUND     Use project_knowledge_search (live
+                 project index) for upload-state
+                 verification mid-session. The live
+                 index reflects mid-session uploads
+                 within seconds. Defer mount-based
+                 verification to next cold-load. Tools
+                 sequence required by TB00000 v2_15
+                 §4.3.1 RR-SCOPE-008 before declaring
+                 a fact unverifiable: filesystem mount
+                 + project_knowledge_search +
+                 conversation_search + recent_chats.
+  STATUS         ACTIVE WORKAROUND.
+  LAST VERIFIED  04-23-2026 (TB00121).
+
+============================================================
+6. ENTRY MAINTENANCE
+============================================================
+
+6.1 ADDING A NEW ENTRY
+    A new KPL entry is added through a normal 0311006
+    version increment per 0311003. The increment:
+      (a) Adds a new KPL-NNN block in §5 using the next
+          unused number.
+      (b) Conforms to §4 entry format.
+      (c) Cites the originating session log in the
+          ORIGIN field.
+      (d) Updates the §7 revision history.
+
+6.2 UPDATING AN EXISTING ENTRY
+    LAST VERIFIED date updates and minor description
+    refinements use a regular version increment per
+    0311003. Material changes to the WORKAROUND field
+    require:
+      (a) FP/DP analysis recorded in the §7 revision
+          history entry.
+      (b) Cross-check that any document referencing the
+          old WORKAROUND text (governance, NSI, spec)
+          is updated in the same cascade.
+
+6.3 RETIRING AN ENTRY
+    To mark an entry RESOLVED, SUPERSEDED, or
+    DEPRECATED:
+      (a) Update STATUS field with the new state.
+      (b) Add a RETIREMENT NOTE under the entry citing
+          the resolution evidence (vendor patch URL,
+          superseding KPL number, or feature
+          deprecation reference).
+      (c) Do NOT delete the entry. Retired entries
+          remain in §5 for historical and audit
+          purposes.
+
+6.4 INTERIM REGISTER MIGRATION
+    The interim KPL register inside 0311002 v1_5 §8.2.4
+    DC-CLEANUP-004 is RETIRED at 0311006 v1 approval.
+    Future 0311002 increments remove the interim register
+    text and replace it with a single line referencing
+    0311006 as the canonical source. The TB00139 batch
+    delivers 0311006 dv1_0; the 0311002 retirement edit
+    follows in a subsequent session per the standing
+    sequencing rule (one cascade boundary per session).
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  04-25-2026  Initial. TB00139 STREAM 3
+                     DC-CLEANUP-003 extraction sweep
+                     closure. Migrates KPL-001 / KPL-002
+                     / KPL-003 from 0311002 v1_5 §8.2.4
+                     DC-CLEANUP-004 interim register
+                     into the canonical 0311006
+                     repository. KPL register, entry
+                     format, scope, parent chain,
+                     entry-maintenance procedure all
+                     established. Interim register in
+                     0311002 v1_5 remains in place
+                     until 0311002 next-increment edit
+                     retires it. Reserves the AA=03
+                     instance slot per 0311002 v1_5
+                     §8.2.4 DC-CLEANUP-004 plan.
+
+============================================================
+END OF DOCUMENT
+============================================================
