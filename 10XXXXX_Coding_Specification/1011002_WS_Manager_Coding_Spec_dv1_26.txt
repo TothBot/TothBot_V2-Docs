@@ -1,10 +1,10 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_25
+DocVersion: dv1_26
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_25.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_26.txt
 DocDate:    05-03-2026
-DocTime:    16:00:00 UTC
+DocTime:    21:00:00 UTC
 
 ============================================================
 WS MANAGER CODING SPECIFICATION
@@ -270,8 +270,18 @@ Section 3. All hard rules are consolidated in Section 16.
       cancel_order, batch_cancel
 
   Total connection count at runtime:
-    Live mode:   N_conns (public shards) + 1 (private)
-    Paper mode:  N_conns (public shards), no private
+    Both modes:  N_conns (public shards) + 1 (private)
+
+  Per 0511001 dv1_5 §3.1 and ADR §18 TRUE PAPER-LIVE
+  PARITY (D-06): private WS connects in BOTH paper and
+  live mode. The connection itself, the WS auth token,
+  the executions and balances subscriptions, the
+  receive loops, the JSON ping, the zombie monitor,
+  and the sequence-gap detection all execute
+  identically in both modes. Only the order-dispatch
+  outbound traffic from the six methods in §6 gates
+  on paper_mode (paper simulates; live transmits via
+  _send_private).
 
   N_conns formula:
     N_conns = ceil(universe_size / SYMBOLS_PER_CONN_SAFE)
@@ -596,8 +606,11 @@ WM-SHARD-003  SHARD DATA STRUCTURE.
 
                 shards: List[WSShard]   # length N_conns
                 pair_to_shard_index: Dict[Pair, int]
-                private_connection: WSConnection or None
-                                    # None in paper mode
+                private_connection: WSConnection
+                                    # always present per
+                                    # 0511001 dv1_5 ADR §18
+                                    # TRUE PAPER-LIVE PARITY
+                                    # (D-06)
 
 WM-SHARD-004  PARALLEL CONNECT.
               Public shards are connected in parallel
@@ -689,14 +702,15 @@ WM-SHARD-008  PER-SHARD RECONNECT.
 
 WM-SHARD-009  PIPELINE-DURING-RECONNECT GUARD.
               The pipeline trigger is gated on
-              all-shards-healthy. Pseudocode:
+              all-shards-healthy AND private-healthy.
+              Pseudocode (BOTH modes — private connects
+              in both per 0511001 dv1_5 ADR §18):
 
                 def _all_connections_healthy(self):
                     for shard in self.shards:
                         if shard.state != HEALTHY:
                             return False
-                    if (not self.paper_mode and
-                        self.private_connection.state
+                    if (self.private_connection.state
                             != HEALTHY):
                         return False
                     return True
@@ -708,7 +722,10 @@ WM-SHARD-009  PIPELINE-DURING-RECONNECT GUARD.
 
               This generalizes HR-WM-012 to multi-
               connection: pipeline runs only when
-              the entire data plane is healthy.
+              the entire data plane is healthy. The
+              guard evaluates identically in both
+              modes — private WS is a real connection
+              in both modes.
 
 WM-SHARD-010  SILENT-PAIR STATE MACHINE.
               Per-pair state transitions per 0511001
@@ -1522,7 +1539,25 @@ WM-STATUS-001  Log connection_id from status channel on
 ------------------------------------------------------------
 
   Dispatch entry limit order after Gate 8 sizing output.
-  Fields:
+
+  Method body MUST gate on paper_mode at entry per
+  0511001 dv1_5 §13.2 and HR-WM-023:
+
+    async def add_order(self, symbol, side, qty, price,
+                        cl_ord_id, ...):
+        if self.paper_mode:
+            self._log("PAPER_ORDER_SIMULATED",
+                      symbol=symbol, cl_ord_id=cl_ord_id,
+                      qty=qty, price=price)
+            asyncio.create_task(
+                self._simulate_entry_fill(
+                    cl_ord_id, symbol, price, qty))
+            return
+        # LIVE MODE: transmit to Kraken
+        await self._send_private({...})
+
+  LIVE MODE message fields (sent only when paper_mode
+  is False):
     method:        "add_order"
     params:
       order_type:  "limit"
@@ -1539,20 +1574,59 @@ WM-STATUS-001  Log connection_id from status channel on
       token:       <ws_token>
     req_id:        <unique integer>
 
-  On dispatch:
+  On dispatch (BOTH modes — Pending Order Registry and
+  Position Mirror update happen identically):
     Register cl_ord_id in Pending Order Registry with
     estimated_USD_cost = order_qty * entry_limit_price.
     Record cl_ord_id in Position Mirror immediately.
     Log ENTRY_DISPATCHED.
+
+  Paper-mode path: _simulate_entry_fill scheduled as
+  asyncio.create_task fires the same Execution Engine
+  entry-fill callback that a real Kraken executions
+  event would fire in live mode. Mirror update and
+  capital-ledger update logic downstream is byte-
+  identical between modes.
 
 ------------------------------------------------------------
 6.5 batch_add — TP + emergSL Protection
 ------------------------------------------------------------
 
   Dispatched by Execution Engine (0511003) after entry fill.
-  WS Manager sends the batch_add to Kraken.
+  WS Manager sends the batch_add to Kraken (live) or
+  populates PositionRecord locally (paper).
 
-  Fields:
+  Method body MUST gate on paper_mode at entry per
+  0511001 dv1_5 §13.2 and HR-WM-023:
+
+    async def batch_add(self, symbol, tp_limit_price,
+                        sl_trigger_price, qty,
+                        cl_ord_id, tp_cl_ord_id,
+                        sl_cl_ord_id):
+        # Pre-validate (BOTH modes):
+        self._validate_batch_add(
+            symbol, tp_limit_price, sl_trigger_price,
+            qty, entry_fill_price=...)
+
+        if self.paper_mode:
+            pos = self.position_mirror[symbol]
+            pos.tp_price        = tp_limit_price
+            pos.emergsl_price   = sl_trigger_price
+            pos.tp_order_id     = f"PAPER_TP_{cl_ord_id}"
+            pos.emergsl_order_id = f"PAPER_SL_{cl_ord_id}"
+            self._log(
+                "PAPER_BATCH_ADD_SIMULATED",
+                symbol=symbol,
+                tp_price=tp_limit_price,
+                emergsl_price=sl_trigger_price,
+                tp_order_id=pos.tp_order_id,
+                emergsl_order_id=pos.emergsl_order_id)
+            return
+        # LIVE MODE: transmit to Kraken
+        await self._send_private({...})
+
+  LIVE MODE message fields (sent only when paper_mode
+  is False):
     method:       "batch_add"
     params:
       orders:
@@ -1588,13 +1662,19 @@ WM-STATUS-001  Log connection_id from status channel on
     feed status. NEVER rely on API defaults for crash
     protection parameters.
 
-  Validate BEFORE dispatch (AR-047):
+  Validate BEFORE dispatch (AR-047) — applies in BOTH
+  modes via _validate_batch_add helper:
     - TP price: tp_price > entry_fill_price.
     - emergSL trigger: sl_trigger < entry_fill_price.
     - Net 1:1.5 R:R preserved: net_gain = net_loss * 1.5.
     - Qty passes qty_min and cost_min checks.
   A batch_add validation failure kills the entire batch,
   leaving position with no TP and no emergSL. Pre-validate.
+
+  Paper-mode path: tp_price and emergsl_price are stored
+  on the PositionRecord. _maybe_paper_fill (§6.10) reads
+  these fields on each ticker bbo event to detect TP and
+  emergSL fills.
 
 ------------------------------------------------------------
 6.6 cancel_order — Individual Cancel
@@ -1603,6 +1683,17 @@ WM-STATUS-001  Log connection_id from status channel on
   Use for: Layer 2 MAE exit cancel sequence (cancel TP
   before sell). Per-order ACK tracked via req_id_registry.
   Required for cancel timeout fallback (I-6).
+
+  Method body MUST gate on paper_mode at entry per
+  0511001 dv1_5 §13.2:
+
+    async def cancel_order(self, cl_ord_id):
+        if self.paper_mode:
+            self._log("PAPER_CANCEL_SIMULATED",
+                      cl_ord_id=cl_ord_id)
+            return
+        # LIVE MODE: transmit to Kraken
+        await self._send_private({...})
 
 WM-CAN-001  cancel_order = individual cancel with per-order
             ACK tracking. DO NOT use batch_cancel for Layer
@@ -1614,6 +1705,9 @@ WM-CAN-001  cancel_order = individual cancel with per-order
               State unknown → alert operator, hold position.
               NEVER issue market sell with ambiguous order
               state (prevents double-sell).
+            ACK-tracking and timeout-fallback logic
+            applies LIVE MODE only — paper mode returns
+            immediately after the simulation log.
 
   Cancel timeout window: 5.0 seconds (CIATS-owned).
     cancel_timeout_fallback: 5.0s (1011005 dv1_2)
@@ -1625,7 +1719,20 @@ WM-CAN-001  cancel_order = individual cancel with per-order
   Use ONLY for: emergSL qty amendment after TP partial fill.
   NOT for price changes. NOT for entry order changes.
 
-  Fields:
+  Method body MUST gate on paper_mode at entry per
+  0511001 dv1_5 §13.2:
+
+    async def amend_order(self, cl_ord_id, new_qty,
+                          ...):
+        if self.paper_mode:
+            self._log("PAPER_AMEND_SIMULATED",
+                      cl_ord_id=cl_ord_id,
+                      new_qty=new_qty)
+            return
+        # LIVE MODE: transmit to Kraken
+        await self._send_private({...})
+
+  LIVE MODE message fields:
     method: "amend_order"
     params:
       order_id:   <emergsl_order_id>
@@ -1647,7 +1754,20 @@ WM-CAN-001  cancel_order = individual cancel with per-order
   Rate counter bypass ensures execution when rate-limited —
   exactly the condition during Full Halt.
 
-  Fields:
+  Method body MUST gate on paper_mode at entry per
+  0511001 dv1_5 §13.2:
+
+    async def batch_cancel(self, order_ids=None):
+        if self.paper_mode:
+            ids_to_log = order_ids or ["<empty=all>"]
+            for oid in ids_to_log:
+                self._log("PAPER_CANCEL_SIMULATED",
+                          order_id=oid)
+            return
+        # LIVE MODE: transmit to Kraken
+        await self._send_private({...})
+
+  LIVE MODE message fields:
     method: "batch_cancel"
     params:
       orders: [] (empty = cancel all pending non-resting)
@@ -1666,6 +1786,221 @@ WM-CAN-001  cancel_order = individual cancel with per-order
       entry_limit_price_raw, price_increment, ROUND_DOWN)
   Conservative rounding: lower limit → more likely
   post_only fill on Kraken matching engine.
+
+------------------------------------------------------------
+6.10 dispatch_market_sell — Layer 2 / 3 Emergency Sell
+------------------------------------------------------------
+
+  Layer 2 (Exit Controller MAE) and Layer 3 (Kraken
+  resting SL never reached in normal operation) exits
+  use this method to issue an immediate market sell.
+
+  Method body MUST gate on paper_mode at entry per
+  0511001 dv1_5 §13.2:
+
+    async def dispatch_market_sell(self, symbol, qty):
+        if self.paper_mode:
+            current_bid = self._get_current_bid(symbol)
+            self._log("PAPER_MARKET_SELL_SIMULATED",
+                      symbol=symbol, qty=qty,
+                      bid=current_bid)
+            self._apply_paper_pnl_market_sell(
+                symbol, qty, current_bid)
+            self._mirror_remove(symbol)
+            self._fire_ciats_outcome(symbol,
+                                     reason="MARKET_SELL")
+            return
+        # LIVE MODE: transmit to Kraken
+        await self._send_private({...})
+
+  LIVE MODE message fields:
+    method:        "add_order"
+    params:
+      order_type:  "market"
+      side:        "sell"
+      symbol:      <pair>
+      order_qty:   <remaining_qty, quantized ROUND_DOWN>
+      stp_type:    "cancel_newest"
+      deadline:    <now + 5s ISO 8601>
+      cl_ord_id:   <market_sell_cl_ord_id>
+      token:       <ws_token>
+    req_id:        <unique integer>
+
+  Both modes: Position Mirror is removed and CIATS
+  Trade Outcome Bus is fired. The capital-ledger
+  update applies in paper via _apply_paper_pnl_market_sell
+  (§6.12); in live the executions channel fill event
+  drives the equivalent ledger update path.
+
+------------------------------------------------------------
+6.11 _simulate_entry_fill — Paper-Mode Entry Fill Helper
+------------------------------------------------------------
+
+  Paper-mode-only helper invoked by add_order's
+  paper-mode branch. Fires the same Execution Engine
+  entry-fill callback that a real Kraken executions
+  event would fire in live mode, after a small simulated
+  exchange latency.
+
+    async def _simulate_entry_fill(self, cl_ord_id,
+                                   symbol, price, qty):
+        await asyncio.sleep(0.1)  # simulated latency
+        self._apply_paper_pnl_entry(symbol, qty, price)
+        self._log("PAPER_ENTRY_FILL_SIMULATED",
+                  symbol=symbol, cl_ord_id=cl_ord_id,
+                  price=price, qty=qty)
+        # Same callback as live executions handler:
+        await self._execution_engine.on_entry_fill(
+            cl_ord_id=cl_ord_id, symbol=symbol,
+            fill_price=price, fill_qty=qty)
+
+  WM-PAPER-FILL-001  _simulate_entry_fill MUST call the
+                     SAME Execution Engine entry-fill
+                     callback that the live executions
+                     handler calls. There is ONE callback
+                     in Execution Engine for entry fill;
+                     paper invokes it via this helper,
+                     live invokes it from _handle_executions
+                     EXEC_FILLED branch.
+
+  WM-PAPER-FILL-002  _simulate_entry_fill is NOT called
+                     in live mode. It is reachable only
+                     from the paper-mode branch of
+                     add_order.
+
+------------------------------------------------------------
+6.12 _maybe_paper_fill — Paper-Mode TP/emergSL Detection
+------------------------------------------------------------
+
+  Paper-mode fill detection runs inside _handle_ticker
+  on every ticker bbo event for symbols with open
+  positions.
+
+    def _maybe_paper_fill(self, symbol, bid, ask):
+        if not self.paper_mode:
+            return
+        pos = self.position_mirror.get(symbol)
+        if pos is None:
+            return
+        # TP check first (priority per HR-WM-024)
+        if pos.tp_price and ask >= pos.tp_price:
+            self._log("PAPER_TP_FILL_DETECTED",
+                      symbol=symbol,
+                      tp_price=pos.tp_price, ask=ask)
+            self._apply_paper_pnl_tp(symbol, pos.qty,
+                                     pos.tp_price)
+            self._mirror_remove(symbol)
+            self._fire_ciats_outcome(symbol,
+                                     reason="TP_FILL")
+            self._switch_ticker_to_trades(symbol)
+            return
+        # emergSL check
+        if pos.emergsl_price and bid <= pos.emergsl_price:
+            self._log("PAPER_EMERG_SL_TRIGGERED",
+                      symbol=symbol,
+                      emergsl_price=pos.emergsl_price,
+                      bid=bid)
+            self._apply_paper_pnl_emergsl(
+                symbol, pos.qty, pos.emergsl_price)
+            self._mirror_remove(symbol)
+            self._fire_ciats_outcome(symbol,
+                                     reason="EMERG_SL")
+            self._switch_ticker_to_trades(symbol)
+
+  WM-PAPER-FILL-003  _maybe_paper_fill is invoked from
+                     _handle_ticker AFTER the standard
+                     drawdown / state update path has
+                     run. The drawdown / state update
+                     path is identical in both modes —
+                     only the paper-fill detection
+                     branch is paper-mode-only.
+
+  WM-PAPER-FILL-004  TP check runs before emergSL check
+                     on every ticker event (priority
+                     per HR-WM-024). Only one fires per
+                     event.
+
+------------------------------------------------------------
+6.13 Paper P&L Application (§13.8 of 0511001 dv1_5)
+------------------------------------------------------------
+
+  Paper-mode capital-ledger updates apply P&L locally
+  using FEE_MAKER_PCT and FEE_TAKER_PCT (CIATS-owned
+  starting values aligned with Kraken's published
+  spot-trading fee schedule).
+
+    def _apply_paper_pnl_entry(self, symbol, qty,
+                               fill_price):
+        cost = qty * fill_price * (Decimal(1) +
+                                   FEE_MAKER_PCT)
+        self.spot_usd_balance -= cost
+        pos = self.position_mirror[symbol]
+        pos.entry_cost_usd = cost  # for later P&L calc
+        self._log("PAPER_ENTRY_PNL", symbol=symbol,
+                  cost_usd=cost,
+                  spot_usd_balance=self.spot_usd_balance)
+
+    def _apply_paper_pnl_tp(self, symbol, qty,
+                            tp_price):
+        proceeds = qty * tp_price * (Decimal(1) -
+                                     FEE_MAKER_PCT)
+        pos = self.position_mirror[symbol]
+        pnl = proceeds - pos.entry_cost_usd
+        self.spot_usd_balance += proceeds
+        self._log("PAPER_TP_PNL", symbol=symbol,
+                  pnl_usd=pnl,
+                  spot_usd_balance=self.spot_usd_balance)
+
+    def _apply_paper_pnl_emergsl(self, symbol, qty,
+                                 sl_price):
+        proceeds = qty * sl_price * (Decimal(1) -
+                                     FEE_TAKER_PCT)
+        pos = self.position_mirror[symbol]
+        pnl = proceeds - pos.entry_cost_usd
+        self.spot_usd_balance += proceeds
+        self._log("PAPER_EMERG_SL_PNL", symbol=symbol,
+                  pnl_usd=pnl,
+                  spot_usd_balance=self.spot_usd_balance)
+
+    def _apply_paper_pnl_market_sell(self, symbol, qty,
+                                     bid):
+        proceeds = qty * bid * (Decimal(1) -
+                                FEE_TAKER_PCT)
+        pos = self.position_mirror[symbol]
+        pnl = proceeds - pos.entry_cost_usd
+        self.spot_usd_balance += proceeds
+        self._log("PAPER_MARKET_SELL_PNL", symbol=symbol,
+                  pnl_usd=pnl,
+                  spot_usd_balance=self.spot_usd_balance)
+
+  WM-PAPER-PNL-001  PositionRecord adds entry_cost_usd
+                    field (Decimal) populated by
+                    _apply_paper_pnl_entry. P&L
+                    computation in TP / emergSL /
+                    market-sell paths references this
+                    field.
+
+  WM-PAPER-PNL-002  FEE_MAKER_PCT and FEE_TAKER_PCT are
+                    module-level Decimals declared at
+                    the top of ws_manager.py. CIATS-
+                    owned starting values aligned with
+                    Kraken's published spot-trading
+                    fee schedule (0411003 KRAKEN-FEE-001
+                    starting values). Never hardcoded
+                    inline at call sites.
+
+  WM-PAPER-PNL-003  _apply_paper_pnl_* methods are NOT
+                    called in live mode. They are
+                    reachable only from paper-mode
+                    branches.
+
+  WM-PAPER-PNL-004  drawdown_pct computation downstream
+                    uses spot_usd_balance and
+                    portfolio_baseline_USD identically
+                    in both modes (AR-052 / 0511001
+                    dv1_5 §5.4). The formula is mode-
+                    agnostic; only the source of the
+                    operands differs.
 
 ============================================================
 7. CONNECTION HEALTH MONITORING
@@ -2816,67 +3151,134 @@ WM-RECONNECT-018  The _main_loop() TaskGroup MUST receive only truly
                   send helpers check this flag and short-circuit when
                   set.
 
-WM-RECONNECT-019  Paper-mode reconnect gating (OI-028 /
-                  FIX-WM-RECONNECT-019, dv1_21).
+WM-RECONNECT-019  RETIRED dv1_26. Prior text mandated
+                  paper-mode reconnect SKIP every private-
+                  side step (token, private connect,
+                  private subscribe, GetOpenOrders, gap-
+                  closed-position detection, Pending
+                  Order reconcile, sequence-counter reset).
+                  This was the WRONG rule. It encoded the
+                  same defect 0511001 dv1_4 HR-WM-022
+                  encoded — conflating "no order dispatch"
+                  with "no private WS connection." The
+                  rule was the source of multi-session
+                  paper-live parity defect (OI-072,
+                  TB00145).
 
-                  When self.paper_mode is True,
-                  _execute_reconnect_sequence MUST skip every
-                  private-side step:
-                    - Step 1: _rest_get_ws_token()            SKIP
-                    - Step 2b: _ws_connect(PRIVATE_WS_URI)    SKIP
-                    - Step 3b: _subscribe_private()           SKIP
-                    - Step 4: _rest_get_open_orders() +
-                              _detect_gap_closed_positions     SKIP
-                    - Step 5: GAP_CLOSED_POSITION logging      SKIP
-                    - Step 6: _reconcile_pending_orders()      SKIP
-                    - Step 7: executions_last_seq /
-                              balances_last_seq resets         SKIP
+                  REPLACED BY WM-RECONNECT-019-NEW below.
 
-                  Paper-mode reconnect executes ONLY the
-                  public-side subset:
-                    - Step 2a: _ws_connect(PUBLIC_WS_URI)
-                    - Step 3a: _subscribe_public()
-                    - Step 8:  resume ticker subscriptions for
-                               every symbol in monitored_universe
-                    - Step 10: if gap_sec >
-                               RECONNECT_STALE_CACHE_SEC,
-                               seed_indicators_from_rest() for
-                               every symbol
+WM-RECONNECT-019-NEW  TRUE PAPER-LIVE PARITY RECONNECT
+                      (D-06; 0511001 dv1_5 §11 + ADR §18).
 
-                  This mirrors the paper-mode branch of
-                  _startup_connect_and_subscribe (FIX-WM-PT-001,
-                  dv1_14). Rationale: private Kraken API key is
-                  not exercised anywhere in paper mode — order
-                  dispatch is suppressed, balance is static,
-                  executions channel is unused. Calling
-                  _rest_get_ws_token() in paper mode requires a
-                  valid private key for signature generation
-                  and exchanges the key with Kraken; in the
-                  current deployment that key is rejected by
-                  Kraken (EAPI:Invalid key — tracked as OI-041).
-                  Every paper-mode reconnect therefore failed at
-                  Step 1, consumed a retry attempt, and after
-                  MAX_RECONNECT_ATTEMPTS consecutive identical
-                  failures reached the FATAL_RECONNECT_FAILURE
-                  exit path → systemd restart.
+                      _execute_reconnect_sequence MUST
+                      execute ALL reconnect steps in
+                      BOTH modes. There is NO paper-mode
+                      skip of any private-side reconnect
+                      step.
 
-                  Preserved invariants:
-                    - HR-WM-013 portfolio_baseline_USD NEVER
-                      reset on reconnect (paper balance too).
-                    - HR-WM-011 system_state PRESERVED.
-                    - WM-SC-003 exit_cooldown_log and
-                      consecutive_loss_count PRESERVED.
+                      Steps that diverge by mode (the
+                      ONLY divergence in the reconnect
+                      path):
 
-                  Live mode reconnect (self.paper_mode == False)
-                  is unchanged — full Steps 1-10 still apply
-                  per WM-RECONNECT-003 through WM-RECONNECT-014.
+                      Step 4 (snap_orders processing):
+                        LIVE: compare against pre-
+                          disconnect Position Mirror,
+                          detect gap-closed positions.
+                        PAPER: log
+                          SNAP_ORDERS_RECEIVED_PAPER_
+                          RECONNECT at INFO with the
+                          full snap payload; do NOT
+                          alter paper Position Mirror
+                          (HR-WM-033 of 0511001 dv1_5).
 
-                  Test coverage (1021001):
-                    - paper-mode reconnect completes with no
-                      private-WS calls and no REST auth calls
-                    - live-mode reconnect unchanged
-                    - gap > RECONNECT_STALE_CACHE_SEC in paper
-                      mode triggers indicator re-seed
+                      Step 5 (gap-closed position CIATS
+                      Trade Outcome Bus firing):
+                        LIVE: fire for each gap-closed
+                          position.
+                        PAPER: skip (paper Mirror is
+                          owned by the local simulated-
+                          fill path and is preserved
+                          across reconnect; there are
+                          no real gap-closed positions
+                          in paper mode).
+
+                      Step 6 (Pending Order Registry
+                      reconcile):
+                        LIVE: reconcile against
+                          snap_orders.
+                        PAPER: log the response; do not
+                          alter Pending Order Registry
+                          (paper has no real pending
+                          orders).
+
+                      ALL OTHER STEPS execute in BOTH
+                      modes:
+                        Step 1: _rest_get_ws_token() —
+                          BOTH modes (private WS auth
+                          token required for private
+                          WS connect in both modes).
+                        Step 2a: _ws_connect(PUBLIC) —
+                          BOTH modes.
+                        Step 2b: _ws_connect(PRIVATE) —
+                          BOTH modes.
+                        Step 3a: _subscribe_public() —
+                          BOTH modes.
+                        Step 3b: _subscribe_private()
+                          (executions + balances with
+                          all subscription flags) —
+                          BOTH modes.
+                        Step 7: executions_last_seq /
+                          balances_last_seq resets —
+                          BOTH modes.
+                        Step 8: resume ticker
+                          subscriptions for every symbol
+                          in tradeable_universe —
+                          BOTH modes.
+                        Step 9: pipeline-during-
+                          reconnect guard release —
+                          BOTH modes.
+                        Step 10: stale-cache check
+                          (gap_sec >
+                          RECONNECT_STALE_CACHE_SEC) →
+                          seed_indicators_from_rest()
+                          for affected symbols — BOTH
+                          modes.
+
+                      Preserved invariants (BOTH modes):
+                        - HR-WM-013 portfolio_baseline_
+                          USD NEVER reset on reconnect.
+                        - HR-WM-011 system_state
+                          PRESERVED across reconnect.
+                        - WM-SC-003 exit_cooldown_log
+                          and consecutive_loss_count
+                          PRESERVED across reconnect.
+                        - Paper Position Mirror is
+                          PRESERVED across reconnect
+                          per HR-WM-033 of 0511001
+                          dv1_5 (paper Mirror is owned
+                          by the local simulated-fill
+                          path).
+                        - Synthetic paper
+                          spot_usd_balance is PRESERVED
+                          across reconnect per
+                          HR-WM-034 of 0511001 dv1_5.
+
+                      Test coverage (1021001 dv1_1 +):
+                        - paper-mode reconnect executes
+                          all 10 steps; private WS
+                          connects; executions and
+                          balances subscribe; all ACK
+                          handling exercised
+                        - paper-mode reconnect logs
+                          snap_orders without altering
+                          paper Mirror
+                        - paper-mode reconnect preserves
+                          synthetic capital ledger
+                        - live-mode reconnect unchanged
+                          from dv1_25 behavior
+                        - gap > RECONNECT_STALE_CACHE_SEC
+                          in both modes triggers
+                          indicator re-seed
 
 ============================================================
 16. TICKER EVENT_TRIGGER MANAGEMENT (AR-034)
@@ -3053,9 +3455,12 @@ HR-WM-028  AR-070 SILENT-NARROWING PROHIBITION.
 HR-WM-029  PIPELINE-DURING-RECONNECT GUARD
            (GENERALIZED). Pipeline trigger is gated
            on all-shards-healthy AND
-           private-healthy (live mode) /
-           all-shards-healthy (paper mode). If ANY
-           connection is in reconnect state, candle
+           private-healthy. Both modes evaluate the
+           guard identically because private WS
+           connects in both modes per 0511001 dv1_5
+           ADR §18 TRUE PAPER-LIVE PARITY (D-06).
+           If ANY connection (any public shard or
+           private) is in reconnect state, candle
            events are discarded; pipeline does not
            run. Per WM-SHARD-009.
 
@@ -3096,7 +3501,117 @@ HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
            against back-to-back-restart scenarios;
            only the bucket does. Any code path that
            emits a Kraken WS subscribe outside the
-           bucket is a session-halting defect.
+           bucket is a session-halting defect. The
+           bucket operates in BOTH paper and live
+           mode — there is no paper-mode bypass.
+
+HR-WM-033  PAPER POSITION-MIRROR SOURCING (D-06;
+           0511001 dv1_5 HR-WM-033). In paper mode,
+           Position Mirror is populated EXCLUSIVELY
+           by the local simulated-fill path:
+             - Entry fills via _simulate_entry_fill
+               (§6.11)
+             - TP / emergSL fills via _maybe_paper_fill
+               (§6.12)
+             - Market-sell exits via dispatch_market_sell
+               paper branch (§6.10)
+           Real Kraken executions events received on
+           the private WS in paper mode (the channel
+           IS subscribed in paper per D-06) are LOGGED
+           but do NOT populate or mutate paper Mirror.
+           snap_orders / snap_trades responses in
+           paper mode are LOGGED but do NOT populate
+           paper Mirror. This prevents real Kraken
+           positions held by the operator outside
+           TothBot from contaminating paper-trading
+           state.
+
+HR-WM-034  PAPER CAPITAL-LEDGER SOURCING (D-06;
+           0511001 dv1_5 HR-WM-034). In paper mode,
+           spot_usd_balance is initialized from
+           paper_starting_balance ($1,000 per D-05) at
+           Step 11 and updated EXCLUSIVELY by the local
+           simulated-fill P&L path per §6.13. Real
+           Kraken balances events received on the
+           private WS in paper mode are LOGGED but do
+           NOT overwrite the synthetic paper
+           spot_usd_balance. portfolio_baseline_USD is
+           set once from paper_starting_balance and
+           never reset (HR-WM-013). The drawdown_pct
+           formula is identical to live mode (AR-052).
+
+HR-WM-035  NO PAPER-MODE BRANCH OUTSIDE THE FOUR
+           DIVERGENCE POINTS (D-06; 0511001 dv1_5
+           HR-WM-035 + ADR §18). Code authored for
+           ws_manager.py MUST NOT introduce a branch
+           on self.paper_mode anywhere except:
+             (a) The six dispatch methods in §6.4-§6.8
+                 and §6.10 (add_order, batch_add,
+                 cancel_order, amend_order,
+                 batch_cancel, dispatch_market_sell).
+             (b) Step 11 capital-ledger initialization
+                 (one branch in startup_sequence per
+                 1011014 dv1_8).
+             (c) snap_orders Mirror handling in
+                 _handle_executions and the reconnect
+                 Step 4 path (paper logs, live
+                 reconciles per HR-WM-033).
+             (d) Capital-ledger update source in
+                 _handle_balances (paper logs only,
+                 live updates) and the §6.13
+                 _apply_paper_pnl_* helpers.
+           Additional paper-mode branches inside
+           _maybe_paper_fill (§6.12) and
+           _simulate_entry_fill (§6.11) are PERMITTED
+           because these methods are reachable only
+           from the paper-mode branch of (a) and are
+           themselves part of the (a) divergence
+           point's implementation.
+
+           Pre-commit code review MUST verify no new
+           paper_mode branch is introduced outside
+           (a)-(d). Any new branch MUST be cited to
+           one of (a)-(d) or HR-WM-035 must be
+           amended in the same commit to record a
+           new divergence point. Code-review enforcement
+           via grep audit:
+             grep -nE "self\.paper_mode|self\._paper_mode"
+                 ws_manager.py
+           expected count: bounded by the four-point
+           list above plus the §6.11-6.13 helper
+           methods.
+
+HR-WM-036  TRUE PAPER-LIVE PARITY VALIDATION
+           (D-06; ADR §18 of 0511001 dv1_5).
+           Unit and integration test suites
+           (1021001 dv1_1+, 1021002 dv1_1+) MUST
+           include tests that:
+             - Verify paper-mode startup completes
+               all 11 steps (per 0511001 dv1_5 §4.2)
+               including private WS connect, token
+               acquisition, executions/balances
+               subscribe, and snap_orders reception.
+             - Verify paper-mode reconnect completes
+               all 10 steps including private WS
+               re-connect.
+             - Verify paper-mode receives and logs
+               snap_orders, balances events, and
+               executions events without altering
+               paper Position Mirror or paper
+               capital ledger.
+             - Verify paper-mode sequence-gap
+               detection fires correctly on
+               synthetic gap injection.
+             - Verify paper-mode P&L application
+               for entry, TP, emergSL, and
+               market-sell scenarios produces
+               correct spot_usd_balance updates.
+             - Verify drawdown_pct formula
+               evaluates identically in both modes
+               given equivalent operand values.
+           Test failure on any of the above is a
+           parity defect requiring code remediation
+           before deploy.
 
 ============================================================
 18. RELATED DOCUMENTS
@@ -3104,8 +3619,11 @@ HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
 
   1000000  Coding_Specification          dv1_0
   1010000  Trading_System_Coding_Anchor  dv1_17
-  0511001  WS_Manager_Specification      dv1_4   (parent spec
-                                                   — PATH 2 ADR)
+  0511001  WS_Manager_Specification      dv1_5   (parent spec
+                                                   — TRUE PAPER-
+                                                   LIVE PARITY
+                                                   ADR §18 +
+                                                   PATH 2 ADR §17)
   0510000  System_Components_Anchor      dv1_0
   0500000  System_Architecture_Overview  dv1_21
   0411001  Kraken_WS_v2_Specification    dv1_11
@@ -3146,6 +3664,224 @@ HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_26  05-03-2026  TRUE PAPER-LIVE PARITY (D-06).
+
+                      Companion increment to 0511001
+                      dv1_5 ADR §18. Mirrors the
+                      single-execution-code-path
+                      architecture into the coding
+                      contract. Specifies the dispatch-
+                      boundary gate code pattern for
+                      the six dispatch methods, retires
+                      WM-RECONNECT-019 (which was the
+                      WRONG rule encoding the same
+                      defect 0511001 dv1_4 HR-WM-022
+                      encoded), adds new HR rules for
+                      paper Mirror sourcing, paper
+                      capital-ledger sourcing,
+                      no-paper-branch-outside-the-four-
+                      points, and parity test coverage
+                      requirements.
+
+                      Sections amended:
+                        Header: dv1_25 -> dv1_26.
+                        §4.1 Connection Inventory:
+                          total connection count is
+                          N_conns + 1 in BOTH modes;
+                          rationale text added citing
+                          0511001 dv1_5 ADR §18.
+                        §4.6 WSManager state:
+                          private_connection comment
+                          updated from "None in paper
+                          mode" to "always present per
+                          ADR §18".
+                        §4.x WM-SHARD-009: pseudocode
+                          for _all_connections_healthy
+                          rewritten — no paper_mode
+                          branch; private always
+                          checked.
+                        §6.4 add_order: explicit paper-
+                          mode gate at entry; live-mode
+                          message fields preserved.
+                        §6.5 batch_add: explicit paper-
+                          mode gate at entry; PositionRecord
+                          field population logic
+                          documented.
+                        §6.6 cancel_order: explicit
+                          paper-mode gate.
+                        §6.7 amend_order: explicit
+                          paper-mode gate.
+                        §6.8 batch_cancel: explicit
+                          paper-mode gate.
+                        §6.10 dispatch_market_sell:
+                          NEW subsection — sixth
+                          dispatch method documented
+                          with paper-mode gate, P&L
+                          application, and Mirror
+                          removal.
+                        §6.11 _simulate_entry_fill: NEW
+                          subsection — paper-mode-only
+                          helper; calls same Execution
+                          Engine entry-fill callback
+                          that live mode invokes.
+                          WM-PAPER-FILL-001/002 added.
+                        §6.12 _maybe_paper_fill: NEW
+                          subsection — paper-mode TP /
+                          emergSL detection inside
+                          _handle_ticker.
+                          WM-PAPER-FILL-003/004 added.
+                        §6.13 Paper P&L Application:
+                          NEW subsection — explicit
+                          arithmetic for entry, TP,
+                          emergSL, and market-sell
+                          P&L using FEE_MAKER_PCT and
+                          FEE_TAKER_PCT.
+                          WM-PAPER-PNL-001..004 added.
+                        §15 WM-RECONNECT-019: RETIRED.
+                          Replaced by
+                          WM-RECONNECT-019-NEW which
+                          mandates ALL 10 reconnect
+                          steps execute in BOTH modes;
+                          divergence limited to the
+                          four §13.1 points of 0511001
+                          dv1_5 (Step 4 snap_orders
+                          handling, Step 5 gap-closed
+                          firing, Step 6 Pending Order
+                          reconcile).
+                        §17 HR-WM-029: rewritten —
+                          private-healthy guard
+                          evaluated identically in both
+                          modes (no live/paper
+                          qualifier).
+                        §17 HR-WM-032: rewritten —
+                          token bucket in BOTH modes
+                          (no paper bypass).
+                        §17 HR-WM-033: NEW — paper
+                          Position Mirror sourcing
+                          (only local simulated-fill
+                          path).
+                        §17 HR-WM-034: NEW — paper
+                          capital-ledger sourcing
+                          (only simulated-fill P&L).
+                        §17 HR-WM-035: NEW — no
+                          paper-mode branch outside
+                          the four divergence points;
+                          grep audit gate.
+                        §17 HR-WM-036: NEW — TRUE
+                          PARITY validation test
+                          coverage requirements.
+                        §18 Related Documents:
+                          0511001 reference updated
+                          dv1_4 -> dv1_5.
+                        §19 Revision History: this
+                          entry.
+
+                      REASON FOR CHANGE:
+                      OI-072 PAPER-LIVE PARITY DESIGN
+                      DEFECT. dv1_25 inherited the
+                      narrow-parity reading from
+                      0511001 dv1_4 HR-WM-022 /
+                      HR-WM-026. WM-RECONNECT-019 was
+                      the explicit dv1_25 encoding of
+                      that defect at the coding-spec
+                      level — mandating that paper-mode
+                      reconnect SKIP every private-side
+                      step. The defect surfaced TB00145
+                      when STREAM 5 deploy preparation
+                      forced a question about which
+                      parity reading governs. Bill
+                      directed: "There is only one
+                      correct action. Halt STREAM 5,
+                      fix the design (single code path
+                      with dispatch-layer gate), and
+                      re-validate."
+
+                      0511001 dv1_5 was authored same
+                      session as architectural fix.
+                      1011002 dv1_26 (this document)
+                      mirrors the architectural fix
+                      into the coding contract.
+
+                      FP/DP ANALYSIS:
+                      PATH α (preserve dv1_25 narrow
+                        parity) RETIRED — coding spec
+                        cannot diverge from parent
+                        spec; 0511001 dv1_5 mandates
+                        single-path architecture so
+                        coding contract MUST match.
+                      PATH β (defer changes; deploy
+                        dv1_25 then patch) RETIRED —
+                        deploying code that does not
+                        match parent spec is a
+                        document-control defect.
+                      PATH γ (companion-cycle dv1_26)
+                        ACCEPTED — architectural and
+                        coding-contract specs locked
+                        in same cycle; code rewrite
+                        in subsequent Claude Code
+                        session implements both.
+
+                      Decision: PATH γ.
+
+                      PARENT CHAIN COMPLIANCE:
+                      1011002 chain: 1011002 (Tier 3
+                      instance) -> 1010000
+                      Trading_System_Coding_Anchor
+                      (Tier 2) -> 1000000
+                      Coding_Specification (Tier 1
+                      domain). Parent spec
+                      (0511001) updated dv1_4 -> dv1_5
+                      same session. No parent chain
+                      dependencies introduced by this
+                      increment.
+
+                      COMPANION DELIVERABLES THIS
+                      SESSION (TB00145 batch):
+                      0511001 dv1_4 -> dv1_5 (parent
+                        architectural spec; ADR §18
+                        TRUE PAPER-LIVE PARITY).
+                      0211005 dv1_1 -> dv1_2 (paper-
+                        trading operations procedure;
+                        PT-MODE-003 rewritten).
+                      1011014 dv1_7 -> dv1_8 (startup
+                        sequence; paper-mode early
+                        return removed at Step 1).
+                      TB00145 Session Log v1_0 (NEW).
+                      TB00145 NSI v1_0 (NEW).
+
+                      OPEN ITEMS UPDATED:
+                      OI-072 PAPER-LIVE PARITY DESIGN
+                        DEFECT (coding-spec layer).
+                        CLOSED via this increment.
+                        Code-rewrite layer pending
+                        ws_manager.py dv1_26 (next
+                        Claude Code session per TB00145
+                        NSI). Test layer pending unit +
+                        integration suite update per
+                        HR-WM-036.
+                      OI-072 SUB-ITEM B (HR-WM-035
+                        enforcement mechanism choice).
+                        CLOSED — grep audit gate
+                        codified in HR-WM-035.
+                      STREAM 5 deploy of fb5de32
+                        (1011002 dv1_25): HALTED.
+                        Code does not match dv1_26
+                        contract. Rewrite required
+                        before any deploy.
+
+                      Bill override: 1011002 dv1_25 ->
+                      dv1_26 is enacted under Bill's
+                      standing document-control
+                      override continuing the scope
+                      established for architectural
+                      increments in TB00115 onward.
+                      Direct increment dv1_25 -> dv1_26;
+                      no rv state. Per Bill's TB00145
+                      direction.
+
+                      Document Status updated:
+                      supersedes dv1_25.
 
   dv1_25  05-03-2026  SUBSCRIBE PACING TOKEN BUCKET.
 
