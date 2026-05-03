@@ -1,0 +1,2063 @@
+DocDCN:     0511001
+DocTitle:   WS_Manager_Specification
+DocVersion: dv1_4
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511001_WS_Manager_Specification_dv1_4.txt
+DocDate:    04-26-2026
+DocTime:    21:30:00 UTC
+
+============================================================
+WS MANAGER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+WS Manager component of TothBot V2. It defines what the
+WS Manager does, its interfaces, its hard rules, what
+triggers it, and what it logs. It is the authoritative
+parent document for 1011002 WS_Manager_Coding_Spec.
+
+The WS Manager is TothBot's sole interface to all Kraken
+WebSocket v2 connections and is the central event processor
+for the system. All Kraken push events flow through the WS
+Manager. It is the heart of the TothBot runtime.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Maintains all Kraken WS v2 connections. Receives all
+  Kraken push events and dispatches them to the correct
+  internal handlers via O(1) dispatch table (AR-015).
+  Manages all per-symbol state (indicators, position
+  tracking, cooldowns). Runs the pipeline trigger on
+  each 5-minute candle close. Executes all WS outbound
+  messages (orders, amendments, cancels). Manages
+  startup warm-up, mid-session reconnect, and all
+  connection health monitoring. Supports paper trading
+  mode. In paper mode, universe population, REST Ticker
+  liquidity filtering, subscriptions, indicator warm-up,
+  candle processing, pipeline triggers, and CIATS data
+  flows execute IDENTICALLY to live mode per D-06. Only
+  private WS connection, auth, executions/balances
+  subscription, and order dispatch are skipped in paper
+  mode — all orders are simulated locally.
+
+Primary inputs:
+  Kraken WS v2 push events (all channels)
+  Internal calls from Signal Pipeline, Execution Engine,
+  Exit Controller, CIATS (via Parameter Store)
+  Config key paper_trading_mode (bool)
+
+Primary outputs:
+  Dispatched Kraken WS v2 outbound messages (orders,
+  cancels, amendments, pings) — LIVE MODE ONLY
+  Simulated order events (paper mode only)
+  Pipeline trigger events to Signal_Pipeline
+  Internal state updates (Position Mirror, indicator
+  caches, drawdown state, cooldown state)
+  Logger calls (all events)
+  Operator alerts
+
+============================================================
+3. WEBSOCKET CONNECTIONS
+============================================================
+
+3.1 Connection Inventory
+
+  PUBLIC WS v2 (wss://ws.kraken.com/v2):
+    Connection model: N_conns shards (PATH 2 multi-
+                      connection batched-subscribe per
+                      §15A ADR). Each shard is an
+                      independent WebSocket connection
+                      to the same Kraken public endpoint.
+                      Each shard owns a partition of the
+                      tradeable_universe and subscribes
+                      its own copies of the per-pair
+                      channels for its assigned symbols.
+                      Connection-wide channels
+                      (instrument, status) are subscribed
+                      ONCE on shard index 0 only (one
+                      copy of global engine state is
+                      sufficient).
+
+    Subscriptions on shard 0 ONLY:
+      instrument  — per-pair specs + status cache (startup)
+      status      — global engine state + connection_id
+
+    Subscriptions per shard (each shard subscribes its
+    own assigned symbol partition):
+      ohlc(5)     — 5-minute SYSTEM CLOCK
+      ohlc(60)    — NOT subscribed via WS. Kraken WS v2
+                    rejects a second ohlc interval per
+                    symbol (HR-WM-021). 1H HTF cache
+                    sourced from REST only.
+      ticker      — price data (per-pair, event_trigger
+                    managed based on position state)
+
+  PRIVATE WS v2 (wss://ws-auth.kraken.com/v2):
+    Connection model: SINGLE connection (private
+                      operations are not symbol-sharded —
+                      a single account-scope private feed
+                      is sufficient and authoritative).
+    Subscriptions inbound:
+      executions  — fills, expirations, rejections, status
+      balances    — real-time settlement
+    Outbound messages:
+      add_order, amend_order, batch_add, cancel_order,
+      batch_cancel
+    NOTE: Private WS is NEVER connected in paper mode.
+          Public WS shards connect and operate normally
+          in paper mode. All order operations are
+          simulated.
+
+  Total connection count at runtime:
+    Live mode:   N_conns (public shards) + 1 (private)
+    Paper mode:  N_conns (public shards), no private
+
+3.1.1 Connection Sharding (PATH 2)
+
+  N_conns is computed at startup as:
+
+    N_conns = ceil(universe_size / SYMBOLS_PER_CONN_SAFE)
+
+  where:
+
+    SYMBOLS_PER_CONN_SAFE = 500
+      CIATS-owned starting value. Empirically validated
+      ceiling between 650 and 700 symbols per connection
+      for ticker+ohlc back-to-back subscribe (TB00141
+      §3.5 Phase B bisection). Starting value of 500
+      provides 23-29% safety margin. CIATS may revise
+      via parameter update; never hardcoded in code.
+
+  Symbol distribution: alternating-index assignment
+  across the sorted tradeable_universe. For symbol at
+  sorted index i:
+
+    shard_index = i % N_conns
+
+  This produces approximately balanced shards
+  (universe_size / N_conns symbols each, ±1).
+
+  Each shard holds its assigned symbol partition for
+  the session lifetime. Re-shard occurs only on:
+    (1) Universe re-evaluation (detects added/removed
+        pairs in tradeable_universe), or
+    (2) Per-shard reconnect (the affected shard
+        re-subscribes its existing partition without
+        re-shard across other shards).
+
+  Subscribe count per shard is decoupled from
+  max_concurrent (CIATS-owned trading-position cap).
+  The full D-03 universe is always subscribed
+  regardless of concurrent-position count.
+
+3.2 Connection Library Configuration (AR-058, AR-059, AR-060)
+
+  REQUIRED import:
+    from websockets.asyncio.client import connect
+  DEPRECATED (DO NOT USE):
+    import websockets; websockets.connect()
+
+  All connections — including every PUBLIC shard and
+  the PRIVATE connection — MUST set:
+    max_queue=None        — unlimited message queue (AR-058)
+    ping_interval=None    — disable library TCP PING (AR-059)
+    max_size=10MB         — AR-029
+    open_timeout=10       — AR-029
+
+  Application JSON ping is the sole keepalive mechanism,
+  applied per-connection (every PUBLIC shard runs its own
+  30-second ping; PRIVATE runs its own ping). Library
+  built-in PING is explicitly disabled on all connections.
+
+3.3 REST Connection Configuration (AR-035)
+
+  aiohttp ClientSession settings (applied to all REST):
+    ClientTimeout(total=10, connect=5, sock_read=8)
+    TCPConnector(limit=10, limit_per_host=5,
+                 force_close=False)
+  All REST calls via aiohttp (AR-025). asyncio.gather()
+  for parallel calls across different pairs. asyncio.sleep
+  (1.1) between sequential calls to same pair (AR-036).
+
+============================================================
+4. STARTUP SEQUENCE
+============================================================
+
+4.1 Pre-Connection Checks
+
+  Step 0: Query Kraken Status API at startup (AR-038).
+          GET https://status.kraken.com/api/v2/
+          scheduled-maintenances/upcoming.json
+          If maintenance within 2 hours: log
+          KRAKEN_MAINTENANCE_SCHEDULED, alert operator.
+          Informational only — does not block startup.
+          Executed in BOTH paper and live mode.
+
+  Step 1: Acquire WS token via REST GetWebSocketsToken
+          using TRADE API key. Token valid 900 seconds.
+          Reconnect logic also acquires new token.
+          SKIPPED in paper mode (no private WS needed).
+
+4.2 WS Connection, Subscription, and Universe Population
+
+  PAPER-TO-LIVE PARITY BINDING (D-06):
+    Steps 2 through 8 below execute IDENTICALLY in paper
+    mode and live mode. Paper-mode skip is limited to
+    Step 9 (private WS connect, auth), Step 10 (executions
+    and balances subscribe), and Step 11 (snap_orders
+    reconciliation). All universe population, REST
+    Ticker liquidity filtering, subscriptions, and
+    indicator warm-up execute in BOTH modes. Skipping
+    any of Steps 2-8 in paper mode is a defect
+    (OI-044 root cause; HR-WM-026).
+
+  Step 2: Connect N_conns public WS shards in parallel
+          via asyncio.gather. Each shard opens its own
+          websockets.asyncio.client.connect to
+          wss://ws.kraken.com/v2 with the same
+          connection parameters (§3.2). Log
+          connection_id from each shard's status
+          channel message (AR-064). N_conns is computed
+          per §3.1.1 after the universe size is known
+          (Step 4) — for the public connect at Step 2,
+          a provisional N_conns=1 is sufficient because
+          the instrument and status subscriptions
+          (Step 3, Step 5) live on shard 0 only and
+          shard 0 is needed before universe is known.
+          Shards 1..N_conns-1 are connected after Step
+          4 once the final tradeable_universe size is
+          known. Executed in BOTH modes.
+
+  Step 3: Subscribe instrument channel on shard 0.
+          Receive full instrument snapshot. Build per-
+          pair status cache. Populate
+          tradeable_universe per 0711003 dv1_3 AS-001
+          criteria:
+            (1) Quote currency: USD, USDC, or USDT
+                (D-03 amended TB00130, 0500000 dv1_20
+                AR-070)
+            (2) Instrument status = online
+            (3) 24h volume >= min_volume_usd_daily
+                ($500k starting — filter applied in
+                Step 4 after REST Ticker call)
+          NO top-N cap is applied (D-08 retirement of
+          prior monitored_universe_n=50).
+          Register the regime anchor handle:
+          regime_anchor = "BTC/USD" (0711003 dv1_3 AS-003).
+          Under D-03 amended BTC/USD is a member of
+          tradeable_universe (USD quote is in scope) AND
+          the regime_anchor handle. regime_anchor is
+          subscribed for ohlc(5), ohlc(60) cache seed,
+          and daily regime. Per AR-074 (unchanged) and
+          0711003 dv1_3 HR-AS-009, BTC/USD pipeline
+          evaluation for entry is CIATS-OWNED and
+          DISABLED BY DEFAULT — Gate 1 default-excludes
+          BTC/USD from entry evaluation unless CIATS
+          has explicitly enabled BTC/USD pipeline
+          evaluation via parameter update. Parse and
+          log subscription ACK warnings[] (AR-031).
+          Executed in BOTH modes.
+
+  Step 4: Call REST Ticker (0411002 REST-TKR-001) for
+          all AS-001 candidate pairs. BTC/USD is naturally
+          included as a candidate under D-03 amended
+          (USD quote is in scope); no separate append is
+          required. Compute USD volume per pair:
+            usd_volume_24h = Decimal(v[1]) * Decimal(p[1])
+          Populate liquidity_24h cache. Apply the
+          min_volume_usd_daily filter: retain only pairs
+          where liquidity_24h[pair] >= $500k. regime_anchor
+          (BTC/USD) is retained regardless of volume per
+          AR-074 (always exceeds $500k/day in practice,
+          but the rule holds architecturally). The
+          resulting filtered set is the final
+          tradeable_universe. Executed in BOTH modes.
+          (0711003 dv1_3 AS-004 Steps 4, 5, 6.)
+
+  Step 5: Subscribe status channel on shard 0. Log
+          engine state transitions. Executed in BOTH
+          modes.
+
+  Step 5a: SHARDING. Compute N_conns per §3.1.1 from
+          the final tradeable_universe size. If
+          N_conns > 1: connect shards 1..N_conns-1 in
+          parallel via asyncio.gather and capture
+          connection_id from each shard's status
+          channel message. Build pair_to_shard_index
+          mapping using alternating-index assignment
+          across the sorted tradeable_universe.
+          Executed in BOTH modes.
+
+  Step 6: Subscribe ohlc(5) for each pair in
+          tradeable_universe, dispatching the subscribe
+          to the pair's assigned shard per
+          pair_to_shard_index mapping. BTC/USD
+          (regime_anchor) is a member of
+          tradeable_universe under D-03 amended, so no
+          separate iteration append is required. Note:
+          ohlc(60) for all pairs is NOT subscribed via
+          WS — Kraken WS v2 rejects a second ohlc
+          interval per symbol (HR-WM-021). Subscribe
+          ohlc(5) via WS only. 1H HTF cache is seeded
+          via REST in Step 8. Executed in BOTH modes.
+
+  Step 6.5: Silent-Pair Handling. After all Step 6
+          subscribes ack, start a per-pair silent-pair
+          timer of T_silent (60s starting value, CIATS-
+          owned) for each pair. State machine:
+
+            INITIAL ─[subscribe ack]→ SUBSCRIBED
+            SUBSCRIBED ─[snapshot or update received
+                         within T_silent]→ DATA_READY
+            SUBSCRIBED ─[no snapshot or update within
+                         T_silent]→ DATA_PENDING
+            DATA_PENDING ─[any update received]→ DATA_READY
+            (any state) ─[shard disconnect]→ on
+                         reconnect: re-subscribe, reset
+                         pair to SUBSCRIBED.
+
+          DATA_PENDING pairs remain in tradeable_universe
+          and remain subscribed. They are skipped by
+          Signal Pipeline at evaluation (HR-WM-030).
+          DATA_PENDING > 1 hour: log
+          PAIR_DATA_PENDING_LONG (level=WARN, pair, age).
+          No automatic universe removal under any
+          circumstance. (TB00142 Rabbit 1 closure: 6 of
+          748 pairs (~0.8%) observed silent in long
+          Phase D probe; all 6 had effectively zero
+          recent activity and would not clear D-04
+          $500k/day liquidity filter at signal layer
+          regardless.) Executed in BOTH modes.
+
+  Step 7: Subscribe ticker channel for pairs based on
+          Position Mirror state (AR-034), dispatching
+          each subscribe to the pair's assigned shard
+          per pair_to_shard_index mapping. At startup,
+          no positions are open (pending snap_orders in
+          live mode), so all pairs initially subscribe
+          with event_trigger:trades. Mode switches to
+          bbo when a position opens. In paper mode:
+          ticker subscribed for all tradeable_universe
+          pairs (including BTC/USD as regime_anchor
+          member) regardless of position state (needed
+          for paper fill detection per §13.3). Ticker
+          subscribes are also subject to the §4.2 Step
+          6.5 silent-pair handling state machine
+          (silent on ticker == silent on ohlc almost
+          always; per-pair state is unified). Executed
+          in BOTH modes.
+
+  Step 8: Indicator warm-up per §4.3 (AR-044, AR-068).
+          For each pair in tradeable_universe:
+          GetOHLCData(interval=5) to seed ATR(14), RSI(14),
+          EMA(9), EMA(21), VolumeMA(20).
+          For each pair: GetOHLCData(interval=60) to seed
+          EMA(20) and EMA(50) for HTF cache.
+          For regime_anchor: GetOHLCData(interval=1440)
+          for daily regime computation.
+          Stagger 1.1s same-pair; asyncio.gather() across
+          pairs. WARM_UP → READY on all five seeded.
+          Executed in BOTH modes.
+
+  -------- PAPER-MODE SKIP BOUNDARY --------
+
+  Paper mode executes Steps 9b and 10b (below), then
+  proceeds to main loop.
+
+  Live mode executes Steps 9 through 11 (below).
+
+  Step 9 (LIVE ONLY): Connect private WS with token
+          from Step 1. Log connection_id from status
+          channel on private connection (AR-064).
+
+  Step 9b (PAPER ONLY): Set spot_usd_balance =
+          Decimal(str(config.get(
+              "paper_starting_balance", 1000))).
+          Default is $1,000 per D-05 / TB00001 line 51
+          (corrected from prior $10,000 default in
+          dv1_1). Set portfolio_baseline_USD =
+          spot_usd_balance. Log PAPER_BALANCE_SET
+          (level=INFO, component=WS_MGR,
+          balance=spot_usd_balance).
+
+  Step 10 (LIVE ONLY): Subscribe executions channel with:
+            ratecounter:true     (A-1)
+            snap_orders:true     (A-3, AR-003)
+            snap_trades:true     (A-3, AR-003)
+            order_status:true    (AR-026 — MANDATORY)
+          CRITICAL: order_status:true MUST be present.
+          Without it, amended and restated exec_types are
+          silently dropped, breaking A-12 and A-13.
+          Subscribe balances channel. Begin tracking
+          sequence integers for gap detection (A-9).
+
+  Step 10b (PAPER ONLY): No executions or balances
+          subscription. Paper fill detection is driven by
+          ticker events in _handle_ticker() per §13.3.
+
+  Step 11 (LIVE ONLY): Process snap_orders and snap_trades
+          response from executions subscription. Reconcile
+          Position Mirror. Populate Pending Order Registry
+          for all orders in new or pending_new status
+          (AR-053). Capture spot_usd_balance from balances
+          snapshot. Set portfolio_baseline_USD =
+          spot_usd_balance. This baseline is NEVER updated
+          during operation and NEVER reset on reconnect
+          (AR-052).
+
+4.3 Indicator Warm-Up (AR-044, AR-068)
+
+  For each pair in tradeable_universe (stagger 1.1s per
+  pair for the same-pair sequence; asyncio.gather() across
+  different pairs). regime_anchor also seeded via the
+  same mechanism for ohlc(5) SSS state (unused for
+  trading but needed for consistent cache structure) and
+  ohlc(60) / daily regime.
+
+  Step 7a: GetOHLCData(interval=5). Use response[:-1].
+           Seed ALL five per-pair indicators:
+             ATR(14): SMA of first 14 True Ranges. Then
+                      incremental: ATR = (prev_ATR*13 +
+                      current_TR) / 14. O(1) per update
+                      (AR-016).
+             RSI(14): Wilder's SMMA (AR-076). Seed:
+                      avg_gain = sum(gains[:14]) / 14
+                      avg_loss = sum(losses[:14]) / 14
+                      Incremental:
+                      avg_gain = (prev*13 + gain) / 14
+                      avg_loss = (prev*13 + loss) / 14
+                      RS = avg_gain / avg_loss
+                      RSI = 100 - (100 / (1 + RS))
+                      DO NOT use EMA alpha=2/15 for RSI.
+             EMA(9):  SMA seed on first 9 closes. Then
+                      alpha = 2/10 = 0.2 (standard EMA).
+             EMA(21): SMA seed on first 21 closes. Then
+                      alpha = 2/22 (standard EMA).
+             Vol MA(20): SMA of first 20 volumes. Then
+                         rolling SMA thereafter.
+           Initialize last_interval_begin from
+           response[-2].interval_begin (AR-045).
+           Pair transitions WARM_UP → READY only when ALL
+           FIVE indicators seeded (AR-068).
+
+  Step 7b: GetOHLCData(interval=60). Use response[:-1].
+           Seed EMA(20) and EMA(50) for HTF cache.
+             EMA(20): SMA seed on first 20 closes. alpha = 2/21.
+             EMA(50): SMA seed on first 50 closes. alpha = 2/51.
+           Initialize last_interval_begin_60 from
+           response[-2].interval_begin.
+
+  Step 7c: GetOHLCData(interval=1440). Use response[:-1].
+           Regime Engine seeding. Passed to Regime Engine.
+           Regime computation: exclude response[-1] ALWAYS
+           (AR-017). Use only response[:-1].
+
+  STAGGER RULE (AR-036): 1.1s between calls for the SAME
+  pair. asyncio.gather() across DIFFERENT pairs.
+
+  WARM_UP pairs are SKIPPED at pipeline pre-check.
+  READY pairs begin trading immediately — system does NOT
+  wait for all pairs to reach READY (AR-044).
+
+  This procedure executes IDENTICALLY in paper and live
+  mode per HR-WM-026.
+
+4.4 Post-Warm-Up: ticker subscription mode
+
+  Subscribe ticker for all READY pairs using event_trigger
+  based on Position Mirror state (AR-034):
+    event_trigger:bbo    — pairs WITH open positions
+    event_trigger:trades — pairs WITHOUT open positions
+  WS Manager manages per-pair trigger mode and updates
+  subscription when position state changes.
+
+  Paper mode exception: event_trigger:bbo is used for
+  pairs with paper positions (detected via position_mirror
+  membership) to enable paper fill detection per §13.3.
+
+============================================================
+5. PER-SYMBOL STATE (in-memory, not persisted)
+============================================================
+
+5.1 Indicator State (updated on each ohlc(5m) close)
+
+  Per monitored pair, WS Manager maintains:
+    atr_14:              Decimal   (incremental running value)
+    prev_tr:             Decimal   (previous True Range)
+    rsi_14_avg_gain:     Decimal   (Wilder SMMA state — AR-076)
+    rsi_14_avg_loss:     Decimal   (Wilder SMMA state — AR-076)
+    ema_9:               Decimal   (standard EMA alpha=0.2)
+    ema_21:              Decimal   (standard EMA alpha=2/22)
+    volume_ma_20:        Decimal   (rolling 20-candle SMA)
+    last_interval_begin: str       (candle close detection)
+    last_complete_candle: OHLCCandle (closed candle data)
+
+  Per monitored pair for HTF Gate 4:
+    htf_ema_20:          Decimal   (1H EMA(20))
+    htf_ema_50:          Decimal   (1H EMA(50))
+    last_interval_begin_60: str    (1H candle close detection)
+
+  Per-pair status cache (from instrument channel):
+    pair_status:         dict[str, str] (symbol → status string)
+    price_increment:     dict[str, Decimal]   (AR-028)
+    qty_min:             dict[str, Decimal]   (AR-028)
+    cost_min:            dict[str, Decimal]   (AR-028)
+
+  Pair warm-up state:
+    warm_up_state:       dict[str, str]  WARM_UP | READY
+
+  Universe state:
+    tradeable_universe:  set[str]  (USD/USDC/USDT pairs
+                                    passing AS-001. NO top-N
+                                    cap. Includes BTC/USD
+                                    under D-03 amended.)
+    regime_anchor:       str       ("BTC/USD" — regime
+                                    anchor handle; member
+                                    of tradeable_universe;
+                                    pipeline evaluation
+                                    CIATS-owned per AR-074,
+                                    default disabled)
+
+5.2 Position State (managed jointly with Position Mirror)
+
+  position_mirror:       dict[str, PositionRecord]
+                         (sole authoritative O(1) record)
+  pending_orders:        dict[str, Decimal]
+                         cl_ord_id → estimated_USD_cost (AR-053)
+
+  PositionRecord fields include (additions dv1_1):
+    tp_price:            Decimal   (TP limit price — paper mode)
+    emergsl_price:       Decimal   (emergSL trigger price — paper mode)
+  These fields are populated by batch_add() in paper mode
+  (where no actual Kraken orders are placed) to enable
+  _handle_ticker() paper fill detection.
+
+5.3 Selection Controller State (AR-073)
+
+  exit_cooldown_log:         dict[str, float]
+                             symbol → time.monotonic() of last exit
+  consecutive_loss_count:    dict[str, int]
+                             symbol → consecutive losses without win
+  Update on position close:
+    Always: exit_cooldown_log[symbol] = time.monotonic()
+    If loss exit (MAE_THRESHOLD_BREACH, TIME_EXPIRY,
+      HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE,
+      SIGNAL_DECAY): consecutive_loss_count[symbol] += 1
+    If TP_FILL (win): consecutive_loss_count[symbol] = 0
+  Both dicts PRESERVED across reconnect. NEVER discarded.
+
+5.4 Drawdown State (AR-052)
+
+  portfolio_baseline_USD:   Decimal
+      - Live mode: set once at startup Step 11 from snap_orders
+        spot_usd_balance.
+      - Paper mode: set at startup Step 9b from config
+        paper_starting_balance (default $1,000 per D-05).
+      - NEVER updated or reset on reconnect.
+  spot_usd_balance:         Decimal   (updated on every balances event
+                                        in live mode; static in paper mode)
+  drawdown_pct:             Decimal   (computed on every bbo event)
+  system_state:             str       NORMAL | SESSION_PAUSE | FULL_HALT
+  PRESERVED across reconnect. NEVER reset on reconnect.
+
+5.5 Connection Health State
+
+  last_real_data_time_public:  float  (time.monotonic())
+  last_real_data_time_private: float  (live mode only)
+  executions_last_seq:         int    (gap detection A-10)
+  balances_last_seq:           int    (gap detection A-9)
+  req_id_registry:             dict[int, RequestRecord]
+                               req_id → {method, timestamp, symbol}
+
+============================================================
+6. CANDLE-CLOSE DETECTION (AR-045)
+============================================================
+
+WS OHLC fires on every trade event within the candle
+period — NOT only on candle close. WS Manager MUST
+implement candle-close detection:
+
+  On each ohlc(5m) message for symbol S:
+    if msg.interval_begin == last_interval_begin[S]:
+      Update in-progress candle. DO NOT fire pipeline.
+    else:
+      Candle for last_interval_begin[S] is NOW CLOSED.
+      Fire pipeline with last_complete_candle[S].
+      last_complete_candle[S] = current message data.
+      last_interval_begin[S] = msg.interval_begin.
+
+  Same logic for ohlc(60) with separate
+  last_interval_begin_60 dict.
+
+  OHLC interval field: use interval_begin (AR-027).
+  deprecated timestamp field MUST NOT be used.
+
+  OHLC stall: If no trades occur after an interval border,
+  no OHLC message is sent until next trade. WS Manager
+  MUST handle this — pipeline does not fire on stalled
+  pairs. Addressed in 0511002.
+
+  Pipeline is fired for every pair in tradeable_universe.
+  regime_anchor (BTC/USD) candle closes update regime
+  state but DO NOT trigger entry pipeline evaluation
+  (Gate 1 exclusion per HR-AS-009).
+
+============================================================
+7. CONNECTION HEALTH MONITORING
+============================================================
+
+7.1 JSON Ping / Keepalive (A-7)
+
+  Send {"method":"ping"} on EACH active WS connection
+  every 30 seconds. Expect {"method":"pong"} within 10
+  seconds. No pong within 10 seconds = dead connection.
+  Reconnect immediately.
+  Application-level ping only. Library TCP PING disabled
+  (AR-059). No dual ping mechanism.
+  In paper mode: ping sent on public WS only (private WS
+  is None). Private ping section is guarded:
+    if self._ws_private is not None: [private ping logic]
+
+7.2 Zombie Connection Detection (A-8, AR-042)
+
+  Track last_real_data_time per connection using
+  time.monotonic(). Reset ONLY on real channel events:
+    ohlc, ticker, instrument, executions, balances, status
+  MUST NOT reset on: heartbeat, pong, ACK messages.
+  If elapsed > 90 seconds:
+    Log ZOMBIE_CONNECTION_DETECTED (CRITICAL)
+    Alert operator (HIGH)
+    Reconnect immediately
+  In paper mode: private zombie check is guarded:
+    if self._ws_private is not None: [private zombie logic]
+
+7.3 Balances Sequence Gap Detection (A-9)
+
+  Track balances_last_seq integer. Any gap (skip > 1):
+    Alert immediately (HIGH)
+    Trigger REST GetAccountBalance reconciliation
+    Log BALANCES_SEQUENCE_GAP
+  Missed balance events = incorrect capital calculation
+  = direct loss risk.
+  Live mode only. In paper mode: no balances subscription.
+
+7.4 Executions Sequence Gap Detection (A-10)
+
+  Track executions_last_seq independently. Any gap:
+    Alert immediately (CRITICAL — higher severity than A-9)
+    Trigger REST GetOpenOrders reconciliation
+    Reconcile Position Mirror
+    Log EXECUTIONS_SEQUENCE_GAP
+  Missed execution events = Position Mirror desync =
+  TothBot does not know position state = direct loss risk.
+  Sequence tracking resets on each new subscription
+  (reconnect). Do NOT gap-detect across sessions.
+  Live mode only. In paper mode: no executions subscription.
+
+7.5 Rate Counter Monitoring (A-1, AR-030)
+
+  executions subscription includes ratecounter:true at
+  zero additional cost. WS Manager tracks per-pair rate
+  counter. Operative ceiling = maxratecount from
+  subscription ACK (AR-030). Use ACK value, not hardcoded
+  125. Expose rate_counter_by_pair to CIATS EWMA Monitor.
+  Live mode only.
+
+7.6 Connection ID Logging (AR-064)
+
+  Log connection_id (uint64) from status channel on every
+  new WS connection. Include in all reconnect, disconnect,
+  and gap log entries. Zero additional cost.
+
+============================================================
+8. INBOUND DISPATCH TABLE (AR-015, AR-023)
+============================================================
+
+All inbound WS messages routed via O(1) dispatch table
+keyed on channel + message type. Unknown message types:
+log UNKNOWN_MESSAGE_TYPE (WARN), never silently dropped.
+
+The executions channel exec_type dispatch table MUST handle
+ALL 10 values explicitly (AR-023):
+
+  pending_new    — Order accepted by engine. No Mirror update.
+  new            — Order active on book. No Mirror update.
+  trade          — Partial fill. Update Mirror (cum_qty,
+                   avg_price). If entry: check for partial
+                   fill protection trigger (AR-054).
+                   Capture last_qty, last_price (AR-061).
+  filled         — Full fill. Trigger appropriate action:
+                   - Entry filled: Execution Engine dispatches
+                     batch_add TP+emergSL (0511003).
+                   - TP filled: L1b — Exit Controller cancels
+                     emergSL (0511004). Fire CIATS.
+  iceberg_refill — Log only. No Mirror update.
+  canceled       — Clear pending_orders. If entry canceled
+                   with cum_qty > 0: partial fill protection
+                   (AR-054). If exit canceled: cancel timeout
+                   fallback resolution.
+  expired        — Same as canceled handling (AR-054 applies).
+  amended        — User-initiated amend. TothBot V1 NEVER
+                   sends amend_order for its own orders.
+                   Any amended event = UNEXPECTED_ORDER_AMENDED
+                   (CRITICAL), alert operator HIGH. Do NOT
+                   auto-correct. Operator must review (AR-057).
+  restated       — Engine maintenance amend. NOT fill/cancel.
+                   Do NOT update Position Mirror. Elevated
+                   alert if resting order affected (AR-024).
+  status         — Order status snapshot. Log. No trade action.
+
+  use reason field (not cancel_reason — deprecated, AR-022).
+
+8.1 TP Partial Fill Handling (AR-066)
+
+  When exec_type=trade for a TP order (identified by
+  order_id matching TP order_id in Position Mirror):
+    remaining_qty = tp_order_qty - cum_qty
+    Update Position Mirror qty to remaining_qty
+    Amend emergSL to remaining_qty via amend_order
+      (NOT cancel+resubmit — saves rate counter + preserves
+      queue position)
+    Rate counter: amend_order (+1 fixed) vs cancel_order
+      (+8 <5s) + add_order (+1) = +9 total — amend saves 8.
+    If remaining_qty < qty_min OR remaining_qty * bid < cost_min:
+      cancel emergSL → immediate market sell → clear Mirror
+  Fire CIATS Trade Outcome Bus ONCE on full position close
+  (aggregate all partial fill data). Not on each partial.
+  On exec_type=filled (full TP): L1b logic unchanged.
+
+8.2 Entry Partial Fill + Expiry/Cancel (AR-054)
+
+  GTD post_only entry orders can receive partial fills
+  before expiry or cancel. When exec_type=="expired" OR
+  exec_type=="canceled" AND cum_qty > 0 (REAL position,
+  no TP, no emergSL):
+    CASE A (expired, cum_qty > 0) or CASE B (canceled, cum_qty > 0):
+      1. Clear Pending Order Registry for this cl_ord_id.
+      2. Extract qty=Decimal(str(cum_qty)),
+         entry=Decimal(str(avg_price)).
+      3. Validate qty >= qty_min AND qty*entry >= cost_min.
+         If fails: dispatch market sell immediately.
+      4. Recalculate TP and emergSL from actual entry price
+         using current ATR(14) and mae_mult / sl_mult.
+         Verify net_gain = net_loss * 1.5 (sacred R:R).
+      5. Dispatch batch_add: TP limit + emergSL stop.
+      6. Enter Position Mirror with cum_qty and avg_price.
+      7. Log ENTRY_PARTIAL_FILL_PROTECTED.
+    CASE C (expired or canceled, cum_qty == 0):
+      No fill. Clear registry. Log. No position.
+
+============================================================
+9. OUTBOUND WS MESSAGES
+============================================================
+
+9.1 All Outbound Fields (mandatory on every message, A-2)
+
+  req_id:      client-assigned integer, unique per message
+               Tracked in req_id_registry with timestamp.
+  cl_ord_id:   up to 18 chars on add_order and batch_add.
+               Assigned at dispatch before Kraken response.
+               Position Mirror records cl_ord_id immediately
+               at dispatch — no async gap.
+
+9.2 stp_type Format (AR-032)
+
+  WS v2 USES UNDERSCORES: cancel_newest, cancel_oldest,
+  cancel_both. REST uses hyphens: cancel-newest.
+  All WS v2 add_order and batch_add MUST use cancel_newest
+  (underscore). Never use hyphen in WS v2 messages.
+
+9.3 deadline Parameter (AR-033)
+
+  Standard: deadline = UTC now + 5 seconds (ISO 8601).
+  Range: 500ms–60s. Required on ALL add_order and batch_add.
+  Engine rejects orders arriving after this time.
+
+9.4 cancel_order vs batch_cancel (AR-041)
+
+  cancel_order: individual cancel with per-order ACK tracked
+                by req_id. Use for Layer 2 MAE exit cancel
+                sequence (cancel timeout fallback requires
+                per-order ACK tracking per I-6).
+  batch_cancel: returns single count response. Bypasses rate
+                counter maximum. Use for Full Halt ONLY
+                (count sufficient; rate bypass ensures
+                execution when rate-limited). (AR-019)
+
+9.5 Dead Man's Switch — EXPLICITLY PROHIBITED (AR-055)
+
+  No call to cancel_all_orders_after under ANY circumstance.
+  DMS would cancel ALL orders including emergSL stop orders
+  protecting open positions during crash — destroying the
+  sole Kraken-side crash protection. HARD PROHIBITION.
+
+9.6 Entry Limit Price (AR-069)
+
+  entry_limit_price_raw = last_complete_candle[symbol].close
+  entry_limit_price = quantize(raw, price_increment, ROUND_DOWN)
+  Conservative: lower limit → more likely post_only fill.
+
+9.7 emergSL Trigger Reference (AR-046)
+
+  ALL emergSL batch_add calls MUST include explicit triggers:
+    "triggers": {
+      "reference": "last",
+      "price": <sl_trigger_price>,
+      "price_type": "static"
+    }
+  reference="last" uses Kraken internal last-traded price —
+  always available regardless of external index feed status.
+  Never rely on API defaults for crash-protection parameters.
+
+============================================================
+10. TICKER EVENT_TRIGGER MANAGEMENT (AR-034)
+
+  Pairs WITH open positions:    subscribe ticker with
+                                 event_trigger:bbo
+  Pairs WITHOUT open positions: subscribe ticker with
+                                 event_trigger:trades
+  WS Manager updates subscription mode on position open
+  and close. bbo fires faster — adverse price detection
+  for open longs uses bid as realizable exit value.
+
+  Paper mode: paper positions (detected via position_mirror
+  membership) also use event_trigger:bbo to enable paper
+  fill detection per §13.3.
+
+============================================================
+11. MID-SESSION RECONNECT (AR-056)
+============================================================
+
+Mid-session reconnect is DISTINCT from startup. Implemented
+as a separate code path.
+
+PER-SHARD RECONNECT (PATH 2). Under PATH 2 multi-connection
+architecture, each public WS shard is an independent
+reconnect domain. Loss of one shard reconnects only that
+shard. The other N_conns - 1 shards continue uninterrupted.
+Universe re-shard is NOT performed on per-shard reconnect —
+the reconnecting shard re-subscribes its existing symbol
+partition. This bounds reconnect blast radius to
+universe_size / N_conns pairs, not the entire universe.
+
+Loss of the PRIVATE connection reconnects the PRIVATE
+connection only. Public shards are unaffected by PRIVATE
+loss.
+
+Key distinctions from startup:
+  portfolio_baseline_USD: NEVER reset on reconnect.
+  drawdown_pct:           PRESERVED across reconnect.
+  system_state:           PRESERVED across reconnect.
+  tradeable_universe:     PRESERVED across reconnect.
+  regime_anchor:          PRESERVED across reconnect.
+  pair_to_shard_index:    PRESERVED across per-shard
+                          reconnect; rebuilt only on
+                          universe re-evaluation.
+  ATR/EMA caches:         PRESERVED unless gap > 15 minutes
+                          (stale threshold — re-seed if stale).
+  exit_cooldown_log:      PRESERVED.
+  consecutive_loss_count: PRESERVED.
+  Pair states (DATA_READY / DATA_PENDING per §4.2 Step
+  6.5): RESET to SUBSCRIBED on the reconnecting shard's
+  pairs only. Silent-pair timer restarts.
+
+Per-shard reconnect sequence (PUBLIC SHARD i, LIVE OR PAPER):
+  1. Connect public WS shard i (re-open
+     websockets.asyncio.client.connect with same params).
+  2. If shard i == 0: resubscribe instrument and status.
+  3. Resubscribe ohlc(5) for the symbols owned by shard i
+     per pair_to_shard_index.
+  4. Resubscribe ticker per §4.4 for the symbols owned by
+     shard i (event_trigger per Position Mirror state).
+  5. Reset silent-pair timers per §4.2 Step 6.5 for shard
+     i's pairs.
+  6. Resume normal operation on shard i. Other shards
+     unaffected.
+
+Reconnect sequence (PRIVATE, LIVE MODE only):
+  1. Acquire new WS token (GetWebSocketsToken).
+  2. Connect private WS.
+  3. Resubscribe executions and balances (with
+     order_status:true, snap_orders:true, snap_trades:true,
+     ratecounter:true per §4.2 Step 10).
+  4. Process snap_orders: compare against pre-disconnect
+     Position Mirror. Detect gap-closed positions.
+  5. For each position closed during gap:
+     Fire CIATS Trade Outcome Bus with available data.
+     Log GAP_CLOSED_POSITION.
+  6. Reconcile Pending Order Registry against snap_orders.
+  7. Reset sequence counters (executions_last_seq,
+     balances_last_seq) — do NOT gap-detect across sessions.
+  8. DISCARD any pipeline events queued during reconnect.
+     Pipeline evaluations PROHIBITED during reconnect of
+     ANY connection (per HR-WM-012).
+  9. Resume normal operation.
+
+PIPELINE-DURING-RECONNECT GUARD. Pipeline evaluations are
+prohibited while ANY shard or the private connection is
+in reconnect state. Pipeline resumes only when all active
+connections are healthy. This prevents partial-universe
+signal evaluation during a degraded-connectivity window
+(HR-WM-012 generalized to multi-connection architecture).
+
+Fatal reconnect (per shard or private): 10 attempts over
+120 seconds on the same connection →
+  Log FATAL_RECONNECT_FAILURE (CRITICAL, with shard_index
+    or "private") →
+  systemd restarts TothBot process → full startup sequence
+  (full re-shard).
+
+============================================================
+12. INTERFACES
+============================================================
+
+12.1 To Signal Pipeline (0511002)
+  WS Manager fires pipeline on each candle close for every
+  pair in tradeable_universe. regime_anchor candle closes
+  update regime state but do NOT fire pipeline.
+  Passes: closed candle data, pre-computation cache,
+  Parameter Store snapshot.
+
+12.2 To Execution Engine (0511003)
+  Receives sizing output from Gate 8 via pipeline.
+  Dispatches add_order on entry (live) or simulates
+  entry fill (paper mode).
+
+12.3 To Exit Controller (0511004)
+  Fires Exit Controller on:
+    - ticker bbo event for open-position pairs (drawdown)
+    - ohlc(60) candle close (HTF regime check L1a-001)
+    - ohlc(5m) candle close (max hold count L1a-003)
+    - 00:00 UTC (daily regime check L1a-002)
+    - executions fill events (L1b, L2) — live mode
+    - paper fill detection via _handle_ticker() — paper mode
+  Dispatches cancel_order and batch_cancel on EC instruction
+  (live mode only; simulated in paper mode).
+
+12.4 To Position Mirror (0511005)
+  WS Manager is the sole writer to Position Mirror.
+  Updates on: dispatch (entry cl_ord_id recorded),
+  fill, partial fill, position close, reconciliation.
+  In paper mode: Mirror updated on simulated fill events.
+  tp_price and emergsl_price populated on batch_add.
+
+12.5 To Logger (0511006)
+  All events, state transitions, alerts, and data records
+  passed to Logger. Non-blocking (async queue).
+
+12.6 To CIATS Parameter Store
+  Reads frozen snapshot at pipeline start. WS Manager
+  never writes to Parameter Store directly.
+
+12.7 To REST (Kraken)
+  GetWebSocketsToken: startup and every reconnect (live only).
+  GetOHLCData: startup warm-up per pair (AR-044). Both modes.
+  REST Ticker: startup + periodic refresh (both modes).
+  GetOpenOrders: executions gap recovery fallback (live only).
+  GetAccountBalance: balances gap recovery fallback (live only).
+  Status API: startup proactive check (AR-038). Both modes.
+
+============================================================
+13. PAPER TRADING MODE
+============================================================
+
+13.1 Activation
+
+  paper_mode is set from config key paper_trading_mode
+  (bool). Defaults to False (live) if not present.
+  Read once in WSManager.__init__:
+    self.paper_mode: bool = bool(
+        config.get("paper_trading_mode", False))
+
+  When paper_mode is True:
+    - Private WS is NEVER connected.
+    - All order operations are simulated locally.
+    - Public WS connects and operates normally.
+    - Universe population, REST Ticker liquidity
+      filtering, subscriptions, indicator warm-up,
+      OHLC processing, ticker events, and pipeline
+      triggers execute IDENTICALLY to live mode
+      (D-06 / HR-WM-026).
+    - Position tracking, drawdown, and CIATS operate
+      normally.
+
+13.2 Simulated Order Methods
+
+  All order methods gate on paper_mode at entry and return
+  immediately after logging a simulation event:
+
+  add_order():
+    Log PAPER_ORDER_SIMULATED (symbol, cl_ord_id, qty, price).
+    Schedule _simulate_entry_fill(cl_ord_id, symbol, price,
+        qty) as asyncio.create_task().
+    return. Do NOT call _send_private().
+
+  _simulate_entry_fill(cl_ord_id, symbol, price, qty):
+    Async method. sleep(0.1) to simulate exchange latency.
+    Call Execution Engine entry fill callback with simulated
+    fill data (price = entry limit price, qty = full qty).
+    Log simulated fill event.
+
+  batch_add():
+    Populate PositionRecord fields from call arguments:
+      pos.tp_price    = tp_limit_price
+      pos.emergsl_price = sl_trigger_price
+      pos.tp_order_id   = f"PAPER_TP_{cl_ord_id}"
+      pos.emergsl_order_id = f"PAPER_SL_{cl_ord_id}"
+    Log PAPER_BATCH_ADD_SIMULATED (symbol, tp_price,
+        emergsl_price, tp_order_id, emergsl_order_id).
+    return. Do NOT call _send_private().
+
+  cancel_order():
+    Log PAPER_CANCEL_SIMULATED (cl_ord_id).
+    return.
+
+  amend_order():
+    Log PAPER_AMEND_SIMULATED (cl_ord_id, new params).
+    return.
+
+  batch_cancel():
+    Log PAPER_CANCEL_SIMULATED for each order_id.
+    return.
+
+  dispatch_market_sell():
+    Log PAPER_MARKET_SELL_SIMULATED (symbol, qty).
+    Immediately remove position from Position Mirror.
+    Fire CIATS Trade Outcome Bus.
+    return. Do NOT call _send_private().
+
+13.3 Paper Fill Detection (_handle_ticker)
+
+  In paper mode, _handle_ticker() performs fill simulation
+  based on ticker bid/ask prices against stored PositionRecord
+  tp_price and emergsl_price fields:
+
+  On each ticker event for symbol S where paper_mode is True
+  and symbol S is in position_mirror:
+
+    TP detection:
+      if current ask >= pos.tp_price:
+        Log PAPER_TP_FILL_DETECTED (symbol, tp_price, ask).
+        Remove position from Mirror.
+        Fire CIATS Trade Outcome Bus (win).
+        Unsubscribe ticker bbo for S → trades mode.
+
+    emergSL detection:
+      if current bid <= pos.emergsl_price:
+        Log PAPER_EMERG_SL_TRIGGERED (symbol, emergsl_price,
+            bid).
+        Remove position from Mirror.
+        Fire CIATS Trade Outcome Bus (loss).
+        Unsubscribe ticker bbo for S → trades mode.
+
+  TP check runs before emergSL check on every event.
+  Only one fires per event.
+
+13.4 Main Loop Paper Path
+
+  _main_loop() branches on paper_mode:
+
+  PAPER MODE (3-task group):
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(self._recv_loop_public())
+        tg.create_task(self._ping_loop())
+        tg.create_task(self._zombie_monitor())
+    return
+
+  LIVE MODE (4-task group):
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(self._recv_loop_public())
+        tg.create_task(self._recv_loop_private())
+        tg.create_task(self._ping_loop())
+        tg.create_task(self._zombie_monitor())
+
+  Private recv loop is excluded from paper mode — there
+  is no private WS connection to receive from.
+
+13.5 Private Guards in Supporting Methods
+
+  _ping_loop():
+    Private ping section guarded:
+      if self._ws_private is not None:
+          [private ping logic]
+    Public ping executes unconditionally.
+
+  _zombie_monitor():
+    Private zombie check guarded:
+      if self._ws_private is not None:
+          [private zombie detection logic]
+    Public zombie check executes unconditionally.
+
+13.6 Paper Starting Balance (D-05)
+
+  paper_starting_balance config key defaults to $1,000
+  per TB00128 Ratified Decision D-05 (source: TB00001
+  line 51). Prior dv1_1 default was $10,000 — corrected
+  in dv1_2.
+
+  If config key is absent: default $1,000.
+  If config key is explicitly set: use the configured value.
+  Ops procedure to change the value between runs: edit
+  config file, restart process (standard systemd restart
+  cycle per 0211005).
+
+============================================================
+14. HARD RULES
+============================================================
+
+HR-WM-001  Two API key pairs: DATA (public WS, REST market
+           data) and TRADE (private WS, REST auth). Both
+           IP-whitelisted to 87.99.141.44 (AR-037).
+
+HR-WM-002  All WS connections: max_queue=None, ping_interval
+           =None, max_size=10MB, open_timeout=10. No exceptions.
+
+HR-WM-003  Application JSON ping every 30 seconds on EACH
+           active connection. Library TCP PING disabled.
+           Single authoritative keepalive mechanism (AR-059).
+           In paper mode: public WS only.
+
+HR-WM-004  last_real_data_time reset ONLY on real channel
+           events. Heartbeat, pong, and ACK MUST NOT reset
+           the zombie detection timer (AR-042).
+
+HR-WM-005  executions subscription MUST include
+           order_status:true (AR-026). Without it, amended
+           and restated exec_types are silently dropped.
+
+HR-WM-006  All 10 exec_type values handled explicitly in
+           dispatch table. No silent drops (AR-023).
+
+HR-WM-007  cancel_reason is deprecated. Use reason field
+           in all executions channel parsing (AR-022).
+
+HR-WM-008  All Decimal values from WS messages: convert via
+           Decimal(str()) immediately on receipt (AR-047).
+
+HR-WM-009  stp_type in WS v2: underscore (cancel_newest).
+           REST: hyphen (cancel-newest). Never confuse
+           (AR-032).
+
+HR-WM-010  cancel_all_orders_after: EXPLICITLY PROHIBITED
+           under any circumstance (AR-055, HR-DMS-001).
+
+HR-WM-011  portfolio_baseline_USD: set once at startup.
+           NEVER updated or reset during operation or on
+           reconnect (AR-052). In paper mode: set from
+           config paper_starting_balance (default $1,000
+           per D-05). In live mode: set from snap_orders
+           spot_usd_balance at Step 11.
+
+HR-WM-012  Pipeline evaluations PROHIBITED during reconnect.
+           Candle events queued during reconnect discarded.
+
+HR-WM-013  GetOHLCData response[-1]: ALWAYS excluded from
+           all indicator calculations (AR-017, AR-027).
+           Use only response[:-1].
+
+HR-WM-014  deadline parameter required on ALL add_order and
+           batch_add. Standard: UTC now + 5 seconds (AR-033).
+
+HR-WM-015  emergSL stop orders MUST include explicit trigger
+           with reference="last" (AR-046). Never rely on
+           API defaults.
+
+HR-WM-016  Mid-session reconnect is a separate code path
+           from startup. Never use startup code for
+           reconnect (AR-056).
+
+HR-WM-017  All five SSS indicators (ATR, RSI, EMA9, EMA21,
+           VolumeMA20) must be seeded before pair reaches
+           READY. WARM_UP pairs skipped at pipeline (AR-068).
+
+HR-WM-018  RSI(14) uses Wilder's SMMA (alpha=1/14). Standard
+           EMA (alpha=2/15) MUST NOT be used for RSI (AR-076).
+
+HR-WM-019  Subscription ACK warnings[] parsed and logged on
+           every subscribe call. maxratecount from executions
+           ACK is operative rate ceiling (AR-030, AR-031).
+
+HR-WM-020  Both DATA and TRADE keys IP-whitelisted. Update
+           on any VPS migration (AR-037).
+
+HR-WM-021  paper_mode is read once from config at __init__.
+           Defaults False. Cannot change at runtime.
+           Governs ONLY: private WS connection, token
+           acquisition, executions/balances subscription,
+           snap_orders processing, and order dispatch.
+           Does NOT govern: universe population, REST
+           Ticker filter, public subscriptions, indicator
+           warm-up, OHLC processing, ticker events,
+           pipeline triggers, or CIATS data flows.
+           (Clarified dv1_2 per HR-WM-026.)
+
+HR-WM-022  In paper mode, private WS MUST NEVER be connected.
+           self._ws_private remains None. Any code path
+           referencing _ws_private MUST guard:
+             if self._ws_private is not None:
+
+HR-WM-023  In paper mode, ALL order methods (add_order,
+           batch_add, cancel_order, amend_order, batch_cancel,
+           dispatch_market_sell) MUST gate at entry and
+           return after simulation. MUST NOT call
+           _send_private() under any circumstance.
+
+HR-WM-024  Paper fill detection fires in _handle_ticker()
+           only when paper_mode is True AND the symbol has
+           an open position in position_mirror. TP check
+           runs before emergSL check on every tick. Only
+           one fires per event.
+
+HR-WM-025  Paper mode does not affect OHLC processing,
+           indicator updates, pipeline triggering, or CIATS
+           data flows. These operate identically in both modes.
+
+HR-WM-026  PAPER-TO-LIVE PARITY (D-06). Paper mode MUST
+           execute §4.2 Steps 2 through 8 (public WS
+           connect, instrument subscription, universe
+           population per 0711003 AS-001, REST Ticker
+           liquidity filter, status subscription, ohlc(5)/
+           ohlc(60) subscription, ticker subscription,
+           indicator warm-up) IDENTICALLY to live mode.
+           Only Steps 9 (private WS connect), 10
+           (executions and balances subscribe), and 11
+           (snap_orders reconciliation) are skipped in
+           paper mode. Skipping any of Steps 2-8 in paper
+           mode is a defect (OI-044 root cause;
+           TB00128 D-06).
+
+HR-WM-027  UNIVERSE SCOPE. tradeable_universe comprises
+           ALL Kraken spot pairs with quote currency
+           USD, USDC, OR USDT satisfying AS-001 criteria.
+           NO top-N cap. regime_anchor ("BTC/USD") is a
+           member of tradeable_universe under D-03
+           amended (USD quote in scope) AND is the
+           regime_anchor handle for regime computation.
+           Per AR-074 (unchanged) and 0711003 dv1_3
+           HR-AS-009, BTC/USD pipeline evaluation for
+           entry is CIATS-OWNED and DISABLED BY DEFAULT
+           (Gate 1 default-excludes BTC/USD unless
+           CIATS has explicitly enabled pipeline
+           evaluation via parameter update). Per 0711003
+           dv1_3 + TB00130 D-03 (amended) + TB00128 D-08.
+
+HR-WM-028  CONNECTION SHARDING (PATH 2). Public WS
+           connections are sharded per §3.1.1.
+           N_conns = ceil(universe_size /
+           SYMBOLS_PER_CONN_SAFE). SYMBOLS_PER_CONN_SAFE
+           is a CIATS-owned starting value (500); never
+           hardcoded in code. Single-connection
+           architectures (PATH 1) are PROHIBITED for any
+           universe size approaching the empirically-
+           confirmed 650-700 single-connection ceiling.
+           Per §15A ADR.
+
+HR-WM-029  SHARD INDEPENDENCE. Each public WS shard is
+           an independent reconnect domain. Per-shard
+           reconnect re-subscribes only the
+           reconnecting shard's symbol partition; other
+           shards are unaffected. Per §11.
+
+HR-WM-030  SILENT-PAIR HANDLING. Pairs that ack
+           subscribe but do not emit ticker:snapshot or
+           ticker:update within T_silent (60s starting
+           value, CIATS-owned) are marked DATA_PENDING
+           and remain in tradeable_universe but are
+           skipped at Signal Pipeline evaluation. No
+           automatic universe removal. DATA_PENDING
+           pairs transition to DATA_READY on first
+           update receipt. Per §4.2 Step 6.5.
+
+HR-WM-031  SUBSCRIBE-COUNT vs MAX-CONCURRENT
+           DECOUPLING. The number of pairs subscribed
+           on the WS layer is determined by the D-03
+           universe filter (~748 pairs at TB00142
+           snapshot). It is NOT bounded by
+           max_concurrent (CIATS-owned position cap).
+           Universe scope ≠ position count. Any code
+           that conflates the two — for example, by
+           reducing the subscribe set to a small
+           multiple of max_concurrent — is an AR-070
+           silent-narrowing defect.
+
+============================================================
+15. WHAT TRIGGERS IT
+============================================================
+
+  Kraken ohlc(5m) close event    → Pipeline trigger
+                                    (tradeable_universe;
+                                    regime_anchor BTC/USD
+                                    default-excluded from
+                                    Gate 1 per AR-074 /
+                                    HR-AS-009 unless CIATS
+                                    enables)
+  Kraken ohlc(60) close event    → L1a HTF check
+  Kraken ticker bbo event        → Drawdown check (EC)
+                                    Paper fill detection (paper mode)
+  Kraken executions event        → Dispatch table handler (live only)
+  Kraken balances event          → Balance update, seq check (live only)
+  Kraken instrument event        → Status cache update, universe
+                                    add/remove per AS-006
+  Kraken status event            → Engine state update
+  30-second timer                → JSON ping on all active connections
+  90-second inactivity           → Zombie detection trigger
+  00:00 UTC                      → Daily regime refresh call
+  liquidity_refresh_hours timer  → REST Ticker refresh per 0711003 AS-005
+  System startup                 → Full startup sequence (both modes)
+  WS disconnect                  → Reconnect sequence
+  Simulated fill task            → Entry fill callback (paper mode)
+
+============================================================
+16. WHAT IT LOGS
+============================================================
+
+All log entries include: timestamp (UTC), component=WS_MGR,
+symbol (where applicable), connection_id, level.
+
+  STARTUP:            WS_TOKEN_ACQUIRED (live only),
+                      WS_CONNECTED,
+                      INSTRUMENT_SNAPSHOT_COMPLETE,
+                      UNIVERSE_BUILT (pairs=N list),
+                      REGIME_ANCHOR_SUBSCRIBED,
+                      LIQUIDITY_SEEDED (pairs, volumes),
+                      SUBSCRIPTION_ACK (warnings if any),
+                      MAXRATECOUNT_SET (live only),
+                      WARM_UP_STARTED,
+                      PAIR_READY,
+                      ALL_PAIRS_WARM_UP_COMPLETE
+  PAPER STARTUP:      PAPER_BALANCE_SET (balance=N, INFO)
+  CONNECTION:         PING_SENT, PONG_RECEIVED, PING_TIMEOUT,
+                      ZOMBIE_CONNECTION_DETECTED,
+                      RECONNECT_INITIATED, RECONNECT_COMPLETE,
+                      FATAL_RECONNECT_FAILURE,
+                      KRAKEN_MAINTENANCE_SCHEDULED,
+                      CONNECTION_ID_LOGGED
+  UNIVERSE:           PAIR_ADDED, PAIR_REMOVED,
+                      PAIR_REMOVAL_DEFERRED,
+                      UNIVERSE_REBALANCED,
+                      LIQUIDITY_REFRESHED,
+                      LIQUIDITY_REFRESH_FAILED
+  SEQUENCE GAPS:      EXECUTIONS_SEQUENCE_GAP,
+                      BALANCES_SEQUENCE_GAP
+  CANDLE EVENTS:      CANDLE_CLOSE (symbol, interval, OHLC)
+  EXEC DISPATCH:      EXEC_TRADE, EXEC_FILLED, EXEC_CANCELED,
+                      EXEC_EXPIRED, EXEC_RESTATED,
+                      UNEXPECTED_ORDER_AMENDED (CRITICAL),
+                      UNKNOWN_EXEC_TYPE
+  POSITION:           ENTRY_DISPATCHED, TP_PARTIAL_FILL,
+                      ENTRY_PARTIAL_FILL_PROTECTED,
+                      GAP_CLOSED_POSITION
+  DRAWDOWN:           SESSION_PAUSE_TRIGGERED,
+                      FULL_HALT_TRIGGERED, DRAWDOWN_RECOVERED
+  RATE COUNTER:       RATE_COUNTER_UPDATE (per pair, per eval)
+  PAPER TRADING:      PAPER_ORDER_SIMULATED,
+                      PAPER_BATCH_ADD_SIMULATED,
+                      PAPER_CANCEL_SIMULATED,
+                      PAPER_AMEND_SIMULATED,
+                      PAPER_MARKET_SELL_SIMULATED,
+                      PAPER_TP_FILL_DETECTED,
+                      PAPER_EMERG_SL_TRIGGERED
+  ERRORS:             UNKNOWN_MESSAGE_TYPE (WARN), any exception
+
+============================================================
+17. ARCHITECTURAL DECISION RECORD: PATH 2 MULTI-CONNECTION
+    BATCHED-SUBSCRIBE
+============================================================
+
+17.1 STATUS
+
+  ACCEPTED. Authored TB00142 / 04-26-2026 UTC.
+  Supersedes implicit single-connection assumption in
+  dv1_3 and earlier. Implementation contract in 1011002
+  dv1_24.
+
+17.2 CONTEXT
+
+  TothBot V2 trades a universe of TOKEN/USD,
+  TOKEN/USDC, TOKEN/USDT pairs (D-03) — currently 748
+  pairs, drifting daily as Kraken adds and removes
+  listings. The trading system requires a real-time
+  price feed for the entire D-03 universe. Kraken
+  WebSocket v2 is the authoritative feed.
+
+  Empirical evidence from TB00141 STREAM 1 and TB00142
+  STREAM 1 long-window probe:
+
+    Single-connection batched-subscribe ceiling for
+    ticker+ohlc back-to-back lies between 650 and 700
+    symbols. Above ceiling: immediate TCP close with
+    no warning frame. (TB00141 §3.5 Phase B
+    bisection.)
+
+    748-pair universe exceeds the single-connection
+    ceiling. Single-connection architecture cannot
+    carry the D-03 universe on any batching technique.
+
+    Multi-connection batched-subscribe at 2
+    connections × 374 symbols runs clean over a 2-hour
+    observation window (TB00142 §3.4 long Phase D):
+      Disconnects:           0
+      Rate-limit errors:     0
+      Steady-state rate:     ~10 msg/s aggregate
+                             ~5 msg/s per conn
+      Heartbeat cadence:     1.0/s/conn (matches
+                             Kraken spec)
+
+17.3 DECISION
+
+  PATH 2: multi-connection batched-subscribe.
+
+  Number of connections is computed at startup as:
+
+    N_conns = ceil(universe_size / SYMBOLS_PER_CONN_SAFE)
+
+  where SYMBOLS_PER_CONN_SAFE = 500 (CIATS-owned
+  starting value; 23-29% safety margin under
+  empirically-confirmed 650-700 ceiling).
+
+  Symbols are distributed across connections via
+  alternating-index assignment (load-balanced by
+  sorted-symbol ordering).
+
+  Each connection holds its assigned symbol partition
+  for the session lifetime. Re-shard occurs only on
+  universe re-evaluation or per-shard reconnect.
+
+  Subscribe count is decoupled from max_concurrent.
+  The full D-03 universe is always subscribed
+  regardless of position count.
+
+17.4 ALTERNATIVES CONSIDERED AND RETIRED
+
+  PATH 1 — single-connection batched-subscribe.
+    RETIRED. 650-700-symbol ceiling vs 748-pair
+    universe. Cannot carry D-03.
+
+  PATH 3 — tiered HOT/WARM (high-liquidity pairs on
+    dedicated connection, rest on shared connection).
+    RETIRED. Adds operational complexity (re-tiering
+    on liquidity drift), creates asymmetric reconnect
+    impact (HOT loss = total halt), and PATH 2
+    already meets the requirement without tiering.
+
+  PATH 4 — PATH 1 with adaptive backoff on
+    rate-limit error.
+    RETIRED. PATH 1 base architecture is not viable.
+    Backoff layer atop a non-viable base is not a fix.
+
+17.5 CONSEQUENCES
+
+  Positive.
+    - D-03 universe fully observable. No silent
+      narrowing at the WS layer.
+    - Per-connection load is bounded and predictable.
+      SYMBOLS_PER_CONN_SAFE acts as a CIATS-tunable
+      knob.
+    - Universe growth past the single-conn ceiling
+      is handled transparently: N_conns grows by 1
+      per 500 additional pairs.
+    - Reconnect blast radius is limited to one shard.
+      Loss of one connection affects universe_size /
+      N_conns pairs, not the whole universe.
+
+  Negative.
+    - Per-pair memory footprint × N_conns for
+      heartbeat tracking and connection-state dicts.
+      Negligible at expected N_conns (currently 2;
+      would be 3 at 1500-pair universe).
+    - Reconnect logic is per-shard. Coordinated
+      re-shard on universe change requires care to
+      avoid double-subscribe and gap.
+    - 0.8% snapshot-silent pairs observed in long
+      Phase D (6 of 748). Handled by the silent-pair
+      state-machine in §4.2 Step 6.5.
+
+  Neutral.
+    - Public WebSocket endpoint (no auth) used for
+      market data subscribe/receive. Authenticated
+      endpoint (private orders / ownTrades) is
+      independent and unaffected by this decision.
+
+17.6 EMPIRICAL ENVELOPE (CIATS starting values)
+
+  SYMBOLS_PER_CONN_SAFE              = 500
+  CONFIRMED_CEILING_LOW              = 650
+  CONFIRMED_CEILING_HIGH             = 700
+  STEADY_STATE_MSG_PER_S_AGGREGATE   = 10
+                                       (at 748-pair
+                                        universe,
+                                        2 conns)
+  STEADY_STATE_MSG_PER_S_PER_CONN    = 5
+  HEARTBEAT_PER_S_PER_CONN           = 1
+  LONG_WINDOW_OBSERVATION_S          = 7201
+  LONG_WINDOW_DISCONNECTS            = 0
+  LONG_WINDOW_RATE_LIMIT_ERRORS      = 0
+  T_SILENT_DEFAULT                   = 60s
+                                       (silent-pair
+                                        timer per
+                                        §4.2 Step 6.5)
+
+  All values are starting points subject to CIATS
+  revision per TB00000 §9.16. Any future change to
+  these values must satisfy TB00000 v2_17 §4.3.1
+  RR-SCOPE-009 (constraint origin investigation) and
+  0311002 v1_8 §8.2.5 DC-PREFLIGHT-006 (rate-limit
+  pre-deploy gate).
+
+17.7 OPEN ITEMS
+
+  N>2 connection scaling not empirically tested in
+    long-window form. Captured as future probe work;
+    not blocking under current 748-pair universe
+    (N=2).
+
+  Reconnect-under-PATH-2 not empirically tested.
+    Probe phase does not exist. Captured as future
+    probe work. dv1_25 reconnect logic to be designed
+    per Kraken WS reconnect spec, with margin-
+    conservative backoff per DC-PREFLIGHT-006.
+
+  Tighter ceiling bisection between 650 and 700
+    optional (Bill discretion). Not blocking;
+    SYMBOLS_PER_CONN_SAFE = 500 is well below either
+    bound.
+
+17.8 REFERENCES
+
+  TB00141 §3.4-§3.7  Phase A / B / D probe data
+  TB00142 §3.4       Long Phase D analysis
+  TB00142 §3.5       Rabbit 1 silent-pair analysis
+  0411001 dv1_11    Kraken WS v2 specification
+  TB00000 v2_17 §4.3.1  RR-SCOPE-009 (constraint
+                         governance)
+  0311002 v1_8 §8.2.5   DC-PREFLIGHT-006 (rate-limit
+                         pre-deploy gate)
+
+============================================================
+18. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding;
+                                              AR-070 amended
+                                              dv1_20)
+  0411001  Kraken_WS_v2_Specification       (wire contract)
+  0411002  Kraken_REST_API_Specification    (REST contract)
+  0511002  Signal_Pipeline_Specification    (fired by WM)
+  0511003  Execution_Engine_Specification   (called by WM)
+  0511004  Exit_Controller_Specification    (called by WM)
+  0511005  Position_Mirror_Specification    (owned by WM)
+  0511006  Logger_Specification             (called by WM)
+  0711003  Asset_Selection_Specification    (dv1_3 — AS-001
+                                              universe criteria
+                                              USD/USDC/USDT,
+                                              AS-003 regime
+                                              anchor with CIATS-
+                                              owned pipeline
+                                              evaluation)
+  1011002  WS_Manager_Coding_Spec           (AA=10 child;
+                                              dv1_24
+                                              implementation
+                                              contract for
+                                              PATH 2)
+  0211005  Paper_Trading_Operations_Procedure (paper-parity
+                                              binding)
+  TB00000  Project Instructions for Claude  (v2_17 RR-SCOPE-009)
+  0311002  Document_Creation_Workflow       (v1_8 DC-PREFLIGHT-006)
+  TB00141  Session Log                      (Phase A/B/D probe)
+  TB00142  Session Log                      (Long Phase D
+                                              analysis +
+                                              silent-pair
+                                              characterization +
+                                              ADR authoring)
+
+============================================================
+19. REVISION HISTORY
+============================================================
+
+  dv1_4  04-26-2026  PATH 2 MULTI-CONNECTION BATCHED-
+                     SUBSCRIBE ARCHITECTURE.
+
+                     Major architectural amendment
+                     adopting PATH 2 (multi-connection
+                     batched-subscribe) over PATH 1
+                     (single-connection batched-
+                     subscribe) for the public WS
+                     subscribe layer.
+
+                     Sections amended:
+                       §3.1 Connection Inventory:
+                         rewritten to describe N_conns
+                         public WS shards.
+                       §3.1.1 Connection Sharding:
+                         NEW. N_conns formula,
+                         SYMBOLS_PER_CONN_SAFE = 500
+                         starting value, alternating-
+                         index distribution, re-shard
+                         conditions.
+                       §3.2 Connection Library
+                         Configuration: clarified that
+                         all connections (every shard
+                         + private) use identical
+                         parameters; per-shard 30s
+                         application JSON ping.
+                       §4.2 Step 2: rewritten for
+                         parallel shard connect via
+                         asyncio.gather. Provisional
+                         N_conns=1 at Step 2; final
+                         N_conns at Step 5a after
+                         universe finalization.
+                       §4.2 Step 5a SHARDING: NEW
+                         step. Computes final N_conns,
+                         connects shards 1..N_conns-1,
+                         builds pair_to_shard_index
+                         mapping.
+                       §4.2 Step 6: rewritten to
+                         dispatch each ohlc(5)
+                         subscribe to assigned shard.
+                       §4.2 Step 6.5 Silent-Pair
+                         Handling: NEW. Per-pair
+                         state machine (INITIAL ->
+                         SUBSCRIBED -> DATA_READY /
+                         DATA_PENDING -> DATA_READY).
+                         T_silent = 60s starting
+                         value. DATA_PENDING pairs
+                         remain in universe but
+                         skipped at signal layer.
+                         Closes TB00142 Rabbit 1.
+                       §4.2 Step 7: rewritten to
+                         dispatch each ticker
+                         subscribe to assigned shard;
+                         silent-pair state-machine
+                         applies to ticker as well.
+                       §11 Mid-Session Reconnect:
+                         rewritten for per-shard
+                         reconnect domain semantics.
+                         Loss of one shard reconnects
+                         only that shard. Universe
+                         re-shard NOT performed on
+                         per-shard reconnect.
+                         Pipeline-during-reconnect
+                         guard generalized to multi-
+                         connection.
+                       §14 Hard Rules: ADDED
+                         HR-WM-028 (connection
+                         sharding), HR-WM-029
+                         (shard independence),
+                         HR-WM-030 (silent-pair
+                         handling), HR-WM-031
+                         (subscribe-count vs
+                         max-concurrent decoupling
+                         — anti-AR-070).
+                       §17 ADR: NEW (renumbered
+                         from §17 Related Documents
+                         which becomes §18).
+                         Architectural Decision
+                         Record for PATH 2 with
+                         status, context, decision,
+                         alternatives, consequences,
+                         empirical envelope, open
+                         items, references.
+                       §18 Related Documents
+                         (renumbered from §17):
+                         added TB00000 v2_17,
+                         0311002 v1_8, TB00141,
+                         TB00142.
+                       §19 Revision History
+                         (renumbered from §18):
+                         this entry.
+
+                     REASON FOR CHANGE:
+                     OI-060 WS_SUBSCRIBE_RATE_LIMIT_
+                     STORM (TB00135 originating
+                     defect, FINDING-TB00135-001).
+                     Single-connection architecture
+                     was the second-order cause of
+                     the storm: ws_manager.py dv1_22
+                     attempted to subscribe the
+                     full 748-pair universe + ohlc
+                     channels on one connection,
+                     hit the per-connection
+                     ceiling, and triggered Kraken
+                     Cloudflare throttle. Bot
+                     killed. PATH 2 is the
+                     architectural fix grounded in
+                     2 hours of clean empirical
+                     data (TB00142 §3.4 long Phase
+                     D).
+
+                     Implementation in
+                     ws_manager.py dv1_25
+                     (clean-slate rewrite, STREAM 4
+                     Claude Code session). Coding
+                     contract in 1011002 dv1_24
+                     (companion increment same
+                     session).
+
+                     FP/DP ANALYSIS:
+                     PATH 1 (RETIRED) cannot
+                       carry 748-pair universe.
+                     PATH 2 (ACCEPTED)
+                       empirically clean for 2
+                       hours.
+                     PATH 3 (RETIRED) operational
+                       complexity without
+                       benefit.
+                     PATH 4 (RETIRED) base PATH 1
+                       not viable.
+
+                     Decision: PATH 2 per ADR §17.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0511001 chain: 0511001 (Tier
+                     3 instance) -> 0510000
+                     System_Components_Anchor
+                     (Tier 2) -> 0500000
+                     System_Architecture_Overview
+                     (Tier 1 domain). All parents
+                     present at dv1_4 commit
+                     time. No parent chain
+                     dependencies introduced by
+                     this increment.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00142 batch):
+                     TB00000 v2_16 -> v2_17 (adds
+                       RR-SCOPE-009).
+                     0311002 v1_7 -> v1_8 (adds
+                       DC-PREFLIGHT-006).
+                     1011002 dv1_23 -> dv1_24
+                       (implementation contract
+                       for PATH 2).
+                     TB00142 Session Log v1_0
+                       (NEW).
+                     TB00142 NSI v1_0 (NEW).
+
+                     OPEN ITEMS UPDATED:
+                     OI-060 WS_SUBSCRIBE_RATE_
+                       LIMIT_STORM. Empirical
+                       resolution complete via
+                       TB00141 + TB00142 long
+                       Phase D probe.
+                       Architectural fix
+                       documented this
+                       increment. Code-deploy
+                       closure pending STREAM 4
+                       (ws_manager.py dv1_25
+                       clean-slate) + STREAM 5
+                       (deploy + observation).
+                     OI-045 USDT exclusion.
+                       Universe scope clarified
+                       in HR-WM-031 (subscribe-
+                       count != max-concurrent).
+                       Code-deploy closure
+                       pending STREAM 4-5.
+                     OI-046 Top-N cap retired.
+                       HR-WM-031 explicitly
+                       prohibits the failure
+                       pattern that allowed
+                       AR-070 silent narrowing.
+                       Code-deploy closure
+                       pending STREAM 4-5.
+                     FINDING-TB00135-001
+                       (subscribe storm).
+                       Architectural fix
+                       documented this
+                       increment. Code-deploy
+                       closure pending STREAM
+                       4-5.
+                     Rabbit 1 (TB00142 §3.5
+                       silent-pair
+                       characterization).
+                       CLOSED at design layer
+                       via §4.2 Step 6.5
+                       silent-pair handling and
+                       HR-WM-030.
+
+                     Bill override: 0511001
+                     dv1_3 -> dv1_4 is enacted
+                     under Bill's standing
+                     document-control override
+                     continuing the scope
+                     established for
+                     architectural increments
+                     in TB00115 onward. Direct
+                     increment dv1_3 -> dv1_4;
+                     no rv state. Per Bill's
+                     TB00142 direction: "act on
+                     the decision" authorizing
+                     immediate enactment of
+                     FP/DP-derived architectural
+                     changes.
+
+                     Document Status updated:
+                     supersedes dv1_3.
+
+  dv1_3  04-24-2026  TB00131 Priority 1 cascade from 0500000
+                     dv1_20 AR-070 amendment. Companion to
+                     0711003 dv1_3. D-03 amended (TB00130)
+                     via Bill directive + FP/DP
+                     3-sequential-search / 18-source
+                     analysis. Scope: USD, USDC, or USDT
+                     quote currencies (supersedes TB00128
+                     D-03 "USDC+USDT only").
+
+                     CHANGE 1 (primary — §4.2 Step 3):
+                     Universe criterion 1 changed from
+                     "USDC OR USDT" to "USD, USDC, or USDT".
+                     regime_anchor registration text
+                     rewritten — BTC/USD is now a member of
+                     tradeable_universe under D-03 amended
+                     AND the regime_anchor handle.
+                     "non-tradeable" language replaced with
+                     "CIATS-OWNED and DISABLED BY DEFAULT"
+                     per AR-074 (unchanged) and 0711003
+                     dv1_3 HR-AS-009. Gate 1 default
+                     exclusion of BTC/USD preserved; CIATS
+                     may enable BTC/USD pipeline evaluation
+                     via explicit parameter update
+                     post-200-trade PDCA.
+
+                     CHANGE 2 (§4.2 Step 4): "PLUS
+                     regime_anchor" append removed — BTC/USD
+                     flows through the AS-001 candidate list
+                     naturally under D-03 amended. Volume-
+                     filter retention rule for BTC/USD
+                     re-anchored on AR-074 rather than
+                     non-tradeable designation. 0711003
+                     citation updated to dv1_3.
+
+                     CHANGE 3 (§4.2 Step 6): "PLUS
+                     regime_anchor" iteration append
+                     removed — BTC/USD is a member of
+                     tradeable_universe under D-03 amended.
+
+                     CHANGE 4 (§4.2 Step 7): Paper-mode
+                     ticker subscription note clarified —
+                     BTC/USD is included in the
+                     tradeable_universe iteration as a
+                     regime_anchor member, no separate
+                     append.
+
+                     CHANGE 5 (§5.1 Universe state):
+                     tradeable_universe set comment updated
+                     to USD/USDC/USDT and BTC/USD inclusion.
+                     regime_anchor comment rewritten —
+                     regime_anchor is a handle into
+                     tradeable_universe, pipeline evaluation
+                     CIATS-owned per AR-074, default
+                     disabled.
+
+                     CHANGE 6 (HR-WM-027): Universe scope
+                     rule rewritten. Quote-currency
+                     enumeration changed to USD/USDC/USDT.
+                     "NON-TRADEABLE" regime_anchor language
+                     replaced with CIATS-owned-default-
+                     disabled per AR-074. Authority citation
+                     updated to 0711003 dv1_3 + TB00130 D-03
+                     amended + TB00128 D-08.
+
+                     CHANGE 7 (§15 Triggers): Pipeline-
+                     trigger row comment updated — BTC/USD
+                     default-excluded from Gate 1 rather
+                     than "regime_anchor skipped".
+
+                     CHANGE 8 (§17 Related Documents):
+                     0711003 citation updated to dv1_3 with
+                     USD/USDC/USDT + AS-003 CIATS-owned
+                     pipeline note.
+
+                     FP/DP analysis: TB00130 §4.1 (Bill
+                     directive + 3 sequential searches, 18
+                     sources); TB00130 NSI §4.1 (Priority 1
+                     cascade target definition, "Section 4.2
+                     paper-mode startup universe criteria
+                     updated" and "HR-WM-027 universe scope
+                     text updated to match"); 0500000
+                     dv1_20 AR-070 (amended authority);
+                     0711003 dv1_3 (companion cascade).
+
+                     Internal-consistency notes: The
+                     NSI §4.1 "Minimum-scope edit" directive
+                     is respected for §2 (Primary inputs /
+                     outputs), §3 (Connection inventory and
+                     config), §4.1 (Pre-connection checks),
+                     §4.2 Steps 0-2, 5, 8, 9-11, §4.3
+                     (warm-up detail), §5.2/5.3 (non-
+                     universe state), §6-14 and §16 content.
+                     Changes to §4.2 Steps 3/4/6/7, §5.1
+                     Universe state, HR-WM-027, §15 trigger
+                     comment, and §17 0711003 citation are
+                     internal-consistency propagations of
+                     the primary universe-criterion change —
+                     required because those sections cite or
+                     depend on the quote-currency enumeration
+                     or the BTC/USD non-tradeable framing.
+                     Not expansions of scope.
+
+                     Bill override: document control
+                     constraints (dv → rv → v lifecycle) not
+                     applied this cascade per Bill's standing
+                     TothBot V2 Remediation override.
+                     Direct increment dv1_2 → dv1_3.
+
+  dv1_2  04-24-2026  TB00129 Phase 2 remediation — full
+                     rewrite implementing TB00128 Ratified
+                     Decisions D-03, D-05, D-06, D-08.
+
+                     CHANGE 1 (R-01 / D-06): §4.2 restructured.
+                     Steps 2 through 8 (public WS connect,
+                     instrument subscription, universe
+                     population per AS-001, REST Ticker
+                     filter, status subscription, ohlc
+                     subscriptions, ticker subscriptions,
+                     indicator warm-up) now execute
+                     IDENTICALLY in paper and live mode.
+                     Paper-mode skip boundary moved to AFTER
+                     Step 8 (prior dv1_1 skipped universe
+                     population entirely — OI-044 root cause).
+                     New HR-WM-026 binds the parity rule.
+                     HR-WM-021 scope clarified: paper_mode
+                     governs ONLY private WS, auth, private
+                     subscriptions, and order dispatch — NOT
+                     universe or public-side processing.
+
+                     CHANGE 2 (R-02, R-03 / D-03, D-08):
+                     §4.2 Step 3 universe criteria updated
+                     from dv1_1 "(1) Quote currency: USD or
+                     USDC (2) Status: online (3) 24h volume
+                     ≥ $500k, Top N=50 pairs" to 0711003
+                     dv1_2 AS-001: "(1) USDC OR USDT (2)
+                     online (3) ≥ $500k. NO top-N cap."
+                     BTC/USD reclassified as non-tradeable
+                     regime_anchor registered separately
+                     per AS-003. New HR-WM-027 binds universe
+                     scope.
+
+                     CHANGE 3 (D-05): §4.2 Step 9b and §13.6
+                     paper_starting_balance default corrected
+                     from $10,000 (dv1_1) to $1,000 per
+                     TB00001 line 51 / TB00128 D-05.
+                     HR-WM-011 updated accordingly.
+
+                     CHANGE 4 (§2 Component Summary): paper-
+                     mode description rewritten to reflect
+                     parity binding. Old description implied
+                     universe/public-side was simplified in
+                     paper mode; corrected to reflect that
+                     ALL public-side processing runs
+                     identically.
+
+                     CHANGE 5 (§5.1 Universe state): added
+                     tradeable_universe and regime_anchor to
+                     per-symbol state inventory. dv1_1 had
+                     these implicitly; now explicit.
+
+                     CHANGE 6 (§6 Candle-close): note added
+                     that regime_anchor candle closes update
+                     regime state but do NOT fire pipeline
+                     (Gate 1 exclusion).
+
+                     CHANGE 7 (§7.3, §7.4, §7.5): added "Live
+                     mode only" notation to reflect paper-mode
+                     subscription boundary.
+
+                     CHANGE 8 (§10 Ticker event_trigger):
+                     paper-mode exception added — paper
+                     positions use bbo for paper fill
+                     detection.
+
+                     CHANGE 9 (§11 Mid-Session Reconnect):
+                     tradeable_universe and regime_anchor
+                     added to PRESERVED-across-reconnect
+                     list. Paper-mode reconnect path
+                     documented separately.
+
+                     CHANGE 10 (§12.7 REST interfaces): REST
+                     Ticker and GetOHLCData updated with
+                     "Both modes" notation.
+
+                     CHANGE 11 (§15 Triggers): universe-event
+                     triggers added (liquidity_refresh_hours
+                     timer, instrument status events).
+                     Startup trigger note updated to clarify
+                     both modes.
+
+                     CHANGE 12 (§16 Logs): UNIVERSE section
+                     added (PAIR_ADDED, PAIR_REMOVED,
+                     UNIVERSE_REBALANCED, LIQUIDITY_*).
+                     REGIME_ANCHOR_SUBSCRIBED added.
+
+                     CHANGE 13 (§17 Related): 0711003 bumped
+                     to dv1_2 reference with annotation.
+                     0211005 added.
+
+                     Companion changes this cascade:
+                       0711003  dv1_1 → dv1_2
+                       0500000  dv1_19 → dv1_20 (AR-070
+                                amended — deferred to
+                                dedicated 0500000 session)
+                       ws_manager.py  dv1_23 → dv1_24
+                                      (deferred to TB00130)
+                       1011002  WS_Manager_Coding_Spec
+                                      (deferred to TB00130)
+                       1011009  Selection_Controller_Coding_
+                                      Spec (deferred to TB00130)
+                       1010000  Trading_System_Coding_Anchor
+                                      registry bumps (deferred
+                                      to TB00130)
+
+                     FP/DP analysis: TB00128 §3.3-§3.8,
+                     TB00129 §3 Phase 1 audit.
+
+                     Bill override: document control
+                     constraints not applied this cascade per
+                     Bill's standing TB00128 remediation
+                     override. Direct increment dv1_1 → dv1_2.
+
+  dv1_1  04-10-2026  Paper trading mode added throughout.
+                     Source: ws_manager.py (2,686 lines,
+                     all 13 changes verified per TB00069/TB00070).
+                     Changes:
+                     Section 2: paper_mode noted in summary.
+                     Section 3.1: private WS note for paper mode.
+                     Section 4.2: paper mode startup path added.
+                     Section 5.2: PositionRecord tp_price and
+                       emergsl_price fields added (dv1_1 addition).
+                     Section 5.4: paper balance note.
+                     Section 7.1: private ping guard noted.
+                     Section 7.2: private zombie guard noted.
+                     Section 12.2, 12.3, 12.4, 12.7: paper mode
+                       behavior noted in interface descriptions.
+                     Section 13: NEW — Paper Trading Mode.
+                       13.1 Activation and paper_mode attribute.
+                       13.2 Simulated order methods (all 6).
+                       13.3 Paper fill detection (_handle_ticker).
+                       13.4 Main loop paper path (3-task group).
+                       13.5 Private guards (_ping_loop,
+                            _zombie_monitor).
+                     Section 14: HR-WM-021 through HR-WM-025 added.
+                     Section 15: Paper triggers added.
+                     Section 16: PAPER TRADING log events added.
+                     Sections renumbered: old 13-17 → 14-18.
+
+  dv1_0  04-04-2026  Initial document. Derived from
+                     0500000 dv1_18 Sections 2, 6, 8, 9,
+                     11. Covers all AR entries assigned to
+                     WS Manager: A-1 through A-10, AR-015
+                     through AR-056 (WM assignments), AR-057
+                     through AR-076 (WM assignments). All
+                     five coding-readiness questions answered.
+                     Hard rules HR-WM-001 through HR-WM-020
+                     defined.
+
+============================================================
+END OF DOCUMENT
+============================================================
