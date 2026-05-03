@@ -1,10 +1,10 @@
 DocDCN:     1011014
 DocTitle:   Startup_Sequence_Coding_Spec
-DocVersion: dv1_7
+DocVersion: dv1_8
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011014_Startup_Sequence_Coding_Spec_dv1_7.txt
-DocDate:    04-21-2026
-DocTime:    23:59:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011014_Startup_Sequence_Coding_Spec_dv1_8.txt
+DocDate:    05-03-2026
+DocTime:    21:45:00 UTC
 
 ============================================================
 STARTUP SEQUENCE CODING SPECIFICATION
@@ -106,6 +106,52 @@ Each step must complete successfully before proceeding
 to the next (unless explicitly noted as non-blocking).
 
 ------------------------------------------------------------
+PAPER-LIVE PARITY (D-06; 0511001 dv1_5 ADR §18)
+------------------------------------------------------------
+
+ALL TEN STEPS execute in BOTH paper mode and live mode.
+There is NO paper-mode early return at any step. There
+is NO paper-mode skip of any step. The minimum divergence
+set between modes is restricted to two startup-time
+points (both within Step 5 / Step 6):
+
+  (1) Step 5 portfolio_baseline_USD source.
+      Live mode:  snap_orders spot_usd_balance.
+      Paper mode: paper_starting_balance ($1,000 per
+                  D-05).
+  (2) Step 6 snap_orders Mirror handling.
+      Live mode:  reconcile Position Mirror against
+                  snap_orders; populate Pending Order
+                  Registry.
+      Paper mode: log SNAP_ORDERS_RECEIVED_PAPER /
+                  SNAP_TRADES_RECEIVED_PAPER at INFO;
+                  do NOT populate paper Position
+                  Mirror; do NOT populate paper
+                  Pending Order Registry. Paper Mirror
+                  is owned by the local simulated-fill
+                  path in WS Manager (see 1011002
+                  dv1_26 §6.11 _simulate_entry_fill,
+                  §6.12 _maybe_paper_fill).
+
+Steps 1, 2, 3, 4, 7, 8, 9, 10 execute byte-identically
+in both modes with no paper_mode branch. Step 5
+executes the connect + subscribe identically; only
+the spot_usd_balance and portfolio_baseline_USD
+initialization source diverges. Step 6 executes the
+snap_orders processing identically; only the
+downstream Mirror/Registry update diverges.
+
+Cross-references:
+  0511001 dv1_5 HR-WM-026  TRUE PAPER-LIVE PARITY
+  0511001 dv1_5 ADR §18    Architectural Decision
+                            Record
+  1011002 dv1_26 HR-WM-035  No paper-mode branch
+                            outside the four
+                            divergence points
+  0211005 dv1_2 PT-MODE-005 Operations procedure
+                            11-step parity binding
+
+------------------------------------------------------------
 STEP 1 — Kraken Status API Check (AR-038)
 ------------------------------------------------------------
 
@@ -200,6 +246,11 @@ STEP 5 — Connect Private WS and Subscribe (AR-003)
 
 SS-STARTUP-013  Connect: wss://ws-auth.kraken.com/v2
 
+  Connects in BOTH paper mode and live mode per D-06
+  TRUE PAPER-LIVE PARITY (0511001 dv1_5 ADR §18).
+  No paper-mode skip. WS auth token from Step 2 is used
+  identically in both modes.
+
   ★ MANDATORY (AR-058, AR-059, AR-060):
     conn = await connect(
         "wss://ws-auth.kraken.com/v2",
@@ -209,7 +260,7 @@ SS-STARTUP-013  Connect: wss://ws-auth.kraken.com/v2
         ping_interval=None,
     )
 
-SS-STARTUP-014  Subscribe executions:
+SS-STARTUP-014  Subscribe executions (BOTH modes):
   {
     "method": "subscribe",
     "params": {
@@ -223,8 +274,13 @@ SS-STARTUP-014  Subscribe executions:
   }
   Extract maxratecount from ACK (AR-019).
   Parse ACK warnings[] and log.
+  Subscription is identical in both modes; paper mode
+  uses the executions data path for parity-of-data-path
+  verification (sequence-gap detection, ratecounter
+  monitoring, snap_orders reception) without altering
+  the paper Position Mirror.
 
-SS-STARTUP-015  Subscribe balances:
+SS-STARTUP-015  Subscribe balances (BOTH modes):
   {
     "method": "subscribe",
     "params": {
@@ -233,21 +289,73 @@ SS-STARTUP-015  Subscribe balances:
       "snapshot": true
     }
   }
-  Parse initial snapshot: use wallets[type=spot][id=main].
-  Set portfolio_baseline_USD = spot_usd_balance. AR-050.
-  This is set ONCE here. Never reset during live operation.
+  Subscription is identical in both modes.
+
+  Initialize portfolio_baseline_USD (DIVERGENCE POINT):
+    LIVE mode:
+      Parse initial balances snapshot: use
+      wallets[type=spot][id=main]. Set:
+        spot_usd_balance = <snapshot value>
+        portfolio_baseline_USD = spot_usd_balance
+      AR-050. Set ONCE here. Never reset during
+      operation or on reconnect.
+
+    PAPER mode:
+      Log the balances snapshot at INFO
+      (BALANCES_SNAPSHOT_PAPER_LOGGED) for parity-of-
+      data-path verification but DO NOT use it to
+      initialize spot_usd_balance. Instead:
+        spot_usd_balance = Decimal(str(config.get(
+            "paper_starting_balance", 1000)))
+        portfolio_baseline_USD = spot_usd_balance
+      Default $1,000 per D-05 / TB00001 line 51. Set
+      ONCE here. Never reset during operation or on
+      reconnect (HR-WM-011 of 0511001 dv1_5 — same
+      rule both modes).
+      Log PAPER_BALANCE_SET (level=INFO,
+      component=STARTUP_SEQUENCE, balance=<value>).
+
+  This is the ONLY paper_mode branch in Step 5. The
+  WS connection itself, the auth token, the
+  subscription messages, the ACK parsing, and all
+  downstream connection-health monitoring (ping,
+  zombie, sequence-gap, ratecounter) are identical
+  in both modes.
 
 SS-STARTUP-016  Start ping task on private WS connection.
   Start zombie detection on private WS connection.
+  BOTH modes — private WS is a real connection in both
+  modes; no paper_mode branch.
 
 ------------------------------------------------------------
 STEP 6 — Reconcile Open Positions (AR-003)
 ------------------------------------------------------------
 
-SS-STARTUP-017  Process snap_orders snapshot from
-  executions channel. Identify all open orders.
+SS-STARTUP-017  Process snap_orders / snap_trades snapshot
+  from executions channel. Subscription delivers the
+  snapshot in both modes; the snapshot is RECEIVED in
+  both modes. Downstream processing diverges
+  (DIVERGENCE POINT):
 
-SS-STARTUP-018  Restore Position Mirror from snapshot:
+  LIVE mode:
+    Identify all open orders. Restore Position Mirror
+    from snapshot. Populate Pending Order Registry for
+    new / pending_new orders (AR-053).
+
+  PAPER mode:
+    Log SNAP_ORDERS_RECEIVED_PAPER (level=INFO,
+    component=STARTUP_SEQUENCE, payload=<full snap>)
+    and SNAP_TRADES_RECEIVED_PAPER for parity-of-data-
+    path verification. Do NOT populate paper Position
+    Mirror from snapshot. Do NOT populate paper Pending
+    Order Registry. Paper Mirror is owned by the local
+    simulated-fill path in WS Manager (1011002 dv1_26
+    HR-WM-033). This separation prevents real Kraken
+    positions held by the operator outside TothBot from
+    contaminating paper-trading state.
+
+SS-STARTUP-018  Restore Position Mirror from snapshot
+  (LIVE MODE ONLY):
   For each open position found:
     symbol, entry_fill_price (avg_price), qty,
     TP order_id, emergSL order_id, cl_ord_id
@@ -255,9 +363,17 @@ SS-STARTUP-018  Restore Position Mirror from snapshot:
     Log INCOMPLETE_PROTECTION (CRITICAL). Alert operator.
     Do NOT auto-repair without operator confirmation.
 
+  Paper mode: Position Mirror remains empty at startup.
+  It will be populated by simulated-fill events from
+  the local _simulate_entry_fill path as TothBot's own
+  trades trigger.
+
 SS-STARTUP-019  On reconciliation gap (executions seq gap):
-  Fall back to REST GetOpenOrders. AR-021.
-  GetAccountBalance for balance check.
+  LIVE mode: Fall back to REST GetOpenOrders (AR-021),
+    GetAccountBalance for balance check.
+  PAPER mode: Log REST fallback responses for parity
+    verification; do NOT use them to alter paper Mirror
+    or paper spot_usd_balance.
 
 ------------------------------------------------------------
 STEP 7 — Restore Ticker for Open Positions (AR-034)
@@ -288,8 +404,10 @@ SS-WARMUP-001  REST warm-up is triggered from within
 
   Paper mode: identical warm-up path. No difference.
   The same _warm_up_all_pairs() call executes in both live
-  and paper mode. Private WS absence does not affect
-  REST warm-up.
+  and paper mode. Paper and live share ONE execution code
+  path under D-06 TRUE PAPER-LIVE PARITY (0511001 dv1_5
+  ADR §18); private WS is connected in both modes
+  (Step 5).
 
   For all WARM_UP pairs, execute 2 GetOHLCData calls
   per pair (interval=5 and interval=60). Use
@@ -668,21 +786,33 @@ SS-RECON-016  After RECONNECT_COMPLETE, verify:
 11. RELATED DOCUMENTS
 ============================================================
 
-(Refreshed dv1_7 — TB00108 AI-3 xref cleanup. All
-versions verified against 1010000 dv1_11 Section 4 /
-Section 5 and 0311001 v1_1 Section 12 as of
-04-21-2026.)
+(Refreshed dv1_8 — TB00145 TRUE PAPER-LIVE PARITY
+cascade. Versions verified against 0511001 dv1_5
+companion increment same session.)
 
-  0411001  Kraken_WS_v2_Specification    dv1_0
-  0500000  System_Architecture_Overview  dv1_19
+  0411001  Kraken_WS_v2_Specification    dv1_11
+  0500000  System_Architecture_Overview  dv1_21
+  0511001  WS_Manager_Specification      dv1_5
+                                          (TRUE PAPER-LIVE
+                                           PARITY ADR §18 +
+                                           PATH 2 ADR §17)
   0511006  Logger_Specification          dv1_1
+  0211005  Paper_Trading_Operations_Procedure  dv1_2
+                                          (TRUE PAPER-LIVE
+                                           PARITY operations)
   1011001  Engineering_Best_Practices    dv1_7
-  1011002  WS_Manager_Coding_Spec        dv1_20
+  1011002  WS_Manager_Coding_Spec        dv1_26
+                                          (mirrors 0511001
+                                           dv1_5 ADR §18)
   1011007  Logger_Coding_Spec            dv1_4
   1011010  CIATS_Coding_Spec             dv1_6
   1011011  Risk_Engine_Coding_Spec       dv1_3
   1011012  Regime_Engine_Coding_Spec     dv1_4
   1011013  VPS_Deployment_Coding_Spec    dv1_5
+  TB00128  Ratified Decision D-06        (paper-to-live
+                                           parity EXACT)
+  TB00145  Session Log                   (TRUE PAPER-LIVE
+                                           PARITY restoration)
 
 ============================================================
 12. COMPONENT WIRING RULES
@@ -732,6 +862,181 @@ SS-WIRE-001  The _regime_wrapper closure in startup_sequence.py
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_8  05-03-2026  TRUE PAPER-LIVE PARITY (D-06).
+
+                     Companion increment to 0511001
+                     dv1_5 ADR §18, 1011002 dv1_26,
+                     and 0211005 dv1_2. Aligns the
+                     startup-sequence coding contract
+                     with the single-execution-code-
+                     path architecture mandated by
+                     0511001 dv1_5.
+
+                     Sections amended:
+                       Header: dv1_7 -> dv1_8.
+                       §6 PARITY PREFIX: NEW. Added
+                         top-level statement before
+                         Step 1 establishing that ALL
+                         TEN STEPS execute in BOTH
+                         modes; minimum divergence set
+                         restricted to two startup-
+                         time points (Step 5
+                         portfolio_baseline_USD source,
+                         Step 6 snap_orders Mirror
+                         handling). Cross-references
+                         to 0511001 dv1_5 HR-WM-026 +
+                         ADR §18, 1011002 dv1_26
+                         HR-WM-035, 0211005 dv1_2
+                         PT-MODE-005.
+                       §6 STEP 5 (Connect Private WS):
+                         rewritten — explicit "BOTH
+                         modes" note on private WS
+                         connect; explicit
+                         portfolio_baseline_USD
+                         divergence-point block (live
+                         from snap_orders / paper
+                         from paper_starting_balance).
+                         Step retains identical
+                         connect, subscribe, ACK
+                         parsing, ping, zombie monitor
+                         in both modes.
+                       §6 STEP 6 (Reconcile Open
+                         Positions): rewritten —
+                         snap_orders / snap_trades
+                         RECEIVED in both modes.
+                         Downstream Mirror /
+                         Pending Order Registry
+                         population is LIVE MODE
+                         ONLY; paper logs the
+                         snapshot but does not
+                         populate paper Mirror
+                         (paper Mirror is owned by
+                         the local simulated-fill
+                         path in 1011002 dv1_26 §6.11
+                         / §6.12).
+                       §6 STEP 8 (REST Warm-Up):
+                         "Private WS absence does not
+                         affect REST warm-up"
+                         language retired. Replaced
+                         with "Paper and live share
+                         ONE execution code path
+                         under D-06 TRUE PAPER-LIVE
+                         PARITY; private WS is
+                         connected in both modes
+                         (Step 5)."
+                       §11 Related Documents:
+                         updated 0511001 dv1_19 ->
+                         dv1_5; 1011002 dv1_20 ->
+                         dv1_26; 0411001 dv1_0 ->
+                         dv1_11; 0500000 dv1_19 ->
+                         dv1_21; added 0511001 (with
+                         ADR §18 annotation), 0211005
+                         dv1_2, TB00128, TB00145.
+                         All versions verified
+                         against 0511001 dv1_5
+                         companion increment same
+                         session.
+                       §13 Revision History: this
+                         entry.
+
+                     REASON FOR CHANGE:
+                     OI-072 PAPER-LIVE PARITY DESIGN
+                     DEFECT (startup-sequence layer).
+                     dv1_7 spec did not explicitly
+                     codify that all 10 startup steps
+                     execute in both modes. Step 5
+                     (private WS connect) and Step 6
+                     (reconcile open positions) were
+                     ambiguous as to paper-mode
+                     behavior; an implementation
+                     following 0511001 dv1_4
+                     HR-WM-022 would have skipped
+                     Step 5 and Step 6 entirely in
+                     paper mode. The Step 8
+                     "Private WS absence" comment
+                     reinforced this incorrect
+                     reading.
+
+                     The defect was surfaced in
+                     TB00145 when STREAM 5 deploy
+                     preparation forced a question
+                     about which parity reading
+                     governs. Bill directed: "There
+                     is only one correct action.
+                     Halt STREAM 5, fix the design
+                     (single code path with
+                     dispatch-layer gate), and
+                     re-validate."
+
+                     dv1_8 makes the parity
+                     architecture explicit at every
+                     decision point in the startup
+                     sequence and codifies the two
+                     startup-time divergence points
+                     unambiguously.
+
+                     FP/DP ANALYSIS:
+                     PATH α (preserve dv1_7 ambiguity)
+                       RETIRED — leaving step-level
+                       paper-mode behavior ambiguous
+                       in the coding contract is the
+                       defect that allowed dv1_4
+                       HR-WM-022 to inherit forward.
+                     PATH β (rewrite from scratch)
+                       RETIRED — surgical edits
+                       sufficient; no structural
+                       reorganization needed.
+                     PATH γ (surgical edits to Steps
+                       5, 6, 8 + new parity prefix)
+                       ACCEPTED — minimum-impact
+                       change that establishes
+                       unambiguous parity behavior
+                       throughout the startup
+                       sequence.
+
+                     Decision: PATH γ.
+
+                     PARENT CHAIN COMPLIANCE:
+                     1011014 chain: 1011014 (Tier 3
+                     instance) -> 1010000
+                     Trading_System_Coding_Anchor
+                     (Tier 2) -> 1000000
+                     Coding_Specification (Tier 1
+                     domain). All parents present.
+                     Architectural parent (0511001)
+                     updated to dv1_5 same session.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00145 batch):
+                     0511001 dv1_4 -> dv1_5
+                       (architectural spec).
+                     1011002 dv1_25 -> dv1_26
+                       (WS Manager coding spec).
+                     0211005 dv1_1 -> dv1_2
+                       (paper-trading operations
+                       procedure).
+                     TB00145 Session Log v1_0 (NEW).
+                     TB00145 NSI v1_0 (NEW).
+
+                     OPEN ITEMS UPDATED:
+                     OI-072 PAPER-LIVE PARITY DESIGN
+                       DEFECT (startup-sequence
+                       layer). CLOSED via this
+                       increment.
+
+                     Bill override: 1011014 dv1_7 ->
+                     dv1_8 is enacted under Bill's
+                     standing document-control
+                     override continuing the scope
+                     established for architectural
+                     increments in TB00115 onward.
+                     Direct increment dv1_7 -> dv1_8;
+                     no rv state. Per Bill's TB00145
+                     direction.
+
+                     Document Status updated:
+                     supersedes dv1_7.
 
   dv1_7  04-21-2026  TB00108 AI-3 — OI-014 startup_sequence
                      stale xrefs (LOW). Spec-side cleanup
