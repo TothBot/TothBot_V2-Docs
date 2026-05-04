@@ -1,10 +1,10 @@
 DocDCN:     0211005
 DocTitle:   Paper_Trading_Operations_Procedure
-DocVersion: dv1_2
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_2.txt
-DocDate:    05-03-2026
-DocTime:    21:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_1.txt
+DocDate:    04-24-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 PAPER TRADING OPERATIONS PROCEDURE
@@ -29,20 +29,15 @@ trading were live. CIATS accumulates real statistical
 data during paper trading.
 
 Paper trading mimics all aspects of live trading EXACTLY
-per TB00128 Ratified Decision D-06 and 0511001 dv1_5 ADR
-§18 TRUE PAPER-LIVE PARITY. This is not a preference —
-it is an architectural invariant enforced at every
-boundary. The tradeable universe in paper mode is
-IDENTICAL to the tradeable universe in live mode (USD,
-USDC, or USDT quoted Kraken spot pairs satisfying
-0711003 dv1_3 AS-001 criteria, no top-N cap). The
-startup sequence in paper mode executes ALL ELEVEN
-steps of 0511001 dv1_5 §4.2 (Step 1 through Step 11)
-identically to live mode, governed by PT-MODE-005
-below. The minimum divergence set between modes is
-restricted to four specific points enumerated in
-PT-MODE-001. Any deviation from this divergence-set
-constraint is a defect.
+per TB00128 Ratified Decision D-06. This is not a
+preference — it is an architectural invariant enforced
+at every boundary. The tradeable universe in paper mode
+is IDENTICAL to the tradeable universe in live mode
+(USD, USDC, or USDT quoted Kraken spot pairs satisfying
+0711003 dv1_3 AS-001 criteria, no top-N cap). The startup
+sequence in paper mode executes the same 0511001 dv1_3
+§4.2 Steps 2-8 as live mode, governed by PT-MODE-005
+below. Any deviation from exact parity is a defect.
 
 The purpose of the paper trading phase is threefold:
   (1) Validate that TothBot V2 executes correctly against
@@ -71,79 +66,32 @@ PT-MODE-001  EXECUTION MODE DEFINITION
 ------------------------------------------------------------
 
 Paper trading mode: TothBot V2 runs with a configuration
-flag that activates simulated order execution. Under D-06
-TRUE PAPER-LIVE PARITY (0511001 dv1_5 ADR §18), paper mode
-shares ONE execution code path with live mode. The minimum
-divergence set is restricted to four points enumerated in
-PT-MODE-005 below.
+flag that activates simulated order execution. In this mode:
 
-In paper trading mode:
+  LIVE:     All Kraken WS connections (public and private).
+            All market data is real-time live data.
+            All pipeline gate evaluations execute in full.
+            All CIATS monitoring and analysis runs in full.
+            All Logger records are written in full.
 
-  LIVE (identical to live mode):
-            All Kraken WS connections (public shards AND
-            private). Private WS authentication via TRADE
-            key. All subscriptions (instrument, status,
-            ohlc, ticker, executions, balances) active.
-            All market data is real-time live data. All
-            pipeline gate evaluations execute in full.
-            All CIATS monitoring and analysis runs in
-            full. All Logger records are written in full.
-            All connection-health monitoring (ping, zombie
-            detection, sequence-gap detection,
-            ratecounter) runs in full on every connection
-            including private. All reconnect logic (per-
-            shard and private) runs in full.
-
-  SIMULATED (the four divergence points):
-            (1) Order dispatch — six methods (add_order,
-                batch_add, cancel_order, amend_order,
-                batch_cancel, dispatch_market_sell) gate
-                on paper_mode at entry. Paper simulates
-                locally; no outbound private-WS order
-                traffic. Live transmits via _send_private.
-            (2) Capital-ledger initialization source —
-                paper initializes spot_usd_balance and
-                portfolio_baseline_USD from
-                paper_starting_balance ($1,000 per D-05).
-                Live initializes both from snap_orders
-                spot_usd_balance.
-            (3) snap_orders Mirror handling — paper LOGS
-                snap_orders / snap_trades for parity-of-
-                data-path verification but does NOT
-                populate paper Position Mirror from them.
-                Paper Mirror is populated EXCLUSIVELY by
-                the local simulated-fill path. Live
-                reconciles real Mirror against snap_orders
-                normally.
-            (4) Capital-ledger update source — paper
-                updates spot_usd_balance from simulated-
-                fill P&L applied locally. Live updates
-                from balances events.
+  SIMULATED: Order dispatch is intercepted before reaching
+            Kraken. No add_order, batch_add, cancel_order,
+            batch_cancel, or amend_order is sent to Kraken.
 
   SIMULATED FILLS: When TothBot would have dispatched an
             entry order, a simulated fill is generated at
-            the entry limit price by the local
-            _simulate_entry_fill helper. The Position
-            Mirror is updated as if a real fill occurred
-            via the SAME Execution Engine entry-fill
-            callback that a real Kraken executions event
-            would invoke in live mode. TP and emergSL
-            prices are computed from the simulated fill
-            price using the actual R:R formula. No
+            the entry limit price. The Position Mirror is
+            updated as if a real fill occurred. TP and
+            emergSL prices are computed from the simulated
+            fill price using the actual R:R formula. No
             resting orders are placed on Kraken.
 
-  SIMULATED EXITS: When an exit condition triggers
-            (Layer 1a signal, Layer 1b TP via paper-fill
-            detection, Layer 2 MAE threshold, Layer 3
-            emergSL price breach via paper-fill detection),
-            the exit is simulated at the relevant price
-            (TP price for Layer 1b, bid price for Layer
-            1a / Layer 2 market-sell, emergSL price for
-            Layer 3). Net P/L is computed locally with
-            full fee application using FEE_MAKER_PCT
-            and FEE_TAKER_PCT (CIATS-owned starting
-            values aligned with Kraken's published
-            spot-trading fee schedule).
+  SIMULATED EXITS: When an exit condition triggers (Layer
+            1a signal, Layer 1b TP, Layer 2 MAE threshold,
+            Layer 3 emergSL price breach), the exit is
+            simulated at the bid price (for Layer 1a, 1b)
+            or at the emergSL price (Layer 3). Net P/L is
+            computed with full fee application.
 
 ------------------------------------------------------------
 PT-MODE-002  PAPER TRADING CONFIGURATION FLAG
@@ -166,320 +114,121 @@ Bus records must carry a paper_trade: bool field.
 PT-MODE-003  PRIVATE WS CONNECTION IN PAPER MODE
 ------------------------------------------------------------
 
-TothBot V2 connects to the Kraken private WS in paper
-trading mode IDENTICALLY to live trading mode (D-06 TRUE
-PAPER-LIVE PARITY; 0511001 dv1_5 ADR §18). The private WS
-connection is established at startup Step 9 and re-
-established on every private-WS reconnect in BOTH modes.
+TothBot V2 connects to the private Kraken WS in paper
+trading mode. This is required for:
+  - Real-time balances monitoring (for drawdown calculation
+    using actual account balance as portfolio_baseline_USD)
+  - Rate counter monitoring (real market data)
+  - Authentic market conditions including real bid/ask
+    spreads and real order book conditions
 
-API key usage:
-  DATA key:    Public WS subscriptions and REST market
-               data calls (GetOHLCData, REST Ticker).
-               Used in BOTH modes.
-  TRADE key:   Private WS authentication
-               (GetWebSocketsToken). Used in BOTH modes.
-               Both modes acquire a WS auth token via
-               REST GetWebSocketsToken using the TRADE
-               key, and use that token to authenticate
-               the private WS connection.
-
-The TRADE key has both order-dispatch capability and read
-capability. In paper mode, the order-dispatch capability is
-gated at the §13.2 dispatch boundary in WSManager (six
-methods only) — paper simulates locally; no outbound order
-messages are transmitted on the private WS. The read
-capability is exercised in paper mode for parity-of-data-
-path verification: executions and balances events are
-received and processed by the same handlers that run in
-live mode.
-
-Private-WS data-path behavior in paper mode:
-  - WS auth token acquired via GetWebSocketsToken (TRADE
-    key) — IDENTICAL to live mode.
-  - Private WS connection established — IDENTICAL.
-  - executions channel subscribed with full subscription
-    flags (ratecounter, snap_orders, snap_trades,
-    order_status) — IDENTICAL.
-  - balances channel subscribed — IDENTICAL.
-  - Receive loop, JSON ping, zombie monitor, sequence-gap
-    detection, ratecounter monitoring — IDENTICAL on
-    private WS.
-  - snap_orders / snap_trades responses are LOGGED
-    (event SNAP_ORDERS_RECEIVED_PAPER) but do NOT
-    populate paper Position Mirror (paper Mirror is
-    populated only by the local simulated-fill path per
-    PT-MODE-006).
-  - balances events are LOGGED (event
-    BALANCES_EVENT_PAPER_LOGGED) but do NOT overwrite
-    the synthetic paper spot_usd_balance (paper balance
-    is updated only by simulated-fill P&L per PT-MODE-007).
-  - executions events that may arrive (e.g., from real
-    Kraken activity by the operator outside TothBot) are
-    LOGGED at INFO but do NOT populate paper Position
-    Mirror.
-
-Rationale: paper-mode validation of the private-WS data
-path catches defects in token acquisition, private
-connect, executions/balances subscribe, sequence-gap
-detection, snap_orders parsing, ratecounter, private
-ping, private zombie detection, and private reconnect
-BEFORE live capital is at risk. Validation of these
-paths is the entire purpose of paper trading; partial
-validation defeats that purpose. (Closes the dv1_1
-PT-MODE-003 internal contradiction in which paper was
-described as connecting private WS but using DATA key
-— private WS authentication requires the TRADE key per
-HR-WM-001.)
+The private WS is READ ONLY in paper trading mode. No
+orders are written. API key permissions: the DATA key
+is used in paper mode. The TRADE key is not used.
 
 ------------------------------------------------------------
 PT-MODE-004  PORTFOLIO BASELINE IN PAPER MODE
 ------------------------------------------------------------
 
 In paper trading mode, portfolio_baseline_USD is set from
-paper_starting_balance ($1,000 per D-05 / TB00001 line 51)
-at startup Step 11. Live mode initializes
-portfolio_baseline_USD from snap_orders spot_usd_balance.
+the actual Kraken spot/main USD balance at startup (per
+0211003 Step 5). This represents the actual capital Bill
+has available, even though it is not being traded.
 
-Rationale: paper mode does not place real orders against
-the operator's Kraken account. Real Kraken balance
-therefore does NOT change in paper mode (no real fills).
-If portfolio_baseline_USD were sourced from real Kraken
-balance in paper mode, drawdown would be computed against
-a static value that never moves, making drawdown
-monitoring meaningless. The synthetic $1,000 baseline
-is the only value that produces a meaningful drawdown
-metric for paper-mode operation.
-
-D-05 prescribes $1,000 as the paper starting capital
-because $1,000 is also the planned funding amount for
-the live-mode account at first activation (per TB00001
-business plan). With paper starting capital matched to
-live starting capital, the drawdown thresholds (5%
-session pause / 10% full halt) calibrate identically in
-both modes — the absolute dollar threshold (5% × $1,000
-= $50; 10% × $1,000 = $100) is the same.
-
-portfolio_baseline_USD is set ONCE at startup Step 11
-and is NEVER updated or reset on reconnect (HR-WM-011 of
-0511001 dv1_5; HR-WM-013 of 1011002 dv1_26) — same rule
-in both modes.
-
-If Bill changes paper_starting_balance via config edit
-between sessions, the new value takes effect at next
-TothBot restart. Mid-session changes are not permitted
-(HR-PT-004).
-
-(Closes the dv1_1 PT-MODE-004 contradiction with
-0511001 dv1_5 HR-WM-011 / HR-WM-034 which mandate
-paper baseline from paper_starting_balance.)
+All drawdown calculations in paper mode use this real
+baseline. This ensures the paper trading drawdown thresholds
+(5%/10%) are calibrated to actual capital, not an arbitrary
+notional amount. The paper trading session pause and full
+halt thresholds fire against real portfolio size.
 
 ------------------------------------------------------------
 PT-MODE-005  PAPER-MODE STARTUP PARITY BINDING
 ------------------------------------------------------------
 
 Paper-mode startup executes IDENTICALLY to live-mode
-startup through ALL ELEVEN steps of 0511001 dv1_5 §4.2
-(Step 1 through Step 11). There is NO paper-mode skip
-of any startup step. The minimum divergence set is
-restricted to two startup-time points enumerated in
-PT-MODE-001 — capital-ledger initialization source
-(Step 11) and snap_orders Mirror handling (Step 11) —
-both confined to Step 11 only.
+startup through 0511001 dv1_3 §4.2 Steps 2 through 8,
+with the ONLY difference being Step 7 private WS
+subscription set (paper mode subscribes DATA-key
+balances + executions for portfolio_baseline + rate-counter
+monitoring per PT-MODE-003; paper mode does NOT subscribe
+TRADE-key order-submission endpoints). Every other startup
+step is bit-for-bit identical.
 
 Enforcement references (paper-mode MUST mirror live-mode):
 
-  0511001 dv1_5 HR-WM-026
-    "TRUE PAPER-LIVE PARITY (D-06). Paper mode and live
-    mode share ONE execution code path. The eleven
-    startup steps (§4.2 Step 1 through Step 11) all
-    execute in BOTH modes. There is NO paper-mode skip
-    of any startup step. ... The minimum divergence set
-    is restricted to four specific points enumerated in
-    §13.1."
-
-  0511001 dv1_5 HR-WM-021
-    "paper_mode is read once from config at __init__.
-    Defaults False. Cannot change at runtime. Under
-    D-06 TRUE PAPER-LIVE PARITY (HR-WM-026), paper_mode
-    governs ONLY the four divergence points enumerated
-    in §13.1: (1) The order-dispatch boundary (six
-    methods in §13.2); (2) Step 11 capital-ledger
-    initialization source; (3) Step 11 + reconnect
-    snap_orders Mirror handling; (4) Capital-ledger
-    update source."
+  0511001 dv1_3 HR-WM-026
+    "Paper mode EXECUTES Section 4.2 Steps 2 through 8
+    IDENTICALLY to live mode. Paper mode does NOT skip
+    instrument-channel population, REST Ticker liquidity
+    fetch, tradeable_universe population, private WS
+    connection, subscriptions, or WARM_UP. The only
+    step-level difference: Step 7 private WS subscription
+    set. OI-044 root cause was paper-mode skipping Steps
+    2-8. D-06 ratified parity."
 
   0711003 dv1_3 HR-AS-010
     "Paper mode executes AS-004 Steps 1 through 8
     IDENTICALLY to live mode. Skipping any step in paper
-    mode is a defect."
+    mode is a defect (OI-044 root cause). Only private
+    WS subscription and auth are skipped in paper mode.
+    Universe population, REST Ticker, volume filter,
+    subscriptions, and WARM_UP all execute."
 
 Paper-mode startup ordering (must match live-mode exactly
-per the rules above) — eleven steps:
+per the two rules above):
 
-  Step 1  Acquire WS auth token via REST
-          GetWebSocketsToken using TRADE API key.
-          BOTH modes (private WS connects in both modes
-          per D-06).
-  Step 2  Connect public WS shards (provisional
-          N_conns=1; final N_conns at Step 5a).
-          IDENTICAL.
-  Step 3  Subscribe instrument channel on shard 0.
-          Build per-pair status cache. Compute
-          tradeable_universe per 0711003 dv1_3 AS-001
-          (USD/USDC/USDT quote + online status + AS-001
-          candidate list). IDENTICAL.
-  Step 4  REST Ticker call for AS-001 candidates;
-          apply $500k/day USD volume filter; build
-          final tradeable_universe. Add regime_anchor
-          handle (BTC/USD; member of tradeable_universe
-          under D-03 amended; default Gate 1 excludes
-          BTC/USD from entry-evaluation per AR-074 /
-          HR-AS-009). IDENTICAL.
-  Step 5  Subscribe status channel on shard 0.
-          IDENTICAL.
-  Step 5a SHARDING: compute final N_conns, connect
-          shards 1..N_conns-1, build pair_to_shard_index
-          mapping. IDENTICAL.
-  Step 6  Subscribe ohlc(5m) for each pair in
-          tradeable_universe. ohlc(60m) NOT subscribed
-          via WS (Kraken WS v2 rejects second ohlc
-          interval); 1H HTF cache seeded via REST in
-          Step 8. IDENTICAL.
-  Step 6.5 Silent-pair handling: per-pair state machine
-          for SUBSCRIBED → DATA_READY / DATA_PENDING.
-          IDENTICAL.
-  Step 7  Subscribe ticker channel for tradeable_universe
-          pairs (event_trigger:trades initially).
-          IDENTICAL.
-  Step 8  Indicator warm-up via REST GetOHLCData (5m,
-          60m, daily for regime_anchor). IDENTICAL.
-  Step 9  Connect private WS using token from Step 1.
-          BOTH modes.
-  Step 10 Subscribe executions channel (with
-          ratecounter:true, snap_orders:true,
-          snap_trades:true, order_status:true) and
-          balances channel. Begin sequence-gap
-          detection. IDENTICAL on both modes (paper
-          subscribes for parity-of-data-path).
-  Step 11 Process snap_orders / snap_trades response.
-          DIVERGENCE POINT (1 of 2 startup-time
-          divergence points):
-            LIVE: reconcile Position Mirror against
-              snap_orders, populate Pending Order
-              Registry, capture spot_usd_balance from
-              balances snapshot, set
-              portfolio_baseline_USD =
-              spot_usd_balance.
-            PAPER: log SNAP_ORDERS_RECEIVED_PAPER at
-              INFO; do NOT populate paper Position
-              Mirror; set spot_usd_balance =
-              paper_starting_balance ($1,000 per
-              D-05); set portfolio_baseline_USD =
-              spot_usd_balance; log
-              PAPER_BALANCE_SET.
+  Step 1  Engine transitions STARTING → LOADING.
+  Step 2  Connect public WS. Subscribe instrument channel.
+          Populate pair_cache.
+  Step 3  Compute tradeable_universe per 0711003 dv1_3
+          AS-001 (USD/USDC/USDT quote + online status +
+          $500k/day USD volume via REST Ticker). Result is
+          IDENTICAL in paper and live.
+  Step 4  Add regime_anchor handle (BTC/USD). BTC/USD is
+          a member of tradeable_universe under D-03
+          amended; default Gate 1 excludes BTC/USD from
+          entry-evaluation per AR-074 / HR-AS-009.
+  Step 5  Subscribe ohlc(5m), ohlc(60m), and ticker for
+          all tradeable_universe members (staggered
+          1.1s per pair per RE-RL-001). Identical in
+          paper and live.
+  Step 6  Seed per-pair indicators via REST GetOHLCData
+          (AR-044 + AR-068). Identical in paper and live.
+  Step 7  Connect private WS.
+            PAPER: subscribe balances + executions
+                   (DATA key; READ ONLY; no order
+                   subscription set).
+            LIVE:  subscribe balances + executions
+                   (TRADE key; order-submission endpoints
+                   active).
+  Step 8  Call C — Regime Engine initial computation
+          (1011012 dv1_5 RE-MKT-001; BTC/USD regime
+          computed first). Identical in paper and live.
+          Transition LOADING → WARMED_UP when all five
+          per-pair indicators are seeded AND initial
+          regime computation completes.
 
-Paper-mode bypass of ANY Step 1-11 requirement (other
-than the Step 11 divergence above) is a defect matching
-the OI-072 root cause and must be treated as a session-
-halting condition.
+Paper-mode bypass of ANY Step 2-8 requirement (other than
+the Step 7 subscription-set difference noted above) is a
+defect matching OI-044 root cause and must be treated as
+a session-halting condition.
 
-Paper-mode startup MUST log PAPER_TRADING_MODE_ON with
-a payload confirming each step completed against the
-live-parity reference. The log entry schema (dv1_2
-update):
+Paper-mode startup MUST log PAPER_TRADING_MODE_ON with a
+payload confirming each step completed against the
+live-parity reference. The log entry schema:
 
   event:                  PAPER_TRADING_MODE_ON
   paper_trade:            True
-  parity_binding:         0511001_dv1_5_HR-WM-026
+  parity_binding:         0511001_dv1_3_HR-WM-026
   universe_source:        0711003_dv1_3_AS-001
   universe_scope:         ["USD", "USDC", "USDT"]
   top_n_cap:              null  (retired per D-08)
   regime_anchor:          "BTC/USD"
   regime_anchor_eval:     "CIATS-owned, default-disabled"
-  steps_executed:         [1, 2, 3, 4, 5, "5a", 6, "6.5",
-                           7, 8, 9, 10, 11]
-  step_11_capital_source: "paper_starting_balance"
-  step_11_balance_usd:    1000  (or configured value)
-  private_ws_connected:   True
-  trade_key_used:         True
+  steps_executed:         [2, 3, 4, 5, 6, 7, 8]
+  step_7_subscription:    "DATA_KEY_READ_ONLY"
 
 Any missing step in steps_executed is a defect.
-
-------------------------------------------------------------
-PT-MODE-006  PAPER POSITION-MIRROR SOURCING
-------------------------------------------------------------
-
-In paper mode, Position Mirror is populated EXCLUSIVELY
-by the local simulated-fill path:
-  - Entry fills: _simulate_entry_fill (called from the
-    paper-mode branch of add_order)
-  - TP / emergSL fills: _maybe_paper_fill (called from
-    _handle_ticker on every bbo event for symbols with
-    open positions)
-  - Market-sell exits: dispatch_market_sell paper-mode
-    branch
-
-Real Kraken executions events received on the private WS
-in paper mode are LOGGED at INFO but do NOT populate or
-mutate paper Position Mirror. snap_orders / snap_trades
-responses (received at startup Step 11 and on every
-private-WS reconnect Step 4) are LOGGED but do NOT
-populate paper Position Mirror.
-
-This separation prevents real Kraken positions held by
-the operator outside TothBot from contaminating paper-
-trading state. Bill may hold manual positions in his
-Kraken account during paper-mode operation without
-TothBot attempting to manage them.
-
-Cross-references:
-  0511001 dv1_5 HR-WM-033
-  1011002 dv1_26 HR-WM-033
-
-------------------------------------------------------------
-PT-MODE-007  PAPER CAPITAL-LEDGER UPDATE SOURCE
-------------------------------------------------------------
-
-In paper mode, spot_usd_balance is updated EXCLUSIVELY
-by the local simulated-fill P&L path:
-
-  Entry fill:        spot_usd_balance -= entry_cost_usd
-                     where entry_cost_usd =
-                     qty * fill_price * (1 + FEE_MAKER_PCT)
-  TP fill:           spot_usd_balance += tp_proceeds
-                     where tp_proceeds =
-                     qty * tp_price * (1 - FEE_MAKER_PCT)
-  emergSL fill:      spot_usd_balance += sl_proceeds
-                     where sl_proceeds =
-                     qty * sl_price * (1 - FEE_TAKER_PCT)
-  Market-sell exit:  spot_usd_balance += ms_proceeds
-                     where ms_proceeds =
-                     qty * current_bid * (1 - FEE_TAKER_PCT)
-
-FEE_MAKER_PCT and FEE_TAKER_PCT are CIATS-owned starting
-values aligned with Kraken's published spot-trading fee
-schedule (0411003 KRAKEN-FEE-001).
-
-Real Kraken balances events received on the private WS
-in paper mode are LOGGED at INFO
-(event BALANCES_EVENT_PAPER_LOGGED) but do NOT overwrite
-the synthetic paper spot_usd_balance.
-
-drawdown_pct is computed identically in both modes using
-the same formula (AR-052 / 0511001 dv1_5 §5.4):
-
-  drawdown_pct = (spot_usd_balance -
-                  portfolio_baseline_USD) /
-                 portfolio_baseline_USD
-
-The formula is mode-agnostic; only the source of
-spot_usd_balance updates differs.
-
-Cross-references:
-  0511001 dv1_5 HR-WM-034
-  0511001 dv1_5 §13.8 Simulated-Fill P&L Application
-  1011002 dv1_26 HR-WM-034
-  1011002 dv1_26 §6.13 Paper P&L Application
 
 ============================================================
 4. CIATS ACTIVATION SEQUENCE DURING PAPER TRADING
@@ -867,46 +616,26 @@ approved the transition:
              for all future parameter change tracking.
 
   HR-PT-008  PAPER-TO-LIVE PARITY BINDING (D-06).
-             Paper-mode startup MUST execute 0511001
-             dv1_5 §4.2 ALL ELEVEN STEPS (Step 1
-             through Step 11) identically to live mode
-             per PT-MODE-005. Private WS connects in
-             both modes. Executions and balances
-             subscriptions occur in both modes. The
-             ONLY divergence at startup is Step 11
-             capital-ledger source (paper:
-             paper_starting_balance / live: snap_orders)
-             and Step 11 snap_orders Mirror handling
-             (paper logs / live reconciles). At
-             runtime the additional divergences are
-             order dispatch (six methods in §13.2 of
-             0511001 dv1_5) and capital-ledger update
-             source (paper: simulated-fill P&L / live:
-             balances events). All other code paths
-             are byte-identical between modes.
+             Paper-mode startup MUST execute 0511001 dv1_3
+             §4.2 Steps 2-8 identically to live mode per
+             PT-MODE-005. The ONLY permitted difference is
+             Step 7 subscription set (DATA-key READ ONLY
+             in paper vs TRADE-key FULL in live).
              Cross-references:
-               0511001 dv1_5 HR-WM-026  (TRUE PAPER-
-                 LIVE PARITY)
-               0511001 dv1_5 ADR §18    (architectural
-                 decision record)
-               1011002 dv1_26 HR-WM-035 (no paper-mode
-                 branch outside the four divergence
-                 points)
-               0711003 dv1_3 HR-AS-010  (Asset
-                 Selection paper-parity binding)
+               0511001 dv1_3 HR-WM-026  (WS Manager
+                 paper-parity binding)
+               0711003 dv1_3 HR-AS-010  (Asset Selection
+                 paper-parity binding)
                TB00128 Ratified Decision D-06
                  (paper-to-live parity EXACT)
-             Any paper-mode startup that skips any
-             Step 1-11 requirement (other than the
-             Step 11 capital-ledger and snap_orders
-             divergences enumerated in PT-MODE-005)
-             is a session-halting defect and triggers
-             PT-AC-002 Critical classification.
-             OI-072 root cause: dv1_1 PT-MODE-005
-             encoded a narrow-parity reading
-             (Steps 2-8 only); HR-PT-008 dv1_2
-             restores the plain-language meaning of
-             D-06.
+             Any paper-mode startup that skips a Step 2-8
+             requirement is a session-halting defect and
+             triggers PT-AC-002 Critical classification.
+             OI-044 root cause: paper-mode was previously
+             bypassing Steps 2-8; HR-PT-008 makes the
+             parity binding an explicit business-procedure
+             invariant independent of code-level
+             enforcement.
 
 ============================================================
 10. RELATED DOCUMENTS
@@ -919,264 +648,16 @@ approved the transition:
                                                dv1_0
   0211003  Startup_Shutdown_Procedure          dv1_0
   0211004  Incident_Response_Procedure         dv1_0
-  0511001  WS_Manager_Specification            dv1_5
-                                               (TRUE PAPER-
-                                               LIVE PARITY
-                                               ADR §18 +
-                                               PATH 2 ADR §17)
-  1011002  WS_Manager_Coding_Spec              dv1_26
-                                               (mirrors dv1_5
-                                               ADR §18 with
-                                               coding contract)
-  1011014  Startup_Sequence_Coding_Spec        dv1_8
-                                               (paper-mode
-                                               early-return
-                                               removed at
-                                               Step 1 per
-                                               TRUE PARITY)
+  0511001  WS_Manager_Specification            dv1_3
   0511006  Logger_Specification                dv1_1
-  0500000  System_Architecture_Overview        dv1_21
+  0500000  System_Architecture_Overview        dv1_20
   0711003  Asset_Selection_Specification       dv1_3
-  0411003  Kraken_Fee_Rate_Limit_Specification dv1_0
-                                               (FEE_MAKER_PCT,
-                                               FEE_TAKER_PCT
-                                               source)
   0311001  Namespace_Specification             (governs DCN)
   0311002  Document_Creation_Workflow          (governs sequence)
-  TB00128  Ratified Decision D-06              (paper-to-live
-                                               parity EXACT)
-  TB00145  Session Log                         (TRUE PAPER-
-                                               LIVE PARITY
-                                               restoration)
 
 ============================================================
 11. REVISION HISTORY
 ============================================================
-
-  dv1_2  05-03-2026  TRUE PAPER-LIVE PARITY (D-06).
-
-                     Companion increment to 0511001
-                     dv1_5 ADR §18 and 1011002 dv1_26.
-                     Restores D-06 plain-language
-                     meaning ("paper trading must
-                     mimic live trading exactly")
-                     into the paper-trading operations
-                     procedure. Resolves three
-                     internal contradictions in dv1_1.
-
-                     Sections amended:
-                       Header: dv1_1 -> dv1_2.
-                       PT-MODE-001: rewritten —
-                         enumerates the four §13.1
-                         divergence points (order
-                         dispatch, capital-ledger
-                         init, snap_orders Mirror
-                         handling, capital-ledger
-                         update). Clarifies that all
-                         WS connections (public AND
-                         private) operate identically
-                         in both modes.
-                       PT-MODE-003: REWRITTEN —
-                         private WS connects in BOTH
-                         modes. Private WS
-                         authentication uses TRADE
-                         key in BOTH modes (private
-                         WS auth requires TRADE key
-                         per HR-WM-001; the dv1_1
-                         claim that DATA key is used
-                         in paper mode was the
-                         internal contradiction).
-                         Order-dispatch capability
-                         of TRADE key is gated at
-                         §13.2 dispatch boundary;
-                         read capability is
-                         exercised in both modes for
-                         parity-of-data-path
-                         validation.
-                       PT-MODE-004: REWRITTEN —
-                         portfolio_baseline_USD in
-                         paper mode initialized from
-                         paper_starting_balance
-                         ($1,000 per D-05), NOT
-                         from real Kraken balance.
-                         Rationale: paper Kraken
-                         balance does not change in
-                         paper mode (no real fills);
-                         drawdown computation against
-                         a static baseline is
-                         meaningless. dv1_1 PT-MODE-004
-                         contradicted 0511001 dv1_5
-                         HR-WM-011 / HR-WM-034 — this
-                         dv1_2 amendment resolves
-                         the contradiction in favor
-                         of the architectural spec.
-                       PT-MODE-005: MAJOR REWRITE —
-                         eleven steps (Step 1
-                         through Step 11) execute in
-                         BOTH modes. Step 9 (private
-                         WS connect) and Step 10
-                         (executions/balances
-                         subscribe) execute in paper
-                         mode. The ONLY startup-time
-                         divergence is Step 11
-                         capital-ledger source
-                         (paper: paper_starting_balance
-                         / live: snap_orders) and
-                         Step 11 snap_orders Mirror
-                         handling (paper logs / live
-                         reconciles). Updated parity
-                         binding reference from
-                         0511001 dv1_3 to dv1_5.
-                         Updated PAPER_TRADING_MODE_ON
-                         log schema to include all
-                         11 steps in steps_executed.
-                       PT-MODE-006: NEW — paper
-                         Position-Mirror sourcing
-                         (only local simulated-fill
-                         path; real Kraken executions
-                         and snap_orders logged but
-                         not used to populate paper
-                         Mirror). Cross-references
-                         0511001 dv1_5 HR-WM-033 and
-                         1011002 dv1_26 HR-WM-033.
-                       PT-MODE-007: NEW — paper
-                         capital-ledger update source
-                         (only simulated-fill P&L;
-                         real Kraken balances events
-                         logged but not used to
-                         overwrite synthetic paper
-                         spot_usd_balance). Includes
-                         explicit P&L arithmetic for
-                         entry / TP / emergSL /
-                         market-sell. Cross-references
-                         0511001 dv1_5 HR-WM-034 +
-                         §13.8 and 1011002 dv1_26
-                         HR-WM-034 + §6.13.
-                       HR-PT-008: REWRITTEN — eleven-
-                         step parity binding;
-                         references 0511001 dv1_5
-                         HR-WM-026 and ADR §18;
-                         OI-072 root cause referenced
-                         (dv1_1 PT-MODE-005
-                         encoded narrow-parity
-                         reading; dv1_2 restores
-                         plain-language D-06).
-                       §10 Related Documents:
-                         updated 0511001 dv1_3 ->
-                         dv1_5; added 1011002 dv1_26,
-                         1011014 dv1_8, 0411003
-                         (fee schedule source),
-                         TB00128 (D-06 ratification),
-                         TB00145 (session log).
-                       §11 Revision History: this
-                         entry.
-
-                     REASON FOR CHANGE:
-                     OI-072 PAPER-LIVE PARITY DESIGN
-                     DEFECT (operations-procedure
-                     layer). dv1_1 contained three
-                     internal contradictions that
-                     the dv1_2 amendments resolve:
-
-                     CONTRADICTION 1 (PT-MODE-003):
-                     dv1_1 said paper connects private
-                     WS but uses DATA key.
-                     Inconsistency: private WS auth
-                     requires TRADE key per HR-WM-001
-                     (DATA key is for public WS and
-                     REST market data only). Resolved
-                     in dv1_2: TRADE key used in BOTH
-                     modes; order-dispatch capability
-                     gated at §13.2 boundary.
-
-                     CONTRADICTION 2 (PT-MODE-004 vs
-                     0511001 dv1_5 HR-WM-011 /
-                     HR-WM-034): dv1_1 said paper
-                     baseline from real Kraken
-                     balance. 0511001 dv1_5 mandates
-                     paper baseline from
-                     paper_starting_balance ($1,000).
-                     Resolved in dv1_2 in favor of
-                     architectural spec.
-
-                     CONTRADICTION 3 (PT-MODE-005):
-                     dv1_1 said only Step 7 differs
-                     (Steps 2-8 narrow parity).
-                     0511001 dv1_5 mandates all 11
-                     steps in both modes with four-
-                     point divergence. Resolved in
-                     dv1_2 with full 11-step parity
-                     and explicit divergence-point
-                     enumeration.
-
-                     The defect was surfaced in
-                     TB00145 when STREAM 5 deploy
-                     preparation forced a question
-                     about which parity reading
-                     governs. Bill directed: "There
-                     is only one correct action.
-                     Halt STREAM 5, fix the design
-                     (single code path with
-                     dispatch-layer gate), and
-                     re-validate."
-
-                     FP/DP ANALYSIS:
-                     PATH α (preserve dv1_1 narrow
-                       parity) RETIRED — operations
-                       procedure cannot diverge from
-                       parent architectural spec
-                       (0511001 dv1_5).
-                     PATH β (defer changes; deploy
-                       dv1_25 then patch) RETIRED —
-                       operations procedure
-                       inconsistency with code
-                       behavior creates Bill-side
-                       confusion at every paper
-                       run.
-                     PATH γ (companion-cycle dv1_2)
-                       ACCEPTED — operations
-                       procedure aligned with
-                       architectural and coding
-                       specs in same cycle.
-
-                     Decision: PATH γ.
-
-                     PARENT CHAIN COMPLIANCE:
-                     0211005 chain: 0211005 (Tier 3
-                     instance) -> 0210000
-                     Operations_CIATS_Anchor (Tier 2)
-                     -> 0200000 Operations (Tier 1
-                     domain). All parents present at
-                     dv1_2 commit time.
-
-                     COMPANION DELIVERABLES THIS
-                     SESSION (TB00145 batch):
-                     0511001 dv1_4 -> dv1_5
-                       (architectural spec).
-                     1011002 dv1_25 -> dv1_26
-                       (coding spec).
-                     1011014 dv1_7 -> dv1_8 (startup
-                       sequence; in author).
-                     TB00145 Session Log v1_0 (NEW).
-                     TB00145 NSI v1_0 (NEW).
-
-                     OPEN ITEMS UPDATED:
-                     OI-072 PAPER-LIVE PARITY DESIGN
-                       DEFECT (operations layer).
-                       CLOSED via this increment.
-
-                     Bill override: 0211005 dv1_1 ->
-                     dv1_2 is enacted under Bill's
-                     standing document-control
-                     override continuing the scope
-                     established for architectural
-                     increments in TB00115 onward.
-                     Direct increment dv1_1 -> dv1_2;
-                     no rv state. Per Bill's TB00145
-                     direction.
-
-                     Document Status updated:
-                     supersedes dv1_1.
 
   dv1_1  04-24-2026  Paper-to-live parity binding formalized.
                      Phase 3 Step 5 of TB00131 5-phase spec
