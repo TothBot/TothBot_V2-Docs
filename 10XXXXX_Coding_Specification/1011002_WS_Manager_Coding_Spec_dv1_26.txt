@@ -1,10 +1,10 @@
 DocDCN:     1011002
 DocTitle:   WS_Manager_Coding_Spec
-DocVersion: dv1_25
+DocVersion: dv1_26
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_25.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011002_WS_Manager_Coding_Spec_dv1_26.txt
 DocDate:    05-03-2026
-DocTime:    16:00:00 UTC
+DocTime:    23:59:30 UTC
 
 ============================================================
 WS MANAGER CODING SPECIFICATION
@@ -2901,6 +2901,341 @@ WM-RECONNECT-019  Paper-mode reconnect gating (OI-028 /
   state change — no deferred mode switch.
 
 ============================================================
+16A. PAPER MODE OPERATIONS (NEW dv1_26)
+============================================================
+
+This section is the implementation contract for the
+paper-mode synthetic ledger and paper exit routing
+mandated by 0511001 dv1_5 §13.7 + §13.8 + HR-WM-032 +
+HR-WM-033. All rules in §16A apply ONLY when
+self.paper_mode is True. Live mode is unaffected.
+
+------------------------------------------------------------
+16A.1 Paper Synthetic Ledger
+------------------------------------------------------------
+
+Paper mode has no Kraken balances channel by HR-WM-022
+(paper does NOT connect private WS). Without the balances
+channel, spot_usd_balance cannot be updated by exchange-
+pushed events. Paper mode therefore maintains a SYNTHETIC
+LEDGER that is updated locally on every simulated fill
+using the same arithmetic Kraken applies in live.
+
+WM-PAPER-LEDGER-001  INITIALIZATION.
+
+           At startup Step 9b (paper mode branch in
+           _startup):
+             self.spot_usd_balance = Decimal(str(
+                 self._cfg.get("paper_starting_balance",
+                               PAPER_STARTING_BALANCE_DEFAULT)))
+             self.portfolio_baseline_USD = self.spot_usd_balance
+
+           PAPER_STARTING_BALANCE_DEFAULT = Decimal("1000")
+           per D-05 LOCKED.
+
+           portfolio_baseline_USD is NEVER updated after
+           startup (HR-WM-011 unchanged in paper mode).
+
+           Log emission:
+             PAPER_BALANCE_SET (level=INFO,
+               balance=spot_usd_balance,
+               baseline=portfolio_baseline_USD,
+               source="paper_starting_balance")
+
+WM-PAPER-LEDGER-002  ENTRY-FILL DEBIT.
+
+           In _simulate_entry_fill(cl_ord_id, symbol,
+           price, qty), AFTER position_mirror is
+           populated and BEFORE invoking the Execution
+           Engine entry callback:
+
+             entry_cost = qty * price
+             entry_fee  = entry_cost * FEE_MAKER_PCT
+             self.spot_usd_balance -= (entry_cost +
+                                       entry_fee)
+
+           PositionRecord MUST capture fees_entry_usd =
+           entry_fee for downstream exit P/L computation
+           (consumed by Exit Controller's _close_position
+           per WM-PAPER-EXIT-001..003).
+
+           PositionRecord schema extension (dv1_26):
+             fees_entry_usd: Decimal  (paper + live;
+                                       set on entry fill;
+                                       read by EC on exit)
+
+           Log emission per WM-PAPER-LEDGER-004.
+
+           Rationale: paper entry uses limit order at
+           limit price. Limit-order fills incur maker
+           fee per Kraken fee schedule (FEE_MAKER_PCT =
+           Decimal("0.0016") per 0411003).
+
+WM-PAPER-LEDGER-003  EXIT-FILL CREDIT.
+
+           Triggered by paper exit paths per
+           WM-PAPER-EXIT-001..004. The exit path computes
+           exit_price and fees_exit, applies the ledger
+           credit:
+
+             exit_proceeds = qty * exit_price
+             self.spot_usd_balance += (exit_proceeds -
+                                       fees_exit)
+
+           Fee schedule by exit type:
+
+             TP fill (limit order, maker):
+               fees_exit = exit_proceeds * FEE_MAKER_PCT
+
+             emergSL trigger / Layer 2 MAE breach /
+             Layer 1 signal exit / time expiry /
+             regime exit (market sell, taker):
+               fees_exit = exit_proceeds * FEE_TAKER_PCT
+
+           FEE_MAKER_PCT = Decimal("0.0016")
+           FEE_TAKER_PCT = Decimal("0.0026")
+
+           Order of operations:
+             (1) Compute exit_price + fees_exit (in
+                 ws_manager.py paper-exit code path).
+             (2) Apply ledger credit per this rule.
+             (3) Pass exit_price + fees_exit to Exit
+                 Controller's _close_position(...) per
+                 WM-PAPER-EXIT-001..004.
+             (4) Exit Controller emits TRADE_CLOSE log
+                 record with full P/L payload.
+             (5) Exit Controller clears position_mirror,
+                 releases semaphore, updates Selection
+                 Controller state.
+
+           Ledger update MUST occur BEFORE
+           _close_position() so that any downstream
+           drawdown computation triggered during
+           position close reads a consistent ledger
+           state.
+
+WM-PAPER-LEDGER-004  PAPER_LEDGER_UPDATED LOG EMISSION.
+
+           Every ledger mutation (initialization,
+           entry-fill debit, exit-fill credit) emits a
+           structured log record:
+
+             event:        PAPER_LEDGER_UPDATED
+             level:        INFO
+             component:    WS_MGR
+             event_type:   "INIT" | "ENTRY_FILL" |
+                           "EXIT_FILL"
+             symbol:       trading pair (or "" for INIT)
+             delta_usd:    Decimal — net change to
+                           spot_usd_balance (negative
+                           for debit, positive for
+                           credit)
+             fee_usd:      Decimal — fee component of
+                           the transaction
+             new_balance:  Decimal — spot_usd_balance
+                           AFTER the mutation
+             exit_reason:  str — exit_reason for
+                           EXIT_FILL events; "" for
+                           INIT and ENTRY_FILL
+
+           CIATS log-file polling reads
+           PAPER_LEDGER_UPDATED records to verify
+           paper-mode capital evolution matches
+           live-mode balances-channel evolution
+           wherever physically possible.
+
+------------------------------------------------------------
+16A.2 Paper Exit Routing Through Exit Controller
+------------------------------------------------------------
+
+All paper-mode exit paths MUST route through Exit
+Controller's _close_position() close sequence. The
+dv1_25 parallel _fire_ciats_outcome path is RETIRED.
+Per HR-WM-033 and 1011005 dv1_3 §EC-PAPER.
+
+WM-PAPER-EXIT-001  TP FILL DETECTION ROUTING.
+
+           In _maybe_paper_fill(symbol, bid, ask) when
+           ask >= pos.tp_price:
+
+             # 1. Compute exit_price + fees.
+             exit_price = pos.tp_price
+             qty        = pos.qty
+             exit_proceeds = qty * exit_price
+             fees_exit  = exit_proceeds * FEE_MAKER_PCT
+
+             # 2. Apply HR-WM-032 ledger update.
+             self.spot_usd_balance += (exit_proceeds -
+                                       fees_exit)
+             self._log("PAPER_LEDGER_UPDATED", ...)
+
+             # 3. Log paper-fill detection event.
+             self._log("PAPER_TP_FILL_DETECTED", ...)
+
+             # 4. Route to Exit Controller.
+             #    Exit Controller emits TRADE_CLOSE,
+             #    clears position_mirror, releases
+             #    semaphore, updates SC state.
+             await self._exit_controller_fn(
+                 event="paper_close",
+                 symbol=symbol,
+                 exit_price=exit_price,
+                 exit_reason="TP_FILL",
+                 fees_exit=fees_exit,
+             )
+
+             # 5. Switch ticker mode to trades.
+             await self._update_ticker_event_trigger(
+                 symbol, "trades")
+
+           ws_manager.py MUST NOT directly pop the
+           position from position_mirror. Position
+           Mirror clearing is Exit Controller's
+           responsibility (per HR-EC-009 cascade).
+
+           ws_manager.py MUST NOT call the retired
+           _fire_ciats_outcome. CIATS data flow goes
+           through Exit Controller's TRADE_CLOSE log
+           emission (EC-TOB-002 in 1011005).
+
+WM-PAPER-EXIT-002  EMERG_SL TRIGGER ROUTING.
+
+           In _maybe_paper_fill(symbol, bid, ask) when
+           bid <= pos.emergsl_price:
+
+             # 1. Compute exit_price + fees.
+             exit_price = bid    # market sell at bid
+             qty        = pos.qty
+             exit_proceeds = qty * exit_price
+             fees_exit  = exit_proceeds * FEE_TAKER_PCT
+
+             # 2. Apply HR-WM-032 ledger update.
+             self.spot_usd_balance += (exit_proceeds -
+                                       fees_exit)
+             self._log("PAPER_LEDGER_UPDATED", ...)
+
+             # 3. Log paper-fill detection event.
+             self._log("PAPER_EMERG_SL_TRIGGERED", ...)
+
+             # 4. Route to Exit Controller.
+             await self._exit_controller_fn(
+                 event="paper_close",
+                 symbol=symbol,
+                 exit_price=exit_price,
+                 exit_reason="EMERGENCY_SL",
+                 fees_exit=fees_exit,
+             )
+
+             # 5. Switch ticker mode to trades.
+             await self._update_ticker_event_trigger(
+                 symbol, "trades")
+
+           Same restrictions as WM-PAPER-EXIT-001:
+           NO direct position_mirror pop, NO call to
+           retired _fire_ciats_outcome.
+
+WM-PAPER-EXIT-003  LAYER 2 MAE BREACH (EC-DRIVEN).
+
+           Layer 2 MAE exits are Exit Controller's
+           own logic (1011005 §7 EC-L2-001..004). In
+           live mode EC dispatches a market_sell via
+           ws_manager.dispatch_market_sell(). In paper
+           mode the same EC code path executes; the
+           paper-mode dispatch_market_sell synthesizes
+           a fill locally per WM-PAPER-EXIT-004.
+
+           No new code path required at the WS
+           Manager layer beyond WM-PAPER-EXIT-004.
+
+WM-PAPER-EXIT-004  dispatch_market_sell PAPER MODE
+                   BEHAVIOR.
+
+           The dv1_25 paper branch of
+           dispatch_market_sell() directly pops the
+           position from position_mirror and returns.
+           This is RETIRED in dv1_26. New behavior:
+
+             async def dispatch_market_sell(
+                 self, symbol, qty,
+             ) -> tuple[Decimal, Decimal]:
+                 """
+                 Returns (exit_price, fees_exit) for
+                 paper mode so Exit Controller can
+                 receive the realized values for
+                 _close_position. Live-mode return is
+                 also (exit_price, fees_exit) computed
+                 from the actual fill — uniform return
+                 contract per HR-WM-033 / 1011005
+                 dv1_3 EC-MS-001.
+                 """
+                 if self.paper_mode:
+                     bid = self.latest_bid.get(
+                         symbol, Decimal("0"))
+                     if bid <= Decimal("0"):
+                         self._log(
+                             "PAPER_MARKET_SELL_NO_BID",
+                             level="WARN",
+                             symbol=symbol)
+                         return (Decimal("0"),
+                                 Decimal("0"))
+                     exit_price = bid
+                     exit_proceeds = qty * exit_price
+                     fees_exit = exit_proceeds * \
+                                 FEE_TAKER_PCT
+                     # HR-WM-032 ledger update.
+                     self.spot_usd_balance += (
+                         exit_proceeds - fees_exit)
+                     self._log(
+                         "PAPER_LEDGER_UPDATED", ...)
+                     self._log(
+                         "PAPER_MARKET_SELL_SIMULATED",
+                         level="INFO",
+                         symbol=symbol, qty=qty,
+                         exit_price=exit_price,
+                         fees_exit=fees_exit)
+                     return (exit_price, fees_exit)
+
+                 # Live path unchanged from dv1_25.
+                 # Live return value is computed by
+                 # _market_sell_with_retry helper (in
+                 # exit_controller.py) from the actual
+                 # exec_type=trade event captured on
+                 # the executions channel.
+                 ...
+
+           ws_manager.py paper-mode dispatch_market_sell
+           MUST NOT directly pop position_mirror; Exit
+           Controller's _close_position handles that
+           after receiving the (exit_price, fees_exit)
+           tuple.
+
+WM-PAPER-EXIT-005  _fire_ciats_outcome RETIRED.
+
+           The dv1_25 _fire_ciats_outcome method is
+           RETIRED in dv1_26. All CIATS outcome data
+           flows via Exit Controller's TRADE_CLOSE log
+           emission per 1011005 EC-TOB-002.
+
+           ws_manager.py:
+             - DELETE the _fire_ciats_outcome method.
+             - DELETE all call sites of
+               _fire_ciats_outcome.
+             - DELETE the constructor parameter
+               ciats_outcome_bus_fn (no longer needed).
+             - Selection Controller state updates
+               (wm.exit_cooldown_log /
+               wm.consecutive_loss_count) MUST be
+               performed by Exit Controller per
+               1011005 EC-CLOSE-005, NOT by ws_manager.
+
+           This change is byte-impacting on the
+           ws_manager.py constructor signature. Module
+           wire-up in tothbot/__main__.py MUST be
+           updated to remove the
+           ciats_outcome_bus_fn argument. Closes
+           FINDING-TB00147-08 final architectural seam.
+
+============================================================
 17. HARD RULES — CONSOLIDATED
 ============================================================
 
@@ -3079,24 +3414,75 @@ HR-WM-031  CONSTRAINT REMOVAL — RR-SCOPE-009. Any
            section are load-bearing-by-default. Bill
            explicit override is the sole bypass.
 
-HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
-           Every outbound subscribe to Kraken MUST
-           pass through the process-singleton token
-           bucket per §4.7 WM-PACE-001 through
-           WM-PACE-010. There is NO bypass for any
-           subscribe pathway: startup, per-shard
-           reconnect, full-process-restart, universe
-           re-evaluation, ad-hoc, or
-           authenticated-channel are ALL bound by
-           the same bucket. This is the design-
-           level fix for OI-060 (rate-limit storm)
-           per TB00143 STREAM 4 FP/DP analysis.
-           Architecture alone (PATH 2 sharding)
-           does NOT bound IP-level subscribe rate
-           against back-to-back-restart scenarios;
-           only the bucket does. Any code path that
-           emits a Kraken WS subscribe outside the
-           bucket is a session-halting defect.
+HR-WM-032  PAPER LEDGER UPDATE (NEW dv1_26 — cascaded
+           from 0511001 dv1_5 HR-WM-032). In paper
+           mode, spot_usd_balance is a synthetic
+           ledger initialized at startup to
+           paper_starting_balance and EVOLVED locally
+           on every simulated fill per §16A.1
+           (WM-PAPER-LEDGER-001..004). Entry fills
+           debit the ledger by (entry_qty *
+           entry_price * (1 + FEE_MAKER_PCT)). Exit
+           fills credit the ledger by (exit_qty *
+           exit_price - fees_exit) where fees_exit
+           uses FEE_MAKER_PCT for limit-order TP
+           fills and FEE_TAKER_PCT for market-sell
+           exits. portfolio_baseline_USD is NEVER
+           updated after startup (HR-WM-011
+           unchanged). Every ledger mutation emits a
+           PAPER_LEDGER_UPDATED log record with
+           {event_type, symbol, delta_usd, fee_usd,
+           new_balance, exit_reason}. Without this
+           rule, paper-mode drawdown numerators are
+           wrong and CIATS cannot reconstruct paper
+           P/L. Closes FINDING-TB00147-06.
+
+HR-WM-033  PAPER EXITS ROUTE THROUGH EXIT CONTROLLER
+           (NEW dv1_26 — cascaded from 0511001 dv1_5
+           HR-WM-033). All paper-mode exit paths (TP
+           fill detected in _maybe_paper_fill,
+           emergSL trigger in _maybe_paper_fill,
+           Layer 1 signal exit, Layer 2 MAE breach,
+           time expiry, regime exit) MUST route
+           through Exit Controller's _close_position()
+           per §16A.2 (WM-PAPER-EXIT-001..005).
+           ws_manager.py applies the HR-WM-032 ledger
+           update, then calls Exit Controller; Exit
+           Controller emits the TRADE_CLOSE log
+           record (per 1011005 dv1_3 EC-TOB-002 +
+           EC-PAPER), clears Position Mirror,
+           releases the semaphore, and updates
+           Selection Controller state. The
+           ws_manager._fire_ciats_outcome method is
+           RETIRED in dv1_26. Without this rule,
+           paper-mode CIATS data flow is non-parity
+           with live (no TRADE_CLOSE records
+           emitted), in direct violation of HR-WM-025
+           and TB00000 v2_18 §4.4 PA-005. Closes
+           FINDING-TB00147-08.
+
+HR-WM-034  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
+           (RENUMBERED dv1_26: was HR-WM-032 in
+           dv1_25; renumbered to make room for
+           cascaded HR-WM-032/033 from 0511001 dv1_5.
+           Rule content unchanged.) Every outbound
+           subscribe to Kraken MUST pass through the
+           process-singleton token bucket per §4.7
+           WM-PACE-001 through WM-PACE-010. There is
+           NO bypass for any subscribe pathway:
+           startup, per-shard reconnect, full-
+           process-restart, universe re-evaluation,
+           ad-hoc, or authenticated-channel are ALL
+           bound by the same bucket. This is the
+           design-level fix for OI-060 (rate-limit
+           storm) per TB00143 STREAM 4 FP/DP
+           analysis. Architecture alone (PATH 2
+           sharding) does NOT bound IP-level
+           subscribe rate against back-to-back-
+           restart scenarios; only the bucket does.
+           Any code path that emits a Kraken WS
+           subscribe outside the bucket is a
+           session-halting defect.
 
 ============================================================
 18. RELATED DOCUMENTS
@@ -3104,7 +3490,7 @@ HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
 
   1000000  Coding_Specification          dv1_0
   1010000  Trading_System_Coding_Anchor  dv1_17
-  0511001  WS_Manager_Specification      dv1_4   (parent spec
+  0511001  WS_Manager_Specification      dv1_5   (parent spec
                                                    — PATH 2 ADR)
   0510000  System_Components_Anchor      dv1_0
   0500000  System_Architecture_Overview  dv1_21
@@ -3114,20 +3500,25 @@ HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
   0411003  Kraken_Fee_Rate_Limit_Spec    dv1_0
   0511002  Signal_Pipeline_Specification dv1_0
   0511003  Execution_Engine_Specification dv1_0
-  0511004  Exit_Controller_Specification  dv1_2
+  0511004  Exit_Controller_Specification  dv1_3
   0511005  Position_Mirror_Specification  dv1_0
   0511006  Logger_Specification           dv1_1
   1011001  Engineering_Best_Practices     dv1_7
   1011003  Signal_Pipeline_Coding_Spec    dv1_0
   1011004  Execution_Engine_Coding_Spec   dv1_0
-  1011005  Exit_Controller_Coding_Spec    dv1_2
+  1011005  Exit_Controller_Coding_Spec    dv1_3
   1011006  Position_Mirror_Coding_Spec    dv1_0
   1011007  Logger_Coding_Spec             dv1_3
   1011011  Risk_Engine_Coding_Spec        dv1_3
   1011012  Regime_Engine_Coding_Spec      dv1_5
   1011014  Startup_Sequence_Coding_Spec   dv1_7
-  TB00000  Project Instructions for Claude v2_17
-                                          (RR-SCOPE-009)
+  0211005  Paper_Trading_Operations_Procedure  dv1_3
+                                          (paper-parity
+                                           binding;
+                                           cites HR-WM-032
+                                           and HR-WM-033)
+  TB00000  Project Instructions for Claude v2_18
+                                          (§4.4 PAPER-AS-MASTER)
   0311002  Document_Creation_Workflow    v1_8
                                           (DC-PREFLIGHT-006)
   TB00141  Session Log                            (Phase A/B/D
@@ -3146,6 +3537,204 @@ HR-WM-032  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET.
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_26  05-03-2026  PAPER-AS-MASTER CORRECTIVE — TB00147
+                      TIER 1.5 + TIER 2 AUDIT CASCADE.
+
+                      Cascade of 0511001 dv1_5 HR-WM-032
+                      (paper synthetic ledger update) and
+                      HR-WM-033 (paper exits route through
+                      Exit Controller).
+
+                      Sections amended:
+                        Header: dv1_25 -> dv1_26.
+
+                        §16A PAPER MODE OPERATIONS (NEW):
+                          §16A.1 Paper Synthetic Ledger
+                            (WM-PAPER-LEDGER-001..004) —
+                            initialization, entry-fill
+                            debit, exit-fill credit (fee
+                            schedule by exit type),
+                            PAPER_LEDGER_UPDATED log
+                            schema.
+                          §16A.2 Paper Exit Routing
+                            Through Exit Controller
+                            (WM-PAPER-EXIT-001..005) —
+                            TP fill detection routing,
+                            emergSL trigger routing,
+                            Layer 2 MAE breach
+                            (EC-driven), dispatch_market_
+                            sell paper-mode behavior with
+                            (exit_price, fees_exit) return
+                            tuple, _fire_ciats_outcome
+                            method RETIRED.
+
+                        §17 HARD RULES CONSOLIDATED:
+                          HR-WM-032 (NEW) — paper ledger
+                            update, cascaded from 0511001
+                            dv1_5 HR-WM-032.
+                          HR-WM-033 (NEW) — paper exits
+                            route through Exit Controller,
+                            cascaded from 0511001 dv1_5
+                            HR-WM-033.
+                          HR-WM-034 (RENUMBERED from
+                            dv1_25 HR-WM-032) — outbound
+                            subscribe pacing token bucket;
+                            content unchanged. Renumbered
+                            to make room for cascaded
+                            HR-WM-032/033 from parent
+                            spec.
+
+                        §18 RELATED DOCUMENTS:
+                          0511001 dv1_4 -> dv1_5.
+                          0511004 dv1_2 -> dv1_3.
+                          1011005 dv1_2 -> dv1_3.
+                          0211005 dv1_3 (NEW citation —
+                            paper-parity binding).
+                          TB00000 v2_17 -> v2_18 (PA-001..
+                            010 PAPER-AS-MASTER).
+
+                      REASON FOR CHANGE.
+
+                      TB00147 audit findings 6 + 8
+                      (CRITICAL severity each) require
+                      coding-spec implementation contracts
+                      to match the parent-spec hard rules
+                      added in 0511001 dv1_5. dv1_26 is
+                      the cascade-down implementation
+                      contract.
+
+                      FINDING-TB00147-06 (paper synthetic
+                        ledger never updated on simulated
+                        fills) — closed by §16A.1
+                        WM-PAPER-LEDGER-001..004 +
+                        HR-WM-032.
+
+                      FINDING-TB00147-08 (paper exits
+                        bypass Exit Controller, no
+                        TRADE_CLOSE log records emitted in
+                        paper mode, CIATS Half-Kelly
+                        cannot operate on paper data) —
+                        closed by §16A.2 WM-PAPER-EXIT-
+                        001..005 + HR-WM-033.
+
+                      FP/DP analysis: Option C (formal
+                      spec amendment + code edit + deploy
+                      + observe) per 0511001 dv1_5
+                      revision history. 1011002 dv1_26 is
+                      the coding-spec layer of Option C.
+
+                      PA-MASTER PRE-EMIT SCAN.
+
+                      Authored under TB00000 v2_18 §4.4
+                      PA-008 pre-emit-scan discipline.
+                      Direction-of-mimicry: paper mimics
+                      live wherever physically possible
+                      (PA-001 / PA-005). The four PA-004
+                      divergence points are preserved
+                      verbatim. Live-mode behavior is
+                      unchanged by dv1_26 — only paper-
+                      mode behavior is corrected to
+                      match what live already does
+                      (specifically: synthetic ledger
+                      mirrors the balances-channel
+                      ledger evolution; paper exit close
+                      sequence mirrors the live exit
+                      close sequence via shared Exit
+                      Controller).
+
+                      CODE IMPACT (for TB00148
+                      implementation session).
+
+                      ws_manager.py changes required:
+                        (1) PositionRecord schema
+                            extension: add
+                            fees_entry_usd: Decimal field.
+                        (2) _simulate_entry_fill: apply
+                            HR-WM-032 entry-fill ledger
+                            debit; capture
+                            fees_entry_usd on
+                            PositionRecord.
+                        (3) _maybe_paper_fill: route TP
+                            and emergSL detection through
+                            Exit Controller per
+                            WM-PAPER-EXIT-001/002 instead
+                            of direct position_mirror
+                            pop.
+                        (4) dispatch_market_sell: paper
+                            branch returns (exit_price,
+                            fees_exit) tuple; ledger
+                            update applied; no direct
+                            position_mirror pop.
+                        (5) Constructor: remove
+                            ciats_outcome_bus_fn
+                            parameter (no longer needed).
+                        (6) DELETE _fire_ciats_outcome
+                            method and all call sites.
+                        (7) New helper:
+                            _emit_paper_ledger_updated
+                            for the standardized log
+                            event per WM-PAPER-LEDGER-004.
+                        (8) Selection Controller state
+                            updates (exit_cooldown_log,
+                            consecutive_loss_count) MOVE
+                            from ws_manager to
+                            exit_controller (HR-WM-033).
+
+                      Module wire-up in
+                      tothbot/__main__.py:
+                        (a) Remove ciats_outcome_bus_fn
+                            argument from WSManager
+                            constructor call.
+                        (b) Verify exit_controller_fn is
+                            wired (already required —
+                            pre-existing).
+
+                      Test coverage (paper-mode unit
+                      tests added in TB00148):
+                        - PAPER_BALANCE_SET initializes
+                          synthetic ledger.
+                        - Entry fill debits balance
+                          correctly with maker fee.
+                        - TP fill credits balance with
+                          maker fee; routes through EC;
+                          TRADE_CLOSE log emitted.
+                        - emergSL trigger credits balance
+                          with taker fee; routes through
+                          EC; TRADE_CLOSE log emitted.
+                        - Layer 2 MAE breach (EC-driven)
+                          uses dispatch_market_sell
+                          taker fee; ledger correct.
+                        - Drawdown computation correct
+                          across multi-trade sequences
+                          (5+ trades).
+                        - 19/19 dv1_25 tests still pass
+                          (no regression on live-mode
+                          behavior).
+
+                      PARENT CHAIN COMPLIANCE.
+
+                      1011002 (Tier 3 Instance, AA=10
+                      Sub-Domain 1) -> 1010000
+                      Trading_System_Coding_Anchor
+                      (Tier 2) -> 1000000
+                      Coding_Specification (Tier 1
+                      Domain). Chain unbroken. Cross-
+                      cascade reference: 0511001 dv1_5
+                      (parent system spec).
+
+                      Bill override.
+
+                      TB00147 cascade enacted under
+                      Bill explicit authorization
+                      (TB00147 chat, 05-03-2026)
+                      "Yes, I authorize expanded
+                      ALT-A." Direct increment dv1_25
+                      -> dv1_26 under standing
+                      document-control override scope
+                      established TB00115 et al.
+
+                      Document Status: supersedes dv1_25.
 
   dv1_25  05-03-2026  SUBSCRIBE PACING TOKEN BUCKET.
 
