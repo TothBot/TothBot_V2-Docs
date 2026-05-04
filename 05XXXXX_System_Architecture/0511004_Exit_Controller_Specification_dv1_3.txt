@@ -1,10 +1,10 @@
 DocDCN:     0511004
 DocTitle:   Exit_Controller_Specification
-DocVersion: dv1_2
+DocVersion: dv1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511004_Exit_Controller_Specification_dv1_2.txt
-DocDate:    04-04-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511004_Exit_Controller_Specification_dv1_3.txt
+DocDate:    05-03-2026
+DocTime:    23:59:40 UTC
 
 ============================================================
 EXIT CONTROLLER SPECIFICATION
@@ -304,6 +304,179 @@ EC-L2-001: MAE Threshold Detection
   duplicate position risk and R:R violation.
 
 ============================================================
+6A. PAPER MODE EXIT BEHAVIOR (EC-PAPER) — NEW dv1_3
+============================================================
+
+This section specifies how Exit Controller behaves in
+paper mode. Per TB00000 v2_18 §4.4 PA-001..010 PAPER-AS-
+MASTER and 0511001 dv1_5 HR-WM-033 PAPER EXITS ROUTE
+THROUGH EXIT CONTROLLER, ALL paper-mode exit paths route
+through Exit Controller's normal close sequence. The
+Exit Controller layer is byte-identical between paper
+and live modes wherever physically possible per PA-005.
+
+------------------------------------------------------------
+6A.1 Architectural Principle
+------------------------------------------------------------
+
+EC-PAPER-001  PAPER-LIVE BYTE-IDENTICAL CLOSE PATH.
+
+           Exit Controller's _close_position() close
+           sequence is byte-identical between paper and
+           live modes. The only physical difference is
+           the SOURCE of (exit_price, fees_exit):
+
+             LIVE: exit_price + fees_exit derived from
+                   actual Kraken executions channel
+                   exec_type=trade events; market_sell
+                   helper synthesizes the values from
+                   real fills.
+
+             PAPER: exit_price + fees_exit synthesized
+                    locally per 1011002 dv1_26 §16A.2
+                    WM-PAPER-EXIT-001..004 (TP fill at
+                    pos.tp_price with FEE_MAKER_PCT;
+                    emergSL trigger / Layer 2 / Layer 1
+                    / time expiry at current bid with
+                    FEE_TAKER_PCT) and passed into Exit
+                    Controller via the same call signature
+                    Exit Controller already uses
+                    internally.
+
+           Per HR-EC-013 (NEW dv1_3), the close sequence
+           downstream of (exit_price, fees_exit)
+           determination is byte-identical: same
+           TRADE_CLOSE log payload, same Position Mirror
+           clearing, same Selection Controller state
+           updates, same semaphore release.
+
+EC-PAPER-002  ENTRY POINTS FROM WS MANAGER.
+
+           Exit Controller exposes a single entry point
+           callable by WS Manager for paper-mode exits:
+
+             async def on_paper_close(
+                 self,
+                 symbol: str,
+                 exit_price: Decimal,
+                 exit_reason: str,
+                 fees_exit: Decimal,
+                 wm: "WSManager",
+             ) -> None:
+
+           This entry point is invoked by WS Manager's
+           _maybe_paper_fill() per 1011002 dv1_26
+           WM-PAPER-EXIT-001 (TP detection) and
+           WM-PAPER-EXIT-002 (emergSL trigger). The
+           method internally calls _close_position(...)
+           with the supplied parameters.
+
+           For Layer 2 MAE breach (EC-driven exit, the
+           Exit Controller initiates), the paper-mode
+           path uses dispatch_market_sell which now
+           returns (exit_price, fees_exit) per 1011002
+           dv1_26 WM-PAPER-EXIT-004; Exit Controller
+           then calls _close_position with those values.
+           No new entry point is required for Layer 2
+           paper.
+
+           For Layer 1a paths (HTF reversal, daily regime
+           downgrade, time expiry, signal decay), Exit
+           Controller's existing logic flow into market
+           sell via dispatch_market_sell — the
+           (exit_price, fees_exit) tuple return per
+           WM-PAPER-EXIT-004 supplies the synthesized
+           values for paper mode without any code change
+           in Layer 1a logic.
+
+           For Layer 1b (TP fill detection), the entry
+           point is on_paper_close per the bullet above.
+
+EC-PAPER-003  TRADE_CLOSE LOG RECORD PARITY.
+
+           Paper-mode TRADE_CLOSE log records emitted by
+           _close_position() contain the SAME fields as
+           live-mode TRADE_CLOSE records:
+
+             ts, event=TRADE_CLOSE, symbol,
+             entry_fill_price, exit_price,
+             entry_timestamp_utc, exit_timestamp_utc,
+             hold_candle_count, MAE_pct_reached,
+             fees_entry_usd, fees_exit_usd,
+             fees_total_usd,
+             exit_reason, asset_regime, vol_regime,
+             market_regime, signal_params, actual_RR,
+             net_PL_USD, net_gain_usd, net_loss_usd.
+
+           CIATS log-file polling reads paper TRADE_CLOSE
+           records identically to live TRADE_CLOSE
+           records. CIATS Half-Kelly, Mann-Whitney U,
+           EWMA, CUSUM, and Spearman operate on a
+           unified corpus regardless of mode.
+
+           No paper-specific TRADE_CLOSE schema. No
+           paper-specific CIATS data flow. PA-005
+           byte-identical CIATS data flow holds.
+
+EC-PAPER-004  fees_entry_usd CONSUMPTION.
+
+           _close_position() reads fees_entry_usd from
+           the PositionRecord (set by WS Manager on
+           entry fill per 1011002 dv1_26
+           WM-PAPER-LEDGER-002 for paper, WS Manager
+           live-fill handler for live). Exit Controller
+           does NOT recompute entry fees — they are
+           already captured at entry time.
+
+           fees_total_usd = fees_entry_usd + fees_exit
+           net_pl = (exit_price - entry_price) * qty
+                    - fees_total_usd
+
+EC-PAPER-005  RETIREMENT OF ws_manager._fire_ciats_outcome.
+
+           Per 1011002 dv1_26 WM-PAPER-EXIT-005, the
+           ws_manager._fire_ciats_outcome method is
+           RETIRED. Exit Controller is now the SOLE
+           emitter of TRADE_CLOSE log records and the
+           SOLE updater of Selection Controller state
+           (exit_cooldown_log, consecutive_loss_count)
+           in BOTH paper and live modes.
+
+           Selection Controller state updates (formerly
+           in ws_manager._fire_ciats_outcome for paper)
+           MOVE to exit_controller._close_position per
+           HR-EC-014 (NEW dv1_3). Live-mode behavior
+           was already correct (ws_manager did not
+           update SC state in live mode); only paper-
+           mode behavior changes to match.
+
+------------------------------------------------------------
+6A.2 What This Section Does NOT Change
+------------------------------------------------------------
+
+  - Three-layer architecture (§3) is unchanged.
+  - Drawdown monitoring (§4) is unchanged. Note that
+    drawdown computation now reads a CORRECT
+    spot_usd_balance in paper mode per 1011002 dv1_26
+    HR-WM-032 (synthetic ledger evolution).
+  - Pair status adaptation (§5) is unchanged.
+  - Cancel timeout fallback (§6) is unchanged.
+  - Hard rules HR-EC-001 through HR-EC-012 are
+    unchanged.
+  - Live-mode behavior is unchanged.
+
+------------------------------------------------------------
+6A.3 Closes
+------------------------------------------------------------
+
+EC-PAPER section closes the parent-spec layer of
+FINDING-TB00147-08 (paper exits bypass Exit Controller).
+Implementation contract is in 1011005 dv1_3 (EC-PAPER
+coding contract). WS Manager-side cascade is in 1011002
+dv1_26 §16A.2 WM-PAPER-EXIT-001..005 (delivery of
+exit_price + fees_exit to EC).
+
+============================================================
 7. INTERFACES
 ============================================================
 
@@ -394,6 +567,51 @@ HR-EC-012  R:R violation: sacred net_gain = net_loss * 1.5
            (3.0x ATR) is NOT in the R:R formula. emergSL is
            crash protection — its distance is separate.
 
+HR-EC-013  PAPER-LIVE CLOSE-PATH PARITY (NEW dv1_3).
+           _close_position() close sequence is byte-
+           identical between paper and live modes
+           downstream of (exit_price, fees_exit)
+           determination. Same TRADE_CLOSE log payload,
+           same Position Mirror clearing, same Selection
+           Controller state updates, same semaphore
+           release. Per §6A EC-PAPER and TB00000 v2_18
+           §4.4 PA-005 byte-identical paper-live outside
+           PA-004. Closes parent-spec layer of
+           FINDING-TB00147-08.
+
+HR-EC-014  SELECTION CONTROLLER STATE UPDATE AUTHORITY
+           (NEW dv1_3). Exit Controller is the SOLE
+           updater of Selection Controller state
+           (wm.exit_cooldown_log, wm.consecutive_loss_
+           count) in BOTH paper and live modes. The
+           dv1_25 ws_manager._fire_ciats_outcome path
+           (which formerly updated these in paper mode)
+           is RETIRED per 1011002 dv1_26
+           WM-PAPER-EXIT-005. Exit Controller's
+           _close_position() performs the SC state
+           update on every close in BOTH modes, using
+           the AR-073 win/loss classification in
+           selection_ctrl.py.
+
+HR-EC-015  CIATS-OWNED PARAMETERS — NO HARDCODED USAGE
+           (NEW dv1_3). All CIATS-owned starting values
+           used by Exit Controller (mae_mult,
+           cancel_timeout_window, mpp_retry_count,
+           max_hold_candles, and any future addition)
+           MUST be read at use-time from the CIATS
+           Parameter Store / WS Manager config snapshot
+           via params.get(key, DEFAULT_CONSTANT). Module-
+           level constants serve ONLY as defaults for
+           the params.get() fallback; they MUST NOT be
+           used directly in business logic. Direct
+           constant usage is a defect that defeats CIATS
+           PDCA for the affected parameter and creates
+           cross-module parameter inconsistency. Per TB00000
+           §6.8 (Deming) and §9.16 (Parameter Philosophy).
+           Closes parent-spec layer of
+           FINDING-TB00147-07. Cascaded to 1011005 dv1_3
+           §10 HR-EC consolidation.
+
 ============================================================
 9. WHAT TRIGGERS IT
 ============================================================
@@ -466,15 +684,194 @@ HR-EC-012  R:R violation: sacred net_gain = net_loss * 1.5
   0510000  System_Components_Anchor         (parent anchor)
   0500000  System_Architecture_Overview     (ARs binding)
   0411001  Kraken_WS_v2_Specification       (wire contract)
-  0511001  WS_Manager_Specification         (triggers EC)
+  0411003  Kraken_Fee_Rate_Limit_Spec       (FEE_MAKER_PCT,
+                                              FEE_TAKER_PCT)
+  0511001  WS_Manager_Specification         (dv1_5 — triggers
+                                              EC; HR-WM-032 +
+                                              HR-WM-033 paper
+                                              cascade source)
   0511002  Signal_Pipeline_Specification    (Gate 7 drawdown)
-  0511005  Position_Mirror_Specification    (position data)
-  0511006  Logger_Specification             (log recipient)
-  1011005  Exit_Controller_Coding_Spec      (AA=10 child)
+  0511005  Position_Mirror_Specification    (position data;
+                                              fees_entry_usd
+                                              field consumed
+                                              by EC per
+                                              EC-PAPER-004)
+  0511006  Logger_Specification             (log recipient
+                                              for TRADE_CLOSE)
+  0211005  Paper_Trading_Operations_Procedure (dv1_3 — paper-
+                                              parity binding;
+                                              cites EC-PAPER)
+  1011002  WS_Manager_Coding_Spec           (dv1_26 — §16A
+                                              WM-PAPER-LEDGER
+                                              + WM-PAPER-EXIT
+                                              feeds EC inputs)
+  1011005  Exit_Controller_Coding_Spec      (dv1_3 — AA=10
+                                              child; EC-PAPER
+                                              implementation
+                                              contract;
+                                              CIATS-owned
+                                              parameter
+                                              integration)
+  TB00000  Project Instructions for Claude  (v2_18 §4.4
+                                              PA-001..010
+                                              PAPER-AS-MASTER)
 
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_3  05-03-2026  PAPER-AS-MASTER CORRECTIVE — TB00147
+                     TIER 2 AUDIT FINDINGS 7 + 8.
+
+                     New section §6A and three new hard
+                     rules added:
+
+                       §6A PAPER MODE EXIT BEHAVIOR
+                         (EC-PAPER) NEW. Five sub-rules
+                         EC-PAPER-001 through EC-PAPER-005
+                         specifying paper-live byte-
+                         identical close path, entry
+                         points from WS Manager,
+                         TRADE_CLOSE log record parity,
+                         fees_entry_usd consumption from
+                         PositionRecord, and retirement
+                         of ws_manager._fire_ciats_outcome
+                         parallel path. All paper-mode
+                         exits route through Exit
+                         Controller's existing
+                         _close_position() sequence.
+
+                       HR-EC-013 (NEW) — paper-live
+                         close-path parity. Byte-
+                         identical downstream of
+                         (exit_price, fees_exit)
+                         determination. PA-005 mandate.
+
+                       HR-EC-014 (NEW) — Selection
+                         Controller state update
+                         authority. Exit Controller is
+                         the SOLE updater of
+                         exit_cooldown_log and
+                         consecutive_loss_count in BOTH
+                         modes. Closes paper-live
+                         divergence.
+
+                       HR-EC-015 (NEW) — CIATS-owned
+                         parameters MUST be read at use-
+                         time via params.get(key,
+                         DEFAULT_CONSTANT). Module
+                         constants serve only as
+                         params.get() fallbacks.
+                         Direct constant usage is a
+                         defect. Closes parent-spec
+                         layer of FINDING-TB00147-07.
+
+                       §11 RELATED DOCUMENTS expanded
+                         with cascade citations
+                         (0511001 dv1_5, 1011002 dv1_26,
+                         0211005 dv1_3, 1011005 dv1_3,
+                         TB00000 v2_18). 0411003 added
+                         (fee schedule citation needed
+                         by EC-PAPER fee arithmetic).
+
+                     REASON FOR CHANGE.
+
+                     TB00147 Tier 2 audit (paper P&L
+                     verification + remaining .py file
+                     defect-class scan) surfaced two
+                     defects in Exit Controller scope:
+
+                       FINDING-TB00147-07 (HIGH)
+                         exit_controller.py uses four
+                         module-level constants
+                         (CANCEL_TIMEOUT_WINDOW,
+                         MPP_RETRY_COUNT,
+                         MAX_HOLD_CANDLES, MAE_MULT)
+                         directly in business logic
+                         despite spec mandate that all
+                         four are CIATS-owned. CIATS
+                         proposals to change these
+                         parameters take effect in
+                         risk_engine, execution_engine,
+                         and ciats — but NOT in
+                         exit_controller. Cross-module
+                         CIATS parameter inconsistency.
+                         Concrete failure mode: CIATS
+                         proposes mae_mult 1.5 -> 1.7;
+                         risk_engine sizes for wider
+                         stops; exit_controller still
+                         triggers Layer 2 MAE breach at
+                         old 1.5x — closes positions
+                         BEFORE they reach the new
+                         threshold the rest of the
+                         system was sized for. Closed by
+                         HR-EC-015 + 1011005 dv1_3
+                         coding contract.
+
+                       FINDING-TB00147-08 (CRITICAL)
+                         Paper-mode exit paths in
+                         ws_manager.py dv1_25 BYPASS
+                         Exit Controller, directly
+                         mutating position_mirror via
+                         pop() and firing a parallel
+                         _fire_ciats_outcome that does
+                         NOT emit a TRADE_CLOSE log
+                         record. CIATS Half-Kelly
+                         cannot operate on paper data
+                         because it polls TRADE_CLOSE
+                         log records. Direct violation
+                         of HR-WM-025 (paper does NOT
+                         affect CIATS data flows) and
+                         TB00000 v2_18 §4.4 PA-005
+                         (byte-identical paper-live
+                         outside PA-004). Closed at the
+                         parent-spec layer by §6A
+                         EC-PAPER + HR-EC-013/014.
+                         Cascade implementation contract
+                         is in 1011005 dv1_3.
+
+                     FP/DP ANALYSIS.
+
+                     Same Option A / B / C analysis as
+                     0511001 dv1_5. Option C accepted.
+                     This document is the Exit
+                     Controller parent-spec layer of
+                     Option C.
+
+                     PA-MASTER PRE-EMIT SCAN.
+
+                     Authored under TB00000 v2_18 §4.4
+                     PA-008 pre-emit-scan discipline.
+                     Direction-of-mimicry: paper mimics
+                     live wherever physically possible
+                     (PA-001 / PA-005). Live-mode Exit
+                     Controller behavior is unchanged
+                     by dv1_3 — only paper-mode behavior
+                     is corrected to match what live
+                     already does (route through
+                     _close_position; emit TRADE_CLOSE;
+                     update SC state).
+
+                     PARENT CHAIN COMPLIANCE.
+
+                     0511004 (Tier 3 Instance) ->
+                     0510000 System_Components_Anchor
+                     (Tier 2) -> 0500000
+                     System_Architecture_Overview
+                     (Tier 1, Domain). Chain unbroken.
+
+                     Bill override.
+
+                     TB00147 cascade enacted under
+                     Bill explicit authorization
+                     (TB00147 chat, 05-03-2026)
+                     "Yes, I authorize expanded
+                     ALT-A." Direct increment dv1_2
+                     -> dv1_3 under standing
+                     document-control override scope
+                     established TB00115 et al.
+
+                     Document Status: supersedes dv1_2.
 
   dv1_2  04-04-2026  Two additional defects from dv1_0
                      corrected. (1) Section 2 Component
