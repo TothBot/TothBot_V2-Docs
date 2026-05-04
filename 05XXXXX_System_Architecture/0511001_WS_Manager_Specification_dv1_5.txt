@@ -1,10 +1,10 @@
 DocDCN:     0511001
 DocTitle:   WS_Manager_Specification
-DocVersion: dv1_4
+DocVersion: dv1_5
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511001_WS_Manager_Specification_dv1_4.txt
-DocDate:    04-26-2026
-DocTime:    21:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511001_WS_Manager_Specification_dv1_5.txt
+DocDate:    05-03-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 WS MANAGER SPECIFICATION
@@ -1095,7 +1095,8 @@ Fatal reconnect (per shard or private): 10 attempts over
           [private zombie detection logic]
     Public zombie check executes unconditionally.
 
-13.6 Paper Starting Balance (D-05)
+13.6 Paper Starting Balance (D-05) and Synthetic Ledger
+     Evolution
 
   paper_starting_balance config key defaults to $1,000
   per TB00128 Ratified Decision D-05 (source: TB00001
@@ -1107,6 +1108,201 @@ Fatal reconnect (per shard or private): 10 attempts over
   Ops procedure to change the value between runs: edit
   config file, restart process (standard systemd restart
   cycle per 0211005).
+
+  IMPORTANT (dv1_5): The synthetic spot_usd_balance is
+  NOT static. It is INITIALIZED to paper_starting_balance
+  at startup AND EVOLVES through the run as simulated
+  fills realize P/L. Per HR-WM-032 (paper ledger update
+  rule), every paper exit (TP fill, emergSL trigger,
+  Layer 2 MAE breach, Layer 1 signal exit, time expiry,
+  any other close path) updates spot_usd_balance using
+  the same fee schedule Kraken applies in live (entry
+  maker fee + exit fee). This makes paper-mode capital
+  ledger evolution mirror live-mode balance-channel
+  evolution wherever physically possible per
+  TB00000 v2_18 §4.4 PA-001..010 PAPER-AS-MASTER.
+
+13.7 Paper Synthetic Ledger Update Rule (NEW dv1_5)
+
+  HR-WM-032 PAPER LEDGER UPDATE governs how
+  spot_usd_balance evolves in paper mode. The rule is
+  cascaded into the coding spec at 1011002 dv1_26 §10A
+  WM-PAPER-LEDGER-001 through WM-PAPER-LEDGER-004.
+
+  CONCEPT.
+
+    Paper mode has no Kraken balances channel by
+    HR-WM-022 (paper does NOT connect private WS).
+    Without the balances channel, spot_usd_balance
+    cannot be updated by exchange-pushed events.
+    Paper mode therefore maintains a SYNTHETIC LEDGER
+    that is updated locally on every simulated fill
+    using the same arithmetic Kraken applies in live.
+
+  REQUIRED BEHAVIOR.
+
+    On startup (paper mode):
+      spot_usd_balance      = paper_starting_balance
+      portfolio_baseline_USD = paper_starting_balance
+
+    On every paper ENTRY simulated fill
+    (_simulate_entry_fill):
+      entry_cost = entry_qty * entry_price
+      entry_fee  = entry_cost * FEE_MAKER_PCT
+      spot_usd_balance -= (entry_cost + entry_fee)
+      Position is added to position_mirror with
+      fees_entry_usd = entry_fee captured.
+
+    On every paper EXIT simulated fill (TP fill,
+    emergSL trigger, Layer 2 MAE breach, Layer 1
+    signal exit, time expiry):
+      exit_proceeds = exit_qty * exit_price
+      exit_fee = exit_proceeds * FEE_MAKER_PCT
+                 (TP, maker fee — limit order fills)
+                 OR
+      exit_fee = exit_proceeds * FEE_TAKER_PCT
+                 (emergSL trigger, market sell —
+                  taker fee)
+      spot_usd_balance += (exit_proceeds - exit_fee)
+      The Position Mirror entry is then cleared by
+      Exit Controller per HR-WM-033.
+
+    portfolio_baseline_USD is NEVER updated after
+    startup (HR-WM-011 unchanged in paper mode).
+
+  CONSEQUENCE.
+
+    Drawdown computation (§5.4) operates correctly
+    in paper mode because spot_usd_balance reflects
+    realized cash + unrealized open-position MTM
+    (sum of position_mirror entries × bid). Without
+    HR-WM-032, paper drawdown denominators would be
+    wrong and circuit breakers (SESSION_PAUSE,
+    FULL_HALT) would fire on incorrect numbers.
+
+    CIATS Trade Outcome Bus receives a complete
+    TRADE_CLOSE log record per HR-WM-033 with
+    realized P/L derivable from entry + exit prices
+    + qty + fees. Half-Kelly computation
+    (CIATS-KE-002) operates on paper data identically
+    to live data. PA-005 byte-identical CIATS data
+    flow holds.
+
+  LOG EVENTS REQUIRED.
+
+    PAPER_LEDGER_UPDATED  on every ledger mutation,
+                          payload includes
+                          {event_type, symbol,
+                          delta_usd, fee_usd,
+                          new_balance, exit_reason}.
+
+13.8 Paper Exit Routing Through Exit Controller
+     (NEW dv1_5)
+
+  HR-WM-033 PAPER EXITS ROUTE THROUGH EC governs the
+  paper-mode exit path so that ALL exits (live and
+  paper) traverse the same Exit Controller close
+  sequence. Cascaded into the coding spec at 1011002
+  dv1_26 §6.x and 1011005 dv1_3 EC-PAPER section.
+  Cross-referenced from 0511004 dv1_3 §EC-PAPER.
+
+  PROBLEM (pre-dv1_5).
+
+    Paper-mode exits in dv1_25 code (_maybe_paper_fill,
+    paper-mode handle_filled, paper-mode
+    dispatch_market_sell) bypass the Exit Controller
+    entirely. They directly mutate position_mirror via
+    pop() and fire a parallel CIATS outcome path
+    (_fire_ciats_outcome) that does NOT emit a
+    TRADE_CLOSE log record and does NOT carry P/L
+    payload. CIATS Half-Kelly cannot operate on paper
+    data because TRADE_CLOSE records are absent.
+
+    This violates HR-WM-025 (paper does NOT affect
+    CIATS data flows) and TB00000 v2_18 §4.4 PA-005
+    (paper-live byte-identical outside PA-004 four
+    points). The paper-vs-live exit path divergence
+    is NOT one of the four PA-004 points; it is a
+    defect.
+
+  REQUIRED BEHAVIOR (dv1_5).
+
+    All paper-mode exit paths MUST route through Exit
+    Controller's close sequence:
+
+      Paper TP detected (_handle_ticker, ask >= tp_price):
+        1. Compute exit_price = tp_price (limit order
+           fills at the limit).
+        2. Compute fees_exit = exit_qty * tp_price *
+           FEE_MAKER_PCT.
+        3. Apply HR-WM-032 ledger update:
+           spot_usd_balance += (exit_proceeds - fees_exit).
+        4. Call Exit Controller's _close_position(
+           symbol, exit_price=tp_price,
+           exit_reason="TP_FILL",
+           fees_exit=fees_exit, wm=self).
+        5. Exit Controller emits TRADE_CLOSE log
+           record (EC-TOB-002) with full P/L payload.
+        6. Exit Controller clears position_mirror,
+           releases semaphore, updates Selection
+           Controller state.
+        7. Unsubscribe ticker bbo for symbol →
+           trades mode.
+
+      Paper emergSL triggered (_handle_ticker,
+      bid <= emergsl_price):
+        1. Compute exit_price = bid (market sell at
+           current bid — taker fill).
+        2. Compute fees_exit = exit_qty * bid *
+           FEE_TAKER_PCT.
+        3. Apply HR-WM-032 ledger update.
+        4. Call _close_position(symbol,
+           exit_price=bid, exit_reason="EMERGENCY_SL",
+           fees_exit=fees_exit, wm=self).
+        5. Exit Controller emits TRADE_CLOSE.
+        6. Exit Controller cleanup.
+        7. Unsubscribe ticker bbo → trades mode.
+
+      Paper Layer 1 signal exit, Layer 2 MAE breach,
+      time expiry, regime exit (any path Exit
+      Controller normally drives in live):
+        Exit Controller's normal close sequence runs
+        in paper mode too. The dispatch_market_sell()
+        in paper mode does NOT directly clear
+        position_mirror; it computes the exit_price
+        from current bid + fees_exit at taker rate,
+        applies HR-WM-032 ledger update, then yields
+        control back to Exit Controller's
+        _close_position which finishes the close
+        sequence.
+
+  CIATS DATA FLOW PARITY.
+
+    Paper-mode TRADE_CLOSE log records contain the
+    same fields as live-mode TRADE_CLOSE records:
+      ts, event=TRADE_CLOSE, symbol,
+      entry_fill_price, exit_price,
+      entry_timestamp_utc, exit_timestamp_utc,
+      hold_candle_count, MAE_pct_reached,
+      fees_entry_usd, fees_exit_usd, fees_total_usd,
+      exit_reason, asset_regime, vol_regime,
+      market_regime, signal_params, actual_RR,
+      net_PL_USD, net_gain_usd, net_loss_usd.
+
+    CIATS log-file polling reads paper TRADE_CLOSE
+    records identically to live records. Half-Kelly,
+    Mann-Whitney U, EWMA, CUSUM, and Spearman
+    operate on a unified corpus.
+
+  RETIRED PARALLEL PATH.
+
+    The dv1_4 / dv1_25 _fire_ciats_outcome function
+    in ws_manager.py is RETIRED in dv1_26. All CIATS
+    outcome data flows via Exit Controller's
+    TRADE_CLOSE log emission. ws_manager.py paper-
+    mode exit code paths must ONLY apply HR-WM-032
+    ledger update, then call Exit Controller for the
+    rest of the close sequence.
 
 ============================================================
 14. HARD RULES
@@ -1287,6 +1483,54 @@ HR-WM-031  SUBSCRIBE-COUNT vs MAX-CONCURRENT
            multiple of max_concurrent — is an AR-070
            silent-narrowing defect.
 
+HR-WM-032  PAPER LEDGER UPDATE (NEW dv1_5). In paper
+           mode, spot_usd_balance is a synthetic
+           ledger initialized at startup to
+           paper_starting_balance and EVOLVED locally
+           on every simulated fill. On entry fills
+           the ledger is debited by (entry_qty *
+           entry_price + entry_qty * entry_price *
+           FEE_MAKER_PCT). On exit fills the ledger
+           is credited by (exit_qty * exit_price -
+           fees_exit) where fees_exit uses
+           FEE_MAKER_PCT for limit-order TP fills and
+           FEE_TAKER_PCT for market-sell exits
+           (emergSL trigger, Layer 2 MAE breach,
+           Layer 1 signal exit, time expiry, regime
+           exit). portfolio_baseline_USD is NEVER
+           updated after startup (HR-WM-011
+           unchanged). Without this rule, paper-mode
+           drawdown numerators are wrong and CIATS
+           cannot reconstruct paper P/L. Per §13.7.
+           Cascaded to 1011002 dv1_26 §10A
+           (WM-PAPER-LEDGER-001..004). Closes
+           FINDING-TB00147-06 (paper synthetic ledger
+           never updated on simulated fills).
+
+HR-WM-033  PAPER EXITS ROUTE THROUGH EXIT CONTROLLER
+           (NEW dv1_5). All paper-mode exit paths
+           (TP fill, emergSL trigger, Layer 1 signal
+           exit, Layer 2 MAE breach, time expiry,
+           regime exit) MUST route through Exit
+           Controller's _close_position() close
+           sequence. ws_manager.py paper code paths
+           apply the HR-WM-032 ledger update, then
+           call Exit Controller; the Exit Controller
+           emits the TRADE_CLOSE log record (per
+           1011005 EC-TOB-002), clears Position
+           Mirror, releases the semaphore, and
+           updates Selection Controller state. The
+           dv1_25 parallel _fire_ciats_outcome path
+           is RETIRED. Without this rule, paper-mode
+           CIATS data flow is non-parity with live
+           (no TRADE_CLOSE records emitted), in
+           direct violation of HR-WM-025 and
+           TB00000 v2_18 §4.4 PA-005. Per §13.8.
+           Cascaded to 1011002 dv1_26 §6.x and
+           1011005 dv1_3 EC-PAPER. Closes
+           FINDING-TB00147-08 (paper exits bypass
+           Exit Controller).
+
 ============================================================
 15. WHAT TRIGGERS IT
 ============================================================
@@ -1363,7 +1607,17 @@ symbol (where applicable), connection_id, level.
                       PAPER_AMEND_SIMULATED,
                       PAPER_MARKET_SELL_SIMULATED,
                       PAPER_TP_FILL_DETECTED,
-                      PAPER_EMERG_SL_TRIGGERED
+                      PAPER_EMERG_SL_TRIGGERED,
+                      PAPER_LEDGER_UPDATED (dv1_5,
+                          per HR-WM-032: payload
+                          {event_type, symbol,
+                          delta_usd, fee_usd,
+                          new_balance, exit_reason}).
+                      Per HR-WM-033 (dv1_5), TRADE_CLOSE
+                      records for paper-mode exits are
+                      emitted by Exit Controller (not
+                      WS Manager) — same log schema
+                      as live-mode TRADE_CLOSE records.
   ERRORS:             UNKNOWN_MESSAGE_TYPE (WARN), any exception
 
 ============================================================
@@ -1563,13 +1817,26 @@ symbol (where applicable), connection_id, level.
                                               owned pipeline
                                               evaluation)
   1011002  WS_Manager_Coding_Spec           (AA=10 child;
-                                              dv1_24
+                                              dv1_26
                                               implementation
                                               contract for
-                                              PATH 2)
+                                              PATH 2 +
+                                              HR-WM-032
+                                              paper ledger +
+                                              HR-WM-033 paper
+                                              exit routing)
   0211005  Paper_Trading_Operations_Procedure (paper-parity
-                                              binding)
-  TB00000  Project Instructions for Claude  (v2_17 RR-SCOPE-009)
+                                              binding;
+                                              dv1_3 cites
+                                              HR-WM-032 +
+                                              HR-WM-033)
+  0511004  Exit_Controller_Specification    (dv1_3 EC-PAPER
+                                              section receives
+                                              HR-WM-033 cascade)
+  TB00000  Project Instructions for Claude  (v2_18 §4.4
+                                              PA-001..010
+                                              PAPER-AS-MASTER
+                                              PRINCIPLE)
   0311002  Document_Creation_Workflow       (v1_8 DC-PREFLIGHT-006)
   TB00141  Session Log                      (Phase A/B/D probe)
   TB00142  Session Log                      (Long Phase D
@@ -1581,6 +1848,240 @@ symbol (where applicable), connection_id, level.
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_5  05-03-2026  PAPER-AS-MASTER CORRECTIVE — TB00147
+                     TIER 1.5 + TIER 2 AUDIT FINDINGS.
+
+                     Two new hard rules added to §14
+                     and two new sub-sections added to
+                     §13:
+
+                       HR-WM-032 PAPER LEDGER UPDATE
+                         Synthetic spot_usd_balance
+                         evolves locally on every
+                         simulated fill using
+                         FEE_MAKER_PCT for entries +
+                         TP fills, FEE_TAKER_PCT for
+                         market-sell exits. Closes
+                         FINDING-TB00147-06.
+
+                       HR-WM-033 PAPER EXITS ROUTE
+                         THROUGH EXIT CONTROLLER.
+                         All paper exit paths go
+                         through EC's _close_position()
+                         so TRADE_CLOSE log records
+                         are emitted with full P/L
+                         payload (PA-005 paper-live
+                         byte-identical CIATS data
+                         flow). Closes
+                         FINDING-TB00147-08.
+
+                       §13.6 amended to clarify
+                         paper_starting_balance
+                         INITIALIZES the synthetic
+                         ledger; the ledger then
+                         EVOLVES via simulated-fill
+                         P/L per HR-WM-032.
+
+                       §13.7 NEW. Paper Synthetic
+                         Ledger Update Rule. Concept,
+                         required behavior, fee
+                         schedule application,
+                         consequence, log events.
+
+                       §13.8 NEW. Paper Exit Routing
+                         Through Exit Controller.
+                         Problem statement,
+                         required behavior per exit
+                         path, CIATS data flow
+                         parity, retirement of
+                         dv1_4/dv1_25 parallel
+                         _fire_ciats_outcome path.
+
+                       §16 LOG INVENTORY amended:
+                         PAPER_LEDGER_UPDATED added
+                         to PAPER TRADING category.
+                         TRADE_CLOSE records noted
+                         as Exit Controller
+                         responsibility (same schema
+                         paper and live).
+
+                       §18 RELATED DOCUMENTS amended:
+                         1011002 dv1_24 → dv1_26
+                         (cascade target).
+                         0211005 dv1_3 cite added
+                         (paper-parity binding).
+                         0511004 dv1_3 cite added
+                         (EC-PAPER section).
+                         TB00000 v2_17 → v2_18
+                         (PA-001..010 reference).
+
+                     REASON FOR CHANGE.
+
+                     TB00147 Tier 1.5 + Tier 2 audit
+                     of fb5de32 ws_manager.py dv1_25
+                     (committed TothBot_V2-Code master)
+                     surfaced two CRITICAL defects
+                     plus one HIGH defect in the
+                     paper-mode code path:
+
+                       FINDING-TB00147-06 (CRITICAL)
+                         Paper synthetic ledger
+                         spot_usd_balance set ONCE at
+                         startup ($1,000 default per
+                         D-05) and never updated by
+                         simulated fills. Drawdown
+                         numerator computed from
+                         (portfolio_baseline -
+                         current) is wrong because
+                         current does not accumulate
+                         realized cash from closed
+                         paper trades. SESSION_PAUSE
+                         and FULL_HALT circuit
+                         breakers fire on incorrect
+                         numbers. PA-004 #3 in
+                         TB00000 v2_18 explicitly
+                         mandates synthetic ledger
+                         evolves via simulated-fill
+                         P/L using same fee schedule
+                         as live; dv1_4 spec did not
+                         formalize this requirement,
+                         and dv1_25 code did not
+                         implement it.
+
+                       FINDING-TB00147-08 (CRITICAL)
+                         Paper-mode exit paths in
+                         dv1_25 code (_maybe_paper_fill,
+                         paper-mode handle_filled,
+                         paper-mode dispatch_market_sell)
+                         BYPASS Exit Controller
+                         entirely. They directly mutate
+                         position_mirror via pop() and
+                         fire a parallel
+                         _fire_ciats_outcome that does
+                         NOT emit a TRADE_CLOSE log
+                         record. CIATS Half-Kelly
+                         (CIATS-KE-002) cannot operate
+                         on paper data because it
+                         polls TRADE_CLOSE log records;
+                         these are absent in paper
+                         mode. Direct violation of
+                         HR-WM-025 (paper does NOT
+                         affect CIATS data flows) and
+                         TB00000 v2_18 §4.4 PA-005
+                         (byte-identical paper-live
+                         outside PA-004 four points).
+                         Position close path is NOT
+                         in PA-004; the divergence is
+                         a defect.
+
+                       FINDING-TB00147-07 (HIGH)
+                         exit_controller.py uses four
+                         hardcoded module constants
+                         (CANCEL_TIMEOUT_WINDOW,
+                         MPP_RETRY_COUNT,
+                         MAX_HOLD_CANDLES, MAE_MULT)
+                         for parameters spec mandates
+                         as CIATS-owned. Cross-module
+                         CIATS parameter inconsistency.
+                         Closed in 1011005 dv1_3
+                         (Exit Controller coding spec
+                         level — parent spec 0511004
+                         dv1_3 governs). Not addressed
+                         in 0511001 dv1_5.
+
+                     FP/DP ANALYSIS.
+
+                     Option A (deploy fb5de32 as-is to
+                     paper observation window):
+                     REJECTED. 24-72h window would
+                     produce zero valid CIATS data
+                     (FINDING 8) AND false drawdown
+                     signals (FINDING 6). Loss-
+                     prevention mandate (TB00000 §3.0
+                     Primary Mission) forbids deploying
+                     to a state we know produces
+                     invalid validation data.
+
+                     Option B (NSI-text governance,
+                     fix later): REJECTED. NSI text
+                     governance has a six-recurrence
+                     failure history in this project
+                     (OI-037 / TB00114-119); §4.3
+                     absolute-standing-rule pattern is
+                     what works for behavior-class
+                     defects. CIATS-flow-parity is a
+                     behavior-class concern.
+
+                     Option C (formal spec amendment +
+                     code edit + deploy + observe):
+                     ACCEPTED. Matches the §4.2 / §4.3
+                     / §4.4 enforcement pattern that
+                     has demonstrably worked. PA-005
+                     mandates byte-identical paper-
+                     live; spec must encode the
+                     requirement before code can
+                     conform.
+
+                     Decision: Option C.
+
+                     PA-MASTER PRE-EMIT SCAN.
+
+                     This document was authored
+                     under TB00000 v2_18 §4.4 PA-008
+                     pre-emit-scan discipline. Every
+                     new rule preserves the paper-
+                     canonical direction-of-mimicry
+                     (paper is master; live mimics
+                     paper outside PA-004 four
+                     points). Live-mode behavior is
+                     unchanged by dv1_5 — only paper-
+                     mode behavior is corrected to
+                     match what live already does.
+
+                     COMPANION DELIVERABLES THIS
+                     CASCADE (TB00147 batch):
+                       1011002 dv1_25 -> dv1_26
+                         (WS Manager coding spec —
+                         §10A WM-PAPER-LEDGER + §6.x
+                         exit routing; HR-WM-032/033
+                         consolidated)
+                       0511004 dv1_2 -> dv1_3 (Exit
+                         Controller spec — EC-PAPER
+                         section)
+                       1011005 dv1_2 -> dv1_3 (Exit
+                         Controller coding spec —
+                         CIATS-owned parameter
+                         integration closing
+                         FINDING-7; EC-PAPER coding
+                         contract closing FINDING-8
+                         cascade)
+                       0211005 dv1_2 -> dv1_3
+                         (paper trading operations
+                         procedure — PT-MODE-004
+                         amended)
+
+                     PARENT CHAIN COMPLIANCE.
+
+                     0511001 (Tier 3 Instance) ->
+                     0510000 System_Components_Anchor
+                     (Tier 2) -> 0500000
+                     System_Architecture_Overview
+                     (Tier 1, Domain). Chain unbroken.
+
+                     Bill override.
+
+                     TB00147 cascade enacted under
+                     Bill explicit authorization
+                     (TB00147 chat, 05-03-2026)
+                     "Yes, I authorize expanded
+                     ALT-A." Direct increment dv1_4
+                     -> dv1_5 under standing
+                     document-control override
+                     scope established TB00115 et al.
+
+                     Document Status: supersedes
+                     dv1_4.
 
   dv1_4  04-26-2026  PATH 2 MULTI-CONNECTION BATCHED-
                      SUBSCRIBE ARCHITECTURE.
