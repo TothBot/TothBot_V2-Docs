@@ -1,10 +1,10 @@
 DocDCN:     0311006
 DocTitle:   Known_Platform_Limitations
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311006_Known_Platform_Limitations_dv1_0.txt
-DocDate:    04-25-2026
-DocTime:    21:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311006_Known_Platform_Limitations_dv1_1.txt
+DocDate:    05-04-2026
+DocTime:    20:00:00 UTC
 
 ============================================================
 KNOWN PLATFORM LIMITATIONS
@@ -230,11 +230,64 @@ KPL-003
   STATUS         ACTIVE WORKAROUND.
   LAST VERIFIED  04-23-2026 (TB00121).
 
+------------------------------------------------------------
+KPL-004
+------------------------------------------------------------
+
+  PLATFORM       Claude.ai
+  DEFECT         The Claude.ai project knowledge folder
+                 does NOT accept .svg file uploads. Bill
+                 cannot upload SVG vector-graphics asset
+                 files to the project knowledge folder
+                 even though .svg is a valid asset
+                 extension under 0311001 v1_4 §15.3
+                 taxonomy. The result: SVG files cannot
+                 serve as project-folder-resident
+                 controlled assets, even though they are
+                 git-tracked normally in
+                 TothBot_V2-Docs.
+  ORIGIN         TB00150 (Bill mid-session feedback during
+                 0500000 dv1_23 v1_0 delivery review).
+  ROOT CAUSE     Claude.ai project knowledge folder
+                 implements a per-extension allowlist for
+                 uploaded files. .svg is not in the
+                 allowlist. .png, .jpg, .jpeg ARE in the
+                 allowlist. Vendor behavior; not under
+                 TothBot V2 control.
+  WORKAROUND     For controlled documents that need
+                 graphical-asset embeds:
+                   (1) Author the diagram as SVG (vector
+                       source) for editability.
+                   (2) Rasterize the SVG to high-
+                       resolution PNG via cairosvg
+                       (output_width >= 1840 px, 300
+                       DPI). The PNG is the CANONICAL
+                       asset file in the controlled
+                       namespace per 0311001 v1_4 §15.5
+                       Type=Image.
+                   (3) Reference the PNG file in the
+                       parent .txt source via
+                       `[Asset file: 0500000_ImageN_
+                       Title.png]` syntax per §15.6.
+                   (4) The SVG vector source files are
+                       NOT in the controlled namespace.
+                       Preserve them in a development-
+                       only location (e.g., outside the
+                       05XXXXX folder, or in git history
+                       of prior dv1_22-style inline
+                       embeds) for future re-rasterization
+                       or editing.
+                 The .docx and .pdf rendering pipelines
+                 embed the PNG directly per §15.8 RC-2
+                 (.png -> embed directly). No
+                 rasterization step at render time
+                 because PNG is already canonical.
+  STATUS         ACTIVE WORKAROUND.
+  LAST VERIFIED  05-04-2026 (TB00150).
+
 ============================================================
 6. ENTRY MAINTENANCE
 ============================================================
-
-6.1 ADDING A NEW ENTRY
     A new KPL entry is added through a normal 0311006
     version increment per 0311003. The increment:
       (a) Adds a new KPL-NNN block in §5 using the next
@@ -280,6 +333,49 @@ KPL-003
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_1  05-04-2026  KPL-004 ADDED: SVG-FILE-UPLOAD-NOT-
+                     ACCEPTED platform limitation.
+
+                     ORIGIN: TB00150 mid-session feedback.
+                     Bill identified during 0500000 dv1_23
+                     v1_0 delivery review that the
+                     Claude.ai project knowledge folder
+                     does not accept .svg file uploads.
+                     The 7 SVG asset files originally
+                     produced for dv1_23 (one per diagram)
+                     could not be uploaded to the project
+                     folder, blocking V-023 reference-
+                     resolution from /mnt/project/ in
+                     downstream Claude sessions.
+
+                     FP/DP RESOLUTION: PNG canonical with
+                     §15.5 Type=Image. The PNGs already
+                     rasterized from the SVGs via cairosvg
+                     (300 DPI, 1840+ px width) become the
+                     canonical asset files in the
+                     controlled namespace. SVG vector
+                     sources are NOT in the namespace —
+                     preserved as development-only files
+                     (or in git history of dv1_22 inline
+                     embeds) for future editing. Uses
+                     §15.5 / §15.3 as-written (no
+                     governance amendment).
+
+                     CASCADE EFFECT: 0500000 dv1_23
+                     authored TB00150 carries PNG-canonical
+                     references from initial v1_0 delivery
+                     (after Bill mid-session correction
+                     before any GitHub commit). All 7
+                     diagrams stored as 0500000_ImageN_
+                     Title.png. References in dv1_23 .txt
+                     use Image type. dv1_23 binaries
+                     pass §4.1.4 + V-020..030 validation.
+
+                     ENTRY MAINTENANCE: KPL-004 entry
+                     conforms to §4 format. ACTIVE
+                     WORKAROUND. LAST VERIFIED
+                     05-04-2026.
 
   dv1_0  04-25-2026  Initial. TB00139 STREAM 3
                      DC-CLEANUP-003 extraction sweep

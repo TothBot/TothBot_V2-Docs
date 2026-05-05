@@ -1,10 +1,10 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_8
+DocVersion: v1_9
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_8.txt
-DocDate:    04-26-2026
-DocTime:    21:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_9.txt
+DocDate:    05-04-2026
+DocTime:    18:30:00 UTC
 
 ============================================================
 DOCUMENT CREATION WORKFLOW
@@ -1404,6 +1404,188 @@ Governing documents:
            to CHECK 1 implementation).
 
 ------------------------------------------------------------
+DC-PREFLIGHT-007  CHECK 4 — ASSET INVENTORY VALIDATION
+------------------------------------------------------------
+
+Claude executes an asset-inventory sweep at session
+open against every controlled document in
+/mnt/project/. The check enforces the 0311001 v1_4 §15
+Embedded Asset Architecture at session-open time so
+that inline-embed defects (V-028, PP-1) and
+reference-asset desynchronization defects (V-023,
+V-026, V-027) are surfaced before any binary rendering
+operation is attempted.
+
+Required validation:
+
+  (a) ASSET REFERENCE PARSE.
+      For every .txt controlled document in
+      /mnt/project/, Claude greps for the canonical
+      reference syntax per 0311001 v1_4 §15.6:
+        [Asset file: <filename>]
+      and the deprecated alias:
+        [Diagram file: <filename>]
+      Every reference is recorded.
+
+  (b) ASSET FILE PRESENCE.
+      For every reference recorded in (a), Claude
+      verifies that the corresponding asset file
+      exists in /mnt/project/. Missing asset files
+      = V-023 / V-027 violation. The session HALTS
+      until either the asset file is recovered from
+      GitHub by Bill, or the reference is removed
+      from the .txt source via documented
+      remediation.
+
+  (c) ORPHAN ASSET CHECK.
+      Every asset file in /mnt/project/ matching the
+      0311001 v1_4 §15.5 canonical filename pattern
+      MUST have at least one corresponding reference
+      in some .txt controlled document. Asset files
+      with no referencing document are V-026 orphan
+      assets and are FLAGGED to Bill for resolution
+      (either reference addition or asset removal).
+
+  (d) INLINE EMBED SCAN.
+      For every .txt controlled document in
+      /mnt/project/, Claude greps for prohibited
+      inline embed patterns (per 0311001 v1_4 §15.10
+      PP-1 through PP-5):
+        - Inline `<svg>...</svg>` XML
+        - Inline base64 image data (base64 markers
+          such as "data:image/", multi-line A-Za-z0-9+/
+          blocks)
+        - Inline Office Open XML fragments
+        - Inline PDF byte sequences
+      Any match = V-028 / CI-003 violation. The
+      finding is logged as a remediation item per
+      0311001 v1_4 §15.9 migration procedure. The
+      session does NOT halt for this finding (a
+      historical document with inline embeds may be
+      in the project folder pending migration on its
+      next normal version increment), but Claude
+      MUST surface the finding in the §3 STEP A
+      report and propose remediation in the session's
+      first STREAM if the affected document is in
+      scope.
+
+  (e) FILENAME VALIDATION.
+      Every asset file in /mnt/project/ MUST match
+      the 0311001 v1_4 §15.5 canonical filename
+      pattern and §15.7 V-020 / V-021 / V-025 / V-029
+      / V-030 validation rules. Non-conforming
+      filenames are V-025 violations.
+
+ROOT CAUSE ADDRESSED:
+ERROR-TB00149-02 SVG-DROP-IN-BINARY-GENERATION (TB00149
+origin) — the dv1_22 .txt source contained 6 inline
+`<svg>` XML embeds in violation of 0311001 v1_4 §15
+authoring architecture, and the rendering pipeline
+silently stripped them when generating the .docx and
+.pdf. Had DC-PREFLIGHT-007 been in place at TB00149
+session open, the inline-embed defect would have been
+detected and remediated before any binary rendering
+was attempted, preventing the silent content loss in
+the dv1_22 binaries.
+
+Governing documents:
+  TB00000  Project Instructions for Claude (§4.1
+           CI-002 External Asset Architecture, CI-003
+           No Inline Binary Embeds, CI-009 Asset
+           Presence Verification).
+  0311001  Namespace_Specification (§15 Embedded
+           Asset Architecture, V-020 through V-030,
+           PP-1 through PP-10).
+
+------------------------------------------------------------
+DC-PREFLIGHT-008  CHECK 5 — BINARY-IN-FOLDER CONTENT-
+                  COMPLETENESS VALIDATION
+------------------------------------------------------------
+
+Claude executes a content-completeness validation
+sweep at session open against every BINARY artifact
+(.docx, .pdf, .xlsx, .pptx) present in /mnt/project/.
+The check applies the TB00000 v2_19 §4.1 DR-007 gates
+to every binary present in the project folder, not
+only to binaries Claude is producing in the current
+session. The purpose is to detect prior-session
+binaries that were delivered with content gaps and
+are therefore unsafe to use as a base for any
+subsequent rendering or reference operation.
+
+Required validation:
+
+  (a) DR-004 REFERENCE.
+      Every binary in /mnt/project/ is first probed
+      via DR-004.1 file-type probe and DR-004.2
+      structural probe. Binaries that fail DR-004 are
+      flagged as KPL-002 plain-text-mislabeled
+      defects and are NOT used as a base for any
+      session work. The corresponding canonical
+      .txt source-of-truth (per CI-001) is the only
+      reference Claude uses.
+
+  (b) DR-007 REFERENCE FOR DR-004-PASSING BINARIES.
+      For every binary in /mnt/project/ that PASSED
+      DR-004, Claude executes DR-007.1 asset-
+      reference parity check against the
+      corresponding .txt source-of-truth. If the
+      .txt source contains N "[Asset file: ...]"
+      references and the binary contains M embedded
+      assets, M MUST equal N. M < N indicates the
+      binary is content-incomplete (silent-loss
+      defect, ERROR-TB00149-02 class).
+
+      Additional DR-007 checks (DR-007.2 section-
+      heading parity, DR-007.3 structural-marker
+      parity, DR-007.4 word-count parity, DR-007.5
+      placeholder/stub scan, DR-007.6 revision-
+      history parity) are run as time permits;
+      DR-007.1 is the minimum required check.
+
+  (c) FAILURE FLAG.
+      Any binary that fails DR-007 in /mnt/project/
+      is FLAGGED as content-incomplete in the
+      session's §3 STEP A report. Such a binary
+      MUST NOT be used as a reference, MUST NOT be
+      treated as the source-of-truth, and MUST NOT
+      be edited or used as a base for the new
+      version's binary generation. The
+      corresponding .txt source-of-truth governs
+      per CI-001.
+
+      If the binary's content-incompleteness affects
+      a document in scope for the current session,
+      remediation per 0311001 v1_4 §15.9 migration
+      procedure is added to the session work plan.
+
+ROOT CAUSE ADDRESSED:
+ERROR-TB00149-02 second-order finding — the dv1_19,
+dv1_20, dv1_21 .docx and .pdf binaries in the project
+folder were defective per KPL-002 plain-text
+mislabeling, and the dv1_21 binaries specifically
+contained no rendered diagrams (preceding the dv1_22
+defect for the same root cause). Had DC-PREFLIGHT-008
+been in place, the recurring content-loss defect
+would have been surfaced at every session open from
+dv1_19 onward, ~23 days earlier than its actual
+TB00149 detection.
+
+Governing documents:
+  TB00000  Project Instructions for Claude (§4.1
+           DR-004 Binary Artifact Structural
+           Integrity Validation, DR-007 Binary
+           Artifact Content-Completeness
+           Validation, CI-001 Canonical Source-of-
+           Truth, CI-011 Round-Trip Regeneration
+           Policy).
+  0311001  Namespace_Specification (§15 Embedded
+           Asset Architecture, §15.9 Migration
+           Rule).
+  0311006  Known_Platform_Limitations (KPL-002
+           plain-text-mislabel defect).
+
+------------------------------------------------------------
 DC-PREFLIGHT-006  PRE-DEPLOY RATE-LIMIT AND RESOURCE-
                   ENVELOPE IMPACT ANALYSIS
 ------------------------------------------------------------
@@ -1835,6 +2017,156 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_9   05-04-2026  ERROR-TB00149-02 REMEDIATION —
+                     STEP A §8.2.5 EXTENSION.
+
+                     Two new pre-flight checks added
+                     to STEP A: DC-PREFLIGHT-007
+                     ASSET INVENTORY VALIDATION and
+                     DC-PREFLIGHT-008 BINARY-IN-FOLDER
+                     CONTENT-COMPLETENESS VALIDATION.
+
+                     DC-PREFLIGHT-007 enforces the
+                     0311001 v1_4 §15 Embedded Asset
+                     Architecture at session-open
+                     time. It scans every .txt
+                     controlled document in
+                     /mnt/project/ for asset
+                     references, verifies each
+                     reference resolves to an asset
+                     file in the same folder
+                     (V-023 / V-027), checks for
+                     orphan asset files (V-026),
+                     scans for prohibited inline
+                     embed patterns (V-028 / PP-1
+                     through PP-5), and validates
+                     filenames against the §15.5
+                     canonical pattern.
+
+                     DC-PREFLIGHT-008 applies the
+                     TB00000 v2_19 §4.1 DR-004 +
+                     DR-007 gates to every binary
+                     artifact present in
+                     /mnt/project/. Binaries that
+                     fail DR-004 are flagged as
+                     KPL-002 plain-text mislabel
+                     defects and are not used as a
+                     base. Binaries that pass DR-004
+                     undergo DR-007 content-
+                     completeness validation
+                     (minimum: DR-007.1 asset-
+                     reference parity). Binaries
+                     that fail DR-007 are flagged as
+                     content-incomplete and require
+                     0311001 v1_4 §15.9 migration
+                     before reuse.
+
+                     REASON FOR CHANGE:
+                     ERROR-TB00149-02 SVG-DROP-IN-
+                     BINARY-GENERATION (TB00149
+                     origin). The dv1_22 .docx and
+                     .pdf delivered in TB00149 v1_0
+                     were missing all 6 SVG diagrams
+                     present in the .txt source.
+                     Investigation revealed the
+                     dv1_19, dv1_20, dv1_21 binaries
+                     in the project folder were also
+                     defective (per KPL-002 plain-
+                     text mislabeling) and likely
+                     also missing diagrams,
+                     indicating ~23 days of recurring
+                     content-loss defect undetected
+                     because no session-open check
+                     existed for binary content
+                     completeness.
+
+                     DC-PREFLIGHT-007 closes the
+                     authoring-side gap (inline
+                     embeds in .txt source not
+                     surfaced before binary
+                     rendering attempts).
+                     DC-PREFLIGHT-008 closes the
+                     delivery-side gap (defective
+                     binaries from prior sessions
+                     reused as base for new sessions
+                     without content validation).
+
+                     FP/DP ANALYSIS:
+                     Option A (do not extend STEP A;
+                     rely on TB00000 v2_19 DR-007
+                     delivery-time gate alone) —
+                     REJECTED. Delivery-time gates
+                     catch defects at session close,
+                     but session-open gates catch
+                     defects at session start —
+                     before any rendering work is
+                     undertaken on a defective base.
+                     Both are needed for full
+                     coverage.
+                     Option B (single new pre-flight
+                     covering both asset inventory
+                     and binary content) — REJECTED.
+                     Asset inventory and binary
+                     content are different validation
+                     classes (authoring-architecture
+                     compliance vs delivery-artifact
+                     completeness). Combining them
+                     into one pre-flight obscures
+                     which class fails when one
+                     fails.
+                     Option C (two pre-flights:
+                     DC-PREFLIGHT-007 for asset
+                     inventory authoring, DC-
+                     PREFLIGHT-008 for binary
+                     content completeness) —
+                     ACCEPTED. Aligned with TB00000
+                     v2_19 §4.1 DR-007 (delivery-time
+                     gate) and 0311001 v1_4 §15
+                     (authoring-architecture
+                     governance). The three together
+                     provide layered defense:
+                     authoring + session-open +
+                     delivery.
+
+                     Decision: Option C.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0311002 is an instance document
+                     under 0310000 Governance_
+                     Procedures_Anchor under 0300000
+                     Governance Domain Document.
+                     Parent chain unchanged. No
+                     other §s of 0311002 modified.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00149 v1_1 batch):
+                     TB00000 v2_18 -> v2_19 (full
+                       rewrite of §4.1).
+                     0311001 v1_3 -> v1_4 (full
+                       rewrite of §15).
+                     TB00149 Session Log v1_0 ->
+                       v1_1 (supersedes).
+                     TB00149 Next Session
+                       Instructions v1_0 -> v1_1
+                       (supersedes).
+
+                     OPEN ITEMS UPDATED:
+                     OI-080 CONTENT-INTEGRITY
+                       VIOLATION RECURRENCE TRACKING.
+                       Initial cumulative count = 1
+                       (ERROR-TB00149-02). DC-
+                       PREFLIGHT-007 + DC-
+                       PREFLIGHT-008 close the
+                       session-open detection gap.
+
+                     Bill override: 0311002 v1_8 ->
+                     v1_9 is enacted under Bill's
+                     standing document-control
+                     override per Bill's TB00149
+                     explicit direction. Direct
+                     increment v1_8 -> v1_9; no rv
+                     state.
 
   v1_8   04-26-2026  OI-063 CLOSURE — DC-PREFLIGHT-006
                      PRE-DEPLOY RATE-LIMIT GUARDRAIL.

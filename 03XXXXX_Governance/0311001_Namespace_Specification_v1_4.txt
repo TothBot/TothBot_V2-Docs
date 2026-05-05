@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_3
+DocVersion: v1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_3.txt
-DocDate:    04-23-2026
-DocTime:    01:50:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_4.txt
+DocDate:    05-04-2026
+DocTime:    18:30:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -661,61 +661,490 @@ For code files and operational scripts in TothBot_V2-Code:
   Git history provides version tracking.
 
 ============================================================
-15. DIAGRAM ASSET SPECIFICATION
+15. EMBEDDED ASSET ARCHITECTURE
 ============================================================
 
 ------------------------------------------------------------
-15.1 Why Diagrams Are Separate Files
+15.1 Purpose and Scope
 ------------------------------------------------------------
 
-Controlled documents are stored as .txt files (Claude
-project folder compatible format). Binary image formats
-cannot be embedded in .txt files. SVG files provide
-structured vector graphics storable as text alongside
-the parent document.
+Section 15 governs every embedded asset in every
+controlled document in TothBot V2. An embedded asset is
+any non-prose information element that the controlled
+document presents as a unit: diagrams, images, charts,
+tables rendered as images, embedded data files, audio
+samples, video samples, or any other functionally-binary
+content.
+
+Section 15 defines:
+
+  (a) The architecture by which embedded assets are
+      stored, named, and referenced.
+  (b) The reference syntax controlled documents use to
+      cite assets.
+  (c) The validation rules that detect missing or
+      misnamed assets.
+  (d) The rendering contract that derived formats
+      (.docx, .pdf, .xlsx, .pptx) MUST honor when
+      transforming the .txt source plus assets into a
+      deliverable binary.
+  (e) The migration rule for any existing document that
+      contains inline embedded assets in violation of
+      the external-file architecture.
+
+Section 15 is the AUTHORING-LAYER governance for
+embedded assets. The DELIVERY-LAYER governance lives in
+TB00000 §4.1 (DR-007 Binary Artifact Content-
+Completeness Validation, CI-002 External Asset
+Architecture, CI-003 No Inline Binary Embeds, CI-004
+Reference Syntax Binding, CI-009 Asset Presence
+Verification). Sections 15 and TB00000 §4.1 work
+together: Section 15 defines the asset model, TB00000
+§4.1 enforces it at delivery.
+
+Section 15 closes ERROR-TB00149-02 SVG-DROP-IN-BINARY-
+GENERATION at the authoring-architecture layer.
 
 ------------------------------------------------------------
-15.2 Diagram Storage Location
+15.2 Foundational Principle — External Asset Files
 ------------------------------------------------------------
 
-Each diagram asset is stored in the SAME folder as its
-parent controlled document in TothBot_V2-Docs.
+Every embedded asset is an EXTERNAL FILE stored
+separately from the .txt controlled document that
+references it. Inline embeds of any kind are PROHIBITED
+in .txt source. This prohibition applies regardless of
+whether the embedded content is structurally text (e.g.,
+SVG XML) or structurally binary (e.g., base64 PNG).
 
-Example: 0500000 diagrams live in 05XXXXX_System_Architecture/.
+The four reasons:
+
+  (1) The .txt controlled document is the
+      source-of-truth for prose, structure, and
+      references. Mixing prose with binary-functioning
+      content makes the .txt file harder to read,
+      review, edit, and audit.
+
+  (2) The rendering pipeline (which produces .docx and
+      .pdf from .txt) operates deterministically when
+      assets are external. Rendering pipelines that
+      attempt to interpret inline embeds silently fail
+      (the TB00149 ERROR-TB00149-02 origin pattern):
+      the pipeline strips the inline embed and
+      substitutes a stub note rather than rendering
+      the asset.
+
+  (3) Asset reuse across documents requires assets to
+      be addressable. Inline embeds are not
+      addressable.
+
+  (4) Version control of assets requires assets to be
+      first-class files. Inline embeds inherit the
+      version of their host document and cannot be
+      independently versioned.
 
 ------------------------------------------------------------
-15.3 Diagram Filename Convention
+15.3 Asset Type Taxonomy
 ------------------------------------------------------------
 
-  [ParentDCN]_Diagram[N]_[ShortTitle].svg
+Section 15 covers the following asset types. Each type
+has a designated file extension and a role in the
+rendering pipeline.
 
-Example:
+  TYPE      EXTENSION   ROLE
+  ----      ---------   ----
+  Diagram   .svg        Vector graphics for
+                        architectural diagrams,
+                        flowcharts, state machines,
+                        timing diagrams. Source-of-
+                        truth is the SVG XML; the
+                        rendering pipeline rasterizes
+                        to PNG for .docx embed and
+                        embeds vector or raster in
+                        .pdf.
+  Image     .png        Raster graphics for
+                        screenshots, photographs,
+                        captured data plots. .png is
+                        the lossless raster format;
+                        rendering pipeline embeds
+                        directly with no
+                        transformation.
+  Image     .jpg/.jpeg  Raster graphics for
+                        photographs where lossy
+                        compression is acceptable.
+                        Rendering pipeline embeds
+                        directly.
+  Data      .csv        Structured data referenced by
+                        the controlled document.
+                        Rendering pipeline either
+                        embeds as a typographic table
+                        or includes the .csv as an
+                        attachment.
+  Audio     .wav/.mp3   Audio samples. Rendering
+                        pipeline includes as
+                        attachment in .docx and .pdf.
+  Video     .mp4        Video samples. Rendering
+                        pipeline includes as
+                        attachment in .docx and .pdf.
+
+New asset types may be added to this taxonomy only by
+amendment to Section 15 with a new revision history
+entry. Use of any asset type not enumerated above is
+PROHIBITED.
+
+------------------------------------------------------------
+15.4 Asset Storage Location
+------------------------------------------------------------
+
+Every asset is stored in the SAME folder as its parent
+controlled document in TothBot_V2-Docs.
+
+  Example folder layout for 0500000:
+
+    05XXXXX_System_Architecture/
+      0500000_System_Architecture_Overview_dv1_22_Claude_Source.txt
+      0500000_System_Architecture_Overview_dv1_22.docx
+      0500000_System_Architecture_Overview_dv1_22.pdf
+      0500000_Diagram1_Kraken_API_Connection_Architecture.svg
+      0500000_Diagram2_Trading_Pipeline.svg
+      0500000_Diagram3_Exit_Architecture.svg
+      0500000_Diagram4_Regime_Taxonomy.svg
+      0500000_Diagram5_CIATS_Architecture.svg
+      0500000_Diagram6_Complete_System.svg
+
+Subfolders for assets are PROHIBITED. All assets for a
+given parent DCN live at the same flat level as the
+parent .txt file. This keeps the folder browse-friendly
+and the rendering pipeline's relative-path resolution
+simple.
+
+------------------------------------------------------------
+15.5 Asset Filename Convention
+------------------------------------------------------------
+
+The canonical asset filename pattern is:
+
+  [ParentDCN]_[Type][N]_[ShortTitle].[ext]
+
+Where:
+
+  ParentDCN    The 7-digit DCN of the parent
+               controlled document (e.g., 0500000).
+  Type         The asset type word, capitalized:
+                 Diagram   for .svg vector graphics
+                 Image     for .png / .jpg / .jpeg
+                 Data      for .csv
+                 Audio     for .wav / .mp3
+                 Video     for .mp4
+  N            The sequence number within the parent
+               document, starting at 1, incrementing
+               by 1 for each next asset of the same
+               Type.
+  ShortTitle   A short descriptive title in
+               PascalCase or Snake_Case. Spaces
+               PROHIBITED. Special characters
+               PROHIBITED. Maximum 60 characters.
+  ext          The file extension (lowercase) per
+               §15.3 taxonomy.
+
+Examples (canonical):
+
   0500000_Diagram1_Kraken_API_Connection_Architecture.svg
   0500000_Diagram2_Trading_Pipeline.svg
+  1011002_Image1_WS_Manager_State_Machine.png
+  0211001_Data1_CIATS_Trade_Outcome_Schema.csv
 
-A document that references a diagram that does not exist
-as an SVG file is incomplete.
+Examples (PROHIBITED — V-021 / V-025 violations):
+
+  diagram1.svg
+    (no parent DCN prefix)
+  0500000_diagram1.svg
+    (Type word not capitalized)
+  0500000_Diagram_1.svg
+    (sequence number separated by underscore)
+  0500000_Diagram1.svg
+    (ShortTitle missing)
+  0500000_Diagram1_kraken_api connection.svg
+    (spaces in ShortTitle)
+  0500000_Diagram1_Kraken-API.svg
+    (hyphens in ShortTitle)
+
+A controlled document that references an asset that
+does not exist as a file in the parent folder is
+incomplete (V-023 violation).
 
 ------------------------------------------------------------
-15.4 Referencing Diagrams in Controlled Documents
+15.6 Reference Syntax in Controlled Documents
 ------------------------------------------------------------
 
-Within a .txt controlled document, each diagram is
-referenced by its exact filename:
+Within a .txt controlled document, every embedded asset
+is referenced using the canonical syntax:
 
-  [Diagram file: 0500000_Diagram1_Kraken_API_Connection_Architecture.svg]
+  [Asset file: <filename>]
+
+Where <filename> is the EXACT canonical filename of the
+asset per §15.5. The reference is positioned at the
+insertion point where the rendered asset should appear
+in derived formats.
+
+Examples (canonical):
+
+  [Asset file: 0500000_Diagram1_Kraken_API_Connection_Architecture.svg]
+  [Asset file: 1011002_Image1_WS_Manager_State_Machine.png]
+  [Asset file: 0211001_Data1_CIATS_Trade_Outcome_Schema.csv]
+
+LEGACY COMPATIBILITY: The pre-v1_4 reference syntax
+"[Diagram file: <filename>]" is recognized by the
+rendering pipeline as an alias for "[Asset file:
+<filename>]" but is DEPRECATED. New references MUST use
+"[Asset file: ...]". Existing "[Diagram file: ...]"
+references in the corpus migrate to "[Asset file: ...]"
+on the next normal version increment of each affected
+document.
+
+PROHIBITED VARIANT FORMS:
+
+  [Image: filename.png]         (missing "file:" word)
+  [File: filename.svg]          (missing asset type)
+  [Diagram1]                    (missing filename)
+  [See diagram 0500000_...svg]  (prose; not a formal
+                                 reference)
+  inline `<svg>...</svg>` XML   (CI-003 violation;
+                                 see §15.10)
+  base64-encoded image data     (CI-003 violation)
+
+The rendering pipeline recognizes ONLY the canonical
+syntax (and the deprecated [Diagram file: ...] alias
+during migration). It does NOT scan prose for asset
+mentions. A document that intends to render an asset
+MUST use the formal reference syntax.
 
 ------------------------------------------------------------
-15.5 Validation Rules for Diagram Assets
+15.7 Validation Rules for Embedded Assets
 ------------------------------------------------------------
 
-  V-020  Diagram asset filename begins with parent DCN
-  V-021  Diagram asset uses .svg extension
-  V-022  Diagram asset lives in same folder as parent doc
-  V-023  Every diagram reference in a .txt document has
-         a corresponding SVG file in the folder
-  V-024  Diagram N+1 does not exist without Diagram N
-         for the same parent DCN
+  V-020  Asset filename begins with parent DCN
+         (7 digits, no separator before underscore).
+
+  V-021  Asset filename uses an extension enumerated
+         in §15.3 (.svg, .png, .jpg, .jpeg, .csv,
+         .wav, .mp3, .mp4). Other extensions
+         PROHIBITED.
+
+  V-022  Asset file lives in the SAME folder as
+         parent .txt controlled document. Subfolders
+         for assets PROHIBITED.
+
+  V-023  Every "[Asset file: filename]" reference
+         (or deprecated "[Diagram file: filename]"
+         alias) in a .txt controlled document has a
+         corresponding asset file in the parent
+         folder with the EXACT canonical filename
+         specified.
+
+  V-024  Asset N+1 of a given Type does not exist
+         without Asset N of the same Type for the
+         same parent DCN. Sequence numbers within a
+         Type are dense (no gaps).
+
+  V-025  Asset filename matches the canonical
+         §15.5 pattern. Filenames not matching are
+         a V-025 defect requiring rename.
+
+  V-026  No asset file exists in a parent folder
+         without a corresponding "[Asset file: ...]"
+         reference in the parent .txt controlled
+         document. Orphan asset files (asset present,
+         no reference) are a V-026 defect requiring
+         either reference addition or asset removal.
+
+  V-027  No "[Asset file: ...]" reference exists in
+         a parent .txt controlled document without a
+         corresponding asset file in the parent
+         folder. Orphan references (reference
+         present, no asset) are a V-027 defect — the
+         inverse of V-023; both phrasings MUST hold.
+
+  V-028  No INLINE embedded assets in any .txt
+         controlled document. Inline `<svg>` XML,
+         inline base64 data, inline Office Open XML
+         fragments, inline PDF byte sequences — all
+         PROHIBITED. Per CI-003 in TB00000 §4.1.
+
+  V-029  Asset filename ShortTitle component
+         contains only [A-Z][a-z][0-9_] characters.
+         No spaces, no hyphens, no special
+         characters, no Unicode outside ASCII.
+
+  V-030  Maximum asset filename length 200
+         characters (cross-platform filesystem
+         portability).
+
+------------------------------------------------------------
+15.8 Rendering Contract for Derived Formats
+------------------------------------------------------------
+
+Every derived format (.docx, .pdf, .xlsx, .pptx) is
+produced by a deterministic rendering pipeline that
+reads the .txt Claude Source and the asset files it
+references, then produces the derived format. The
+pipeline MUST honor the following contract:
+
+  RC-1 EVERY ASSET REFERENCE PRODUCES A RENDERED
+       ASSET.
+       For every "[Asset file: filename]" reference
+       in the .txt source, the rendering pipeline
+       produces a rendered asset embedded in the
+       derived format at the corresponding position.
+       The rendering pipeline MUST NOT silently
+       drop, skip, or stub-substitute any asset
+       reference.
+
+  RC-2 RENDERING PER ASSET TYPE.
+       The rendering pipeline applies the following
+       per-Type transformations:
+
+         .svg → .docx: rasterize to PNG at 2x
+                       display resolution (minimum
+                       150 DPI), embed PNG in body
+                       at reference position.
+         .svg → .pdf:  embed vector SVG directly
+                       where possible; fall back to
+                       PNG raster (300 DPI) where
+                       vector embed unsupported.
+         .png/.jpg/.jpeg → .docx, .pdf: embed
+                       directly.
+         .csv → .docx: render as typographic table
+                       OR embed as attachment.
+         .csv → .pdf:  render as typographic table
+                       OR embed as attachment.
+         .wav/.mp3/.mp4 → .docx, .pdf: embed as
+                       file attachment.
+
+  RC-3 PIPELINE FAILURE IS A DEFECT.
+       If the rendering pipeline cannot render any
+       asset reference, the pipeline MUST FAIL and
+       the derived format MUST NOT be produced. A
+       failed render is reported to Claude (and
+       through Claude to Bill) as a defect requiring
+       remediation. Stub-note substitution is
+       PROHIBITED per CI-008.
+
+  RC-4 NO PIPELINE-INTRODUCED CONTENT.
+       The rendering pipeline produces ONLY content
+       derived from the source-of-truth set. It MUST
+       NOT add prose, captions, watermarks,
+       footers, or any other content not present in
+       the source-of-truth. Header / footer / page
+       numbers may be added per a documented
+       rendering profile, but no body content.
+
+  RC-5 NO PIPELINE-INTRODUCED LOSS.
+       The rendering pipeline preserves ALL prose,
+       structure, references, and asset embeds from
+       the source-of-truth set, with only the
+       transformations enumerated in TB00000 §4.1
+       CI-007 (T-1 through T-5) permitted. Any
+       deviation is a defect.
+
+  RC-6 DETERMINISTIC OUTPUT.
+       Two invocations of the rendering pipeline on
+       the same source-of-truth set produce
+       semantically equivalent output. Byte-level
+       differences are permitted only in non-content
+       metadata (e.g., creation timestamps in PDF
+       metadata).
+
+------------------------------------------------------------
+15.9 Migration Rule for Existing Inline Embeds
+------------------------------------------------------------
+
+Any existing controlled document that contains inline
+embedded assets (in violation of V-028 / CI-003) MUST
+be migrated to the external-file architecture on the
+next normal version increment of that document. The
+migration procedure is:
+
+  STEP 1 EXTRACTION.
+         Each inline `<svg>` XML embed is extracted
+         from the .txt source and saved as a
+         separate file in the parent folder, named
+         per §15.5 canonical convention. The
+         extraction preserves the SVG XML byte-for-
+         byte; no editing is performed.
+
+  STEP 2 REFERENCE SUBSTITUTION.
+         Each inline embed in the .txt source is
+         replaced by the canonical "[Asset file:
+         filename]" reference at the same position.
+
+  STEP 3 RENDERING REGENERATION.
+         The .docx and .pdf are regenerated from the
+         migrated .txt source plus the extracted
+         asset files via the §15.8 rendering
+         pipeline. The regenerated binaries pass
+         TB00000 §4.1 DR-007 content-completeness
+         validation.
+
+  STEP 4 REVISION HISTORY ENTRY.
+         The version increment's revision history
+         entry explicitly enumerates the migration:
+           - Asset extraction count and filenames.
+           - Reference substitution count.
+           - Binary regeneration confirmation.
+
+  STEP 5 VALIDATION.
+         Run V-020 through V-030 against the
+         migrated document and asset files. All
+         MUST pass.
+
+Migration is NOT a content change in the
+information-content sense (the same diagrams are
+present after migration, just stored differently).
+However, the structural change (.txt source layout,
+asset file presence, reference syntax) is significant
+and MUST be documented in the revision history.
+
+------------------------------------------------------------
+15.10 Prohibited Patterns
+------------------------------------------------------------
+
+The following patterns are PROHIBITED in any
+controlled document. Detection of any pattern is a
+V-028 / CI-003 violation requiring immediate
+remediation per §15.9.
+
+  PP-1  Inline `<svg>...</svg>` XML embed in .txt
+        source. (THE TB00149 ERROR-TB00149-02
+        ORIGIN PATTERN.)
+
+  PP-2  Inline base64-encoded image data in .txt
+        source.
+
+  PP-3  Inline Office Open XML fragments
+        (`<w:p>`, `<w:tbl>`, etc.) in .txt source.
+
+  PP-4  Inline PDF byte sequences in .txt source.
+
+  PP-5  Embedded binary content via any encoding
+        scheme (uuencode, hex, ASCII85) in .txt
+        source.
+
+  PP-6  Asset files stored in subfolders below the
+        parent .txt source location.
+
+  PP-7  Asset filenames not conforming to §15.5
+        canonical pattern.
+
+  PP-8  Reference syntax variant forms not
+        recognized in §15.6.
+
+  PP-9  Asset files present without corresponding
+        references (orphan assets, V-026
+        violation).
+
+  PP-10 References present without corresponding
+        asset files (orphan references, V-027
+        violation).
 
 ============================================================
 16. RELATED DOCUMENTS
@@ -733,6 +1162,195 @@ referenced by its exact filename:
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_4   05-04-2026  ERROR-TB00149-02 REMEDIATION —
+                     FULL REWRITE OF SECTION 15.
+
+                     Section 15 retitled "EMBEDDED ASSET
+                     ARCHITECTURE" (was "DIAGRAM ASSET
+                     SPECIFICATION") and rewritten in
+                     full to govern every embedded asset
+                     type (not just SVG diagrams) and
+                     to define the complete authoring,
+                     storage, reference, validation, and
+                     rendering-contract architecture.
+
+                     NEW STRUCTURE:
+                       15.1 Purpose and Scope
+                       15.2 Foundational Principle —
+                            External Asset Files
+                       15.3 Asset Type Taxonomy
+                            (Diagram .svg, Image .png/
+                            .jpg/.jpeg, Data .csv,
+                            Audio .wav/.mp3, Video
+                            .mp4)
+                       15.4 Asset Storage Location
+                            (same folder as parent;
+                            subfolders prohibited)
+                       15.5 Asset Filename Convention
+                            ([ParentDCN]_[Type][N]_
+                            [ShortTitle].[ext]; with
+                            canonical examples and
+                            prohibited variants)
+                       15.6 Reference Syntax in
+                            Controlled Documents
+                            ([Asset file: filename]
+                            with [Diagram file: ...]
+                            deprecated alias for
+                            backward compatibility)
+                       15.7 Validation Rules
+                            (V-020 through V-030)
+                       15.8 Rendering Contract for
+                            Derived Formats
+                            (RC-1 through RC-6;
+                            per-type rendering rules
+                            for .svg/.png/.jpg/.csv/
+                            audio/video → .docx/.pdf)
+                       15.9 Migration Rule for
+                            Existing Inline Embeds
+                            (5-step procedure)
+                       15.10 Prohibited Patterns
+                             (PP-1 through PP-10)
+
+                     REASON FOR CHANGE:
+                     ERROR-TB00149-02 SVG-DROP-IN-
+                     BINARY-GENERATION (TB00149
+                     origin). Prior §15 ("DIAGRAM ASSET
+                     SPECIFICATION") was scoped to
+                     diagram-type assets only and lacked
+                     a rendering contract for derived
+                     formats. The 0500000 dv1_22 .txt
+                     source produced in TB00149
+                     contained 6 inline `<svg>` XML
+                     embeds in violation of §15.4
+                     reference syntax (which mandates
+                     external SVG files), and the
+                     rendering pipeline silently
+                     stripped the inline embeds and
+                     substituted a stub note in the
+                     generated .docx and .pdf.
+                     Investigation revealed: (a) prior
+                     §15 said diagrams MUST be external
+                     files but did not say inline embeds
+                     are PROHIBITED; (b) prior §15 had
+                     no rendering contract requiring the
+                     pipeline to honor every reference;
+                     (c) prior §15 covered only
+                     diagrams, leaving image/data/
+                     audio/video assets ungoverned; (d)
+                     prior §15 had no migration
+                     procedure for existing non-
+                     compliant documents; (e) prior §15
+                     had no enumeration of prohibited
+                     patterns. The dv1_22 .docx and .pdf
+                     diagram-loss defect is one
+                     instantiation of an
+                     architectural-governance gap that
+                     extended across all asset types and
+                     rendering pipelines.
+
+                     Bill's directive (TB00149 chat):
+                     "Rewrite the entire section to be
+                     CLEAR, UNAMBIGUOUS, AND CORRECT.
+                     Do not just add a patch. Redo the
+                     entire section in ALL REQUIRED
+                     DOCUMENTS to ensure this does not
+                     continue to happen. Make sure it
+                     is not only this situation, but
+                     make sure NO INFORMATION is ever
+                     lost by accident or drift."
+
+                     FP/DP ANALYSIS:
+                     Option A (add new sub-sections to
+                     existing §15) — REJECTED per Bill
+                     explicit directive against patch-
+                     only approach.
+                     Option B (full §15 rewrite covering
+                     all asset types, formal reference
+                     syntax with prohibition of
+                     variants, complete validation rule
+                     set V-020 through V-030, rendering
+                     contract RC-1 through RC-6,
+                     migration procedure, enumerated
+                     prohibited patterns) — ACCEPTED.
+                     Aligned with TB00000 v2_19 §4.1
+                     full rewrite (companion increment
+                     same session). The two together
+                     form the authoring + delivery
+                     governance for the embedded-asset
+                     architecture.
+
+                     Decision: Option B.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0311001 is an instance document
+                     under 0310000 Governance_
+                     Procedures_Anchor under 0300000
+                     Governance Domain Document.
+                     Parent chain unchanged. Section 17
+                     Revision History updated. No
+                     changes to other §s of 0311001.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00149 v1_1 batch):
+                     TB00000 v2_18 -> v2_19 (full
+                       rewrite of §4.1; companion
+                       delivery + integrity governance).
+                     0311002 v1_8 -> v1_9 (DC-
+                       PREFLIGHT-007 asset inventory
+                       check + DC-PREFLIGHT-008
+                       binary-in-folder content-
+                       completeness check added to
+                       STEP A §8.2.5).
+                     TB00149 Session Log v1_0 -> v1_1
+                       (supersedes; documents this
+                       governance addition).
+                     TB00149 Next Session Instructions
+                       v1_0 -> v1_1 (supersedes;
+                       directs TB00150 to apply new
+                       governance to dv1_22 SVG
+                       extraction + .docx/.pdf
+                       regeneration).
+
+                     OPEN ITEMS UPDATED:
+                     OI-080 CONTENT-INTEGRITY VIOLATION
+                       RECURRENCE TRACKING. Initial
+                       cumulative count = 1
+                       (ERROR-TB00149-02). New §15
+                       authoring rules close the
+                       authoring-architecture component
+                       at the governance layer.
+                     ERROR-TB00149-02 logged in TB00149
+                       SL v1_1 §7. CLOSED at governance
+                       layer via TB00000 v2_19 §4.1 +
+                       0311001 v1_4 §15 + 0311002 v1_9
+                       STEP A additions. Operational
+                       verification at every future
+                       authoring + binary delivery
+                       action.
+
+                     The 0500000 dv1_22 binary
+                     remediation (extract 6 inline SVG
+                     XML embeds into separate .svg
+                     files per new §15.5; rewrite
+                     dv1_22 .txt to use §15.6
+                     reference syntax; regenerate
+                     .docx/.pdf with rasterized PNG
+                     embeds; validate per new TB00000
+                     §4.1 DR-007) is deferred to
+                     TB00150 per TB00149 NSI v1_1
+                     STREAM A. The governance is in
+                     place first; the application of
+                     the governance to dv1_22 is
+                     STREAM A of the next session.
+
+                     Bill override: 0311001 v1_3 ->
+                     v1_4 is enacted under Bill's
+                     standing document-control
+                     override per Bill's TB00149
+                     explicit direction. Direct
+                     increment v1_3 -> v1_4; no rv
+                     state.
 
   v1_3   04-23-2026  OI-039 remediation. Four changes.
 
