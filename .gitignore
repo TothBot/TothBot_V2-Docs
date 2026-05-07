@@ -10,3 +10,7 @@ desktop.ini
 # Temp files
 *.tmp
 ~$*
+
+# Bill safety archives - format-proliferation rollback set (TB00151e)
+05XXXXX_System_Architecture/Past 0500000 Docs/
+05XXXXX_System_Architecture/Past 0500000 Docs 2/

@@ -1,10 +1,10 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_9
+DocVersion: v1_10
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_9.txt
-DocDate:    05-04-2026
-DocTime:    18:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_10.txt
+DocDate:    05-06-2026
+DocTime:    22:00:00 UTC
 
 ============================================================
 DOCUMENT CREATION WORKFLOW
@@ -1409,7 +1409,7 @@ DC-PREFLIGHT-007  CHECK 4 — ASSET INVENTORY VALIDATION
 
 Claude executes an asset-inventory sweep at session
 open against every controlled document in
-/mnt/project/. The check enforces the 0311001 v1_4 §15
+/mnt/project/. The check enforces the 0311001 v1_6 §15
 Embedded Asset Architecture at session-open time so
 that inline-embed defects (V-028, PP-1) and
 reference-asset desynchronization defects (V-023,
@@ -1421,7 +1421,7 @@ Required validation:
   (a) ASSET REFERENCE PARSE.
       For every .txt controlled document in
       /mnt/project/, Claude greps for the canonical
-      reference syntax per 0311001 v1_4 §15.6:
+      reference syntax per 0311001 v1_6 §15.6:
         [Asset file: <filename>]
       and the deprecated alias:
         [Diagram file: <filename>]
@@ -1439,7 +1439,7 @@ Required validation:
 
   (c) ORPHAN ASSET CHECK.
       Every asset file in /mnt/project/ matching the
-      0311001 v1_4 §15.5 canonical filename pattern
+      0311001 v1_6 §15.5 canonical filename pattern
       MUST have at least one corresponding reference
       in some .txt controlled document. Asset files
       with no referencing document are V-026 orphan
@@ -1449,7 +1449,7 @@ Required validation:
   (d) INLINE EMBED SCAN.
       For every .txt controlled document in
       /mnt/project/, Claude greps for prohibited
-      inline embed patterns (per 0311001 v1_4 §15.10
+      inline embed patterns (per 0311001 v1_6 §15.10
       PP-1 through PP-5):
         - Inline `<svg>...</svg>` XML
         - Inline base64 image data (base64 markers
@@ -1459,7 +1459,7 @@ Required validation:
         - Inline PDF byte sequences
       Any match = V-028 / CI-003 violation. The
       finding is logged as a remediation item per
-      0311001 v1_4 §15.9 migration procedure. The
+      0311001 v1_6 §15.9 migration procedure. The
       session does NOT halt for this finding (a
       historical document with inline embeds may be
       in the project folder pending migration on its
@@ -1471,15 +1471,52 @@ Required validation:
 
   (e) FILENAME VALIDATION.
       Every asset file in /mnt/project/ MUST match
-      the 0311001 v1_4 §15.5 canonical filename
+      the 0311001 v1_6 §15.5 canonical filename
       pattern and §15.7 V-020 / V-021 / V-025 / V-029
       / V-030 validation rules. Non-conforming
       filenames are V-025 violations.
 
+  (f) HTML SCOPE — REFRAMED CHECK FOR HTML
+      CONTROLLED DOCUMENTS.
+      For every controlled document in
+      /mnt/project/ with .html extension and
+      "_Claude_Source.html" filename suffix per
+      KPL-005, the inline-embed scan in (d) is
+      EXPECTED to find inline <svg> elements
+      because HTML's structural contract requires
+      them. Inline <svg> in HTML controlled
+      documents is NOT a V-028 / CI-003
+      violation per the HTML scope exception in
+      0311001 v1_6 §15.13 and TB00000 v2_20
+      §4.1 CI-003 amendment.
+
+      For HTML controlled documents, asset
+      reference parity is REFRAMED as the
+      identity check:
+        - Count inline <svg> elements in the
+          .html source (the rendered diagram
+          count).
+        - Count <figure class="diagram"> elements
+          containing inline <svg> (the structural
+          diagram count).
+        - The two counts MUST be equal (every
+          <figure class="diagram"> contains
+          exactly one inline <svg>, OR is a
+          placeholder figure with class
+          "diagram diagram-placeholder" and a
+          <div class="placeholder-box"> per
+          V-037 in 0311001 v1_6 §15.7).
+      Mismatch is a V-037 violation. The (a)
+      [Asset file: ...] reference parse and (b)
+      asset file presence and (c) orphan asset
+      check do NOT apply to HTML controlled
+      documents because there are no external
+      asset files to reference.
+
 ROOT CAUSE ADDRESSED:
 ERROR-TB00149-02 SVG-DROP-IN-BINARY-GENERATION (TB00149
 origin) — the dv1_22 .txt source contained 6 inline
-`<svg>` XML embeds in violation of 0311001 v1_4 §15
+`<svg>` XML embeds in violation of 0311001 v1_6 §15
 authoring architecture, and the rendering pipeline
 silently stripped them when generating the .docx and
 .pdf. Had DC-PREFLIGHT-007 been in place at TB00149
@@ -1505,7 +1542,7 @@ DC-PREFLIGHT-008  CHECK 5 — BINARY-IN-FOLDER CONTENT-
 Claude executes a content-completeness validation
 sweep at session open against every BINARY artifact
 (.docx, .pdf, .xlsx, .pptx) present in /mnt/project/.
-The check applies the TB00000 v2_19 §4.1 DR-007 gates
+The check applies the TB00000 v2_20 §4.1 DR-007 gates
 to every binary present in the project folder, not
 only to binaries Claude is producing in the current
 session. The purpose is to detect prior-session
@@ -1556,11 +1593,45 @@ Required validation:
 
       If the binary's content-incompleteness affects
       a document in scope for the current session,
-      remediation per 0311001 v1_4 §15.9 migration
+      remediation per 0311001 v1_6 §15.9 migration
       procedure is added to the session work plan.
 
+  (d) HTML SCOPE — DR-004 / DR-007 NOT APPLIED TO
+      HTML CONTROLLED DOCUMENTS.
+      DR-004 binary structural integrity validation
+      and DR-007 binary content-completeness
+      validation do NOT apply to .html controlled
+      documents. .html files are text containers, not
+      binary containers. They are validated by the
+      DC-PREFLIGHT-007 (f) HTML SCOPE check
+      (inline-<svg> identity parity) plus the
+      well-formedness check defined in TB00000 v2_20
+      §4.1 DR-007 HTML scope amendment (Python
+      HTMLParser feeds the file with no orphan close
+      tags and zero unclosed elements at EOF).
+
+      The check sequence for an HTML controlled
+      document at session open is:
+        (1) DC-PREFLIGHT-007 (a)-(c) skip (no
+            external asset references in HTML
+            scope).
+        (2) DC-PREFLIGHT-007 (d) inline-embed
+            scan finds the expected inline <svg>
+            elements; not flagged as V-028.
+        (3) DC-PREFLIGHT-007 (e) filename
+            validation confirms the
+            "_Claude_Source.html" suffix.
+        (4) DC-PREFLIGHT-007 (f) HTML SCOPE
+            confirms <figure class="diagram"> /
+            inline <svg> identity parity per
+            V-037.
+        (5) DC-PREFLIGHT-008 (a)-(c) skip.
+        (6) HTML well-formedness check: Python
+            html.parser feed with zero orphan
+            closes and zero unclosed elements at
+            EOF.
+
 ROOT CAUSE ADDRESSED:
-ERROR-TB00149-02 second-order finding — the dv1_19,
 dv1_20, dv1_21 .docx and .pdf binaries in the project
 folder were defective per KPL-002 plain-text
 mislabeling, and the dv1_21 binaries specifically
@@ -2017,6 +2088,145 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_10  05-06-2026  TB00151e HTML CANONICAL FORMAT
+                     ADOPTION — STEP A §8.2.5
+                     DC-PREFLIGHT-007 / DC-PREFLIGHT-008
+                     HTML SCOPE AMENDMENTS.
+
+                     Two reframing amendments to the STEP A
+                     pre-flight check definitions in §8.2.5:
+
+                     CHANGE 1 — DC-PREFLIGHT-007 ADDS
+                     SUB-CHECK (f) HTML SCOPE.
+                     For controlled documents with .html
+                     extension and "_Claude_Source.html"
+                     filename suffix per KPL-005:
+                       - Inline-embed scan (d) does NOT
+                         flag inline <svg> as V-028 / CI-003
+                         violation.
+                       - Asset reference parse (a), asset
+                         file presence (b), and orphan
+                         asset check (c) do NOT apply
+                         (no external asset files in HTML
+                         scope).
+                       - Identity parity check IS applied:
+                         <figure class="diagram"> count
+                         equals inline <svg> count, or
+                         the figure is a
+                         "diagram diagram-placeholder"
+                         with a placeholder-box. V-037
+                         in 0311001 v1_6 §15.7 governs.
+
+                     CHANGE 2 — DC-PREFLIGHT-008 ADDS
+                     SUB-CHECK (d) HTML SCOPE.
+                     For controlled documents with .html
+                     extension:
+                       - DR-004 binary structural integrity
+                         and DR-007 binary content-
+                         completeness do NOT apply (.html
+                         is not a binary container).
+                       - The HTML well-formedness check
+                         applies instead: Python
+                         html.parser feed with zero orphan
+                         closes and zero unclosed elements
+                         at EOF.
+                       - The DC-PREFLIGHT-007 (f) HTML
+                         SCOPE identity-parity check is
+                         the asset-content gate.
+
+                     REASON FOR CHANGE:
+                     TB00151d Session Log v1_0 §3 verified
+                     the HTML format end-to-end on Bill
+                     side and Claude side. TB00151e STAGE
+                     1 GATE PASS (cold-load verification)
+                     confirmed the test file passes all
+                     six verification sub-steps including
+                     project_knowledge_search retrieval,
+                     filesystem mount visibility, structural
+                     grep counts, Python HTMLParser well-
+                     formedness, and three distributed
+                     prose-extraction samples.
+
+                     The STEP A pre-flight checks
+                     established in v1_9 were authored
+                     against the pre-HTML-adoption
+                     architecture (every controlled
+                     document is .txt with external assets
+                     per §15). For HTML controlled
+                     documents, that authoring contract
+                     is structurally inverted: there are no
+                     external asset files, and inline
+                     <svg> is not just permitted but
+                     REQUIRED. The pre-flight checks must
+                     be reframed accordingly or they would
+                     produce false-positive V-028 / CI-003
+                     violations on every HTML document at
+                     every session open.
+
+                     FP/DP ANALYSIS:
+                     Option A (rewrite STEP A from
+                     scratch with HTML-first defaults)
+                     REJECTED — silent narrowing risk
+                     against the deployed §15 / V-020..V-036
+                     enforcement on existing .txt
+                     documents (RR-SCOPE-007 hazard).
+                     Option B (carve-out HTML scope as
+                     additive sub-checks) ACCEPTED —
+                     leaves all existing rules unchanged
+                     for .txt documents while adding
+                     HTML-specific behavior in named
+                     sub-checks (f) on DC-PREFLIGHT-007
+                     and (d) on DC-PREFLIGHT-008. Reversible
+                     by removing the sub-checks if HTML
+                     adoption is later rolled back.
+                     Option C (defer to a future cycle)
+                     REJECTED — DC-PREFLIGHT-007 (d) inline-
+                     embed scan would false-positive on
+                     every HTML controlled document
+                     starting with 0500000 dv1_24.
+
+                     Decision: Option B.
+
+                     PARENT CHAIN COMPLIANCE: 0311002 is
+                     an Instance under 0310000
+                     Governance_Procedures_Anchor under
+                     0300000 Governance Domain. Parent
+                     chain unchanged.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00151e batch):
+                     TB00000 v2_19 -> v2_20 (§4.1 DR-002
+                       RETIRED, DR-005 AMENDED, DR-007
+                       SCOPED, §4.1.7 count++).
+                     0311001 v1_5 -> v1_6 (§15 scoped to
+                       non-HTML; §15.13 NEW HTML canonical
+                       format; V-037 NEW).
+                     0311006 dv1_1 -> dv1_2 (KPL-004
+                       SUPERSEDED; KPL-005 NEW HTML
+                       canonical format).
+
+                     OPEN ITEMS UPDATED:
+                     OI-080 cumulative content-integrity
+                       violation count incremented from 1
+                       to 2 in TB00000 v2_20 §4.1.7
+                       (carries the TB00151d format-
+                       proliferation systemic defect).
+                     OI-NEW (TB00151d-01) HTML FORMAT
+                       ADOPTION DECISION — CLOSED via this
+                       four-document amendment package.
+
+                     Bill override: 0311002 v1_9 -> v1_10
+                     is enacted under Bill's TB00151e
+                     STAGE 2 explicit approval gate.
+                     Direct increment v1_9 -> v1_10; no
+                     rv state, consistent with
+                     governance-amendment cascade pattern
+                     used in TB00120, TB00137, TB00139,
+                     TB00140, TB00142, TB00149.
+
+                     Document Status updated: supersedes
+                     v1_9.
 
   v1_9   05-04-2026  ERROR-TB00149-02 REMEDIATION —
                      STEP A §8.2.5 EXTENSION.

@@ -1,10 +1,10 @@
 DocDCN:     0311006
 DocTitle:   Known_Platform_Limitations
-DocVersion: dv1_1
+DocVersion: dv1_2
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311006_Known_Platform_Limitations_dv1_1.txt
-DocDate:    05-04-2026
-DocTime:    20:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311006_Known_Platform_Limitations_dv1_2.txt
+DocDate:    05-06-2026
+DocTime:    22:00:00 UTC
 
 ============================================================
 KNOWN PLATFORM LIMITATIONS
@@ -282,8 +282,138 @@ KPL-004
                  (.png -> embed directly). No
                  rasterization step at render time
                  because PNG is already canonical.
-  STATUS         ACTIVE WORKAROUND.
+  STATUS         SUPERSEDED by KPL-005 (HTML CANONICAL
+                 FORMAT FOR DIAGRAM-BEARING CONTROLLED
+                 DOCUMENTS).
   LAST VERIFIED  05-04-2026 (TB00150).
+
+  RETIREMENT NOTE
+    The PNG-canonical workaround is retired by the
+    HTML format adoption decision authorized in
+    TB00151d and enacted in TB00151e (this version).
+    HTML controlled documents embed diagrams as inline
+    <svg> XML directly per KPL-005; no .png sidecar,
+    no .svg sidecar, no _svg.txt rename workaround.
+    Resolution evidence:
+      TB00151d Session Log v1_0 §3 (HTML format
+      proposal end-to-end verification).
+      TB00151e Session Log v1_0 STAGE 1 GATE PASS
+      (cold-load verification of dv1_24 .html test
+      file).
+      TB00000 v2_20 §4.1 DR-002 RETIREMENT and
+      DR-005 AMENDMENT.
+      0311001 v1_6 §15.13 HTML CANONICAL FORMAT FOR
+      DIAGRAM-BEARING DOCUMENTS.
+    KPL-004 entry retained per §6.3 retirement rule
+    (do NOT delete; preserve historical record).
+    Future encounters of the SVG-upload-not-accepted
+    behavior do NOT require the rename workaround
+    described above; HTML adoption removes the need
+    to upload separate SVG files at all.
+
+------------------------------------------------------------
+KPL-005
+------------------------------------------------------------
+
+  PLATFORM       Claude.ai
+  DEFECT         Not a defect per se — a deliberate
+                 architectural commitment recorded as a
+                 KPL entry because it reflects a
+                 platform-shaped authoring contract.
+                 Diagram-bearing TothBot V2 controlled
+                 documents would normally require either
+                 (a) inline binary embeds in .txt source
+                 (CI-003 prohibited; the
+                 ERROR-TB00149-02 SVG-drop class), or
+                 (b) external sidecar asset files that
+                 the Claude.ai project knowledge upload
+                 UI does not accept in some formats
+                 (KPL-004 SVG case). Both options carry
+                 known recurrence risk.
+  ORIGIN         TB00151d (HTML format proposal end-to-
+                 end verification) + TB00151e (cold-load
+                 verification gate PASS + governance
+                 amendment package this version).
+  ROOT CAUSE     The Claude.ai project knowledge stack
+                 has three distinct properties that
+                 together select HTML as the canonical
+                 format for diagram-bearing documents:
+                   (1) Browser-native rendering. Bill
+                       opens .html files by double-click
+                       and views prose, structure, and
+                       diagrams in a single rendered
+                       view without any external tool.
+                   (2) Text-extracting indexer.
+                       project_knowledge_search
+                       extracts plain text from .html
+                       cleanly, including SVG-internal
+                       <title> and <desc> elements,
+                       supporting full-text search and
+                       cross-reference verification.
+                   (3) Inline SVG visual rendering. The
+                       Claude.ai search-result
+                       preprocessor rasterizes inline
+                       <svg> elements visually for
+                       Claude, making diagrams visible
+                       in addition to readable as XML.
+                       Verified TB00151d §3.5 BONUS
+                       finding.
+                 No other format Bill has access to
+                 combines all three properties. .docx
+                 fails (1) and (3) for Claude. .pdf
+                 fails (1)-(3) when content is rendered
+                 as plain text per KPL-002. .txt fails
+                 (1) and (3) entirely. .svg fails
+                 (2) (upload UI rejects per KPL-004).
+                 HTML is unique.
+  WORKAROUND     The active authoring contract for
+                 diagram-bearing TothBot V2 controlled
+                 documents:
+                   (1) The canonical source-of-truth
+                       file extension is .html.
+                   (2) The filename ends in
+                       "_Claude_Source.html" to
+                       distinguish the canonical
+                       source from any browser-saved
+                       or auto-renamed copies.
+                   (3) Diagrams are authored as inline
+                       <svg> elements directly inside
+                       the .html body. No external
+                       .svg sidecar, no _svg.txt
+                       rename workaround, no .png
+                       rasterization step.
+                   (4) Each diagram lives inside a
+                       <figure class="diagram">
+                       element with the inline <svg>
+                       and an optional <figcaption>.
+                       Pending diagrams (not yet
+                       authored) use
+                       <figure class="diagram diagram-
+                       placeholder"> with a
+                       <div class="placeholder-box">
+                       describing the placeholder.
+                   (5) No .docx and no .pdf companion
+                       files are generated.
+                   (6) The HTML file passes TB00000
+                       v2_20 §4.1 DR-007 content-
+                       completeness validation. For
+                       HTML, DR-007.1 asset-reference
+                       parity is the identity check
+                       (source <svg> count equals
+                       rendered <svg> count, always
+                       1:1, because the inline embed
+                       IS the rendering).
+                 Rendering pipeline is the browser
+                 itself plus the Claude.ai indexer.
+                 No build step. No drift. No silent
+                 stub substitution failure mode.
+  STATUS         ACTIVE — canonical format for
+                 diagram-bearing controlled documents.
+                 NOT a workaround in the
+                 limitation-with-pain sense; it is the
+                 architectural answer.
+  LAST VERIFIED  05-06-2026 (TB00151e STAGE 1 GATE
+                 PASS).
 
 ============================================================
 6. ENTRY MAINTENANCE
@@ -333,6 +463,81 @@ KPL-004
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_2  05-06-2026  KPL-004 SUPERSEDED + KPL-005 NEW —
+                     HTML CANONICAL FORMAT ADOPTION.
+
+                     KPL-004 STATUS changed from ACTIVE
+                     WORKAROUND to SUPERSEDED. Retirement
+                     note added citing TB00151d / TB00151e
+                     resolution evidence and pointing
+                     downstream readers to KPL-005. The
+                     PNG-canonical workaround that
+                     KPL-004 prescribed is retired in
+                     favor of HTML inline <svg>
+                     embedding.
+
+                     KPL-005 ADDED: HTML CANONICAL FORMAT
+                     FOR DIAGRAM-BEARING CONTROLLED
+                     DOCUMENTS.
+
+                     ORIGIN: TB00151d Session Log v1_0
+                     §3 (HTML format proposal end-to-end
+                     verification on Bill side and
+                     Claude side) + TB00151e STAGE 1
+                     GATE PASS (cold-load verification
+                     of 0500000 dv1_24 .html test file).
+
+                     ROOT CAUSE summary: Claude.ai
+                     project knowledge stack uniquely
+                     supports browser-native rendering
+                     for Bill, text-extracting indexer
+                     for Claude, AND inline SVG visual
+                     rendering by the search-result
+                     preprocessor — three properties no
+                     other format Bill has access to
+                     combines. HTML is selected as the
+                     canonical format for diagram-
+                     bearing controlled documents.
+
+                     WORKAROUND content: The active
+                     authoring contract for diagram-
+                     bearing TothBot V2 controlled
+                     documents — single .html file
+                     with inline <svg> diagrams,
+                     "_Claude_Source.html" filename
+                     suffix, no .docx, no .pdf, no
+                     .svg sidecar, no .png rasterization,
+                     no _svg.txt rename. Rendering
+                     pipeline is the browser plus the
+                     Claude.ai indexer. No build step.
+
+                     CASCADE CONTEXT: This entry is
+                     authored as part of the TB00151e
+                     four-document governance amendment
+                     package adopting HTML as canonical
+                     format for diagram-bearing
+                     controlled documents. Companion
+                     amendments:
+                       TB00000 v2_19 -> v2_20 (§4.1
+                         DR-002 RETIRED, DR-005 AMENDED,
+                         DR-007 SCOPED, §4.1.7 count++).
+                       0311001 v1_5 -> v1_6 (§15 scoped
+                         to non-HTML documents; §15.13
+                         NEW HTML canonical format;
+                         V-037 NEW HTML figure validation).
+                       0311002 v1_9 -> v1_10
+                         (DC-PREFLIGHT-007 and
+                         DC-PREFLIGHT-008 reframed for
+                         HTML scope).
+
+                     STATUS: ACTIVE — canonical format
+                     for diagram-bearing controlled
+                     documents. Not a workaround-with-
+                     pain; the architectural answer.
+
+                     LAST VERIFIED 05-06-2026 (TB00151e
+                     STAGE 1 GATE PASS).
 
   dv1_1  05-04-2026  KPL-004 ADDED: SVG-FILE-UPLOAD-NOT-
                      ACCEPTED platform limitation.
