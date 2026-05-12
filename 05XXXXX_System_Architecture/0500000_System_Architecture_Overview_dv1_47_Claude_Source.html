@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_46</title>
+<title>0500000 System Architecture Overview dv1_47</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,21 +132,21 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_46</td></tr>
+  <tr><td>DocVersion</td><td>dv1_47</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_46_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>05-11-2026</td></tr>
-  <tr><td>DocTime</td><td>11:34:00 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_47_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>05-12-2026</td></tr>
+  <tr><td>DocTime</td><td>05:10:00 UTC</td></tr>
 </table>
 <p class="format-note">
-<strong>HTML CANONICAL FORMAT — ALL 8 DIAGRAMS INLINE.</strong> This is the
-single-file HTML canonical source for 0500000. All 8 diagrams (Tier 1 Context
-+ Diagrams 1-7) embed directly as inline SVG XML. Bill opens this
-file by double-click to view text and diagrams together in one rendered view.
-Claude reads the same file as text from /mnt/project/ and parses prose and SVG
-directly. ONE file format. ONE source of truth. No .docx, no .pdf, no _svg.txt
-sidecars, no PNG sidecars. Governed by 0311001 v1_6 §15.13 and TB00000 v2_20
-§4.1 DR-002-HTML.
+<strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
+single-file HTML canonical source for 0500000. All 10 diagrams (Tier 1 Context
++ Diagrams 1-7 Tier-2 + Diagrams 8-9 Tier-3 gate-detail sub-figures) embed
+directly as inline SVG XML. Bill opens this file by double-click to view text
+and diagrams together in one rendered view. Claude reads the same file as text
+from /mnt/project/ and parses prose and SVG directly. ONE file format. ONE
+source of truth. No .docx, no .pdf, no _svg.txt sidecars, no PNG sidecars.
+Governed by 0311001 v1_6 §15.13 and TB00000 v2_20 §4.1 DR-002-HTML.
 </p>
 <p class="format-note">
 <strong>SUPERSEDES dv1_23 .txt + .docx + .pdf + 4 _svg.txt + 6 PNG (13 files).</strong>
@@ -2006,7 +2006,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
     R-increment: R1 -&gt; R2 (G8 -&gt; Execution_Engine dispatch seam REWORK depicting PA-004 dispatch boundary [DR-005 + DR-010]; LM emergency-IOC path through dispatch seam added [DR-010 / TB00148 F30]; G2 Liquidity label standardized to $500k USD/day with param:min_volume_usd_daily tag [DR-004]; AR-005 + AR-016 ATR-incremental restored to root governs:ar field and gate-level constraints [DR-015]; D-08 Top-N retired verified [DR-002]; D-03 USD+USDC+USDT universe verified [DR-003]; AR-070 amended-form verified [DR-007])
     governs:
       ar: AR-005 (WS v2 only), AR-016 (ATR(14) incremental O(1) per update), AR-069, AR-070_Universe_Scope_Retired (amended -&gt; decision:D-03_Universe_Scope), AR-072, AR-074, AR-076
-      rule: HR-EE-013, HR-SP-001, HR-SP-002, HR-SP-003, HR-SP-004, HR-SP-005, HR-SP-006, HR-WM-024, Sacred_R_R_1_to_1_5
+      rule: HR-EE-013, HR-SP-001, HR-SP-002, HR-SP-003, HR-SP-004, HR-SP-005, HR-SP-006, HR-WM-024, Sacred_R_R_1_to_1_5, Per_Trade_Ceiling_Check, Expected_RR_A1_Acceptance
       decision: D-03_Universe_Scope (USD + USDC + USDT), D-04_Liquidity_Floor ($500k USD/day), D-06_Paper_Live_Parity, D-08_Top_N_Cap_Retired
       contract: WSManager_Dispatch_Seam, OHLC_5m_System_Clock, Pre_Computation_Cache_Read, Parameter_Store_Snapshot
       gate: Pre_Gate_1_Per_Pair_Status, G1_State_Machine, G2_Liquidity, G3_Regime_Filter, G4_HTF_Confirmation, G5_Selection_Controller, G6_Regime_Sizer, G7_Risk_Guard, G8_Position_Sizer
@@ -2290,9 +2290,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         canonical: gate:G7_Risk_Guard
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
-        drill_targets: mod:Risk_Engine, channel:kraken_ws_ticker
-        constraints: rule:HR-WM-024
-        consumes: param:full_halt_drawdown, param:session_pause_drawdown, param:max_concurrent, channel:kraken_ws_ticker
+        drill_targets: mod:Risk_Engine, channel:kraken_ws_ticker, 0500000_Image8_T3_R1_Gate_7_Risk_Guard_Detail
+        constraints: rule:HR-WM-024, rule:Per_Trade_Ceiling_Check
+        consumes: param:full_halt_drawdown, param:session_pause_drawdown, channel:kraken_ws_ticker, param:per_trade_ceiling_pct
         produces: none
         schema_version: 1.0
       </desc>
@@ -2313,8 +2313,8 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         canonical: gate:G8_Position_Sizer
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
-        drill_targets: layer:L2_MAE_Threshold, layer:L3_Emergency_SL, layer:L1b_TP_Fill
-        constraints: rule:Sacred_R_R_1_to_1_5, ar:AR-016
+        drill_targets: layer:L2_MAE_Threshold, layer:L3_Emergency_SL, layer:L1b_TP_Fill, 0500000_Image9_T3_R1_Gate_8_Position_Sizer_Detail
+        constraints: rule:Sacred_R_R_1_to_1_5, rule:Expected_RR_A1_Acceptance, ar:AR-016
         consumes: indicator:ATR_14, param:mae_mult, param:emergency_sl_mult
         produces: none
         schema_version: 1.0
@@ -2465,6 +2465,438 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
   </div>
   <figcaption>Image2 Trading Pipeline</figcaption>
 </figure>
+
+<h3>3.1 Gate 7 Risk Guard — Coder Detail Sub-Figure (Diagram 8 of 10)</h3>
+<p>
+Sub-figure elaborating gate:G7_Risk_Guard. Five sequential checks evaluated in
+strict order; first failure short-circuits. Each check shows the data inputs
+required, the pass/fail branches, and the event identifier emitted on failure.
+This figure replaces the architectural detail previously carried in
+1011011 Risk_Engine_Coding_Spec (retired this audit cycle).
+</p>
+
+<figure class="diagram">
+  <div class="diagram-svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1100"
+     font-family="Arial, Helvetica, sans-serif" font-size="12">
+  <title>0500000_Image8_T3_R1_Gate_7_Risk_Guard_Detail</title>
+  <desc>
+    diagram_canonical: 0500000_Image8_T3_R1_Gate_7_Risk_Guard_Detail
+    tier: 3
+    parent_dcn: 0500000
+    parent_diagram: 0500000_Image2_T2_R2_Trading_Pipeline
+    parent_element: gate:G7_Risk_Guard
+    schema_version: 1.0
+    R-increment: R0 -&gt; R1 (initial authoring; migrated unique architectural content from 1011011 Risk_Engine_Coding_Spec dv1_3 retirement per TB00212 Phase 1 10XXXXX redundancy audit Option (b) pathway).
+    governs:
+      gate: G7_Risk_Guard
+      rule: HR-WM-024, Per_Trade_Ceiling_Check
+      param: full_halt_drawdown_pct, session_pause_drawdown_pct, per_trade_size_usd, per_trade_ceiling_pct
+      mod: Risk_Engine
+      evt: G7_DRAWDOWN_HALT, G7_CONCENTRATION_BREACH, G7_EXPOSURE_BREACH, G7_SEMAPHORE_BUSY, G7_PER_TRADE_CEILING_BREACH
+    sacred_constraints: None at this layer (Gate 8 owns the sacred 1:1.5 R:R floor).
+  </desc>
+  <defs>
+    <marker id="arrow_g7" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow_g7_red" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="1100" fill="#ffffff"/>
+
+  <g id="g7d_title_bar" class="decoration">
+    <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
+    <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
+          text-anchor="middle">DIAGRAM 8 — Gate 7 Risk Guard Detail (5 Sequential Checks) — R1</text>
+    <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
+      0500000_Image8_T3_R1_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R2_Trading_Pipeline
+    </text>
+  </g>
+
+  <g id="g7d_entry" class="decoration">
+    <rect x="450" y="100" width="320" height="40" fill="#fef3c7" stroke="#d4a017" stroke-width="2" rx="6"/>
+    <text x="610" y="125" font-size="13" font-weight="700" fill="#854d0e" text-anchor="middle">ENTRY: candidate from gate:G6_Regime_Sizer</text>
+  </g>
+  <line x1="610" y1="140" x2="610" y2="158" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g7)"/>
+
+  <!-- CHECK 1: Drawdown Halt -->
+  <g id="g7d_check1_drawdown" class="tier-3">
+    <title>check:G7_CHECK_1_Drawdown_Halt</title>
+    <desc>
+        canonical: check:G7_CHECK_1_Drawdown_Halt
+        tier: 3
+        parent_element: gate:G7_Risk_Guard
+        consumes: param:spot_usd_balance, param:portfolio_baseline, param:full_halt_drawdown_pct, param:session_pause_drawdown_pct
+        produces: evt:G7_DRAWDOWN_HALT (on fail)
+        evaluation_order: 1
+        schema_version: 1.0
+      </desc>
+    <polygon points="610,160 870,200 610,240 350,200" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+    <text x="610" y="195" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">CHECK 1 — Drawdown</text>
+    <text x="610" y="212" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">drawdown_pct &lt; full_halt AND &lt; session_pause?</text>
+  </g>
+  <g class="decoration">
+    <text x="40" y="195" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
+    <text x="40" y="210" font-size="9" font-weight="400" fill="#475569" text-anchor="start">spot_usd_balance, portfolio_baseline,</text>
+    <text x="40" y="222" font-size="9" font-weight="400" fill="#475569" text-anchor="start">full_halt_drawdown_pct (10% starting),</text>
+    <text x="40" y="234" font-size="9" font-weight="400" fill="#475569" text-anchor="start">session_pause_drawdown_pct (5% starting)</text>
+    <text x="40" y="248" font-size="9" font-weight="400" fill="#475569" text-anchor="start">Per-wallet evaluation (TB00000 v2_29 §9.7)</text>
+  </g>
+  <g class="decoration">
+    <line x1="870" y1="200" x2="1098" y2="200" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g7_red)"/>
+    <text x="985" y="193" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">FAIL</text>
+    <rect x="1100" y="180" width="380" height="50" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" rx="4"/>
+    <text x="1290" y="200" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">HALT (full) | PAUSE (session)</text>
+    <text x="1290" y="217" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">evt:G7_DRAWDOWN_HALT</text>
+  </g>
+  <line x1="610" y1="240" x2="610" y2="278" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g7)"/>
+  <text x="630" y="262" font-size="9" font-weight="700" fill="#16a34a" text-anchor="start">PASS</text>
+
+  <!-- CHECK 2: Concentration -->
+  <g id="g7d_check2_concentration" class="tier-3">
+    <title>check:G7_CHECK_2_Concentration</title>
+    <desc>
+        canonical: check:G7_CHECK_2_Concentration
+        tier: 3
+        parent_element: gate:G7_Risk_Guard
+        consumes: positions_held_count_per_module, param:concentration_cap_per_module
+        produces: evt:G7_CONCENTRATION_BREACH (on fail)
+        evaluation_order: 2
+        schema_version: 1.0
+      </desc>
+    <polygon points="610,280 870,320 610,360 350,320" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+    <text x="610" y="315" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">CHECK 2 — Concentration</text>
+    <text x="610" y="332" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">positions_held &lt; concentration_cap?</text>
+  </g>
+  <g class="decoration">
+    <text x="40" y="315" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
+    <text x="40" y="330" font-size="9" font-weight="400" fill="#475569" text-anchor="start">positions_held_count (mod:Position_Mirror)</text>
+    <text x="40" y="342" font-size="9" font-weight="400" fill="#475569" text-anchor="start">concentration_cap (CIATS-owned)</text>
+    <text x="40" y="356" font-size="9" font-weight="400" fill="#475569" text-anchor="start">Per-module evaluation</text>
+  </g>
+  <g class="decoration">
+    <line x1="870" y1="320" x2="1098" y2="320" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g7_red)"/>
+    <text x="985" y="313" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">FAIL</text>
+    <rect x="1100" y="300" width="380" height="50" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" rx="4"/>
+    <text x="1290" y="320" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">BLOCK</text>
+    <text x="1290" y="337" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">evt:G7_CONCENTRATION_BREACH</text>
+  </g>
+  <line x1="610" y1="360" x2="610" y2="398" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g7)"/>
+  <text x="630" y="382" font-size="9" font-weight="700" fill="#16a34a" text-anchor="start">PASS</text>
+
+  <!-- CHECK 3: Exposure -->
+  <g id="g7d_check3_exposure" class="tier-3">
+    <title>check:G7_CHECK_3_Exposure</title>
+    <desc>
+        canonical: check:G7_CHECK_3_Exposure
+        tier: 3
+        parent_element: gate:G7_Risk_Guard
+        consumes: total_committed_usd_per_module, wallet_balance_per_module, param:exposure_cap_pct
+        produces: evt:G7_EXPOSURE_BREACH (on fail)
+        evaluation_order: 3
+        schema_version: 1.0
+      </desc>
+    <polygon points="610,400 870,440 610,480 350,440" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+    <text x="610" y="435" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">CHECK 3 — Exposure</text>
+    <text x="610" y="452" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">total_committed_usd / wallet &lt; exposure_cap?</text>
+  </g>
+  <g class="decoration">
+    <text x="40" y="435" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
+    <text x="40" y="450" font-size="9" font-weight="400" fill="#475569" text-anchor="start">total_committed_usd_per_module</text>
+    <text x="40" y="462" font-size="9" font-weight="400" fill="#475569" text-anchor="start">wallet_balance_per_module</text>
+    <text x="40" y="474" font-size="9" font-weight="400" fill="#475569" text-anchor="start">exposure_cap_pct (CIATS-owned)</text>
+  </g>
+  <g class="decoration">
+    <line x1="870" y1="440" x2="1098" y2="440" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g7_red)"/>
+    <text x="985" y="433" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">FAIL</text>
+    <rect x="1100" y="420" width="380" height="50" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" rx="4"/>
+    <text x="1290" y="440" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">BLOCK</text>
+    <text x="1290" y="457" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">evt:G7_EXPOSURE_BREACH</text>
+  </g>
+  <line x1="610" y1="480" x2="610" y2="518" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g7)"/>
+  <text x="630" y="502" font-size="9" font-weight="700" fill="#16a34a" text-anchor="start">PASS</text>
+
+  <!-- CHECK 4: Semaphore -->
+  <g id="g7d_check4_semaphore" class="tier-3">
+    <title>check:G7_CHECK_4_Semaphore</title>
+    <desc>
+        canonical: check:G7_CHECK_4_Semaphore
+        tier: 3
+        parent_element: gate:G7_Risk_Guard
+        consumes: BoundedSemaphore per-module state (non-blocking probe via semaphore.locked())
+        produces: evt:G7_SEMAPHORE_BUSY (on fail = locked)
+        evaluation_order: 4
+        schema_version: 1.0
+      </desc>
+    <polygon points="610,520 870,560 610,600 350,560" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+    <text x="610" y="555" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">CHECK 4 — Semaphore</text>
+    <text x="610" y="572" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">semaphore.locked() == False?</text>
+  </g>
+  <g class="decoration">
+    <text x="40" y="555" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
+    <text x="40" y="570" font-size="9" font-weight="400" fill="#475569" text-anchor="start">BoundedSemaphore per-module</text>
+    <text x="40" y="582" font-size="9" font-weight="400" fill="#475569" text-anchor="start">Non-blocking probe; held by</text>
+    <text x="40" y="594" font-size="9" font-weight="400" fill="#475569" text-anchor="start">mod:Execution_Engine during dispatch</text>
+  </g>
+  <g class="decoration">
+    <line x1="870" y1="560" x2="1098" y2="560" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g7_red)"/>
+    <text x="985" y="553" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">LOCKED</text>
+    <rect x="1100" y="540" width="380" height="50" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" rx="4"/>
+    <text x="1290" y="560" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">SKIP cycle (retry next candle)</text>
+    <text x="1290" y="577" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">evt:G7_SEMAPHORE_BUSY</text>
+  </g>
+  <line x1="610" y1="600" x2="610" y2="638" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g7)"/>
+  <text x="630" y="622" font-size="9" font-weight="700" fill="#16a34a" text-anchor="start">FREE</text>
+
+  <!-- CHECK 5: Per-Trade Ceiling -->
+  <g id="g7d_check5_per_trade_ceiling" class="tier-3">
+    <title>check:G7_CHECK_5_Per_Trade_Ceiling</title>
+    <desc>
+        canonical: check:G7_CHECK_5_Per_Trade_Ceiling
+        tier: 3
+        parent_element: gate:G7_Risk_Guard
+        constraints: rule:Per_Trade_Ceiling_Check
+        consumes: param:per_trade_size_usd, param:per_trade_ceiling_pct, wallet_balance_per_module
+        produces: evt:G7_PER_TRADE_CEILING_BREACH (on fail)
+        evaluation_order: 5
+        schema_version: 1.0
+      </desc>
+    <polygon points="610,640 870,680 610,720 350,680" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
+    <text x="610" y="675" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">CHECK 5 — Per-Trade Ceiling</text>
+    <text x="610" y="692" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">per_trade_size_usd ≤ wallet × ceiling_pct?</text>
+  </g>
+  <g class="decoration">
+    <text x="40" y="675" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
+    <text x="40" y="690" font-size="9" font-weight="400" fill="#475569" text-anchor="start">per_trade_size_usd (CIATS-sized)</text>
+    <text x="40" y="702" font-size="9" font-weight="400" fill="#475569" text-anchor="start">wallet_balance_per_module</text>
+    <text x="40" y="714" font-size="9" font-weight="400" fill="#475569" text-anchor="start">per_trade_ceiling_pct (25% starting)</text>
+    <text x="40" y="726" font-size="9" font-weight="400" fill="#1e3a8a" text-anchor="start">TB00000 v2_29 §9.17 + §9.10</text>
+  </g>
+  <g class="decoration">
+    <line x1="870" y1="680" x2="1098" y2="680" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g7_red)"/>
+    <text x="985" y="673" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">FAIL</text>
+    <rect x="1100" y="660" width="380" height="50" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" rx="4"/>
+    <text x="1290" y="680" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">BLOCK</text>
+    <text x="1290" y="697" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">evt:G7_PER_TRADE_CEILING_BREACH</text>
+  </g>
+  <line x1="610" y1="720" x2="610" y2="758" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g7)"/>
+  <text x="630" y="742" font-size="9" font-weight="700" fill="#16a34a" text-anchor="start">PASS</text>
+
+  <!-- ALL PASS exit -->
+  <g id="g7d_exit_all_pass" class="decoration">
+    <rect x="370" y="760" width="480" height="60" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5" rx="6"/>
+    <text x="610" y="785" font-size="14" font-weight="700" fill="#14532d" text-anchor="middle">ALL 5 CHECKS PASS</text>
+    <text x="610" y="805" font-size="11" font-weight="400" fill="#14532d" text-anchor="middle">→ proceed to gate:G8_Position_Sizer</text>
+  </g>
+
+  <g id="g7d_footer" class="decoration">
+    <rect x="20" y="900" width="1460" height="180" fill="#1a2942" rx="4"/>
+    <text x="40" y="928" fill="#ffffff" font-size="13" font-weight="700">Gate 7 Risk Guard — Coder Implementation Notes</text>
+    <text x="40" y="952" fill="#cbd5e1" font-size="10" font-weight="400">EVALUATION ORDER IS STRICT — first failure short-circuits the remaining checks. Cheapest checks first (drawdown, concentration, exposure are cached state probes); semaphore is a non-blocking lock probe; per-trade ceiling is a simple arithmetic check on already-sized candidate.</text>
+    <text x="40" y="976" fill="#cbd5e1" font-size="10" font-weight="400">EVERY FAILURE EMITS its labeled event identifier to mod:Logger (sole CIATS data source). Reason code on every reject. CIATS observes failure frequency per check via EWMA Monitor.</text>
+    <text x="40" y="1000" fill="#cbd5e1" font-size="10" font-weight="400">PER-MODULE EVALUATION — each trading module (Long, Short, future) evaluates Gate 7 against its own wallet + own positions + own semaphore. Long failure does not block Short, and vice versa (TB00000 v2_29 §9.3 + §9.7).</text>
+    <text x="40" y="1024" fill="#fbbf24" font-size="10" font-weight="700">CHECK 5 PER-TRADE CEILING is the LOSS-LIMITER on a wrong CIATS R:R estimate — caps any single trade at 25% of module wallet (starting; CIATS-adjustable). Prevents single-trade wipeout on bad sizing.</text>
+    <text x="40" y="1052" fill="#cbd5e1" font-size="10" font-style="italic">Migrated from 1011011 Risk_Engine_Coding_Spec dv1_3 (retired this audit cycle). All five checks become diagram-canonical per TB00000 §4.5 DD-001.</text>
+  </g>
+</svg>
+  </div>
+  <figcaption>Image8 Gate 7 Risk Guard Detail</figcaption>
+</figure>
+
+<h3>3.2 Gate 8 Position Sizer — Coder Detail Sub-Figure (Diagram 9 of 10)</h3>
+<p>
+Sub-figure elaborating gate:G8_Position_Sizer. A1 acceptance floor evaluated
+at gate entry (reject if expected R:R below the sacred 1:1.5 floor); then the
+sizing math computes MAE / emergSL / TP from ATR(14); the sacred 1:1.5 R:R
+floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned. This
+figure replaces the architectural detail previously carried in 1011011
+Risk_Engine_Coding_Spec (retired this audit cycle).
+</p>
+
+<figure class="diagram">
+  <div class="diagram-svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 980"
+     font-family="Arial, Helvetica, sans-serif" font-size="12">
+  <title>0500000_Image9_T3_R1_Gate_8_Position_Sizer_Detail</title>
+  <desc>
+    diagram_canonical: 0500000_Image9_T3_R1_Gate_8_Position_Sizer_Detail
+    tier: 3
+    parent_dcn: 0500000
+    parent_diagram: 0500000_Image2_T2_R2_Trading_Pipeline
+    parent_element: gate:G8_Position_Sizer
+    schema_version: 1.0
+    R-increment: R0 -&gt; R1 (initial authoring; migrated unique architectural content from 1011011 Risk_Engine_Coding_Spec dv1_3 retirement per TB00212 Phase 1 10XXXXX redundancy audit Option (b) pathway).
+    governs:
+      gate: G8_Position_Sizer
+      rule: Sacred_R_R_1_to_1_5, Expected_RR_A1_Acceptance
+      ar: AR-016
+      indicator: ATR_14
+      param: mae_mult, emergency_sl_mult
+      evt: G8_A1_REJECT, G8_SIZED
+    sacred_constraints: Net 1:1.5 R:R minimum floor — the only hardcoded number in TothBot V2 — never CIATS-owned (rule:Sacred_R_R_1_to_1_5 per TB00000 v2_29 §9.10).
+  </desc>
+  <defs>
+    <marker id="arrow_g8" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow_g8_red" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+    </marker>
+    <marker id="arrow_g8_green" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="980" fill="#ffffff"/>
+
+  <g id="g8d_title_bar" class="decoration">
+    <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
+    <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
+          text-anchor="middle">DIAGRAM 9 — Gate 8 Position Sizer Detail — R1</text>
+    <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
+      0500000_Image9_T3_R1_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R2_Trading_Pipeline
+    </text>
+  </g>
+
+  <g id="g8d_entry" class="decoration">
+    <rect x="450" y="100" width="320" height="40" fill="#fef3c7" stroke="#d4a017" stroke-width="2" rx="6"/>
+    <text x="610" y="125" font-size="13" font-weight="700" fill="#854d0e" text-anchor="middle">ENTRY: all gate:G7 checks PASS</text>
+  </g>
+  <line x1="610" y1="140" x2="610" y2="158" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
+
+  <!-- A1 ACCEPTANCE FLOOR -->
+  <g id="g8d_a1_acceptance" class="tier-3">
+    <title>rule:Expected_RR_A1_Acceptance</title>
+    <desc>
+        canonical: rule:Expected_RR_A1_Acceptance
+        tier: 3
+        parent_element: gate:G8_Position_Sizer
+        constraints: rule:Sacred_R_R_1_to_1_5
+        consumes: expected_RR estimate (computed from MAE projection, TP projection, fee schedule)
+        produces: evt:G8_A1_REJECT (on fail = below sacred floor)
+        evaluation_order: 1 (Gate 8 entry; precedes all sizing math)
+        schema_version: 1.0
+      </desc>
+    <polygon points="610,160 880,210 610,260 340,210" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+    <text x="610" y="200" font-size="14" font-weight="700" fill="#14532d" text-anchor="middle">A1 ACCEPTANCE FLOOR</text>
+    <text x="610" y="220" font-size="11" font-weight="700" fill="#0f172a" text-anchor="middle">expected_RR ≥ 1.5?</text>
+    <text x="610" y="237" font-size="9" font-weight="700" fill="#7f1d1d" text-anchor="middle">(SACRED — never CIATS-owned)</text>
+  </g>
+  <g class="decoration">
+    <text x="40" y="200" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
+    <text x="40" y="215" font-size="9" font-weight="400" fill="#475569" text-anchor="start">expected_RR estimate (point estimate</text>
+    <text x="40" y="227" font-size="9" font-weight="400" fill="#475569" text-anchor="start">per A1 rule; A2 confidence-bounded</text>
+    <text x="40" y="239" font-size="9" font-weight="400" fill="#475569" text-anchor="start">variant deferred — TB00000 §9.10)</text>
+    <text x="40" y="253" font-size="9" font-weight="700" fill="#1e3a8a" text-anchor="start">Floor = 1.5 (HARDCODED)</text>
+  </g>
+  <g class="decoration">
+    <line x1="880" y1="210" x2="1098" y2="210" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g8_red)"/>
+    <text x="989" y="203" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">BELOW FLOOR</text>
+    <rect x="1100" y="190" width="380" height="50" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" rx="4"/>
+    <text x="1290" y="210" font-size="11" font-weight="700" fill="#991b1b" text-anchor="middle">REJECT candidate trade</text>
+    <text x="1290" y="227" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">evt:G8_A1_REJECT</text>
+  </g>
+  <line x1="610" y1="260" x2="610" y2="298" stroke="#16a34a" stroke-width="2" fill="none" marker-end="url(#arrow_g8_green)"/>
+  <text x="630" y="282" font-size="9" font-weight="700" fill="#16a34a" text-anchor="start">PASS</text>
+
+  <!-- SIZING MATH SECTION HEADER -->
+  <g id="g8d_sizing_header" class="decoration">
+    <rect x="350" y="300" width="520" height="34" fill="#1e3a8a" rx="4"/>
+    <text x="610" y="322" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">SIZING MATH (CIATS-owned ABOVE the sacred floor)</text>
+  </g>
+  <line x1="610" y1="334" x2="610" y2="352" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
+
+  <!-- MAE computation -->
+  <g id="g8d_mae" class="tier-3">
+    <title>compute:MAE</title>
+    <desc>compute MAE: mae_pct = ATR(14) × mae_mult / entry_fill_price. Inputs: indicator:ATR_14, param:mae_mult (1.5x starting). Output feeds net_loss.</desc>
+    <rect x="350" y="354" width="520" height="42" fill="#f1f5f9" stroke="#475569" stroke-width="1.5" rx="4"/>
+    <text x="610" y="376" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">mae_pct = ATR(14) × mae_mult / entry_fill_price</text>
+    <text x="610" y="390" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">mae_mult = 1.5 (CIATS-owned starting; ar:AR-016 ATR(14) incremental)</text>
+  </g>
+  <line x1="610" y1="396" x2="610" y2="414" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
+
+  <!-- net_loss computation -->
+  <g id="g8d_net_loss" class="tier-3">
+    <title>compute:net_loss</title>
+    <desc>compute net_loss: net_loss = mae_pct + entry_maker_fee + mae_taker_fee (0.16% + 0.26%). Output feeds net_gain.</desc>
+    <rect x="350" y="416" width="520" height="42" fill="#f1f5f9" stroke="#475569" stroke-width="1.5" rx="4"/>
+    <text x="610" y="438" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">net_loss = mae_pct + 0.16% + 0.26%</text>
+    <text x="610" y="452" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">entry maker fee + MAE taker exit fee (Kraken spot starting tier — 0411003)</text>
+  </g>
+  <line x1="610" y1="458" x2="610" y2="476" stroke="#b91c1c" stroke-width="2" fill="none" marker-end="url(#arrow_g8_red)"/>
+
+  <!-- SACRED net_gain computation -->
+  <g id="g8d_net_gain_sacred" class="tier-3">
+    <title>compute:net_gain_SACRED</title>
+    <desc>compute net_gain: net_gain = net_loss × 1.5. The multiplier 1.5 is the SACRED FLOOR — the only hardcoded number in TothBot V2 (rule:Sacred_R_R_1_to_1_5). CIATS may NEVER modify this value. CIATS owns the sizing curve ABOVE this floor.</desc>
+    <rect x="350" y="478" width="520" height="58" fill="#fee2e2" stroke="#b91c1c" stroke-width="2.5" rx="4"/>
+    <text x="610" y="501" font-size="13" font-weight="700" fill="#7f1d1d" text-anchor="middle">net_gain = net_loss × 1.5  ★ SACRED FLOOR ★</text>
+    <text x="610" y="518" font-size="9" font-weight="700" fill="#991b1b" text-anchor="middle">1.5 is the ONLY hardcoded number in TothBot V2 — rule:Sacred_R_R_1_to_1_5</text>
+    <text x="610" y="530" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">CIATS owns the sizing curve ABOVE this floor (TB00000 v2_29 §9.10)</text>
+  </g>
+  <line x1="610" y1="536" x2="610" y2="554" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
+
+  <!-- gross_target / TP computation -->
+  <g id="g8d_gross_target" class="tier-3">
+    <title>compute:gross_target_TP</title>
+    <desc>compute gross_target / TP: gross_target = net_gain + tp_maker_fee (0.16%). This is the maker exit limit price target for the resting TP order.</desc>
+    <rect x="350" y="556" width="520" height="42" fill="#f1f5f9" stroke="#475569" stroke-width="1.5" rx="4"/>
+    <text x="610" y="578" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">gross_target = net_gain + 0.16%   (TP maker exit)</text>
+    <text x="610" y="592" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">TP resting limit price target above entry (long) / below entry (short)</text>
+  </g>
+  <line x1="610" y1="598" x2="610" y2="616" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
+
+  <!-- emergSL computation -->
+  <g id="g8d_emergsl" class="tier-3">
+    <title>compute:emergSL_distance</title>
+    <desc>compute emergSL_distance: emergSL_dist = ATR(14) × emergency_sl_mult / entry_fill_price. NEVER appears in R:R formula. Crash protection only — Kraken resting SL stop-market triggers ONLY on VPS/TothBot/internet failure.</desc>
+    <rect x="350" y="618" width="520" height="42" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5" rx="4"/>
+    <text x="610" y="640" font-size="12" font-weight="700" fill="#7c2d12" text-anchor="middle">emergSL_dist = ATR(14) × emergency_sl_mult / entry_fill_price</text>
+    <text x="610" y="654" font-size="9" font-weight="400" fill="#7c2d12" text-anchor="middle">emergency_sl_mult = 3.0 (CIATS-owned starting). Crash brake only — NEVER in R:R formula.</text>
+  </g>
+  <line x1="610" y1="660" x2="610" y2="678" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
+
+  <!-- SIZED output -->
+  <g id="g8d_sized_output" class="decoration">
+    <rect x="350" y="680" width="520" height="60" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5" rx="6"/>
+    <text x="610" y="705" font-size="14" font-weight="700" fill="#14532d" text-anchor="middle">SIZED → mod:Execution_Engine</text>
+    <text x="610" y="725" font-size="10" font-weight="400" fill="#14532d" text-anchor="middle">{ entry_fill_price, net_loss, net_gain, gross_target, emergSL_dist }</text>
+  </g>
+
+  <g class="decoration">
+    <text x="40" y="370" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs to math:</text>
+    <text x="40" y="385" font-size="9" font-weight="400" fill="#475569" text-anchor="start">indicator:ATR_14 (per-pair, 14-bar)</text>
+    <text x="40" y="397" font-size="9" font-weight="400" fill="#475569" text-anchor="start">param:mae_mult (1.5 start)</text>
+    <text x="40" y="409" font-size="9" font-weight="400" fill="#475569" text-anchor="start">param:emergency_sl_mult (3.0 start)</text>
+    <text x="40" y="421" font-size="9" font-weight="400" fill="#475569" text-anchor="start">entry_fill_price (actual fill,</text>
+    <text x="40" y="433" font-size="9" font-weight="400" fill="#475569" text-anchor="start">not limit price — AR-008)</text>
+    <text x="40" y="447" font-size="9" font-weight="400" fill="#475569" text-anchor="start">Fee schedule per 0411003</text>
+    <text x="40" y="459" font-size="9" font-weight="400" fill="#475569" text-anchor="start">(0.16% maker, 0.26% taker)</text>
+  </g>
+
+  <g id="g8d_footer" class="decoration">
+    <rect x="20" y="800" width="1460" height="160" fill="#1a2942" rx="4"/>
+    <text x="40" y="828" fill="#ffffff" font-size="13" font-weight="700">Gate 8 Position Sizer — Coder Implementation Notes</text>
+    <text x="40" y="852" fill="#cbd5e1" font-size="10" font-weight="400">A1 ACCEPTANCE FLOOR is evaluated FIRST at Gate 8 entry. Candidates with point-estimate expected_RR &lt; 1.5 are rejected before any sizing math runs. This is the sacred-floor enforcement gate per TB00000 v2_29 §9.10 ACCEPTANCE RULE A1.</text>
+    <text x="40" y="876" fill="#fbbf24" font-size="11" font-weight="700">SACRED: net_gain = net_loss × 1.5 is HARDCODED. CIATS may NEVER modify the 1.5 multiplier. CIATS owns the sizing curve ABOVE the floor (per_trade_size_usd as function of expected_RR, bounded by per_trade_ceiling_pct per Gate 7 CHECK 5).</text>
+    <text x="40" y="900" fill="#cbd5e1" font-size="10" font-weight="400">ALL CALCULATIONS USE ACTUAL FILL PRICE — never limit price. This is why OTO was rejected (ar:AR-008): OTO uses limit price for child-order pricing and breaks the actual-fill-price requirement.</text>
+    <text x="40" y="924" fill="#cbd5e1" font-size="10" font-weight="400">emergSL_dist NEVER appears in the R:R formula. The Kraken resting SL stop-market order is layer:L3 emergency brake only — triggers on VPS/TothBot/internet failure. NEVER in normal operation.</text>
+    <text x="40" y="948" fill="#cbd5e1" font-size="10" font-style="italic">Migrated from 1011011 Risk_Engine_Coding_Spec dv1_3 (retired this audit cycle). All sizing math + A1 acceptance + sacred floor become diagram-canonical per TB00000 §4.5 DD-001.</text>
+  </g>
+</svg>
+  </div>
+  <figcaption>Image9 Gate 8 Position Sizer Detail</figcaption>
+</figure>
+
 <h2>4. Exit Architecture — Ground Zero Redesign for Kraken</h2>
 <p>
 Rebuilt from zero for Kraken. Exit Controller owns all normal exits. Kraken off-book
@@ -6636,6 +7068,298 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_47  05-12-2026  TB00212 PHASE 1 10XXXXX REDUNDANCY AUDIT —
+                      TWO NEW TIER-3 GATE-DETAIL SUB-FIGURES
+                      (DIAGRAMS 8 + 9) — UNIQUE 1011011 ARCHITECTURAL
+                      CONTENT MIGRATED TO CANONICAL PARENT.
+
+                      INCREMENT TYPE: figure-count expansion 8 -&gt; 10.
+                      Two new tier-3 sub-figures added between §3
+                      Trading Pipeline (Image2) and §4 Exit
+                      Architecture:
+                        Diagram 8 — Gate 7 Risk Guard Detail
+                          (5 sequential checks: drawdown halt,
+                          concentration, exposure, semaphore-locked,
+                          per-trade ceiling).
+                        Diagram 9 — Gate 8 Position Sizer Detail
+                          (A1 acceptance floor at entry + sizing
+                          math + sacred 1:1.5 floor enforcement).
+
+                      All 8 previously-existing figures preserved
+                      BYTE-IDENTICAL except for D2 (Image2) Gate 7
+                      and Gate 8 &lt;desc&gt; fields which receive
+                      drill_targets extension referencing the new
+                      sub-figures.
+
+                      AMENDMENT SCOPE DETAIL.
+
+                      (1) HEADER REFRESH.
+                          DocVersion: dv1_46 -&gt; dv1_47.
+                          DocPath: ...0500000_System_Architecture_
+                            Overview_dv1_46_Claude_Source.html -&gt;
+                            ...0500000_System_Architecture_Overview_
+                            dv1_47_Claude_Source.html.
+                          DocDate: 05-11-2026 -&gt; 05-12-2026
+                            (new session date).
+                          DocTime: 11:34:00 UTC -&gt; 05:10:00 UTC
+                            (TB00212 session-open authoring window).
+                          HTML &lt;title&gt;: "0500000 System
+                            Architecture Overview dv1_46" -&gt;
+                            "...dv1_47".
+
+                      (2) FORMAT-NOTE UPDATE.
+                          "ALL 8 DIAGRAMS INLINE" -&gt;
+                            "ALL 10 DIAGRAMS INLINE".
+                          "All 8 diagrams (Tier 1 Context +
+                            Diagrams 1-7)" -&gt;
+                            "All 10 diagrams (Tier 1 Context +
+                            Diagrams 1-7 Tier-2 + Diagrams 8-9
+                            Tier-3 gate-detail sub-figures)".
+
+                      (3) D2 (IMAGE2) GATE 7 &lt;desc&gt; FIELD
+                          UPDATE.
+                          drill_targets extended:
+                            mod:Risk_Engine, channel:kraken_ws_ticker
+                              -&gt;
+                            mod:Risk_Engine, channel:kraken_ws_ticker,
+                              0500000_Image8_T3_R1_Gate_7_Risk_Guard_
+                              Detail
+                          constraints extended:
+                            rule:HR-WM-024
+                              -&gt;
+                            rule:HR-WM-024, rule:Per_Trade_Ceiling_
+                              Check
+                          consumes updated:
+                            param:full_halt_drawdown, param:session_
+                              pause_drawdown, param:max_concurrent,
+                              channel:kraken_ws_ticker
+                              -&gt;
+                            param:full_halt_drawdown, param:session_
+                              pause_drawdown, channel:kraken_ws_
+                              ticker, param:per_trade_ceiling_pct
+                          (param:max_concurrent removed — retired in
+                           TB00000 v2_29 §9.17; this is a cluster C7
+                           currency-lag closure side effect at no
+                           additional cost.)
+
+                      (4) D2 (IMAGE2) GATE 8 &lt;desc&gt; FIELD
+                          UPDATE.
+                          drill_targets extended:
+                            layer:L2_MAE_Threshold, layer:L3_
+                              Emergency_SL, layer:L1b_TP_Fill
+                              -&gt;
+                            layer:L2_MAE_Threshold, layer:L3_
+                              Emergency_SL, layer:L1b_TP_Fill,
+                              0500000_Image9_T3_R1_Gate_8_Position_
+                              Sizer_Detail
+                          constraints extended:
+                            rule:Sacred_R_R_1_to_1_5, ar:AR-016
+                              -&gt;
+                            rule:Sacred_R_R_1_to_1_5, rule:Expected_
+                              RR_A1_Acceptance, ar:AR-016
+
+                      (5) D2 (IMAGE2) ROOT &lt;desc&gt; GOVERNS:RULE
+                          LIST EXTENSION.
+                            HR-EE-013, HR-SP-001..006, HR-WM-024,
+                            Sacred_R_R_1_to_1_5
+                              -&gt;
+                            HR-EE-013, HR-SP-001..006, HR-WM-024,
+                            Sacred_R_R_1_to_1_5, Per_Trade_Ceiling_
+                            Check, Expected_RR_A1_Acceptance
+
+                      (6) NEW DIAGRAM 8 — GATE 7 RISK GUARD DETAIL.
+                          Canonical name: 0500000_Image8_T3_R1_
+                            Gate_7_Risk_Guard_Detail
+                          Tier: 3 (sub-figure of tier-2 gate:G7_
+                            Risk_Guard in D2)
+                          viewBox: 1500x1100
+                          R-revision: R1 (initial authoring)
+                          Content: 5 sequential decision diamonds
+                            in vertical evaluation order — drawdown
+                            halt, concentration, exposure,
+                            semaphore-locked, per-trade ceiling —
+                            with per-check data input labels on the
+                            left, fail-branch BLOCK boxes with event
+                            identifiers on the right, and an ALL
+                            PASS exit terminator routing to Gate 8.
+                          Coder implementation notes footer
+                            enumerates strict evaluation order
+                            (cheap checks first; semaphore non-
+                            blocking probe; per-trade ceiling is
+                            simple arithmetic), per-module
+                            evaluation rule (Long fails do not block
+                            Short, and vice versa), and the loss-
+                            limiter role of CHECK 5 in capping
+                            single-trade wipeout exposure on a
+                            wrong CIATS R:R estimate.
+                          Tagged elements: 5 check tier-3 labeled
+                            groups (check:G7_CHECK_1 through CHECK_
+                            5) per 0311001 v1_12 §15.11.
+
+                      (7) NEW DIAGRAM 9 — GATE 8 POSITION SIZER
+                          DETAIL.
+                          Canonical name: 0500000_Image9_T3_R1_
+                            Gate_8_Position_Sizer_Detail
+                          Tier: 3 (sub-figure of tier-2 gate:G8_
+                            Position_Sizer in D2)
+                          viewBox: 1500x980
+                          R-revision: R1 (initial authoring)
+                          Content: A1 acceptance floor decision
+                            diamond at gate entry (reject if
+                            expected_RR &lt; 1.5; sacred floor
+                            enforcement); then sequential sizing-
+                            math computation boxes — mae_pct,
+                            net_loss, net_gain (SACRED highlighted
+                            in red — net_gain = net_loss × 1.5,
+                            the only hardcoded number in TothBot
+                            V2), gross_target (TP maker), emergSL_
+                            dist (orange-highlighted as crash-only
+                            never-in-RR-formula); then SIZED output
+                            routing to mod:Execution_Engine.
+                          Coder implementation notes footer
+                            enumerates: A1 evaluated before any
+                            sizing math runs; the 1.5 multiplier is
+                            never CIATS-owned (CIATS owns the curve
+                            ABOVE the floor); all calculations use
+                            actual fill price not limit price (why
+                            OTO ar:AR-008 was rejected); emergSL_
+                            dist never appears in R:R formula
+                            (layer:L3 crash brake only).
+                          Tagged elements: rule:Expected_RR_A1_
+                            Acceptance + 5 compute:* tier-3 labeled
+                            groups per 0311001 v1_12 §15.11.
+
+                      (8) PRESERVATIONS.
+                          All 8 previously-existing figures retained.
+                          7 figures preserved BYTE-IDENTICAL: D1
+                            Kraken API, D3 Exit Architecture, D4
+                            Regime Taxonomy, D5 CIATS Architecture,
+                            D6 Complete System, D7 Paper-Mode
+                            Dispatch Boundary, D8 Tier-1 System
+                            Context.
+                          D2 Trading Pipeline (Image2) receives
+                            ONLY the enumerated &lt;desc&gt; field
+                            updates in items (3)-(5) above. All
+                            pre-existing D2 SVG visual content
+                            (gate boxes, skip-rejection labels,
+                            dispatch boundary container, modules,
+                            execution engine, flow arrows, footer)
+                            preserved BYTE-IDENTICAL — no visual
+                            element changed.
+                          Document figure count: 8 -&gt; 10.
+
+                      (9) NEW PROSE SUB-SECTIONS.
+                          §3.1 introduces Diagram 8 (Gate 7 detail).
+                          §3.2 introduces Diagram 9 (Gate 8 detail).
+                          Both sub-sections explicitly state the
+                            figures replace architectural detail
+                            previously carried in 1011011 (retired
+                            this audit cycle).
+
+                      (10) PER-AUDIT RULE ESTABLISHED.
+                          For the remaining 12 Tier-3 instance
+                          coding specs in the Phase 1 redundancy
+                          audit scope (1011002, 1011003, 1011004,
+                          1011005, 1011006, 1011007, 1011008,
+                          1011009, 1011010, 1011012, 1011013,
+                          1011014), the rule is:
+
+                            BEFORE retiring each coding spec,
+                            evaluate whether the existing 0500000
+                            diagrams capture all the unique
+                            architectural content the spec carries.
+
+                            IF YES: retire the spec via dv -&gt; rt
+                              state transition per 0311003.
+
+                            IF NO: add a new tier-3 sub-figure
+                              to 0500000 (or extend an existing
+                              parent figure where appropriate),
+                              migrate the unique architectural
+                              content into the new sub-figure as
+                              diagram-canonical content (per
+                              TB00000 §4.5 DD-001), THEN retire
+                              the spec.
+
+                          Estimated figure-count impact across
+                          the remaining 12 audits: 0500000 grows
+                          from 10 (post-dv1_47) to approximately
+                          14-20 (depending on per-spec unique
+                          content density). Net drift surface
+                          DECREASES: 12 separately-versioned
+                          coding-spec documents are replaced by
+                          tier-3 sub-figures inside one
+                          versioned parent document.
+
+                      (11) DC-PREFLIGHT-009 CASCADE-CURRENCY-CHECK
+                          (per 0311002 v1_11 §8.2.5).
+                          Q1 CONSUMER IDENTIFICATION: 13 Tier-3
+                            AA=10 instance coding specs cite
+                            0500000 via parent-chain version
+                            citation + various via tagged-element
+                            identifiers; 1010000 Trading_System_
+                            Coding_Anchor cites via parent chain;
+                            1011001 Engineering_Best_Practices
+                            sibling; AA=06 risk parents 0611001-
+                            0611004 may cite Gate 7 / Gate 8
+                            architectural elements.
+                          Q2 CASCADE SCOPE: NO CASCADE for the
+                            Diagram 8 + Diagram 9 sub-figure
+                            additions themselves — these are NEW
+                            architectural elements not previously
+                            cited by any consumer; no existing
+                            identifier reference becomes stale.
+                            VERSION-CITATION REFRESH DEFERRED for
+                            all 13 Tier-3 instance coding specs —
+                            these retire in the audit; the cascade
+                            resolves via retirement rather than
+                            refresh.
+                          Q3 SEQUENCING: this session = 0500000
+                            dv1_47 + 1011011 retirement; TB00213+
+                            per the audit rule item (10) above for
+                            remaining 12 specs.
+                          Q4 RECORD KEEPING: this entry + TB00212
+                            SL § cascade analysis section.
+
+                      (12) REASON FOR APPROACH CHANGE FROM PRIOR
+                          TB00211 NSI DIRECTIVE.
+                          The prior session NSI directed inline
+                          tier-3 diamond decision-node additions
+                          inside the existing Image2 figure as
+                          "Gate 7 sub-diagram" + "Gate 8 sub-
+                          diagram" content. At TB00212 chat-turn
+                          inspection of dv1_46, no such sub-
+                          diagrams exist — Gate 7 and Gate 8 are
+                          single rectangular boxes within Image2
+                          with no internal check structure. The
+                          inline-diamond approach would have
+                          produced an architecturally weak result
+                          (a floating CHECK 5 with no CHECK 1-4,
+                          a floating A1 with no surrounding sizing
+                          math context) — confusing to coders and
+                          incomplete for the design-document role
+                          diagrams must play under TB00000 §4.5
+                          DD-001 diagrams-as-canonical.
+                          FP/DP analysis across five dimensions
+                          (canonical for coding; correctness;
+                          clarity; loss prevention via reduced
+                          coder-interpretation defect surface;
+                          net drift surface across remaining
+                          audit cycles) selected the new-sub-
+                          figure approach uniformly. Bill TB00212
+                          chat ratification of the new-sub-figure
+                          approach + per-audit rule for remaining
+                          12 specs.
+
+                      Bill override: TB00000 v2_29 §4.5 DD-001
+                      diagrams-as-canonical principle authorizes
+                      figure-count expansion when existing figures
+                      cannot accommodate migrated architectural
+                      content from retiring coding specs. Per
+                      TB00212 chat-turn Bill plan approval.
+
+                      Document Status updated: supersedes dv1_46.
+
   dv1_46  05-11-2026  STAGE M-4 SUB-STEP 3 — D7 SVG STRUCTURAL
                       AMENDMENT (MOD:SHORT_MODULE LABELED GROUP
                       ADDITION) — TB00188.

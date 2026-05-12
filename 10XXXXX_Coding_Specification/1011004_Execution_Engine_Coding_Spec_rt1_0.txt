@@ -1,0 +1,465 @@
+DocDCN:     1011004
+DocTitle:   Execution_Engine_Coding_Spec
+DocVersion: rt1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/_Archive/1011004_Execution_Engine_Coding_Spec_rt1_0.txt
+DocDate:    05-12-2026
+DocTime:    06:15:00 UTC
+
+============================================================
+EXECUTION ENGINE CODING SPECIFICATION — RETIRED
+============================================================
+
+============================================================
+1. RETIREMENT MARKER
+============================================================
+
+1.1 STATUS.
+  This document is RETIRED (rt1_0) per state transition
+  dv1_0 -> rt1_0 authorized by Bill chat-turn directive
+  at TB00213 session open (2026-05-12).
+
+1.2 RETIREMENT TYPE.
+  Direct retirement — NO new architectural migration
+  required. All architectural content previously residing
+  in this spec is canonically encoded in 0500000 dv1_47
+  + 0511003 dv1_1 + 1011001 dv1_7 + TB00000 v2_29 §9.17.
+
+1.3 RETIREMENT RATIONALE.
+  Per TB00000 v2_29 §4.5 DD-001 diagrams-as-canonical
+  governance + the per-audit rule established at TB00212
+  SL §2.6. 1011004 is the second Tier-3 instance coding
+  spec retired under the Option (b) Phase 1 audit
+  pathway. The per-audit STEP 1 enumeration + STEP 2
+  classification + STEP 3 migration-target identification
+  is recorded in Section 3 below.
+
+1.4 AUTHORIZATION CHAIN.
+  - TB00211 Option (b) pathway selection (Bill
+    ratification at chat-turn 7).
+  - TB00212 SL §2.6 per-audit rule establishment.
+  - TB00213 NSI v1_0 Work Product 2 directive.
+  - Bill TB00213 chat-turn directive at session open
+    authorizing audit-and-retire under the per-audit
+    rule.
+
+============================================================
+2. PARENT CHAIN (AT RETIREMENT)
+============================================================
+
+  1000000  Coding_Specification           dv1_0
+  1010000  Trading_System_Coding_Anchor   dv1_17
+  1011004  This document (RETIRED rt1_0)
+
+  AA=05 parent specification (canonical for hard rules
+  and architectural flow):
+    0511003  Execution_Engine_Specification  dv1_1
+
+  Upstream protocol parent specifications:
+    0411001  Kraken_WS_v2_Specification               dv1_11
+    0411003  Kraken_Fee_Rate_Limit_Specification      dv1_0
+
+============================================================
+3. PER-AUDIT RULE EXECUTION RECORD
+============================================================
+
+3.1 STEP 1 — ENUMERATE AUDITED SPEC SECTIONS.
+
+  1011004 dv1_0 contained 14 sections:
+    Section 1   Purpose
+    Section 2   Parent Chain
+    Section 3   Five Coding-Readiness Questions
+    Section 4   Parameters
+    Section 5   Phase 1 — Entry Order Dispatch
+                (sub-sections 5.1-5.8)
+    Section 6   Entry Order Outcomes
+                (sub-sections 6.1-6.6)
+    Section 7   Phase 2 — TP + Emergency SL Placement
+                (sub-sections 7.1-7.4)
+    Section 8   Rate Counter Summary
+    Section 9   Interfaces (sub-sections 9.1-9.7)
+    Section 10  Hard Rules (HR-EE-001..013)
+    Section 11  What Triggers It
+    Section 12  What It Logs
+    Section 13  Related Documents
+    Section 14  Revision History
+
+3.2 STEP 2 — CLASSIFY EACH SECTION AGAINST CANONICAL
+    RECEIVERS.
+
+  Classification key:
+    [d-1] = Architectural element -> 0500000 (canonical
+            in dv1_47 already; or new sub-figure needed)
+    [d-2] = Hard rule -> AA-parent spec (0511003)
+    [d-3] = Python pattern -> 1011001 Engineering Best
+            Practices
+    [META] = Document metadata (no migration target)
+    [PARAM] = Parameter value -> TB00000 §9.17 registry
+
+  Section 1 Purpose:                    [META]
+    Document-purpose statement. Not architectural
+    content. Replicated at retirement in §1 above.
+
+  Section 2 Parent Chain:               [META]
+    Parent-chain enumeration. Not architectural content.
+    Replicated at retirement in §2 above with current
+    versions.
+
+  Section 3 Five Coding-Readiness Q's:  [d-1] + [d-2]
+    Summary of architectural function (Q1), interfaces
+    (Q2), hard rules (Q3), triggers (Q4), logs (Q5).
+    All five Q's already canonically encoded:
+      Q1 (function): 0500000 dv1_47 D2 Trading Pipeline
+                     Image2 "ON FILL — mod:Execution_
+                     Engine — batch_add (TP resting limit
+                     + emergSL stop-market — atomic)"
+                     block + D7 Paper-Mode Dispatch
+                     Boundary mod:Execution_Engine
+                     dispatch-side group.
+      Q2 (interfaces): 0500000 D2 connection arrows +
+                       0511003 dv1_1 §7 Interfaces.
+      Q3 (hard rules): 0500000 AR-006/007/008/018/028/
+                       032/033/043/046/047/053/054/055
+                       + 0511003 dv1_1 §8 HR-EE-001..015.
+      Q4 (triggers): 0500000 D2 Image2 + 0511003 §9.
+      Q5 (logs):     0500000 D2 + 0511003 §10.
+
+  Section 4 Parameters:                 [PARAM]
+    entry_timeout_sec: TB00000 v2_29 §9.17 CIATS-OWNED
+      registry.
+    max_concurrent: RETIRED per TB00000 v2_29 §9.17
+      RETIRED section (concurrent count emerges from
+      wallet_balance / per_trade_size_usd arithmetic).
+    maker_fee_rate: per-pair from Kraken pair_cache
+      (encoded in 0500000 D2 + 0411003 Kraken_Fee_Rate_
+      Limit_Specification).
+    net_R_R_ratio: TB00000 v2_29 §9.10 SACRED constraint
+      (rr_minimum_net = 1:1.5 minimum floor).
+
+  Section 5 Phase 1 — Entry Order Dispatch:
+    Sub-section 5.1 Trigger and Input:  [d-1] + [d-2]
+      Gate 8 output dict format: 0500000 D2 + 0511003 §3.
+      Pair-status check: 0511003 §3 + AR-XXX.
+      Min validation (HR-EE-010): 0511003 §8 HR-EE-010
+                                  + AR-028.
+    Sub-section 5.2 BoundedSemaphore:   [d-1] + [d-2] + [d-3]
+      Semaphore acquire/release: 0500000 AR-043 (canonical
+      architectural reasoning) + 0511003 §8 implicit +
+      1011011 retirement record (now retired) → AA=06
+      0611001 / 0611003 (parent specs for the semaphore-
+      backed max_concurrent rule).
+      Python API specifics (acquire(blocking=False)):
+      coder discretion within BP-ASYNC-* patterns
+      (1011001 dv1_7 §ASYNC).
+    Sub-section 5.3 cl_ord_id Assignment: [d-1] + [d-2]
+      Format spec (18 chars, symbol prefix + ts_ms):
+      0511003 §3.1.
+      No-async-gap rule (A-2): 0500000 AR-002 + 0511003
+      §3.1 + HR-EE-006.
+      Python timestamp arithmetic specifics: coder
+      discretion within BP-ENV-005 UTC.
+    Sub-section 5.4 req_id Assignment:  [d-1] + [d-2]
+      req_id_registry data shape {method, timestamp,
+      symbol}: 0511003 §3.2.
+      itertools.count() initialization specifics: coder
+      discretion within BP-ASYNC-* patterns.
+    Sub-section 5.5 add_order Construction: [d-1] + [d-2]
+      Full add_order field set: 0511003 §3.3 + 0500000
+      D7 left-column add_order detail block (lines
+      1489+ of dv1_47 HTML).
+      AR-006: canonical in 0500000.
+      AR-032 (stp_type underscore): canonical in 0500000.
+      AR-033 (deadline now+5s): canonical in 0500000.
+      AR-047 (Decimal str conversion): canonical in
+      0500000 + 1011001 BP-JSON-004.
+    Sub-section 5.6 Pending Order Registry: [d-1] + [d-2]
+      AR-053 canonical in 0500000 + 0511003 §3.4.
+      Registry state machine: 0511003 §3.4 + §4.
+    Sub-section 5.7 Position Mirror at Dispatch: [d-2]
+      A-2 no-async-gap: 0500000 + 0511003 + 0511005
+      Position_Mirror_Specification (sibling parent).
+    Sub-section 5.8 Rate Counter Cost:  [d-1] + [d-2]
+      add_order +1 unit: 0500000 D7 left-column rate-
+      counter block (line 1560+) + 0411003 + 0511003
+      §3.5.
+
+  Section 6 Entry Order Outcomes:        [d-2]
+    All six exec_type branches (filled / trade / expired
+    / canceled / new / post_only-rejected): 0511003 §4
+    sub-sections 4.1-4.6.
+    AR-054 partial-fill protection: 0500000 AR-054 +
+    0511001 WS_Manager_Specification §8.2 (canonical
+    dispatch).
+
+  Section 7 Phase 2 — TP + emergSL batch_add: [d-1] + [d-2]
+    batch_add construction: 0511003 §5 + 0500000 D2 ON
+    FILL block + AR-007 + AR-046.
+    HR-EE-009 sacred 1:1.5 net R:R hardcoded: 0500000
+    AR-011 + TB00000 v2_29 §9.10 SACRED constraint.
+    AR-008 OTO prohibition: canonical in 0500000.
+
+  Section 8 Rate Counter Summary:        [d-1] + [d-2]
+    add_order +1, batch_add +(n/2): 0500000 D7 + 0411003.
+
+  Section 9 Interfaces:                  [d-1] + [d-2]
+    All seven interface targets (9.1-9.7) match 0511003
+    §7 + 0500000 D2 connection arrows.
+
+  Section 10 Hard Rules:                 [d-2]
+    HR-EE-001..013: 0511003 §8 HR-EE-001..015 (super-set;
+    0511003 added HR-EE-014 NO DIRECT PRIVATE-WS ACCESS
+    + HR-EE-015 MODE-OPAQUE CALLER CONTRACT in dv1_1 per
+    paper-as-master).
+    Source AR-* citations (AR-006/007/008/018/028/032/
+    033/046/047/053/055): canonical in 0500000.
+
+  Section 11 What Triggers It:           [d-2]
+    Gate 8 trigger + exec_type events: 0511003 §9.
+
+  Section 12 What It Logs:               [d-2]
+    Log event names + field lists: 0511003 §10.
+    Logger interface contract: 0511006 + 1011007.
+
+  Section 13 Related Documents:          [META]
+    Document cross-reference list. Not architectural
+    content.
+
+  Section 14 Revision History:           [META]
+    Document control metadata. Replicated below.
+
+3.3 STEP 3 — IDENTIFY MIGRATION TARGETS FOR UNIQUE
+    CONTENT.
+
+  UNIQUE architectural elements not yet canonically
+  encoded:
+    NONE. All architectural content (function, interfaces,
+    flow, hard rules, AR-* reasoning, triggers, logs) is
+    canonically encoded in 0500000 dv1_47 + 0511003 dv1_1.
+
+  UNIQUE hard rules not yet canonically encoded:
+    NONE. HR-EE-001..013 in 1011004 are a strict subset
+    of HR-EE-001..015 in 0511003 dv1_1. The dv1_1
+    additions (HR-EE-014 NO DIRECT PRIVATE-WS ACCESS +
+    HR-EE-015 MODE-OPAQUE CALLER CONTRACT) supersede the
+    1011004 dv1_0 hard-rule set.
+
+  UNIQUE Python patterns not yet canonically encoded:
+    NONE that require migration. Python-implementation
+    specifics in 1011004 (itertools.count() for req_id_
+    counter; entry_qty.quantize(rounding=ROUND_DOWN);
+    asyncio.BoundedSemaphore.acquire(blocking=False);
+    dict-literal construction syntax for add_order_msg
+    and batch_add_msg) are coder-discretion language-
+    specific applications of contracts already encoded
+    in 0511003 + 1011001 dv1_7 BP-* patterns:
+      BP-JSON-004 Decimal from string conversion
+      BP-ASYNC-001 async-first design
+      BP-ENV-005 UTC for all time
+      Decimal.quantize for all rounding (1011001 §8)
+
+  MIGRATION DETERMINATION: NO MIGRATION REQUIRED.
+  1011004 dv1_0 -> rt1_0 direct retirement is the
+  appropriate disposition under the per-audit rule.
+
+3.4 STEP 4 — RETIRE THE SPEC.
+
+  This document records the dv1_0 -> rt1_0 retirement
+  state transition. Authorization in §1.4. Revision
+  history below.
+
+============================================================
+4. CANONICAL SOURCES AFTER RETIREMENT
+============================================================
+
+4.1 ARCHITECTURAL ELEMENTS (DIAGRAMS-AS-CANONICAL).
+
+  0500000 System_Architecture_Overview dv1_47 contains
+  the canonical architectural encoding of Execution
+  Engine components:
+
+    D2 Trading Pipeline (Image2):
+      - mod:Execution_Engine group with title and
+        canonical-id desc field.
+      - ON FILL block: "ON FILL — mod:Execution_Engine
+        — batch_add (TP resting limit + emergSL stop-
+        market — atomic)"
+      - drill_targets to mod:WS_Manager,
+        mod:Execution_Engine, Image7 dispatch boundary
+      - SIZED -> mod:Execution_Engine flow connection
+      - ws_private.send(add_order) detail label
+
+    D7 Paper-Mode Dispatch Boundary (Image7):
+      - mod:Execution_Engine in dispatch-side group
+      - add_order detail block (left column lines 1489+)
+      - batch_add detail block (left column lines 1495+)
+      - Rate counter contribution detail (add_order: +1;
+        batch_add: +n/2)
+
+    Architectural Reasoning entries (all canonical):
+      AR-006  add_order field requirements
+      AR-007  TP placement — resting limit via batch_add
+              on fill (amended dv1_42 M-2 short-direction)
+      AR-008  Emergency SL — stop-market via batch_add
+              atomic with TP (amended dv1_42 M-2)
+      AR-018  amend_order primary; edit_order PROHIBITED
+      AR-028  qty_min and cost_min validation in Gate 8
+              before every add_order
+      AR-032  stp_type:cancel_newest WS v2 underscore
+              format (NOT REST hyphen format)
+      AR-033  deadline parameter on all WS v2 add_order
+              and batch_add (dv1_10)
+      AR-043  BoundedSemaphore-backed max_concurrent
+      AR-046  emergSL triggers.reference="last"
+              MANDATORY (dv1_13)
+      AR-047  Decimal(str()) on all WS message numeric
+              fields (NEVER Decimal(float))
+      AR-053  Pending Order Registry population on
+              every add_order dispatch
+      AR-054  Partial-fill protection trigger
+      AR-055  cancel_all_orders_after PROHIBITED
+
+4.2 HARD RULES (AA=05 PARENT SPEC).
+
+  0511003 Execution_Engine_Specification dv1_1 contains
+  the canonical hard-rule set:
+    HR-EE-001  post_only=true on ALL entry add_order
+    HR-EE-002  stp_type="cancel_newest" UNDERSCORE
+    HR-EE-003  deadline UTC now + 5s ISO 8601
+    HR-EE-004  triggers.reference="last" MANDATORY
+    HR-EE-005  TP + emergSL via batch_add atomic
+    HR-EE-006  cl_ord_id at dispatch BEFORE Kraken
+               response (no async gap A-2)
+    HR-EE-007  Pending Order Registry populated on
+               every dispatch
+    HR-EE-008  Decimal(str()) on all WS numeric fields
+    HR-EE-009  net_gain = net_loss * 1.5 HARDCODED
+               (sacred constraint per §9.10)
+    HR-EE-010  qty_min + cost_min validation before
+               dispatch
+    HR-EE-011  amend_order primary; edit_order
+               PROHIBITED
+    HR-EE-012  cancel_all_orders_after PROHIBITED
+    HR-EE-013  PAPER-LIVE BEHAVIORAL PARITY EXACT
+               (no mode-conditional branching)
+    HR-EE-014  NO DIRECT PRIVATE-WS ACCESS (NEW dv1_1)
+    HR-EE-015  MODE-OPAQUE CALLER CONTRACT (NEW dv1_1)
+
+4.3 PYTHON PATTERNS (1011001 ENGINEERING BEST PRACTICES).
+
+  1011001 Engineering_Best_Practices dv1_7 contains
+  the canonical Python-pattern set:
+    BP-ENV-001..005   Python environment + UTC
+    BP-JSON-001..006  orjson + Decimal-from-str
+    BP-ASYNC-001..007 async-first + asyncio queue +
+                      graceful shutdown
+    BP-HTTP-001..005  aiohttp ClientSession + retry
+    §8 Decimal Precision Rules
+
+  Execution-Engine-specific Python applications
+  (itertools.count for req_id_counter; BoundedSemaphore
+  API; Decimal.quantize calls) are coder-discretion
+  applications of these general patterns and do not
+  require migration as new BP-* entries.
+
+4.4 PARAMETER REGISTRY.
+
+  TB00000 v2_29 §9.17 CIATS PARAMETER REGISTRY contains
+  the canonical parameter values:
+    entry_timeout_sec  (CIATS-OWNED, 30-60s starting)
+    rr_minimum_net     (SACRED, 1:1.5 floor)
+  max_concurrent is RETIRED per §9.17 RETIRED section
+  (concurrent count emerges from wallet_balance /
+  per_trade_size_usd arithmetic).
+
+============================================================
+5. CONSUMER SPECS AT RETIREMENT
+============================================================
+
+5.1 SPECS THAT CITED 1011004.
+  All consumer specs that cited 1011004 by version,
+  identifier, or content are within the Phase 1 audit
+  scope and will themselves retire in subsequent audit
+  cycles. Citation refreshes resolve via retirement
+  rather than refresh.
+
+5.2 CASCADE STATUS.
+  No new cross-document cascade triggered by this
+  retirement. End-of-Phase-1-audit cascade for 1010000
+  + 1011001 deferred per the per-audit rule.
+
+============================================================
+6. ORIGINATING CONTENT REFERENCE
+============================================================
+
+6.1 The complete dv1_0 content (Sections 1 through 14
+    of the pre-retirement spec) is preserved in git
+    history at TothBot_V2-Docs commit chain. Use:
+
+      git log --follow 10XXXXX_Coding_Specification/1011004_Execution_Engine_Coding_Spec_dv1_0.txt
+
+    to inspect the originating content. Per 0311003
+    VP-010(b), superseded version history is managed
+    through git.
+
+6.2 Per 0311003 VP-010(c), this retired (rt) document
+    is the document moved to _Archive. Bill action
+    (file move from working tree to _Archive folder)
+    closes the retirement workflow.
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  rt1_0  05-12-2026  RETIREMENT STATE TRANSITION
+                     dv1_0 -> rt1_0 per Bill TB00213
+                     chat-turn directive at session
+                     open authorizing Phase 1 audit
+                     Work Product 2 (second audit-
+                     cycle retirement under Option (b)
+                     pathway; first direct retirement
+                     without new 0500000 migration).
+
+                     Per-audit rule STEP 1 + STEP 2 +
+                     STEP 3 record embedded in §3.
+                     Determination: NO MIGRATION
+                     REQUIRED. All architectural
+                     content canonically encoded in
+                     0500000 dv1_47 (D2 ON FILL
+                     block + D7 dispatch boundary +
+                     AR-006/007/008/018/028/032/
+                     033/043/046/047/053/054/055).
+                     All hard rules in 0511003 dv1_1
+                     §8 HR-EE-001..015 (super-set of
+                     1011004 dv1_0 HR-EE-001..013).
+                     All Python patterns are coder-
+                     discretion applications of
+                     existing 1011001 dv1_7 BP-*
+                     patterns. All parameter values
+                     in TB00000 v2_29 §9.17 registry.
+
+                     Authorization chain: TB00211
+                     Option (b) pathway selection +
+                     TB00212 per-audit rule + TB00213
+                     NSI Work Product 2 directive +
+                     Bill TB00213 chat-turn open
+                     authorizing audit-and-retire.
+
+                     Document moves to _Archive per
+                     0311003 VP-010(c) after Bill
+                     commits this file.
+
+  dv1_0  04-25-2026  Initial recovery authoring at
+                     TB00137 close. Full coding-
+                     readiness contract: 5-question
+                     summary, Phase 1 entry dispatch,
+                     entry outcomes (6 exec_type
+                     branches), Phase 2 batch_add
+                     placement, rate counter summary,
+                     interfaces (7 targets), hard
+                     rules HR-EE-001..013, triggers,
+                     logs, related documents.
+                     Coding-ready.
+
+============================================================
+END OF DOCUMENT
+============================================================
