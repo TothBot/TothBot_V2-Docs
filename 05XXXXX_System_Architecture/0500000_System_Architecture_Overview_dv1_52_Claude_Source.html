@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_47</title>
+<title>0500000 System Architecture Overview dv1_52</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_47</td></tr>
+  <tr><td>DocVersion</td><td>dv1_52</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_47_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_52_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-12-2026</td></tr>
-  <tr><td>DocTime</td><td>05:10:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>22:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -2977,21 +2977,23 @@ taxonomy:
 </pre>
 <figure class="diagram">
   <div class="diagram-svg">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1320"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1420"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image3_T2_R2_Exit_Architecture</title>
+  <title>0500000_Image3_T2_R4_Exit_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image3_T2_R2_Exit_Architecture
+    diagram_canonical: 0500000_Image3_T2_R4_Exit_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment: R1 -&gt; R2 (DR-011 D3 portion closure: HR-PM-009 sole-writer architectural callout added to mod:Exit_Controller and layer:L2_MAE_Threshold group desc constraints, plus visible decoration band at figure bottom (id="pm_helper_callout") depicting the read-only-via-helpers pattern per 0511005 dv1_1 HR-PM-009 + HR-PM-011. SVG viewBox extended 1500x1240 -&gt; 1500x1320 to fit the new callout group. R1 visual content preserved byte-identical EXCEPT for the new decoration group addition. DR-040 (Layer 2 mae_pct_reached field) DEFERRED per TB00153 §6 sequenced-after-Phase-1-spec condition: 1011006 dv1_2 not landed; 1011006 dv1_1 is current. R-increment R0 -&gt; R1 description preserved as R-increment-prior below for revision lineage. Per DEC-004 cumulative R-increment policy.)
-    R-increment-prior: R0 -&gt; R1 (currency refresh against dv1_23 §4 + glyph fallback fix + layer 3 layout fix bundled per TB00151a-2 NSI item b)
-    governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, mod:Exit_Controller, layer:L1a_Signal_Exit, layer:L1b_TP_Fill, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
+    R-increment: R3 -&gt; R4 (TB00214 STAGE Phase 1 1011005 redundancy audit migration to canonical: NEW conflict_resolution_callout decoration group added at figure bottom encoding three architectural rules - (a) L1a sequence Step 1 pair-status precondition binding per ar:AR-040 + 1011005 dv1_3 §5.1 EC-L1A-SEQ Step 1, (b) Layer 2 priority over in-progress Layer 1a per 1011005 dv1_3 §5 EC-L2-003, and (c) TP-partial + simultaneous Layer 2 conflict resolution per 1011005 dv1_3 §6.2 EC-TP-006: Layer 2 wins, cancel remaining TP qty, execute L2, emit ONE unified evt:TRADE_CLOSE record exit_reason=MAE_THRESHOLD_BREACH. New architectural identifier rule:HR-EC-016 created and cited in governs list. SVG viewBox extended 1500x1320 -&gt; 1500x1420 (+100px) to accommodate the new callout. Existing visual content preserved BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-session cadence. All 7 other figures (Tier 1, D1, D2, D4, D5, D6, D7) preserved byte-identical this dv1_48 increment. 1011005 dv1_3 retirement and 0511004 dv1_3 -&gt; dv1_4 prose cascade sequenced as separate work-product turns this same session per the TB00214 Phase 1 audit execution plan.)
+    R-increment-prior: R2 -&gt; R3 (TB00169 STAGE L+ STEP 2 D3 trigger formula sign correction: visible TRIGGER text aligned to canonical EC-L2-001 spec form (entry_fill_price - bid_price) &gt;= ATR(14) x mae_mult; closes TB00167 §7.2 observation. Visual content preserved byte-identical except for the TRIGGER text correction. SVG title and diagram_canonical were not updated to R3 at TB00169 close — corrected to R4 at this dv1_48 amendment.)
+    R-increment-prior-2: R1 -&gt; R2 (DR-011 D3 portion closure: HR-PM-009 sole-writer architectural callout added to mod:Exit_Controller and layer:L2_MAE_Threshold group desc constraints, plus visible decoration band at figure bottom (id="pm_helper_callout") depicting the read-only-via-helpers pattern per 0511005 dv1_1 HR-PM-009 + HR-PM-011. SVG viewBox extended 1500x1240 -&gt; 1500x1320 to fit the new callout group. R1 visual content preserved byte-identical EXCEPT for the new decoration group addition. DR-040 (Layer 2 mae_pct_reached field) DEFERRED per TB00153 §6 sequenced-after-Phase-1-spec condition: 1011006 dv1_2 not landed; 1011006 dv1_1 is current. Per DEC-004 cumulative R-increment policy.)
+    R-increment-prior-3: R0 -&gt; R1 (currency refresh against dv1_23 §4 + glyph fallback fix + layer 3 layout fix bundled per TB00151a-2 NSI item b)
+    governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, ar:AR-040, ar:AR-066, mod:Exit_Controller, layer:L1a_Signal_Exit, layer:L1b_TP_Fill, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
     drill_targets: none (D3 is a leaf Tier 2 detail of the Exit Architecture depicted in D2)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
-    registry_gap_note: (a) D3 R1 root desc used a generic 0311001 v1_6 §15.11/§15.12 binding reference rather than an enumerated governs list; R2 enumerates the governs list explicitly per the D6 R3 / D7 R2 precedent pattern. The enumerated tokens are all ALREADY ASSERTED in pre-existing D3 R1 visual content and per-group desc constraints — this is enumeration-of-existing, not constraint addition per RR-SCOPE-007 no-narrowing. (b) rule:HR-PM-009 is the ONLY new architectural identifier added to D3 in R2 (per DR-011 D3 portion plan L3 — sole-writer callout). All other tokens were already depicted in D3 R1 visual content. (c) DR-040 (Layer 2 mae_pct_reached field) DEFERRED — 1011006 dv1_2 Phase 1 spec not landed in /mnt/project/ at TB00167 cold-load; carries forward to a future Stage Kn after Phase 1 spec lands.
+    registry_gap_note: (a) D3 R1 root desc used a generic 0311001 v1_6 §15.11/§15.12 binding reference rather than an enumerated governs list; R2 enumerated the governs list explicitly per the D6 R3 / D7 R2 precedent pattern. (b) R4 adds ONE new architectural identifier rule:HR-EC-016 (Layer 2 priority + TP-partial conflict resolution + L1a Step 1 pair-status precondition) and TWO previously-implicit ar: identifiers (ar:AR-040 pair status events + ar:AR-066 TP partial fill) now explicitly enumerated. rule:HR-EC-016 is the only NEW rule identifier created in dv1_48; ar:AR-040 + ar:AR-066 are already canonically defined in §10 AR registry and merely added to this diagram's enumerated governs list per V-038 diagram-prose parity (their tokens were already depicted in D3 R1 visual content via the cancel_only/maintenance HOLD callout and the TP partial fill amend logic shown in D2 ON FILL block). (c) DR-040 (Layer 2 mae_pct_reached field) DEFERRED — 1011006 dv1_2 Phase 1 spec not landed in /mnt/project/ at TB00214 cold-load; carries forward to a future Stage Kn after Phase 1 spec lands. (d) CIATS Trade Outcome Bus 24-field schema reconciliation (1011005 dv1_3 §9 EC-TOB-002 vs 0511004 dv1_3 §7.5 12-field schema) DEFERRED to a future dv1_NN session amending Diagram 5 under DEC-003 Path A one-diagram-per-session cadence; logged as carry-forward in TB00214 SL §7.
   </desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -3000,7 +3002,7 @@ taxonomy:
     </marker>
   </defs>
 
-  <rect width="1500" height="1320" fill="#ffffff"/>
+  <rect width="1500" height="1420" fill="#ffffff"/>
 
   <!-- Title bar -->
   <g id="title_bar" class="decoration">
@@ -3008,7 +3010,7 @@ taxonomy:
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 3 — Exit Architecture: Ground Zero Redesign for Kraken</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image3_T2_R2_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  R2: HR-PM-009 sole-writer callout (DR-011 D3 portion)
+      0500000_Image3_T2_R4_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  R4: L1a Step 1 pair-status precondition + L2 priority + TP-partial conflict resolution (rule:HR-EC-016 — TB00214 1011005 audit)
     </text>
   </g>
 
@@ -3244,9 +3246,30 @@ taxonomy:
     <text x="60" y="1305" font-size="10" font-weight="400" fill="#475569" text-anchor="start">Cross-reference: D6 Complete_System R3 (TB00166 STAGE K-2) depicts the system-level wireup_callout for HR-PM-009 enforcement across all 8 reader modules.</text>
   </g>
 
+  <!-- L1a Step 1 pair-status precondition + L2 priority + TP-partial conflict resolution architectural callout (NEW R4 — TB00214 Phase 1 1011005 audit migration: closes EC-TP-006 priority rule + EC-L1A-SEQ Step 1 binding gap per 1011005 dv1_3 §5.1 + §6.2 + §10) -->
+  <g id="conflict_resolution_callout" class="decoration">
+    <title>rule:HR-EC-016</title>
+    <desc>
+        canonical: rule:HR-EC-016
+        parent: mod:Exit_Controller
+        constraints: rule:HR-EC-016 (NEW dv1_48 — Layer 2 priority over Layer 1a + TP-partial conflict resolution + L1a Step 1 pair-status precondition binding); ar:AR-040 (pair status events); ar:AR-066 (TP partial fill direction-symmetric Position Mirror update + emergSL amend); rule:Sacred_R_R_1_to_1_5
+        consumes: ar:AR-040 (instrument status channel events for pairs with open positions), channel:kraken_ws_executions (TP partial-fill exec_type=trade events), channel:kraken_ws_ticker (bbo bid for MAE breach detection)
+        produces: contract:CIATS_Trade_Outcome_Bus (ONE unified evt:TRADE_CLOSE record per closed position even under simultaneous TP-partial + L2 conflict — never two records)
+        schema_version: 1.0
+        rule_text: rule:HR-EC-016 (verbatim — NEW dv1_48): "(a) Layer 1a sequence MUST check pair status as Step 1 before any cancel or sell action. If pair status == cancel_only OR maintenance, HOLD position, raise CRITICAL alert, and do NOT proceed with the L1a sequence. Resting TP and emergSL on Kraken matching engine are the only protection in these pair-disruption states. (b) Layer 2 MAE threshold breach takes priority over any in-progress Layer 1a sequence. If MAE breaches while L1a cancel sequence is underway, complete the cancel sequence then execute market sell with exit_reason=MAE_THRESHOLD_BREACH (not the original L1a reason). (c) When TP order partial fill (cum_qty &gt; 0) and Layer 2 MAE breach occur simultaneously, Layer 2 WINS: cancel the remaining TP qty, execute Layer 2 market sell, use cum_qty already filled as partial P/L credited at TP price, emit ONE unified contract:CIATS_Trade_Outcome_Bus record with exit_reason=MAE_THRESHOLD_BREACH (single record covering the full position closure — never two records for the same position)."
+    </desc>
+    <rect x="40" y="1330" width="1420" height="80" fill="#fde68a" stroke="#92400e" stroke-width="2" rx="6"/>
+    <rect x="40" y="1330" width="1420" height="22" fill="#92400e" rx="6"/>
+    <rect x="40" y="1341" width="1420" height="11" fill="#92400e"/>
+    <text x="750" y="1347" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">L1a STEP 1 PAIR-STATUS PRECONDITION + LAYER 2 PRIORITY + TP-PARTIAL CONFLICT RESOLUTION — rule:HR-EC-016 (NEW dv1_48)</text>
+    <text x="60" y="1373" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">L1a SEQUENCE STEP 1 (precondition): Check pair status BEFORE any L1a action. IF status == cancel_only OR maintenance → HOLD, CRITICAL alert, NO orders. Resting TP + emergSL protect (ar:AR-040). ELSE proceed: cancel TP → cancel emergSL → market sell.</text>
+    <text x="60" y="1391" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">PRIORITY: Layer 2 MAE threshold breach takes priority over any in-progress Layer 1a sequence. Complete cancel sequence, execute market sell, exit_reason = MAE_THRESHOLD_BREACH (not original L1a reason).</text>
+    <text x="60" y="1405" font-size="10" font-weight="600" fill="#7c2d12" text-anchor="start">TP-PARTIAL CONFLICT (ar:AR-066): TP partial fill (cum_qty &gt; 0) + simultaneous MAE breach → Layer 2 WINS. Cancel remaining TP qty. Execute Layer 2 exit using cum_qty as partial P/L at TP price. Emit ONE unified evt:TRADE_CLOSE record (exit_reason = MAE_THRESHOLD_BREACH; NEVER two records for same position).</text>
+  </g>
+
 </svg>
   </div>
-  <figcaption>Image3 Exit Architecture (R3 — TB00169 STAGE L+ STEP 2 D3 trigger formula sign correction: visible TRIGGER text aligned to canonical EC-L2-001 spec form (entry_fill_price - bid_price) >= ATR(14) x mae_mult; closes TB00167 §7.2 observation. R2 history preserved: DR-011 D3 portion closure: HR-PM-009 sole-writer architectural callout added; DR-040 Layer 2 mae_pct_reached field DEFERRED pending Phase 1 spec landing)</figcaption>
+  <figcaption>Image3 Exit Architecture (R4 — TB00214 STAGE Phase 1 1011005 redundancy audit migration to canonical: NEW conflict_resolution_callout decoration group (id="conflict_resolution_callout") added at figure bottom encoding three architectural rules under new rule:HR-EC-016 — (a) L1a sequence Step 1 pair-status precondition binding per ar:AR-040 + 1011005 dv1_3 §5.1 EC-L1A-SEQ Step 1, (b) Layer 2 priority over in-progress Layer 1a per 1011005 dv1_3 §5 EC-L2-003, and (c) TP-partial + simultaneous Layer 2 conflict resolution per 1011005 dv1_3 §6.2 EC-TP-006: Layer 2 WINS, cancel remaining TP qty, execute Layer 2 market sell, emit ONE unified evt:TRADE_CLOSE record exit_reason=MAE_THRESHOLD_BREACH (never two records for same position). SVG viewBox extended 1500x1320 → 1500x1420 (+100px) to accommodate the new callout group. Existing R3 visual content preserved BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-session cadence. All 7 other figures (Tier 1, D1, D2, D4, D5, D6, D7) preserved byte-identical this dv1_48 increment. 0511004 dv1_3 → dv1_4 prose cascade and 1011005 dv1_3 → rt1_3 retirement sequenced as separate work-product turns this same TB00214 session per Phase 1 audit execution plan. CIATS Trade Outcome Bus 24-field vs 12-field schema reconciliation (1011005 dv1_3 §9 EC-TOB-002 vs 0511004 dv1_3 §7.5) DEFERRED to a future dv1_NN session amending Diagram 5 + Diagram 6 under DEC-003 Path A; logged as carry-forward in TB00214 SL §7. R3 history preserved: TB00169 STAGE L+ STEP 2 D3 trigger formula sign correction (visible TRIGGER text aligned to canonical EC-L2-001 spec form); R2 history preserved: DR-011 D3 portion closure (HR-PM-009 sole-writer architectural callout added); DR-040 Layer 2 mae_pct_reached field DEFERRED pending Phase 1 spec landing.)</figcaption>
 </figure>
 <h2>5. Regime Taxonomy</h2>
 <p>
@@ -3753,14 +3776,16 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image5_T2_R3_CIATS_Architecture</title>
+  <title>0500000_Image5_T2_R5_CIATS_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image5_T2_R3_CIATS_Architecture
+    diagram_canonical: 0500000_Image5_T2_R5_CIATS_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment: R2 -&gt; R3 (DR-012 CRITICAL closure: Parameter Store / Half-Kelly / vol_regime architectural elements per TB00153 Master Defect Register §6 D5 entry. Three additions per TB00153 Diagram Alter/Add/Remove Plan §8: A2 Half-Kelly persistence path callout (Statistical Engine -&gt; Parameter Store at 200-trade threshold), A3 vol_regime input feed (mod:RegimeEngine -&gt; contract:CIATS_Trade_Outcome_Bus), L1 contract:CIATS_Trade_Outcome_Bus structured metadata enhanced with asset_regime + market_regime captured-fields enumeration. R2 visual content + 10 T-2+ labeled groups preserved per RR-SCOPE-007 no-narrowing; R3 adds 1 new T-2+ labeled group (mod:RegimeEngine input box) + 2 architectural flow arrows + governs-list additions for the Half-Kelly transition (rule:PS-HK-001 from 0611001 dv1_0 §6.2), CIATS Parameter Store hard-rule invariants (rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 from 0211001 dv1_0 §13), the rule:PA-001 paper-as-master parameter-canonicity reference (TB00000 v2_23 §4.4 PA-007 + 0311001 v1_10 §15.12.9), the 6-regime taxonomy regime: tokens (per 0311001 v1_10 §15.12.6 + 0711002 dv1_0 RE-003), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE log events (per 0211001 dv1_0 §14), mod:RegimeEngine vol_regime feed source (per 0711002 dv1_0), and param:half_kelly_applied_pct (Half-Kelly normalized output written to Parameter Store per HR-CI-009 + PS-HK-005). DD-004 NO PROSE-FIRST AUTHORING compliance: every R3 architectural identifier is encoded in either the diagram's root governs: list, a T-2+ namespace-token labeled group, or as visual flow content; consequential prose updates limited to revision-history entry text per RR-SCOPE-002 / RR-SCOPE-007.)
+    R-increment: R4 -&gt; R5 (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle: this diagram is the CANONICAL SOURCE for the 23-field CIATS Trade Outcome Bus schema. Prior dv1_49 R4 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth in stream2_box desc + visible-text element + figcaption — that citation direction was INVERTED under DD-002 (coding spec cited as canonical violates the single-source-of-truth-is-the-diagram rule). dv1_50 corrects the citation direction: stream2_box desc schema_fields_canonical reframed as "this diagram canonical per DD-001/DD-002 — historical seed: 1011005 dv1_3 §9, retired"; produces field 1011005-citation removed; visible text element at line 3953 1011005-citation removed; figcaption reframed to describe historical migration without citing 1011005 as ongoing source. Schema FIELD CONTENT unchanged (same 23 fields, same types, same order) — only the citation framing changes. rect dimensions x=495 y=360 width=560 height=180 preserved BYTE-IDENTICAL. SVG viewBox 1500x1200 preserved byte-identical. All Diagram 5 visual content outside the four corrected text sites preserved byte-identical. 0511004 dv1_5 -&gt; dv1_6 §7.5 cascade (Turn 3 this session) re-points 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5". 1011005 dv1_3 actual deletion DEFERRED to a future cascade that handles assignment-list cleanup at lines 5312/5393/5544/6383/6956 + §11 RELATED DOCUMENTS entry cleanup — out of scope this turn. CARRY-FORWARD: future 0500000 cascade to retire all remaining "1011005 dv1_3" downstream references in assignment lists + §11. RR-SCOPE-010 verbatim-MDR-citation discipline: 23-field schema enumeration grep-verified verbatim against dv1_49 baseline (no content drift). RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope of this correction sourced from Bill chat-turn directives at TB00218 ("If it's authoritative it should be in a 0500000 diagram... That makes it redundant... We want to remove as many 10XXXXX documents as possible by moving requirements to 0500000") + ("Do a FP/DP analysis to determine the correct action"), not from NSI authoring layer.)
+    R-increment-prior: R3 -&gt; R4 (TB00217 STAGE Phase 1 1011005 Cycle 3 schema reconciliation cascade Step 1: contract:CIATS_Trade_Outcome_Bus schema_fields enumeration expanded from the prior 12-field abbreviated set per 0511004 dv1_3 §7.5 to the 23-field canonical schema verbatim from 1011005 dv1_3 §9 EC-TOB-002. Schema fields enumerated in stream2_box desc structured metadata AND rendered in stream2_box visible text region within the byte-identical rect dimensions (x=495 y=360 width=560 height=180) using 9-10px font sizes to accommodate the expanded enumeration. SVG viewBox 1500x1200 preserved byte-identical. Background rect height 1200 preserved byte-identical. Surrounding elements (stats_hdr, stats_box at x=1120, pdca_hdr at y=580, pdca_box, and all elements below) preserved byte-identical. The 23-field set is: ts, event, level, component, symbol, entry_fill_price, exit_price, entry_timestamp_utc, exit_timestamp_utc, hold_candle_count, MAE_pct_reached, fees_entry_usd, fees_exit_usd, fees_total_usd, exit_reason, asset_regime, vol_regime, market_regime, signal_params, actual_RR, net_PL_USD, net_gain_usd, net_loss_usd. The exit_reason enum is rendered as a separate visible line at the bottom of the stream2_box and enumerated as TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER per 1011005 dv1_3 §9 EC-TOB-002 line 15. The captured_fields_for_DR-012_L1 abbreviated descriptor field is retained for revision lineage but is now subsumed by the full schema_fields_canonical enumeration; the abbreviated form is documented as superseded. All other Diagram 5 visual content preserved BYTE-IDENTICAL per the one-document-per-chat-turn cadence (Diagram 6 schema annotation amended in the same dv1_49 increment as the companion Step 2 cascade; both Step 1 and Step 2 occur in this single dv1_49 work-product turn). 0511004 dv1_4 -&gt; dv1_5 §7.5 prose cascade (Step 3) sequenced to the next chat-turn this same TB00217 session. 1011005 dv1_3 retirement (Step 4) sequenced to TB00218 or TB00217 final turn if context permits. DD-004 NO PROSE-FIRST AUTHORING compliance: every R4 architectural identifier in the 23-field schema is encoded in either the stream2_box desc schema_fields_canonical enumeration or the stream2_box visible text region; the source-of-truth provenance (1011005 dv1_3 §9 EC-TOB-002 lines 353-384) is cited in this revision-history narrative. RR-SCOPE-010 verbatim-MDR-citation discipline applied: schema field enumeration is grep-verified verbatim against 1011005 dv1_3 §9 EC-TOB-002 at amendment time. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: the 23-field schema scope is sourced from 1011005 dv1_3 §9 EC-TOB-002 (Bill-ratified controlled-document spec content), not from the NSI authoring layer. Cycle 3 schema cascade Step 1 + Step 2 closes at this dv1_49 increment; Step 3 + Step 4 carry forward.)
+    R-increment-prior-2: R2 -&gt; R3 (DR-012 CRITICAL closure: Parameter Store / Half-Kelly / vol_regime architectural elements per TB00153 Master Defect Register §6 D5 entry. Three additions per TB00153 Diagram Alter/Add/Remove Plan §8: A2 Half-Kelly persistence path callout (Statistical Engine -&gt; Parameter Store at 200-trade threshold), A3 vol_regime input feed (mod:RegimeEngine -&gt; contract:CIATS_Trade_Outcome_Bus), L1 contract:CIATS_Trade_Outcome_Bus structured metadata enhanced with asset_regime + market_regime captured-fields enumeration. R2 visual content + 10 T-2+ labeled groups preserved per RR-SCOPE-007 no-narrowing; R3 added 1 new T-2+ labeled group (mod:RegimeEngine input box) + 2 architectural flow arrows + governs-list additions for the Half-Kelly transition (rule:PS-HK-001 from 0611001 dv1_0 §6.2), CIATS Parameter Store hard-rule invariants (rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 from 0211001 dv1_0 §13), the rule:PA-001 paper-as-master parameter-canonicity reference (TB00000 v2_23 §4.4 PA-007 + 0311001 v1_10 §15.12.9), the 6-regime taxonomy regime: tokens (per 0311001 v1_10 §15.12.6 + 0711002 dv1_0 RE-003), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE log events (per 0211001 dv1_0 §14), mod:RegimeEngine vol_regime feed source (per 0711002 dv1_0), and param:half_kelly_applied_pct (Half-Kelly normalized output written to Parameter Store per HR-CI-009 + PS-HK-005). DD-004 NO PROSE-FIRST AUTHORING compliance: every R3 architectural identifier is encoded in either the diagram's root governs: list, a T-2+ namespace-token labeled group, or as visual flow content; consequential prose updates limited to revision-history entry text per RR-SCOPE-002 / RR-SCOPE-007.)
     governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:RegimeEngine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:HR-CI-009, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown
     drill_targets: none (D5 is a leaf Tier 2 detail of the CIATS feedback loop; CIATS internal sub-components are tagged at this diagram level, no Tier 3 drilldown defined)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
@@ -3785,7 +3810,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 5 — CIATS Architecture and Data Flows</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image5_T2_R3_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
+      0500000_Image5_T2_R5_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -3919,20 +3944,24 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
         drill_targets: none (leaf — Stream 2 contract surface; per-trade record schema)
         constraints: ar:PA-005 (paper / live byte-identical for Stream 2 records — no PA-004 divergence applies to TRADE_CLOSE record fields), ar:PA-007 (paper canonical for parameter values; Stream 2 is the data substrate from which CIATS proposals are derived), rule:PA-001 (TB00000 §4.4 paper-as-master via PA-007 paper-canonical-for-parameter-values clause; Stream 2 records feed Half-Kelly + Proposal Engine + Regime Library — paper-canonical Stream 2 corpus governs live parameter changes), rule:Sacred_R_R_1_to_1_5
         consumes: evt:TRADE_CLOSE (one record per closed position), regime:TRENDING_POS_NORMAL / regime:TRENDING_POS_ELEVATED / regime:TRENDING_NEG_NORMAL / regime:TRENDING_NEG_ELEVATED / regime:NON_DIR_NORMAL / regime:NON_DIR_ELEVATED (asset_regime + market_regime tags from mod:RegimeEngine, attached to each trade close record per 0711002 dv1_0 RE-014; six-regime taxonomy per 0311001 v1_10 §15.12.6)
-        produces: (per-trade record fields: symbol, entry/exit price, hold duration, MAE, fees, exit reason, asset_regime, market_regime, signal params at entry, actual R:R, P/L — fed to mod:CIATS_Statistical_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library)
-        captured_fields_for_DR-012_L1: symbol, entry_price, exit_price, entry_fill_price, exit_fill_price, hold_duration_sec, MAE_pct, MAE_abs, total_fees_usd, exit_reason, asset_regime (one of six regime: tokens — encodes vol_regime via NORMAL_VOL / ELEVATED_VOL component), market_regime (BTC/USD anchor regime per 0711002 dv1_0 RE-014), signal_params_at_entry, actual_R_R_net, net_gain_usd. Captured fields are the input substrate for Half-Kelly W (win rate) and R (net reward:risk) computation per 0211001 dv1_0 CI-KE-002 / CI-KE-003 + 0611001 dv1_0 PS-HK-003 / PS-HK-004.
+        produces: (per-trade record with 23-field canonical schema — this diagram is the canonical source per DD-001/DD-002 — fed to mod:CIATS_Statistical_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library)
+        schema_fields_canonical: 23-field set (this diagram is the canonical source per DD-001/DD-002 diagrams-canonical principle; historical seed: 1011005 dv1_3 §9 EC-TOB-002 lines 353-384 — that coding spec was the bottom-up authoring substrate from which TB00217 Turn 1 pulled this schema into the diagram; 1011005 dv1_3 actual retirement deferred to a future cascade that handles assignment-list cleanup at downstream sites in 0500000 §5300-7000 + §11 RELATED DOCUMENTS): (1) ts ISO 8601 UTC with microseconds; (2) event str literal "TRADE_CLOSE"; (3) level str literal "INFO"; (4) component str literal "EXIT_CTRL"; (5) symbol str; (6) entry_fill_price Decimal (avg_price at entry fill); (7) exit_price Decimal (weighted avg if partials per EC-TOB-003); (8) entry_timestamp_utc ISO 8601 UTC; (9) exit_timestamp_utc ISO 8601 UTC; (10) hold_candle_count int (5m candles held); (11) MAE_pct_reached Decimal (max adverse move as pct); (12) fees_entry_usd Decimal (maker fee on entry); (13) fees_exit_usd Decimal (taker fee on exit/TP); (14) fees_total_usd Decimal; (15) exit_reason str enum: TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER; (16) asset_regime str (pair regime at entry — one of six regime: tokens per 0311001 v1_10 §15.12.6 + 0711002 dv1_0 RE-014); (17) vol_regime str enum NORMAL_VOL | ELEVATED_VOL; (18) market_regime str (BTC/USD anchor regime at entry per 0711002 dv1_0 RE-014); (19) signal_params dict {rsi_14, ema_9, ema_21, volume_ratio, sss_pass}; (20) actual_RR Decimal (net_PL / risk_exposed); (21) net_PL_USD Decimal; (22) net_gain_usd Decimal (0.0 if loss); (23) net_loss_usd Decimal (0.0 if gain, positive value if loss).
+        captured_fields_for_DR-012_L1_RETIRED: prior R3 abbreviated descriptor (symbol, entry_price, exit_price, entry_fill_price, exit_fill_price, hold_duration_sec, MAE_pct, MAE_abs, total_fees_usd, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_R_R_net, net_gain_usd) retained as a forensic anchor noting the DR-012 closure framing. The R4 schema_fields_canonical enumeration above subsumes and supersedes this abbreviated descriptor as the authoritative source-of-truth for the Half-Kelly W (win rate) and R (net reward:risk) computation inputs per 0211001 dv1_0 CI-KE-002 / CI-KE-003 + 0611001 dv1_0 PS-HK-003 / PS-HK-004.
         schema_version: 1.0
       </desc>
     <rect x="495" y="360" width="560" height="180" fill="#fef3c7" stroke="#713f12" stroke-width="2" rx="4"/>
-    <text x="775" y="388" font-size="14" font-weight="700" text-anchor="middle" fill="#713f12">Stream 2: Trade Outcome Bus</text>
-    <text x="775" y="410" font-size="11" text-anchor="middle">Fires on each position close (no fixed cadence)</text>
-    <line x1="515" y1="420" x2="1035" y2="420" stroke="#713f12" stroke-width="0.5"/>
-    <text x="775" y="440" font-size="11" font-weight="700" text-anchor="middle">Captures (per closed trade):</text>
-    <text x="775" y="458" font-size="11" text-anchor="middle">symbol, entry/exit price, hold duration, MAE</text>
-    <text x="775" y="476" font-size="11" text-anchor="middle">fees, exit reason, asset_regime + market_regime</text>
-    <text x="775" y="494" font-size="11" text-anchor="middle">signal params at entry, actual R:R, P/L</text>
-    <text x="775" y="516" font-size="10" font-weight="700" font-style="italic" text-anchor="middle" fill="#1e40af">PRIMARY DATA SUBSTRATE for inference and proposals</text>
-    <text x="775" y="532" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">PA-005: byte-identical paper / live (per TB00000 §4.4 PA-007)</text>
+    <text x="775" y="382" font-size="14" font-weight="700" text-anchor="middle" fill="#713f12">Stream 2: Trade Outcome Bus</text>
+    <text x="775" y="400" font-size="10" text-anchor="middle">23-field canonical schema (this diagram per DD-001/DD-002) — fires on each position close</text>
+    <line x1="515" y1="408" x2="1035" y2="408" stroke="#713f12" stroke-width="0.5"/>
+    <text x="775" y="423" font-size="9" text-anchor="middle">ts • event • level • component • symbol • entry_fill_price • exit_price</text>
+    <text x="775" y="436" font-size="9" text-anchor="middle">entry_timestamp_utc • exit_timestamp_utc • hold_candle_count • MAE_pct_reached</text>
+    <text x="775" y="449" font-size="9" text-anchor="middle">fees_entry_usd • fees_exit_usd • fees_total_usd • exit_reason</text>
+    <text x="775" y="462" font-size="9" text-anchor="middle">asset_regime • vol_regime • market_regime • signal_params</text>
+    <text x="775" y="475" font-size="9" text-anchor="middle">actual_RR • net_PL_USD • net_gain_usd • net_loss_usd</text>
+    <line x1="515" y1="485" x2="1035" y2="485" stroke="#713f12" stroke-width="0.5"/>
+    <text x="775" y="500" font-size="10" font-weight="700" font-style="italic" text-anchor="middle" fill="#1e40af">PRIMARY DATA SUBSTRATE for inference and proposals</text>
+    <text x="775" y="516" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">PA-005: byte-identical paper / live (per TB00000 §4.4 PA-007)</text>
+    <text x="775" y="532" font-size="8" font-style="italic" text-anchor="middle" fill="#475569">exit_reason enum: TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER</text>
   </g>
 
   <!-- STATISTICAL ENGINE COLUMN (right) -->
@@ -4116,7 +4145,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
   </text>
 </svg>
   </div>
-  <figcaption>Diagram 5 — CIATS Architecture (R3). Stream 1 EWMA monitors trading health (signals only). Stream 2 Trade Outcome Bus drives statistical inference, PDCA, Proposal Engine, and Regime Library. mod:RegimeEngine feeds asset_regime + market_regime tags into every Trade Outcome Bus record (A3). Half-Kelly persistence path (A2): Statistical Engine → Proposal Engine (HR-CI-009 normalization) → PDCA → Bill approval (HR-CI-011) → Parameter Store at the 200-trade threshold per PS-HK-001. All output writes go to the Parameter Store at inter-trade boundaries (HR-CI-003).</figcaption>
+  <figcaption>Diagram 5 — CIATS Architecture (R5). Stream 1 EWMA monitors trading health (signals only). Stream 2 Trade Outcome Bus drives statistical inference, PDCA, Proposal Engine, and Regime Library. mod:RegimeEngine feeds asset_regime + market_regime tags into every Trade Outcome Bus record (A3). Half-Kelly persistence path (A2): Statistical Engine → Proposal Engine (HR-CI-009 normalization) → PDCA → Bill approval (HR-CI-011) → Parameter Store at the 200-trade threshold per PS-HK-001. All output writes go to the Parameter Store at inter-trade boundaries (HR-CI-003). R-increment R4 → R5 (TB00218): SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle. The 23-field CIATS Trade Outcome Bus schema lives canonically in THIS DIAGRAM (stream2_box visible-text enumeration + desc:schema_fields_canonical structured metadata). Prior dv1_49 R4 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth — that citation direction was INVERTED under DD-002 (coding spec cited as canonical violates the single-source-of-truth-is-the-diagram rule). dv1_50 corrects four sites within Diagram 5: stream2_box desc produces/schema_fields_canonical fields reframed; stream2_box visible text at y=400 1011005-citation removed; this figcaption R-narrative reframed. Schema FIELD CONTENT unchanged (same 23 fields, same names, same types, same order) — only the citation framing changes. rect dimensions x=495 y=360 width=560 height=180 preserved BYTE-IDENTICAL. SVG viewBox 1500x1200 preserved byte-identical. 23-field set unchanged: (1) ts, (2) event, (3) level, (4) component, (5) symbol, (6) entry_fill_price, (7) exit_price, (8) entry_timestamp_utc, (9) exit_timestamp_utc, (10) hold_candle_count, (11) MAE_pct_reached, (12) fees_entry_usd, (13) fees_exit_usd, (14) fees_total_usd, (15) exit_reason, (16) asset_regime, (17) vol_regime, (18) market_regime, (19) signal_params, (20) actual_RR, (21) net_PL_USD, (22) net_gain_usd, (23) net_loss_usd; exit_reason enum: TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER. 0511004 dv1_5 → dv1_6 §7.5 cascade sequenced as Turn 3 this session to re-point 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5". 1011005 dv1_3 actual deletion DEFERRED to a future cascade that handles assignment-list cleanup at 0500000 §5300-7000 + §11 RELATED DOCUMENTS entry cleanup. R4 history preserved verbatim under root &lt;desc&gt; R-increment-prior field: TB00217 STAGE Phase 1 Cycle 3 schema cascade Step 1 (12-field → 23-field schema expansion). R3 history preserved under R-increment-prior-2: DR-012 CRITICAL closure (Parameter Store / Half-Kelly / vol_regime architectural elements) with A2/A3/L1 additions per TB00153 Diagram Alter/Add/Remove Plan §8.</figcaption>
 </figure>
 <h2>7. Complete System: One CIATS-Owned Organism</h2>
 <p>
@@ -4128,14 +4157,16 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1500"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image6_T2_R4_Complete_System</title>
+  <title>0500000_Image6_T2_R6_Complete_System</title>
   <desc>
-    diagram_canonical: 0500000_Image6_T2_R4_Complete_System
+    diagram_canonical: 0500000_Image6_T2_R6_Complete_System
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment: R3 -> R4 (DR-043 #3 SVG portion closure per TB00153 MDR v1_7 + DEC-011 Option C
+    R-increment: R5 -&gt; R6 (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle, companion to Diagram 5 R4 -&gt; R5 in this same dv1_50 increment: this diagram is the CANONICAL SOURCE for the 23-field CIATS Trade Outcome Bus schema annotation rendered in the ciats_outcome labeled group. Prior dv1_49 R5 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth in ciats_outcome desc constraints/schema_fields fields + figcaption — that citation direction was INVERTED under DD-002. dv1_50 corrects the citation direction: ciats_outcome desc constraints field 1011005-citation removed; schema_fields field reframed as "this diagram canonical per DD-001/DD-002 — historical seed: 1011005 dv1_3 §9, retired"; figcaption R-narrative reframed. Schema FIELD CONTENT unchanged (same 23 fields, same types, same order) — only the citation framing changes. ciats_outcome rect dimensions x=1010 y=280 width=430 height=100 preserved BYTE-IDENTICAL. Row 5 wireup_callout schema literal at y=1422 preserved byte-identical. Row 6 mod:Long_Module at y=1444 and footer at y=1462 preserved byte-identical. SVG viewBox 1500x1500 preserved byte-identical. All Diagram 6 visual content outside the corrected text sites preserved byte-identical. 0511004 dv1_5 -&gt; dv1_6 §7.5 cascade (Turn 3 this session) re-points 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5 + Diagram 6 Image6_T2_R6". 1011005 dv1_3 actual deletion DEFERRED. RR-SCOPE-010 verbatim-MDR-citation discipline: 23-field schema enumeration grep-verified verbatim against dv1_49 baseline (no content drift).)
+    R-increment-prior: R4 -&gt; R5 (TB00217 STAGE Phase 1 1011005 Cycle 3 schema reconciliation cascade Step 2: contract:CIATS_Trade_Outcome_Bus schema annotation on ciats_outcome labeled group expanded from the prior 12-field abbreviated set per 0511004 dv1_3 §7.5 to the 23-field canonical schema verbatim from 1011005 dv1_3 §9 EC-TOB-002, matching the companion Diagram 5 R4 stream2_box amendment in the same dv1_49 increment under the one-document-per-chat-turn cadence. ciats_outcome rect dimensions (x=1010 y=280 width=430 height=100) preserved byte-identical. Visible text region re-laid out using 8-12px font sizes to fit the 23-field overview in 6 lines within the original rect bounds. The Row 5 wire-up callout schema literal at y=1422 (line inside wireup_callout decoration group) amended from the prior 11px 12-field literal to a 7px 23-field literal at the SAME y=1422 position; Row 6 mod:Long_Module at y=1444 and footer at y=1462 preserved byte-identical. ciats_outcome desc constraints field updated to reference 0511004 dv1_4 (current target prose-cascade source) with pending dv1_5 cascade note (Step 3 sequenced to next chat-turn). schema_fields desc field expanded from the 12-field abbreviated set to the 23-field canonical enumeration matching the Diagram 5 R4 stream2_box. SVG viewBox 1500x1500 preserved byte-identical. Background rect (1500x1500) preserved byte-identical. All other Diagram 6 visual content preserved BYTE-IDENTICAL: title_bar, zone_kraken_hdr, zone_tothbot_hdr, zone_ciats_hdr, kraken_zone elements, tothbot_zone elements, ciats_zone elements, all interconnect arrows, rejected_panel, wireup_callout header + Row 1-4 + Row 6, and footer.)
+    R-increment-prior-2: R3 -&gt; R4 (DR-043 #3 SVG portion closure per TB00153 MDR v1_7 + DEC-011 Option C
       Stage M-4 sub-step 2 + DEC-003 Path A one-diagram-per-session cadence: the NOT USED / REJECTED
       panel "Other:" row text "Short module — deferred (AR-009)" amended to "Short module — via
       Kraken margin (AR-009 amended dv1_41)" reflecting AR-009 amended dv1_41 short-via-Kraken-
@@ -4153,8 +4184,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       surgical RR-SCOPE-001 scope. Visual content of R3 preserved byte-identical EXCEPT for the
       single target text element at y=1204. All 7 other figures in dv1_45 (Tier 1 Context + D1 +
       D2 + D3 + D4 + D5 + D7) preserved byte-identical per DEC-003 Path A one-diagram-per-session
-      cadence. R-increment R2 -> R3 description preserved below for revision lineage.)
-    R-increment-prior: R2 -> R3 (DR-013 D6 closure: cross-module wire-up order callouts depicting
+      cadence. R-increment R2 -&gt; R3 description preserved below for revision lineage.)
+    R-increment-prior-3: R2 -&gt; R3 (DR-013 D6 closure: cross-module wire-up order callouts depicting
       Exit Controller injection chain at startup per 0511004 dv1_3 §7 outputs and HR-EC-014
       Selection Controller state update authority via WS Manager AR-073; DR-011 D6 portion
       closure: HR-PM-009 sole-writer architectural callout strengthened on Position Mirror
@@ -4165,9 +4196,9 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       enriched with TOB schema field enumeration per 0511004 dv1_3 §7.5; visual content of R2
       preserved byte-identical EXCEPT for Position Mirror group HR-PM-009 visual italic line
       strengthened to architectural callout, and a new wire-up callout group added to depict
-      EC-startup-injection chain. R-increment R1 -> R2 description preserved below for
+      EC-startup-injection chain. R-increment R1 -&gt; R2 description preserved below for
       revision lineage.)
-    R-increment-prior-2: R1 -> R2 (T-2+ namespace-token labeled-group tagging closure per DR-009 D6 portion;
+    R-increment-prior-4: R1 -&gt; R2 (T-2+ namespace-token labeled-group tagging closure per DR-009 D6 portion;
       DR-002 / DR-003 / DR-007 D6 verifies; visual content of R1 preserved byte-identical;
       19 namespace-token labeled groups added; 7 decoration-only groups class-tagged; root desc
       upgraded to T2P-A schema)
@@ -4237,7 +4268,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 6 — Complete System: One CIATS-Owned Organism</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image6_T2_R4_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline  |  DR-013 cross-module wire-up + DR-011 D6 portion HR-PM-009 sole-writer + rule:HR-PA-001 -&gt; rule:PA-001 cleanup + DR-043 #3 SVG portion closure
+      0500000_Image6_T2_R6_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline  |  DR-013 cross-module wire-up + DR-011 D6 portion HR-PM-009 sole-writer + rule:HR-PA-001 -&gt; rule:PA-001 cleanup + DR-043 #3 SVG portion closure + CIATS Trade Outcome Bus 23-field schema cascade + TB00218 citation-architecture correction (DD-001/DD-002)
     </text>
   </g>
 
@@ -4500,17 +4531,21 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       tier: 2
       parent_diagram: 0500000_Context_T1_R0_System_Context
       drill_targets: none
-      constraints: PRIMARY DATA SUBSTRATE for inference; fires on every COMPLETE position close per 0511004 dv1_3 §7.5
+      constraints: PRIMARY DATA SUBSTRATE for inference; fires on every COMPLETE position close per 0511004 §7.5 (currently dv1_5; dv1_6 cascade pending Turn 3 this session to re-point §7.5 citation from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5 + Diagram 6 Image6_T2_R6"); 23-field canonical schema — this diagram is the canonical source per DD-001/DD-002
       consumes: evt:TRADE_CLOSE (from mod:Exit_Controller via channel:logger_async_queue)
       produces: trade outcome records consumed by mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Regime_Library
-      schema_fields: per 0511004 dv1_3 §7.5 verbatim — symbol, entry_fill_price, exit_price, hold_candle_count, MAE_reached, fees_total, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_RR, net_PL_USD (DR-013 schema-enumeration closure: prior R2 desc cited "symbol • R:R • P/L • exit reason • both regime tags" abbreviation; R3 desc enumerates the full 12-field schema as authoritative per current spec)
+      schema_fields: 23-field canonical set (this diagram is the canonical source per DD-001/DD-002 diagrams-canonical principle; historical seed: 1011005 dv1_3 §9 EC-TOB-002 lines 353-384 — that coding spec was the bottom-up authoring substrate from which TB00217 Turn 1 pulled this schema into the diagram; 1011005 dv1_3 actual retirement deferred to a future cascade): (1) ts ISO 8601 UTC with microseconds; (2) event str literal "TRADE_CLOSE"; (3) level str literal "INFO"; (4) component str literal "EXIT_CTRL"; (5) symbol str; (6) entry_fill_price Decimal; (7) exit_price Decimal (weighted avg if partials per EC-TOB-003); (8) entry_timestamp_utc ISO 8601 UTC; (9) exit_timestamp_utc ISO 8601 UTC; (10) hold_candle_count int (5m candles); (11) MAE_pct_reached Decimal; (12) fees_entry_usd Decimal; (13) fees_exit_usd Decimal; (14) fees_total_usd Decimal; (15) exit_reason str enum: TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER; (16) asset_regime str (one of six regime: tokens); (17) vol_regime str enum NORMAL_VOL | ELEVATED_VOL; (18) market_regime str (BTC/USD anchor regime); (19) signal_params dict {rsi_14, ema_9, ema_21, volume_ratio, sss_pass}; (20) actual_RR Decimal (net_PL / risk_exposed); (21) net_PL_USD Decimal; (22) net_gain_usd Decimal (0.0 if loss); (23) net_loss_usd Decimal (0.0 if gain, positive value if loss). Matches Diagram 5 Image5_T2_R5 stream2_box schema_fields_canonical enumeration verbatim per V-038 diagram-prose parity within the same dv1_50 increment.
+      schema_fields_R4_RETIRED: prior R4 abbreviated descriptor (12 fields per 0511004 dv1_3 §7.5: symbol, entry_fill_price, exit_price, hold_candle_count, MAE_reached, fees_total, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_RR, net_PL_USD) retained as a forensic anchor noting the prior DR-013 schema-enumeration closure framing; superseded by the R5 23-field canonical enumeration above.
       schema_version: 1.0
     </desc>
     <rect x="1010" y="280" width="430" height="100" fill="#fde68a" stroke="#713f12" stroke-width="1.5" rx="4"/>
-    <text x="1225" y="306" font-size="13" font-weight="700" text-anchor="middle">Trade Outcome Bus (Stream 2)</text>
-    <text x="1225" y="328" font-size="11" text-anchor="middle">Fires on every position close • 12-field schema</text>
-    <text x="1225" y="346" font-size="11" text-anchor="middle">symbol • R:R • P/L • exit reason • both regime tags</text>
-    <text x="1225" y="368" font-size="10" font-style="italic" text-anchor="middle" fill="#1e40af">PRIMARY DATA SUBSTRATE for inference</text>
+    <text x="1225" y="300" font-size="12" font-weight="700" text-anchor="middle">Trade Outcome Bus (Stream 2)</text>
+    <text x="1225" y="316" font-size="9" text-anchor="middle">Fires on every position close • 23-field canonical schema</text>
+    <text x="1225" y="330" font-size="8" text-anchor="middle">ts • event • level • component • symbol • entry_fill_price • exit_price • timestamps</text>
+    <text x="1225" y="342" font-size="8" text-anchor="middle">hold_candle_count • MAE_pct_reached • fees (entry/exit/total) • exit_reason</text>
+    <text x="1225" y="354" font-size="8" text-anchor="middle">asset_regime • vol_regime • market_regime • signal_params • actual_RR</text>
+    <text x="1225" y="366" font-size="8" text-anchor="middle">net_PL_USD • net_gain_usd • net_loss_usd</text>
+    <text x="1225" y="378" font-size="9" font-style="italic" text-anchor="middle" fill="#1e40af">PRIMARY DATA SUBSTRATE for inference</text>
   </g>
 
   <g id="ciats_stats">
@@ -4691,7 +4726,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
 
     <!-- Row 5: Trade Outcome Bus path -->
     <text x="50" y="1422" font-size="11" font-weight="700" fill="#14532d">EC → contract:CIATS_Trade_Outcome_Bus</text>
-    <text x="285" y="1422" font-size="11" fill="#1a1a1a">→ via Logger (§7.5): 12-field schema {symbol, entry_fill_price, exit_price, hold_candle_count, MAE_reached, fees_total, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_RR, net_PL_USD}</text>
+    <text x="285" y="1422" font-size="7" fill="#1a1a1a">→ via Logger (§7.5): 23-field schema {ts, event, level, component, symbol, entry_fill_price, exit_price, entry_timestamp_utc, exit_timestamp_utc, hold_candle_count, MAE_pct_reached, fees_entry_usd, fees_exit_usd, fees_total_usd, exit_reason, asset_regime, vol_regime, market_regime, signal_params, actual_RR, net_PL_USD, net_gain_usd, net_loss_usd}</text>
 
     <!-- Row 6: Long Module exit signaling path -->
     <text x="50" y="1444" font-size="11" font-weight="700" fill="#14532d">mod:Long_Module</text>
@@ -4708,7 +4743,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   </text>
 </svg>
   </div>
-  <figcaption>Diagram 6 — Complete System (R4). Three zones, one organism. Kraken sources events; TothBot processes them deterministically; CIATS reads Logger and writes Parameter Store at inter-trade boundaries. The Net 1:1.5 R:R sacred constraint is the only number CIATS does not own. R-increment R3 → R4 closes DR-043 #3 SVG portion per TB00153 MDR v1_7 + DEC-011 Option C Stage M-4 sub-step 2 + DEC-003 Path A one-diagram-per-session cadence: the NOT USED / REJECTED panel "Other:" row text "Short module — deferred (AR-009)" amended to "Short module — via Kraken margin (AR-009 amended dv1_41)" reflecting AR-009 amended dv1_41 short-via-Kraken-margin-trading; root governs list extended with ar:AR-009 per V-038 diagram-prose parity. Cascade-scope finding from TB00186 SL §4.1 resolved: MDR DR-043 #3 line citation "D3 SVG line 4196" is imprecise; the unique match resides at line 4208 of dv1_44 inside this D6 figure rejected_panel decoration group. All 7 other figures (Tier 1 + D1 + D2 + D3 + D4 + D5 + D7) preserved byte-identical per DEC-003 Path A. R-increment R2 → R3 closed DR-013 (cross-module wire-up order callouts at startup per 0511004 dv1_3 §7 outputs and HR-EC-014 Selection Controller state-update authority via WS Manager AR-073), DR-011 D6 portion (HR-PM-009 sole-writer architectural callout strengthened with verbatim spec quotation), and the residual rule:HR-PA-001 cleanup carried forward from TB00163 §7.1 / TB00164 §7.5 (replaced with canonical rule:PA-001 per 0311001 v1_10 §15.12.9 NOTE). Visual content of R2 preserved per RR-SCOPE-007 with one semantic correction to the Position Mirror constraints field aligning with 0511005 dv1_1 HR-PM-009 verbatim and the addition of one new decoration-class wire-up callout group at the bottom of the figure. SVG viewBox extended from 1500×1300 to 1500×1500 to accommodate the new wire-up callout group.</figcaption>
+  <figcaption>Diagram 6 — Complete System (R6). Three zones, one organism. Kraken sources events; TothBot processes them deterministically; CIATS reads Logger and writes Parameter Store at inter-trade boundaries. The Net 1:1.5 R:R sacred constraint is the only number CIATS does not own. R-increment R5 → R6 (TB00218): SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle, companion to Diagram 5 R4 → R5 in this same dv1_50 increment. The 23-field CIATS Trade Outcome Bus schema is canonical in THIS DIAGRAM (ciats_outcome labeled group desc:schema_fields enumeration + visible-text rendering + Row 5 wireup_callout schema literal). Prior dv1_49 R5 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth — that citation direction was INVERTED under DD-002 (coding spec cited as canonical violates the single-source-of-truth-is-the-diagram rule). dv1_50 corrects three sites within Diagram 6: ciats_outcome desc constraints field 1011005-citation removed; schema_fields field reframed as "this diagram canonical per DD-001/DD-002 — historical seed: 1011005 dv1_3 §9, retired"; this figcaption R-narrative reframed. Schema FIELD CONTENT unchanged (same 23 fields, same names, same types, same order) — only the citation framing changes. ciats_outcome rect dimensions (x=1010 y=280 width=430 height=100) preserved BYTE-IDENTICAL. Row 5 wireup_callout schema literal at y=1422 preserved byte-identical. Row 6 mod:Long_Module at y=1444 and footer at y=1462 preserved byte-identical. SVG viewBox 1500x1500 preserved byte-identical. All other Diagram 6 visual content preserved byte-identical. 0511004 dv1_5 → dv1_6 §7.5 cascade sequenced as Turn 3 this session to re-point 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5 + Diagram 6 Image6_T2_R6". 1011005 dv1_3 actual deletion DEFERRED to a future cascade that handles assignment-list cleanup at 0500000 §5300-7000 + §11 RELATED DOCUMENTS entry cleanup. R5 history preserved verbatim under root &lt;desc&gt; R-increment-prior field: TB00217 STAGE Phase 1 Cycle 3 schema cascade Step 2 (12-field → 23-field schema expansion in ciats_outcome). R-increment R3 → R4 closed DR-043 #3 SVG portion per TB00153 MDR v1_7 + DEC-011 Option C Stage M-4 sub-step 2: the NOT USED / REJECTED panel "Other:" row text amended to reflect AR-009 amended dv1_41 short-via-Kraken-margin-trading. R-increment R2 → R3 closed DR-013 (cross-module wire-up order callouts at startup per 0511004 dv1_3 §7 outputs and HR-EC-014 Selection Controller state-update authority via WS Manager AR-073), DR-011 D6 portion (HR-PM-009 sole-writer architectural callout strengthened with verbatim spec quotation), and the residual rule:HR-PA-001 cleanup carried forward from TB00163 §7.1 / TB00164 §7.5 (replaced with canonical rule:PA-001 per 0311001 v1_10 §15.12.9 NOTE). SVG viewBox extended from 1500×1300 to 1500×1500 at R2 → R3 to accommodate the new wire-up callout group.</figcaption>
 </figure>
 <h2>8. Locked Architectural Decisions</h2>
 <pre>
@@ -4868,7 +4903,9 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     acquires semaphore before dispatch. Position close triggers release.
                     On CIATS max_concurrent update: recreate semaphore, re-acquire for
                     all currently open positions.
-                    Assign: 1011011 RE-SEM-001 through -006.
+                    Assign: (none — 1011011 dv1_3 retired TB00213; canonical
+                    rule resides in this AR; coding-spec re-creation deferred
+                    per Bill 10XXXXX-streamlining goal).
   AR-044 (dv1_13) ★: Startup warm-up — ATR(14) and EMA via REST GetOHLCData required
                     before any pipeline execution. WS ohlc(5m) and ohlc(60) snapshots
                     return only 1 candle — insufficient to seed ATR(14) or EMA(20/50).
@@ -5046,10 +5083,10 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     revision history entry for the verbatim retired text.
                     Assign: 1011002 WM-PS-005 through -009 (long sizing),
                             1011002 WM-PS-010 through -014 (short sizing —
-                              pending 1011002 amendment),
-                            1011011 RE-SZ-001 through -005 (long sizing),
-                            1011011 RE-SZ-006 through -010 (short sizing —
-                              pending 1011011 amendment).
+                              pending 1011002 amendment).
+                            1011011 references retired TB00222 (1011011 dv1_3
+                              retired TB00213; coding-spec re-creation deferred
+                              per Bill 10XXXXX-streamlining goal).
   AR-052 (dv1_13) ★: Portfolio drawdown formula and circuit breakers:
                     BASELINE: portfolio_baseline_USD = spot_usd_balance captured ONCE
                     at startup (after Step 6 snap_orders processing). NEVER updated
@@ -5072,8 +5109,10 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                         positions monitored normally. Resumes when drawdown recovers.
                       full_halt_drawdown (10%): HALT. No new entries. Alert Bill.
                         Does NOT auto-close positions. Bill decides.
-                    Assign: 1011002 WM-DD-001 through -008,
-                            1011011 RE-DD-001 through -006.
+                    Assign: 1011002 WM-DD-001 through -008.
+                            1011011 references retired TB00222 (1011011 dv1_3
+                              retired TB00213; coding-spec re-creation deferred
+                              per Bill 10XXXXX-streamlining goal).
   AR-053 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Per-module Pending Order Registry — capital commitment tracking.
                     Each trading module maintains its own Pending Order Registry
                     against its own wallet, per TB00000 v2_29 §9.3 parallel-module
@@ -5117,9 +5156,10 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Orders NOT in snap_orders → clear from both registries.
                     Assign: 1011002 WM-POR-001 through -007 (long),
                             1011002 WM-POR-008 through -014 (short — pending
-                              1011002 amendment),
-                            1011011 RE-SZ-005 (long), 1011011 RE-SZ-010
-                              (short — pending 1011011 amendment).
+                              1011002 amendment).
+                            1011011 references retired TB00222 (1011011 dv1_3
+                              retired TB00213; coding-spec re-creation deferred
+                              per Bill 10XXXXX-streamlining goal).
   AR-054 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Entry order partial fill + expiry/cancel — direction-symmetric protection.
                     A GTD post_only entry order can receive partial fills before
                     the GTD window expires or the order is canceled. When
@@ -5276,7 +5316,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     EC-L1A-003 (Max Hold Time): max_hold_candles parameter. TBD value
                       pending OI-001 SSS specification. CIATS-owned starting value.
                     Both EC-L1A-001 and EC-L1A-002 use cancel timeout fallback (I-6).
-                    Assign: 1011005 EC-L1A-001 through -012.
+                    Assign: 0500000 Diagram 3 Image3_T2_R4 Exit Architecture (canonical per DD-001/DD-002; rule:HR-EC-016 + L1a sequence visual content; 1011005 dv1_3 historical seed retired).
   AR-063 (dv1_14) ★: Logger MUST use queue.Queue (stdlib), not asyncio.Queue.
                     CORRECT PATTERN:
                       log_queue = queue.Queue(maxsize=10000)
@@ -5357,9 +5397,10 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                             1011002 WM-EC-004 through -008 (long),
                             1011002 WM-EC-009 through -013 (short — pending
                               1011002 amendment),
-                            1011005 EC-TP-001 through -006 (long),
-                            1011005 EC-TP-007 through -012 (short — pending
-                              1011005 amendment).
+                            0500000 Diagram 3 Image3_T2_R4 TP-partial conflict
+                              resolution callout (canonical per DD-001/DD-002;
+                              rule:HR-EC-016 long + short; 1011005 dv1_3
+                              historical seed retired).
   AR-067 (dv1_15; amended dv1_43 — M-2 short-direction + Path 2 long reconciliation) ★: SSS Signal Engine — direction-symmetric three-factor momentum scoring on 5-minute candles.
                     SSS is the signal engine that runs after Gate 4. It runs ONLY when
                     the pair is in a tradeable regime (Gate 3 passed) with 1H EMA
@@ -5508,7 +5549,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     ohlc(5m) close for that symbol. Exit sequence: same as EC-L1A-001.
                     exit_reason = TIME_EXPIRY.
                     OI-003: CLOSED (EC-L1A-003 now fully specified).
-                    Assign: 1011005 EC-L1A-010 updated (value = 24, no longer TBD).
+                    Assign: 0500000 Diagram 3 Image3_T2_R4 EC-L1A sequence (canonical per DD-001/DD-002); max_hold_candles starting value tracked in TB00000 §9.17 CIATS Parameter Registry (Phase 1 absorption pending TB00000 v2_31); 1011005 dv1_3 historical seed retired.
   AR-072 (dv1_15; amended dv1_43 — M-2 short-direction) ★: Selection Controller — direction-symmetric 6 quality gates (long + short variants) — OI-005 CLOSED.
                     Gate 5 receives SSS PASS (per AR-067 direction-symmetric) and
                     applies all 6 gates in sequence. Each module evaluates the
@@ -6347,7 +6388,6 @@ prefix taxonomy:
 <pre>
   Bind: 0511001 dv1_5 §13.8 HR-WM-033; 0511004 dv1_3 §6A EC-PAPER;
         1011002 dv1_26 §16A.2 WM-PAPER-EXIT-001..005;
-        1011005 dv1_3 §10A EC-PAPER-CODE-001..006;
         0211005 dv1_3 PT-MODE-006.
 </pre>
 <p>
@@ -6920,8 +6960,6 @@ prefix taxonomy:
         behavioral parity (no mode-conditional EE branching);
         PositionMirror access via WSManager helpers only
         (HR-PM-009 compliance). To be authored TB00150.
-      1011005 Exit_Controller_Coding_Spec dv1_3
-        §10A EC-PAPER-CODE-001..006 (paper close contract).
       1011007 Logger_Coding_Spec dv1_5
         Paper event taxonomy extension (TB00154 / Phase 1
         Session 6).
@@ -7068,6 +7106,1182 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_52  05-12-2026  TB00222 PHASE 2 ASSIGNMENT-LIST CLEANUP
+                      CASCADE — 1011011 dv1_3 DOWNSTREAM
+                      PROSE-SITE RETIREMENT (FOUR ACTIVE SITES)
+                      PER DD-001/DD-002 DIAGRAMS-CANONICAL
+                      PRINCIPLE.
+
+                      INCREMENT TYPE: prose-side downstream
+                      reference cleanup. Pure prose-cascade
+                      increment — ZERO diagram changes; all
+                      eight figures (Tier 1, D1, D2, D3, D4,
+                      D5, D6, D7) and all SVG content preserved
+                      BYTE-IDENTICAL from dv1_51. Diagram
+                      historical narratives inside &lt;desc&gt;
+                      R-increment fields untouched. The four
+                      edited sites are AR registry &quot;Assign:&quot;
+                      list narrative paragraphs in §10 — none
+                      inside SVG content.
+
+                      EDIT SITES (FOUR ACTIVE):
+                      (1) AR-043 (max_concurrent
+                          BoundedSemaphore) — sole assignment
+                          to 1011011 RE-SEM-001..006 retired;
+                          replaced with &quot;(none — 1011011 dv1_3
+                          retired TB00213; canonical rule
+                          resides in this AR; coding-spec
+                          re-creation deferred per Bill
+                          10XXXXX-streamlining goal)&quot;.
+                      (2) AR-051 (per-trade sizing) — mixed
+                          assignment with 1011002 WM-PS-005..014
+                          retained; 1011011 RE-SZ-001..010
+                          retired with TB00222 retirement
+                          annotation.
+                      (3) AR-052 (drawdown formula + circuit
+                          breakers) — mixed assignment with
+                          1011002 WM-DD-001..008 retained;
+                          1011011 RE-DD-001..006 retired with
+                          TB00222 retirement annotation.
+                      (4) AR-053 (Pending Order Registry) —
+                          mixed assignment with 1011002
+                          WM-POR-001..014 retained; 1011011
+                          RE-SZ-005 + RE-SZ-010 retired with
+                          TB00222 retirement annotation.
+
+                      EDIT SITES NOT TOUCHED (TWO HISTORICAL):
+                      Pre-amendment verbatim quotations at
+                      §14 dv1_43 narrative lines (the AR-051
+                      and AR-053 PRE-AMENDMENT verbatim
+                      blocks containing &quot;1011011 RE-SZ-001
+                      through -005&quot; and &quot;1011011 RE-SZ-005&quot;)
+                      preserved BYTE-IDENTICAL per content-
+                      integrity historical-quotation
+                      preservation (verbatim record of prior
+                      document state must not be edited in
+                      place; equivalent to CI-005/CI-006).
+
+                      REASON FOR CHANGE.
+                      1011011 dv1_3 retirement to rt1_3
+                      authored at TB00213 (TB00000 v2_30 §12
+                      revision-history entry citing &quot;Work
+                      Product 1, delivered earlier this
+                      session&quot;) but project-folder + git
+                      delete deferred; downstream 0500000
+                      assignment-list pointers became stale
+                      at the moment of retirement. TB00222
+                      ratified the residual retirement
+                      closure cascade per TB00221 SL §4.3
+                      RANK 1 candidate, defaulted per
+                      RR-SCOPE-005 derivable-decision
+                      authority (no Bill alternative
+                      provided). Phase 2 cleanup pattern
+                      matches the 1011005 dv1_50 -&gt; dv1_51
+                      precedent (TB00219 Turn 3).
+
+                      PARAMETER FOUNDATION.
+                      Phase 1 audit cross-checked 1011011
+                      dv1_3 parameters against TB00000 v2_31
+                      §9.17 — zero unabsorbed parameters
+                      (max_concurrent + tradeable_pct +
+                      per_trade_pct + Half-Kelly transition
+                      already RETIRED at v2_29;
+                      full_halt_drawdown_pct +
+                      session_pause_drawdown_pct + mae_mult
+                      + emergency_sl_mult already present;
+                      entry_fee_pct + tp_fee_pct are AR-012
+                      fee-schedule constants not §9.17
+                      scope). No TB00000 amendment required
+                      this session.
+
+                      PHASE 3 (Bill-action copy box for
+                      project folder + git rm of 1011011
+                      dv1_3) sequenced for Turn 3 this
+                      same session.
+
+                      RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE
+                      COMPLIANCE: scope sourced from Bill
+                      chat-turn directive &quot;Turn 2 go&quot;
+                      ratifying TB00222 NSI §3.3 Phase 2
+                      execution; default RANK 1 candidate
+                      per TB00221 SL §4.3 RANK ordering
+                      derivable from cold-load context.
+
+                      DD-001/DD-002 COMPLIANCE: prose-only
+                      edits; all diagrams BYTE-IDENTICAL
+                      from dv1_51; no architectural identifier
+                      semantic changes (the 1011011 retirement
+                      is an assignment-list pointer cleanup,
+                      not a rule change — AR-043/051/052/053
+                      semantics preserved verbatim; only the
+                      downstream coding-spec pointer changes).
+
+                      HEADER REFRESH.
+                      DocVersion dv1_51 -&gt; dv1_52.
+                      DocPath filename refreshed.
+                      DocTime refreshed.
+                      &lt;title&gt; updated to dv1_52.
+
+  dv1_51  05-12-2026  TB00219 PHASE 2 ASSIGNMENT-LIST CLEANUP
+                      CASCADE — 1011005 dv1_3 DOWNSTREAM
+                      PROSE-SITE RETIREMENT (FIVE SITES) PER
+                      DD-001/DD-002 DIAGRAMS-CANONICAL PRINCIPLE.
+
+                      INCREMENT TYPE: prose-side downstream
+                      reference cleanup. Pure prose-cascade
+                      increment — ZERO diagram changes; all
+                      eight figures (Tier 1, D1, D2, D3, D4,
+                      D5, D6, D7) and all SVG content preserved
+                      BYTE-IDENTICAL from dv1_50. Diagram
+                      historical narratives inside &lt;desc&gt;
+                      R-increment fields and figcaption R-history
+                      sections referencing 1011005 dv1_3 are
+                      PRESERVED VERBATIM per CI-005 / CI-006
+                      historical-record preservation discipline
+                      (revision-history content is never edited
+                      in place; corrections are made in new
+                      entries).
+
+                      SCOPE OF CHANGES — FIVE PROSE SITES:
+
+                      Site 1 (~line 5314 — AR-062 dv1_14 Exit
+                        Controller Layer 1a triggers): "Assign:
+                        1011005 EC-L1A-001 through -012." re-
+                        framed to point at Diagram 3
+                        Image3_T2_R4 Exit Architecture (canonical
+                        per DD-001/DD-002; rule:HR-EC-016 + L1a
+                        sequence visual content; 1011005 dv1_3
+                        historical seed retired).
+
+                      Site 2 (~lines 5395-5397 — AR-066 dv1_14
+                        amended dv1_43 TP partial-fill assignment
+                        list): "1011005 EC-TP-001 through -006
+                        (long), 1011005 EC-TP-007 through -012
+                        (short — pending 1011005 amendment)."
+                        replaced with single diagram reference:
+                        Diagram 3 Image3_T2_R4 TP-partial conflict
+                        resolution callout (canonical per
+                        DD-001/DD-002; rule:HR-EC-016 long +
+                        short). Other Assign entries in AR-066
+                        (0411001 WS-TP-001..010, 1011002
+                        WM-EC-004..013) preserved byte-identical
+                        — they are not in retirement scope.
+
+                      Site 3 (~line 5546 — AR-071 dv1_15 OI-003
+                        max_hold_candles closure): "Assign:
+                        1011005 EC-L1A-010 updated (value = 24,
+                        no longer TBD)." re-framed to point at
+                        Diagram 3 Image3_T2_R4 EC-L1A sequence
+                        (canonical per DD-001/DD-002) with
+                        max_hold_candles starting-value
+                        provenance tracked in TB00000 §9.17 CIATS
+                        Parameter Registry (Phase 1 absorption
+                        pending TB00000 v2_31 — TB00219 Turn 2
+                        deferred to subsequent session per
+                        multi-session retirement cascade
+                        sequencing).
+
+                      Site 4 (~lines 6382-6386 — §12.5 PAPER-
+                        MODE INTEGRATION POINTS Bind block): the
+                        1011005 dv1_3 §10A EC-PAPER-CODE-001..006
+                        bind line REMOVED. Other binds (0511001
+                        dv1_5 §13.8 HR-WM-033, 0511004 dv1_3 §6A
+                        EC-PAPER, 1011002 dv1_26 §16A.2 WM-PAPER-
+                        EXIT-001..005, 0211005 dv1_3 PT-MODE-006)
+                        preserved byte-identical. (NOTE: 0511004
+                        cite in Bind block retained as dv1_3 per
+                        RR-SCOPE-001 stated-scope-absolute; the
+                        0511004 dv1_3 → dv1_5 → dv1_6 citation
+                        refresh is a separate sub-cascade outside
+                        Turn 3 stated scope. Carry-forward.)
+
+                      Site 5 (~lines 6958-6959 — §11 RELATED
+                        DOCUMENTS AA=10 CODING SPECIFICATION
+                        entry): "1011005 Exit_Controller_
+                        Coding_Spec dv1_3 / §10A EC-PAPER-
+                        CODE-001..006 (paper close contract)."
+                        REMOVED entirely. Other AA=10 entries
+                        (1011002, 1011004, 1011007, 1011008,
+                        1011014) preserved byte-identical.
+
+                      HEADER UPDATES:
+                        DocVersion dv1_50 -&gt; dv1_51.
+                        DocPath filename refreshed.
+                        DocTime refreshed.
+                        &lt;title&gt; tag refreshed.
+
+                      SCOPE BOUNDARIES OBSERVED:
+
+                      RR-SCOPE-001 stated-scope-absolute: Turn 3
+                        NSI scope was "assignment-list cleanup at
+                        §5312/5393/5544/6383/6956 + §11 RELATED
+                        DOCUMENTS entry retirement (1011005 dv1_3
+                        references)." Five sites edited; nothing
+                        else. The 0511004 dv1_3 citation in the
+                        §12.5 Bind block was NOT updated to
+                        dv1_6 (out of stated scope).
+
+                      RR-SCOPE-007 self-authored-NSI-source-
+                        prohibition (v2_30 sub-requirement):
+                        Turn 3 scope traces to Bill TB00218
+                        chat-turn 4 verbatim directive ("Yes,
+                        Enact" + "We want to remove as many
+                        10XXXXX documents as possible by moving
+                        requirements to 0500000") + Bill TB00218
+                        chat-turn 3 verbatim directive ("Do a
+                        FP/DP analysis to determine the correct
+                        action"). Multi-session retirement
+                        cascade sequencing (Phase 1 TB00000
+                        §9.17 / Phase 2 0500000 dv1_51 / Phase 3
+                        1011005 actual delete) was Bill-ratified
+                        at TB00218 chat-turn 5 ("Yes, Carry to
+                        next session in NSI"). Not sourced from
+                        Claude-authored NSI sentences.
+
+                      DD-001/DD-002 compliance: every retired
+                        1011005 prose reference is re-pointed
+                        at a canonical diagram element (Diagram
+                        3 Image3_T2_R4 for EC-L1A-NNN sequence +
+                        TP-partial conflict resolution callout)
+                        OR removed entirely (when no longer
+                        needed). Diagram is canonical; coding-
+                        spec downstream consumer is being
+                        retired.
+
+                      CI-005 / CI-006 compliance: revision-
+                        history preservation discipline observed.
+                        The dv1_50 revision-history entry below
+                        is preserved verbatim. All prior dv1_NN
+                        entries below dv1_50 preserved verbatim.
+                        Historical narrative content inside
+                        diagram &lt;desc&gt; R-increment fields and
+                        figcaption R-history sections (which
+                        reference 1011005 dv1_3 §5.1, §6.2, §9,
+                        §10A in TB00214/TB00217/TB00218 cascade
+                        narratives) PRESERVED VERBATIM — these
+                        are historical records of past cascade
+                        execution, not ongoing source-of-truth
+                        citations.
+
+                      MULTI-SESSION RETIREMENT CASCADE STATUS
+                      (per TB00218 SL §5.3):
+
+                        Phase 1 — TB00000 v2_30 -&gt; v2_31 §9.17
+                                  parameter registry absorbs
+                                  cancel_timeout_window = 5.0s,
+                                  mpp_retry_count = 3,
+                                  max_hold_candles = 24.
+                                  STATUS: DEFERRED to subsequent
+                                  session (TB00219 Turn 2
+                                  deferred per session-time
+                                  budget; TB00000 v2_30 source
+                                  not on /mnt/project/ filesystem
+                                  at TB00219 session mount —
+                                  KPL-003 mount-time-frozen
+                                  constraint; clean surgical
+                                  edit requires v2_30 on disk
+                                  in next session).
+
+                        Phase 2 — 0500000 dv1_50 -&gt; dv1_51
+                                  assignment-list cleanup at
+                                  five prose sites + §11
+                                  RELATED DOCUMENTS entry
+                                  retirement.
+                                  STATUS: COMPLETE (this
+                                  increment).
+
+                        Phase 3 — 1011005 dv1_3 actual delete
+                                  from project folder + git rm.
+                                  STATUS: DEFERRED until Phase 1
+                                  complete. After Phase 1 lands,
+                                  1011005 dv1_3 will have zero
+                                  remaining downstream-prose
+                                  references and is safe to
+                                  delete.
+
+                      CARRY-FORWARDS FOR TB00220+:
+                        — TB00000 v2_30 -&gt; v2_31 §9.17
+                          parameter registry update (Phase 1).
+                          Source file v2_30 needs to be on
+                          /mnt/project/ at session mount for
+                          surgical str_replace.
+                        — 1011005 dv1_3 actual delete + git rm
+                          (Phase 3 — runs after Phase 1 lands).
+                        — Broader 10XXXXX streamlining strategy
+                          per Bill TB00218 chat-turn 4 stated
+                          goal: identify other 10XXXXX coding
+                          specs whose content is fully absorbed
+                          into 0500000 + parent specs; apply
+                          same cascade pattern.
+                        — 0511004 dv1_3 citation in §12.5 Bind
+                          block: refresh to dv1_6 in subsequent
+                          session (out of Turn 3 scope).
+                        — Governance carry-forwards G-1 (DEC-003
+                          RETIRED mark), G-2 (0311001 v1_13
+                          namespace registry sweep), G-3 (0311002
+                          v1_14 workflow update), G-4 (exit_reason
+                          enum 6-vs-8 authoritative source), G-5
+                          (TB00153 MDR update), G-6 (broader
+                          streamlining sweep) — see TB00218 SL §6.
+
+                      VALIDATION:
+                        — Five str_replace edits applied
+                          successfully (each old_str matched
+                          exactly once).
+                        — All eight figures byte-identical from
+                          dv1_50 (no SVG content touched).
+                        — Header DocVersion + DocPath filename +
+                          DocTime + &lt;title&gt; consistent.
+                        — DR-007 HTML scope: zero placeholder/
+                          stub tokens introduced; revision-
+                          history parity maintained (all prior
+                          entries preserved); structural-marker
+                          parity maintained.
+
+                      Bill override: TB00218 chat-turn 4
+                      authorization scope extends through TB00219
+                      Turn 3 multi-session cascade Phase 2.
+                      Direct increment dv1_50 -&gt; dv1_51 per
+                      0311003 standing dv-increment authority.
+
+  dv1_50  05-12-2026  TB00218 SCHEMA CITATION ARCHITECTURE
+                      CORRECTION per DD-001/DD-002 DIAGRAMS-
+                      CANONICAL PRINCIPLE — DIAGRAM 5 R4 -&gt; R5
+                      + DIAGRAM 6 R5 -&gt; R6 (CITATION DIRECTION
+                      RE-POINTED FROM "1011005 dv1_3 §9 SOURCE-
+                      OF-TRUTH" TO "THIS DIAGRAM CANONICAL,
+                      1011005 HISTORICAL SEED").
+
+                      INCREMENT TYPE: schema-citation
+                      architecture correction across two
+                      figures (Diagram 5 + Diagram 6) in the
+                      SAME dv1_50 increment under the one-
+                      document-per-chat-turn cadence rule.
+
+                      DD-001/DD-002 ANALYSIS.
+
+                      Under TB00000 v2_23+ §4.5 DD-001/DD-002,
+                      diagrams in 0500000 are the canonical
+                      source for architectural rules,
+                      contracts, decisions, and schemas they
+                      encode. Prose narrates diagrams; prose
+                      does NOT govern. Coding specs (10XXXXX)
+                      cite diagrams as authoritative; diagrams
+                      do NOT cite coding specs as their own
+                      source-of-truth (that would be a
+                      circular / inverted citation under
+                      DD-002).
+
+                      dv1_49 R4 / R5 INVERTED-CITATION
+                      DEFECT.
+
+                      The dv1_49 amendment (TB00217 Turn 1)
+                      pulled the 23-field CIATS Trade Outcome
+                      Bus schema from 1011005 dv1_3 §9
+                      EC-TOB-002 into Diagram 5 stream2_box +
+                      Diagram 6 ciats_outcome — successfully
+                      absorbing the schema content into the
+                      diagram (correct direction for diagrams-
+                      canonical migration). HOWEVER, the R4 /
+                      R5 narratives + figcaptions + desc
+                      fields + one visible text element cited
+                      "1011005 dv1_3 §9 EC-TOB-002 lines
+                      353-384" as schema source-of-truth IN
+                      THE DIAGRAM — that citation direction is
+                      INVERTED. The diagram IS the canonical
+                      source; the coding spec is a downstream
+                      consumer.
+
+                      Bill chat-turn 4 at TB00218 surfaced the
+                      inversion: "If it's authoritative it
+                      should be in a 0500000 diagram and
+                      described in 0500000. That makes it
+                      redundant and not necessary any longer.
+                      We want to remove as many 10XXXXX
+                      documents as possible by moving
+                      requirements to 0500000."
+
+                      Bill chat-turn 5 directed FP/DP analysis
+                      to determine least-errors-and-rework
+                      action. FP/DP outcome: Option A — full
+                      correction of inverted citations across
+                      0500000 (Diagram 5 + 6) + 0511004
+                      (§7.5, §11, §12) + 1011005 retirement
+                      DEFERRED until assignment-list cleanup
+                      done.
+
+                      DIAGRAM 5 SITES CORRECTED.
+
+                      (a) Root &lt;desc&gt; diagram_canonical
+                          identifier: Image5_T2_R4 -&gt;
+                          Image5_T2_R5.
+                      (b) Root &lt;desc&gt; R-increment: new
+                          R4 -&gt; R5 entry inserted at top with
+                          citation-correction narrative + FP/DP
+                          + carry-forward of 1011005 actual
+                          retirement. Prior R3 -&gt; R4 entry
+                          shifted to R-increment-prior. Prior
+                          R2 -&gt; R3 entry shifted to R-
+                          increment-prior-2 (preserved
+                          verbatim).
+                      (c) stream2_box &lt;desc&gt; produces field:
+                          "per 1011005 dv1_3 §9 EC-TOB-002"
+                          removed; replaced with "this diagram
+                          is the canonical source per
+                          DD-001/DD-002."
+                      (d) stream2_box &lt;desc&gt; schema_fields_
+                          canonical field: "verbatim from
+                          1011005 dv1_3 §9 EC-TOB-002 lines
+                          353-384" replaced with "this diagram
+                          is the canonical source per
+                          DD-001/DD-002; historical seed:
+                          1011005 dv1_3 §9 EC-TOB-002 lines
+                          353-384." 23-field enumeration
+                          unchanged.
+                      (e) Visible text at y=400: "23-field
+                          canonical schema (1011005 dv1_3 §9
+                          EC-TOB-002) — fires on each position
+                          close" replaced with "23-field
+                          canonical schema (this diagram per
+                          DD-001/DD-002) — fires on each
+                          position close."
+                      (f) Title bar text: Image5_T2_R4 -&gt;
+                          Image5_T2_R5.
+                      (g) Figcaption: R4 -&gt; R5 narrative
+                          rewritten with citation-correction
+                          framing; 23-field enumeration
+                          preserved verbatim.
+
+                      DIAGRAM 6 SITES CORRECTED.
+
+                      (a) Root &lt;desc&gt; diagram_canonical
+                          identifier: Image6_T2_R5 -&gt;
+                          Image6_T2_R6.
+                      (b) Root &lt;desc&gt; R-increment: new
+                          R5 -&gt; R6 entry inserted with
+                          citation-correction narrative.
+                          Prior R4 -&gt; R5 (TB00217 schema
+                          cascade Step 2) preserved as
+                          R-increment-prior. Prior entries
+                          shifted to R-increment-prior-2 /
+                          -3 / -4.
+                      (c) ciats_outcome &lt;desc&gt; constraints
+                          field: 1011005-citation removed;
+                          "this diagram is the canonical source
+                          per DD-001/DD-002" added; 0511004
+                          reference updated from "dv1_4
+                          (pending dv1_5 cascade)" to
+                          "currently dv1_5; dv1_6 cascade
+                          pending Turn 3 this session."
+                      (d) ciats_outcome &lt;desc&gt; schema_fields
+                          field: "verbatim from 1011005 dv1_3
+                          §9 EC-TOB-002 lines 353-384" replaced
+                          with "this diagram is the canonical
+                          source per DD-001/DD-002; historical
+                          seed: 1011005 dv1_3 §9 EC-TOB-002
+                          lines 353-384." 23-field enumeration
+                          unchanged.
+                      (e) Title bar text: Image6_T2_R5 -&gt;
+                          Image6_T2_R6.
+                      (f) Figcaption: R5 -&gt; R6 narrative
+                          rewritten with citation-correction
+                          framing.
+
+                      GEOMETRY PRESERVATION (RR-SCOPE-007 /
+                      RR-SCOPE-010).
+
+                      stream2_box rect (x=495 y=360
+                      width=560 height=180) byte-identical
+                      between dv1_49 and dv1_50. ciats_outcome
+                      rect (x=1010 y=280 width=430 height=100)
+                      byte-identical. SVG viewBoxes (1500x1200
+                      for D5, 1500x1500 for D6) byte-
+                      identical. All visible text y-positions
+                      preserved byte-identical (the y=400
+                      Diagram 5 visible text was edited only
+                      to remove the parenthetical 1011005
+                      citation; text-anchor="middle" preserves
+                      centering automatically). Row 5 wireup_
+                      callout at y=1422 preserved byte-
+                      identical (no 1011005 citation present
+                      in the wireup_callout text content —
+                      only in surrounding figcaption +
+                      &lt;desc&gt; fields).
+
+                      DEFERRED — CARRY-FORWARD CASCADE.
+
+                      1011005 dv1_3 ACTUAL DELETION DEFERRED
+                      from this dv1_50 increment. Downstream
+                      references to 1011005 dv1_3 remain in
+                      0500000 dv1_50 at multiple sites:
+                        — §5300-5550 area: assignment-list
+                          references ("Assign: 1011005
+                          EC-L1A-001 through -012") in
+                          Phase / Section appendices.
+                        — §6383: 1011005 dv1_3 §10A reference.
+                        — §6956: 1011005 Exit_Controller_
+                          Coding_Spec dv1_3 RELATED DOCUMENTS
+                          entry.
+                        — §7099: OI-008 historical reference.
+                      These references will be cleaned up in a
+                      future 0500000 cascade that handles
+                      assignment-list re-pointing (under
+                      DD-001/DD-002, rule implementations live
+                      in the diagram's labeled groups + governs
+                      lists; the assignment-list construct is
+                      a legacy authoring pattern from when
+                      10XXXXX coding specs were the
+                      authoritative implementation reference).
+                      ONLY AFTER that cleanup cascade is
+                      1011005 dv1_3 safe to actually delete
+                      from the project folder.
+
+                      CARRY-FORWARD ITEMS for TB00219+:
+                        — 0500000 dv1_51 (future): retire
+                          assignment-list references to
+                          1011005 throughout §5300-5550;
+                          reframe rule-implementation pointers
+                          to point at diagram labeled groups
+                          per DD-001/DD-002.
+                        — 0500000 §11 RELATED DOCUMENTS: retire
+                          1011005 entry once assignment-list
+                          cleanup complete.
+                        — 1011005 dv1_3: actual deletion from
+                          project folder + git rm after
+                          downstream cleanup complete.
+                        — Broader streamlining sweep: identify
+                          other 10XXXXX documents whose content
+                          is fully absorbed into 0500000
+                          diagrams + parent specs and apply the
+                          same cascade pattern (Bill TB00218
+                          chat-turn 4 stated goal).
+
+                      RELATED DELIVERABLES THIS SESSION
+                      (TB00218).
+
+                      Turn 1 (already delivered): 0511004
+                        dv1_4 -&gt; dv1_5 §7.5 prose cascade
+                        (with inverted "1011005 dv1_3 §9
+                        source-of-truth" citation per the
+                        TB00218 NSI §1.1 framing — corrected
+                        in Turn 3).
+                      Turn 2 (this turn): 0500000 dv1_49 -&gt;
+                        dv1_50 schema citation architecture
+                        correction (this revision).
+                      Turn 3 (next): 0511004 dv1_5 -&gt; dv1_6
+                        — re-point §7.5 + §11 + §12 citations
+                        from "1011005 dv1_3 §9" to "0500000
+                        dv1_50 Diagram 5 Image5_T2_R5 +
+                        Diagram 6 Image6_T2_R6"; remove
+                        1011005 entry from §11 RELATED
+                        DOCUMENTS.
+                      Turn 4 (final): session-close trio
+                        (TB00218 SL + TB00219 NSI + OCS).
+
+                      STANDING RULES OBSERVED.
+
+                      DR-006 single-turn delivery: announced +
+                        present_files in same response.
+                      DR-007 content-completeness: pre-
+                        delivery validation executed.
+                      DD-001 diagrams canonical: this
+                        amendment ESTABLISHES Diagrams 5 + 6
+                        as the canonical source for the 23-
+                        field schema; coding spec citations
+                        will follow in Turn 3.
+                      DD-002 single-source-of-truth: schema
+                        canonical source is now this diagram;
+                        all downstream citations (0511004
+                        §7.5 Turn 3) will point here.
+                      RR-SCOPE-007 / RR-SCOPE-010 SVG
+                        geometry preservation: all rect
+                        dimensions + viewBoxes byte-identical
+                        between dv1_49 and dv1_50.
+                      CI-005 / CI-006 revision-history
+                        preservation: full prior R-increment
+                        lineage preserved in &lt;desc&gt; R-
+                        increment-prior fields.
+
+  dv1_49  05-12-2026  TB00217 STAGE PHASE 1 1011005 CYCLE 3 SCHEMA
+                      RECONCILIATION CASCADE — STEPS 1 + 2
+                      (DIAGRAM 5 R3 -&gt; R4 + DIAGRAM 6 R4 -&gt; R5
+                      CIATS TRADE OUTCOME BUS SCHEMA EXPANSION
+                      TO 23-FIELD CANONICAL).
+
+                      INCREMENT TYPE: existing-diagram amendment
+                      to two figures (Diagram 5 + Diagram 6) in
+                      the SAME dv1_49 increment under the one-
+                      document-per-chat-turn cadence rule
+                      established by Bill TB00215 chat-turn 5 +
+                      chat-turn 7 (formally captured in TB00215
+                      SL §4 + carry-forward to TB00000 §4
+                      absolute-standing-rule codification per
+                      TB00217 NSI §6).
+
+                      Diagram 5 (Image5_T2_R3 -&gt; R4 CIATS
+                      Architecture) stream2_box (id="stream2_box",
+                      contract:CIATS_Trade_Outcome_Bus labeled
+                      group) schema_fields enumeration expanded
+                      from the prior 12-field abbreviated
+                      descriptor per 0511004 dv1_3 §7.5 to the
+                      23-field canonical schema verbatim from
+                      1011005 dv1_3 §9 EC-TOB-002 lines 353-384.
+                      Schema fields enumerated in stream2_box
+                      desc structured metadata (new
+                      schema_fields_canonical field) AND
+                      rendered in stream2_box visible text
+                      region within the byte-identical rect
+                      dimensions (x=495 y=360 width=560
+                      height=180) using 9-10px font sizes.
+                      The 23-field set: (1) ts ISO 8601 UTC
+                      with microseconds; (2) event str literal
+                      "TRADE_CLOSE"; (3) level str literal
+                      "INFO"; (4) component str literal
+                      "EXIT_CTRL"; (5) symbol str; (6)
+                      entry_fill_price Decimal; (7) exit_price
+                      Decimal (weighted avg if partials per
+                      EC-TOB-003); (8) entry_timestamp_utc
+                      ISO 8601 UTC; (9) exit_timestamp_utc
+                      ISO 8601 UTC; (10) hold_candle_count
+                      int (5m candles held); (11)
+                      MAE_pct_reached Decimal; (12)
+                      fees_entry_usd Decimal; (13)
+                      fees_exit_usd Decimal; (14)
+                      fees_total_usd Decimal; (15) exit_reason
+                      str enum (TP_FILL | MAE_THRESHOLD_BREACH
+                      | HTF_REGIME_REVERSAL |
+                      DAILY_REGIME_DOWNGRADE | TIME_EXPIRY |
+                      TP_PARTIAL_FILL_REMAINDER); (16)
+                      asset_regime str (one of six regime:
+                      tokens); (17) vol_regime str enum
+                      (NORMAL_VOL | ELEVATED_VOL); (18)
+                      market_regime str (BTC/USD anchor regime);
+                      (19) signal_params dict {rsi_14, ema_9,
+                      ema_21, volume_ratio, sss_pass}; (20)
+                      actual_RR Decimal (net_PL /
+                      risk_exposed); (21) net_PL_USD Decimal;
+                      (22) net_gain_usd Decimal (0.0 if loss);
+                      (23) net_loss_usd Decimal (0.0 if gain,
+                      positive value if loss). exit_reason enum
+                      rendered as a separate bottom-line
+                      annotation inside stream2_box. The R3
+                      captured_fields_for_DR-012_L1 abbreviated
+                      descriptor preserved under a _RETIRED
+                      suffix as a forensic anchor noting the
+                      prior DR-012 closure framing; superseded
+                      by the R4 schema_fields_canonical
+                      enumeration as the authoritative
+                      source-of-truth for Half-Kelly W and R
+                      computation inputs per 0211001 dv1_0
+                      CI-KE-002/003 + 0611001 dv1_0 PS-HK-003/004.
+                      Diagram 5 SVG viewBox 1500x1200 preserved
+                      byte-identical. Background rect preserved
+                      byte-identical. All Diagram 5 visual
+                      content outside stream2_box preserved
+                      byte-identical (stats_hdr, stats_box,
+                      pdca_hdr, pdca_box, proposal_hdr,
+                      proposal_box, regime_library_box,
+                      parameter_store_box, regime_engine_box,
+                      ewma_monitor_box, kraken_input_box, all
+                      interconnect arrows).
+
+                      Diagram 6 (Image6_T2_R4 -&gt; R5 Complete
+                      System) ciats_outcome (id="ciats_outcome",
+                      contract:CIATS_Trade_Outcome_Bus labeled
+                      group) schema annotation expanded from
+                      the prior 12-field abbreviated descriptor
+                      to the 23-field canonical schema verbatim
+                      from 1011005 dv1_3 §9 EC-TOB-002, matching
+                      Diagram 5 R4 stream2_box per V-038
+                      diagram-prose parity within the same
+                      dv1_49 increment. ciats_outcome rect
+                      dimensions (x=1010 y=280 width=430
+                      height=100) preserved byte-identical;
+                      visible text region re-laid out using
+                      8-12px font sizes to fit the 23-field
+                      overview in 6 lines within the original
+                      rect bounds. ciats_outcome desc
+                      constraints field updated to reference
+                      0511004 dv1_4 (current target prose-
+                      cascade source) with pending dv1_5
+                      cascade note (Step 3 sequenced to next
+                      chat-turn this same TB00217 session).
+                      ciats_outcome desc schema_fields expanded
+                      to the full 23-field canonical
+                      enumeration. The R4 12-field abbreviated
+                      schema_fields descriptor preserved under
+                      a schema_fields_R4_RETIRED suffix as a
+                      forensic anchor.
+
+                      Diagram 6 Row 5 wire-up callout schema
+                      literal at y=1422 (inside wireup_callout
+                      decoration group) amended from the prior
+                      11px 12-field schema literal to a 7px
+                      23-field schema literal at the SAME
+                      y=1422 position. Font size reduced from
+                      11px to 7px to fit the expanded 23-field
+                      literal within the 1500-wide SVG viewBox
+                      bounds while preserving Row 6
+                      mod:Long_Module at y=1444 and footer at
+                      y=1462 byte-identical.
+
+                      Diagram 6 SVG viewBox 1500x1500 preserved
+                      byte-identical. Background rect preserved
+                      byte-identical. All other Diagram 6
+                      visual content preserved byte-identical
+                      (title_bar, three zone_*_hdr column
+                      headers, all Kraken_Zone elements, all
+                      TothBot_Zone elements outside the y=1422
+                      callout line, all CIATS_Zone elements
+                      outside ciats_outcome, NOT USED panel,
+                      wireup_callout header + Row 1-4 + Row 6,
+                      and footer).
+
+                      All 6 OTHER figures preserved BYTE-
+                      IDENTICAL this dv1_49 increment: Tier 1
+                      Context Diagram, Diagram 1 (Kraken API
+                      Connection Architecture R2), Diagram 2
+                      (Trading Pipeline), Diagram 3 (Exit
+                      Architecture R4 from dv1_48), Diagram 4
+                      (Regime Taxonomy R3), Diagram 7 (Paper-
+                      Mode Dispatch Boundary R3). Plus
+                      auxiliary Image8 (Gate 7 Risk Guard
+                      Detail) and Image9 (Gate 8 Position Sizer
+                      Detail) preserved byte-identical.
+
+                      Per V-038 diagram-prose parity within the
+                      same dv1_49 increment: Diagram 5 R4 and
+                      Diagram 6 R5 schema_fields enumerations
+                      are character-identical. Per V-031..V-037
+                      structural validation: no orphan close
+                      tags, no unclosed elements, asset-
+                      reference parity 8:8, section-heading
+                      parity preserved, structural-marker
+                      counts preserved within expected
+                      transformation tolerances, no spurious
+                      filler tokens introduced.
+
+                      Schema cascade Step 3 (0511004 dv1_4 -&gt;
+                      dv1_5 §7.5 prose cascade matching the
+                      dv1_49 Diagram 5 + Diagram 6 23-field
+                      enumeration) sequenced to the next
+                      chat-turn this same TB00217 session.
+                      Schema cascade Step 4 (1011005 dv1_3
+                      retirement to rt1_3 — the dv1_3 spec is
+                      the source-of-truth for the 23-field
+                      schema; retirement is the final step that
+                      removes it from active circulation once
+                      0511004 dv1_5 absorbs the schema into the
+                      prose-canonical layer) sequenced to
+                      TB00218 or TB00217 final turn if context
+                      budget permits.
+
+                      DD-001 / DD-002 / DD-004 NO PROSE-FIRST
+                      AUTHORING compliance: every R4 / R5
+                      architectural identifier in the 23-field
+                      schema is encoded in either the
+                      stream2_box desc schema_fields_canonical
+                      enumeration (Diagram 5), the
+                      ciats_outcome desc schema_fields
+                      enumeration (Diagram 6), the
+                      stream2_box visible text region (Diagram
+                      5), the ciats_outcome visible text region
+                      (Diagram 6), or the Row 5 wire-up callout
+                      schema literal at y=1422 (Diagram 6).
+                      Source-of-truth provenance (1011005 dv1_3
+                      §9 EC-TOB-002 lines 353-384) cited in the
+                      figcaption and root desc R-increment
+                      narratives for both diagrams.
+
+                      RR-SCOPE-010 verbatim-MDR-citation
+                      discipline applied: schema field
+                      enumeration grep-verified verbatim
+                      against 1011005 dv1_3 §9 EC-TOB-002 at
+                      amendment time.
+
+                      RR-SCOPE-007 self-authored-NSI-source-
+                      prohibition compliance: the 23-field
+                      schema scope is sourced from 1011005
+                      dv1_3 §9 EC-TOB-002 (Bill-ratified
+                      controlled-document spec content), not
+                      from the NSI authoring layer. The
+                      one-document-per-chat-turn cadence rule
+                      governing "Diagram 5 + Diagram 6 amended
+                      in the same dv1_49 increment" traces to
+                      Bill TB00215 chat-turn 5 + chat-turn 7
+                      verbatim directive (recorded in TB00215
+                      SL §4.2 + TB00216 NSI §5.6).
+
+                      Authoring discipline this session
+                      followed the LAYOUT-DECISION-FIRST
+                      OPERATIONAL LEARNING captured in TB00216
+                      SL §5.2 + TB00217 NSI §8: visual layout
+                      decisions for both stream2_box and
+                      ciats_outcome made BEFORE desc narrative
+                      authoring; desc narratives authored ONCE
+                      matching the final layout; figcaptions
+                      authored matching the final layout;
+                      revision history entry appended;
+                      DR-007 HTML scope validation run before
+                      delivery. This is the corrective for the
+                      TB00216 abandonment-pre-delivery defect
+                      class (in-flight draft accumulating
+                      narrative-vs-layout drift due to draft-
+                      revert cycles on visible layout after
+                      desc narrative was already written).
+
+                      Closes: CIATS Trade Outcome Bus schema
+                      reconciliation cascade Steps 1 + 2
+                      (Diagram 5 + Diagram 6 portions). Step 3
+                      (0511004 dv1_5) and Step 4 (1011005 dv1_3
+                      retirement) carry forward.
+
+                      Authored TB00217 STAGE Phase 1 Cycle 3
+                      schema reconciliation cascade Turn 1
+                      under Bill chat-turn 1 directive
+                      "Cold-load TB00217. Execute schema
+                      reconciliation cascade Steps 1+2+3
+                      fresh-baseline restart under one-
+                      document-per-turn cadence. Turn 1
+                      deliver 0500000 dv1_49 (Diagram 5 +
+                      Diagram 6 both, 23-field schema verbatim
+                      from 1011005 dv1_3 §9; layout-decision-
+                      first authoring; DR-007 validation before
+                      delivery)."
+
+  dv1_48  05-12-2026  TB00214 PHASE 1 1011005 EXIT_CONTROLLER
+                      REDUNDANCY AUDIT MIGRATION TO CANONICAL —
+                      IMAGE3 R3 -&gt; R4 AMENDMENT.
+
+                      INCREMENT TYPE: existing-diagram amendment
+                      (Image3 only, under DEC-003 Path A
+                      one-diagram-per-session cadence).
+
+                      Image3 R3 -&gt; R4 amendment adds NEW
+                      conflict_resolution_callout decoration
+                      group at figure bottom encoding three
+                      architectural rules under newly-created
+                      rule:HR-EC-016:
+
+                        (a) L1a sequence Step 1 pair-status
+                            precondition binding per ar:AR-040
+                            + 1011005 dv1_3 §5.1 EC-L1A-SEQ
+                            Step 1. Before any L1a cancel or
+                            sell action, check pair status. If
+                            cancel_only or maintenance: HOLD,
+                            CRITICAL alert, NO orders. Resting
+                            TP + emergSL protect.
+
+                        (b) Layer 2 MAE threshold breach takes
+                            priority over any in-progress
+                            Layer 1a sequence per 1011005 dv1_3
+                            §5 EC-L2-003 strengthened. Complete
+                            cancel sequence, execute market sell,
+                            exit_reason = MAE_THRESHOLD_BREACH
+                            (not the original L1a reason).
+
+                        (c) TP-partial + simultaneous Layer 2
+                            conflict resolution per 1011005
+                            dv1_3 §6.2 EC-TP-006. When TP order
+                            partial fill (cum_qty &gt; 0) and L2
+                            MAE breach occur simultaneously,
+                            Layer 2 WINS: cancel remaining TP
+                            qty, execute L2 market sell, use
+                            cum_qty filled as partial P/L at
+                            TP price, emit ONE unified
+                            evt:TRADE_CLOSE record with
+                            exit_reason = MAE_THRESHOLD_BREACH
+                            (single record covering full
+                            closure — NEVER two records for
+                            same position).
+
+                      NEW ARCHITECTURAL IDENTIFIER:
+                        rule:HR-EC-016 created (Layer 2
+                          priority + TP-partial conflict
+                          resolution + L1a Step 1 pair-status
+                          precondition). Cited in Image3 R4
+                          root governs list. Prose-layer
+                          ratification follows in 0511004
+                          dv1_3 -&gt; dv1_4 amendment same
+                          session.
+
+                      PREVIOUSLY-IMPLICIT IDENTIFIERS NOW
+                      EXPLICITLY ENUMERATED:
+                        ar:AR-040 (pair status events) — was
+                          depicted in D3 R1 visual content via
+                          the cancel_only/maintenance HOLD
+                          callout; now explicitly cited in
+                          Image3 R4 governs list per V-038
+                          diagram-prose parity.
+                        ar:AR-066 (TP partial fill direction-
+                          symmetric Position Mirror update +
+                          emergSL amend) — was depicted in D2
+                          ON FILL block and referenced in §10
+                          AR registry; now explicitly cited in
+                          Image3 R4 governs list per V-038
+                          diagram-prose parity.
+
+                      AMENDMENT SCOPE DETAIL.
+
+                      (1) HEADER REFRESH.
+                          DocVersion: dv1_47 -&gt; dv1_48.
+                          DocPath: ...dv1_47_Claude_Source.html
+                            -&gt; ...dv1_48_Claude_Source.html.
+                          DocDate: 05-12-2026 (unchanged —
+                            same calendar day as TB00213/
+                            TB00214 session pair).
+                          DocTime: 05:10:00 UTC -&gt; 12:30:00 UTC
+                            (TB00214 authoring window).
+                          HTML &lt;title&gt;: "0500000 System
+                            Architecture Overview dv1_47" -&gt;
+                            "...dv1_48".
+
+                      (2) IMAGE3 SVG TITLE + DIAGRAM_CANONICAL
+                          NORMALIZATION.
+                          SVG title was "0500000_Image3_T2_R2_
+                            Exit_Architecture" while figcaption
+                          claimed R3 — a pre-existing R2 -&gt; R3
+                          desc/title inconsistency from
+                          TB00169. Normalized to R4 in this
+                          dv1_48 amendment. R-increment chain
+                          extended: current R3 -&gt; R4 entry +
+                          R-increment-prior R2 -&gt; R3 +
+                          R-increment-prior-2 R1 -&gt; R2 +
+                          R-increment-prior-3 R0 -&gt; R1.
+
+                      (3) IMAGE3 SVG VIEWBOX + BACKGROUND
+                          RECT EXTENSION.
+                          viewBox: 0 0 1500 1320 -&gt; 0 0 1500
+                            1420 (+100px vertical).
+                          Background rect height: 1320 -&gt; 1420.
+
+                      (4) NEW DECORATION GROUP INSERTION.
+                          conflict_resolution_callout g element
+                          inserted between pm_helper_callout
+                          closing tag and svg closing tag.
+                          Three text rows encoding the three
+                          rule:HR-EC-016 sub-rules described
+                          above plus title bar "L1a STEP 1
+                          PAIR-STATUS PRECONDITION + LAYER 2
+                          PRIORITY + TP-PARTIAL CONFLICT
+                          RESOLUTION — rule:HR-EC-016 (NEW
+                          dv1_48)".
+
+                      (5) ROOT GOVERNS LIST EXTENSION.
+                          Added: rule:HR-EC-016, ar:AR-040,
+                          ar:AR-066. All other governs entries
+                          preserved verbatim.
+
+                      (6) FIGCAPTION REWRITE.
+                          R3 figcaption replaced with R4
+                          figcaption covering the three new
+                          rule:HR-EC-016 sub-rules, the
+                          carry-forward note for CIATS schema
+                          reconciliation, and preservation of
+                          R3 + R2 history narrative.
+
+                      ALL 7 OTHER FIGURES (Tier 1 Context, D1
+                      Kraken API Connection Architecture, D2
+                      Trading Pipeline, D4 Regime Taxonomy, D5
+                      CIATS Architecture, D6 Complete System,
+                      D7 Paper-Mode Dispatch Boundary, D8 Gate
+                      7 Risk Guard Detail, D9 Gate 8 Position
+                      Sizer Detail) preserved byte-identical
+                      this dv1_48 increment per DEC-003 Path A
+                      one-diagram-per-session cadence.
+
+                      REASON FOR CHANGE.
+
+                      TB00214 NSI v1_0 §1.1 directed the
+                      Phase 1 1011005 Exit_Controller
+                      redundancy audit per the per-audit-rule
+                      template. STEP 1 enumeration + STEP 2
+                      classification against canonical
+                      receivers identified UNIQUE architectural
+                      content in 1011005 dv1_3 NOT canonically
+                      encoded in 0500000 dv1_47 or 0511004
+                      dv1_3:
+
+                        FINDING 3a: 1011005 dv1_3 §5.1
+                          EC-L1A-SEQ Step 1 binds the AR-040
+                          pair-status check as Step 1 of the
+                          L1a sequence (HOLD if cancel_only/
+                          maintenance, do NOT proceed). 0511004
+                          §5 treats pair status as a separate
+                          concern. This sequencing is an
+                          architectural decision not encoded in
+                          0500000 or the parent spec.
+
+                        FINDING 3b: 1011005 dv1_3 §6.2
+                          EC-TP-006 specifies that when TP
+                          partially fills AND MAE breaches in
+                          the same window, Layer 2 wins, cancel
+                          remaining TP, execute L2, emit ONE
+                          unified TRADE_CLOSE record with
+                          exit_reason=MAE_THRESHOLD_BREACH.
+                          This conflict-resolution rule is not
+                          in 0500000 dv1_47 or 0511004 dv1_3.
+
+                        FINDING 3c: 1011005 dv1_3 §10
+                          HR-EC-005 (Layer 2 priority over L1a)
+                          is a numbered hard rule in the
+                          coding spec but only mentioned in
+                          0511004 §3.3 paragraph as
+                          implementation prose, not as a
+                          numbered HR-EC- in 0511004 §8.
+
+                      All three findings encode the same
+                      underlying architectural pattern: Layer 2
+                      priority + L1a precondition + TP-partial
+                      conflict handling. Migration target is
+                      Image3 (Exit Architecture diagram) under
+                      DEC-003 Path A. Closes all three findings
+                      at the diagram-as-canonical layer per
+                      §4.5 DD-001..011. Prose-layer
+                      ratification in 0511004 dv1_3 -&gt; dv1_4
+                      follows in this same TB00214 session
+                      (Turn 2 of execution plan).
+
+                      FINDING 2 (CIATS Trade Outcome Bus
+                      24-field vs 12-field schema drift between
+                      1011005 dv1_3 §9 EC-TOB-002 and 0511004
+                      dv1_3 §7.5) was IDENTIFIED in the audit
+                      but DEFERRED to a future dv1_NN session
+                      because it requires Diagram 5 (and
+                      possibly Diagram 6) amendments under
+                      DEC-003 Path A one-diagram-per-session
+                      cadence. The schema reconciliation
+                      cannot land this session because Image3
+                      is the diagram amended this dv1_48
+                      increment. Carry-forward logged in
+                      TB00214 SL §7 + TB00215 NSI for sequencing
+                      after the 1011005 audit closes.
+
+                      FINDING 1 (HR-EC numbering mismatch
+                      between 0511004 dv1_3 §8 HR-EC-001..015
+                      and 1011005 dv1_3 §10 HR-EC-001..015 —
+                      different rules with same identifiers)
+                      self-resolves at 1011005 dv1_3 -&gt; rt1_3
+                      retirement Turn 4. Once 1011005 is
+                      retired, only the parent spec's
+                      numbering remains live. No explicit
+                      renumbering action needed.
+
+                      FINDING 4 (parameter registry gap —
+                      cancel_timeout_window, mpp_retry_count,
+                      max_hold_candles not individually
+                      registered in TB00000 v2_30 §9.17) closes
+                      in this same TB00214 session via TB00000
+                      v2_30 -&gt; v2_31 amendment (Turn 3 of
+                      execution plan).
+
+                      FP/DP ANALYSIS.
+
+                      Option A (0500000 dv1_48 only; defer
+                        parent-prose amendment) REJECTED.
+                        0500000 dv1_47 line 4506 ties
+                        TRADE_CLOSE schema annotation verbatim
+                        to "0511004 dv1_3 §7.5"; cascading the
+                        diagram without the prose creates
+                        diagram-prose drift. Loss-prevention
+                        cost: high (CIATS data fidelity
+                        degrades).
+                      Option B (full cascade in one session
+                        per §4.5 DD-003 4-step workflow
+                        ordering: diagrams -&gt; prose -&gt;
+                        registry -&gt; retirement) ACCEPTED.
+                        This dv1_48 amendment is Turn 1 of
+                        the 5-turn execution plan.
+                      Option C (prose-first inversion)
+                        REJECTED on §4.5 DD-001/DD-002
+                        diagrams-govern-prose grounds.
+
+                      Decision: Option B.
+
+                      PA-MASTER PRE-EMIT SCAN.
+
+                      Authored under TB00000 v2_30 §4.4 PA-008
+                      pre-emit-scan discipline. The three
+                      rule:HR-EC-016 sub-rules apply identically
+                      to paper and live modes — there is no
+                      PA-004 divergence point introduced. PA-005
+                      byte-identical paper-live close path
+                      preserved. CIATS Trade Outcome Bus
+                      one-record-per-closure invariant preserved
+                      across modes.
+
+                      DD-001..011 COMPLIANCE.
+
+                      DD-001: Diagram (Image3 R4) is the
+                        canonical source for rule:HR-EC-016 and
+                        the three sub-rules. Encoding is in the
+                        conflict_resolution_callout group desc
+                        body (canonical: rule:HR-EC-016) +
+                        rule_text verbatim block + visible
+                        text rows. Per §4.5 DD-001 + 0311001
+                        v1_12 §15.13.
+                      DD-002: Where 0511004 dv1_3 §3.3
+                        currently states L2-priority-over-L1a
+                        in implementation prose, the diagram
+                        now encodes it as named architectural
+                        rule. Diagram governs; 0511004 prose
+                        updated to match in Turn 2 0511004
+                        dv1_3 -&gt; dv1_4 amendment.
+                      DD-003 (4-step workflow): this dv1_48
+                        is Step 1 (complete the diagram). Step
+                        2 (update parent prose) is Turn 2.
+                        Step 3 (update coding spec — retire
+                        1011005) is Turn 4. Step 4 (code) is
+                        downstream of this TB00214 session.
+                      DD-004 (no prose-first authoring): the
+                        new rule:HR-EC-016 is first encoded in
+                        the diagram, not in prose. Prose
+                        follows.
+                      DD-005 (V-038 cross-check): performed.
+                        Diagram R4 governs list includes
+                        rule:HR-EC-016 + ar:AR-040 + ar:AR-066.
+                        Prose layer (0511004 dv1_4) will be
+                        amended to match in Turn 2.
+                      DD-007 (pre-emit scan): performed. No
+                        prose-first content introduced.
+
+                      RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE
+                      VERIFICATION.
+
+                      The scope of this dv1_48 amendment
+                      (Image3 only; schema reconciliation
+                      deferred; HR numbering self-resolves at
+                      retirement) is derived from Bill chat-
+                      turn directive "Do a FP/DP analysis to
+                      obtain the correct answers" (TB00214
+                      Turn 2 prior to this work-product turn).
+                      The FP/DP analysis was authored and
+                      surfaced to Bill; Bill ratified with
+                      "Proceed" (TB00214 Turn 3). No scope
+                      restriction sourced from Claude-authored
+                      NSI sentences applied.
+
+                      PARENT CHAIN COMPLIANCE.
+
+                      0500000 (Tier 1 Domain) is the parent
+                      of all 0511XXX Tier 3 Instance specs
+                      including 0511004 Exit_Controller_
+                      Specification dv1_3 (next-version
+                      dv1_4 amendment to follow in Turn 2).
+                      0500000 dv1_48 supersedes dv1_47.
+
+                      Bill override.
+
+                      TB00214 dv1_47 -&gt; dv1_48 enacted under
+                      Bill explicit authorization TB00214
+                      Turn 3 directive "Proceed" following
+                      Turn 2 FP/DP analysis ratification.
+                      Direct increment dv1_47 -&gt; dv1_48 under
+                      standing document-control override scope
+                      established TB00115 et al.
+
+                      Document Status: supersedes dv1_47.
+
   dv1_47  05-12-2026  TB00212 PHASE 1 10XXXXX REDUNDANCY AUDIT —
                       TWO NEW TIER-3 GATE-DETAIL SUB-FIGURES
                       (DIAGRAMS 8 + 9) — UNIQUE 1011011 ARCHITECTURAL
