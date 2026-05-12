@@ -1,10 +1,10 @@
 DocDCN:     0711002
 DocTitle:   Regime_Taxonomy_Specification
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711002_Regime_Taxonomy_Specification_dv1_0.txt
-DocDate:    04-05-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711002_Regime_Taxonomy_Specification_dv1_1.txt
+DocDate:    05-11-2026
+DocTime:    22:00:00 UTC
 
 ============================================================
 REGIME_TAXONOMY_SPECIFICATION
@@ -127,51 +127,73 @@ RE-003  6-REGIME GRID — COMPLETE TAXONOMY
               +-------------------+-------------------+
 TRENDING_POS  | REGIME 1          | REGIME 2          |
 (ADX>25,      | FULL position     | FULL position     |
-EMA20>EMA50)  | Entry PERMITTED   | Entry PERMITTED   |
+EMA20>EMA50)  | LONG PERMITTED    | LONG PERMITTED    |
               | (Gate 8 standard) | (ATR adapts size) |
               +-------------------+-------------------+
 NON_DIRECTIONAL| REGIME 3         | REGIME 4          |
 (ADX<=25)     | 50% position      | NO ENTRY          |
-              | Entry PERMITTED   | Gate 3 BLOCKS      |
-              | (Gate 6 sizes)    |                   |
+              | LONG PERMITTED    | Gate 3 BLOCKS     |
+              | (Gate 6 sizes)    | (both directions) |
               +-------------------+-------------------+
 TRENDING_NEG  | REGIME 5          | REGIME 6          |
-(ADX>25,      | NO ENTRY          | NO ENTRY          |
-EMA20<EMA50)  | Gate 3 BLOCKS     | Gate 3 BLOCKS     |
+(ADX>25,      | LONG blocked      | LONG blocked      |
+EMA20<EMA50)  | SHORT permitted   | SHORT permitted   |
               +-------------------+-------------------+
 
-Entry-permitted regimes: Regime 1, Regime 2, Regime 3.
-Entry-blocked regimes:   Regime 4, Regime 5, Regime 6.
+Per-direction entry permission (directional cascade per
+HR-REGIME-007 amended dv1_1):
 
-Gate 3 (Regime Pre-Filter) blocks Regime 4, 5, 6.
-Gate 6 (Regime Gate) handles 50% sizing for Regime 3.
+  LONG entry-permitted regimes:   Regime 1, Regime 2, Regime 3.
+  SHORT entry-permitted regimes:  Regime 5, Regime 6.
+  Entry-blocked regimes (both):   Regime 4.
+
+Gate 3 (Regime Pre-Filter) per directional cascade:
+  Regime 4 blocked (both directions — high vol whipsaw
+    territory; no directional thesis).
+  Regimes 5, 6 dispatch to Short_Module (LONG blocked;
+    SHORT permitted via Short_Module per AR-009 amended
+    dv1_41 short via Kraken margin trading; AR-072
+    short SC-GATE-1 variant; AR-073 per-side state
+    management).
+  Regimes 1, 2, 3 dispatch to Long_Module.
+Gate 6 (Regime Gate) handles 50% sizing for Regime 3 (Long).
 Gates 3 and 6 are specified in AA=08 (Trading System).
 This document defines the regime state. AA=08 evaluates it.
 
 ------------------------------------------------------------
-RE-004  ENTRY BLOCKING RULES
+RE-004  ENTRY BLOCKING RULES (DIRECTIONAL CASCADE)
 ------------------------------------------------------------
 
-  TRENDING_NEGATIVE (all vol):   BLOCKED at Gate 3.
-    Reason: short side not implemented (AR-009). Entering
-    long in a confirmed downtrend is directionally incorrect.
+  TRENDING_NEGATIVE (all vol):   DIRECTIONAL CASCADE at Gate 3.
+    LONG entry: BLOCKED. Entering long in a confirmed
+      downtrend is directionally incorrect.
+    SHORT entry: PERMITTED via Short_Module dispatch.
+      AR-009 amended dv1_41 — short via Kraken margin
+      trading per DEC-011 Stage M ratification.
+      AR-072 short SC-GATE-1 variant — Selection
+      Controller short-side gate set.
+      AR-073 per-side state management + pair_cache
+      margin_eligible_flag.
 
   NON_DIR + ELEVATED_VOL:        BLOCKED at Gate 3.
-    Reason: high volatility with no directional trend
-    is whipsaw territory. Risk-adjusted expectancy is
-    negative for this combination.
+    Both directions blocked. Reason: high volatility
+    with no directional trend is whipsaw territory.
+    Risk-adjusted expectancy is negative for this
+    combination on either side.
 
-  NON_DIR + NORMAL_VOL:          PERMITTED at Gate 3.
+  NON_DIR + NORMAL_VOL:          LONG PERMITTED at Gate 3.
     Modified: 50% of normal position size (Gate 6).
     Reason: no confirmed trend but acceptable volatility.
     Reduced size reflects lower conviction.
+    Short side: not permitted — short thesis requires
+    confirmed directional state (TRENDING_NEGATIVE).
 
-  TRENDING_POS + NORMAL_VOL:     PERMITTED at Gate 3.
+  TRENDING_POS + NORMAL_VOL:     LONG PERMITTED at Gate 3.
     Standard: 100% position size.
     Reason: confirmed trend, acceptable volatility.
-    Optimal regime for TothBot V2 strategy.
+    Optimal regime for TothBot V2 long-side strategy.
 
-  TRENDING_POS + ELEVATED_VOL:   PERMITTED at Gate 3.
+  TRENDING_POS + ELEVATED_VOL:   LONG PERMITTED at Gate 3.
     Standard: 100% position size (ATR already adapts
     via mae_mult in Gate 8 Position Sizer — AR-043).
     Reason: confirmed trend. ATR adapts the risk distance
@@ -453,6 +475,14 @@ document records the strategy rule that Gate 4 implements.
     Daily EMA(20/50) → directional state computation
     1H EMA(20/50)    → Gate 4 HTF confirmation
 
+  Short-side 1H confirmation: Short_Module dispatch path
+  for TRENDING_NEGATIVE pairs uses the Selection Controller
+  short-side gate variant (AR-072). The short-side 1H
+  confirmation logic is specified in 0811002 Selection_
+  Controller_Specification and 0811005 Short_Module_
+  Specification, not in this document. This section
+  documents the long-side Gate 4 rule only.
+
 ============================================================
 9. HARD RULES — REGIME TAXONOMY
 ============================================================
@@ -485,12 +515,33 @@ HR-REGIME-005  BTC/USD regime is computed every day.
 HR-REGIME-006  All regime arithmetic MUST use Python
                Decimal. float arithmetic is PROHIBITED.
 
-HR-REGIME-007  TRENDING_NEGATIVE blocks entry unconditionally
-               at Gate 3 regardless of volatility state.
-               Long-only strategy. No exception.
+HR-REGIME-007  TRENDING_NEGATIVE applies a directional
+               cascade at Gate 3 regardless of volatility
+               state:
+                 - LONG entry BLOCKED unconditionally
+                   (entering long in a confirmed downtrend
+                   is directionally incorrect).
+                 - SHORT entry PERMITTED via Short_Module
+                   dispatch.
+                     AR-009 amended dv1_41: short via
+                       Kraken margin trading per DEC-011
+                       Stage M ratification.
+                     AR-072: short SC-GATE-1 variant —
+                       Selection Controller short-side
+                       gate set.
+                     AR-073: per-side state management +
+                       pair_cache margin_eligible_flag
+                       (population from REST
+                       GetAssetPairs).
+               No exception within the directional
+               cascade. The cascade applies to BOTH
+               TRENDING_NEGATIVE_NORMAL_VOL (Regime 5)
+               AND TRENDING_NEGATIVE_ELEVATED_VOL
+               (Regime 6).
 
 HR-REGIME-008  NON_DIR + ELEVATED_VOL blocks entry
                unconditionally at Gate 3. No exception.
+               Both directions blocked.
 
 HR-REGIME-009  Regime thresholds are CIATS-owned starting
                values. No threshold may be changed by CIATS
@@ -525,6 +576,14 @@ Break-even win rate for 1:1.5 R:R = 40%. Regime filtering
 exists to ensure TothBot enters conditions with >40% win
 rate expectancy. These starting values are derived from
 that baseline.
+
+Per-module CIATS framework (TB00000 v2_29 §9.6): Long
+and Short modules maintain independent CIATS instances
+with isolated statistical pools. Regime parameters
+above are shared (regime classification is direction-
+independent); CIATS may propose direction-specific
+threshold adjustments at the 200-trade floor per
+module-isolated statistical inference.
 
 ============================================================
 11. WHAT DOES THIS COMPONENT DO?
@@ -570,14 +629,306 @@ that baseline.
   0711001  SSS_Signal_Model_Specification
   0711003  Asset_Selection_Specification
   0500000  System_Architecture_Overview (AR-017, GAP-03,
-           Section 5 — primary source)
+           Section 5 — primary source; AR-009 amended
+           dv1_41; AR-072 + AR-073 amended dv1_43 M-2 —
+           short-direction architecture sources for
+           HR-REGIME-007 dv1_1 amendment)
   0511002  Signal_Pipeline_Specification (Gates 3, 4, 6)
   0411002  Kraken_REST_API_Specification (GetOHLCData)
+  0811002  Selection_Controller_Specification (AR-072
+           short SC-GATE-1 variant; AR-073 per-side
+           state management)
+  0811005  Short_Module_Specification (Short_Module
+           dispatch consumer of HR-REGIME-007 dv1_1
+           directional cascade)
   1011012  Regime_Engine_Coding_Spec (AA=10 — RE-* rules)
 
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_1  05-11-2026  TB00185 STAGE M-3 REGIME TAXONOMY
+                     MAPPING — HR-REGIME-007 SEMANTIC
+                     AMENDMENT (LONG-ONLY BLOCK ->
+                     DIRECTIONAL CASCADE).
+
+                     Surgical amendments to four sections:
+
+                     CHANGE 1 — HEADER UPDATE.
+                     DocVersion dv1_0 -> dv1_1. DocPath
+                     updated to dv1_1.txt. DocDate
+                     refreshed to 05-11-2026. DocTime
+                     refreshed to 22:00:00 UTC.
+
+                     CHANGE 2 — §4 RE-003 6-REGIME GRID
+                     CELL UPDATES + DIRECTIONAL-CASCADE
+                     SUMMARY.
+                     TRENDING_NEG band (Regimes 5 + 6)
+                     cells updated from "NO ENTRY / Gate
+                     3 BLOCKS" to "LONG blocked / SHORT
+                     permitted" reflecting directional
+                     cascade. TRENDING_POS band cell
+                     labels reframed from "Entry
+                     PERMITTED" to "LONG PERMITTED"
+                     (semantically identical — long
+                     side was the only side at dv1_0;
+                     direction now explicit). NON_DIR
+                     band cell labels reframed
+                     similarly. "Entry-permitted
+                     regimes / Entry-blocked regimes"
+                     summary lines below grid replaced
+                     with per-direction summary
+                     (LONG permitted: Regimes 1, 2, 3;
+                     SHORT permitted: Regimes 5, 6;
+                     blocked both: Regime 4). Gate 3
+                     description expanded with
+                     directional dispatch logic
+                     (Long_Module for Regimes 1-3;
+                     Short_Module for Regimes 5-6;
+                     blocked for Regime 4).
+
+                     PRE-AMENDMENT BASELINE (dv1_0
+                     RE-003 grid + summary lines)
+                     PRESERVED VERBATIM per CI-005 +
+                     CI-006:
+
+                       TRENDING_POS  | REGIME 1
+                       (ADX>25,      | FULL position
+                       EMA20>EMA50)  | Entry PERMITTED
+                                     | (Gate 8 standard)
+
+                       NON_DIRECTIONAL| REGIME 3
+                       (ADX<=25)     | 50% position
+                                     | Entry PERMITTED
+                                     | (Gate 6 sizes)
+
+                                     | REGIME 4
+                                     | NO ENTRY
+                                     | Gate 3 BLOCKS
+
+                       TRENDING_NEG  | REGIME 5
+                       (ADX>25,      | NO ENTRY
+                       EMA20<EMA50)  | Gate 3 BLOCKS
+
+                       Entry-permitted regimes: Regime
+                         1, Regime 2, Regime 3.
+                       Entry-blocked regimes: Regime 4,
+                         Regime 5, Regime 6.
+                       Gate 3 (Regime Pre-Filter)
+                         blocks Regime 4, 5, 6.
+
+                     CHANGE 3 — §4 RE-004 ENTRY BLOCKING
+                     RULES — TRENDING_NEGATIVE ENTRY
+                     AMENDMENT.
+                     TRENDING_NEGATIVE entry-blocking
+                     rule amended from "BLOCKED at
+                     Gate 3 / short side not
+                     implemented (AR-009)" to
+                     "DIRECTIONAL CASCADE at Gate 3 /
+                     LONG entry BLOCKED + SHORT entry
+                     PERMITTED via Short_Module
+                     dispatch" with citations to
+                     AR-009 amended dv1_41 (short via
+                     Kraken margin trading per DEC-011),
+                     AR-072 (short SC-GATE-1 variant),
+                     AR-073 (per-side state management
+                     + pair_cache margin_eligible_flag).
+                     Adjacent rules (NON_DIR +
+                     ELEVATED_VOL; NON_DIR + NORMAL_VOL;
+                     TRENDING_POS + NORMAL_VOL;
+                     TRENDING_POS + ELEVATED_VOL)
+                     reframed with explicit LONG / SHORT
+                     direction (NON_DIR + NORMAL_VOL
+                     adds explicit "Short side: not
+                     permitted — short thesis requires
+                     confirmed directional state
+                     TRENDING_NEGATIVE" clarification).
+
+                     PRE-AMENDMENT BASELINE (dv1_0
+                     RE-004 TRENDING_NEGATIVE entry)
+                     PRESERVED VERBATIM per CI-005 +
+                     CI-006:
+
+                       TRENDING_NEGATIVE (all vol):
+                         BLOCKED at Gate 3.
+                         Reason: short side not
+                         implemented (AR-009). Entering
+                         long in a confirmed downtrend
+                         is directionally incorrect.
+
+                     CHANGE 4 — §9 HR-REGIME-007 RULE
+                     BODY SEMANTIC AMENDMENT.
+                     Rule body amended from "blocks
+                     entry unconditionally at Gate 3 /
+                     long-only strategy" to "applies a
+                     directional cascade at Gate 3 /
+                     LONG BLOCKED + SHORT PERMITTED via
+                     Short_Module dispatch" with
+                     citations to AR-009 amended
+                     dv1_41, AR-072, AR-073. Explicit
+                     application clause added stating
+                     the cascade applies to both
+                     TRENDING_NEGATIVE_NORMAL_VOL
+                     (Regime 5) AND
+                     TRENDING_NEGATIVE_ELEVATED_VOL
+                     (Regime 6).
+
+                     PRE-AMENDMENT BASELINE (dv1_0
+                     HR-REGIME-007 rule body)
+                     PRESERVED VERBATIM per CI-005 +
+                     CI-006:
+
+                       HR-REGIME-007  TRENDING_NEGATIVE
+                         blocks entry unconditionally
+                         at Gate 3 regardless of
+                         volatility state. Long-only
+                         strategy. No exception.
+
+                     CHANGE 5 — §8 GATE 4 SHORT-SIDE
+                     SCOPE NOTE.
+                     §8 1H HTF Confirmation — Gate 4
+                     remains a long-side documentation
+                     section (records the strategy rule
+                     that Gate 4 implements for
+                     TRENDING_POSITIVE pairs). One
+                     short-side scope note added at the
+                     end of §8 directing readers to
+                     0811002 Selection_Controller_
+                     Specification and 0811005 Short_
+                     Module_Specification for the
+                     short-side 1H confirmation logic
+                     (AR-072 short SC-GATE-1 variant).
+                     The §8 long-side Gate 4 rule body
+                     itself is unchanged.
+
+                     CHANGE 6 — §10 CIATS PARAMETER
+                     REGISTRY — PER-MODULE FRAMEWORK
+                     CLARIFICATION.
+                     One clarification paragraph added
+                     at the end of §10 noting per-
+                     module CIATS framework per
+                     TB00000 v2_29 §9.6: Long and Short
+                     modules maintain independent CIATS
+                     instances with isolated statistical
+                     pools; regime parameters are
+                     shared (regime classification is
+                     direction-independent); CIATS may
+                     propose direction-specific
+                     threshold adjustments at the 200-
+                     trade floor per module-isolated
+                     statistical inference. No
+                     parameter value or threshold
+                     changed at dv1_1 per TB00185 NSI
+                     §2.1(a)(4) parameter-foundation
+                     lock.
+
+                     CHANGE 7 — §12 RELATED DOCUMENTS
+                     EXPANSION.
+                     0500000 entry expanded to cite
+                     AR-009 amended dv1_41 + AR-072 +
+                     AR-073 amended dv1_43 M-2 as
+                     short-direction architecture
+                     sources for the HR-REGIME-007
+                     dv1_1 amendment. Added 0811002
+                     Selection_Controller_Specification
+                     and 0811005 Short_Module_
+                     Specification entries reflecting
+                     the new short-side cross-
+                     references introduced by the
+                     directional cascade.
+
+                     OUT-OF-SCOPE THIS AMENDMENT
+                     (forward-tracked, not silently
+                     dropped):
+                       D4 SVG amendment (DR-043 #4 SVG
+                         portion) — sequenced M-4 per
+                         DEC-003 Path A one-diagram-
+                         per-session cadence.
+                       D3 SVG amendment (DR-043 #3 SVG
+                         portion) — sequenced M-4.
+                       D7 SVG amendment — sequenced
+                         M-4.
+                       0500000 D-05 prose amendment
+                         (paper short collateral spec
+                         text) — TB00153 MDR v1_7
+                         carry-forward.
+                       0811005 SM-011 tactical-bridge
+                         retirement — next 0811005 dv
+                         increment.
+                       1011010 CIATS_Coding_Spec per-
+                         module instantiation —
+                         sequenced M-5.
+                       1011012 Regime_Engine_Coding_Spec
+                         amendment to reflect dv1_1
+                         directional cascade — Step 3
+                         coding-spec work sequenced
+                         after M-6 Stage M close +
+                         DEC-008 trigger.
+
+                     REASON FOR CHANGE.
+                     Stage M-3 regime taxonomy mapping
+                     per DEC-011 Option C M-3 sub-step.
+                     Closes the prose-layer portion of
+                     TB00153 MDR v1_7 DR-043 #4 (D4 SVG
+                     portion remains OPEN sequenced to
+                     M-4 per DEC-003 Path A). The
+                     directional-cascade amendment
+                     enables the Short_Module dispatch
+                     path documented in 0500000 dv1_43
+                     AR-009 + AR-072 + AR-073 and
+                     codified in 0811005 dv1_0 Short
+                     Module Specification.
+
+                     FP/DP ANALYSIS — SURGICAL SCOPE
+                     vs FULL DOCUMENT RECONCILIATION.
+                     Surgical scope per TB00185 NSI §2
+                     limits the amendment to HR-REGIME-
+                     007 rule body plus internally-
+                     consistent adjacent sections
+                     (RE-003 grid + RE-004 entry
+                     blocking + §8 scope note + §10
+                     framework clarification + §12
+                     cross-reference expansion).
+                     Sections containing direction-
+                     neutral content (computation
+                     specifications RE-008..RE-013;
+                     data source RE-005; timing RE-006;
+                     response[-1] exclusion RE-007;
+                     trade tagging RE-014, RE-015;
+                     hard rules HR-REGIME-001..006 +
+                     HR-REGIME-008..010) are preserved
+                     byte-identical. Full-document
+                     reconciliation would risk
+                     introducing scope drift and is
+                     not required for the directional-
+                     cascade enablement.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0711002 chain: 0700000 (Domain
+                     Document) -> 0710000 (Sub-Domain
+                     Anchor) -> 0711002 (Instance
+                     Document). Chain unchanged from
+                     dv1_0. No new parent dependency
+                     introduced.
+
+                     STAGE M-3 EXIT TRIGGER.
+                     With 0711002 dv1_1 delivered,
+                     Stage M-3 EXIT is reached. Stage
+                     M-4 (D3 + D4 + D7 SVG diagram
+                     amendments, one diagram per
+                     session per DEC-003 Path A) is
+                     sequenced as next-stage work per
+                     DEC-011 Option C M-3 -> M-4 sub-
+                     step ordering.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00185 batch):
+                       0711002 dv1_0 -> dv1_1.txt
+                         (this document — sole in-scope
+                         artifact).
+                       TB00185 Session Log v1_0 (NEW).
+                       TB00186 Next Session
+                         Instructions v1_0 (NEW).
 
   dv1_0  04-05-2026  Initial document. Complete regime
                      taxonomy specification. 6-regime grid

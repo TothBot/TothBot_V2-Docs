@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_6
+DocVersion: v1_12
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_6.txt
-DocDate:    05-06-2026
-DocTime:    22:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_12.txt
+DocDate:    05-10-2026
+DocTime:    23:30:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -1246,6 +1246,70 @@ MUST use the formal reference syntax.
          DC-PREFLIGHT-007 sub-check (f) HTML
          SCOPE.
 
+  V-038  Diagram-prose authority parity. APPLIES
+         to every diagram-bearing controlled
+         document at every authoring/amendment
+         cycle. Per §15.14 (NEW v1_10) and
+         TB00000 §4.5 DD-001..DD-010, diagrams
+         are the canonical Design Documents and
+         govern over prose. V-038 enforces that
+         every architectural rule, contract,
+         decision, gate, layer, regime, param,
+         container, mod, indicator, evt, channel,
+         ar, or pt_mode identifier asserted in
+         document prose has a corresponding
+         diagram element — either a T-2+
+         namespace-token labeled group with
+         matching CANONICAL_NAME OR a root <desc>
+         governs: list entry — somewhere in the
+         document's diagram set.
+
+         Violations:
+           V-038.1 Prose asserts a rule /
+                   contract / decision / gate /
+                   layer / regime / param /
+                   container / mod / indicator /
+                   evt / channel / ar / pt_mode
+                   identifier with no
+                   corresponding diagram
+                   labeled-group tag and no
+                   corresponding root <desc>
+                   governs: entry. Prose-only
+                   architecture = defect.
+           V-038.2 Prose and diagram both
+                   reference the same identifier
+                   but with conflicting
+                   semantics (different
+                   parent_diagram, different
+                   constraints, different
+                   consumes/produces, etc.).
+                   Conflict = defect; resolution
+                   per §15.14.3 (diagram
+                   governs; prose updated to
+                   match).
+           V-038.3 Diagram contains a labeled
+                   group or root <desc> entry
+                   not referenced anywhere in
+                   document prose, AND the
+                   identifier is not recorded
+                   as a known diagram-only
+                   architectural element. Stale
+                   diagram tag candidate; flag
+                   for §15.14.5 cross-check
+                   resolution.
+
+         Enforcement: Pre-amendment cross-check
+         per §15.14.5; session-open pre-flight
+         per 0311002 DC-PREFLIGHT (future
+         amendment); pre-delivery DR-007 HTML
+         scope sweep extended to include V-038
+         scan.
+
+         Closure of TB00163 §7.4 DIAGRAMS-AS-
+         CANONICAL governance gap is at the
+         §4.5 / §15.14 standing-rule layer;
+         V-038 is the validation-layer companion.
+
 ------------------------------------------------------------
 15.8 Rendering Contract for Derived Formats
 ------------------------------------------------------------
@@ -1834,6 +1898,222 @@ Major revisions (2.0+) require explicit migration
 of existing tagged diagrams.
 
 ------------------------------------------------------------
+15.11.6 Diagram-Level Root <desc> Contract (NEW v1_7)
+------------------------------------------------------------
+
+§15.11.3 codifies the LABELED-GROUP <g><desc>
+schema (one <desc> per tagged <g> element). This
+section codifies the separate DIAGRAM-LEVEL root
+<desc> schema (exactly one <desc> immediately
+following the root <svg>'s <title>). Both schemas
+co-exist within a single SVG: the root <desc>
+governs the diagram as a whole; labeled-group
+<desc> elements govern individual tagged <g>
+groups.
+
+The diagram-level root <desc> is MANDATORY for
+every Tier 1, Tier 2, and Tier 3 diagram. Tier 4
+diagrams MAY carry a root <desc> but are not
+strictly required to.
+
+  ENCODING.
+    <svg ...>
+      <title>diagram_canonical_name</title>
+      <desc>
+        diagram_canonical: [DCN]_[Type][N]_T[Tier]_R[R]_[ShortTitle]
+        tier: <1|2|3|4>
+        parent_dcn: <four-or-more-digit DCN of
+                     governing parent document>
+        schema_version: 1.0
+        R-increment: R<integer>
+        governs: <comma-separated list of rule: /
+                  ar: / decision: / container: /
+                  param: tokens this diagram
+                  enforces or witnesses at the
+                  whole-diagram level>
+        drill_targets: <enumerated drill targets
+                        per tier rules below>
+        parent_diagram: <parent diagram filename
+                         OR field OMITTED for
+                         Tier 1>
+        sacred_constraints: <comma-separated list
+                             of hardcoded values
+                             outside CIATS scope,
+                             e.g., "Net 1:1.5 R:R">
+      </desc>
+      ... <g> labeled groups and decoration ...
+    </svg>
+
+  TIER 1 RULES (DIAGRAM-LEVEL).
+    T1-A parent_diagram FIELD OMITTED.
+         The root <desc> of a Tier 1 diagram
+         MUST NOT include the parent_diagram
+         field. A Tier 1 diagram is the
+         system-context root and has no parent
+         diagram by definition. Per §15.5
+         filename rule (N omitted) and §15.11.1
+         tier rule (Tier 1 is the top tier).
+
+    T1-B drill_targets FIELD MANDATORY AND
+         EXHAUSTIVE.
+         The drill_targets field of a Tier 1
+         root <desc> MUST enumerate exactly one
+         entry per Tier 2 child of the same
+         parent DCN. Each entry MUST be a BARE
+         CANONICAL-NAME of the form
+         [DCN]_Image[N]_T2_[ShortTitle], without
+         R-state suffix (AMENDED v1_11 per
+         DEC-009 ratified at TB00170; pre-v1_11
+         form [DCN]_Image[N]_T2_R[R]_[ShortTitle]
+         RETIRED).
+
+         Adding a new Tier 2 diagram under the
+         same parent DCN REQUIRES a corresponding
+         R-increment of the Tier 1 diagram and a
+         drill_targets entry addition.
+
+         R-INCREMENTS OF EXISTING TIER 2 FIGURES
+         do NOT trigger Tier 1 R-increments.
+         drill_targets are decoupled from Tier 2
+         R-state; the bare canonical-name resolves
+         the figure regardless of current R-state.
+
+         RATIONALE (NEW v1_11).
+         Under DD-001 (diagrams canonical) the
+         drill_targets field is a navigation
+         pointer from Tier 1 to Tier 2 figures.
+         R-states are mutable versioning
+         attributes (advance R-1 -> R-2 -> R-3
+         across sessions). Canonical-name identity
+         (DCN + Image[N] + Tier + ShortTitle) is
+         immutable. Pointers must reference stable
+         identifiers; binding them to mutable
+         R-state forces Tier 1 churn on every
+         Tier 2 R-increment, propagating drift.
+         The current R-state of any Tier 2 figure
+         is discoverable from the figure's own
+         <title>diagram_canonical</title> field.
+
+         RESOLUTION SEMANTICS.
+         A bare canonical-name drill_target
+         entry resolves to the CURRENT R-state
+         instance of the named Tier 2 diagram.
+         Implementation: the bare-name
+         [DCN]_Image[N]_T2_[ShortTitle] matches
+         the canonical-name prefix of the current
+         diagram_canonical
+         [DCN]_Image[N]_T2_R[R]_[ShortTitle];
+         the [R] component is resolved at lookup
+         time from the target figure's own root
+         <desc>.
+
+         TIER 2 ELEMENT-LEVEL drill_targets
+         (drill_targets fields on individual
+         <g> elements within Tier 2 figures
+         pointing to other Tier 2 figures, per
+         §15.11.3): same bare-canonical-name
+         convention applies. Migration of
+         element-level drill_targets to bare
+         form is sequenced for next R-increment
+         of each Tier 2 figure (no retroactive
+         multi-figure amendment per DEC-003
+         Path A one-diagram-per-session).
+         Pre-v1_11 element-level drill_targets
+         in _R[R] form are tolerated until
+         per-figure migration completes.
+
+    T1-C tier FIELD VALUE FIXED.
+         The tier field MUST be the literal value
+         "1". No other value is permitted in a
+         Tier 1 diagram root <desc>.
+
+    T1-D LABELED-GROUP parent_diagram VALUE
+         WITHIN A TIER 1 DIAGRAM.
+         Labeled groups <g> inside a Tier 1
+         diagram (governed by §15.11.3) MUST
+         declare parent_diagram = "none" in their
+         per-group <desc>. The "none" literal is
+         the §15.11.3 form for tagged groups in
+         Tier 1; the diagram-level field T1-A
+         remains OMITTED. The two are distinct:
+         T1-A removes the field at diagram root;
+         T1-D sets the field to "none" at every
+         tagged <g> within the diagram.
+
+  TIER 2/3/4 RULES (DIAGRAM-LEVEL).
+    T2P-A parent_diagram FIELD MANDATORY.
+         Tier 2, 3, and 4 diagram root <desc>
+         elements MUST include the parent_diagram
+         field, populated with the filename of
+         the parent diagram in the tier above.
+         For Tier 2: parent_diagram = the Tier 1
+         diagram of the same parent DCN. For
+         Tier 3: parent_diagram = the Tier 2
+         diagram that drills to this Tier 3
+         component. For Tier 4: parent_diagram =
+         the Tier 2 or Tier 3 diagram that
+         scopes this sequence.
+
+    T2P-B drill_targets FIELD CONDITIONAL.
+         Tier 2 diagrams MAY include a
+         drill_targets field enumerating Tier 3
+         components reached from elements within
+         the diagram. Tier 3 diagrams MAY include
+         a drill_targets field enumerating Tier 4
+         sequences. When present, every entry
+         MUST be a BARE CANONICAL-NAME of the
+         form [DCN]_Image[N]_T[Tier]_[ShortTitle]
+         per the same convention as T1-B
+         (AMENDED v1_11 per DEC-009). Bare-name
+         entries resolve to the current R-state
+         of the named target diagram at lookup
+         time. Pre-v1_11 _R[R] form is tolerated
+         until per-figure migration completes.
+
+  CO-EXISTENCE WITH §15.11.3.
+    The diagram-level root <desc> (this section)
+    and the labeled-group <g><desc> (§15.11.3)
+    co-exist in the same SVG file. The root
+    <desc> applies to the diagram as a whole.
+    Each tagged <g> MUST carry its own <desc>
+    per §15.11.3. The two schemas share the
+    schema_version field; both MUST declare
+    schema_version: 1.0 under v1.0 of the tag
+    taxonomy.
+
+  VALIDATION COVERAGE.
+    The validation classes V1-V6 enumerated in
+    §15.11.4 apply to root <desc> as follows:
+      V1 (drill traversal): Tier 1 T1-B
+        completeness — every Tier 2 child of
+        the parent DCN is enumerated.
+      V2 (cross-tier reference scope): root
+        parent_diagram and drill_targets MUST
+        cross exactly one tier boundary
+        (Tier-N references Tier-(N+1) or
+        Tier-(N-1) only, per E2-A in §15.11.2).
+      V4 (type-relation): governs and
+        sacred_constraints fields use the same
+        prefix taxonomy enumerated in §15.11.3
+        (rule:, ar:, decision:, etc.).
+
+  RECURRENCE PREVENTION RATIONALE.
+    Pre-v1_7, the diagram-level root <desc>
+    schema was de-facto pattern only — present
+    in 0500000 dv1_24 D1 through D7 root
+    descriptions but not codified. This created
+    a documentation gap (DR-008 partial) and a
+    Tier 1 authoring gap (DR-001) where no
+    written contract specified what fields a
+    root <desc> must contain or how Tier 1
+    differs from Tier 2+. v1_7 closes both gaps:
+    the root <desc> contract is now explicit,
+    Tier 1 deviations from the Tier 2+ rule are
+    enumerated as T1-A through T1-D, and the
+    schema is anchored to schema_version 1.0
+    alongside §15.11.3.
+
+------------------------------------------------------------
 15.12 Asset-Tag Canonical Registry (NEW v1_5)
 ------------------------------------------------------------
 
@@ -1886,7 +2166,39 @@ REGISTRY CONVENTIONS:
   mod:Regime_Engine             (seed; 1011012)
   mod:Selection_Controller      (seed; 1011009)
   mod:Long_Module               (seed; 0811001)
+  mod:Short_Module              (TB00176; 0811005 spec
+                                 slot reserved M-1;
+                                 parallel-module
+                                 architecture per
+                                 DEC-011 + TB00176
+                                 chat-turn 1 FP/DP
+                                 analysis under
+                                 DD-011 derivable-
+                                 decision authority)
   mod:Startup_Sequence          (1011014)
+  mod:CIATS_EWMA_Monitor        (0211001 §CI-AR-002;
+                                 0500000 dv1_29 D5 R2 +
+                                 dv1_31 D6 R2; TB00162)
+  mod:CIATS_Statistical_Engine  (0211001 §CI-AR-002;
+                                 0500000 dv1_29 D5 R2 +
+                                 dv1_31 D6 R2; TB00162)
+  mod:CIATS_PDCA_Engine         (0211001 §CI-AR-002;
+                                 0500000 dv1_29 D5 R2 +
+                                 dv1_31 D6 R2; TB00162)
+  mod:CIATS_Proposal_Engine     (0211001 §CI-AR-002;
+                                 0500000 dv1_29 D5 R2 +
+                                 dv1_31 D6 R2; TB00162)
+  mod:CIATS_Parameter_Store     (0211001 §CI-AR-002;
+                                 0500000 dv1_29 D5 R2 +
+                                 dv1_31 D6 R2; TB00162)
+  mod:CIATS_Regime_Library      (0211001 §CI-AR-002;
+                                 0500000 dv1_29 D5 R2 +
+                                 dv1_31 D6 R2; TB00162)
+
+  NOTE: The seventh CIATS sub-component named in
+  0211001 dv1_0 §CI-AR-002 (Trade Outcome Bus) is
+  registered as contract:CIATS_Trade_Outcome_Bus
+  in §15.12.3 — no mod: entry required.
 
 ------------------------------------------------------------
 15.12.2 container: Container Registry
@@ -2056,7 +2368,33 @@ REGISTRY CONVENTIONS:
   rule:HR-SP-004                     (0511002)
   rule:HR-SP-005                     (0511002)
   rule:HR-SP-006                     (0511002)
+  rule:HR-REGIME-007                 (0711002 line 488;
+                                      cited 0500000
+                                      dv1_40 D4 SVG
+                                      line 3071; added
+                                      v1_12 per TB00176
+                                      M-1 registry-gap
+                                      closure; rule
+                                      semantics
+                                      UNCHANGED at M-1
+                                      — semantic
+                                      amendment from
+                                      long-only block
+                                      to directional
+                                      cascade is M-3
+                                      regime amendment
+                                      work)
   rule:Sacred_R_R_1_to_1_5           (TB00000 §9.10)
+  rule:PA-001                        (TB00000 §4.4)
+
+NOTE — TB00163 Part 1 verification confirmed
+rule:HR-PA-001 is non-canonical (D6 R2 root <desc>
+registry_gap_note (b) authoritative). Only
+rule:PA-001 added to this registry. The TB00000 §4.4
+PAPER-AS-MASTER PRINCIPLE is the canonical
+architectural rule reference; HR-PA-001 was a
+candidate identifier evaluated and rejected at
+§15.12.9 amendment time.
 
 ------------------------------------------------------------
 15.12.10 decision: Decision Registry
@@ -2478,6 +2816,219 @@ documents (which retain the rendering-pipeline
 exposure) but no further HTML-scope incidents are
 expected.
 
+------------------------------------------------------------
+15.14 DIAGRAMS AS CANONICAL DESIGN DOCUMENTS
+      (NEW v1_10)
+------------------------------------------------------------
+
+15.14.1 PURPOSE
+
+§15.14 establishes the namespace-level enforcement
+of the diagrams-as-canonical-and-authoritative
+principle codified at the project-instructions
+level in TB00000 v2_23 §4.5 DD-001..DD-010. Where
+§4.5 codifies the rule with absolute-standing-rule
+treatment matching the §4.2 / §4.3 / §4.4
+enforcement pattern (pre-emit scan + self-catch +
+recurrence tracking), §15.14 binds the rule to the
+0311001 namespace mechanics: diagram tag
+taxonomy (§15.11.3), root <desc> contract
+(§15.11.6), canonical registry (§15.12), and the
+new V-038 validation rule (§15.7).
+
+The principle: in any controlled document that
+contains both diagram(s) and prose (currently the
+single 0500000 System_Architecture_Overview HTML
+controlled document; future Tier-2-and-below
+diagram-bearing specs as authored), the
+DIAGRAM(S) ARE THE AUTHORITATIVE source for all
+architectural rules, contracts, decisions, gates,
+layers, regimes, parameters, containers, modules,
+indicators, events, channels, architectural
+reasoning entries, and pt_mode identifiers. Prose
+contextualizes the diagrams and explains them in
+narrative form; prose does NOT govern. When prose
+and diagram conflict, the diagram wins; prose is
+updated to match the diagram, never the reverse.
+
+15.14.2 SCOPE
+
+§15.14 applies to:
+
+  (a) 0500000 System_Architecture_Overview (current
+      diagram-bearing controlled document, .html
+      canonical format per §15.13).
+  (b) Any future Tier-2-and-below controlled
+      document that embeds one or more inline
+      <svg> diagram figures per §15.13. The
+      diagram-prose authority hierarchy attaches
+      automatically at the moment the document
+      becomes diagram-bearing.
+
+§15.14 does NOT apply to:
+
+  (a) Pure-prose controlled documents (governance
+      procedures, coding specs without diagrams,
+      session logs, NSIs, chat-start documents).
+      These have no diagram and the rule is moot.
+  (b) Code files (.py, .js, .sh, etc.) — these
+      are governed by the trading-system code
+      controls and Engineering_Best_Practices
+      (1011001), not by §15.14.
+  (c) The diagram-tag taxonomy itself (§15.11.3)
+      and the canonical registry (§15.12) — these
+      are diagram-supporting metadata, not
+      diagrams subject to the hierarchy.
+
+15.14.3 DIAGRAM-OVER-PROSE AUTHORITY RULE
+
+In every diagram-bearing controlled document
+within the §15.14.2(a)-(b) scope, the following
+authority hierarchy is in force:
+
+  (1) The diagram(s) — the inline <svg> figures
+      and their root <desc> elements, T-2+
+      namespace-token labeled groups (per
+      §15.11.3), structured key:value <desc>
+      bodies (per §15.11.6), and visual content
+      — are the AUTHORITATIVE source for every
+      architectural rule, contract, decision,
+      gate, layer, regime, parameter, container,
+      mod, indicator, evt, channel, ar, and
+      pt_mode element they encode.
+
+  (2) Prose in the same document is NARRATIVE
+      and EXPLANATORY. Prose contextualizes the
+      diagram for the reader; prose does NOT
+      establish architecture. Architectural
+      content in prose is a derived restatement
+      of what the diagram already encodes.
+
+  (3) Where prose and diagram conflict, the
+      DIAGRAM GOVERNS. Resolution is to update
+      prose to match diagram. Updating diagram
+      to match prose is PROHIBITED unless the
+      prose-side change is itself driven by an
+      antecedent diagram amendment (in which
+      case the diagram-update rule per §15.11.6
+      and §15.13 applies and the prose update
+      is then consequential).
+
+  (4) New architectural rules, contracts, etc.
+      MUST first appear in the appropriate
+      diagram element (root <desc> governs:
+      list, labeled-group <desc>, or visual
+      content as applicable). Prose introducing
+      a new architectural rule WITHOUT a
+      corresponding diagram element is a
+      V-038.1 defect.
+
+15.14.4 4-STEP WORKFLOW BINDING
+
+The 4-step controlled-document authoring sequence
+codified at TB00000 v2_23 §4.5 DD-003 is bound to
+0311001 namespace mechanics as follows:
+
+  Step 1  — Complete the diagrams (Design
+            Documents). Diagram authoring follows
+            §15.11 (Architecture Blueprint
+            Framework), §15.11.6 (Root <desc>
+            Contract), §15.13 (HTML Canonical
+            Format), and §15.12 (Canonical
+            Registry). Diagram amendments are
+            tracked per the asset-revision R[R]
+            convention (§15.5).
+
+  Step 2  — Update 0500000 (or successor diagram-
+            bearing parent document) prose to
+            match the completed diagrams. Prose
+            edits are CONSEQUENTIAL to diagram
+            edits at this step. V-038 cross-check
+            verifies parity.
+
+  Step 3  — Write or rewrite the 10XXXXX coding
+            specs to match the completed diagrams
+            (and the matched prose). Coding spec
+            content references the diagram tags
+            (CANONICAL_NAME identifiers from
+            §15.12) and the diagram-encoded
+            rules.
+
+  Step 4  — Code from documents that make sense
+            (the post-Step-3 corpus). Code cites
+            the coding spec sections and diagram
+            tags it implements.
+
+Steps proceed in strict order. Step N MAY NOT
+begin until Step N-1 is complete. Stepping
+forward without prerequisite-step closure is a
+process defect under TB00000 v2_23 §4.5 DD-003
+and is logged per §4.5 DD-006 recurrence
+tracking.
+
+15.14.5 V-038 NEW VALIDATION RULE
+
+V-038 (defined in §15.7 above) is the
+diagram-prose authority parity validation rule.
+At every controlled-document
+authoring/amendment cycle, the document is
+cross-checked:
+
+  (1) Enumerate every architectural identifier
+      asserted in document prose
+      (rule:/contract:/decision:/gate:/layer:/
+      regime:/param:/container:/mod:/indicator:/
+      evt:/channel:/ar:/pt_mode:).
+
+  (2) Enumerate every T-2+ namespace-token
+      labeled group CANONICAL_NAME and every
+      root <desc> governs: list entry across
+      the document's diagram set.
+
+  (3) Compute the symmetric difference. Each
+      unmatched identifier surfaces as a V-038
+      defect candidate per §15.7 V-038.1
+      (prose-only) or V-038.3 (diagram-only).
+      Each shared identifier with conflicting
+      semantics surfaces as a V-038.2 defect
+      candidate.
+
+  (4) Defects are recorded in the Master
+      Defect Register and resolved per §15.14.3
+      (diagram governs).
+
+V-038 is enforced at session-open pre-flight
+(future 0311002 amendment) and at pre-delivery
+DR-007 HTML scope sweep (TB00000 v2_20 §4.1
+DR-007.8 amendment-pending).
+
+15.14.6 INTERACTION WITH §15.13 HTML CANONICAL
+        FORMAT
+
+§15.13 (HTML CANONICAL FORMAT FOR DIAGRAM-BEARING
+DOCUMENTS) governs the FILE FORMAT of a diagram-
+bearing controlled document — the document is a
+single .html file with inline <svg> figures and
+the "_Claude_Source.html" filename suffix. §15.14
+governs the AUTHORITY HIERARCHY between diagram
+and prose WITHIN that single .html file.
+
+The two rules are complementary, not redundant:
+
+  - §15.13 says: "the document is one .html
+    file with inline diagrams" (the FORMAT).
+  - §15.14 says: "within that one .html file,
+    the diagrams govern over the prose" (the
+    HIERARCHY).
+
+A document can satisfy §15.13 (correct HTML
+format) and still violate §15.14 (prose
+asserting architecture not encoded in
+diagrams). V-037 (§15.7) catches §15.13
+violations; V-038 (§15.7) catches §15.14
+violations. Both validation rules apply at
+every diagram-bearing document amendment.
+
 ============================================================
 16. RELATED DOCUMENTS
 ============================================================
@@ -2489,11 +3040,870 @@ expected.
   0311004  Document_Creation_and_Approval_Procedure
   1011001  Engineering_Best_Practices (BP-HDR code file rules)
   TB00000  Project Instructions for Claude (§4.2 ABSOLUTE
-           STANDING RULE; §11 authoritative path tree)
+           STANDING RULE; §4.5 DIAGRAMS AS CANONICAL DESIGN
+           DOCUMENTS — referenced by §15.14; §11
+           authoritative path tree)
 
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_12  05-10-2026  TB00176 STAGE M-1 SHORT-ARCHITECTURE
+                     SPEC FOUNDATION — §15.12.1 mod:
+                     REGISTRY + §15.12.9 rule: REGISTRY
+                     AMENDMENTS.
+
+                     Two amendments to Section 15.12:
+
+                     CHANGE 1 — §15.12.1 mod: MODULE
+                     REGISTRY ADD.
+                     ADD: mod:Short_Module (TB00176;
+                     0811005 spec slot reserved M-1).
+                     Parallel-module architecture (sibling
+                     to mod:Long_Module) per DEC-011 Stage
+                     M ratification (TB00172 + TB00153 DR
+                     v1_3 §8) + TB00176 chat-turn 1 FP/DP
+                     analysis under DD-011 PRE-EMIT SCAN +
+                     RR-SCOPE-005 derivable-decision
+                     execution authority.
+
+                     CHANGE 2 — §15.12.9 rule: HARDRULE
+                     REGISTRY ADD.
+                     ADD: rule:HR-REGIME-007 (0711002 line
+                     488; cited 0500000 dv1_40 D4 SVG line
+                     3071). Registry-gap closure per
+                     TB00175 SL §6.1 finding. Rule
+                     semantics UNCHANGED at M-1 —
+                     TRENDING_NEGATIVE blocks entry
+                     unconditionally per current 0711002
+                     dv1_0 line 488 definition. Semantic
+                     amendment (long-only block →
+                     directional cascade enabling short
+                     entry on TRENDING_NEGATIVE regime) is
+                     M-3 regime amendment work per TB00176
+                     NSI §2.2(b).
+
+                     REASON FOR CHANGE.
+                     Stage M Short-Architecture-Integration
+                     M-1 sub-step (spec foundation)
+                     authorization active per TB00175 SL §4
+                     E-M0-10 Stage M-0 EXIT REACHED.
+                     TB00175 SL §3.3 + TB00176 NSI §2.1
+                     enumerate the five M-1 deliverables;
+                     these two registry amendments are
+                     deliverable items (b) per NSI §2.1(b).
+                     The mod:Short_Module slot is the
+                     architectural anchor for downstream
+                     M-2..M-6 short-side work. The
+                     HR-REGIME-007 registry addition closes
+                     the registry-gap finding surfaced at
+                     TB00175 SL §6.1 (HR-REGIME-007 defined
+                     in 0711002 + cited in dv1_40 D4 SVG
+                     but absent from §15.12.9 registry
+                     prior to v1_12).
+
+                     FP/DP ANALYSIS — mod:Short_Module
+                     ARCHITECTURE.
+                     Two candidate architectures evaluated:
+                     parallel module (mod:Short_Module as
+                     sibling to mod:Long_Module) vs
+                     generalized Entry_Module (refactor
+                     mod:Long_Module into single direction-
+                     parameterized module). Four-dimension
+                     evaluation:
+
+                       (1) PA-005 paper-as-master byte-
+                           identical paper/live compliance:
+                           parallel = clean (each module
+                           mode-flag-driven independently);
+                           generalized = preservable but
+                           more complex.
+                       (2) DD-001/002 diagrams-canonical
+                           compliance: parallel = natural
+                           extension (D7 dispatch seam
+                           already shows mod:Long_Module as
+                           labeled group; Short_Module
+                           added as symmetric labeled group
+                           at M-4); generalized = requires
+                           diagram refactor (existing
+                           mod:Long_Module labeled group
+                           renamed/restructured).
+                       (3) Migration cost: parallel = LOW
+                           (0811001 Long Module spec
+                           UNTOUCHED; new 0811005 spec
+                           authored fresh); generalized =
+                           HIGH (0811001 major rewrite;
+                           audit of all mod:Long_Module
+                           references in dv1_40 prose +
+                           downstream specs).
+                       (4) Per-side capacity-cap
+                           flexibility: parallel = cleaner
+                           per-side caps if M-2 splits
+                           max_concurrent / per_trade_pct
+                           per direction; generalized =
+                           requires side-as-parameter
+                           handling in single module.
+
+                     Parallel module wins 4 of 4. No
+                     dimension favors generalized
+                     Entry_Module. Outcome unambiguous.
+
+                     Per DD-011 PRE-EMIT SCAN + RR-SCOPE-005
+                     derivable-decision execution: parallel-
+                     module architecture enacted directly at
+                     TB00176 chat-turn 1. No Bill ratification
+                     question surfaced. Cumulative DD-class
+                     violation count unchanged from TB00175
+                     close (= 5; pre-DD-011-enactment cluster).
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311001 is a Sub-Domain instance
+                     document at Tier 3 (AA=03 Governance,
+                     B=1 Procedures sub-domain, C=1
+                     instance, DDD=001) per its own §1.
+                     Parent: 0310000 Governance_Procedures_
+                     Anchor. Parent chain unbroken.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00176 STAGE M-1 BATCH):
+                       0500000 dv1_40 → dv1_41.html
+                         (AR-009 prose amendment + §1.3
+                         consequential prose amendment;
+                         all 8 figures SVG byte-identical
+                         preserved per DEC-003 Path A).
+                       0311001 v1_11 → v1_12.txt (this
+                         document).
+                       TB00153 Master_Defect_Register
+                         v1_5 → v1_6.txt (new DR-043
+                         F-V038-004 cluster: #1 + #2
+                         portions CLOSED at dv1_41 prose
+                         layer; #3 + #4 portions OPEN
+                         sequenced to M-3 + M-4).
+                       TB00176 Session_Log v1_0.txt
+                         (NEW).
+                       TB00177 Next_Session_Instructions
+                         v1_0.txt (NEW — Stage M-2
+                         kickoff).
+
+                     OPEN ITEMS UPDATED:
+                     TB00175 SL §6.1 HR-REGIME-007
+                       REGISTRY GAP. CLOSED via §15.12.9
+                       addition this version.
+                     F-V038-004 #1 + #2 prose portions
+                       CLOSED at 0500000 dv1_41 prose
+                       layer (companion deliverable).
+                     F-V038-004 #3 + #4 SVG portions
+                       OPEN sequenced to M-3 + M-4 per
+                       TB00176 NSI §2.1(c) + DR-043
+                       multi-portion disposition.
+
+                     Bill override: 0311001 v1_11 → v1_12
+                     is enacted under Bill's standing
+                     document-control override continuing
+                     the scope established across the v1
+                     series. Direct increment v1_11 →
+                     v1_12; no rv state. Per Bill's
+                     TB00176 directive "Proceed to turn 2"
+                     following Turn 1 cold-load report +
+                     FP/DP analyses with derivable
+                     outcomes enacted directly under
+                     DD-011 + RR-SCOPE-005.
+
+                     Document Status updated: supersedes
+                     v1_11.
+
+  v1_11  05-10-2026  TB00170 STAGE L+ STEP 2 §15.11.5
+                     T1-B + T2P-B drill_targets BARE-
+                     CANONICAL-NAME CONVENTION AMENDMENT
+                     (DEC-009 RATIFIED AT TB00170).
+
+                     One amendment to Section 15.11:
+                     §15.11.5 T1-B + T2P-B drill_targets
+                     entry-form requirement updated from
+                     [DCN]_Image[N]_T2_R[R]_[ShortTitle]
+                     to BARE CANONICAL-NAME form
+                     [DCN]_Image[N]_T2_[ShortTitle]
+                     (no _R[R] suffix).
+
+                     ORIGIN OF AMENDMENT:
+                     Tier 1 figure (Image1_T1) was
+                     authored at 0500000 dv1_24 baseline
+                     when all D-figures (Image1_T2 through
+                     Image7_T2) were at R-1; drill_targets
+                     were authored as
+                     "Image[N]_T2_R1_[ShortTitle]" — a
+                     form indistinguishable in single-state
+                     world from canonical-name. DD-001
+                     and DD-002 (diagrams canonical;
+                     prose follows) were promulgated AFTER
+                     dv1_24 (TB00000 v2_18 + later). Pre-
+                     v1_7 0311001 had no T1-B contract;
+                     v1_7 codified T1-B requiring _R[R]
+                     form which was a reaffirmation of the
+                     dv1_24 form rather than a re-analysis.
+                     Subsequent R-increments of D-figures
+                     (D1->R-2, D3->R-3, D5->R-3, D6->R-3
+                     by dv1_36) created visible staleness
+                     in Tier 1 drill_targets vs current
+                     R-states.
+
+                     FP/DP ANALYSIS UNDER DD-001
+                     (TB00170 SL §6):
+                     R-states are mutable versioning
+                     attributes; canonical-name identity
+                     is immutable. Pointers must reference
+                     stable identifiers. Binding Tier 1
+                     drill_targets to Tier 2 R-state
+                     forces Tier 1 R-increment on every
+                     Tier 2 R-increment — drift
+                     propagation. Bare canonical-name
+                     decouples Tier 1 from Tier 2 R-state
+                     and minimizes navigation-pointer
+                     coupling.
+
+                     CHANGES:
+
+                     CHANGE 1 — §15.11.5 T1-B AMENDMENT.
+                     drill_targets entry form requirement
+                     changed from
+                     "[DCN]_Image[N]_T2_R[R]_[ShortTitle]"
+                     to bare
+                     "[DCN]_Image[N]_T2_[ShortTitle]".
+                     Added rationale block explaining
+                     decoupling motivation. Added
+                     resolution-semantics block explaining
+                     bare-name -> current R-state lookup.
+                     Added Tier 2 element-level migration
+                     note (pre-v1_11 _R[R] tolerated until
+                     per-figure migration).
+
+                     CHANGE 2 — §15.11.5 T2P-B AMENDMENT.
+                     Tier 2/3 element-level drill_targets
+                     also use bare canonical-name form per
+                     same convention. Pre-v1_11 _R[R] form
+                     tolerated until per-figure migration.
+
+                     COMPANION ENACTMENT:
+                     0500000 dv1_36 -> dv1_37 Tier 1 SVG
+                     drill_targets rewrite (7 entries:
+                     Image1_T2_R1_... through
+                     Image7_T2_R1_... -> bare names) +
+                     dv1_37 §0 reading-conventions block
+                     addition referencing this v1_11 §15.11.5
+                     T1-B amendment.
+
+                     SCOPE BOUNDARY:
+                     Tier 2 element-level drill_targets
+                     across all 7 Tier 2 figures NOT
+                     amended this session per DEC-003
+                     Path A (one diagram per session).
+                     Tier 1 only at TB00170. Tier 2
+                     element-level migration sequenced
+                     for next R-increment of each
+                     Tier 2 figure.
+
+                     CUMULATIVE V-038 STATUS:
+                     V-038 procedure (NEW v1_10 §15.7)
+                     unchanged; §15.14 standing-rule
+                     layer unchanged. v1_11 amends
+                     §15.11.5 only.
+
+                     APPROVAL: Bill chat-turn 4 at
+                     TB00170 (Gate 2 ratification).
+
+                     COMPANION DELIVERABLES THIS SESSION:
+                     0500000 dv1_36 -> dv1_37.html.
+                     TB00000 v2_24 -> v2_25.txt.
+                     TB00153 Master_Defect_Register v1_2
+                       -> v1_3.txt.
+                     TB00153 Decision_Register v1_1
+                       -> v1_2.txt.
+                     TB00170 Session Log v1_0 (NEW).
+                     TB00171 Next Session Instructions
+                       v1_0 (NEW).
+
+  v1_10  05-09-2026  TB00164 STAGE J §15.14 +
+                     V-038 — DIAGRAMS AS CANONICAL
+                     DESIGN DOCUMENTS NAMESPACE-LEVEL
+                     ENFORCEMENT.
+
+                     Two amendments to Section 15:
+
+                     CHANGE 1 — §15.7 NEW V-038
+                     VALIDATION RULE.
+                     V-038 added after V-037,
+                     governing diagram-prose
+                     authority parity. Three
+                     sub-violations: V-038.1
+                     prose-only architectural
+                     identifier (no diagram
+                     element); V-038.2 conflicting
+                     semantics across diagram and
+                     prose; V-038.3 diagram-only
+                     identifier without prose
+                     reference. V-038 binds the
+                     §4.5 / §15.14 standing rule
+                     to the existing §15.7
+                     validation infrastructure
+                     used by the asset-architecture
+                     pipeline. Pre-amendment cross-
+                     check + pre-delivery DR-007
+                     HTML scope sweep extension is
+                     the enforcement layer.
+
+                     CHANGE 2 — §15.14 NEW SECTION
+                     DIAGRAMS AS CANONICAL DESIGN
+                     DOCUMENTS — NAMESPACE-LEVEL
+                     ENFORCEMENT.
+                     Six sub-sections:
+                       15.14.1 PURPOSE
+                       15.14.2 SCOPE
+                       15.14.3 DIAGRAM-OVER-PROSE
+                               AUTHORITY RULE
+                       15.14.4 4-STEP WORKFLOW
+                               BINDING
+                       15.14.5 V-038 NEW
+                               VALIDATION RULE
+                       15.14.6 INTERACTION WITH
+                               §15.13 HTML
+                               CANONICAL FORMAT
+                     §15.14 binds the TB00000 v2_23
+                     §4.5 DD-001..DD-010 absolute
+                     standing rule to 0311001
+                     namespace mechanics: the
+                     diagram-tag taxonomy
+                     (§15.11.3), root <desc>
+                     contract (§15.11.6), canonical
+                     registry (§15.12), and
+                     V-038 validation. The
+                     authority hierarchy: diagrams
+                     govern over prose; prose is
+                     updated to match diagrams,
+                     never the reverse; the 4-step
+                     workflow (Step 1 diagrams
+                     -> Step 2 prose -> Step 3
+                     10XXXXX -> Step 4 code)
+                     proceeds in strict order.
+
+                     CHANGE 3 — §16 RELATED
+                     DOCUMENTS UPDATED. TB00000
+                     reference extended to cite
+                     §4.5 DIAGRAMS AS CANONICAL
+                     DESIGN DOCUMENTS standing
+                     rule.
+
+                     REASON FOR CHANGE:
+                     TB00163 SL v1_1 §7.4
+                     surfaced the DIAGRAMS-AS-
+                     CANONICAL governance gap as
+                     CRITICAL. The
+                     diagrams-as-canonical
+                     decision was made by Bill
+                     in pre-TB00149 session and
+                     verbatim recorded in TB00152
+                     SL §5.1 (2026-05-08): "We
+                     had changed to use diagrams
+                     in 0500000 as authoritative
+                     source documents because
+                     Claude does not have the
+                     ability to keep all of the
+                     connections and gates
+                     straight using multiple and
+                     multiple pros requirements.
+                     ... They have become our
+                     'Design Documents.' ... The
+                     diagrams control everything
+                     and we proceed from the
+                     diagrams." Bill reaffirmed
+                     in TB00163 chat-turn 4:
+                     "Diagrams need to be
+                     completed and become
+                     governing as canonical-over-
+                     prose... it creates fewer
+                     documents to control drift
+                     than following 30 documents
+                     with pros. Flaws JUMP out
+                     using the diagram method."
+                     The decision was never
+                     codified. Lesson-text-only
+                     governance has demonstrably
+                     failed for behavior-class
+                     defects in this project (six
+                     OI-037 recurrences
+                     TB00114-TB00119). The
+                     diagrams-as-canonical
+                     principle is a behavior-class
+                     principle requiring identical
+                     absolute-standing-rule
+                     treatment matching the §4.2
+                     OneDrive ban / §4.3 RR-SCOPE /
+                     §4.4 PA-MASTER pattern.
+
+                     FP/DP ANALYSIS:
+                     Captured in TB00164 NSI v1_1
+                     §1 + §4.1. Option C (codify
+                     in TB00000 §4.5 with
+                     namespace-level binding in
+                     0311001 §15.14 + V-038
+                     validation) ACCEPTED as the
+                     only governance pattern with
+                     100% success rate for
+                     behavior-class defects in
+                     this project. Options A
+                     (lesson-text only) and B
+                     (one-rule bullet) REJECTED
+                     per six-recurrence OI-037
+                     precedent.
+
+                     RR-SCOPE-007 (no narrowing):
+                     amendment is purely additive.
+                     New §15.14, new V-038 in
+                     §15.7, new §17 entry, §16
+                     reference extension. No prior
+                     content removed, relaxed, or
+                     weakened.
+
+                     RR-SCOPE-009 (Chesterton's-
+                     fence): N/A — adds standing
+                     rule; no constraint removed.
+
+                     PARENT CHAIN COMPLIANCE: 0311001
+                     parent chain (0300000 -> 0310000
+                     -> 0311001) unchanged. v1_9 ->
+                     v1_10 is a Section 15 amendment
+                     (new §15.14 + V-038) plus §16
+                     cross-reference extension plus
+                     §17 revision history append; no
+                     other section content changed.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00164 batch):
+                     TB00000 v2_22 -> v2_23 (§4.5
+                       NEW DD-001..DD-010 absolute
+                       standing rule).
+                     0311001 v1_8 -> v1_9 (recreated
+                       this session — see v1_9
+                       entry below for recreation
+                       history).
+                     TB00164 Session Log v1_0 (NEW).
+                     TB00165 Next Session
+                       Instructions v1_0 (NEW with
+                       VERY SHORT chat-start copy
+                       box per TB00000 v2_22 §4.1.2
+                       DR-008).
+
+                     OPEN ITEMS UPDATED:
+                     TB00163 §7.4 DIAGRAMS-AS-
+                       CANONICAL governance gap
+                       (CRITICAL) CLOSED at
+                       governance layer via TB00000
+                       v2_23 §4.5 + 0311001 v1_10
+                       §15.14 + V-038. Operational
+                       verification at every future
+                       diagram-bearing controlled
+                       document amendment cycle.
+
+                     Bill override: 0311001 v1_9 ->
+                     v1_10 enacted under Bill's
+                     standing document-control
+                     override continuing the scope
+                     established in prior governance
+                     cascades. Direct increment
+                     v1_9 -> v1_10; no rv state.
+                     Per Bill's TB00163 chat-turn
+                     directive ("Provide SL, NSI,
+                     and OCS for Diagrams as Design
+                     Documents that are canonical
+                     and authoritative. This is the
+                     only priority until it is
+                     completed.") and TB00164 NSI
+                     v1_1 §1 SOLE PRIORITY mission.
+
+                     Document Status updated:
+                     supersedes v1_9.
+
+  v1_9   05-09-2026  TB00163 PART 1 §15.12.9 rule:
+                     REGISTRY AMENDMENT — rule:PA-001
+                     ADDED.
+
+                     Single amendment to Section 15:
+
+                     CHANGE 1 — §15.12.9 rule: HardRule
+                     Registry: one new entry appended:
+                       rule:PA-001                (TB00000 §4.4)
+
+                     Cites originating spec (TB00000
+                     v2_22 §4.4 PAPER-AS-MASTER
+                     PRINCIPLE) per §15.12.15 M-1
+                     ADDITION RULE. NOTE block appended
+                     after entry block recording the
+                     TB00163 §3.6 verification finding
+                     that rule:HR-PA-001 (originally
+                     considered as a sibling addition)
+                     is non-canonical per D6 R2 root
+                     <desc> registry_gap_note (b);
+                     only rule:PA-001 was added.
+
+                     REASON FOR CHANGE:
+                     TB00161 §7.2 finding (b) +
+                     TB00162 §7.3 carry-forward
+                     surfaced a registry gap on
+                     PA-001 / HR-PA-001 candidates.
+                     TB00163 Stage I Option E2
+                     (default per TB00163 NSI v1_0)
+                     resolved the gap by adding
+                     rule:PA-001 only after
+                     verification of the canonical
+                     identifier in the diagram
+                     authoritative source.
+
+                     FP/DP ANALYSIS:
+                     Captured in TB00163 SL v1_1
+                     §3.5 + §3.6 verification trail.
+                     Option E2 default selected on
+                     deterministic-outcome basis
+                     (rule:PA-001 canonical;
+                     rule:HR-PA-001 not canonical
+                     per diagram evidence).
+
+                     RR-SCOPE-009 (Chesterton's-fence)
+                     N/A — amendment is purely
+                     additive, no constraint removed
+                     or relaxed.
+
+                     PARENT CHAIN COMPLIANCE: 0311001
+                     parent chain (0300000 -> 0310000
+                     -> 0311001) unchanged. v1_8 ->
+                     v1_9 is a §15.12.9 sub-section
+                     amendment with §17 revision
+                     history append; no other section
+                     content changed.
+
+                     COMPANION DELIVERABLES (TB00163
+                     Part 1 batch — original):
+                     TB00163 Session Log v1_0 (NEW).
+                     TB00164 Next Session Instructions
+                       v1_0 (NEW).
+
+                     RECREATION HISTORY:
+                     The original v1_9 file authored
+                     in TB00163 Part 1 (single-turn
+                     batch with TB00163 SL v1_0 +
+                     TB00164 NSI v1_0) was not
+                     persisted to Bill's local C:
+                     drive or to the TothBot_V2-Docs
+                     GitHub repository. At TB00164
+                     Stage J cold-load (2026-05-09),
+                     the file was confirmed missing
+                     from /mnt/project/, C: drive,
+                     and GitHub origin/HEAD. v1_9 was
+                     re-authored in TB00164 Stage J
+                     turn 1 from the TB00163 SL v1_1
+                     §3.7 documented amendment
+                     description. Content is
+                     identical to the lost original.
+                     Bill ratified Option 3
+                     (recreate + v1_10 chain
+                     preserved) in TB00164 chat-turn
+                     2.
+
+                     Bill override: 0311001 v1_8 ->
+                     v1_9 enacted under Bill's
+                     standing document-control
+                     override continuing the scope
+                     from prior cascades.
+
+                     Document Status updated:
+                     supersedes v1_8.
+
+  v1_8   05-09-2026  TB00162 §15.12.1 mod: REGISTRY
+                     AMENDMENT — SIX CIATS SUB-COMPONENT
+                     TOKENS ADDED.
+
+                     Single amendment to Section 15:
+
+                     CHANGE 1 — §15.12.1 mod: Module
+                     Registry: six new entries appended:
+                       mod:CIATS_EWMA_Monitor
+                       mod:CIATS_Statistical_Engine
+                       mod:CIATS_PDCA_Engine
+                       mod:CIATS_Proposal_Engine
+                       mod:CIATS_Parameter_Store
+                       mod:CIATS_Regime_Library
+
+                     Each entry cites originating spec
+                     (0211001 dv1_0 §CI-AR-002) and
+                     originating diagrams (0500000
+                     dv1_29 D5 R2 + dv1_31 D6 R2) and
+                     authoring session (TB00162) per
+                     §15.12.15 M-1 ADDITION RULE.
+
+                     A clarifying NOTE appended to
+                     §15.12.1 records that the seventh
+                     CIATS sub-component named in
+                     0211001 §CI-AR-002 (Trade Outcome
+                     Bus) is registered as
+                     contract:CIATS_Trade_Outcome_Bus
+                     in §15.12.3 — no mod: entry
+                     required.
+
+                     REASON FOR CHANGE:
+                     0500000 dv1_29 D5 R2 (CIATS Internal
+                     Detail) and dv1_31 D6 R2 (Complete
+                     System) were authored with T-2+
+                     namespace-token labeled groups for
+                     each of the seven CIATS sub-
+                     components per CI-AR-002. Six of
+                     those seven CANONICAL_NAME
+                     references resolved to mod: prefix
+                     groups whose entries were absent
+                     from §15.12.1 — V-032 ("every
+                     labeled-group CANONICAL_NAME
+                     resolves to a §15.12 entry") was
+                     non-strictly satisfied because the
+                     umbrella mod:CIATS entry covered
+                     the parent module but not the
+                     sub-component children. The gap
+                     was first surfaced in TB00160 §7.1
+                     (D5 R2 authoring session) and
+                     carried forward in TB00161 §7.1
+                     (D6 R2 authoring session). This
+                     amendment closes the gap.
+
+                     FP/DP ANALYSIS:
+                     Option 1 (defer to a future
+                     amendment cycle) — REJECTED. Two
+                     consecutive sessions surfaced the
+                     gap as carry-forward; deferral
+                     allows V-032 ambiguity to persist.
+                     Option 2 (collapse the seven sub-
+                     components into a single mod:CIATS
+                     diagram tag) — REJECTED. D5 R2 and
+                     D6 R2 inline-SVG content already
+                     uses the seven distinct tags;
+                     collapsing them would invalidate
+                     diagram authoring without
+                     architectural justification (the
+                     seven components are
+                     architecturally distinct per
+                     CI-AR-002).
+                     Option 3 (rename the umbrella
+                     mod:CIATS to mod:CIATS_Container
+                     and make the seven sub-components
+                     the primary registry entries) —
+                     REJECTED. M-2 RENAME RULE would
+                     require cascade updates to every
+                     diagram referencing mod:CIATS.
+                     Net cost > benefit.
+                     Option 4 (add the six missing
+                     sub-component entries as additive
+                     amendment, retaining the umbrella
+                     mod:CIATS) — ACCEPTED. Purely
+                     additive (RR-SCOPE-007 no-narrowing
+                     trivially satisfied). Resolves
+                     V-032 strict-satisfaction. Zero
+                     diagram cascade required (existing
+                     diagram tags now resolve cleanly
+                     to registry entries).
+
+                     Decision: Option 4.
+
+                     RR-SCOPE-009 (Chesterton's-fence)
+                     N/A — amendment is purely additive,
+                     no constraint removed or relaxed.
+
+                     PARENT CHAIN COMPLIANCE: 0311001
+                     parent chain (0300000 -> 0310000 ->
+                     0311001) unchanged. v1_7 -> v1_8
+                     is a §15.12.1 sub-section
+                     amendment with §17 revision history
+                     append; no other section content
+                     changed.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00162 batch):
+                     TB00162 SL v1_0 (NEW — records
+                       Stage H Option E execution +
+                       §15.12.1 registry-gap closure).
+                     TB00163 NSI v1_0 (NEW — Stage I
+                       candidate options carry-forward
+                       with copy-box-ready VERY SHORT
+                       chat-start string per TB00000
+                       v2_22 §4.1.2 DR-008).
+
+                     OPEN ITEMS UPDATED:
+                     §15.12.1 mod: registry gap on the
+                       seven CIATS sub-component tokens
+                       (TB00160 §7.1 + TB00161 §7.1
+                       carry-forward): CLOSED for the
+                       six addition tokens. The seventh
+                       (Trade Outcome Bus) confirmed
+                       already registered as
+                       contract:CIATS_Trade_Outcome_Bus
+                       in §15.12.3.
+                     TB00161 §7.2 finding (b)
+                       (rule:HR-PA-001 unregistered):
+                       NOT bundled in this amendment.
+                       Bill did not ratify bundling at
+                       TB00162 session-open. Carry-
+                       forward to a future §15.12.9
+                       amendment cycle (per TB00163
+                       NSI Stage I candidate set).
+
+                     Bill override: 0311001 v1_7 ->
+                     v1_8 is a routine §15.12 amendment
+                     under §15.12.15 M-1 ADDITION RULE
+                     (Bill-authorized at TB00162
+                     session-open via "Execute Stage H
+                     — default Option E" directive).
+                     Direct increment v1_7 -> v1_8;
+                     no rv state.
+
+                     Document Status updated:
+                     supersedes v1_7.
+
+  v1_7   05-08-2026  TB00154 §15.11.6 NEW —
+                     DIAGRAM-LEVEL ROOT <desc>
+                     CONTRACT.
+
+                     Single amendment to Section 15:
+
+                     CHANGE 1 — §15.11.6 NEW.
+                     Codified the diagram-level root
+                     <desc> schema as a separate
+                     contract from the §15.11.3
+                     labeled-group <g><desc> schema.
+                     The two schemas co-exist within
+                     one SVG: root <desc> governs the
+                     diagram as a whole; labeled-group
+                     <desc> elements govern tagged
+                     <g> groups.
+
+                     Diagram-level fields codified:
+                       diagram_canonical, tier,
+                       parent_dcn, schema_version,
+                       R-increment, governs,
+                       drill_targets, parent_diagram
+                       (Tier 2+ only),
+                       sacred_constraints.
+
+                     Tier 1 deviation rules T1-A
+                     through T1-D enumerated:
+                       T1-A parent_diagram FIELD
+                            OMITTED at diagram root.
+                       T1-B drill_targets FIELD
+                            MANDATORY and EXHAUSTIVE
+                            (one entry per Tier 2
+                            child of parent DCN).
+                       T1-C tier FIELD value fixed
+                            at "1".
+                       T1-D Labeled-group <g><desc>
+                            parent_diagram = "none"
+                            within Tier 1 (distinct
+                            from T1-A: T1-A removes
+                            the field at root, T1-D
+                            sets "none" at each
+                            tagged group).
+
+                     Tier 2/3/4 rules T2P-A and
+                     T2P-B enumerated:
+                       T2P-A parent_diagram FIELD
+                            MANDATORY at diagram
+                            root.
+                       T2P-B drill_targets FIELD
+                            CONDITIONAL (Tier 2 to
+                            Tier 3, Tier 3 to
+                            Tier 4) when next-tier
+                            children exist.
+
+                     REASON FOR CHANGE:
+                     TB00153 Tier 1 Context Diagram
+                     Content Scope v1_0 §3 mandated
+                     a root <desc> contract for the
+                     Tier 1 authoring deliverable
+                     (DR-001 closure in TB00154
+                     Stage A). Pre-v1_7, the
+                     diagram-level root <desc>
+                     schema was de-facto pattern
+                     only — present in 0500000
+                     dv1_24 D1-D7 root descriptions
+                     but not codified anywhere in
+                     the spec corpus. §15.11.3
+                     covered LABELED-GROUP <desc>
+                     only, not the broader root
+                     <desc> with diagram_canonical
+                     / parent_dcn / R-increment /
+                     governs / drill_targets /
+                     sacred_constraints fields.
+                     This documentation gap blocked
+                     unambiguous Tier 1 authoring
+                     under §15.11 governance.
+
+                     FP/DP ANALYSIS:
+                     Option A (extend §15.11.3 in
+                     place to cover both root and
+                     labeled-group <desc>) REJECTED
+                     — overloads a section whose
+                     scope-line ("per tagged <g>
+                     group") is referenced
+                     elsewhere; would create
+                     silent-narrowing risk against
+                     existing references to
+                     §15.11.3.
+                     Option B (new §15.11.6
+                     codifying root <desc> as a
+                     separate contract that
+                     references §15.11.3 for the
+                     co-existing labeled-group
+                     schema) ACCEPTED — preserves
+                     §15.11.3 scope unchanged,
+                     keeps the two schemas
+                     individually addressable for
+                     V1-V6 validation, makes Tier 1
+                     deviation rules T1-A through
+                     T1-D enumerable as a unit.
+                     Option C (defer to a future
+                     cycle) REJECTED — TB00154
+                     Stage A Tier 1 authoring
+                     requires the contract before
+                     0500000 dv1_25 commit can
+                     proceed (DEC-004 Path A bundle
+                     applies).
+
+                     Decision: Option B.
+
+                     PARENT CHAIN COMPLIANCE: 0311001
+                     is an Instance under 0310000
+                     Governance_Procedures_Anchor
+                     under 0300000 Governance Domain.
+                     Parent chain unchanged.
+
+                     COMPANION DELIVERABLE THIS
+                     SESSION (TB00154 batch):
+                     0500000 dv1_24 -> dv1_25
+                       (Tier 1 System Context
+                       Diagram authored and
+                       embedded inline; revision
+                       history entry added; DR-001
+                       CRITICAL CLOSED).
+
+                     OPEN ITEMS UPDATED: None.
+
+                     RECURRENCE PREVENTION:
+                     The diagram-level root <desc>
+                     contract is now explicit.
+                     Future Tier 1 authoring under
+                     other parent DCNs (e.g., when
+                     1011002, 0211005, or other
+                     spec-anchor documents acquire
+                     their own Tier 1 context
+                     diagrams) MUST conform to
+                     §15.11.6 T1-A through T1-D
+                     and §15.11.3 labeled-group
+                     schema in combination. The
+                     gap that allowed DR-001 to
+                     persist (no written contract)
+                     is closed.
 
   v1_6   05-06-2026  TB00151e HTML CANONICAL FORMAT
                      ADOPTION — §15 SCOPED + §15.13 NEW
