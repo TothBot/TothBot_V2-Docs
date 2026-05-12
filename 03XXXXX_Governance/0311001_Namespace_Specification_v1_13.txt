@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_12
+DocVersion: v1_13
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_12.txt
-DocDate:    05-10-2026
-DocTime:    23:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_13.txt
+DocDate:    05-12-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -365,7 +365,13 @@ defines the implementation-level rules. Both apply.
   09XXXXX_Plans/
   10XXXXX_Coding_Specification/
   11XXXXX_Compliance/
-  _Archive/
+
+Retired documents (rt-state) are not stored in a
+separate folder. Retirement removes the document
+from HEAD via `git rm` + commit + push; git history
+preserves all prior versions. See TB00000 v2_32 §11
+and 0311003 v1_2 VP-010(c) for the authoritative
+standing practice.
 
 ============================================================
 8. DOCUMENT HEADER FORMAT — TothBot_V2-Docs FILES
@@ -413,9 +419,18 @@ The state is encoded in DocVersion.
         Example: v1_0, v2_0
 
   rt  — Retired
-        No longer authoritative. Moved to _Archive/.
+        No longer authoritative. Retirement removes the
+        document from HEAD via `git rm` + commit + push.
+        Git history preserves all prior versions; use
+        `git log --follow <path>` to inspect a retired
+        document's full version history. No rt-prefix
+        successor file at HEAD; no tombstone document
+        body; no _Archive folder. See TB00000 v2_32 §11
+        and 0311003 v1_2 VP-010(c) for the authoritative
+        standing practice.
         DCN permanently reserved. Never reused.
-        Example: rt1_0
+        Example: rt1_0 (DocVersion at moment of
+        retirement; recorded in git history only).
 
 State transitions:
   dv → v   (Bill approves working draft directly)
@@ -3047,6 +3062,163 @@ every diagram-bearing document amendment.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_13  05-12-2026  TB00224 TURN 2 GOVERNANCE
+                     RECONCILIATION — §7 FOLDER STRUCTURE
+                     + §9 rt-STATE DEFINITION AMENDMENTS
+                     PER TB00000 v2_32 §11 RETIRED-DOCUMENT
+                     STANDING-PRACTICE CODIFICATION.
+
+                     Two surgical edits removing
+                     contradictions with the corrected
+                     retirement standing practice codified
+                     in TB00000 v2_32 §11:
+
+                     CHANGE 1 — §7 FOLDER STRUCTURE.
+                     Prior text (v1_12): folder list ended
+                     with "_Archive/" line. Removed; folder
+                     list now contains the 12 domain
+                     folders only (00XXXXX through
+                     11XXXXX). Closing paragraph added
+                     explaining that retired documents are
+                     not stored in a separate folder;
+                     retirement removes the document from
+                     HEAD via `git rm` + commit + push;
+                     git history preserves all prior
+                     versions; cross-reference to TB00000
+                     v2_32 §11 and 0311003 v1_2 VP-010(c)
+                     as the authoritative source.
+
+                     CHANGE 2 — §9 rt-STATE DEFINITION.
+                     Prior text (v1_12): "rt — Retired.
+                     No longer authoritative. Moved to
+                     _Archive/. DCN permanently reserved.
+                     Never reused. Example: rt1_0."
+                     Replaced with the corrected standing
+                     practice: retirement removes the
+                     document from HEAD via `git rm` +
+                     commit + push; git history preserves
+                     all prior versions; `git log --follow
+                     <path>` retrieves version history;
+                     no rt-prefix successor file at HEAD;
+                     no tombstone document body; no
+                     _Archive folder; cross-reference to
+                     TB00000 v2_32 §11 and 0311003 v1_2
+                     VP-010(c) as the authoritative
+                     source. DCN permanently reserved.
+                     Never reused. Example clarified:
+                     rt1_0 is DocVersion at moment of
+                     retirement, recorded in git history
+                     only.
+
+                     REASON FOR CHANGE.
+                     TB00000 v2_32 §11 (enacted 2026-05-12
+                     at TB00223 close per Bill chat-turn
+                     directive) codified the corrected
+                     retired-document standing practice
+                     and contains an explicit supersession
+                     clause overriding prior text in
+                     0311003 VP-010(c) and 0311001 §7 /
+                     §9. Per the v2_32 §12 FP/DP Option A
+                     analysis, governance reconciliation
+                     of 0311003 + 0311001 was deferred to
+                     TB00224 as a carry-forward (G-6 in
+                     TB00223 SL §6; C-3 in TB00224 NSI §6).
+
+                     PROCEDURAL NOTE — NSI SECTION-CITATION
+                     ERROR.
+                     TB00224 NSI §3.3(b) cited "0311001
+                     v1_12 §8.7 folder structure" as the
+                     target section. The actual folder
+                     structure section in 0311001 v1_12 is
+                     §7 (not §8.7; §8 is the document
+                     header format section). The error is
+                     a RR-SCOPE-010 NSI identifier-citation
+                     discipline observation — first
+                     verified at TB00224 cold-load via
+                     grep against 0311001 v1_12. The
+                     amendment proceeds against the actual
+                     §7 section. The NSI section-citation
+                     error is logged in TB00224 SL §7 as
+                     a Claude error class for governance
+                     observation; cumulative RR-SCOPE-010
+                     count incremented.
+
+                     FP/DP ANALYSIS — SCOPE.
+                     Option A (§7 folder-list edit only) —
+                     REJECTED. §9 rt-state definition
+                     still contains "Moved to _Archive/"
+                     contradiction. Internal-consistency
+                     defect persists.
+                     Option B (§7 + §9 both amended) —
+                     ACCEPTED. Two surgical edits close
+                     both archive-folder references in
+                     this document.
+
+                     Decision: Option B.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311001 parent chain: 0300000
+                     Governance (Domain) → 0310000
+                     Governance_Procedures_Anchor
+                     (Sub-Domain Anchor) → 0311001
+                     Namespace_Specification (Instance).
+                     All parent documents present in
+                     project folder. No new domain or
+                     sub-domain document required.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00224 SESSION-CLOSE):
+                       0311003 v1_1 -> v1_2 (companion
+                         amendment — VP-004 + VP-010(c)
+                         updates; same root cause).
+                       TB00224 Session_Log v1_0.
+                       TB00225 Next_Session_Instructions
+                         v1_0.
+                       (Optional, pending Bill approval
+                         on TB00224 chat-turn 0 audit:
+                         TB00000 v2_32 -> v2_33 for
+                         F-1..F-4 obsolete-citation
+                         findings.)
+
+                     OPEN ITEMS UPDATED.
+                       G-6 archive-folder governance gap
+                         CLOSED via this amendment
+                         (companion to 0311003 v1_2).
+                       C-3 NEW carry-forward CLOSED.
+
+                     RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE-
+                     PROHIBITION COMPLIANCE.
+                     The scope of this amendment traces
+                     directly to Bill chat-turn directive
+                     at TB00223 close (TB00000 v2_32 §11
+                     enactment) which contained an
+                     explicit supersession clause naming
+                     0311001 §8.7 (intent: folder
+                     structure section, actually §7) as
+                     a target for reconciliation. The
+                     scope addition for §9 (rt-state
+                     definition) is a derivable
+                     consistency edit under RR-SCOPE-005
+                     next-logical-step execution — the
+                     §9 rt-state definition contains the
+                     same archive-folder contradiction
+                     as §7 and would be a residual
+                     defect if §7 were amended alone.
+
+                     Bill override: 0311001 v1_12 -> v1_13
+                     is enacted under Bill's standing
+                     document-control override continuing
+                     the scope established in TB00115
+                     (TB00000 v2_10 -> v2_11), TB00116
+                     (v2_11 -> v2_12), TB00120 (v2_12 ->
+                     v2_13). Direct increment v1_12 ->
+                     v1_13; no rv state required for
+                     content additions that close a
+                     tracked OI / carry-forward. Per
+                     Bill's TB00224 chat-turn directive
+                     bundled with the OCS execution
+                     directive.
 
   v1_12  05-10-2026  TB00176 STAGE M-1 SHORT-ARCHITECTURE
                      SPEC FOUNDATION — §15.12.1 mod:

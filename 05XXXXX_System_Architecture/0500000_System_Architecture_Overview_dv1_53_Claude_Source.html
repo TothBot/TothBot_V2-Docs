@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_52</title>
+<title>0500000 System Architecture Overview dv1_53</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_52</td></tr>
+  <tr><td>DocVersion</td><td>dv1_53</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_52_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_53_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-12-2026</td></tr>
-  <tr><td>DocTime</td><td>22:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:59:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -5490,10 +5490,14 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Assign: 0711001 SSS-001 through -012 (long, amended per Path 2),
                             0711001 SSS-013 through -024 (short — pending 0711001
                               authoring extension or sibling Short SSS spec
-                              authoring at M-2 spec layer),
-                            1011003 SP-SSS-001 through -010 (long),
-                            1011003 SP-SSS-011 through -020 (short — pending
-                              1011003 amendment).
+                              authoring at M-2 spec layer).
+                            (1011003 SP-SSS-001 through -010 long + SP-SSS-011
+                              through -020 short retired TB00224 — 1011003
+                              dv1_0 retirement cascade; canonical rule
+                              now resides in this AR + 0500000 dv1_53 SSS-related
+                              diagram elements + TB00000 v2_33 §9.17 absorbed
+                              parameters; coding-spec re-creation deferred per
+                              Bill 10XXXXX-streamlining goal).
   AR-068 (dv1_15) ★: SSS indicator seeding at startup — extension of AR-044.
                     GetOHLCData(interval=5) already called per AR-044. The same response[:-1]
                     seeds ALL five per-pair indicators (no additional REST calls required):
@@ -7106,6 +7110,177 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_53  05-12-2026  TB00224 TURN 3 PHASE 2 ASSIGNMENT-LIST
+                      CLEANUP — 1011003 dv1_0 RETIREMENT
+                      CASCADE (ONE ACTIVE SITE).
+
+                      Surgical edit removing 1011003 SP-SSS-*
+                      assignments from AR-067 (dv1_15; amended
+                      dv1_43) Assign block at lines 5490-5496.
+                      The 1011003 Signal_Pipeline_Coding_Spec
+                      dv1_0 is being retired this session at
+                      Turn 3 Phase 3 per `git rm` + commit +
+                      push per TB00000 v2_32 §11 standing
+                      practice (corrected retired-document
+                      methodology codified at TB00223 close).
+
+                      EDIT — AR-067 ASSIGN BLOCK.
+                      Prior text (dv1_52): "Assign: 0711001
+                      SSS-001 through -012 (long, amended per
+                      Path 2), 0711001 SSS-013 through -024
+                      (short — pending 0711001 authoring
+                      extension or sibling Short SSS spec
+                      authoring at M-2 spec layer), 1011003
+                      SP-SSS-001 through -010 (long), 1011003
+                      SP-SSS-011 through -020 (short — pending
+                      1011003 amendment)."
+
+                      New text (dv1_53): Retains 0711001
+                      assignments byte-identical. Replaces the
+                      two 1011003 assignment lines with a
+                      retirement annotation explaining that
+                      the canonical rule now resides in AR-067
+                      itself + 0500000 dv1_53 SSS-related
+                      diagram elements + TB00000 v2_33 §9.17
+                      absorbed parameters; coding-spec
+                      re-creation deferred per Bill
+                      10XXXXX-streamlining goal.
+
+                      HISTORICAL PRESERVATION.
+                      Two other 1011003 citation sites in
+                      0500000 are PRESERVED BYTE-IDENTICAL
+                      per CI-005 + CI-006:
+                        Line 8476 — procedural enumeration
+                          listing "1011002, 1011003, 1011004,
+                          1011005, ..." as the original
+                          Phase 1 redundancy-audit
+                          candidate set. This is historical
+                          context describing the original
+                          12-candidate audit scope; 1011008
+                          already retired (TB00223) without
+                          scrubbing this enumeration; same
+                          treatment for 1011003.
+                        Line 9755 — historical pre-amendment
+                          AR-067 verbatim quotation preserved
+                          per content-integrity historical-
+                          quotation preservation. Not edited.
+
+                      REASON FOR CHANGE.
+                      Phase 2 of the 1011003 retirement
+                      cascade per TB00224 NSI §3.4 Phase 2
+                      methodology. The Phase 2 audit
+                      identifies active 1011003 citation sites
+                      in 0500000 that need scrubbing before
+                      Phase 3 retirement so that downstream
+                      readers of 0500000 do not chase
+                      retired-document references. Per DD-001
+                      / DD-002 (diagrams-canonical principle —
+                      diagrams govern; prose follows
+                      diagrams), the cleanup is a prose-only
+                      change; no SVG / diagram-content
+                      modification.
+
+                      ALL 10 DIAGRAMS PRESERVED BYTE-
+                      IDENTICAL.
+                      No SVG content modified this increment.
+                      Image1_T2_R2 / Image2_T2_R2 / Image3_T2_R4
+                      / Image4_T2_R2 / Image5_T2_R5 /
+                      Image6_T2_R6 / Image7_T3_R3 / Image8_T3_R1
+                      / Image9_T3_R1 / Context_T1_R0 — all
+                      preserved byte-identical.
+
+                      FP/DP ANALYSIS.
+                      Option A (single-site surgical edit at
+                        AR-067 Assign block; preserve historical
+                        citation sites byte-identical) ACCEPTED.
+                        Matches DR-007 content-completeness
+                        validation pattern + CI-005/CI-006
+                        historical preservation pattern +
+                        precedent set by TB00222 Phase 2
+                        1011011 cleanup (preserved 2 historical
+                        sites byte-identical).
+                      Option B (scrub all three sites including
+                        historical) REJECTED. Violates CI-005
+                        + CI-006 (silent loss of prior verbatim
+                        quotations is a content-integrity
+                        defect).
+                      Option C (defer Phase 2 to a future
+                        session) REJECTED. Phase 2 is part of
+                        the retirement-cascade methodology;
+                        deferral leaves dangling citations to
+                        a retired file in active 0500000 prose.
+
+                      Decision: Option A.
+
+                      DR-007 HTML SCOPE VALIDATION GATES
+                      (all passed — surgical edit pattern):
+                        DR-007.9  HTML well-formedness — PASS.
+                        DR-007.1H asset-reference parity —
+                                  PASS (10 svg + 10 diagram
+                                  figures preserved).
+                        DR-007.2H section-heading parity —
+                                  PASS (h2 + h3 count
+                                  unchanged).
+                        DR-007.3H structural-marker parity —
+                                  PASS (positive delta only in
+                                  expected dv1_53 entry
+                                  category).
+                        DR-007.4H word-count parity — PASS
+                                  (within ±5% tolerance).
+                        DR-007.5H placeholder/stub scan —
+                                  PASS (no new stub tokens).
+                        DR-007.6H revision-history parity —
+                                  PASS (dv1_53 added, all
+                                  prior entries preserved).
+
+                      PARENT CHAIN COMPLIANCE.
+                      0500000 parent chain: 0500000 IS the
+                      AA=05 Tier-1 Domain Document
+                      (canonical-source-of-truth for the
+                      TothBot V2 architecture). No parent
+                      DCN. No new domain or sub-domain
+                      document required.
+
+                      COMPANION DELIVERABLES THIS SESSION
+                      (TB00224 SESSION-CLOSE):
+                        0311003 v1_1 -> v1_2 (Turn 2
+                          VP-004 + VP-010(c) amendment).
+                        0311001 v1_12 -> v1_13 (Turn 2
+                          §7 + §9 amendment).
+                        TB00000 v2_32 -> v2_33 (Turn 3
+                          Phase 1 absorption + audit
+                          findings F-2/F-3/F-4).
+                        0500000 dv1_52 -> dv1_53 (this
+                          document — Turn 3 Phase 2
+                          AR-067 cleanup).
+                        1011003 dv1_0 actual delete +
+                          git rm (Turn 3 Phase 3 — Bill
+                          action via session-close
+                          copy box).
+                        TB00224 Session_Log v1_0.
+                        TB00225 Next_Session_Instructions
+                          v1_0.
+
+                      OPEN ITEMS UPDATED.
+                      Phase 2 of 1011003 retirement
+                        cascade CLOSED via this
+                        amendment.
+                      No new defects surfaced.
+
+                      RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE
+                      PROHIBITION COMPLIANCE.
+                      Scope of this amendment traces to
+                      TB00224 NSI §3.4 Phase 2 methodology
+                      which is the standard retirement-
+                      cascade methodology established
+                      across TB00219..TB00223 Bill-ratified
+                      cascades. Not a new scope restriction.
+
+                      Header refresh: DocVersion dv1_52 ->
+                      dv1_53; DocPath filename refreshed;
+                      DocTime refreshed; &lt;title&gt; updated
+                      to dv1_53.
+
   dv1_52  05-12-2026  TB00222 PHASE 2 ASSIGNMENT-LIST CLEANUP
                       CASCADE — 1011011 dv1_3 DOWNSTREAM
                       PROSE-SITE RETIREMENT (FOUR ACTIVE SITES)

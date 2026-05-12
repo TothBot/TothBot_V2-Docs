@@ -1,10 +1,10 @@
 DocDCN:     0311003
 DocTitle:   Versioning_Procedure
-DocVersion: v1_1
+DocVersion: v1_2
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_1.txt
-DocDate:    04-23-2026
-DocTime:    01:50:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_2.txt
+DocDate:    05-12-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 VERSIONING PROCEDURE
@@ -134,8 +134,16 @@ intermediate rv state.
              → v1_1 with Bill approval; rv not required.
 
   v → rt:    Document retired. Superseded or no longer
-             applicable. Moved to _Archive.
-             Version state changes to rt (e.g., rt1_0).
+             applicable. Retirement removes the document
+             from HEAD via `git rm` + commit + push. Git
+             history preserves all prior versions. No
+             rt-prefix successor file at HEAD; no
+             tombstone document body; no _Archive folder.
+             Use `git log --follow <path>` to inspect a
+             retired document's full version history.
+             Version state is recorded in DocVersion at
+             the moment of retirement (e.g., rt1_0) for
+             the git-history record only.
              BILL ACTION ONLY. Claude cannot execute this.
 
 ------------------------------------------------------------
@@ -248,14 +256,27 @@ tree in TB00000 §11:
       `git log --follow <file>` to inspect a file's
       version history.
 
-  (c) The TothBot_V2-Docs _Archive folder contains ONLY
-      documents in rt (retired) state — not documents
-      that are merely superseded. A document is retired
-      only by explicit Bill action per VP-004 v → rt
-      transition.
+  (c) For retired documents (rt-state) in
+      TothBot_V2-Docs and TothBot_V2-Code:
+      Retirement removes the document from HEAD via
+      `git rm` + commit + push. Git history preserves
+      all prior versions including the final v-state
+      version at the moment of retirement. No
+      rt-prefix successor file is authored or
+      committed at HEAD; no tombstone document body;
+      no _Archive folder anywhere (local, remote, or
+      VPS). Use `git log --follow <path>` to inspect
+      a retired document's full version history.
+      Retirement removes the file from the Claude.ai
+      project knowledge folder, the local C: working
+      tree, AND GitHub HEAD; the document continues
+      to exist as history in git only.
 
-Only documents with rt state are moved to _Archive.
-All other version history is managed through git.
+This standing practice is codified in TB00000 v2_32
+§11 and supersedes any prior text in this document
+or in 0311001 prescribing a local _Archive folder,
+an rt-prefix file at HEAD, or a tombstone document
+body. All version history is managed through git.
 
 ============================================================
 7. VERSION VALIDATION RULES
@@ -276,6 +297,175 @@ automation and automatically by Pathway 1 post-deployment.
 ============================================================
 8. REVISION HISTORY
 ============================================================
+
+  v1_2   05-12-2026  TB00224 TURN 2 GOVERNANCE
+                     RECONCILIATION — VP-004 v → rt
+                     TRANSITION + VP-010(c) REWRITE PER
+                     TB00000 v2_32 §11 RETIRED-DOCUMENT
+                     STANDING-PRACTICE CODIFICATION.
+
+                     Two surgical edits removing
+                     contradictions with the corrected
+                     retirement standing practice
+                     codified in TB00000 v2_32 §11:
+
+                     CHANGE 1 — VP-004 v → rt transition
+                     rule. Prior text (v1_1): "Document
+                     retired. Superseded or no longer
+                     applicable. Moved to _Archive.
+                     Version state changes to rt (e.g.,
+                     rt1_0). BILL ACTION ONLY." Replaced
+                     with explicit retirement methodology:
+                     `git rm` + commit + push; git history
+                     preserves all prior versions; no
+                     rt-prefix successor file at HEAD;
+                     no tombstone document body; no
+                     _Archive folder. `git log --follow
+                     <path>` retrieves version history.
+                     DocVersion still records rt-state at
+                     the moment of retirement for the
+                     git-history record only.
+
+                     CHANGE 2 — VP-010(c) rewrite. Prior
+                     text (v1_1): "The TothBot_V2-Docs
+                     _Archive folder contains ONLY
+                     documents in rt (retired) state ...
+                     Only documents with rt state are
+                     moved to _Archive. All other version
+                     history is managed through git."
+                     Replaced with the v2_32 §11 standing
+                     practice: retirement = `git rm` +
+                     commit + push; no _Archive folder
+                     (local, remote, or VPS); no rt-prefix
+                     file at HEAD; no tombstone document
+                     body; retirement removes the file
+                     from Claude.ai project folder, local
+                     C: working tree, AND GitHub HEAD;
+                     `git log --follow` retrieves version
+                     history; document exists as git
+                     history only.
+
+                     REASON FOR CHANGE.
+                     TB00000 v2_32 §11 (enacted 2026-05-12
+                     at TB00223 close per Bill chat-turn
+                     directive) codified the corrected
+                     retired-document standing practice
+                     and contains an explicit supersession
+                     clause overriding prior text in
+                     0311003 VP-010(c) and 0311001 §7 /
+                     §9. Per the v2_32 §12 FP/DP Option A
+                     analysis, governance reconciliation
+                     of 0311003 + 0311001 was deferred to
+                     TB00224 as a carry-forward (G-6 in
+                     TB00223 SL §6; C-2 in TB00224 NSI §6).
+
+                     The TB00220 SL §4.1 originating
+                     Bill correction observed a multi-
+                     session propagation lapse where the
+                     rt-prefix file methodology was
+                     authored at TB00213 (creating
+                     1011011 rt1_3 and 1011004 rt1_0 at
+                     GitHub HEAD) and not surfaced as a
+                     defect through TB00220. Bill chat-
+                     turn clarifications at TB00223
+                     established the corrected standing
+                     practice: GitHub git history IS the
+                     version archive; the file at HEAD
+                     does not need a rt-prefix rename or
+                     a tombstone body. TB00224 Turn 1
+                     this session executed cleanup of the
+                     TB00213 rt-prefix files (commit
+                     475fd59).
+
+                     FP/DP ANALYSIS — VP-010(a) STRUCTURE.
+                     TB00224 NSI §3.3(a) offered two
+                     options for VP-010(c) handling:
+                     Option (i) retire VP-010(c) + add
+                     new VP-011 RETIREMENT METHODOLOGY
+                     rule; Option (ii) rewrite VP-010(c)
+                     in place + update VP-004 v → rt
+                     transition; no new VP rule.
+
+                     Option (i) — REJECTED. VP-011 is
+                     already taken (line 264 v1_1:
+                     "DocVersion must match the version
+                     in the filename"). Adding a new
+                     VP-011 RETIREMENT METHODOLOGY rule
+                     requires renumbering existing
+                     VP-011..VP-018 to VP-012..VP-019 —
+                     a cascade of 8 renumbers with high
+                     risk of breaking forward references
+                     in this document and in TB00000 +
+                     0311001 + 0311002 + session-log
+                     citation history.
+
+                     Option (ii) — ACCEPTED. Two surgical
+                     edits (VP-004 + VP-010(c)) with no
+                     renumbering and no new rule
+                     creation. Minimal edit surface.
+                     Zero forward-reference cascade.
+
+                     Decision: Option (ii).
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311003 parent chain: 0300000
+                     Governance (Domain) → 0310000
+                     Governance_Procedures_Anchor
+                     (Sub-Domain Anchor) → 0311003
+                     Versioning_Procedure (Instance).
+                     All parent documents present in
+                     project folder. No new domain or
+                     sub-domain document required.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00224 SESSION-CLOSE):
+                       0311001 v1_12 -> v1_13 (companion
+                         amendment — §7 _Archive removal
+                         + §9 rt-state definition update;
+                         same root cause).
+                       TB00224 Session_Log v1_0.
+                       TB00225 Next_Session_Instructions
+                         v1_0.
+                       (Optional, pending Bill approval
+                         on TB00224 chat-turn 0 audit:
+                         TB00000 v2_32 -> v2_33 for
+                         F-1..F-4 obsolete-citation
+                         findings.)
+
+                     OPEN ITEMS UPDATED.
+                       G-6 archive-folder governance
+                         gap CLOSED via this amendment
+                         (companion to 0311001 v1_13).
+                       C-2 NEW carry-forward CLOSED.
+
+                     RR-SCOPE-007 SELF-AUTHORED-NSI-
+                     SOURCE-PROHIBITION COMPLIANCE.
+                     The scope restriction applied here
+                     (Option ii instead of Option i)
+                     traces to Bill chat-turn directive
+                     at TB00223 chat-turn TBD (TB00000
+                     v2_32 §11 enactment) — Bill verbatim:
+                     "TB00000 §11 may need a brief note
+                     matching the same standing practice."
+                     Option selection between (i) and (ii)
+                     is a derivable engineering decision
+                     under RR-SCOPE-005 next-logical-step
+                     execution; not a scope restriction
+                     requiring Bill ratification.
+
+                     Bill override: 0311003 v1_1 -> v1_2
+                     is enacted under Bill's standing
+                     document-control override continuing
+                     the scope established in TB00115
+                     (TB00000 v2_10 -> v2_11), TB00116
+                     (v2_11 -> v2_12), TB00120 (v2_12 ->
+                     v2_13). Direct increment v1_1 ->
+                     v1_2; no rv state required for
+                     content additions that close a
+                     tracked OI / carry-forward. Per
+                     Bill's TB00224 chat-turn directive
+                     bundled with the OCS execution
+                     directive.
 
   v1_1   04-23-2026  OI-039 remediation. VP-010 SUPERSEDED
                      DOCUMENTS rewritten.
