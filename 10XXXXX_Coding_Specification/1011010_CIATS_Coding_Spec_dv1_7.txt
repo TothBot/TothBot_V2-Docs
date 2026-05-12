@@ -1,0 +1,1267 @@
+DocDCN:     1011010
+DocTitle:   CIATS_Coding_Spec
+DocVersion: dv1_7
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011010_CIATS_Coding_Spec_dv1_7.txt
+DocDate:    05-11-2026
+DocTime:    12:30:00 UTC
+
+============================================================
+CIATS CODING SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the complete, unambiguous coding contract
+for CIATS (Continuous Improvement and Autonomous Trading
+System) — TothBot V2's self-improvement engine. CIATS is
+fully asynchronous. It reads only from the Logger and writes
+only to the Parameter Store. It never blocks the trading
+hot path. Deming PDCA governs every change.
+
+CIATS is instantiated PER MODULE under the parallel-module
+framework (per TB00000 v2_29 §9.3 + §9.6). Each trading
+module (mod:Long_Module, mod:Short_Module, and any future
+trading module) instantiates its own CIATS instance with
+its own statistical pool, its own EWMA monitor, its own
+Trade Outcome Bus subscription, its own statistical-method
+state, its own PDCA cycle state, its own Proposal Engine,
+its own Parameter Store namespace, and its own Regime
+Library. Cross-module data contamination is prohibited.
+Module identifier (mod:Long_Module / mod:Short_Module /
+future mod:*) is the routing key for every CIATS data
+flow.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification
+  1010000  Trading_System_Coding_Anchor
+  1011010  This document
+  Parent specification: 0211001  CIATS_Specification  dv1_0
+
+============================================================
+3. FIVE CODING-READINESS QUESTIONS
+============================================================
+
+(1) What does CIATS DO?
+    Each per-module CIATS instance reads Logger output
+    (Trade Outcome Bus and candle eval events) filtered by
+    its module identifier. Runs two parallel streams per
+    instance: Stream 1 (EWMA Monitor, valid at 50 candle
+    evals on the instance's own monitoring signals) for
+    real-time anomaly detection, and Stream 2 (Trade
+    Outcome Bus, valid at 200 closed trades on the
+    instance's own module-tagged outcomes) for statistical
+    inference. Computes Half-Kelly as a CANDIDATE sizing-
+    curve methodology at 200+ trades when CIATS proposes
+    it through PDCA (Half-Kelly is no longer the hardcoded
+    transition rule per TB00000 v2_29 §9.17). Runs per-
+    regime analysis at 600+ trades per instance. Generates
+    parameter proposals via Proposal Engine for the
+    instance's own per-module parameter set (per TB00000
+    v2_29 §9.17). Executes PDCA cycle (Plan-Do-Check-Act)
+    per instance. Writes approved parameter changes to
+    the instance's own Parameter Store namespace at
+    inter-trade boundaries. Never blocks the trading hot
+    path. Never makes changes without PDCA validation and
+    Bill approval. Cross-module statistical aggregation
+    is prohibited.
+
+(2) Interfaces?
+    IN:  Logger log files filtered by module identifier
+         (sole data source — reads files only).
+         Event codes (each tagged with module identifier
+         per 0511006 Logger Specification): CANDLE_EVAL,
+         PIPELINE_GATE_*, TRADE_CLOSE, WS_ROUNDTRIP_*,
+         RATE_COUNTER_UPDATE. Each per-module CIATS
+         instance consumes only events tagged with its
+         own module identifier (mod:Long_Module CIATS
+         consumes only mod:Long_Module-tagged events;
+         mod:Short_Module CIATS consumes only
+         mod:Short_Module-tagged events).
+    OUT: Parameter Store, per-module namespace (each
+         instance writes only to its own module's
+         parameter keys per TB00000 v2_29 §9.17).
+    CIATS does not call any TothBot component directly.
+    CIATS does not have access to live market data.
+    CIATS does not know the current time or positions.
+    No CIATS instance reads or writes another instance's
+    state.
+
+(3) Hard rules?
+    Per-instance 200-trade HARD FLOOR for inference and
+      parameter changes (each instance counts only its
+      own module's closed trades).
+    Per-instance 50-candle-eval floor for EWMA Monitor
+      (monitoring only, per-instance signals).
+    Per-instance 600-trade floor for per-regime analysis.
+    Per-instance PDCA min 50-trade interval between
+      parameter changes (each instance's PDCA cycle
+      operates independently).
+    Cross-module data contamination PROHIBITED (per
+      TB00000 v2_29 §9.6). Long trade outcomes feed only
+      Long CIATS; Short trade outcomes feed only Short
+      CIATS; future-module trade outcomes feed only that
+      module's CIATS.
+    Cross-module statistical aggregation PROHIBITED.
+    Mann-Whitney alpha=0.01 (one-sided) — applied per
+      instance.
+    Spearman: |rho|>0.3 AND p<0.05 required — applied
+      per instance.
+    CUSUM: k=0.5sigma, h=4sigma (relative to per-instance
+      metric sigma).
+    All CPU-bound stats: run_in_executor() mandatory.
+    Logger hot path: put_nowait() only.
+    Half-Kelly is a CANDIDATE sizing-curve methodology
+      CIATS may propose; it is no longer hardcoded
+      transition per TB00000 v2_29 §9.17.
+    Half-Kelly normalization MUST use per-module
+      per_trade_ceiling_pct × module_wallet_balance (NOT
+      the retired tradeable_pct / max_concurrent).
+    Kelly inputs W and R MUST use realized NET P/L from
+      the instance's own module-tagged closed trades only.
+    Negative Kelly: CRITICAL alert with module identifier,
+      no parameter update for that instance.
+    Parameter Store writes ONLY at inter-trade boundaries
+      and ONLY to the instance's own module namespace.
+    CIATS never modifies the sacred §9.10 net 1:1.5 R:R
+      minimum floor (no instance, ever).
+
+(4) What triggers it?
+    Per-instance Stream 1: every candle close event
+      (CANDLE_EVAL in Logger) tagged with the instance's
+      module identifier.
+    Per-instance Stream 2: every TRADE_CLOSE event in
+      Logger tagged with the instance's module identifier.
+    Per-instance PDCA: when that instance's CUSUM signals
+      or its Proposal Engine threshold is met.
+
+(5) What does it log?
+    Every CIATS log entry carries the module= field
+    identifying the originating per-module CIATS
+    instance:
+      CIATS_EWMA_UPDATE: module, signal, value, lambda
+        (every update)
+      CIATS_CUSUM_SIGNAL: module, metric, k, h, cusum_s
+        (when triggered)
+      CIATS_PROPOSAL_GENERATED: module, parameter,
+        old_value, new_value, confidence, test_type
+      CIATS_KELLY_UPDATE: module, K_full, K_half,
+        applied_usd, max_per_trade_usd, W, R, wins,
+        losses, normalization_binding
+      CIATS_PARAMETER_WRITE: module, parameter,
+        old_value, new_value
+      KELLY_NEGATIVE: module, K_full, W, R, trades
+        (CRITICAL)
+      KELLY_NO_LOSSES: module, trades (INFO)
+
+============================================================
+4. STATISTICAL THRESHOLDS
+============================================================
+
+All thresholds in this section are instantiated PER PER-
+MODULE CIATS INSTANCE. Each instance evaluates its own
+threshold against its own statistical pool. Cross-module
+threshold aggregation is prohibited.
+
+CIATS-ST-001  EWMA Monitor valid at 50 candle evals
+              PER INSTANCE.
+              Fast warning stream. Monitoring only.
+              NEVER drives parameter changes.
+
+CIATS-ST-002  200 closed trades PER INSTANCE: HARD FLOOR.
+              Statistical inference valid for that
+              instance.
+              Proposal Engine activates for that instance.
+              CIATS may propose Half-Kelly (or another
+              sizing-curve methodology) for that
+              instance's per_trade_size_usd under PDCA
+              cycle (Half-Kelly is no longer the
+              hardcoded transition per TB00000 v2_29
+              §9.17).
+              This is the threshold for ALL per-instance
+              parameter decisions.
+
+CIATS-ST-003  600 closed trades PER INSTANCE: per-regime
+              analysis valid for that instance.
+              Requires 100+ trades per regime bucket
+              within that instance's pool.
+              Full regime-segmented optimization active
+              for that instance.
+
+============================================================
+5. STATISTICAL METHODS
+============================================================
+
+Every method in this section is applied PER INSTANCE on
+that instance's own data. Cross-module statistical
+aggregation is prohibited. Methods are mechanically
+identical across instances.
+
+------------------------------------------------------------
+5.1 EWMA Monitor (Stream 1)
+------------------------------------------------------------
+
+CIATS-EW-001  EWMA lambda=0.2. Validated by FP/DP.
+              Half-life = ln(0.5)/ln(1-lambda) = 3.1 evaluations.
+              Detects drift within ~22 observations (~27 minutes).
+              Per-instance monitoring signals (not inference):
+                (1) rejection_rate_by_regime (F6)
+                (2) rate_counter_by_pair (A-1)
+                (3) ws_roundtrip_latency_ms (A-3)
+
+              Implementation:
+                ewma_t = lambda * x_t + (1 - lambda) * ewma_{t-1}
+                # lambda = Decimal("0.2")
+                # x_t = new observation value (Decimal),
+                # filtered by instance's module identifier
+
+CIATS-EW-002  EWMA runs per instance on every candle close
+              event tagged with that instance's module
+              identifier.
+              Valid from per-instance observation 50 onward.
+              Feeds per-instance CUSUM for drift detection.
+
+------------------------------------------------------------
+5.2 CUSUM (Cumulative Sum Control Chart)
+------------------------------------------------------------
+
+CIATS-CU-001  Parameters: k=0.5sigma, h=4sigma.
+              sigma = rolling std of the monitored metric
+              within the instance's own data pool.
+              Both k and h scale with that instance's
+              metric sigma. NOT fixed absolute values.
+
+              Implementation (per-instance):
+                import statistics
+
+                metric_values = deque(maxlen=200)  # per-instance
+                S_pos = Decimal("0")               # per-instance
+                S_neg = Decimal("0")               # per-instance
+
+                def update_cusum(new_value):
+                    metric_values.append(new_value)
+                    if len(metric_values) < 30:
+                        return  # Insufficient for sigma
+                    sigma = Decimal(str(
+                        statistics.stdev(metric_values)))
+                    k = Decimal("0.5") * sigma
+                    h = Decimal("4.0") * sigma
+                    x = new_value - Decimal(str(
+                        statistics.mean(metric_values)))
+                    S_pos = max(Decimal("0"), S_pos + x - k)
+                    S_neg = max(Decimal("0"), S_neg - x - k)
+                    if S_pos > h or S_neg > h:
+                        # Drift detected — trigger that
+                        # instance's PDCA PLAN
+                        return True  # Signal
+                    return False
+
+CIATS-CU-002  CUSUM signal triggers PDCA PLAN phase only
+              within the originating instance.
+              Not an automatic parameter change.
+              Three downstream gates filter false signals:
+                (a) Spearman correlation test (per instance)
+                (b) Mann-Whitney U test (per instance)
+                (c) Bill approval
+
+------------------------------------------------------------
+5.3 Mann-Whitney U (PDCA CHECK phase)
+------------------------------------------------------------
+
+CIATS-MW-001  Alpha = 0.01 (one-sided). Confirmed by FP/DP.
+              Applied per instance in PDCA CHECK phase to
+              validate that a proposed parameter change
+              produces statistically significant improvement
+              on that instance's own performance data.
+              Run in ThreadPoolExecutor (CPU-bound).
+
+              from scipy.stats import mannwhitneyu
+              stat, p = mannwhitneyu(group_a, group_b,
+                                     alternative='greater')
+              # group_a, group_b drawn from the instance's
+              # own module-tagged trade outcome pool only
+              if p < 0.01:
+                  # Significant — proceed to ACT
+
+------------------------------------------------------------
+5.4 Spearman Correlation (PDCA PLAN phase)
+------------------------------------------------------------
+
+CIATS-SP-001  |rho| > 0.3 AND p < 0.05 required.
+              Used per instance in PDCA PLAN to validate
+              that a parameter change is actually correlated
+              with that instance's own module performance.
+              Run in ThreadPoolExecutor (CPU-bound).
+
+              from scipy.stats import spearmanr
+              rho, p = spearmanr(param_values, perf_values)
+              # both inputs drawn from the instance's own
+              # module-tagged trade outcome pool only
+              if abs(rho) > 0.3 and p < 0.05:
+                  # Correlation confirmed — generate proposal
+                  # for that instance's parameter set
+
+------------------------------------------------------------
+5.5 Half-Kelly (Candidate Sizing-Curve Methodology)
+------------------------------------------------------------
+
+Per TB00000 v2_29 §9.17, Half-Kelly is no longer the
+hardcoded transition rule. Half-Kelly remains a CANDIDATE
+sizing-curve methodology CIATS may propose under PDCA
+cycle at or after the per-instance 200-trade inference
+threshold. The current sizing-curve form is CIATS-owned:
+per_trade_size_usd starts at the Kraken per-pair minimum
+(~$0.50) and becomes a CIATS-owned function of expected
+R:R from the 200-trade inference threshold forward,
+bounded above by per_trade_ceiling_pct (25% of module
+wallet starting). CIATS may propose Half-Kelly as the
+underlying functional form for that mapping.
+
+CIATS-KE-001  Formula (when proposed): K_full = W - ((1-W) / R),
+              apply 50%. Computed per instance on that
+              instance's own data.
+
+CIATS-KE-002  W and R from NET realized P/L (not gross)
+              within the instance's own module-tagged
+              trade pool:
+                W = count(net_gain_usd > 0 in instance's
+                          module-tagged trades)
+                    / total_module_tagged_trades
+                R = mean(net_gain in instance's wins)
+                    / mean(|net_loss| in instance's losses)
+              Both from per-instance Trade Outcome Bus
+              records.
+
+CIATS-KE-003  Half-Kelly normalization (per-module):
+                max_per_trade_usd =
+                  per_trade_ceiling_pct[module]
+                  × module_wallet_balance_usd[module]
+                applied_usd =
+                  min(K_half × module_wallet_balance_usd[module],
+                      max_per_trade_usd)
+              The retired tradeable_pct / max_concurrent
+              normalization (per TB00000 v2_29 §9.17
+              retirement record) MUST NOT be used.
+
+CIATS-KE-004  Normalization applied on every Kelly update
+              per instance.
+
+CIATS-KE-005  Floor: applied_usd >= Kraken per-pair
+              minimum order size (~$0.50) for that
+              instance's module universe.
+
+CIATS-KE-006  Negative Kelly (K_full <= 0) per instance:
+              CRITICAL alert with module identifier.
+              Do not update per_trade_size_usd for that
+              instance. Log KELLY_NEGATIVE with module
+              field. Other instances are unaffected.
+
+CIATS-KE-007  Complete Kelly procedure: see Section 6.5.
+
+============================================================
+6. CIATS ARCHITECTURE
+============================================================
+
+------------------------------------------------------------
+6.1 Isolation Contract
+------------------------------------------------------------
+
+CIATS-ISO-001  CIATS reads ONLY from Logger output files.
+               CIATS writes ONLY to Parameter Store.
+               No direct calls to TothBot components.
+               No in-memory shared state with hot path.
+               Each per-module CIATS instance operates
+               under this isolation contract independently.
+
+CIATS-ISO-002  Parameter Store writes happen ONLY at
+               inter-trade boundaries (between position
+               opens and closes). Never mid-pipeline.
+               This prevents parameter inconsistency
+               within a single pipeline evaluation
+               (I-4 rule). Each instance writes only to
+               its own module's Parameter Store namespace.
+
+CIATS-ISO-003  CIATS runs as an asyncio.Task per
+               instance in the same event loop. CPU-bound
+               computations delegated to
+               ThreadPoolExecutor:
+                 loop = asyncio.get_event_loop()
+                 result = await loop.run_in_executor(
+                     None, compute_mann_whitney, data)
+
+CIATS-ISO-004  PER-MODULE INSTANCE ISOLATION.
+               Each trading module (mod:Long_Module,
+               mod:Short_Module, and any future trading
+               module) instantiates its own CIATS
+               instance. Instances do NOT share:
+                 - Statistical pools (trade outcome
+                   corpus, EWMA state, CUSUM state)
+                 - PDCA cycle state
+                 - Proposal Engine state
+                 - Regime Library buckets
+                 - Parameter Store namespace
+               Instances DO share:
+                 - The Python process and event loop
+                 - The ThreadPoolExecutor (for CPU-bound
+                   work scheduling)
+                 - The Logger file infrastructure (each
+                   instance reads only its own module-
+                   tagged events from the shared Logger
+                   files)
+
+CIATS-ISO-005  CROSS-MODULE DATA CONTAMINATION
+               PROHIBITED.
+               Per TB00000 v2_29 §9.6: Long trade
+               outcomes feed only Long CIATS;
+               Short trade outcomes feed only Short
+               CIATS; future-module trade outcomes feed
+               only that module's CIATS. No instance
+               may read another instance's statistical
+               pool, parameter store, regime library, or
+               PDCA state. No statistical method may
+               aggregate data across instances. No
+               parameter proposal may reference another
+               instance's data. Cross-instance state
+               sharing is a session-halting defect
+               requiring immediate correction.
+
+------------------------------------------------------------
+6.2 Stream 1 — EWMA Monitor (Per-Instance)
+------------------------------------------------------------
+
+CIATS-MON-001  Each per-module CIATS instance subscribes
+               to CANDLE_EVAL and related events from
+               Logger filtered by its own module
+               identifier. Fires on every 5m candle close
+               for pairs in that module's universe.
+               Valid from per-instance eval 50 onward
+               (~4 hours).
+               THREE monitoring signals per instance
+               (never parameter changes):
+                 (1) rejection_rate_by_regime (per
+                     instance's own pipeline rejections)
+                 (2) rate_counter_by_pair (per instance's
+                     own order submission rates)
+                 (3) ws_roundtrip_latency_ms (shared
+                     WS infrastructure — both instances
+                     observe the same underlying signal
+                     but maintain independent EWMA state)
+
+CIATS-MON-002  EWMA update per instance on each signal
+               observation in that instance's data.
+               CUSUM applied per instance to that
+               instance's EWMA output.
+               CUSUM signal triggers PDCA PLAN phase
+               within the originating instance.
+
+------------------------------------------------------------
+6.3 Stream 2 — Trade Outcome Bus (Module-Routed)
+------------------------------------------------------------
+
+CIATS-TOB-001  Each per-module CIATS instance reads
+               TRADE_CLOSE events from Logger filtered
+               by its own module identifier.
+               One record per closed position in that
+               module.
+               Valid from per-instance trade 200 onward.
+
+CIATS-TOB-002  On each module-tagged TRADE_CLOSE event:
+                 (a) Update that instance's rolling
+                     trade corpus
+                 (b) If instance's corpus >= 200: run
+                     that instance's Proposal Engine
+                 (c) If instance's corpus >= 600: run
+                     that instance's regime-segmented
+                     analysis
+
+CIATS-TOB-003  Per-instance PDCA cycle (minimum
+               50-trade interval per instance):
+                 PLAN:  CUSUM signals drift in instance
+                        data or Spearman confirms
+                        correlation within instance
+                        data.
+                 DO:    Apply proposed change to that
+                        instance's Parameter Store
+                        namespace at next inter-trade
+                        boundary.
+                 CHECK: Mann-Whitney U on pre vs post
+                        change performance within
+                        instance data (alpha=0.01).
+                 ACT:   If CHECK passes: keep change
+                        in instance namespace. If CHECK
+                        fails: revert. Document finding
+                        in instance's PDCA log.
+
+CIATS-TOB-004  TRADE OUTCOME BUS ROUTING BY MODULE
+               IDENTIFIER.
+               Every TRADE_CLOSE event written to the
+               Logger MUST carry a module identifier
+               field (per 0511006 Logger Specification).
+               Permitted identifier values:
+                 mod:Long_Module
+                 mod:Short_Module
+                 (additional mod:* entries as future
+                  trading modules are registered in
+                  0311001 v1_12 §15.12.1 mod: registry)
+               Each per-module CIATS instance filters
+               its subscription on this field at the
+               event consumption boundary. Events with
+               a non-matching module identifier are
+               IGNORED by that instance — never
+               aggregated, never logged in the
+               instance's corpus, never used for
+               statistical inference.
+               Events lacking a module identifier (or
+               carrying an unrecognized identifier) are
+               logged as CIATS_EVENT_ROUTING_ERROR at
+               WARNING level and dropped. No instance
+               processes them.
+
+------------------------------------------------------------
+6.4 Parameter Store (Per-Module Namespace)
+------------------------------------------------------------
+
+CIATS-PS-001  Parameter Store holds all CIATS-owned
+              values. TothBot modules read frozen
+              snapshots of their own parameter
+              namespaces at pipeline start. CIATS
+              writes at inter-trade boundaries only.
+
+CIATS-PS-002  PER-MODULE NAMESPACE.
+              The Parameter Store is organized by
+              module namespace. Each per-module CIATS
+              instance writes only to its own module's
+              keys. Per TB00000 v2_29 §9.17 CIATS-OWNED
+              PER-MODULE INSTANTIATED parameter set,
+              each module has its own value for:
+                per_trade_size_usd[module]
+                per_trade_ceiling_pct[module]
+                session_pause_drawdown_pct[module]
+                full_halt_drawdown_pct[module]
+                mae_mult[module]
+                emergency_sl_mult[module]
+                entry_timeout_sec[module]
+                adx_threshold[module]
+                atr_percentile_thresh[module]
+                htf_ema_periods[module]
+                min_volume_usd_daily[module]
+                expected_rr_acceptance_rule[module]
+              Short-only parameters (Short_Module
+              namespace only):
+                leverage_cap_short
+                rsi_short_low
+                rsi_short_high
+                min_order_size_usd[Short_Module]
+              All parameters tracked with history per
+              module:
+                module, parameter_name, old_value,
+                new_value, change_timestamp,
+                trade_count_at_change_for_module,
+                statistical_basis (test results from
+                that module's instance only)
+
+CIATS-PS-003  EXCEPTIONS — never in Parameter Store
+              (universal across all modules):
+                rr_minimum_net = 1:1.5 — SACRED floor
+                per TB00000 v2_29 §9.10. Never CIATS-
+                owned. Never written by any instance.
+              Operator-controlled (universal across
+              all modules; not CIATS-owned):
+                paper_starting_balance_long_usd
+                paper_starting_balance_short_usd
+                module_wallet_balance_usd[module]
+                (read by each instance for Kelly
+                 normalization but never written by
+                 any CIATS instance)
+
+------------------------------------------------------------
+6.5 Kelly Computation Procedure (Per-Instance Candidate)
+------------------------------------------------------------
+
+Per TB00000 v2_29 §9.17, Half-Kelly is no longer the
+hardcoded transition rule. The procedure below is the
+CANDIDATE Half-Kelly methodology each per-module CIATS
+instance may propose under PDCA cycle as the underlying
+sizing-curve form for that module's per_trade_size_usd.
+Invocation is governed by per-instance PDCA. The
+procedure operates on that instance's own module-tagged
+trade pool only.
+
+              def compute_kelly_per_module(
+                      module_id: str,
+                      closed_trades_for_module: list):
+                  """
+                  Compute Half-Kelly candidate sizing for
+                  one per-module CIATS instance. Inputs
+                  drawn from that instance's own module-
+                  tagged trade outcome pool only.
+                  Returns dollar applied_usd or None.
+                  """
+                  from decimal import Decimal
+
+                  if len(closed_trades_for_module) < 200:
+                      return None  # Below per-instance
+                                    # hard floor
+
+                  wins = [t for t in closed_trades_for_module
+                          if t["net_gain_usd"]
+                             > Decimal("0")]
+                  losses = [t for t in closed_trades_for_module
+                            if t["net_gain_usd"]
+                               <= Decimal("0")]
+
+                  W = (Decimal(len(wins))
+                       / Decimal(len(closed_trades_for_module)))
+
+                  if not losses:
+                      log("KELLY_NO_LOSSES",
+                          module=module_id,
+                          level="INFO")
+                      return None
+
+                  avg_win = (sum(t["net_gain_usd"]
+                                 for t in wins)
+                             / Decimal(len(wins)))
+                  avg_loss = (sum(abs(t["net_gain_usd"])
+                                  for t in losses)
+                              / Decimal(len(losses)))
+
+                  if avg_loss == Decimal("0"):
+                      return None
+
+                  R = avg_win / avg_loss
+                  K_full = W - ((Decimal("1") - W) / R)
+
+                  if K_full <= Decimal("0"):
+                      log("KELLY_NEGATIVE",
+                          module=module_id,
+                          level="CRITICAL",
+                          K_full=K_full, W=W, R=R)
+                      alert(CRITICAL,
+                            f"Kelly negative for "
+                            f"{module_id}: {K_full}")
+                      return None  # No update for this
+                                    # instance. Other
+                                    # instances unaffected.
+
+                  K_half = K_full * Decimal("0.5")
+
+                  # Per TB00000 v2_29 §9.17 per-module
+                  # parameter registry. Retired
+                  # tradeable_pct / max_concurrent
+                  # normalization MUST NOT be used.
+                  module_wallet = parameter_store[
+                      f"module_wallet_balance_usd"
+                  ][module_id]
+                  ceiling_pct = parameter_store[
+                      f"per_trade_ceiling_pct"
+                  ][module_id]
+                  max_per_trade_usd = (
+                      module_wallet * ceiling_pct
+                  )
+
+                  proposed_usd = K_half * module_wallet
+                  applied_usd = min(proposed_usd,
+                                    max_per_trade_usd)
+
+                  log("CIATS_KELLY_UPDATE",
+                      module=module_id,
+                      K_full=K_full, K_half=K_half,
+                      applied_usd=applied_usd,
+                      max_per_trade_usd=max_per_trade_usd,
+                      module_wallet_usd=module_wallet,
+                      ceiling_pct=ceiling_pct,
+                      W=W, R=R,
+                      wins=len(wins),
+                      losses=len(losses),
+                      total=len(closed_trades_for_module),
+                      normalization_binding=(
+                          applied_usd < proposed_usd
+                      ))
+                  return applied_usd
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_7  05-11-2026  STAGE M-5 — PER-MODULE CIATS
+                     FRAMEWORK INSTANTIATION.
+
+                     Amendment per TB00189 NSI v1_0 §2.1(a)
+                     7-bullet scope, ratified TB00188 SL
+                     §4.3 Stage M-5 sequencing trigger
+                     active. Authoring inputs: TB00000
+                     v2_29 §9.3 (parallel-module
+                     framework) + §9.6 (per-module CIATS
+                     framework) + §9.17 (per-module
+                     CIATS-owned parameter registry) +
+                     0211001 dv1_0 (parent specification)
+                     + 0811001 dv1_0 (Long_Module
+                     sibling) + 0811005 dv1_0
+                     (Short_Module sibling) + 0311001
+                     v1_12 §15.12.1 (mod: registry).
+
+                     SCOPE OF CHANGES (seven bullets per
+                     NSI §2.1(a)):
+
+                     (1) HEADER REFRESH.
+                         DocVersion dv1_6 -> dv1_7.
+                         DocPath updated to dv1_7
+                         filename.
+                         DocDate: 04-05-2026 -> 05-11-2026.
+                         DocTime: 13:00:00 UTC ->
+                         12:30:00 UTC.
+
+                     (2) PER-MODULE CIATS INSTANCE
+                         ARCHITECTURE.
+                         Section 1 (PURPOSE) extended:
+                         CIATS is instantiated PER MODULE
+                         under the parallel-module
+                         framework. Each trading module
+                         (mod:Long_Module,
+                         mod:Short_Module, future
+                         modules) instantiates its own
+                         CIATS instance with its own
+                         statistical pool, EWMA monitor,
+                         Trade Outcome Bus subscription,
+                         statistical-method state, PDCA
+                         cycle state, Proposal Engine,
+                         Parameter Store namespace, and
+                         Regime Library. Module
+                         identifier is the routing key.
+                         Cross-module data contamination
+                         prohibited.
+                         Section 6.1 extended with
+                         CIATS-ISO-004 PER-MODULE
+                         INSTANCE ISOLATION (enumerates
+                         what instances do and do not
+                         share).
+
+                     (3) PER-INSTANCE STATISTICAL POOL
+                         ISOLATION.
+                         Section 6.1 extended with
+                         CIATS-ISO-005 CROSS-MODULE DATA
+                         CONTAMINATION PROHIBITED
+                         (codifies prohibition;
+                         declares session-halting defect
+                         class for violation).
+                         Section 3(3) hard rules
+                         extended with cross-module
+                         contamination prohibition rule.
+                         Sections 5.1-5.5 statistical
+                         methods reframed to operate per
+                         instance on instance-own data.
+
+                     (4) PER-INSTANCE THRESHOLD
+                         INSTANTIATION.
+                         Section 4 reframed: all
+                         thresholds (50-eval EWMA /
+                         200-trade inference / 600-trade
+                         per-regime) instantiated per
+                         instance. CIATS-ST-001 / -ST-002
+                         / -ST-003 now per-instance.
+                         Cross-module threshold
+                         aggregation prohibited.
+
+                     (5) PER-INSTANCE PARAMETER PROPOSAL
+                         STREAM.
+                         Section 6.4 (CIATS-PS-002) NEW
+                         PER-MODULE NAMESPACE
+                         specification: Parameter Store
+                         organized by module namespace.
+                         Each instance writes only to
+                         its own module's keys. Per-
+                         module CIATS-owned parameter
+                         set enumerated per TB00000
+                         v2_29 §9.17 (per_trade_size_usd
+                         + per_trade_ceiling_pct +
+                         session_pause + full_halt +
+                         mae_mult + emergency_sl_mult +
+                         entry_timeout_sec + adx +
+                         atr_percentile + htf_ema_periods
+                         + min_volume_usd_daily +
+                         expected_rr_acceptance_rule per
+                         module; Short-only:
+                         leverage_cap_short + rsi_short_*
+                         + min_order_size_usd).
+                         Section 6.4 (CIATS-PS-003)
+                         enumerates universal exceptions
+                         (rr_minimum_net SACRED;
+                         operator-controlled wallets
+                         read-only to CIATS).
+
+                     (6) TRADE OUTCOME BUS ROUTING BY
+                         MODULE IDENTIFIER.
+                         Section 6.3 (CIATS-TOB-004) NEW:
+                         Every TRADE_CLOSE event MUST
+                         carry a module identifier field
+                         per 0511006 Logger Specification.
+                         Each instance filters on this
+                         field at consumption boundary.
+                         Events with non-matching ID
+                         ignored. Events lacking ID
+                         logged as
+                         CIATS_EVENT_ROUTING_ERROR at
+                         WARNING level and dropped.
+
+                     (7) REVISION HISTORY ENTRY PER
+                         CI-005 + CI-006.
+                         This dv1_7 entry. All pre-
+                         amendment §1 + §3 + §4 + §6
+                         text preserved verbatim under
+                         "PRE-AMENDMENT VERBATIM
+                         PRESERVATION" block below per
+                         content-integrity rule CI-005
+                         (pre-edit baseline preservation)
+                         + CI-006 (revision history
+                         completeness).
+
+                     COLLATERAL AMENDMENT — SECTION 5.5
+                     HALF-KELLY REFRAMING.
+                     Per TB00000 v2_29 §9.17 RETIRED AT
+                     v2_29: "Hardcoded Half-Kelly
+                     transition at 200 trades — Half-
+                     Kelly remains a candidate sizing
+                     methodology CIATS may adopt as the
+                     underlying sizing-curve form. It is
+                     no longer a hardcoded transition
+                     rule." Section 5.5 reframed
+                     accordingly: Half-Kelly is now a
+                     CANDIDATE sizing-curve methodology
+                     each per-module CIATS instance may
+                     propose under PDCA. CIATS-KE-003
+                     normalization rewritten from the
+                     retired tradeable_pct /
+                     max_concurrent formula to per-module
+                     per_trade_ceiling_pct ×
+                     module_wallet_balance_usd. Section
+                     6.5 Kelly procedure rewritten as
+                     compute_kelly_per_module() with
+                     module_id parameter, per-instance
+                     trade pool input, module-keyed
+                     parameter reads, and module-tagged
+                     log output. The collateral
+                     amendment is required for per-
+                     module instantiation internal
+                     consistency (the retired parameters
+                     cannot be referenced in a post-v2_29
+                     spec).
+
+                     PARENT CHAIN COMPLIANCE: 1011010 is
+                     a Tier-3 Instance document. Parent
+                     chain (1011010 -> 1010000 -> 1000000)
+                     unchanged. Parent specification
+                     (0211001 CIATS_Specification dv1_0)
+                     unchanged at the parent layer; the
+                     per-module framework codification
+                     in TB00000 v2_29 §9.6 + §9.17 takes
+                     authority over 0211001 dv1_0 until
+                     0211001 is amended in a future cycle.
+
+                     OPEN ITEMS UPDATED:
+                     No new OI raised at dv1_7 enactment.
+                     Stage M-5 close trigger active per
+                     TB00189 NSI §5 E-M5EXIT-04 on
+                     delivery via present_files.
+
+                     STAGE M-5 EXIT REACHED on dv1_7
+                     delivery (per TB00189 NSI §5
+                     E-M5EXIT-01 through E-M5EXIT-06
+                     sequenced exit criteria). Stage M-6
+                     (Stage M close + Step 3 trigger
+                     per DEC-008) sequencing trigger
+                     activated for TB00190.
+
+                     ----------------------------------
+                     PRE-AMENDMENT VERBATIM PRESERVATION
+                     (per CI-005 + CI-006). The dv1_6
+                     text of §1, §3, §4, §6.1, §6.2,
+                     §6.3, §6.4, §6.5, and §5.5 is
+                     preserved below as the predecessor
+                     record. The dv1_7 amended sections
+                     above SUPERSEDE the verbatim text
+                     below; both are retained for
+                     forensic traceability.
+                     ----------------------------------
+
+                     DV1_6 SECTION 1 (PURPOSE) — VERBATIM:
+
+                     "This document is the complete,
+                     unambiguous coding contract for
+                     CIATS (Continuous Improvement and
+                     Autonomous Trading System) —
+                     TothBot V2's self-improvement
+                     engine. CIATS is fully asynchronous.
+                     It reads only from the Logger and
+                     writes only to the Parameter Store.
+                     It never blocks the trading hot
+                     path. Deming PDCA governs every
+                     change."
+
+                     DV1_6 SECTION 3(1) WHAT DOES CIATS
+                     DO — VERBATIM:
+
+                     "Reads Logger output (Trade Outcome
+                     Bus and candle eval events). Runs
+                     two parallel streams: Stream 1
+                     (EWMA Monitor, valid at 50 candle
+                     evals) for real-time anomaly
+                     detection and Stream 2 (Trade
+                     Outcome Bus, valid at 200 closed
+                     trades) for statistical inference.
+                     Computes Half-Kelly at 200+ trades.
+                     Runs per-regime analysis at 600+
+                     trades. Generates parameter
+                     proposals via Proposal Engine.
+                     Executes PDCA cycle (Plan-Do-Check-
+                     Act). Writes approved parameter
+                     changes to Parameter Store at
+                     inter-trade boundaries. Never blocks
+                     the trading hot path. Never makes
+                     changes without PDCA validation and
+                     Bill approval."
+
+                     DV1_6 SECTION 3(2) INTERFACES —
+                     VERBATIM:
+
+                     "IN:  Logger log files (sole data
+                     source — reads files only). Event
+                     codes: CANDLE_EVAL, PIPELINE_GATE_*,
+                     TRADE_CLOSE, WS_ROUNDTRIP_*,
+                     RATE_COUNTER_UPDATE.
+                     OUT: Parameter Store (all CIATS-
+                     owned parameters).
+                     CIATS does not call any TothBot
+                     component directly. CIATS does not
+                     have access to live market data.
+                     CIATS does not know the current
+                     time or positions."
+
+                     DV1_6 SECTION 3(3) HARD RULES —
+                     VERBATIM:
+
+                     "200-trade HARD FLOOR for inference
+                     and parameter changes. 50-candle-
+                     eval floor for EWMA Monitor
+                     (monitoring only). 600-trade floor
+                     for per-regime analysis. PDCA min
+                     50-trade interval between parameter
+                     changes. Mann-Whitney alpha=0.01
+                     (one-sided). Spearman: |rho|>0.3
+                     AND p<0.05 required. CUSUM: k=0.5
+                     sigma, h=4sigma (relative to
+                     metric sigma). All CPU-bound stats:
+                     run_in_executor() mandatory. Logger
+                     hot path: put_nowait() only. Half-
+                     Kelly MUST be normalized by
+                     concurrent position cap. Kelly
+                     inputs W and R MUST use realized
+                     NET P/L. Negative Kelly: CRITICAL
+                     alert, no parameter update.
+                     Parameter Store writes ONLY at
+                     inter-trade boundaries. CIATS
+                     never modifies the hardcoded 1:1.5
+                     R:R constraint."
+
+                     DV1_6 SECTION 3(4) WHAT TRIGGERS
+                     IT — VERBATIM:
+
+                     "Stream 1: every candle close
+                     event (CANDLE_EVAL in Logger).
+                     Stream 2: every TRADE_CLOSE event
+                     in Logger. PDCA: when CUSUM
+                     signals or Proposal Engine
+                     threshold met."
+
+                     DV1_6 SECTION 3(5) WHAT IT LOGS —
+                     VERBATIM:
+
+                     "CIATS_EWMA_UPDATE: signal, value,
+                     lambda (every update).
+                     CIATS_CUSUM_SIGNAL: metric, k, h,
+                     cusum_s (when triggered).
+                     CIATS_PROPOSAL_GENERATED:
+                     parameter, old_value, new_value,
+                     confidence, test_type.
+                     CIATS_KELLY_UPDATE: K_full, K_half,
+                     applied_pct, W, R, wins, losses,
+                     normalization_binding.
+                     CIATS_PARAMETER_WRITE: parameter,
+                     old_value, new_value.
+                     KELLY_NEGATIVE: K_full, W, R,
+                     trades (CRITICAL).
+                     KELLY_NO_LOSSES: trades (INFO)."
+
+                     DV1_6 SECTION 4 STATISTICAL
+                     THRESHOLDS — VERBATIM:
+
+                     "CIATS-ST-001  EWMA Monitor valid
+                     at 50 candle evals. Fast warning
+                     stream. Monitoring only. NEVER
+                     drives parameter changes.
+
+                     CIATS-ST-002  200 closed trades:
+                     HARD FLOOR. Statistical inference
+                     valid. Proposal Engine activates.
+                     Half-Kelly replaces fixed
+                     per_trade_pct. This is the
+                     threshold for ALL parameter
+                     decisions.
+
+                     CIATS-ST-003  600 closed trades:
+                     per-regime analysis valid.
+                     Requires 100+ trades per regime
+                     bucket. Full regime-segmented
+                     optimization active."
+
+                     DV1_6 SECTION 5.5 HALF-KELLY —
+                     VERBATIM:
+
+                     "CIATS-KE-001  Formula:
+                     K_full = W - ((1-W) / R), apply
+                     50%.
+
+                     CIATS-KE-002  W and R from NET
+                     realized P/L (not gross):
+                       W = count(net_gain_usd > 0)
+                           / total_trades
+                       R = mean(net_gain)
+                           / mean(|net_loss|)
+                     Both from Trade Outcome Bus
+                     records.
+
+                     CIATS-KE-003  Half-Kelly
+                     normalization:
+                       max_per_trade = tradeable_pct
+                                       / max_concurrent
+                       applied_pct = min(K_half,
+                                         max_per_trade)
+
+                     CIATS-KE-004  Normalization
+                     applied on every Kelly update.
+
+                     CIATS-KE-005  Floor: applied_pct
+                     >= minimum viable trade size.
+
+                     CIATS-KE-006  Negative Kelly
+                     (K_full <= 0): CRITICAL alert. Do
+                     not update per_trade_pct. Log
+                     KELLY_NEGATIVE.
+
+                     CIATS-KE-007  Complete Kelly
+                     procedure: see Section 6.2."
+
+                     DV1_6 SECTION 6.1 ISOLATION
+                     CONTRACT — VERBATIM:
+
+                     "CIATS-ISO-001  CIATS reads ONLY
+                     from Logger output files. CIATS
+                     writes ONLY to Parameter Store.
+                     No direct calls to TothBot
+                     components. No in-memory shared
+                     state with hot path.
+
+                     CIATS-ISO-002  Parameter Store
+                     writes happen ONLY at inter-trade
+                     boundaries (between position opens
+                     and closes). Never mid-pipeline.
+                     This prevents parameter
+                     inconsistency within a single
+                     pipeline evaluation (I-4 rule).
+
+                     CIATS-ISO-003  CIATS runs as an
+                     asyncio.Task in the same event
+                     loop. CPU-bound computations
+                     delegated to ThreadPoolExecutor:
+                       loop = asyncio.get_event_loop()
+                       result = await loop.run_in_executor(
+                           None, compute_mann_whitney,
+                           data)"
+
+                     DV1_6 SECTION 6.2 STREAM 1 — EWMA
+                     MONITOR — VERBATIM:
+
+                     "CIATS-MON-001  Reads CANDLE_EVAL
+                     and related events from Logger.
+                     Fires on every 5m candle close.
+                     Valid from eval 50 onward
+                     (~4 hours). THREE monitoring
+                     signals only (never parameter
+                     changes):
+                       (1) rejection_rate_by_regime
+                       (2) rate_counter_by_pair
+                       (3) ws_roundtrip_latency_ms
+
+                     CIATS-MON-002  EWMA update on
+                     each signal observation. CUSUM
+                     applied to EWMA output. CUSUM
+                     signal -> PDCA PLAN phase
+                     initiated."
+
+                     DV1_6 SECTION 6.3 STREAM 2 —
+                     TRADE OUTCOME BUS — VERBATIM:
+
+                     "CIATS-TOB-001  Reads TRADE_CLOSE
+                     events from Logger. One record
+                     per closed position. Valid from
+                     trade 200 onward.
+
+                     CIATS-TOB-002  On each
+                     TRADE_CLOSE:
+                       (a) Update rolling trade corpus
+                       (b) If corpus >= 200: run
+                           Proposal Engine
+                       (c) If corpus >= 600: run
+                           regime-segmented analysis
+
+                     CIATS-TOB-003  PDCA cycle
+                     (minimum 50-trade interval):
+                       PLAN:  CUSUM signals drift or
+                              Spearman confirms
+                              correlation between
+                              parameter and
+                              performance.
+                       DO:    Apply proposed change to
+                              Parameter Store at next
+                              inter-trade boundary.
+                       CHECK: Mann-Whitney U on pre vs
+                              post change performance
+                              (alpha=0.01).
+                       ACT:   If CHECK passes: keep
+                              change. If CHECK fails:
+                              revert. Document
+                              finding."
+
+                     DV1_6 SECTION 6.4 PARAMETER
+                     STORE — VERBATIM:
+
+                     "CIATS-PS-001  Parameter Store
+                     holds all CIATS-owned values.
+                     TothBot reads a frozen snapshot
+                     at pipeline start. CIATS writes
+                     at inter-trade boundaries only.
+
+                     CIATS-PS-002  All parameters
+                     tracked with history:
+                       parameter_name, old_value,
+                       new_value, change_timestamp,
+                       trade_count_at_change,
+                       statistical_basis (test
+                       results)
+
+                     CIATS-PS-003  EXCEPTION — never
+                     in Parameter Store: net 1:1.5 R:R
+                     constraint — hardcoded, not
+                     CIATS."
+
+                     DV1_6 SECTION 6.5 KELLY
+                     COMPUTATION PROCEDURE — VERBATIM:
+
+                     "              def compute_kelly(
+                                       closed_trades: list):
+                       from decimal import Decimal
+                       if len(closed_trades) < 200:
+                           return None  # Below hard
+                                          floor
+
+                       wins   = [t for t in
+                                  closed_trades
+                                  if t['net_gain_usd']
+                                     > Decimal('0')]
+                       losses = [t for t in
+                                  closed_trades
+                                  if t['net_gain_usd']
+                                     <= Decimal('0')]
+
+                       W = (Decimal(len(wins))
+                            / Decimal(len(closed_trades)))
+
+                       if not losses:
+                           log('KELLY_NO_LOSSES',
+                               level='INFO')
+                           return None
+
+                       avg_win  = (sum(t['net_gain_usd']
+                                       for t in wins)
+                                   / Decimal(len(wins)))
+                       avg_loss = (sum(abs(t['net_gain_usd'])
+                                       for t in losses)
+                                   / Decimal(len(losses)))
+
+                       if avg_loss == Decimal('0'):
+                           return None
+
+                       R      = avg_win / avg_loss
+                       K_full = W - ((Decimal('1') - W)
+                                     / R)
+
+                       if K_full <= Decimal('0'):
+                           log('KELLY_NEGATIVE',
+                               level='CRITICAL',
+                               K_full=K_full, W=W, R=R)
+                           alert(CRITICAL,
+                                 f'Kelly negative: '
+                                 f'{K_full}')
+                           return None
+
+                       K_half = K_full * Decimal('0.5')
+                       max_pt = (parameter_store[
+                                   'tradeable_pct']
+                                 / Decimal(str(
+                                     parameter_store[
+                                       'max_concurrent']
+                                 )))
+                       applied = min(K_half, max_pt)
+
+                       log('CIATS_KELLY_UPDATE',
+                           K_full=K_full, K_half=K_half,
+                           applied_pct=applied,
+                           W=W, R=R, wins=len(wins),
+                           losses=len(losses),
+                           total=len(closed_trades),
+                           normalization_binding=(
+                               applied < K_half))
+                       return applied"
+
+                     END PRE-AMENDMENT VERBATIM
+                     PRESERVATION.
+
+  dv1_6  04-05-2026  Phase 8 completion. WD -> full spec.
+                     Parent chain updated (1000000/1010000
+                     now exist). WD status removed. Five
+                     coding-readiness questions answered
+                     (Section 3). Section 4: statistical
+                     thresholds table. Section 5: all
+                     statistical methods with implementation
+                     code (EWMA, CUSUM, Mann-Whitney, Spearman,
+                     Half-Kelly). Section 6: CIATS architecture
+                     — isolation contract, Stream 1, Stream 2,
+                     PDCA cycle, Parameter Store rules, complete
+                     Kelly procedure. All prior "must be included"
+                     content carried forward and integrated.
+                     CUSUM correction from dv1_5 carried forward.
+                     Kelly net P/L clarification from dv1_3/dv1_5
+                     carried forward. Document is coding-ready.
+
+  dv1_5  04-05-2026  CUSUM defect corrected: h=4sigma (not
+                     h=5.0 unitless). Full FP/DP rationale.
+
+  dv1_4  04-04-2026  DocPath correction.
+
+  dv1_3  03-26-2026  Kelly net P/L clarification. CIATS-KE-006
+                     through -009.
+
+  dv1_2  03-25-2026  Half-Kelly normalization. CIATS-KE-002-005.
+
+  dv1_1  03-25-2026  ThreadPoolExecutor. Logger put_nowait.
+
+  dv1_0  03-24-2026  Initial WD placeholder.
+
+============================================================
+END OF DOCUMENT
+============================================================
