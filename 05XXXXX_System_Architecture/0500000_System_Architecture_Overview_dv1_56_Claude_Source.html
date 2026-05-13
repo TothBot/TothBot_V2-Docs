@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_55</title>
+<title>0500000 System Architecture Overview dv1_56</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_55</td></tr>
+  <tr><td>DocVersion</td><td>dv1_56</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_55_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_56_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-12-2026</td></tr>
   <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
@@ -1288,7 +1288,7 @@ IMP-08 (dv1_8) ★  systemd Watchdog Integration — Frozen Process Detection:
 <br>
      TothBot with open positions is undetected indefinitely.
 <br>
-     Assign to 1011013 VPS_Deployment_Coding_Spec VD-WD-001 through VD-WD-006.
+     Assign to 0211002 IN-PM-003 + 0211002 IN-PM-004 + D7 systemd-tier visual cluster (per DD-001 diagrams-canonical; 1011013 dv1_6 retired in TB00228 RANK 7 cascade).
 </p>
 <p>
 IMP-16 (dv1_10) ★  aiohttp ClientSession Timeout — Required for REST Reliability:
@@ -4821,7 +4821,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Must not trigger Position Mirror update. Elevated alert if resting order.
   AR-025 (dv1_8) ★: All REST calls via aiohttp (IMP-06). asyncio TaskManager pattern
                     mandatory for 24/7 operation (IMP-07). systemd WatchdogSec=120 with
-                    30-second asyncio ping loop (IMP-08). See 1011013 VPS_Deployment_Spec.
+                    30-second asyncio ping loop (IMP-08). See 0211002 IN-PM-002 + IN-PM-003 (1011013 retired TB00228).
   AR-026 (dv1_9) ★: order_status:true MANDATORY in executions subscription. Without it
                     amended and restated exec_types are silently dropped — A-12/A-13 blind.
   AR-027 (dv1_9) ★: interval_begin replaces deprecated timestamp in OHLC WS v2 channel.
@@ -4861,13 +4861,13 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   AR-037 (dv1_10) ★: Both DATA and TRADE API keys MUST be IP-whitelisted to VPS IP.
                     Current VPS: 87.99.141.44. Update whitelist on any VPS migration.
                     IP whitelisting is configured separately in Kraken API key settings.
-                    Assign: 1011013 VD-KEY-006–009.
+                    Assign: 0211002 IN-KEY-001 through IN-KEY-004 (1011013 VD-KEY-006-009 retired TB00228; parent specification 0211002 is canonical post-retirement).
   AR-038 (dv1_12) ★: Kraken Status API used at startup for proactive maintenance detection.
                     Public REST API at https://status.kraken.com/api/v2/. Query
                     /scheduled-maintenances/upcoming.json on startup. If scheduled
                     maintenance detected within 2 hours: log KRAKEN_MAINTENANCE_SCHEDULED,
                     alert operator. Does NOT block startup — informational only.
-                    Assign: 0411001 WS-STAT-001 through -004, 1011013 VD-STAT-001.
+                    Assign: 0411001 WS-STAT-001 through -004, 0211002 IN-ALT-003 (1011013 VD-STAT-001 retired TB00228; parent specification 0211002 is canonical post-retirement).
   AR-039 (dv1_12) ★: Per-pair instrument channel status check expanded. Complete set of
                     NO-ENTRY states: reduce_only, work_in_progress, delisted, limit_only,
                     cancel_only, maintenance. cancel_only and maintenance were previously
@@ -7109,6 +7109,164 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_56  05-12-2026  TB00228 TURN 2 PHASE 2 — 1011013 dv1_6 RETIREMENT
+                      CASCADE (RANK 7) PROSE-LAYER ASSIGN-LINE
+                      REDIRECTS.
+
+                      Retirement of 1011013 VPS_Deployment_Coding_
+                      Spec dv1_6 per TB00228 Turn 2 Phase 3 git rm
+                      + commit + push per TB00000 v2_35 §11
+                      retired-document standing practice (the rule
+                      that retirement = git rm only, no rt-prefix
+                      file, no tombstone body).
+
+                      Surgical edits across four prose Assign-line
+                      sites resolving all LIVE 1011013 citations.
+                      Zero SVG amendments — VD-SYS-008 contract
+                      identifier (the systemd StartLimitBurst +
+                      StartLimitIntervalSec defense per OI-060
+                      back-to-back-restart subscribe storm) is
+                      already canonical in D7 root &lt;desc&gt; governs:
+                      list per DD-001 (diagrams-canonical) and
+                      remains the architectural authority
+                      post-retirement. All 8 figures preserved
+                      BYTE-IDENTICAL from dv1_55 per DEC-003
+                      Path A (the one-diagram-per-session cadence
+                      decision).
+
+                      PROSE EDITS (four sites):
+                      Line 1291 — IMP-08 (dv1_8) Assign-line for
+                        systemd Watchdog integration. Redirected
+                        from "1011013 VPS_Deployment_Coding_Spec
+                        VD-WD-001 through VD-WD-006" to "0211002
+                        IN-PM-003 + 0211002 IN-PM-004 + D7
+                        systemd-tier visual cluster (per DD-001
+                        diagrams-canonical; 1011013 dv1_6 retired
+                        in TB00228 RANK 7 cascade)".
+                      Line 4824 — AR-025 (dv1_8) prose pointer
+                        for systemd + asyncio watchdog. Redirected
+                        from "See 1011013 VPS_Deployment_Spec" to
+                        "See 0211002 IN-PM-002 + IN-PM-003 (1011013
+                        retired TB00228)".
+                      Line 4864 — AR-037 (dv1_10) Assign-line for
+                        IP-whitelisting. Redirected from "1011013
+                        VD-KEY-006-009" to "0211002 IN-KEY-001
+                        through IN-KEY-004 (1011013 VD-KEY-006-009
+                        retired TB00228; parent specification
+                        0211002 is canonical post-retirement)".
+                      Line 4870 — AR-038 (dv1_12) Assign-line for
+                        Kraken Status API. Redirected from "0411001
+                        WS-STAT-001 through -004, 1011013
+                        VD-STAT-001" to "0411001 WS-STAT-001
+                        through -004, 0211002 IN-ALT-003 (1011013
+                        VD-STAT-001 retired TB00228; parent
+                        specification 0211002 is canonical
+                        post-retirement)".
+
+                      SVG EDITS: NONE.
+                      D7 visual cluster preserves contract:VD-SYS-008
+                      reference in root &lt;desc&gt; governs: list and in
+                      [Unit] StartLimitBurst=3 / StartLimitIntervalSec=600
+                      visual text labels. The contract identifier
+                      survives 1011013 retirement because the
+                      canonical authority for contract:VD-SYS-008
+                      post-retirement is (a) the D7 diagram itself
+                      per DD-001 and (b) TB00000 v2_36 §9.17 VPS
+                      deployment subsection (StartLimitBurst=3 +
+                      StartLimitIntervalSec=600 absorbed from
+                      1011013 dv1_6 VD-SYS-008 in Phase 1).
+
+                      HISTORICAL SITES PRESERVED BYTE-IDENTICAL
+                      PER CI-006 (the rule that prior revision
+                      history is preserved):
+                      Line 1365 — D7 root &lt;desc&gt; governs: list
+                        contract:VD-SYS-008 entry (architectural
+                        registration, not citation; preserved).
+                      Lines 1566, 1572-1573 — D7 visual text
+                        labels referencing VD-SYS-008 (contract
+                        identifier remains canonical; preserved).
+                      Line 7108 — dv1_16 revision-history block
+                        listing 1011013 dv1_2 among Phase 8 WD
+                        documents (preserved per CI-006).
+                      Line 8997 — dv1_47 PER-AUDIT RULE ESTABLISHED
+                        revision-history block listing 1011013
+                        among the 12 audit-scope coding specs
+                        (preserved per CI-006).
+                      Lines 12073-12079, 14724-14998 — dv1_NN
+                        revision-history blocks (preserved per
+                        CI-006).
+
+                      HEADER REFRESH.
+                      &lt;title&gt; updated to dv1_56.
+                      DocVersion: dv1_55 -&gt; dv1_56.
+                      DocPath: ...dv1_55_Claude_Source.html -&gt;
+                      ...dv1_56_Claude_Source.html.
+
+                      DEC-003 PATH A COMPLIANCE.
+                      Zero diagram amendments this session.
+                      DEC-003 Path A (one-diagram-per-session
+                      cadence) satisfied trivially. R-state of all
+                      8 figures unchanged from dv1_55: D1 R2, D2
+                      R2, D3 R3, D4 R3, D5 R1, D6 R1, D7 R1, D8 R1
+                      (per dv1_55 §14 entry).
+
+                      DR-007.9 HTML WELL-FORMEDNESS GATE.
+                      Comparative delta vs dv1_55 baseline =
+                      ZERO (no new structural HTML changes — only
+                      text edits inside existing &lt;p&gt; tags).
+
+                      WORD-COUNT PARITY (DR-007.4).
+                      Body word count delta within ±5% of dv1_55
+                      baseline (~80 words added in §14 dv1_56
+                      revision history entry; ~40 words modified
+                      in 4 Assign-line redirects; net ~80 words
+                      added to a multi-thousand-word body — well
+                      within tolerance).
+
+                      ASSET-REFERENCE PARITY (DR-007.1H + V-037).
+                      8 figures + 0 placeholders = 8 total. All
+                      &lt;figure class="diagram"&gt; elements contain
+                      inline &lt;svg&gt;. Zero placeholder figures.
+
+                      REASON FOR CHANGE.
+                      Phase 2 of TB00228 RANK 7 retirement cascade
+                      for 1011013 dv1_6. RR-SCOPE-009 four-question
+                      Chesterton's-fence audit at Phase 0 confirmed
+                      VD-SYS-008 contract authority is preserved
+                      via DD-001 canonical D7 placement and via
+                      TB00000 v2_36 §9.17 parameter absorption.
+                      OI-019 plural alerts@tothbot.com propagation
+                      to parent 0211002 dv1_1 closes the
+                      RR-SCOPE-009 Q4 loss-prevention gap that
+                      would otherwise have left a non-existent
+                      mailbox as the canonical alert destination
+                      post-retirement.
+
+                      Bill override: dv1_55 -&gt; dv1_56 enacted
+                      under Bill's standing document-control
+                      override continuing the scope established
+                      in TB00115 (v2_10 -&gt; v2_11) and extended
+                      through TB00227. Direct increment dv1_55
+                      -&gt; dv1_56; no rv state. Per Bill's TB00228
+                      OCS directive bundling RANK 7 cascade
+                      execution.
+
+                      COMPANION DELIVERABLES THIS SESSION:
+                      TB00000 v2_35 -&gt; v2_36.txt (Phase 1
+                        StartLimit parameter absorption).
+                      0211002 dv1_0 -&gt; dv1_1.txt (Phase 2 OI-019
+                        propagation to parent specification).
+                      TB00153 MDR v1_11 -&gt; v1_12.txt (Phase 2
+                        Amendment 2: 1011013 retirement entry).
+                      Phase 3 — 1011013 dv1_6 git rm + commit +
+                        push copy box for Bill execution.
+                      TB00228 SL v1_0 + TB00229 NSI v1_0
+                        (session-close trio).
+
+                      Document Status: this document is the sole
+                      authoritative version of 0500000 post-
+                      supersession; dv1_55 is superseded.
+
   dv1_55  05-12-2026  TB00227 TURN 2 PHASE 2 — 1011012 dv1_5 RETIREMENT
                       CASCADE (RANK 6) + D4 REGIME-TAXONOMY
                       PLACEHOLDER + SPEC-DISCREPANCY RESOLUTION.

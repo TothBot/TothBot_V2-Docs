@@ -1,9 +1,9 @@
 DocDCN:     0211002
 DocTitle:   Operations_Infrastructure_Specification
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211002_Operations_Infrastructure_Specification_dv1_0.txt
-DocDate:    04-05-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211002_Operations_Infrastructure_Specification_dv1_1.txt
+DocDate:    05-12-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -27,6 +27,13 @@ this document exists to prevent that outcome.
 
 This document is the parent specification for AA=10
 coding specification 1011013 VPS_Deployment_Coding_Spec.
+(Note: 1011013 dv1_6 was RETIRED in TB00228 RANK 7
+retirement cascade. Per DD-001/DD-002 diagrams-as-
+canonical, 0211002 plus 0500000 diagrams D7 + D8 + root
+<desc> governs: list contract identifiers — including
+contract:VD-SYS-008 systemd StartLimit defense — are the
+sole canonical authority for VPS deployment content
+post-retirement.)
 
 ============================================================
 2. PARENT CHAIN
@@ -219,7 +226,8 @@ TothBot V2 requires persistent outbound connectivity to:
     Port 443 (HTTPS). Called at startup only.
 
   Email alerts (SMTP):
-    alert@tothbot.com outbound. SMTP port as configured.
+    alerts@tothbot.com outbound. SMTP port as configured.
+    Plural address — real Proton Mail mailbox per OI-019.
 
 ------------------------------------------------------------
 IN-NET-002  CONNECTION FAILURE BEHAVIOR
@@ -316,7 +324,14 @@ IN-ALT-001  ALERT DESTINATION
 ------------------------------------------------------------
 
 All TothBot V2 operational alerts are sent to:
-  alert@tothbot.com
+  alerts@tothbot.com
+
+Plural address. This is the real Proton Mail mailbox per
+OI-019. The singular `alert@tothbot.com` cannot be created
+in Proton Mail (catch-all reservation) — every alert
+addressed to the singular form bounces. Do not use
+singular form anywhere in code, config, documents, or
+alert payloads.
 
 No other alert destination is used. CIATS does not send
 alerts directly — all alerts flow through the Logger
@@ -347,7 +362,7 @@ startup to check for scheduled maintenance windows:
   https://status.kraken.com/api/v2/scheduled-maintenances.json
 
 If a scheduled maintenance is within 2 hours of startup:
-  Log at CRITICAL level. Send alert to alert@tothbot.com.
+  Log at CRITICAL level. Send alert to alerts@tothbot.com.
   Continue startup — this check is informational only.
   It does not block startup.
 
@@ -406,7 +421,7 @@ IN-LOG-003  LOGGER QUEUE ALERT REQUIREMENT
 
 The Logger maintains an async bounded queue (maxsize=10,000
 per 0511006). If the queue fills, an immediate CRITICAL
-alert must be sent to alert@tothbot.com. The Logger must
+alert must be sent to alerts@tothbot.com. The Logger must
 never silently drop events. A full queue indicates either
 a disk I/O problem or an unexpectedly high event rate —
 both require immediate operator attention.
@@ -517,14 +532,162 @@ requiring immediate remediation.
   0211001  CIATS_Specification           dv1_0
   0511001  WS_Manager_Specification      dv1_0
   0511006  Logger_Specification          dv1_0
-  0500000  System_Architecture_Overview  dv1_18
-  1011013  VPS_Deployment_Coding_Spec    dv1_3
+  0500000  System_Architecture_Overview  dv1_56
   0311001  Namespace_Specification       (governs DCN)
   0311002  Document_Creation_Workflow    (governs sequence)
+
+(Note: 1011013 VPS_Deployment_Coding_Spec dv1_6 was
+RETIRED in TB00228 RANK 7 retirement cascade and removed
+from this Related Documents list. Per DD-001/DD-002,
+0500000 D7 + D8 SVG diagrams + contract:VD-SYS-008 in
+root <desc> governs: list are the canonical authority
+for VPS deployment content downstream of this parent
+specification.)
 
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_1  05-12-2026  OI-019 PLURAL ADDRESS PROPAGATION +
+                     1011013 RETIREMENT-CASCADE COMPANION
+                     AMENDMENT (TB00228 RANK 7 PHASE 2).
+
+                     Two amendment classes applied to dv1_0
+                     baseline:
+
+                     CLASS A — OI-019 plural address fix.
+                     All five sites referencing the singular
+                     non-existent `alert@tothbot.com`
+                     mailbox updated to the plural real
+                     `alerts@tothbot.com` mailbox per OI-019
+                     (the defect first identified TB00115
+                     2026-04-20 and fixed in 1011013 dv1_5
+                     + logger.py dv1_3 + startup_sequence
+                     dv1_8 + vps_deployment dv1_5; this
+                     amendment propagates the same fix to
+                     the parent specification 0211002 which
+                     was not amended in TB00115). Sites
+                     amended:
+                       §5 IN-NET-001 SMTP outbound address.
+                       §7 IN-ALT-001 alert destination.
+                       §7 IN-ALT-003 Kraken Status API
+                         CRITICAL alert routing.
+                       §8 IN-LOG-003 Logger queue-full
+                         CRITICAL alert routing.
+
+                     CLASS B — 1011013 retirement-cascade
+                     companion notes.
+                       §1 Purpose paragraph: clarifying
+                         note that 1011013 dv1_6 was
+                         retired in TB00228 RANK 7 cascade
+                         and that 0211002 + 0500000
+                         diagrams are sole canonical
+                         authority for VPS deployment
+                         content post-retirement.
+                       §11 Related Documents: 1011013
+                         entry removed (file no longer
+                         exists at GitHub HEAD after Phase
+                         3 git rm); 0500000 reference
+                         updated from "dv1_18" stale
+                         pointer to current "dv1_56";
+                         retirement note added.
+
+                     HEADER REFRESH.
+                     DocVersion: dv1_0 -> dv1_1.
+                     DocPath: ...dv1_0.txt -> ...dv1_1.txt.
+                     DocDate: 04-05-2026 -> 05-12-2026.
+                     DocTime: refreshed.
+
+                     SOURCE.
+                     OI-019 defect record: TB00115 SL
+                     2026-04-20 forensic + TB00000 v2_10
+                     §12 revision history entry. RR-SCOPE-
+                     009 four-question Chesterton's-fence
+                     audit performed at TB00228 Phase 0
+                     surfaced the gap: 1011013 dv1_6 used
+                     plural alerts@tothbot.com but parent
+                     0211002 dv1_0 still used singular
+                     alert@tothbot.com. Retirement of
+                     1011013 without propagating the OI-019
+                     fix to 0211002 would leave a non-
+                     existent mailbox as the canonical
+                     alert destination — direct violation
+                     of RR-SCOPE-009 Q4 (loss-prevention
+                     property preserved) and direct
+                     reintroduction of the original OI-019
+                     defect.
+
+                     REASON FOR CHANGE.
+                     Phase 2 of TB00228 RANK 7 retirement
+                     cascade for 1011013 dv1_6. Option C
+                     selected per FP/DP analysis at TB00228
+                     chat-turn cold-load (RR-SCOPE-009
+                     compliance mandates plural address
+                     propagation to parent before child
+                     retirement; only one compliant option
+                     remained after RR-SCOPE-009 audit;
+                     executed per DD-011 derivable-decision
+                     authority).
+
+                     FP/DP ANALYSIS.
+                     Option A (retire 1011013 without
+                       amending 0211002) — REJECTED.
+                       RR-SCOPE-009 Q4 violation; would
+                       leave non-existent mailbox as
+                       canonical alert destination.
+                     Option B (defer 0211002 amendment to
+                       separate session, retire 1011013
+                       now) — REJECTED. Same RR-SCOPE-009
+                       violation; window of brokenness
+                       between sessions unacceptable.
+                     Option C (bundle 0211002 dv1_0 ->
+                       dv1_1 with TB00228 RANK 7 cascade)
+                       — ACCEPTED. RR-SCOPE-009 compliant.
+                       Maintains zero-broken-alert
+                       invariant.
+
+                     Decision: Option C.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0211002 chain: 0211002 (Tier 3
+                     instance) -> 0210000 (Tier 2 anchor)
+                     -> 0200000 (Tier 1 domain). All
+                     parents present in project folder.
+                     Per DD-001/DD-002 diagrams-as-
+                     canonical, 0500000 D7 + D8 + root
+                     <desc> governs: list (contract:
+                     VD-SYS-008 + contract:WM-PACE-002 +
+                     contract:WM-SHARD-001 + etc.) are
+                     the diagrammatic canonical authority
+                     for content downstream of 0211002.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00228 RANK 7 RETIREMENT CASCADE):
+                       TB00000 v2_35 -> v2_36.txt (Phase 1
+                         StartLimit parameter absorption
+                         to §9.17).
+                       0211002 dv1_0 -> dv1_1.txt (this
+                         document — Phase 2 OI-019 plural
+                         address propagation + retirement
+                         companion notes).
+                       0500000 dv1_55 -> dv1_56.html
+                         (Phase 2 prose Assign-line
+                         redirects).
+                       TB00153 MDR v1_11 -> v1_12.txt
+                         (Phase 2 Amendment 2: 1011013
+                         retirement + OI-019 propagation
+                         entry).
+                       Phase 3 — 1011013 dv1_6 git rm +
+                         commit + push copy box for Bill
+                         execution.
+                       TB00228 Session_Log v1_0 + TB00229
+                         Next_Session_Instructions v1_0
+                         (session close trio).
+
+                     Document Status: this document is
+                     the sole authoritative version of
+                     0211002 post-supersession; dv1_0 is
+                     superseded.
 
   dv1_0  04-05-2026  Initial document. Complete infrastructure
                      specification. VPS environment (IN-VPS-001
