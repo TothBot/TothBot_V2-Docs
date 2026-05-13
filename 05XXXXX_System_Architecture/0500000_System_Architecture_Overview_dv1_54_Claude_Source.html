@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_53</title>
+<title>0500000 System Architecture Overview dv1_54</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_53</td></tr>
+  <tr><td>DocVersion</td><td>dv1_54</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_53_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_54_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-12-2026</td></tr>
-  <tr><td>DocTime</td><td>23:59:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:59:30 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -5538,7 +5538,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     BTC/USD always included as market_regime proxy (see AR-074).
                     CIATS may add/remove pairs via PDCA after 200 trades.
                     OI-002: CLOSED.
-                    Assign: 0711003 AS-001 through -008, 1011009 SC-UNI-001 through -006.
+                    Assign: 0711003 AS-001 through -008. 1011009 SC-UNI-001 through -006 retired TB00226 — canonical authority is 0711003 AS-001..008 + Diagram 1 universe-scope visual (see 0500000 dv1_54 §12.5 Bind block).
                     Scope authority: TB00130 Ratified Decision D-03 (amended, 04-24-2026).
                     FP/DP basis: 3 sequential searches, 18 sources (TB00130).
                     Supersedes: TB00128 D-03 (USDC+USDT only); TB00001 OI-002
@@ -5621,10 +5621,11 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Assign: 0811002 SC-001 through -024 (long),
                             0811002 SC-025 through -048 (short — pending
                               0811002 amendment for direction-symmetric gates
-                              + margin-eligible pre-gate),
-                            1011009 SC-GATE-001 through -018 (long),
-                            1011009 SC-GATE-019 through -036 (short — pending
-                              1011009 amendment).
+                              + margin-eligible pre-gate).
+                            1011009 SC-GATE-001 through -036 retired TB00226 —
+                              canonical authority is 0811002 SC-001..048 +
+                              Diagram 7 selection-controller gate-sequence
+                              visual (see 0500000 dv1_54 §12.5 Bind block).
   AR-073 (canonical: ar:AR-073) (dv1_15; amended dv1_43 — M-2 short-direction) ★: Per-side Selection Controller state management + pair_cache margin_eligible_flag.
                     WS Manager maintains per-MODULE state dicts (not pair-globally).
                     Per TB00000 v2_29 §9.6 per-module CIATS framework, each
@@ -7110,6 +7111,111 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_54  05-12-2026  TB00226 TURN 2 PHASE 2 ASSIGNMENT-LIST
+                      CLEANUP — 1011009 dv1_1 RETIREMENT
+                      CASCADE (TWO ACTIVE SITES).
+
+                      Surgical edits removing 1011009 SC-UNI-*
+                      and 1011009 SC-GATE-* assignments from
+                      two AR Assign blocks. The 1011009
+                      Selection_Controller_Coding_Spec dv1_1
+                      is being retired this session at Turn 2
+                      Phase 3 per `git rm` + commit + push
+                      per TB00000 v2_34 §11 retired-document
+                      standing practice.
+
+                      EDIT 1 — AR-070 ASSIGN BLOCK (line 5541).
+                      Prior text (dv1_53): "Assign: 0711003
+                      AS-001 through -008, 1011009 SC-UNI-001
+                      through -006."
+                      New text (dv1_54): Retains 0711003 AS-*
+                      assignments byte-identical. Replaces
+                      the 1011009 SC-UNI-* reference with a
+                      retirement annotation pointing at the
+                      canonical authority (0711003 + Diagram 1
+                      universe-scope visual per DD-001
+                      diagrams-canonical principle).
+
+                      EDIT 2 — AR-072 ASSIGN BLOCK (lines
+                      5621-5627). Prior text (dv1_53):
+                      "Assign: 0811002 SC-001 through -024
+                      (long), 0811002 SC-025 through -048
+                      (short — pending 0811002 amendment for
+                      direction-symmetric gates + margin-
+                      eligible pre-gate), 1011009 SC-GATE-001
+                      through -018 (long), 1011009 SC-GATE-019
+                      through -036 (short — pending 1011009
+                      amendment)."
+                      New text (dv1_54): Retains 0811002 SC-*
+                      assignments byte-identical. Replaces the
+                      two 1011009 SC-GATE-* lines with a
+                      retirement annotation pointing at the
+                      canonical authority (0811002 + Diagram 7
+                      selection-controller gate-sequence
+                      visual per DD-001 diagrams-canonical
+                      principle).
+
+                      HISTORICAL PRESERVATION.
+                      Two other 1011009 citation sites in
+                      0500000 are PRESERVED BYTE-IDENTICAL
+                      per CI-005 + CI-006 (the historical-
+                      record preservation rules):
+                        Line 8653 — procedural enumeration
+                          inside dv1_47 PER-AUDIT RULE
+                          ESTABLISHED revision-history block
+                          listing the 12 Tier-3 specs in
+                          original Phase 1 redundancy-audit
+                          scope. Historical context describing
+                          the original audit-scope set.
+                        Line 9947 — dv1_15 AR-072 pre-
+                          amendment verbatim quote preserved
+                          as part of the architectural-history
+                          forensic record at an earlier
+                          R-increment closure note.
+                      Both are revision-history Class 2
+                      content per CI-006 and are NEVER edited
+                      in place per the no-silent-loss rule.
+
+                      INCREMENT TYPE: prose-side downstream
+                      reference cleanup. Pure prose-cascade
+                      increment — ZERO diagram changes; all
+                      diagrams preserved BYTE-IDENTICAL from
+                      dv1_53. Per the DEC-003 Path A one-
+                      diagram-per-session cadence + DD-001
+                      diagrams-canonical principle, prose-only
+                      cleanup of retired-spec citations does
+                      NOT consume the per-session diagram-
+                      amendment slot.
+
+                      RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE
+                      COMPLIANCE: RANK 5 candidate identity
+                      (1011009 Selection_Controller_Coding_
+                      Spec dv1_1) traces to Bill TB00226
+                      chat-turn 1 directive "Then proceed
+                      with instructions below" ratifying
+                      TB00226 NSI §4.3 Turn 2 execution. The
+                      RANK 5 identity is derived from TB00221
+                      SL §4.3 line-count ordering principle
+                      over the post-TB00225 retirement-
+                      eligible spec set (1011009 is the
+                      smallest remaining candidate at 555
+                      lines).
+
+                      DD-001/DD-002 COMPLIANCE: prose-only
+                      edits; all diagrams BYTE-IDENTICAL from
+                      dv1_53; no architectural identifier
+                      semantic changes. The 1011009 retirement
+                      is an assignment-list pointer cleanup
+                      (parent spec 0811002 + Diagram 7
+                      remain the canonical authority for
+                      Selection Controller gate semantics).
+
+                      HEADER REFRESH.
+                      DocVersion dv1_53 -&gt; dv1_54.
+                      DocPath filename refreshed.
+                      DocTime refreshed.
+                      &lt;title&gt; updated to dv1_54.
+
   dv1_53  05-12-2026  TB00224 TURN 3 PHASE 2 ASSIGNMENT-LIST
                       CLEANUP — 1011003 dv1_0 RETIREMENT
                       CASCADE (ONE ACTIVE SITE).
