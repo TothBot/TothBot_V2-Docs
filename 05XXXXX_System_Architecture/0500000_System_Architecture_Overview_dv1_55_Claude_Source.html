@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_54</title>
+<title>0500000 System Architecture Overview dv1_55</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_54</td></tr>
+  <tr><td>DocVersion</td><td>dv1_55</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_54_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_55_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-12-2026</td></tr>
-  <tr><td>DocTime</td><td>23:59:30 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -1235,7 +1235,7 @@ A-24 (dv1_10) ★  Regime Engine GetOHLCData Rate Limit Staggering:
 <br>
      retry up to 3 times. If all fail: use stale regime (per RE-SCH-004).
 <br>
-     Assign to 1011012 RE-RL-001 through -004.
+     1011012 RE-RL-001 through -004 retired TB00227 — canonical authority is 0711002 dv1_1 RE-005/RE-006 + Diagram 4 regime-engine visual (see 0500000 dv1_55 §12.5 Bind block).
 </p>
 <p>
 2.5 Data Architecture: Pre-Computation Cache (NEW dv1_5 — I-2)
@@ -1338,7 +1338,7 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
 <br>
      for 50+ pairs at 00:00 UTC hit the rate limit and corrupt regime classification
 <br>
-     for all affected pairs. See A-24. Assign to 1011012 RE-RL-001 through -004.
+     for all affected pairs. See A-24. 1011012 RE-RL-001 through -004 retired TB00227 — canonical authority is 0711002 dv1_1 RE-005/RE-006 + Diagram 4 regime-engine visual (see 0500000 dv1_55 §12.5 Bind block).
 </p>
 <pre>
   Value                          Pre-computed by    Update Trigger                      Cache Read On
@@ -3291,7 +3291,7 @@ DATA SOURCE (NEW dv1_5 — FLAG 2 — FP/DP VERIFIED):
   CRITICAL dv1_6 (GAP-03): The last entry (response[-1]) is ALWAYS the current
   not-yet-committed candle. MUST be excluded from ALL calculations (ADX, EMA, ATR).
   Use only response[:-1]. Including the uncommitted candle corrupts all regime indicators
-  and produces incorrect regime classification. See 1011012 Regime_Engine_Coding_Spec.
+  and produces incorrect regime classification. See 0711002 Regime_Taxonomy_Specification dv1_1 RE-007 + AR-017.
 </pre>
 <pre>
   Directional state:  ADX(14) + EMA(20) vs EMA(50) on DAILY candles (response[:-1] ONLY)
@@ -3400,7 +3400,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
   <g id="grid_hdr" class="decoration">
     <rect x="20" y="300" width="1460" height="40" fill="#1e3a8a" rx="4"/>
     <text x="750" y="326" fill="#ffffff" font-size="17" font-weight="700"
-          text-anchor="middle">6-REGIME GRID — 3 directional × 2 volatility = 6 cells (per 0711002 dv1_0 + 1011012 dv1_5)</text>
+          text-anchor="middle">6-REGIME GRID — 3 directional × 2 volatility = 6 cells (per 0711002 dv1_1)</text>
   </g>
 
   <!-- Column headers (volatility axis) -->
@@ -3470,10 +3470,9 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
       </desc>
     <rect x="885" y="400" width="585" height="115" fill="#fed7aa" stroke="#9a3412" stroke-width="2" rx="4"/>
     <text x="1177" y="425" font-size="14" font-weight="700" text-anchor="middle" fill="#9a3412">REGIME 2 — regime:TRENDING_POS_ELEVATED</text>
-    <text x="1177" y="447" font-size="12" font-weight="700" text-anchor="middle" fill="#7c2d12">ENTRY PERMITTED — see spec for size policy</text>
+    <text x="1177" y="447" font-size="12" font-weight="700" text-anchor="middle" fill="#7c2d12">ENTRY PERMITTED — FULL position size (per 0711002 dv1_1 RE-003)</text>
     <text x="1177" y="467" font-size="11" text-anchor="middle">Confirmed uptrend, ATR adapts risk distance via param:mae_mult</text>
-    <text x="1177" y="485" font-size="10" text-anchor="middle">SPEC DISCREPANCY (TB00158 SL §7): 0711002 = FULL; 1011012 = 50%</text>
-    <text x="1177" y="503" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter; size resolution out of Stage E scope</text>
+    <text x="1177" y="485" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter; 1011012 retired TB00227 — 0711002 dv1_1 canonical</text>
   </g>
 
   <!-- regime:NON_DIR_NORMAL  (Row 2, Col 1) -->
@@ -3491,10 +3490,9 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
       </desc>
     <rect x="290" y="525" width="585" height="115" fill="#fef9c3" stroke="#854d0e" stroke-width="2" rx="4"/>
     <text x="582" y="550" font-size="14" font-weight="700" text-anchor="middle" fill="#854d0e">REGIME 3 — regime:NON_DIR_NORMAL</text>
-    <text x="582" y="572" font-size="12" font-weight="700" text-anchor="middle" fill="#92400e">ENTRY PERMITTED — 50% position size (gate:G6_Regime_Sizer)</text>
+    <text x="582" y="572" font-size="12" font-weight="700" text-anchor="middle" fill="#92400e">ENTRY PERMITTED — 50% position size (gate:G6_Regime_Sizer per 0711002 dv1_1 RE-003)</text>
     <text x="582" y="592" font-size="11" text-anchor="middle">No confirmed trend, acceptable volatility — reduced conviction</text>
-    <text x="582" y="610" font-size="10" text-anchor="middle">SPEC DISCREPANCY (TB00158 SL §7): 0711002 = 50% permitted; 1011012 = NO ENTRY</text>
-    <text x="582" y="628" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter (per 0711002); resolution out of Stage E scope</text>
+    <text x="582" y="610" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter; 1011012 retired TB00227 — 0711002 dv1_1 canonical</text>
   </g>
 
   <!-- regime:NON_DIR_ELEVATED  (Row 2, Col 2) -->
@@ -3707,7 +3705,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
   </g>
 </svg>
   </div>
-  <figcaption>Diagram 4 — Regime Taxonomy (R3). 6-regime 3x2 grid (3 directional × 2 volatility) per 0711002 dv1_1 + 1011012 dv1_5 + 0311001 v1_12 §15.12.6. Each cell is a labeled namespace-token group. Two independent computations (asset_regime per-pair, market_regime BTC/USD anchor) tag every closed trade for CIATS regime-segmented optimization at 600+ trades / 100+ per bucket. R-increment R2 → R3 closes DR-043 #4 D4 SVG portion: HR-REGIME-007 amended dv1_1 long-only unconditional block → directional cascade (LONG blocked + SHORT permitted via mod:Short_Module dispatch per ar:AR-009 amended dv1_41 Kraken margin trading + ar:AR-072 + ar:AR-073) reflected in Regime 5 + Regime 6 cell text and Signal Pipeline cell summary; root governs list expanded for short-side identifiers per V-038 diagram-prose parity. All other 7 figures preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence + DEC-011 Option C Stage M-4 sub-step 1.</figcaption>
+  <figcaption>Diagram 4 — Regime Taxonomy (R3). 6-regime 3x2 grid (3 directional × 2 volatility) per 0711002 dv1_1 + 0311001 v1_13 §15.12.6. Each cell is a labeled namespace-token group. Two independent computations (asset_regime per-pair, market_regime BTC/USD anchor) tag every closed trade for CIATS regime-segmented optimization at 600+ trades / 100+ per bucket. R-increment R2 → R3 closes DR-043 #4 D4 SVG portion: HR-REGIME-007 amended dv1_1 long-only unconditional block → directional cascade (LONG blocked + SHORT permitted via mod:Short_Module dispatch per ar:AR-009 amended dv1_41 Kraken margin trading + ar:AR-072 + ar:AR-073) reflected in Regime 5 + Regime 6 cell text and Signal Pipeline cell summary; root governs list expanded for short-side identifiers per V-038 diagram-prose parity. R3 (dv1_55) also resolves Regime 2 + Regime 3 SPEC DISCREPANCY (TB00158 SL §7) via 1011012 retirement TB00227 — 0711002 dv1_1 RE-003 is sole canonical authority per DD-001/DD-002. All other 7 figures preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence + DEC-011 Option C Stage M-4 sub-step 1.</figcaption>
 </figure>
 
 <h2>6. CIATS Architecture and Data Flows</h2>
@@ -4859,7 +4857,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     REST public OHLC rate-limit: 1 call/second per IP+pair.
                     50 pairs × 1.1s = 55s total. Completes before first 5m candle.
                     asyncio.sleep(1.1) between each GetOHLCData call.
-                    Assign: 1011012 RE-RL-001–004.
+                    1011012 RE-RL-001–004 retired TB00227 — canonical authority is 0711002 dv1_1 RE-005/RE-006 + Diagram 4 regime-engine visual.
   AR-037 (dv1_10) ★: Both DATA and TRADE API keys MUST be IP-whitelisted to VPS IP.
                     Current VPS: 87.99.141.44. Update whitelist on any VPS migration.
                     IP whitelisting is configured separately in Kraken API key settings.
@@ -5693,7 +5691,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     If BTC/USD is excluded by any filter, it is added back explicitly.
                     BTC/USD is NOT traded if it fails entry gates — it is subscribed for regime
                     computation only. Its pipeline evaluation is optional (CIATS-owned).
-                    Assign: 1011012 RE-MKT-001 through -003.
+                    1011012 RE-MKT-001 through -003 retired TB00227 — canonical authority is 0711002 dv1_1 RE-014/RE-015 (two-level trade tagging) + Diagram 4 BTC/USD market_regime anchor cell + 0711003 dv1_3 HR-AS-001/HR-AS-009 (BTC/USD always-subscribed + CIATS-owned pipeline evaluation).
   AR-075 (dv1_15) ★: SSS indicators in per-symbol state dict — pre-computation cache addition.
                     WS Manager per-symbol state dict is extended to include all SSS indicators.
                     These are updated incrementally on each ohlc(5m) candle close (same pattern
@@ -7111,6 +7109,246 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_55  05-12-2026  TB00227 TURN 2 PHASE 2 — 1011012 dv1_5 RETIREMENT
+                      CASCADE (RANK 6) + D4 REGIME-TAXONOMY
+                      PLACEHOLDER + SPEC-DISCREPANCY RESOLUTION.
+
+                      Retirement of 1011012 Regime_Engine_Coding_
+                      Spec dv1_5 per TB00227 Turn 2 Phase 3 git rm
+                      + commit + push per TB00000 v2_34 §11
+                      retired-document standing practice.
+
+                      Surgical edits across nine sites resolving
+                      all LIVE 1011012 citations + placeholder +
+                      spec-discrepancy annotations. All other 7
+                      figures preserved BYTE-IDENTICAL from dv1_54
+                      per DEC-003 Path A one-diagram-per-session
+                      cadence; only Diagram 4 (Regime Taxonomy)
+                      edited this session.
+
+                      PROSE EDITS (six sites):
+                      Line 1238 — AR-070 prose Assign (RE-RL-001..004).
+                        Replaced "Assign to 1011012 RE-RL-001
+                        through -004." with retirement annotation
+                        pointing at canonical authority (0711002
+                        dv1_1 RE-005/RE-006 + Diagram 4 regime-
+                        engine visual).
+                      Line 1341 — AR-070 rate-storm prose. Same
+                        retirement annotation pattern.
+                      Line 3294 — Regime-classification cross-
+                        reference pointer in response[-1]
+                        exclusion narrative. Replaced "See 1011012
+                        Regime_Engine_Coding_Spec." with "See
+                        0711002 Regime_Taxonomy_Specification
+                        dv1_1 RE-007 + AR-017."
+                      Line 3710 — Diagram 4 figcaption. Citation
+                        line "0711002 dv1_1 + 1011012 dv1_5 +
+                        0311001 v1_12 §15.12.6" updated to
+                        "0711002 dv1_1 + 0311001 v1_13 §15.12.6."
+                        Added sentence documenting SPEC
+                        DISCREPANCY resolution via retirement.
+                      Line 4862 — AR-070 secondary Assign
+                        (RE-RL-*). Same retirement annotation.
+                      Line 5696 — AR-074 BTC/USD market_regime
+                        Assign (RE-MKT-001..003). Retirement
+                        annotation pointing at 0711002 dv1_1
+                        RE-014/RE-015 + Diagram 4 BTC/USD anchor
+                        + 0711003 dv1_3 HR-AS-001/HR-AS-009.
+
+                      D4 SVG EDITS (three sites — citation cleanup
+                      + placeholder resolution + spec-discrepancy
+                      resolution):
+                      Line 3403 — D4 grid header attribution label.
+                        Prior text: "6-REGIME GRID … (per 0711002
+                        dv1_0 + 1011012 dv1_5)". New text:
+                        "(per 0711002 dv1_1)" — citation refresh
+                        to current canonical version.
+                      Lines 3475+ — D4 Regime 2 cell (TRENDING_POS_
+                        ELEVATED). Prior cell text: "ENTRY
+                        PERMITTED — see spec for size policy" +
+                        "SPEC DISCREPANCY (TB00158 SL §7): 0711002
+                        = FULL; 1011012 = 50%" + "size resolution
+                        out of Stage E scope". Placeholder
+                        existed because of unresolved
+                        discrepancy. With 1011012 retired, 0711002
+                        dv1_1 RE-003 (FULL position) is sole
+                        canonical authority per DD-001/DD-002.
+                        New cell text: "ENTRY PERMITTED — FULL
+                        position size (per 0711002 dv1_1 RE-003)"
+                        + retirement annotation ("1011012 retired
+                        TB00227 — 0711002 dv1_1 canonical").
+                        SPEC DISCREPANCY annotation REMOVED
+                        (resolved by retirement).
+                      Lines 3496+ — D4 Regime 3 cell (NON_DIR_
+                        NORMAL). Cell text already matched 0711002
+                        dv1_1 RE-003 canonical disposition (50%
+                        position permitted via Gate 6 Regime
+                        Sizer); only the SPEC DISCREPANCY
+                        annotation needed cleanup. Cell text
+                        updated to cite 0711002 dv1_1 RE-003
+                        explicitly. SPEC DISCREPANCY annotation
+                        REMOVED.
+
+                      HISTORICAL PRESERVATION (per CI-005 + CI-006
+                      revision-history-preservation rules — the
+                      rules that prohibit silent truncation of
+                      historical citations): 13 historical 1011012
+                      citation sites preserved BYTE-IDENTICAL
+                      inside prior dv1_NN revision-history blocks
+                      and dv1_47 PER-AUDIT RULE ESTABLISHED block:
+                      lines 7109, 8759 (post-shift), 9558, 9700,
+                      9761, 13794, 13808, 13822, 13974, 13977,
+                      13979, 15610, 15628. These are the dv1_NN
+                      historical forensic record and remain
+                      authoritative for prior-state inspection.
+
+                      D4 R-INCREMENT.
+                      R3 → R3 (no R-increment). The Diagram 4
+                      cell-text edits are placeholder-resolution
+                      and discrepancy-cleanup, not architectural-
+                      semantic changes — the 0711002 dv1_1
+                      directional cascade and Regime 2/3 entry
+                      permissions are unchanged. D4 root governs
+                      list unchanged. D4 namespace-token labeled-
+                      group count = 12 unchanged. The retirement
+                      of 1011012 dv1_5 does not change the regime
+                      taxonomy itself; it removes a duplicate /
+                      divergent coding-spec implementation,
+                      leaving 0711002 dv1_1 as the sole canonical
+                      authority per DD-001 diagrams-as-canonical
+                      principle.
+
+                      SPEC DISCREPANCY RESOLUTION RATIONALE.
+                      TB00158 SL §7 logged a known disposition
+                      mismatch between 0711002 (canonical parent
+                      spec) and 1011012 (coding spec) on Regime 2
+                      and Regime 3 size dispositions. The
+                      discrepancy was annotated in D4 cells
+                      pending resolution authorization. Per
+                      DD-001/DD-002 (the diagrams-as-canonical-
+                      design-documents rule), 0711002 governs
+                      when 0711002 and 1011012 diverged. The
+                      1011012 retirement removes the divergent
+                      authority, leaving 0711002 dv1_1 RE-003
+                      as the sole canonical disposition: Regime
+                      2 = FULL, Regime 3 = 50%. Cell text
+                      updated to reflect canonical positions.
+                      SPEC DISCREPANCY annotations removed
+                      (discrepancy no longer exists).
+
+                      DEC-003 PATH A COMPLIANCE.
+                      One diagram amended this session (D4 only).
+                      All other 7 figures preserved BYTE-IDENTICAL
+                      from dv1_54 — D1 R2, D2 R2, D3 R3, D5 R1,
+                      D6 R1, D7 R2, D8 R1.
+
+                      DD-001/DD-002 COMPLIANCE.
+                      Diagram-canonical edits: D4 cell text now
+                      reflects 0711002 dv1_1 canonical
+                      disposition. No new architectural rules /
+                      contracts / decisions / gates / layers /
+                      regimes / parameters / containers / modules
+                      / indicators / events / channels introduced
+                      in prose without diagram backing.
+
+                      CI-007/CI-008 COMPLIANCE.
+                      No silent loss. The 1011012 RE-RL-001..004
+                      operational rate-limit content (1.1s
+                      stagger, asyncio.gather() prohibition,
+                      2s/4s/8s backoff retry) is preserved at the
+                      architectural level via Diagram 4's regime-
+                      engine cell prose and 0711002 dv1_1 RE-005
+                      / RE-006 (daily computation timing). RE-SCH-
+                      001..003 (00:00 UTC daily schedule)
+                      preserved via 0711002 dv1_1 RE-006 and
+                      Diagram 4 channel:kraken_rest_GetOHLCData.
+                      RE-IND-001..008 (ADX/EMA/ATR computation)
+                      preserved via 0711002 dv1_1 RE-008 through
+                      RE-013. RE-TAX-001..003 (regime cache +
+                      Gate 3 read pattern) preserved via Diagram
+                      4 cell structure + Diagram 2 Gate 3 cell
+                      drill targets. RE-MKT-001..003 (BTC/USD
+                      market_regime tagging) preserved via
+                      0711002 dv1_1 RE-014/RE-015 + Diagram 4
+                      BTC/USD anchor cell + 0711003 dv1_3
+                      HR-AS-001/HR-AS-009.
+
+                      RR-SCOPE-009 COMPLIANCE (Chesterton's fence
+                      — the rule that constraints with unknown
+                      origin must not be removed without origin
+                      investigation): The four-question origin
+                      investigation:
+                        (1) When introduced? 1011012 dv1_5 §7
+                            (RE-RL-* and RE-SCH-*) + §8 (RE-MKT-*).
+                        (2) Problem solved? Operational rate-limit
+                            compliance + daily classification
+                            timing + BTC/USD market_regime anchor.
+                        (3) Evidence problem is gone? Problem is
+                            NOT gone — rate limits + daily
+                            classification + BTC/USD anchor are
+                            all still required. Constraints are
+                            PRESERVED via promotion to canonical
+                            sources (0711002 dv1_1 + Diagrams 2/4
+                            + 0711003 dv1_3), not removed.
+                        (4) Loss-prevention property preserved?
+                            Yes — operational mechanics now sourced
+                            from canonical specs + diagrams.
+
+                      RR-SCOPE-007 COMPLIANCE.
+                      No silent scope narrowing — all prior
+                      LIVE 1011012 citations either replaced with
+                      canonical-authority pointers or preserved
+                      verbatim in historical record. No content
+                      removed without explicit annotation.
+
+                      ATR_ROLLING_WINDOW PARAMETER ABSORPTION.
+                      Companion deliverable TB00000 v2_34 -> v2_35
+                      absorbs the previously-unregistered
+                      atr_rolling_window = 50 days starting CIATS-
+                      owned parameter (documented in 1011012 §10
+                      and 0711002 RE-010) into the canonical §9.17
+                      registry. Closure of Phase 1 audit gap.
+
+                      MASTER DEFECT REGISTER AMENDMENT.
+                      Companion deliverable TB00153 MDR v1_10 ->
+                      v1_11 logs Amendment 1 (the 1011012
+                      retirement entry — the record of which spec
+                      was retired this session). No surgical edit
+                      to prior MDR entries; this retirement
+                      cascade is the first MDR record of 1011012's
+                      formal retirement.
+
+                      HTML WELL-FORMEDNESS GATE — DR-007.9.
+                      Python html.parser feed: zero orphan close
+                      tags, zero unclosed elements at EOF, zero
+                      parser exceptions. PASS.
+
+                      DR-007.1 ASSET-REFERENCE PARITY (HTML SCOPE).
+                      Diagram count unchanged: 8 figures (3
+                      authored inline + 5 placeholders); inline
+                      &lt;svg&gt; count unchanged.
+
+                      DR-007.4 WORD-COUNT PARITY.
+                      Body word count delta within ±5% of dv1_54
+                      after subtracting enumerated CI-007 T-1
+                      asset-embed transformations.
+
+                      Bill override: dv1_54 -> dv1_55 enacted
+                      under Bill's standing document-control
+                      override per TB00227 chat-turn 3 directive
+                      "Did you do a FP/DP analysis to determine
+                      the best path forward? If not do one. Chose
+                      the option that produces the correct result
+                      which produces the least errors and rework,
+                      even if it is not one of the options you
+                      presented." Resulting FP/DP analysis
+                      identified Option D (full retirement +
+                      D4 SVG citation cleanup + Regime 2
+                      placeholder resolution + SPEC DISCREPANCY
+                      removal) as the least-rework path. Executed
+                      under RR-SCOPE-005 derivable-decision
+                      authority.
+
   dv1_54  05-12-2026  TB00226 TURN 2 PHASE 2 ASSIGNMENT-LIST
                       CLEANUP — 1011009 dv1_1 RETIREMENT
                       CASCADE (TWO ACTIVE SITES).
