@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_56</title>
+<title>0500000 System Architecture Overview dv1_58</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,10 +132,10 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_56</td></tr>
+  <tr><td>DocVersion</td><td>dv1_58</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_56_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>05-12-2026</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_58_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>05-13-2026</td></tr>
   <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
 <p class="format-note">
@@ -1362,7 +1362,7 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
     R-increment: R2 (PATH 2 multi-shard architectural rewrite per DR-006 + cumulative AR restoration AR-014/AR-038/AR-039 per DR-014 + universe scope verify USD+USDC+USDT per DR-003 + Top-N retired verify per DR-002 + AR-070 amended-form verify per DR-007)
-    governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-027, rule:HR-WM-028 (PATH 2 connection sharding), rule:HR-WM-029 (shard independence), rule:HR-WM-030 (silent-pair handling), rule:HR-WM-031 (subscribe-count vs max-concurrent decoupling), rule:HR-WM-032 (paper ledger update), rule:HR-WM-033 (paper exits route through Exit Controller), rule:HR-WM-034, contract:WM-PACE-001 (process-singleton token bucket), contract:WM-PACE-002 (SUBSCRIBE_RATE_PER_SEC=10, SUBSCRIBE_BURST_CAPACITY=20), contract:WM-SHARD-001 (N_conns=ceil(universe/SYMBOLS_PER_CONN_SAFE), SYMBOLS_PER_CONN_SAFE=500), contract:WM-SHARD-010 (silent-pair state machine), contract:WM-RECONNECT-016 (transient WS catch + per-shard reconnect), contract:VD-SYS-008 (systemd StartLimitBurst=3 / StartLimitIntervalSec=600), decision:D-03 (universe scope USD+USDC+USDT, no Top-N cap), decision:D-06 (paper-live parity), decision:D-08 (Top-N cap retired), ar:AR-001, ar:AR-002, ar:AR-006, ar:AR-007, ar:AR-008, ar:AR-010, ar:AR-011, ar:AR-014 (Logger async bounded queue, restored per DR-014 G-A4), ar:AR-022, ar:AR-023, ar:AR-024, ar:AR-026, ar:AR-029, ar:AR-030, ar:AR-031, ar:AR-032, ar:AR-033, ar:AR-035, ar:AR-038 (Kraken Status API startup maintenance check, restored per DR-014 G-A5), ar:AR-039 (per-pair instrument channel status check expanded, restored per DR-014 G-A6), ar:AR-046, ar:AR-047, ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-064, ar:AR-066, ar:AR-070 (amended dv1_20: USD+USDC+USDT, no Top-N cap, verified per DR-007), ar:AR-072, container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_004 (private WS skipped in paper)
+    governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-027, rule:HR-WM-028 (PATH 2 connection sharding), rule:HR-WM-029 (shard independence), rule:HR-WM-030 (silent-pair handling), rule:HR-WM-031 (subscribe-count vs max-concurrent decoupling), rule:HR-WM-032 (paper ledger update), rule:HR-WM-033 (paper exits route through Exit Controller), rule:HR-WM-034, contract:WM-PACE-001 (process-singleton token bucket), contract:WM-PACE-002 (SUBSCRIBE_RATE_PER_SEC=10, SUBSCRIBE_BURST_CAPACITY=20), contract:WM-SHARD-001 (N_conns=ceil(universe/SYMBOLS_PER_CONN_SAFE), SYMBOLS_PER_CONN_SAFE=500), contract:WM-SHARD-010 (silent-pair state machine), contract:WM-RECONNECT-016 (transient WS catch + per-shard reconnect), contract:VD-SYS-008 (systemd StartLimitBurst=3 / StartLimitIntervalSec=600), decision:D-03 (universe scope USD+USDC+USDT, no Top-N cap), decision:D-06 (paper-live parity), decision:D-08 (Top-N cap retired), ar:AR-001, ar:AR-002, ar:AR-006, ar:AR-007, ar:AR-008, ar:AR-010, ar:AR-011, ar:AR-014 (Logger async bounded queue, restored per DR-014 G-A4), ar:AR-022, ar:AR-023, ar:AR-024, ar:AR-026, ar:AR-029, ar:AR-030, ar:AR-031, ar:AR-032, ar:AR-033, ar:AR-035, ar:AR-038 (Kraken Status API startup maintenance check, restored per DR-014 G-A5), ar:AR-039 (per-pair instrument channel status check expanded, restored per DR-014 G-A6), ar:AR-046, ar:AR-047, ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-064, ar:AR-066, ar:AR-070 (amended dv1_20: USD+USDC+USDT, no Top-N cap, verified per DR-007), ar:AR-072, container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_004 (private WS skipped in paper), ar:AR-057, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011
     Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
   </desc>
   <defs>
@@ -3784,7 +3784,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
     R-increment: R4 -&gt; R5 (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle: this diagram is the CANONICAL SOURCE for the 23-field CIATS Trade Outcome Bus schema. Prior dv1_49 R4 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth in stream2_box desc + visible-text element + figcaption — that citation direction was INVERTED under DD-002 (coding spec cited as canonical violates the single-source-of-truth-is-the-diagram rule). dv1_50 corrects the citation direction: stream2_box desc schema_fields_canonical reframed as "this diagram canonical per DD-001/DD-002 — historical seed: 1011005 dv1_3 §9, retired"; produces field 1011005-citation removed; visible text element at line 3953 1011005-citation removed; figcaption reframed to describe historical migration without citing 1011005 as ongoing source. Schema FIELD CONTENT unchanged (same 23 fields, same types, same order) — only the citation framing changes. rect dimensions x=495 y=360 width=560 height=180 preserved BYTE-IDENTICAL. SVG viewBox 1500x1200 preserved byte-identical. All Diagram 5 visual content outside the four corrected text sites preserved byte-identical. 0511004 dv1_5 -&gt; dv1_6 §7.5 cascade (Turn 3 this session) re-points 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5". 1011005 dv1_3 actual deletion DEFERRED to a future cascade that handles assignment-list cleanup at lines 5312/5393/5544/6383/6956 + §11 RELATED DOCUMENTS entry cleanup — out of scope this turn. CARRY-FORWARD: future 0500000 cascade to retire all remaining "1011005 dv1_3" downstream references in assignment lists + §11. RR-SCOPE-010 verbatim-MDR-citation discipline: 23-field schema enumeration grep-verified verbatim against dv1_49 baseline (no content drift). RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope of this correction sourced from Bill chat-turn directives at TB00218 ("If it's authoritative it should be in a 0500000 diagram... That makes it redundant... We want to remove as many 10XXXXX documents as possible by moving requirements to 0500000") + ("Do a FP/DP analysis to determine the correct action"), not from NSI authoring layer.)
     R-increment-prior: R3 -&gt; R4 (TB00217 STAGE Phase 1 1011005 Cycle 3 schema reconciliation cascade Step 1: contract:CIATS_Trade_Outcome_Bus schema_fields enumeration expanded from the prior 12-field abbreviated set per 0511004 dv1_3 §7.5 to the 23-field canonical schema verbatim from 1011005 dv1_3 §9 EC-TOB-002. Schema fields enumerated in stream2_box desc structured metadata AND rendered in stream2_box visible text region within the byte-identical rect dimensions (x=495 y=360 width=560 height=180) using 9-10px font sizes to accommodate the expanded enumeration. SVG viewBox 1500x1200 preserved byte-identical. Background rect height 1200 preserved byte-identical. Surrounding elements (stats_hdr, stats_box at x=1120, pdca_hdr at y=580, pdca_box, and all elements below) preserved byte-identical. The 23-field set is: ts, event, level, component, symbol, entry_fill_price, exit_price, entry_timestamp_utc, exit_timestamp_utc, hold_candle_count, MAE_pct_reached, fees_entry_usd, fees_exit_usd, fees_total_usd, exit_reason, asset_regime, vol_regime, market_regime, signal_params, actual_RR, net_PL_USD, net_gain_usd, net_loss_usd. The exit_reason enum is rendered as a separate visible line at the bottom of the stream2_box and enumerated as TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER per 1011005 dv1_3 §9 EC-TOB-002 line 15. The captured_fields_for_DR-012_L1 abbreviated descriptor field is retained for revision lineage but is now subsumed by the full schema_fields_canonical enumeration; the abbreviated form is documented as superseded. All other Diagram 5 visual content preserved BYTE-IDENTICAL per the one-document-per-chat-turn cadence (Diagram 6 schema annotation amended in the same dv1_49 increment as the companion Step 2 cascade; both Step 1 and Step 2 occur in this single dv1_49 work-product turn). 0511004 dv1_4 -&gt; dv1_5 §7.5 prose cascade (Step 3) sequenced to the next chat-turn this same TB00217 session. 1011005 dv1_3 retirement (Step 4) sequenced to TB00218 or TB00217 final turn if context permits. DD-004 NO PROSE-FIRST AUTHORING compliance: every R4 architectural identifier in the 23-field schema is encoded in either the stream2_box desc schema_fields_canonical enumeration or the stream2_box visible text region; the source-of-truth provenance (1011005 dv1_3 §9 EC-TOB-002 lines 353-384) is cited in this revision-history narrative. RR-SCOPE-010 verbatim-MDR-citation discipline applied: schema field enumeration is grep-verified verbatim against 1011005 dv1_3 §9 EC-TOB-002 at amendment time. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: the 23-field schema scope is sourced from 1011005 dv1_3 §9 EC-TOB-002 (Bill-ratified controlled-document spec content), not from the NSI authoring layer. Cycle 3 schema cascade Step 1 + Step 2 closes at this dv1_49 increment; Step 3 + Step 4 carry forward.)
     R-increment-prior-2: R2 -&gt; R3 (DR-012 CRITICAL closure: Parameter Store / Half-Kelly / vol_regime architectural elements per TB00153 Master Defect Register §6 D5 entry. Three additions per TB00153 Diagram Alter/Add/Remove Plan §8: A2 Half-Kelly persistence path callout (Statistical Engine -&gt; Parameter Store at 200-trade threshold), A3 vol_regime input feed (mod:RegimeEngine -&gt; contract:CIATS_Trade_Outcome_Bus), L1 contract:CIATS_Trade_Outcome_Bus structured metadata enhanced with asset_regime + market_regime captured-fields enumeration. R2 visual content + 10 T-2+ labeled groups preserved per RR-SCOPE-007 no-narrowing; R3 added 1 new T-2+ labeled group (mod:RegimeEngine input box) + 2 architectural flow arrows + governs-list additions for the Half-Kelly transition (rule:PS-HK-001 from 0611001 dv1_0 §6.2), CIATS Parameter Store hard-rule invariants (rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 from 0211001 dv1_0 §13), the rule:PA-001 paper-as-master parameter-canonicity reference (TB00000 v2_23 §4.4 PA-007 + 0311001 v1_10 §15.12.9), the 6-regime taxonomy regime: tokens (per 0311001 v1_10 §15.12.6 + 0711002 dv1_0 RE-003), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE log events (per 0211001 dv1_0 §14), mod:RegimeEngine vol_regime feed source (per 0711002 dv1_0), and param:half_kelly_applied_pct (Half-Kelly normalized output written to Parameter Store per HR-CI-009 + PS-HK-005). DD-004 NO PROSE-FIRST AUTHORING compliance: every R3 architectural identifier is encoded in either the diagram's root governs: list, a T-2+ namespace-token labeled group, or as visual flow content; consequential prose updates limited to revision-history entry text per RR-SCOPE-002 / RR-SCOPE-007.)
-    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:RegimeEngine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:HR-CI-009, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown
+    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:RegimeEngine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:HR-CI-009, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, rule:LG-ALERT-005
     drill_targets: none (D5 is a leaf Tier 2 detail of the CIATS feedback loop; CIATS internal sub-components are tagged at this diagram level, no Tier 3 drilldown defined)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
     registry_gap_note: The seven CIATS sub-component mod: tokens (mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store) are referenced in D5 R1 and preserved in R2 + R3 per RR-SCOPE-007 but are not currently registered in 0311001 v1_10 §15.12.1 mod: registry. Surfaced as a registry-amendment requirement per TB00160 NSI §8.1; deferred to a future 0311001 increment per TB00165 NSI §8.7 (registry housekeeping outside DR-012 closure scope is out of bounds at Stage K-1). NEW R3 additions with registry-gap status: mod:RegimeEngine (not currently in §15.12.1), rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 (not currently in §15.12.9 — 0211001 dv1_0 §13 hard rules predate the §15.12.9 registry; rule:PA-001 IS registered in §15.12.9), rule:PS-HK-001 (not currently in §15.12.9 — 0611001 dv1_0 §6.2 hard rule), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not currently in §15.12.7), param:half_kelly_applied_pct (not currently in §15.12.5). Stage K-1 preserves these R3 references per the diagram-as-authoritative principle (DD-001) — registry amendments to absorb the references are deferred to a future 0311001 increment after Step 1 + Step 2 + Step 3 completion per TB00165 NSI §8.7.
@@ -4216,7 +4216,10 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
              ar:AR-001, ar:AR-008, ar:AR-009, ar:AR-014, ar:AR-066,
              decision:D-08_Top_N_Cap_Retired,
              param:per_trade_pct, param:mae_mult, param:emergency_sl_mult,
-             param:paper_starting_balance
+             param:paper_starting_balance,
+             ar:AR-057, rule:HR-LG-011, rule:HR-LG-012,
+             contract:Two_Stream_Record_Architecture,
+             evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL
     drill_targets: none (D6 is leaf system-level Tier 2; per-element CIATS sub-components tagged
                    at this diagram level; full DR-013 cross-module wire-up Tier 3 elaboration is
                    out of scope and not yet authored)
@@ -5326,7 +5329,11 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     writer would compete with the event loop for scheduling.
                     On queue.Full: log to stderr, alert HIGH, skip record — NEVER block.
                     Stop listener on shutdown: log_listener.stop() drains and joins.
-                    Assign: 1011007 LG-QUEUE-001 through -008.
+                    Assign: 0511006 dv1_2 §3.1 + §3.2 (parent spec is canonical
+                            post-1011007 retirement per TB00230 RANK 8 cascade;
+                            architectural rules HR-LG-009..011 + ar:AR-063 are
+                            diagram-canonical per 0500000 dv1_57 D1 R2 + D5 R5
+                            root governs).
   AR-064 (dv1_14) ★: Log connection_id from Kraken status channel on every WS connection.
                     Status channel provides connection_id (uint64) per WS session — a
                     unique Kraken-side identifier. Log on every new connection. Include
@@ -6444,8 +6451,8 @@ prefix taxonomy:
   PA-005 requirement.
 </pre>
 <pre>
-  Bind: 1011007 dv1_5 Logger_Coding_Spec § paper event taxonomy
-        (extension to be authored in TB00154 / Phase 1 Session 6).
+  Bind: 0511006 dv1_2 §5.1 + §5.7 paper event taxonomy (parent spec
+        is canonical post-1011007 retirement per TB00230 RANK 8 cascade).
 </pre>
 <p>
 12.7 Architectural Diagram — Dispatch Boundary
@@ -6963,9 +6970,16 @@ prefix taxonomy:
         behavioral parity (no mode-conditional EE branching);
         PositionMirror access via WSManager helpers only
         (HR-PM-009 compliance). To be authored TB00150.
-      1011007 Logger_Coding_Spec dv1_5
-        Paper event taxonomy extension (TB00154 / Phase 1
-        Session 6).
+      1011007 Logger_Coding_Spec — RETIRED (TB00230 RANK 8
+        cascade). Parent spec 0511006 dv1_2 is canonical
+        post-retirement. Architectural rules HR-LG-004 /
+        HR-LG-007 / HR-LG-009 / HR-LG-010 / HR-LG-011 /
+        HR-LG-012 + ar:AR-057 / AR-061 / AR-063 + contract:
+        Two_Stream_Record_Architecture + evt:ALERT_SENT /
+        ALERT_SMTP_FAILED / TRADE_RECORD_WRITE_FAILED /
+        LOG_QUEUE_FULL + rule:LG-ALERT-005 promoted to
+        diagram-canonical per AMENDMENT-11 (D1 R2 + D5 R5
+        + D6 R6 root governs).
       1011008 Long_Module_Coding_Spec dv1_0
         Paper-dispatch contract for IOC emergency sells (TB00152 /
         Phase 1 Session 4).
@@ -7109,6 +7123,218 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_58  05-13-2026  TB00230 TURN 3 PHASE 3 — 1011007 RETIREMENT CASCADE
+                      (RANK 8) PROSE-LAYER ASSIGN-LINE + BIND-LINE +
+                      RELATED-DOCUMENTS-ENTRY REDIRECTS.
+
+                      Retirement of 1011007 Logger_Coding_Spec dv1_5
+                      per TB00230 Turn 3 Phase 3 git rm + commit + push
+                      per TB00000 v2_36 §11 retired-document standing
+                      practice (the rule that retirement = git rm only,
+                      no rt-prefix file, no tombstone body).
+
+                      Surgical edits across three prose sites resolving
+                      all LIVE 1011007 citations. Zero SVG amendments —
+                      C5 cluster Logger architectural identifiers
+                      (rule:HR-LG-004 / HR-LG-007 / HR-LG-009 /
+                      HR-LG-010 / HR-LG-011 / HR-LG-012 + ar:AR-057 /
+                      AR-061 / AR-063 + contract:Two_Stream_Record_
+                      Architecture + evt:ALERT_SENT / ALERT_SMTP_FAILED
+                      / TRADE_RECORD_WRITE_FAILED / LOG_QUEUE_FULL +
+                      rule:LG-ALERT-005) are already canonical in
+                      D1 R2 + D5 R5 + D6 R6 root &lt;desc&gt; governs lists
+                      per dv1_57 AMENDMENT-11 (Turn 1 this session) and
+                      remain the architectural authority post-retirement.
+                      All 8 figures preserved BYTE-IDENTICAL from dv1_57
+                      per DEC-003 Path A (the one-diagram-per-session
+                      cadence decision).
+
+                      PROSE EDITS (three sites):
+                      Line 5332 — AR-063 (dv1_3) LG-QUEUE Assign-line.
+                        Redirected from "1011007 LG-QUEUE-001 through
+                        -008" to "0511006 dv1_2 §3.1 + §3.2 (parent
+                        spec is canonical post-1011007 retirement per
+                        TB00230 RANK 8 cascade; architectural rules
+                        HR-LG-009..011 + ar:AR-063 are diagram-canonical
+                        per 0500000 dv1_57 D1 R2 + D5 R5 root governs)".
+                      Line 6454 — §12.6 paper event taxonomy Bind-line.
+                        Redirected from "1011007 dv1_5 Logger_Coding_
+                        Spec § paper event taxonomy (extension to be
+                        authored in TB00154 / Phase 1 Session 6)" to
+                        "0511006 dv1_2 §5.1 + §5.7 paper event taxonomy
+                        (parent spec is canonical post-1011007 retirement
+                        per TB00230 RANK 8 cascade)".
+                      Line 6973 — §11 RELATED DOCUMENTS AA=10 CODING
+                        SPECIFICATION list entry. Entry expanded from
+                        "1011007 Logger_Coding_Spec dv1_5 / Paper event
+                        taxonomy extension (TB00154 / Phase 1 Session
+                        6)" to a RETIRED marker explicitly noting
+                        post-retirement canonical authority resides in
+                        0511006 dv1_2 and the C5 cluster architectural
+                        identifiers in 0500000 dv1_57 D1 R2 + D5 R5 +
+                        D6 R6 root governs lists.
+
+                      SVG EDITS: NONE.
+                      All architectural identifiers cited by 1011007
+                      dv1_5 are diagram-canonical post-AMENDMENT-11
+                      (dv1_57 Turn 1 enactment). 1011007 retirement is
+                      the prose-layer-only cleanup completing the C5
+                      cluster cascade.
+
+                      PARENT CHAIN COMPLIANCE.
+                      0500000 is Domain Document for AA=05 System
+                      Architecture. No parent dependency. Section 14
+                      revision history updated. Header refresh:
+                      DocVersion dv1_57 -&gt; dv1_58, DocPath updated,
+                      &lt;title&gt; tag updated.
+
+                      COMPANION DELIVERABLES THIS SESSION (TB00230
+                      RANK 8 PHASE 3 BUNDLE):
+                        0500000 dv1_57 -&gt; dv1_58.html (this document
+                          — Phase 3 surgical prose redirects).
+                        TB00153 Master_Defect_Register v1_12 -&gt; v1_13
+                          (1011007 retirement amendment entry).
+                        1011007 dv1_5 actual delete + git rm (Bill
+                          action via session-close copy box).
+                        TB00230 SL v1_0.txt (session-close trio).
+                        TB00231 NSI v1_0.txt (session-close trio).
+                        OCS chat-response copy box (session-close
+                          trio member 3).
+
+                      METHODOLOGY CITATION.
+                      TB00199 v1_0 §5.1 + §5.2 + Phase 3 LIVE-1011007-
+                      reference identification. TB00229 SL §6.2 Phase 3
+                      bundling decision deferred to TB00230 session-time
+                      evaluation. TB00230 NSI v1_0 §4.4 Turn 3 execution
+                      directive — Phase 3 EXECUTED in TB00230 per
+                      bounded-scope-and-tool-budget condition.
+                      Identical retirement-cascade-Phase-3 methodology
+                      to RANK 7 1011013 retirement (TB00228 Turn 2
+                      Phase 3, 0500000 dv1_55 -&gt; dv1_56 prose-layer-
+                      only edits).
+
+  dv1_57  05-13-2026  TB00230 TURN 1 — RANK 8 1011007 RETIREMENT CASCADE
+                      PHASE 2 AMENDMENT-11: D1 R2 + D5 R5 + D6 R6 ROOT
+                      &lt;desc&gt; GOVERNS LIST ADDITIONS FOR C5 CLUSTER LOGGER
+                      TOKENS PER TB00199 v1_0 §5.1.
+
+                      Surgical root &lt;desc&gt; governs-list additions across
+                      three diagram blocks promoting the C5 cluster
+                      Logger architectural identifiers to diagram-canonical
+                      status per DD-001/DD-002 (the diagrams-canonical
+                      principle and prose-follows-diagram rule). The
+                      additions are purely cumulative: every pre-existing
+                      governs entry preserved byte-identical; only new
+                      tokens appended. ALL 8 FIGURES PRESERVED
+                      BYTE-IDENTICAL VISUALLY — root &lt;desc&gt; metadata
+                      additions only, zero SVG visual content edits, per
+                      DEC-003 Path A one-diagram-per-session cadence
+                      principle extended to the all-three-diagrams-via-
+                      desc-only-edit case (TB00198 AMENDMENT-10 form-factor
+                      precedent).
+
+                      TOKENS ADDED (15 unique tokens across 3 diagrams;
+                      30 total insertions; NSI cited "16" — enumerated
+                      unique count is 15; reconciled to actual unique
+                      count here per RR-SCOPE-010 verbatim discipline):
+
+                      D1 R2 (Image1_T2_R2 — Kraken_API_Connection_
+                        Architecture) — 8 token additions:
+                          ar:AR-057, ar:AR-061, ar:AR-063,
+                          rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009,
+                          rule:HR-LG-010, rule:HR-LG-011
+
+                      D5 R5 (Image5_T2_R5 — CIATS_Architecture) — 14 token
+                        additions:
+                          ar:AR-061, ar:AR-063,
+                          rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009,
+                          rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012,
+                          contract:Two_Stream_Record_Architecture,
+                          evt:ALERT_SENT, evt:ALERT_SMTP_FAILED,
+                          evt:TRADE_RECORD_WRITE_FAILED,
+                          evt:LOG_QUEUE_FULL, rule:LG-ALERT-005
+
+                      D6 R6 (Image6_T2_R6 — Complete_System) — 8 token
+                        additions:
+                          ar:AR-057, rule:HR-LG-011, rule:HR-LG-012,
+                          contract:Two_Stream_Record_Architecture,
+                          evt:ALERT_SENT, evt:ALERT_SMTP_FAILED,
+                          evt:TRADE_RECORD_WRITE_FAILED,
+                          evt:LOG_QUEUE_FULL
+
+                      R-NUMBER NOTE (RR-SCOPE-010 NSI IDENTIFIER-CITATION
+                      RECONCILIATION).
+                      TB00230 NSI v1_0 §4.2 cites the target diagrams as
+                      "D1 R2 + D5 R3 + D6 R4". These R-numbers reflect
+                      TB00199 v1_0 authoring-era state. Current dv1_56
+                      R-numbers are D1 R2 (matches) + D5 R5 + D6 R6
+                      (advanced via TB00214/TB00217/TB00218 cascades).
+                      The target diagrams are unambiguous by Image1/
+                      Image5/Image6 mapping; NSI R-number references
+                      are stale documentation but do not affect target
+                      identification. Per RR-SCOPE-010, this dv1_57
+                      revision-history entry cites the CURRENT R-numbers
+                      (D1 R2 + D5 R5 + D6 R6) not the NSI-era references.
+
+                      REGISTRY-GAP NOTE (per TB00229 SL §6.3 + TB00199
+                      v1_0 §5.1 tertiary carry-forward).
+                      The following added tokens are NOT currently
+                      enumerated in 0311001 v1_13 §15.12 registries:
+                        rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009,
+                        rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012
+                          (rule: registry §15.12.3)
+                        contract:Two_Stream_Record_Architecture
+                          (contract: registry §15.12.7)
+                        evt:ALERT_SENT, evt:ALERT_SMTP_FAILED,
+                        evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL
+                          (evt: registry §15.12.9)
+                        rule:LG-ALERT-005 (rule: registry §15.12.3)
+                      Disposition: registry-gap-note convention applies
+                      per TB00229 SL §6.3. AMENDMENT-11 enactment surfaces
+                      a §15.12 housekeeping requirement deferred to a
+                      future 0311001 increment. Not blocking AMENDMENT-11
+                      this session. Tokens cited in governs lists below
+                      use the same namespace-token form they will take
+                      when registered.
+
+                      PARENT CHAIN COMPLIANCE.
+                      0500000 is Domain Document for AA=05 System
+                      Architecture. No parent dependency. Section 14
+                      revision history updated. Header refresh:
+                      DocVersion dv1_56 -&gt; dv1_57, DocPath updated,
+                      DocDate 05-12-2026 -&gt; 05-13-2026, &lt;title&gt; tag
+                      updated. Per DR-002-HTML single-format requirement
+                      and 0311001 v1_13 §15.13.3 filename pattern.
+
+                      COMPANION DELIVERABLES THIS SESSION (TB00230
+                      RANK 8 PHASE 2):
+                        0500000 dv1_56 -&gt; dv1_57.html (this document
+                          — AMENDMENT-11 enactment).
+                        0511006 dv1_1 -&gt; dv1_2.txt (PROSE-UPDATE-AH
+                          through AT — 13 prose updates per TB00199
+                          v1_0 §5.2 citing AMENDMENT-11 promotions
+                          per DD-002 prose-follows-diagram).
+                        Phase 3 bundling decision per TB00230 §4.4
+                          (0500000 dv1_57 -&gt; dv1_58 + 1011007 git rm
+                          + TB00153 MDR amendment, OR deferred to
+                          TB00231 if scope exceeded).
+                        TB00230 SL v1_0.txt (session-close trio).
+                        TB00231 NSI v1_0.txt (session-close trio).
+                        OCS chat-response copy box (session-close
+                          trio member 3; byte-identical to TB00231 §0).
+
+                      METHODOLOGY CITATION.
+                      TB00199 v1_0 §5.1 AMENDMENT-11 + §5.2 PROSE-
+                      UPDATE-AH..AT. TB00229 SL §6.1 ratified
+                      AMENDMENT-11 scope. TB00230 NSI v1_0 §4.2
+                      Phase 2 execution directive. TB00198 AMENDMENT-10
+                      form-factor precedent (root &lt;desc&gt; additions only,
+                      SVG byte-identical preserved). DD-001/DD-002
+                      diagrams-canonical promotion of C5 cluster Logger
+                      identifiers from coding-spec-only existence
+                      (1011007 dv1_5) to diagram-canonical authority,
+                      enabling 1011007 retirement at Phase 3.
+
   dv1_56  05-12-2026  TB00228 TURN 2 PHASE 2 — 1011013 dv1_6 RETIREMENT
                       CASCADE (RANK 7) PROSE-LAYER ASSIGN-LINE
                       REDIRECTS.

@@ -1,10 +1,10 @@
 DocDCN:     0511006
 DocTitle:   Logger_Specification
-DocVersion: dv1_1
+DocVersion: dv1_2
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511006_Logger_Specification_dv1_1.txt
-DocDate:    04-21-2026
-DocTime:    23:59:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511006_Logger_Specification_dv1_2.txt
+DocDate:    05-13-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 LOGGER SPECIFICATION
@@ -27,7 +27,9 @@ trading hot path. Every logged event is a potential CIATS
 data point.
 
 From dv1_1: the Logger operates a TWO-STREAM RECORD
-ARCHITECTURE on disk. The diagnostic stream (finite-
+ARCHITECTURE on disk (contract:Two_Stream_Record_Architecture
+— diagram-canonical per 0500000 dv1_57 D5 R5 + D6 R6 root
+governs). The diagnostic stream (finite-
 retention rotating file) and the permanent stream
 (append-only, no-rotation, annual-segmented trade record
 file) are distinct components with distinct retention
@@ -84,7 +86,8 @@ Primary outputs:
         trade_record_handler)
     log_listener.start()
 
-  NOT asyncio.Queue:
+  NOT asyncio.Queue (ar:AR-063 — diagram-canonical per 0500000
+    dv1_57 D1 R2 + D5 R5 root governs):
     QueueListener runs in a separate non-asyncio thread
     and is not compatible with asyncio.Queue. An asyncio
     coroutine writer would compete with the event loop
@@ -107,7 +110,8 @@ Primary outputs:
     in one handler does not prevent the others from
     processing the same record.
 
-3.2 On Queue Full
+3.2 On Queue Full (rule:HR-LG-011 — diagram-canonical per
+    0500000 dv1_57 D1 R2 + D5 R5 + D6 R6 root governs)
 
   If log_queue.Full exception raised on put():
     Write directly to sys.stderr: "LOG QUEUE FULL — entry
@@ -117,6 +121,8 @@ Primary outputs:
     NEVER raise an exception back to the trading hot path.
 
 3.3 Two-Stream Record Architecture (dv1_1)
+    (contract:Two_Stream_Record_Architecture — diagram-
+    canonical per 0500000 dv1_57 D5 R5 + D6 R6 root governs)
 
   The Logger produces TWO persistent disk streams with
   distinct and independent retention contracts. Both
@@ -188,7 +194,8 @@ Primary outputs:
         isolation. A failing permanent-stream write does
         not prevent the diagnostic write, and vice versa.
 
-3.4 Shutdown
+3.4 Shutdown (rule:HR-LG-004 — diagram-canonical per
+    0500000 dv1_57 D1 R2 + D5 R5 root governs)
 
   log_listener.stop() on TothBot shutdown.
   stop() drains remaining queue entries and joins the
@@ -218,8 +225,11 @@ Primary outputs:
   cl_ord_id:      str (all order events)
   order_id:       str (all fill/cancel events)
   All numeric values: Decimal (stored as string in log)
+    (rule:HR-LG-009 — diagram-canonical per 0500000 dv1_57
+    D1 R2 + D5 R5 root governs)
 
-4.3 Log file format:
+4.3 Log file format: (rule:HR-LG-010 — diagram-canonical
+    per 0500000 dv1_57 D1 R2 + D5 R5 root governs)
 
   Structured (newline-delimited JSON recommended).
   Each line: one JSON object with all fields.
@@ -259,13 +269,17 @@ Primary outputs:
   CANDLE_CLOSE                — symbol, interval_begin, OHLC,
                                  atr_14, rsi_14, ema_9, ema_21
   EXEC_TRADE                  — order_id, cum_qty, avg_price,
-                                 last_qty, last_price (AR-061)
+                                 last_qty, last_price (ar:AR-061
+                                 — diagram-canonical per 0500000
+                                 dv1_57 D1 R2 + D5 R5 root governs)
   EXEC_FILLED                 — order_id, cum_qty, avg_price,
                                  fees
   EXEC_CANCELED               — order_id, reason
   EXEC_EXPIRED                — order_id, cum_qty
   EXEC_RESTATED               — order_id (warn if resting)
-  UNEXPECTED_ORDER_AMENDED    — order_id (CRITICAL, AR-057)
+  UNEXPECTED_ORDER_AMENDED    — order_id (CRITICAL, ar:AR-057
+                                 — diagram-canonical per 0500000
+                                 dv1_57 D1 R2 + D6 R6 root governs)
   UNKNOWN_EXEC_TYPE           — raw_exec_type (WARN)
   UNKNOWN_MESSAGE_TYPE        — raw_channel (WARN)
   ENTRY_PARTIAL_FILL_PROTECTED — symbol, cum_qty, avg_price
@@ -363,6 +377,9 @@ Primary outputs:
   REGIME_STALE_WARNING        — symbol (if data gap detected)
 
 5.7 Logger Self-Observability Events (dv1_1)
+    (evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_
+    WRITE_FAILED, evt:LOG_QUEUE_FULL — all diagram-canonical
+    per 0500000 dv1_57 D5 R5 + D6 R6 root governs)
 
   ALERT_SENT                  — to, subject,
                                 triggering_event (INFO;
@@ -408,6 +425,8 @@ Primary outputs:
     Fields needed: symbol, value, maxratecount, timestamp_utc
 
   Signal 3: ws_roundtrip_latency_ms (A-3)
+    (rule:HR-LG-007 — diagram-canonical per 0500000 dv1_57
+    D1 R2 + D5 R5 root governs)
     Source: PONG_RECEIVED event — latency_ms field
     Fields needed: connection_id, latency_ms, timestamp_utc
     WS v2 responses include time_in and time_out to
@@ -462,8 +481,10 @@ Primary outputs:
             TRADE_RECORD_WRITE_FAILED (dv1_1),
             ALERT_SMTP_FAILED (dv1_1 — ALERT-EXEMPT;
             written to Stream 1 but does NOT trigger
-            SMTP alert; anti-recursion per 1011007
-            dv1_4 LG-ALERT-005)
+            SMTP alert; anti-recursion per rule:LG-ALERT-005
+            — diagram-canonical per 0500000 dv1_57 D5 R5
+            root governs; coding-spec ref 1011007 dv1_4
+            LG-ALERT-005)
     Routing: alerts@tothbot.com.
 
   Level WARN:
@@ -576,6 +597,8 @@ HR-LG-011  Queue full event: write to stderr AND alert HIGH.
            that queue sizing needs to be reviewed.
 
 HR-LG-012  STREAM 2 (dv1_1) permanent trade record file:
+           (rule:HR-LG-012 — diagram-canonical per 0500000
+           dv1_57 D5 R5 + D6 R6 root governs)
              (a) Append-only. Never truncate. Never rotate.
              (b) Annual segmentation at /home/tothbot/records/
                  trades_<YYYY>.jsonl — UTC calendar year
@@ -645,6 +668,146 @@ HR-LG-012  STREAM 2 (dv1_1) permanent trade record file:
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_2  05-13-2026  TB00230 TURN 2 — PROSE-UPDATE-AH..AT
+                     ENACTMENT: 13 PROSE CITATIONS UPGRADED TO
+                     DIAGRAM-CANONICAL PER DD-002 PROSE-FOLLOWS-
+                     DIAGRAM, CLOSING AMENDMENT-11 CROSS-
+                     REFERENCE LAYER PER TB00199 v1_0 §5.2.
+
+                     Companion deliverable to 0500000 dv1_56 ->
+                     dv1_57 AMENDMENT-11 (TB00230 Turn 1 — root
+                     <desc> governs list additions across D1 R2
+                     + D5 R5 + D6 R6 promoting the C5 cluster
+                     Logger architectural identifiers to
+                     diagram-canonical status). dv1_2 closes
+                     the cross-reference layer: each affected
+                     prose site in 0511006 now cites the
+                     architectural identifier in canonical
+                     namespace-token form with explicit
+                     diagram-canonical pointer to the 0500000
+                     dv1_57 governing block per DD-002.
+
+                     PROSE UPDATES APPLIED (13 sites):
+                     AH §3.1 NOT asyncio.Queue paragraph —
+                        ar:AR-063 citation upgraded to diagram-
+                        canonical (0500000 dv1_57 D1 R2 + D5 R5
+                        root governs).
+                     AI §3.2 On Queue Full heading —
+                        rule:HR-LG-011 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 + D6 R6
+                        root governs).
+                     AJ §3.3 Two-Stream Record Architecture
+                        heading — contract:Two_Stream_Record_
+                        Architecture citation added (0500000
+                        dv1_57 D5 R5 + D6 R6 root governs).
+                     AK §3.4 Shutdown heading — rule:HR-LG-004
+                        citation added (0500000 dv1_57 D1 R2
+                        + D5 R5 root governs).
+                     AL §4.2 Decimal numeric fields —
+                        rule:HR-LG-009 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 root
+                        governs).
+                     AM §4.3 Log file format heading —
+                        rule:HR-LG-010 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 root
+                        governs).
+                     AN §5.1 EXEC_TRADE row — bare AR-061
+                        promoted to ar:AR-061 diagram-
+                        canonical (0500000 dv1_57 D1 R2 + D5
+                        R5 root governs).
+                     AO §5.1 UNEXPECTED_ORDER_AMENDED row —
+                        bare AR-057 promoted to ar:AR-057
+                        diagram-canonical (0500000 dv1_57 D1
+                        R2 + D6 R6 root governs).
+                     AP §5.7 Logger Self-Observability Events
+                        heading — 4 evt: citations added
+                        (evt:ALERT_SENT + evt:ALERT_SMTP_FAILED
+                        + evt:TRADE_RECORD_WRITE_FAILED +
+                        evt:LOG_QUEUE_FULL; all diagram-
+                        canonical per 0500000 dv1_57 D5 R5 +
+                        D6 R6 root governs).
+                     AQ §6.1 Stream 1 Signal 3 ws_roundtrip_
+                        latency_ms paragraph — rule:HR-LG-007
+                        citation added (0500000 dv1_57 D1 R2
+                        + D5 R5 root governs).
+                     AR §7 Level HIGH ALERT_SMTP_FAILED row —
+                        rule:LG-ALERT-005 anti-recursion
+                        citation upgraded to diagram-canonical
+                        (0500000 dv1_57 D5 R5 root governs;
+                        coding-spec ref 1011007 dv1_4 LG-ALERT
+                        -005 retained as historical seed
+                        pointer until 1011007 retired at
+                        Phase 3).
+                     AS §9 HR-LG-012 paragraph — rule:HR-LG-012
+                        citation upgraded to diagram-canonical
+                        (0500000 dv1_57 D5 R5 + D6 R6 root
+                        governs).
+                     AT §1 two-stream mission statement —
+                        contract:Two_Stream_Record_Architecture
+                        citation added (0500000 dv1_57 D5 R5 +
+                        D6 R6 root governs).
+
+                     METHODOLOGY CITATION.
+                     TB00199 v1_0 §5.2 PROSE-UPDATE-AH..AT.
+                     TB00229 SL §6.1 ratified PROSE-UPDATE
+                     scope. TB00230 NSI v1_0 §4.3 Turn 2
+                     execution directive. DD-001 / DD-002
+                     diagrams-canonical principle: every
+                     architectural identifier added in these
+                     13 prose sites is canonical in the
+                     0500000 dv1_57 root <desc> governs lists
+                     for D1 R2 + D5 R5 + D6 R6. Prose layer
+                     of 0511006 dv1_2 follows the diagram
+                     layer per DD-002 prose-follows-diagram
+                     rule.
+
+                     REGISTRY-GAP NOTE.
+                     Six rule: tokens (HR-LG-004 / HR-LG-007 /
+                     HR-LG-009 / HR-LG-010 / HR-LG-011 /
+                     HR-LG-012), one contract: token (Two_
+                     Stream_Record_Architecture), four evt:
+                     tokens (ALERT_SENT / ALERT_SMTP_FAILED /
+                     TRADE_RECORD_WRITE_FAILED / LOG_QUEUE_
+                     FULL), and one anti-recursion rule:
+                     token (LG-ALERT-005) cited in the
+                     prose updates are not currently
+                     registered in 0311001 v1_13 §15.12.3 /
+                     §15.12.7 / §15.12.9 registries.
+                     Disposition: registry-gap-note convention
+                     applies per TB00229 SL §6.3 tertiary
+                     carry-forward. AMENDMENT-11 enactment
+                     surfaces a §15.12 housekeeping
+                     requirement deferred to a future 0311001
+                     increment. Cited tokens use the same
+                     namespace-token form they will take when
+                     registered.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0511006 is AA=05 Instance Document under
+                     0510000 System_Components_Anchor (per
+                     0311001 v1_13 three-tier hierarchy). No
+                     amendment required to parent anchor or
+                     domain document. Header refresh: DocVersion
+                     dv1_1 -> dv1_2, DocPath updated, DocDate
+                     04-21-2026 -> 05-13-2026, DocTime updated.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00230 RANK 8 PHASE 2):
+                       0500000 dv1_56 -> dv1_57.html (Turn 1
+                         AMENDMENT-11 enactment).
+                       0511006 dv1_1 -> dv1_2.txt (this
+                         document — Turn 2 PROSE-UPDATE-AH..AT
+                         enactment).
+                       Phase 3 bundling decision per TB00230
+                         §4.4 (0500000 dv1_57 -> dv1_58 + 1011007
+                         git rm + TB00153 MDR amendment, OR
+                         deferred to TB00231 if scope exceeded).
+                       TB00230 SL v1_0.txt (session-close).
+                       TB00231 NSI v1_0.txt (session-close).
+                       OCS chat-response copy box (session-close
+                         trio member 3; byte-identical to
+                         TB00231 §0).
 
   dv1_1  04-21-2026  TB00108 AI-1 — OI-023 DEFECT-TRADE-
                      RECORD-001 (CRITICAL) architectural
