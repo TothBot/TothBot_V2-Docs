@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_13
+DocVersion: v1_16
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_13.txt
-DocDate:    05-12-2026
-DocTime:    23:59:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_16.txt
+DocDate:    05-13-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2258,6 +2258,12 @@ REGISTRY CONVENTIONS:
   contract:Parameter_Store_Snapshot     (0511002)
   contract:Reconciliation_REST          (0511001
                                          A-7/A-9)
+  contract:Two_Stream_Record_Architecture
+                                        (0511006)
+  contract:Sizing_Curve_Per_Module      (0500000 D5
+                                         R6; TB00239
+                                         AMENDMENT-3;
+                                         TB00000 §9.10)
 
 ------------------------------------------------------------
 15.12.4 gate: Gate Registry
@@ -2324,6 +2330,10 @@ REGISTRY CONVENTIONS:
                                       0511003)
   evt:WS_RECONNECT                   (0511001)
   evt:WS_SUBSCRIBE_RATE_LIMIT        (0411001)
+  evt:ALERT_SENT                     (0511006)
+  evt:ALERT_SMTP_FAILED              (0511006)
+  evt:TRADE_RECORD_WRITE_FAILED      (0511006)
+  evt:LOG_QUEUE_FULL                 (0511006)
 
 ------------------------------------------------------------
 15.12.8 param: Parameter Registry
@@ -2352,6 +2362,17 @@ REGISTRY CONVENTIONS:
   param:paper_trading_mode           (0500000 §12.2)
   param:paper_starting_balance       (TB00000 §4.4
                                       PA-004 D-05)
+  param:per_trade_size_usd           (TB00000 §9.17
+                                      v2_29; CIATS-
+                                      OWNED PER-MODULE
+                                      INSTANTIATED)
+  param:per_trade_ceiling_pct        (TB00000 §9.17
+                                      v2_29; CIATS-
+                                      OWNED PER-MODULE
+                                      INSTANTIATED)
+  param:expected_rr_acceptance_rule  (TB00000 §9.10
+                                      + §9.17 v2_29;
+                                      CIATS-OWNED)
 
 ------------------------------------------------------------
 15.12.9 rule: HardRule Registry
@@ -2401,6 +2422,13 @@ REGISTRY CONVENTIONS:
                                       work)
   rule:Sacred_R_R_1_to_1_5           (TB00000 §9.10)
   rule:PA-001                        (TB00000 §4.4)
+  rule:HR-LG-004                     (0511006)
+  rule:HR-LG-007                     (0511006)
+  rule:HR-LG-009                     (0511006)
+  rule:HR-LG-010                     (0511006)
+  rule:HR-LG-011                     (0511006)
+  rule:HR-LG-012                     (0511006)
+  rule:LG-ALERT-005                  (0511006)
 
 NOTE — TB00163 Part 1 verification confirmed
 rule:HR-PA-001 is non-canonical (D6 R2 root <desc>
@@ -2879,13 +2907,41 @@ updated to match the diagram, never the reverse.
       diagram-prose authority hierarchy attaches
       automatically at the moment the document
       becomes diagram-bearing.
+  (c) CROSS-DOCUMENT AUTHORITY EXTENSION
+      (NEW v1_15 — TB00237 AMENDMENT C). All
+      subordinate specs in AA=04 Exchange_
+      Interface, AA=06 Risk, AA=07 Strategy,
+      AA=08 Trading_System, and AA=10 Coding_
+      Specification domains. For any architectural
+      element (rule, contract, decision, gate,
+      layer, regime, parameter, container, module,
+      indicator, event, channel, ar, pt_mode
+      identifier) encoded in a 0500000 diagram,
+      the 0500000 diagram is AUTHORITATIVE and
+      the subordinate spec's restatement of the
+      same element is DERIVED. Per TB00000 v2_38
+      §4.5 DD-012 (0500000-canonical-all-docs),
+      subordinate specs that contain only
+      architectural restatement (DEC-012(c)(a)
+      classification) are retired per the §11
+      standing practice once V-038 cross-doc
+      cross-check confirms full encoding in
+      0500000.
 
 §15.14 does NOT apply to:
 
-  (a) Pure-prose controlled documents (governance
-      procedures, coding specs without diagrams,
-      session logs, NSIs, chat-start documents).
-      These have no diagram and the rule is moot.
+  (a) Pure-prose controlled documents in domains
+      AA=00 Ethics_and_Safety, AA=01 Management,
+      AA=02 Operations, AA=03 Governance, AA=05
+      System_Architecture (the parent domain of
+      0500000 itself), AA=09 Plans, and AA=11
+      Compliance. These contain governance
+      procedures, operational specifications,
+      business plans, ethics frameworks, and the
+      0500000 parent-domain framework itself —
+      none of which encode TothBot V2 trading-
+      system architectural elements that 0500000
+      is the canonical source for.
   (b) Code files (.py, .js, .sh, etc.) — these
       are governed by the trading-system code
       controls and Engineering_Best_Practices
@@ -2894,6 +2950,14 @@ updated to match the diagram, never the reverse.
       and the canonical registry (§15.12) — these
       are diagram-supporting metadata, not
       diagrams subject to the hierarchy.
+  (d) Session logs (TBNNNNN_Session_Log_*),
+      Next Session Instructions (TBNNNNN_NSI_*),
+      Master Defect Register (TB00153 MDR),
+      Decision Register (TB00153 Decision_
+      Register), and other TB-prefix work-product
+      documents. These are operational artifacts
+      that reference 0500000 architectural
+      elements but do not establish architecture.
 
 15.14.3 DIAGRAM-OVER-PROSE AUTHORITY RULE
 
@@ -3017,6 +3081,71 @@ V-038 is enforced at session-open pre-flight
 DR-007 HTML scope sweep (TB00000 v2_20 §4.1
 DR-007.8 amendment-pending).
 
+CROSS-DOCUMENT V-038 ENFORCEMENT
+(NEW v1_15 — TB00237 AMENDMENT C).
+
+V-038 applies BOTH within a single diagram-
+bearing document (the original v1_10 scope:
+prose-vs-diagram within the same .html file)
+AND across documents in the AA=04/06/07/08/10
+subordinate-spec corpus relative to 0500000
+canonical diagrams (the v1_15 §15.14.2(c)
+extension scope). The cross-document
+enforcement steps:
+
+  (5) For each subordinate spec amendment in
+      AA=04 / AA=06 / AA=07 / AA=08 / AA=10:
+      enumerate every architectural identifier
+      asserted in the subordinate-spec amendment
+      prose.
+
+  (6) For each identifier from (5): grep the
+      current 0500000 .html (root <desc> governs:
+      lists + T-2+ labeled-group <desc> bodies
+      + visual content) for the identifier.
+
+  (7) Compute classification per DEC-012(c)
+      three-bucket scheme:
+        (a) ARCHITECTURAL RESTATEMENT — identifier
+            found in 0500000 with matching
+            semantics. The subordinate-spec
+            content is duplicative; subject to
+            retirement per TB00000 v2_38 §4.5
+            DD-012.
+        (b) CODING-UNIQUE — no architectural
+            meaning; pure code-authoring
+            contract. Retained in the AA=10 spec
+            or migrated to the parent AA spec.
+        (c) ARCHITECTURAL CONTENT NOT IN
+            DIAGRAMS — identifier asserted in
+            subordinate spec but absent from
+            0500000. Per DD-002 prose-follows-
+            diagram + DD-003 4-step workflow:
+            0500000 diagram is amended FIRST,
+            subordinate-spec amendment proceeds
+            SECOND.
+
+  (8) Cross-doc V-038 defects recorded in the
+      Master Defect Register and resolved per
+      the DEC-012 six-sub-step methodology
+      (S-1 audit, S-2 diagram amendments, S-3
+      parent-spec gap-fill, S-4 retirement,
+      S-5 anchor revision, S-6 governance
+      updates). Cross-doc V-038 defects MUST be
+      resolved BEFORE subordinate-spec retirement
+      proceeds.
+
+CROSS-DOC V-038 ENFORCEMENT POINTS:
+
+  (a) Pre-amendment cross-check on any
+      subordinate-spec amendment in AA=04 /
+      AA=06 / AA=07 / AA=08 / AA=10.
+  (b) Pre-retirement gate on any subordinate
+      spec subject to DD-012 retirement campaign.
+  (c) Session-open pre-flight (future 0311002
+      amendment) on any session that touches a
+      subordinate spec.
+
 15.14.6 INTERACTION WITH §15.13 HTML CANONICAL
         FORMAT
 
@@ -3062,6 +3191,767 @@ every diagram-bearing document amendment.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_16  05-13-2026  TB00250 AMENDMENT-14 — F-V038-002
+                     REGISTRY HOUSEKEEPING CLOSURE FOR
+                     FOUR D5 R6 IDENTIFIERS PER TB00240
+                     §6.4 (THREE-SESSION CARRY-FORWARD
+                     CLOSURE: TB00248 -> TB00249 ->
+                     TB00250).
+
+                     Two surgical edits to §15.12 Asset-
+                     Tag Canonical Registry adding the four
+                     R:R-driven sizing curve form-factor
+                     identifiers introduced at 0500000
+                     dv1_60 (TB00239 AMENDMENT-3) D5 R5 ->
+                     R6 root governs list extension and
+                     preserved through dv1_71 per the
+                     registry-gap-note carry-forward
+                     pattern.
+
+                     EDIT 1 — §15.12.3 contract: Contract
+                     Registry. ADDED (1 token):
+                       contract:Sizing_Curve_Per_Module
+                         (0500000 D5 R6; TB00239
+                         AMENDMENT-3; TB00000 §9.10)
+
+                     EDIT 2 — §15.12.8 param: Parameter
+                     Registry. ADDED (3 tokens):
+                       param:per_trade_size_usd
+                         (TB00000 §9.17 v2_29; CIATS-OWNED
+                         PER-MODULE INSTANTIATED)
+                       param:per_trade_ceiling_pct
+                         (TB00000 §9.17 v2_29; CIATS-OWNED
+                         PER-MODULE INSTANTIATED)
+                       param:expected_rr_acceptance_rule
+                         (TB00000 §9.10 + §9.17 v2_29;
+                         CIATS-OWNED)
+
+                     All 4 tokens grep-verified canonical
+                     in 0500000 dv1_71 D5 R7 root governs
+                     list (line 3788) at TB00250 chat-turn
+                     execution. Canonical authority sources:
+                     contract:Sizing_Curve_Per_Module owned
+                     by 0500000 D5 R6 (parent spec subject
+                     to DD-012 carry-forward F-V038-001
+                     scope); three param: tokens owned by
+                     TB00000 v2_38 §9.17 CIATS PARAMETER
+                     REGISTRY (CIATS-OWNED PER-MODULE
+                     INSTANTIATED section) plus §9.10
+                     ACCEPTANCE RULE A1 for expected_rr_
+                     acceptance_rule.
+
+                     REGISTRY-TARGET-NUMBER OBSERVATION.
+                     The 0500000 dv1_71 D5 registry_gap_
+                     note prose cites the param registry
+                     as "0311001 v1_15 §15.12.5"; the
+                     actual param: Parameter Registry
+                     section number in v1_15 is §15.12.8
+                     (§15.12.5 in v1_15 is the layer:
+                     Layer Registry). The dv1_71 narrative
+                     section-number reference is a carry-
+                     forward citation drift from earlier
+                     sessions. v1_16 amendment proceeds
+                     against the correct §15.12.8 target.
+                     Logged as RR-SCOPE-010 NSI identifier-
+                     citation discipline observation in
+                     TB00250 SL.
+
+                     CARRY-FORWARD STATUS UPDATE.
+                     F-V038-002 (REGISTRY HOUSEKEEPING for
+                     4 D5 R6 identifiers) CLOSED at this
+                     v1_16 amendment. Three-session carry-
+                     forward (TB00248 NSI §5.1 -> TB00249
+                     NSI §6 -> TB00250 NSI §5.1) eliminated.
+                     F-V038-001 (SUBORDINATE-SPEC GAP-FILL
+                     OR RETIREMENT for same 4 D5 R6
+                     identifiers) REMAINS OPEN — carries
+                     forward to TB00251 NSI per scope-vs-
+                     budget discipline (cluster C7 systemic
+                     currency-lag entanglement per TB00201
+                     §7.2 fifth-recurrence finding makes
+                     F-V038-001 subordinate-spec gap-fill a
+                     multi-document amendment scope that
+                     exceeds single-AMENDMENT budget).
+
+                     FP/DP-DERIVABILITY-TEST GATE LOG
+                     (per TB00000 v2_38 §4.5 DD-011
+                     AMENDMENT D four-item log).
+
+                     (1) Option-set for AMENDMENT-14:
+                         A. V-038 cross-doc findings
+                            F-V038-001 + F-V038-002 from
+                            TB00240 §6.4.
+                         B. V-038 cross-doc audit of
+                            AR-018/AR-028/AR-053/AR-054/
+                            AR-055/AR-043/HR-EE-014/
+                            HR-EE-015 citations in 4
+                            subordinate specs.
+                         C. S-3 sub-step authoring
+                            (UNBLOCKED post-cluster-C5
+                            closure).
+                         D. 1011002 WS_Manager retirement
+                            cascade (DD-012 scope).
+                         E. Cascade-ordering re-derivation.
+
+                     (2) First-principles analysis:
+                         - TB00000 v2_38 §9.10 loss-
+                           prevention mission: smaller
+                           scope per session reduces error
+                           rate.
+                         - TB00000 v2_38 §4.5 DD-001 +
+                           DD-002 diagrams-canonical:
+                           V-038 cross-doc closure is
+                           foundational for downstream
+                           Step 3 + Step 4 work.
+                         - TB00237 §5.1 scope-vs-budget
+                           lesson: bundle scope to a
+                           single coherent AMENDMENT
+                           per session.
+                         - RR-SCOPE-001 absolute scope
+                           discipline: 3-session carry-
+                           forward (F-V038-002) closure
+                           eliminates recurring NSI
+                           entropy.
+                         - TB00250 NSI §3.3 derivation
+                           hint: Option A is smallest
+                           scope of diagnostic options;
+                           closure establishes V-038
+                           cross-doc baseline before
+                           larger Option B audit.
+
+                     (3) Data sources consulted:
+                         - TB00250 NSI §3 candidate option
+                           set + §5 carry-forwards + §7
+                           cascade-ordering re-derivation.
+                         - TB00249 SL §6 carry-forwards.
+                         - TB00245 SL §5.2 + TB00246 NSI
+                           §5 + TB00247 SL §5.3 + TB00248
+                           NSI §5.1 (F-V038-001/002
+                           lineage tracing 3 sessions).
+                         - 0500000 dv1_71 §8 line 4906
+                           (AR-043 prose-reconciliation
+                           verified landed at TB00250
+                           chat-turn) + D5 root governs
+                           line 3788 (4 R6 identifiers
+                           grep-verified present).
+                         - 0311001 v1_15 §15.12.3 line
+                           2243 contract: registry +
+                           §15.12.8 line 2335 param:
+                           registry (insertion target
+                           sections).
+                         - TB00201 SL §7.2 cluster C7
+                           fifth-recurrence systemic
+                           currency-lag finding (rationale
+                           for F-V038-001 scope deferral).
+                         - TB00000 v2_38 §4.5 DD-011
+                           AMENDMENT D four-item log
+                           requirement + RR-SCOPE-005
+                           derivable-decision execution
+                           authority.
+
+                     (4) Elimination outcomes:
+                         - E (cascade-ordering re-
+                           derivation) eliminated: TB00250
+                           NSI §7.1 already states "1011002
+                           WS_Manager remains next-cascade
+                           target"; re-running diagnostic
+                           with no new finding signal
+                           yields zero new info.
+                         - D (1011002 retirement cascade)
+                           eliminated: largest scope per
+                           §3.3 hint; Phase 0 FP/DP is
+                           itself a derivability gate;
+                           prerequisite diagnostic work
+                           (Options A + B) must clear
+                           first.
+                         - B (V-038 cross-doc audit, 8 ARs
+                           x 4 subordinate specs)
+                           eliminated for this AMENDMENT:
+                           larger scope than A per §3.3
+                           hint; sequential ordering A
+                           first then B with V-038 cross-
+                           doc baseline established.
+                         - C (S-3 sub-step authoring, F-12
+                           simplest = registry housekeeping)
+                           eliminated for this AMENDMENT:
+                           F-12 scope overlaps F-V038-002;
+                           running F-V038-002 first
+                           satisfies a sub-scope of F-12
+                           and surfaces residual scope
+                           with reduced overlap.
+                         - A (V-038 cross-doc findings)
+                           SURVIVES: smallest scope of
+                           diagnostic options; closes
+                           recurring 3-session carry-
+                           forward; establishes V-038
+                           cross-doc baseline; subsumes
+                           F-12 sub-scope.
+
+                     (5) Remaining option: A.
+
+                     Within Option A, sub-scope analysis:
+                     F-V038-001 + F-V038-002 represent two
+                     distinct work products on the same
+                     4-identifier target set. F-V038-002
+                     (registry housekeeping; single-
+                     document amendment to 0311001
+                     §15.12.3 + §15.12.8) is small-scope
+                     derivable. F-V038-001 (subordinate-
+                     spec gap-fill OR retirement; entangled
+                     with cluster C7 systemic currency-lag
+                     reconciliation across 0611001 +
+                     0211001 per TB00201 §7.2 fifth-
+                     recurrence finding) is multi-document
+                     larger-scope work exceeding single-
+                     AMENDMENT budget. Per scope-vs-budget
+                     discipline (TB00237 §5.1) +
+                     RR-SCOPE-001 absolute scope, the
+                     derivable sub-scope this session is
+                     F-V038-002 only; F-V038-001 carries
+                     forward to TB00251 with explicit
+                     cluster C7 context.
+
+                     One compliant sub-disposition surfaced
+                     (F-V038-002 only); executed directly
+                     under TB00000 v2_38 §4.3.1 RR-SCOPE-005
+                     derivable-decision authority +
+                     §4.5 DD-011 enforcement-gate compliance.
+
+                     RR-SCOPE-001 absolute-scope compliance:
+                     AMENDMENT-14 ADD-only scope per the
+                     option-A derivation — four token
+                     additions to §15.12.3 + §15.12.8
+                     registries only; no removal of
+                     existing identifiers; no other section
+                     changes.
+
+                     RR-SCOPE-007 self-authored-NSI-source-
+                     prohibition compliance: scope sourced
+                     from TB00250 NSI §3 (this session NSI
+                     directive bundling TB00240 §6.4
+                     findings) + 0500000 dv1_71 D5 root
+                     governs canonical encoding (Bill-
+                     ratified diagram per DD-001) +
+                     TB00000 v2_38 §9.17 CIATS PARAMETER
+                     REGISTRY (Bill-ratified governance
+                     §9.17 v2_29 enactment per TB00179) +
+                     TB00000 v2_38 §9.10 ACCEPTANCE RULE
+                     A1 (Bill-ratified at TB00179
+                     chat-turn).
+
+                     RR-SCOPE-009 four-question origin
+                     investigation for the 4 identifiers
+                     (all load-bearing CIATS-tracked
+                     parameters):
+                       contract:Sizing_Curve_Per_Module
+                         (1) introduced 0500000 dv1_60
+                         TB00239 AMENDMENT-3 + TB00000
+                         v2_29 §9.10 enactment at TB00179;
+                         (2) problem solved: codifies the
+                         CIATS-owned function form-factor
+                         mapping expected R:R to per-trade
+                         allocation, per-module
+                         instantiated per v2_38 §9.6;
+                         (3) evidence still load-bearing:
+                         0500000 dv1_71 D5 root governs
+                         + proposal_box + param_store_box
+                         actively encode the contract per
+                         CIATS Proposal Engine sole-author
+                         authority; (4) loss-prevention
+                         property: gates sizing-curve form-
+                         factor proposals through CIATS
+                         Proposal Engine + Bill approval
+                         gate (HR-CI-011) before reaching
+                         Parameter Store, preventing
+                         unvalidated curve-form changes
+                         from affecting live trade sizing.
+                       param:per_trade_size_usd
+                         (1) introduced TB00179 v2_28 ->
+                         v2_29 §9.17 rewrite (replaces
+                         retired per_trade_pct);
+                         (2) problem solved: Kraken per-
+                         pair minimum starting value (~
+                         $0.50) flat across R:R buckets
+                         until CIATS has data to
+                         differentiate at 200-trade
+                         inference threshold;
+                         (3) evidence still load-bearing:
+                         TB00000 v2_38 §9.17 explicitly
+                         designates as CIATS-OWNED PER-
+                         MODULE INSTANTIATED in Sizing
+                         curve subsection; (4) loss-
+                         prevention property: maximizes
+                         trade count for CIATS data
+                         accumulation during paper trading
+                         while limiting per-trade capital
+                         at risk.
+                       param:per_trade_ceiling_pct
+                         (1) introduced TB00179 v2_28 ->
+                         v2_29 §9.17 rewrite;
+                         (2) problem solved: hard
+                         concentration ceiling per single
+                         trade (25% of module wallet
+                         starting), CIATS-adjustable up
+                         or down on evidence;
+                         (3) evidence still load-bearing:
+                         TB00000 v2_38 §9.17 active CIATS-
+                         owned starting value; (4) loss-
+                         prevention property: prevents
+                         early-paper-trading single-trade
+                         wipeout from wrong R:R estimate
+                         at high allocation per TB00179
+                         FP/DP analysis (Option B2 vs B1
+                         no-ceiling vs B3 sacred-ceiling).
+                       param:expected_rr_acceptance_rule
+                         (1) introduced TB00179 v2_28 ->
+                         v2_29 §9.10 ACCEPTANCE RULE A1;
+                         (2) problem solved: A1 reject at
+                         point-estimate below 1:1.5
+                         (selected at TB00179 for paper-
+                         trading data maximization; A2
+                         confidence-bounded variant
+                         deferred to CIATS proposal at
+                         200-trade threshold);
+                         (3) evidence still load-bearing:
+                         TB00000 v2_38 §9.10 ACCEPTANCE
+                         RULE A1 explicit enforcement;
+                         (4) loss-prevention property:
+                         ABSOLUTE — every candidate trade
+                         whose point-estimate expected
+                         R:R is below the §9.10 sacred
+                         1:1.5 floor is REJECTED before
+                         sizing math runs.
+
+                     All 4 identifiers load-bearing; all 4
+                     MUST be preserved as canonical registry
+                     entries.
+
+                     RR-SCOPE-010 verbatim-MDR-citation
+                     discipline: contract:Sizing_Curve_
+                     Per_Module semantics grep-verified
+                     verbatim against 0500000 dv1_71 D5
+                     root governs (line 3788) + proposal_
+                     box <desc> + param_store_box <desc>;
+                     param:per_trade_size_usd + param:
+                     per_trade_ceiling_pct + param:
+                     expected_rr_acceptance_rule semantics
+                     grep-verified verbatim against
+                     TB00000 v2_38 §9.17 CIATS-OWNED PER-
+                     MODULE INSTANTIATED subsection (lines
+                     4830-4878 of TB00000 v2_38).
+
+                     V-038 within-document parity status:
+                     contract:Sizing_Curve_Per_Module is
+                     introduced as a registry entry per
+                     this v1_16 amendment; prior-version
+                     registry-gap status is closed.
+                     Symmetric difference with 0500000
+                     dv1_71 D5 root governs reduces by 4
+                     tokens (the 4 identifiers
+                     transitioning from registry-gap-note
+                     status to registered entries).
+
+                     V-038 cross-document parity status:
+                     0211001 dv1_0 CIATS Specification
+                     (AA=02 — OUT OF DD-012 SCOPE per
+                     TB00000 v2_38 §4.5 DD-012 SCOPE
+                     clause; AA=02 Operations not subject
+                     to DD-012 retirement campaign) +
+                     0611001 dv1_0 Position_Sizing_Rules
+                     (AA=06 — IN DD-012 SCOPE; cluster
+                     C7 systemic currency-lag entangled
+                     per TB00201 §7.2). F-V038-001
+                     subordinate-spec gap-fill OR
+                     retirement carry-forward to TB00251
+                     for explicit DD-012 three-bucket
+                     classification per identifier.
+
+                     PARENT CHAIN COMPLIANCE: 0311001 is
+                     the Sub-Domain 3.1.1 Instance
+                     Document under 0310000 Governance_
+                     Procedures_Anchor under 0300000
+                     Governance Domain Document. Parent
+                     chain present in repository per
+                     TB00000 v2_38 §8.8 three-tier
+                     hierarchy. §17 Revision History
+                     updated; no other section content
+                     changed.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00250 SESSION-CLOSE TRIO +
+                     AMENDMENT-14):
+                       0311001 v1_15 -> v1_16.txt (this
+                         document — F-V038-002 registry
+                         housekeeping closure).
+                       TB00250 Session_Log v1_0.txt
+                         (session-close trio member 1).
+                       TB00251 Next_Session_Instructions
+                         v1_0.txt (session-close trio
+                         member 2; carries forward
+                         F-V038-001 + V-038 cross-doc
+                         audit + S-3 sub-step + 1011002
+                         WS_Manager retirement cascade
+                         candidates).
+                       OCS chat-response copy box
+                         (session-close trio member 3,
+                         byte-identical to TB00251 NSI
+                         §0 OCS payload).
+
+                     OPEN ITEMS UPDATED:
+                     F-V038-002 (REGISTRY HOUSEKEEPING)
+                       CLOSED at namespace layer via this
+                       v1_16 amendment. Three-session
+                       carry-forward TB00248 -> TB00249 ->
+                       TB00250 closed.
+                     F-V038-001 (SUBORDINATE-SPEC GAP-FILL
+                       OR RETIREMENT) carry-forward to
+                       TB00251 NSI with explicit cluster
+                       C7 context per TB00201 §7.2
+                       fifth-recurrence systemic
+                       currency-lag finding.
+
+                     Bill override: 0311001 v1_15 -> v1_16
+                     is enacted under Bill's standing
+                     document-control override continuing
+                     the established scope. Per Bill's
+                     TB00250 OCS execute directive bundled
+                     with the TB00250 chat-turn 1 cleanup-
+                     list + AMENDMENT-14 execution sequence
+                     under TB00000 v2_38 §4.3.1
+                     RR-SCOPE-005 derivable-decision
+                     authority + §4.5 DD-011 FP/DP-
+                     derivability-test gate OUTCOME 1
+                     execution.
+
+                     Document Status updated: supersedes
+                     v1_15.
+
+  v1_15  05-13-2026  TB00237 AMENDMENT C — §15.14.2
+                     SCOPE EXTENSION TO CROSS-DOCUMENT
+                     AA=04/06/07/08/10 + §15.14.5
+                     V-038 CROSS-DOC ENFORCEMENT
+                     PROCEDURE.
+
+                     Two §15.14 amendments enacted at
+                     TB00237 chat-turn 1 as the
+                     namespace-level companion to
+                     TB00000 v2_38 §4.5 DD-012
+                     (AMENDMENT A) enactment.
+
+                     AMENDMENT C.1 — §15.14.2 SCOPE.
+                     §15.14 applies extended from
+                     within-document scope (the v1_10
+                     binding: diagram-bearing
+                     controlled documents in isolation)
+                     to CROSS-DOCUMENT scope (the
+                     v1_15 binding: 0500000 canonical
+                     diagrams as authoritative source
+                     for AA=04 Exchange_Interface,
+                     AA=06 Risk, AA=07 Strategy, AA=08
+                     Trading_System, and AA=10 Coding_
+                     Specification subordinate specs).
+                     Exclusions enumerated:
+                     AA=00/01/02/03/05/09/11 domains
+                     OUT OF SCOPE (governance,
+                     operational, management,
+                     compliance, plans, the parent
+                     System_Architecture domain
+                     itself). Code files (.py/.js/.sh)
+                     OUT OF SCOPE. Diagram-tag
+                     taxonomy + canonical registry
+                     OUT OF SCOPE. TB-prefix work-
+                     product documents (SL/NSI/MDR/
+                     DR) OUT OF SCOPE.
+
+                     AMENDMENT C.2 — §15.14.5 V-038
+                     CROSS-DOC ENFORCEMENT PROCEDURE.
+                     V-038 validation extended from
+                     within-document prose-vs-diagram
+                     symmetric-difference to cross-
+                     document subordinate-spec-vs-
+                     0500000 grep-based classification
+                     under DEC-012(c) three-bucket
+                     scheme (a/restatement, b/coding-
+                     unique, c/architectural-content-
+                     not-in-diagrams). Cross-doc V-038
+                     defects recorded in MDR + resolved
+                     per DEC-012 six-sub-step
+                     methodology (S-1..S-6) BEFORE
+                     subordinate-spec retirement
+                     proceeds. Three enforcement
+                     points: pre-amendment, pre-
+                     retirement, session-open pre-
+                     flight.
+
+                     REASON FOR CHANGE.
+                     TB00237 NSI §3.3 AMENDMENT C
+                     specification. Bill TB00236
+                     chat-turn 2 verbatim directive
+                     ("0500000 are canonical and
+                     authoritative and should replace
+                     ALL OTHER DOCUMENTS WHERE
+                     POSSIBLE.") requires a namespace-
+                     level validation rule to enforce
+                     the cross-document authority
+                     hierarchy that TB00000 v2_38
+                     §4.5 DD-012 codifies at the
+                     absolute-standing-rule layer.
+                     Without the V-038 cross-doc
+                     enforcement procedure, the DD-012
+                     retirement-gate sequence (S-1
+                     audit through S-4 retirement)
+                     has no validation mechanism for
+                     detecting incomplete encoding of
+                     subordinate-spec content in
+                     0500000 diagrams. The §15.14.5
+                     extension closes that gap.
+
+                     FP/DP ANALYSIS.
+                     Option A (extend §15.14.2 scope
+                       + §15.14.5 V-038 procedure)
+                       ACCEPTED. Minimum-edit
+                       approach. Preserves the
+                       existing §15.14 structure;
+                       adds cross-doc scope + cross-
+                       doc V-038 steps as scope-
+                       extension paragraphs within
+                       existing sub-sections.
+                     Option B (new §15.15 separate
+                       sub-section) — REJECTED.
+                       Fragments the diagram-as-
+                       canonical principle across
+                       two sub-sections. The
+                       cross-doc scope is a scope
+                       EXTENSION of §15.14, not an
+                       independent rule family.
+
+                     Decision: Option A.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311001 parent chain: 0300000
+                     Governance (Domain) → 0310000
+                     Governance_Procedures_Anchor
+                     (Sub-Domain Anchor) → 0311001
+                     Namespace_Specification
+                     (Instance). All parent documents
+                     present in project folder. No
+                     new domain or sub-domain
+                     document required.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00237 GOVERNANCE-
+                     AMENDMENT BUNDLE):
+                       TB00000 v2_37 -> v2_38
+                         (AMENDMENT A: DD-012 NEW +
+                         AMENDMENT D: DD-011 FP/DP-
+                         derivability-test gate).
+                       TB00153 Decision_Register
+                         v1_4 -> v1_5 (AMENDMENT B:
+                         DEC-012(a) candidate list
+                         extension to include
+                         08XXXXX).
+                       0500000 dv1_58 -> dv1_59
+                         (AMENDMENT-1: §9 prose
+                         reconciliation).
+                       TB00237 Session_Log v1_0.
+                       TB00238 Next_Session_
+                         Instructions v1_0.
+
+                     OPEN ITEMS UPDATED.
+                     OI-NEW V-038-CROSS-DOC-
+                       ENFORCEMENT-GAP CLOSED at
+                       namespace layer via this
+                       v1_15 amendment. Future
+                       operational verification at
+                       every subordinate-spec
+                       amendment + retirement gate.
+
+                     Bill override: 0311001 v1_14
+                     -> v1_15 is enacted under
+                     Bill's standing document-
+                     control override continuing the
+                     established scope. Per Bill's
+                     TB00236 chat-turn 2 verbatim
+                     directive bundled with TB00237
+                     NSI §3 amendment scope.
+
+  v1_14  05-13-2026  TB00233 Q2-A EXECUTION — §15.12
+                     REGISTRY GAP CLOSURE (12 TOKENS
+                     ADDED FROM 0500000 dv1_58 ROOT
+                     governs: LISTS).
+
+                     Three surgical edits to the §15.12
+                     Asset-Tag Canonical Registry adding
+                     12 namespace tokens that were
+                     canonical in the 0500000 dv1_58
+                     root <desc> governs: lists (line
+                     3787 D5 R3 figure + line 1365 D7
+                     figure partial) but absent from
+                     the §15.12 sub-registries. Closure
+                     of the registry-gap backlog
+                     accumulated since TB00230
+                     AMENDMENT-11 token introductions.
+
+                     EDIT 1 — §15.12.3 contract:
+                     Contract Registry. ADDED:
+                       contract:Two_Stream_Record_
+                         Architecture  (0511006)
+
+                     EDIT 2 — §15.12.7 evt: Event
+                     Registry. ADDED (4 tokens):
+                       evt:ALERT_SENT
+                         (0511006)
+                       evt:ALERT_SMTP_FAILED
+                         (0511006)
+                       evt:TRADE_RECORD_WRITE_FAILED
+                         (0511006)
+                       evt:LOG_QUEUE_FULL
+                         (0511006)
+
+                     EDIT 3 — §15.12.9 rule: HardRule
+                     Registry. ADDED (7 tokens):
+                       rule:HR-LG-004   (0511006)
+                       rule:HR-LG-007   (0511006)
+                       rule:HR-LG-009   (0511006)
+                       rule:HR-LG-010   (0511006)
+                       rule:HR-LG-011   (0511006)
+                       rule:HR-LG-012   (0511006)
+                       rule:LG-ALERT-005 (0511006)
+
+                     All 12 tokens grep-verified canonical
+                     in 0500000 dv1_58 source-of-truth at
+                     TB00233 chat-turn execution. Parent
+                     spec attribution: all 12 owned by
+                     0511006 Logger_Specification dv1_2
+                     (verified via Section 3 / Section 4 /
+                     Section 6.X / Section 8 grep against
+                     0511006 dv1_2 body content).
+
+                     TOKEN-COUNT DISCREPANCY RESOLVED.
+                     TB00232 NSI §3.2 stated "11-or-12
+                     tokens"; TB00233 NSI §3.2 enumerated
+                     12 names. Grep verification confirms
+                     actual count is 12. The TB00232 NSI
+                     "11" citation is logged as
+                     RR-SCOPE-010 NSI identifier-citation
+                     discipline observation (cumulative
+                     count tracked in TB00233 SL §8).
+
+                     REGISTRY-TARGET MISNUMBERING IN
+                     TB00233 NSI §3.2 STEP 3 RESOLVED.
+                     TB00233 NSI §3.2 Step 3 directive
+                     stated:
+                       "§15.12.3 (rule registry),
+                        §15.12.7 (contract registry),
+                        §15.12.9 (evt registry)"
+                     The actual §15.12 sub-section
+                     numbering in 0311001 v1_13 is:
+                       §15.12.3 = contract: registry
+                       §15.12.7 = evt: registry
+                       §15.12.9 = rule: registry
+                     v1_14 amendment executed against
+                     the ACTUAL sub-section numbering
+                     per RR-SCOPE-010 grep-verification
+                     gate (verified actual file content
+                     trumps NSI assertion). The TB00233
+                     NSI §3.2 Step 3 sub-section
+                     misnumbering is logged as
+                     RR-SCOPE-010 NSI identifier-citation
+                     discipline observation. Cumulative
+                     RR-SCOPE-010 violation count
+                     incremented (tracked in TB00233 SL
+                     §8).
+
+                     PROCEDURAL NOTE — RR-SCOPE-005
+                     DERIVABLE-DECISION EXECUTION.
+                     Q2-A was derivable from FP/DP
+                     analysis at TB00233 chat-turn
+                     (4-step elimination on remaining
+                     options: Q2-B accumulates drift
+                     non-linearly per cascade; Q2-C is
+                     conditional-dead-end pending
+                     unresolved Q1; Q2-A is bounded
+                     5-step mechanical execution under
+                     DD-001/DD-002 diagrams-canonical
+                     principle and loss-minimization
+                     mission). Claude initially surfaced
+                     Q2-A as ratification question (DD-011
+                     pre-emit scan failure / RR-SCOPE-005
+                     violation); Bill corrected the
+                     pattern at chat-turn 3 ("The
+                     decision is made by the FP/DP
+                     analysis. What the fuck are you
+                     waiting for? Go."). Q2-A executed
+                     this v1_14 amendment.
+
+                     The RR-SCOPE-005 / DD-011 chat-turn
+                     violation is the originating
+                     instance of a post-DD-011-enactment
+                     recurrence; tracked in TB00233 SL
+                     §8 governance-recurrence record.
+
+                     CONFLICT-FREE-SUPERSESSION VERIFIED.
+                     No existing §15.12 entry conflicts
+                     with the 12 new entries. Parent
+                     spec 0511006 dv1_2 remains
+                     canonical. No downstream document
+                     amendment required for the 12-token
+                     registry addition (registry is
+                     diagram-canonical-follow-up under
+                     DD-002 prose-follows-diagram; no
+                     diagram changes required).
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311001 parent chain: 0300000
+                     Governance (Domain) → 0310000
+                     Governance_Procedures_Anchor
+                     (Sub-Domain Anchor) → 0311001
+                     Namespace_Specification (Instance).
+                     All parents in project folder. No
+                     new domain or sub-domain document
+                     required.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00233 SESSION-CLOSE).
+                       0311001 v1_13 → v1_14 (this
+                         document).
+                       TB00233 Session_Log v1_0
+                         (session-close trio member 1).
+                       TB00234 Next_Session_Instructions
+                         v1_0 (session-close trio member
+                         2; carries Q1, Q3, OI-NEW-003/
+                         004/005 forward for Bill
+                         ratification).
+                       OCS chat-response copy box
+                         (session-close trio member 3,
+                         byte-identical to TB00234 §0).
+
+                     OPEN ITEMS UPDATED.
+                     Q2 (§15.12 registry-gap backlog) —
+                       CLOSED at governance layer via
+                       this amendment.
+                     Q1 (TB00207 Step 3 close-gate
+                       ratification) — Carry-forward to
+                       TB00234; §4.5 DD-011 exemption
+                       (Bill business judgment).
+                     Q3 (cascade-campaign direction) —
+                       Carry-forward to TB00234; §4.5
+                       DD-011 exemption (Bill business
+                       judgment).
+                     OI-NEW-003/004/005 — Carry-forward
+                       to TB00234; Bill ratification
+                       class.
+
+                     Bill override: 0311001 v1_13 →
+                     v1_14 is enacted under Bill's
+                     TB00233 chat-turn 3 directive
+                     ("The decision is made by the
+                     FP/DP analysis. What the fuck are
+                     you waiting for? Go.") authorizing
+                     RR-SCOPE-005 derivable-decision
+                     execution per FP/DP-derived Q2-A
+                     selection.
 
   v1_13  05-12-2026  TB00224 TURN 2 GOVERNANCE
                      RECONCILIATION — §7 FOLDER STRUCTURE
