@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_73</title>
+<title>0500000 System Architecture Overview dv1_78</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_73</td></tr>
+  <tr><td>DocVersion</td><td>dv1_78</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_73_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_78_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-14-2026</td></tr>
   <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
@@ -3778,21 +3778,21 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image5_T2_R7_CIATS_Architecture</title>
+  <title>0500000_Image5_T2_R8_CIATS_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image5_T2_R7_CIATS_Architecture
+    diagram_canonical: 0500000_Image5_T2_R8_CIATS_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment: R6 -&gt; R7 (TB00246 AMENDMENT-10 — ar:AR-043 BOUNDED-SEMAPHORE CONCURRENCY-PROTECTION GOVERNS-LIST EXTENSION per TB00196 §5.1 + §6.5 + §6.8 + §7.1 cluster C5 8-element governs-list gap closure path (residual 1-of-3 closure after TB00245 AMENDMENT-9 D2 R5 close of 2 tokens AR-053 + AR-054; HR-EE-014 + HR-EE-015 → D7 deferred to AMENDMENT-11) + TB00203 §5.1 cluster C5 Risk_Engine BoundedSemaphore ownership + TB00244 SL §3.2 sub-decision (B) elimination outcome (B2 AR-043 → D1 ELIMINATED; B1 AR-043 → D5 SELECTED) + TB00246 NSI §3 AMENDMENT-10 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D5 is the canonical encoding site for CIATS Architecture and Data Flows. AR-043 is the CIATS-tracked concurrency-protection mechanism owned by mod:Risk_Engine which is anchored in the CIATS feedback loop architecturally encoded by D5 — Risk_Engine's BoundedSemaphore is the asyncio concurrency-protection primitive consumed by Execution Engine before dispatch (semaphore acquire) and released on position close, preventing asyncio dispatch races during concurrent position-open/close events. TB00203 §5.1 cluster C5 canonical authority chain: Risk_Engine owns BoundedSemaphore as a CIATS-tracked concurrency-protection parameter; TB00196 §6.8 confirms verbatim "Cluster C1 cross-cuts Risk_Engine (BoundedSemaphore owner) directly"; TB00196 §6.5 explicitly identifies AR-043 → D5 root governs target per per-AR target-diagram identification. Single token addition to D5 governs:ar list (numerical insertion between ar:AR-016 and ar:AR-061): ar:AR-043. SVG VISUAL GEOMETRY PRESERVED BYTE-IDENTICAL — desc-only amendment scope per TB00246 NSI §3.4 default determination ("SVG change: NO; governs-list extension only"). No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1200 preserved). rect dimensions for stream2_box (x=495 y=360 width=560 height=180), proposal_box (x=525 y=640 width=450 height=180), param_store_box (x=40 y=920 width=1420 height=120), and all other D5 visual elements preserved BYTE-IDENTICAL. All 9 other figures in dv1_67 (Tier 1 Context + D1 + D2 + D3 + D4 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-001/DD-002/DD-004/DD-011/DD-012 compliance: AR-043 BoundedSemaphore concurrency-protection mechanism encoded in D5 root governs as canonical architectural binding; subordinate-spec restatement in 0211001 CIATS Specification (canonical subordinate spec for CIATS-tracked concurrency-protection mechanism) is derived per DD-012 cross-document authority hierarchy; FP/DP-derivability-test logged at TB00246 chat-turn 1 with explicit four-item log per TB00000 v2_38 §4.5 DD-011 AMENDMENT D — option-set on the verification-confirmation sub-decision per TB00246 NSI §3.2 {A. D5 root governs (per TB00203 §5.1 cluster C5 + TB00196 §6.5 + §6.8 canonical authority chain — Risk_Engine BoundedSemaphore ownership anchored in CIATS); B. D1 root governs (treated as Kraken-API order-dispatch infrastructure)}; first-principles analysis — TB00203 §5.1 cluster C5 explicitly establishes Risk_Engine as canonical BoundedSemaphore owner, TB00196 §6.8 explicitly confirms "Cluster C1 cross-cuts Risk_Engine (BoundedSemaphore owner) directly", TB00196 §6.5 explicitly maps AR-043 → D5 root governs, Risk_Engine is architecturally anchored in CIATS feedback loop (D5 scope) not Kraken-API wire layer (D1 scope), TB00244 SL §3.2 sub-decision (B) Bill-ratified elimination of B2 AR-043 → D1 with verbatim eliminated rationale "TB00203 cluster C5 + TB00196 §6.8 establish Risk_Engine as canonical BoundedSemaphore owner anchored in D5 — AR-043 deferred to a future AMENDMENT targeting D5"; data sources consulted — TB00196 §5.1 + §6.5 + §6.8 + §7.1 cluster C5 per-AR target-diagram identification (Bill-ratified S1EE Gap Register), TB00203 §5.1 cluster C5 Risk_Engine BoundedSemaphore ownership (Bill-ratified S1RE Gap Register), TB00244 SL §3.2 sub-decision (B) elimination outcome (Bill-ratified prior session log), TB00246 NSI §3 + §3.2 (this session NSI directive), TB00000 v2_38 §4.5 DD-001/DD-002 + §9.6 PER-MODULE CIATS FRAMEWORK + §9.10 loss-prevention mission, 0500000 §4 AR-043 line 4906 canonical entry, 0211001 dv1_0 CIATS Specification AR canonical source for AR-043; elimination outcomes — B (D1 target) eliminated because (a) TB00203 §5.1 cluster C5 + TB00196 §6.8 establish Risk_Engine as canonical BoundedSemaphore owner, (b) Risk_Engine is architecturally anchored in CIATS feedback loop (D5 scope) not Kraken-API wire-contract layer (D1 scope), (c) TB00244 SL §3.2 sub-decision (B) Bill-ratified B2 elimination at AMENDMENT-8 close, (d) D1 governs Kraken-API wire-contract mechanisms only (AR-006/AR-007/AR-008/AR-018/AR-028/AR-055) which are distinct from CIATS-tracked concurrency-protection scope; remaining option — A (D5 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-10 ADD-only scope per TB00246 NSI §3 explicit specification — one ar: token addition to D5 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. Note: AR-043 canonical §4 entry at line 4906 references "max_concurrent position limit" — max_concurrent itself was RETIRED at TB00000 v2_29 per §9.17 RETIRED entry ("concurrent-position count emerges from wallet_balance ÷ per_trade_size_usd arithmetic; No artificial ceiling"); the BoundedSemaphore concurrency-protection PRIMITIVE remains load-bearing for asyncio dispatch race-condition prevention even when the max_concurrent ceiling is retired; AR-043 prose-side reconciliation to remove the stale max_concurrent reference is a SEPARATE AMENDMENT scope (AR-043 prose reconciliation) and is OUT OF SCOPE this turn — flagged as carry-forward to a future AMENDMENT under RR-SCOPE-001 absolute-scope discipline + scope-vs-budget lesson. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00196 §5.1 + §6.5 + §6.8 + §7.1 cluster C5 (Bill-ratified S1EE Gap Register controlled document) + TB00203 §5.1 cluster C5 (Bill-ratified S1RE Gap Register controlled document) + TB00244 SL §3.2 sub-decision (B) elimination outcome (Bill-ratified prior session log) + TB00246 NSI §3 (this session NSI directive) + TB00000 v2_38 (Bill-ratified Project Instructions §4.5 DD-001/DD-002 + §9.6 PER-MODULE CIATS FRAMEWORK + §9.10 loss-prevention mission). RR-SCOPE-009 four-question origin investigation for AR-043 (load-bearing constraint): (1) introduced — 0500000 dv1_12; (2) problem solved — concurrency-protection primitive for Execution Engine asyncio dispatch path; BoundedSemaphore acquire-before-dispatch + release-on-position-close prevents asyncio dispatch races during concurrent position-open/close events; BoundedSemaphore raises ValueError on over-release providing bug-detection signal; on CIATS max_concurrent updates (when max_concurrent existed as a CIATS-tracked parameter pre-v2_29), semaphore recreated and re-acquired for currently-open positions; (3) evidence still load-bearing — BoundedSemaphore PRIMITIVE remains load-bearing for asyncio dispatch race-condition prevention even after max_concurrent ceiling retirement at v2_29 (the ceiling-enforcement function is retired but the race-prevention function is still required by mod:Risk_Engine + Execution Engine dispatch path); AR-043 canonical entry's reference to "max_concurrent position limit" is a stale-reference defect requiring separate prose-reconciliation amendment per CI-005 + DD-002; (4) loss-prevention property — preserves Execution Engine dispatch correctness by preventing asyncio race conditions that could otherwise dispatch concurrent conflicting orders against the same module wallet, AND BoundedSemaphore's ValueError-on-over-release provides operational bug-detection signal for over-release defects in dispatch/close path. Load-bearing; MUST be preserved as canonical D5 governs entry. RR-SCOPE-010 verbatim-MDR-citation discipline: AR-043 semantics grep-verified verbatim against 0500000 §4 line 4906 ("AR-043 (dv1_12) ★: max_concurrent position limit enforced by asyncio.BoundedSemaphore. BoundedSemaphore raises ValueError on over-release (bug detection). Gate 7 checks semaphore.locked() (non-blocking). Execution Engine acquires semaphore before dispatch. Position close triggers release. On CIATS max_concurrent update: recreate semaphore, re-acquire for all currently open positions."). DR-007 HTML scope validation at session close.)
-    R-increment-prior: R5 -&gt; R6 (TB00239 AMENDMENT-3 — R:R-DRIVEN SIZING CURVE FORM-FACTOR ENCODING per TB00194 §5.1 cluster C3 closure path + TB00207 §AMENDMENT-3 specification + TB00000 v2_38 §9.10 sacred-floor R:R + CIATS-owned sizing curve above the floor + §9.17 CIATS-OWNED PER-MODULE INSTANTIATED parameter registry. D5 is canonical for CIATS-owned sizing curve form factor per DD-001/DD-002 diagrams-canonical principle and the FP/DP analysis logged in TB00239 SL §3 — D5 already encodes rule:Sacred_R_R_1_to_1_5 (the floor) + mod:CIATS_Proposal_Engine (the curve-form-factor owner per v2_38 §9.10 "CIATS owns the sizing curve ABOVE the floor; CIATS MAY propose adjustments to the sizing curve") + mod:CIATS_Parameter_Store (the store that holds the curve parameters); D6 was rejected because opening CIATS internals at the cross-zone abstraction tier violates the load-bearing D5/D6 separation. Four new architectural identifiers added to root governs list: contract:Sizing_Curve_Per_Module (the CIATS-owned function form factor mapping expected R:R to per-trade allocation, instantiated per parallel-module per v2_38 §9.6 PER-MODULE CIATS FRAMEWORK), param:per_trade_size_usd (CIATS-OWNED PER-MODULE INSTANTIATED, Kraken per-pair minimum ~$0.50 starting per v2_38 §9.17), param:per_trade_ceiling_pct (CIATS-OWNED PER-MODULE INSTANTIATED, 25% of module wallet starting per v2_38 §9.17 — hard concentration ceiling per single trade, CIATS-adjustable up or down on evidence), param:expected_rr_acceptance_rule (CIATS-OWNED, A1 starting — reject at point-estimate below 1:1.5 per v2_38 §9.10 + §9.17). proposal_box &lt;desc&gt; constraints + produces fields extended with the four new identifiers reflecting mod:CIATS_Proposal_Engine sole authorship of curve form-factor proposals per v2_38 §9.10 "CIATS MAY propose adjustments to per_trade_ceiling_pct up or down based on evidence; CIATS MAY propose adjustments to the sizing curve (the function mapping expected R:R to allocation) at the 200-trade inference threshold; CIATS MAY propose Half-Kelly, fixed-fractional, or other sizing methodologies as the underlying curve form; the methodology is CIATS-owned." param_store_box &lt;desc&gt; constraints + produces fields extended with the four new identifiers reflecting mod:CIATS_Parameter_Store sole-writer authority per HR-CI-002 + HR-CI-003 + HR-CI-011 (Bill approval gate). SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00207 §AMENDMENT-3 "SVG change: NO (governs-list extension); CANDIDATE for visual update if explicit sizing-curve callout added" default determination. No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1200 preserved). rect dimensions for stream2_box (x=495 y=360 width=560 height=180), proposal_box (x=525 y=640 width=450 height=180), param_store_box (x=40 y=920 width=1420 height=120), and all other D5 visual elements preserved BYTE-IDENTICAL. SVG byte-identical preservation for D6 + Tier 1 Context + D1 + D2 + D3 + D4 + D7 + D8 + D9 per DEC-003 Path A one-diagram-per-session cadence. registry_gap_note extended with new gap entries for the four R6 additions: contract:Sizing_Curve_Per_Module is not currently registered in 0311001 v1_15 §15.12.3 contract: registry; param:per_trade_size_usd / per_trade_ceiling_pct / expected_rr_acceptance_rule are not currently registered in 0311001 v1_15 §15.12.5 param: registry. Surfaced as registry-amendment requirement for future 0311001 housekeeping increment; dv1_61 preserves these R6 references per the diagrams-as-authoritative principle DD-001 + DD-004 NO PROSE-FIRST AUTHORING (the R6 architectural identifiers are encoded in the diagram FIRST; namespace-registry amendments follow per the established registry-gap-note carry-forward pattern). DD-001 / DD-002 / DD-004 / DD-012 compliance: the R:R-driven sizing curve form factor is architecturally encoded in this D5 diagram as the canonical source; subordinate-spec text in 0211001 CIATS Specification (parent spec for CIATS architecture) and 0611001 Position_Sizing_Rules (parent spec for R:R floor + sizing arithmetic) is derived restatement of what D5 encodes per DD-012 cross-document authority hierarchy; subordinate-spec gap-fill cascade carry-forward to TB00240+ per scope-vs-budget discipline (RR-SCOPE-001 absolute scope to AMENDMENT-3 governs-list extension only; broader subordinate-spec reconciliation is a separate amendment). RR-SCOPE-001 absolute-scope compliance: AMENDMENT-3 ADD-only scope per TB00207 explicit specification; stale v2_29-retired param tokens in D5 governs list (param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:full_halt_drawdown, param:session_pause_drawdown) are NOT removed in this amendment; stale-param cleanup is a separate amendment scope carry-forward to TB00240 NSI per scope-vs-budget discipline lesson. RR-SCOPE-005 derivable-decision execution: D5-vs-D6 target selection derived under DD-011 FP/DP-derivability-test gate at TB00239 chat-turn 1 with explicit four-item log (option-set, first-principles analysis, data sources consulted, elimination outcomes, remaining option) per TB00000 v2_38 §4.5 DD-011 FP/DP-DERIVABILITY-TEST LOGGING GATE; one compliant option (D5) surfaced; executed directly under RR-SCOPE-005 derivable-decision authority. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: AMENDMENT-3 scope sourced from TB00194 §5.1 cluster C3 (Bill-ratified S1WSM Gap Register controlled document) + TB00207 §AMENDMENT-3 (Bill-ratified Step 3 Close Gate Package) + TB00000 v2_38 §9.10 + §9.17 (Bill-ratified Project Instructions); D5 selection sourced from TB00194 §5.1 explicit guidance + TB00239 NSI §3.2 initial derivation backed by FP/DP analysis at this chat-turn. RR-SCOPE-010 verbatim-MDR-citation discipline: identifier citations grep-verified against current authoritative TB00000 v2_38 §9.17 parameter registry (per_trade_size_usd / per_trade_ceiling_pct / expected_rr_acceptance_rule semantics match v2_38 §9.17 verbatim). DR-007 HTML scope validation: figure count 10 -&gt; 10, svg count 10 -&gt; 10, placeholder count 1 -&gt; 1 (identity check); section-heading parity preserved (no new headings introduced); structural-marker parity preserved (HTMLParser feed validation at session close); word-count parity within tolerance for the desc-extension scope; no placeholder/stub tokens; revision-history parity preserved (dv1_61 entry added; all prior entries dv1_60 through dv1_0 preserved verbatim per CI-005 + CI-006); HTML well-formedness gate verified per DR-007.9.)
-    R-increment-prior-2: R4 -&gt; R5 (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle: this diagram is the CANONICAL SOURCE for the 23-field CIATS Trade Outcome Bus schema. Prior dv1_49 R4 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth in stream2_box desc + visible-text element + figcaption — that citation direction was INVERTED under DD-002 (coding spec cited as canonical violates the single-source-of-truth-is-the-diagram rule). dv1_50 corrects the citation direction: stream2_box desc schema_fields_canonical reframed as "this diagram canonical per DD-001/DD-002 — historical seed: 1011005 dv1_3 §9, retired"; produces field 1011005-citation removed; visible text element at line 3953 1011005-citation removed; figcaption reframed to describe historical migration without citing 1011005 as ongoing source. Schema FIELD CONTENT unchanged (same 23 fields, same types, same order) — only the citation framing changes. rect dimensions x=495 y=360 width=560 height=180 preserved BYTE-IDENTICAL. SVG viewBox 1500x1200 preserved byte-identical. All Diagram 5 visual content outside the four corrected text sites preserved byte-identical. 0511004 dv1_5 -&gt; dv1_6 §7.5 cascade (Turn 3 this session) re-points 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5". 1011005 dv1_3 actual deletion DEFERRED to a future cascade that handles assignment-list cleanup at lines 5312/5393/5544/6383/6956 + §11 RELATED DOCUMENTS entry cleanup — out of scope this turn. CARRY-FORWARD: future 0500000 cascade to retire all remaining "1011005 dv1_3" downstream references in assignment lists + §11. RR-SCOPE-010 verbatim-MDR-citation discipline: 23-field schema enumeration grep-verified verbatim against dv1_49 baseline (no content drift). RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope of this correction sourced from Bill chat-turn directives at TB00218 ("If it's authoritative it should be in a 0500000 diagram... That makes it redundant... We want to remove as many 10XXXXX documents as possible by moving requirements to 0500000") + ("Do a FP/DP analysis to determine the correct action"), not from NSI authoring layer.)
-    R-increment-prior-3: R3 -&gt; R4 (TB00217 STAGE Phase 1 1011005 Cycle 3 schema reconciliation cascade Step 1: contract:CIATS_Trade_Outcome_Bus schema_fields enumeration expanded from the prior 12-field abbreviated set per 0511004 dv1_3 §7.5 to the 23-field canonical schema verbatim from 1011005 dv1_3 §9 EC-TOB-002. Schema fields enumerated in stream2_box desc structured metadata AND rendered in stream2_box visible text region within the byte-identical rect dimensions (x=495 y=360 width=560 height=180) using 9-10px font sizes to accommodate the expanded enumeration. SVG viewBox 1500x1200 preserved byte-identical. Background rect height 1200 preserved byte-identical. Surrounding elements (stats_hdr, stats_box at x=1120, pdca_hdr at y=580, pdca_box, and all elements below) preserved byte-identical. The 23-field set is: ts, event, level, component, symbol, entry_fill_price, exit_price, entry_timestamp_utc, exit_timestamp_utc, hold_candle_count, MAE_pct_reached, fees_entry_usd, fees_exit_usd, fees_total_usd, exit_reason, asset_regime, vol_regime, market_regime, signal_params, actual_RR, net_PL_USD, net_gain_usd, net_loss_usd. The exit_reason enum is rendered as a separate visible line at the bottom of the stream2_box and enumerated as TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | TP_PARTIAL_FILL_REMAINDER per 1011005 dv1_3 §9 EC-TOB-002 line 15. The captured_fields_for_DR-012_L1 abbreviated descriptor field is retained for revision lineage but is now subsumed by the full schema_fields_canonical enumeration; the abbreviated form is documented as superseded. All other Diagram 5 visual content preserved BYTE-IDENTICAL per the one-document-per-chat-turn cadence (Diagram 6 schema annotation amended in the same dv1_49 increment as the companion Step 2 cascade; both Step 1 and Step 2 occur in this single dv1_49 work-product turn). 0511004 dv1_4 -&gt; dv1_5 §7.5 prose cascade (Step 3) sequenced to the next chat-turn this same TB00217 session. 1011005 dv1_3 retirement (Step 4) sequenced to TB00218 or TB00217 final turn if context permits. DD-004 NO PROSE-FIRST AUTHORING compliance: every R4 architectural identifier in the 23-field schema is encoded in either the stream2_box desc schema_fields_canonical enumeration or the stream2_box visible text region; the source-of-truth provenance (1011005 dv1_3 §9 EC-TOB-002 lines 353-384) is cited in this revision-history narrative. RR-SCOPE-010 verbatim-MDR-citation discipline applied: schema field enumeration is grep-verified verbatim against 1011005 dv1_3 §9 EC-TOB-002 at amendment time. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: the 23-field schema scope is sourced from 1011005 dv1_3 §9 EC-TOB-002 (Bill-ratified controlled-document spec content), not from the NSI authoring layer. Cycle 3 schema cascade Step 1 + Step 2 closes at this dv1_49 increment; Step 3 + Step 4 carry forward.)
-    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:RegimeEngine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:HR-CI-009, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:per_trade_ceiling_pct, param:expected_rr_acceptance_rule, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, rule:LG-ALERT-005
+    R-increment: R7 -&gt; R8 (TB00279 AMENDMENT-ELP-01 — THREE evt: TOKENS GOVERNS-LIST EXTENSION for ENTRY LIMIT PLACEMENT logging events per TB00278 S1ELP Gap Register v1_0 §5.1 (c) ARCHITECTURAL CONTENT NOT IN DIAGRAMS bucket closure + TB00279 NSI §1.3 AMENDMENT-ELP-01 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D5 is the canonical encoding site for CIATS Architecture and Data Flows AND for the Logger event taxonomy that feeds the CIATS Trade Outcome Bus (mod:Logger is encoded in D5 root governs at line 3792 as the sole CIATS data source per CI-IF-001). Three new evt: token additions to D5 governs list (appended after the existing evt:LOG_QUEUE_FULL entry): evt:ENTRY_PRICE_COMPUTED (every successful entry_limit_price computation per 0811004 dv1_1 §10 — side field added dv1_1 for direction-symmetric scope), evt:ENTRY_PRICE_INVALID (CRITICAL — fires when computed price is zero or negative per 0811004 dv1_1 §10 + HR-ELP-003/004), evt:ENTRY_PRICE_SIDE_MISSING (CRITICAL — NEW dv1_1 — fires when a computation request arrives without a valid side enum per 0811004 dv1_1 §10 + HR-ELP-006). All three events are emitted by the Entry Limit Placement computation owned by AR-069 (canonical entry-limit-price formula encoded in 0500000 dv1_77 §8 lines 5533-5549) and consumed by mod:Logger (sole CIATS data source). SVG VISUAL GEOMETRY PRESERVED BYTE-IDENTICAL — desc-only amendment scope per TB00279 NSI §1.3 default determination ("SVG byte impact: ZERO. Root &lt;desc&gt; text edit only; no &lt;path&gt; / &lt;rect&gt; / &lt;text&gt; / &lt;g&gt; element changes"). No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1200 preserved). rect dimensions for stream2_box (x=495 y=360 width=560 height=180), proposal_box (x=525 y=640 width=450 height=180), param_store_box (x=40 y=920 width=1420 height=120), and all other D5 visual elements preserved BYTE-IDENTICAL. All 9 other figures (Tier 1 Context + D1 + D2 + D3 + D4 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-001/DD-002/DD-004/DD-011/DD-012 compliance: three Entry Limit Placement evt: tokens encoded in D5 root governs as canonical architectural binding for the Logger event taxonomy feeding CIATS Trade Outcome Bus; subordinate-spec restatement in 0811004 dv1_1 §10 "WHAT IT LOGS" is derived per DD-012 cross-document authority hierarchy (0811004 is the audit-subject of the active retirement cascade per DEC-012); 0311001 v1_17 -&gt; v1_18 §15.12.7 evt: registry extension delivered as companion artifact this session (scope (b) per TB00279 NSI §1.3 — registry-binding requirement closure rather than registry-gap-note carry-forward; the registry-binding closure pattern at this session is a deliberate departure from the R6 (TB00239) carry-forward precedent because the three ENTRY_PRICE evt: tokens are bundle-eligible with the AMENDMENT-ELP-01 single-cycle DEC-012 S-2 step per TB00278 NSI §1.3 scope specification). FP/DP-derivability-test logged at TB00279 chat-turn 1 with explicit four-item log per TB00000 v2_38 §4.5 DD-011 AMENDMENT D — option-set on target-diagram sub-decision per TB00278 S1ELP Gap Register §5.4 + TB00279 NSI §1.3 {A. D5 root governs (Logger event taxonomy + CIATS data source canonical encoding); B. D6 root governs (cross-zone abstraction — rejected because Logger is encoded in D5 not D6 per dv1_77 line 3792 existing governs entry); C. defer to a separate Logger-specific diagram (no such diagram exists in 0500000; would require creating a new diagram which is out of scope for DEC-003 Path A one-diagram-per-session cadence and DEC-012 S-2 step scope per TB00278 NSI §1.3)}; first-principles analysis — TB00278 S1ELP Gap Register §5.4 explicitly maps the three evt: tokens to D5 root governs ("Single S-2 cycle: ADD 3 evt: tokens to 0500000 dv1_77 D5 R5 root governs"); D5 already encodes mod:Logger + the existing evt: token taxonomy (evt:TRADE_CLOSE + evt:KELLY_UPDATE + evt:KELLY_NEGATIVE + evt:ALERT_SENT + evt:ALERT_SMTP_FAILED + evt:TRADE_RECORD_WRITE_FAILED + evt:LOG_QUEUE_FULL) per line 3792 existing governs list — the three new entries are natural extensions of the same event-taxonomy pattern; the visual element at line 3824 explicitly labels D5 as "INPUTS — Logger is sole CIATS data source" confirming D5 canonical authority for Logger event taxonomy; 0811004 dv1_1 §10 cites all three events as the entry-limit-placement event set; data sources consulted — TB00278 S1ELP Gap Register v1_0 §5.1 + §5.4 (Bill-ratified S1ELP audit), TB00279 NSI §1.3 (this session NSI directive), TB00000 v2_38 §4.5 DD-001/DD-002 + §9.10 loss-prevention mission, 0811004 dv1_1 §10 (canonical event-emission source for the three tokens), 0500000 dv1_77 §8 AR-069 lines 5533-5549 (canonical entry-limit-price formula); elimination outcomes — B (D6 target) eliminated because D6 is the cross-zone abstraction tier and Logger event taxonomy is encoded in D5 not D6 per existing dv1_77 governs structure, C (separate diagram) eliminated because creating a new diagram exceeds DEC-003 Path A cadence and DEC-012 S-2 step scope; remaining option — A (D5 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-ELP-01 ADD-only scope per TB00279 NSI §1.3 explicit specification — three evt: token additions to D5 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00278 S1ELP Gap Register v1_0 §5.1 + §5.4 (Bill-ratified controlled document — Phase 0 audit ratified at TB00278 chat-turn 1 under RR-SCOPE-005 derivable-decision execution + DD-011 v2_38 AMENDMENT D OUTCOME 1 single-compliant-option result) + TB00279 NSI §1.3 (this session NSI directive originating from Bill OCS chat-turn directive bundling AMENDMENT-ELP-01 execution) + TB00000 v2_38 (Bill-ratified Project Instructions §4.5 DD-001/DD-002 + §9.10 loss-prevention mission) + 0811004 dv1_1 §10 (Bill-ratified subordinate-spec source per DD-012 cross-document authority hierarchy). RR-SCOPE-009 four-question origin investigation for the three evt: tokens (all three load-bearing for paper-as-master CIATS data-source contract per PA-001 + CI-IF-001): evt:ENTRY_PRICE_COMPUTED (1) introduced — 0811004 dv1_0 §10 (entry-limit-placement event for every successful computation); (2) problem solved — emits operational record of every entry_limit_price computation for CIATS observability + Trade Outcome Bus correlation between SSS pass and downstream entry price; (3) evidence still load-bearing — 0811004 dv1_1 §10 active spec entry; per PA-005 byte-identical paper-live contract the same event MUST emit in both paper and live modes; (4) loss-prevention property — preserves CIATS data integrity by ensuring entry-price computation is observable to the statistical inference pipeline. evt:ENTRY_PRICE_INVALID (1) introduced — 0811004 dv1_0 §10 (CRITICAL severity); (2) problem solved — fires when computed entry_limit_price is zero or negative indicating a quantization arithmetic defect or upstream candle_close corruption; (3) evidence still load-bearing — 0811004 dv1_1 §10 + HR-ELP-003 ("Validate &gt; 0 before use") active enforcement; (4) loss-prevention property — ABSOLUTE prevents dispatch of malformed entry orders that would either reject at Kraken matching engine (silent state desync) or fill at corrupt prices. evt:ENTRY_PRICE_SIDE_MISSING (1) introduced — 0811004 dv1_1 §10 NEW dv1_1 (CRITICAL severity); (2) problem solved — fires when a computation request arrives without a valid side enum per HR-ELP-006 ("side enum required on every computation request"); the dv1_1 direction-symmetric amendment introduced side enum as a required input parameter; the absence of side enum prevents quantization-direction selection (ROUND_DOWN for long per HR-ELP-001, ROUND_UP for short per HR-ELP-002); (3) evidence still load-bearing — 0811004 dv1_1 §10 + HR-ELP-006 active enforcement; per PA-005 byte-identical the same event MUST emit in both modes; (4) loss-prevention property — ABSOLUTE prevents direction-blind entry-limit-price computation that would corrupt either long-side ROUND_DOWN arithmetic (if a short side is incorrectly omitted, ROUND_DOWN defaults could leave shorts under-quantized at Kraken price_increment boundaries) or short-side ROUND_UP arithmetic (if long side is incorrectly omitted, the default could leave longs over-quantized) — both failure modes desynchronize Signal_Pipeline state from actual order state and violate PA-005 byte-identical contract. All three load-bearing; all three MUST be preserved as canonical D5 governs entries. RR-SCOPE-010 verbatim-MDR-citation discipline: evt:ENTRY_PRICE_COMPUTED + evt:ENTRY_PRICE_INVALID + evt:ENTRY_PRICE_SIDE_MISSING semantics grep-verified verbatim against 0811004 dv1_1 §10 "WHAT IT LOGS" section (canonical authority source) and TB00278 S1ELP Gap Register v1_0 §5.2 (c) bucket enumeration. DR-007 HTML scope validation at session close. Cluster C7 SEVENTH consecutive currency-lag finding (TB00197 + TB00198 + TB00199 + TB00200 + TB00201 + TB00202 + TB00278) tracked separately per TB00278 SL §6.2 — 18 ELP-NNN + HR-ELP-NNN identifier-token-registration housekeeping items deferred to Step 3 close-gate currency-lag reconciliation sweep per TB00202 §7.5 (out of scope this AMENDMENT-ELP-01 per RR-SCOPE-001 absolute-scope discipline + TB00279 NSI §1.3 surgical scope).)
+    R-increment-prior: R6 -&gt; R7 (TB00246 AMENDMENT-10 — ar:AR-043 BOUNDED-SEMAPHORE CONCURRENCY-PROTECTION GOVERNS-LIST EXTENSION per TB00196 §5.1 + §6.5 + §6.8 + §7.1 cluster C5 8-element governs-list gap closure path + TB00203 §5.1 cluster C5 Risk_Engine BoundedSemaphore ownership + TB00246 NSI §3 AMENDMENT-10 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. Single ar: token addition to D5 governs list: ar:AR-043 (asyncio.BoundedSemaphore concurrency-protection primitive for Execution Engine dispatch path; acquire-before-dispatch + release-on-position-close prevents asyncio dispatch races; BoundedSemaphore raises ValueError on over-release for bug detection). SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope. DD-001/DD-002/DD-004/DD-011/DD-012 compliance: AR-043 BoundedSemaphore concurrency-protection mechanism encoded in D5 root governs as canonical architectural binding; subordinate-spec restatement in 0211001 CIATS Specification is derived per DD-012 cross-document authority hierarchy. RR-SCOPE-009 four-question origin investigation for AR-043 load-bearing constraint: introduced 0500000 dv1_12; problem solved is concurrency-protection primitive for Execution Engine asyncio dispatch path (acquire-before-dispatch + release-on-position-close); still load-bearing as race-prevention primitive even after max_concurrent ceiling retirement at v2_29; loss-prevention property is preserving Execution Engine dispatch correctness by preventing asyncio races. Full TB00246 AMENDMENT-10 narrative preserved verbatim in §14 dv1_67 revision-history entry per CI-005 + CI-006 visible-stack 3-deep rolling policy.)
+    R-increment-prior-2: R5 -&gt; R6 (TB00239 AMENDMENT-3 — R:R-DRIVEN SIZING CURVE FORM-FACTOR ENCODING per TB00194 §5.1 cluster C3 closure path + TB00207 §AMENDMENT-3 specification + TB00000 v2_38 §9.10 sacred-floor R:R + CIATS-owned sizing curve above the floor + §9.17 CIATS-OWNED PER-MODULE INSTANTIATED parameter registry. D5 is canonical for CIATS-owned sizing curve form factor per DD-001/DD-002 diagrams-canonical principle and the FP/DP analysis logged in TB00239 SL §3 — D5 already encodes rule:Sacred_R_R_1_to_1_5 (the floor) + mod:CIATS_Proposal_Engine (the curve-form-factor owner per v2_38 §9.10 "CIATS owns the sizing curve ABOVE the floor; CIATS MAY propose adjustments to the sizing curve") + mod:CIATS_Parameter_Store (the store that holds the curve parameters); D6 was rejected because opening CIATS internals at the cross-zone abstraction tier violates the load-bearing D5/D6 separation. Four new architectural identifiers added to root governs list: contract:Sizing_Curve_Per_Module (the CIATS-owned function form factor mapping expected R:R to per-trade allocation, instantiated per parallel-module per v2_38 §9.6 PER-MODULE CIATS FRAMEWORK), param:per_trade_size_usd (CIATS-OWNED PER-MODULE INSTANTIATED, Kraken per-pair minimum ~$0.50 starting per v2_38 §9.17), param:per_trade_ceiling_pct (CIATS-OWNED PER-MODULE INSTANTIATED, 25% of module wallet starting per v2_38 §9.17 — hard concentration ceiling per single trade, CIATS-adjustable up or down on evidence), param:expected_rr_acceptance_rule (CIATS-OWNED, A1 starting — reject at point-estimate below 1:1.5 per v2_38 §9.10 + §9.17). proposal_box &lt;desc&gt; constraints + produces fields extended with the four new identifiers reflecting mod:CIATS_Proposal_Engine sole authorship of curve form-factor proposals per v2_38 §9.10 "CIATS MAY propose adjustments to per_trade_ceiling_pct up or down based on evidence; CIATS MAY propose adjustments to the sizing curve (the function mapping expected R:R to allocation) at the 200-trade inference threshold; CIATS MAY propose Half-Kelly, fixed-fractional, or other sizing methodologies as the underlying curve form; the methodology is CIATS-owned." param_store_box &lt;desc&gt; constraints + produces fields extended with the four new identifiers reflecting mod:CIATS_Parameter_Store sole-writer authority per HR-CI-002 + HR-CI-003 + HR-CI-011 (Bill approval gate). SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00207 §AMENDMENT-3 "SVG change: NO (governs-list extension); CANDIDATE for visual update if explicit sizing-curve callout added" default determination. No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1200 preserved). rect dimensions for stream2_box (x=495 y=360 width=560 height=180), proposal_box (x=525 y=640 width=450 height=180), param_store_box (x=40 y=920 width=1420 height=120), and all other D5 visual elements preserved BYTE-IDENTICAL. SVG byte-identical preservation for D6 + Tier 1 Context + D1 + D2 + D3 + D4 + D7 + D8 + D9 per DEC-003 Path A one-diagram-per-session cadence. registry_gap_note extended with new gap entries for the four R6 additions: contract:Sizing_Curve_Per_Module is not currently registered in 0311001 v1_15 §15.12.3 contract: registry; param:per_trade_size_usd / per_trade_ceiling_pct / expected_rr_acceptance_rule are not currently registered in 0311001 v1_15 §15.12.5 param: registry. Surfaced as registry-amendment requirement for future 0311001 housekeeping increment; dv1_61 preserves these R6 references per the diagrams-as-authoritative principle DD-001 + DD-004 NO PROSE-FIRST AUTHORING (the R6 architectural identifiers are encoded in the diagram FIRST; namespace-registry amendments follow per the established registry-gap-note carry-forward pattern). DD-001 / DD-002 / DD-004 / DD-012 compliance: the R:R-driven sizing curve form factor is architecturally encoded in this D5 diagram as the canonical source; subordinate-spec text in 0211001 CIATS Specification (parent spec for CIATS architecture) and 0611001 Position_Sizing_Rules (parent spec for R:R floor + sizing arithmetic) is derived restatement of what D5 encodes per DD-012 cross-document authority hierarchy; subordinate-spec gap-fill cascade carry-forward to TB00240+ per scope-vs-budget discipline (RR-SCOPE-001 absolute scope to AMENDMENT-3 governs-list extension only; broader subordinate-spec reconciliation is a separate amendment). RR-SCOPE-001 absolute-scope compliance: AMENDMENT-3 ADD-only scope per TB00207 explicit specification; stale v2_29-retired param tokens in D5 governs list (param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:full_halt_drawdown, param:session_pause_drawdown) are NOT removed in this amendment; stale-param cleanup is a separate amendment scope carry-forward to TB00240 NSI per scope-vs-budget discipline lesson. RR-SCOPE-005 derivable-decision execution: D5-vs-D6 target selection derived under DD-011 FP/DP-derivability-test gate at TB00239 chat-turn 1 with explicit four-item log (option-set, first-principles analysis, data sources consulted, elimination outcomes, remaining option) per TB00000 v2_38 §4.5 DD-011 FP/DP-DERIVABILITY-TEST LOGGING GATE; one compliant option (D5) surfaced; executed directly under RR-SCOPE-005 derivable-decision authority. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: AMENDMENT-3 scope sourced from TB00194 §5.1 cluster C3 (Bill-ratified S1WSM Gap Register controlled document) + TB00207 §AMENDMENT-3 (Bill-ratified Step 3 Close Gate Package) + TB00000 v2_38 §9.10 + §9.17 (Bill-ratified Project Instructions); D5 selection sourced from TB00194 §5.1 explicit guidance + TB00239 NSI §3.2 initial derivation backed by FP/DP analysis at this chat-turn. RR-SCOPE-010 verbatim-MDR-citation discipline: identifier citations grep-verified against current authoritative TB00000 v2_38 §9.17 parameter registry (per_trade_size_usd / per_trade_ceiling_pct / expected_rr_acceptance_rule semantics match v2_38 §9.17 verbatim). DR-007 HTML scope validation: figure count 10 -&gt; 10, svg count 10 -&gt; 10, placeholder count 1 -&gt; 1 (identity check); section-heading parity preserved (no new headings introduced); structural-marker parity preserved (HTMLParser feed validation at session close); word-count parity within tolerance for the desc-extension scope; no placeholder/stub tokens; revision-history parity preserved (dv1_61 entry added; all prior entries dv1_60 through dv1_0 preserved verbatim per CI-005 + CI-006); HTML well-formedness gate verified per DR-007.9.)
+    R-increment-prior-3: R4 -&gt; R5 (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle: this diagram is the CANONICAL SOURCE for the 23-field CIATS Trade Outcome Bus schema. Prior dv1_49 R4 narrative cited "1011005 dv1_3 §9 EC-TOB-002 lines 353-384" as schema source-of-truth in stream2_box desc + visible-text element + figcaption — that citation direction was INVERTED under DD-002 (coding spec cited as canonical violates the single-source-of-truth-is-the-diagram rule). dv1_50 corrects the citation direction: stream2_box desc schema_fields_canonical reframed as "this diagram canonical per DD-001/DD-002 — historical seed: 1011005 dv1_3 §9, retired"; produces field 1011005-citation removed; visible text element at line 3953 1011005-citation removed; figcaption reframed to describe historical migration without citing 1011005 as ongoing source. Schema FIELD CONTENT unchanged (same 23 fields, same types, same order) — only the citation framing changes. rect dimensions x=495 y=360 width=560 height=180 preserved BYTE-IDENTICAL. SVG viewBox 1500x1200 preserved byte-identical. All Diagram 5 visual content outside the four corrected text sites preserved byte-identical. 0511004 dv1_5 -&gt; dv1_6 §7.5 cascade (Turn 3 this session) re-points 0511004 citations from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5". 1011005 dv1_3 actual deletion DEFERRED to a future cascade that handles assignment-list cleanup at lines 5312/5393/5544/6383/6956 + §11 RELATED DOCUMENTS entry cleanup — out of scope this turn. CARRY-FORWARD: future 0500000 cascade to retire all remaining "1011005 dv1_3" downstream references in assignment lists + §11. RR-SCOPE-010 verbatim-MDR-citation discipline: 23-field schema enumeration grep-verified verbatim against dv1_49 baseline (no content drift). RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope of this correction sourced from Bill chat-turn directives at TB00218 ("If it's authoritative it should be in a 0500000 diagram... That makes it redundant... We want to remove as many 10XXXXX documents as possible by moving requirements to 0500000") + ("Do a FP/DP analysis to determine the correct action"), not from NSI authoring layer.)
+    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:RegimeEngine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:HR-CI-009, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:tradeable_pct, param:per_trade_pct, param:half_kelly_applied_pct, param:max_concurrent, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:per_trade_ceiling_pct, param:expected_rr_acceptance_rule, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, evt:ENTRY_PRICE_COMPUTED, evt:ENTRY_PRICE_INVALID, evt:ENTRY_PRICE_SIDE_MISSING, rule:LG-ALERT-005
     drill_targets: none (D5 is a leaf Tier 2 detail of the CIATS feedback loop; CIATS internal sub-components are tagged at this diagram level, no Tier 3 drilldown defined)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
-    registry_gap_note: The seven CIATS sub-component mod: tokens (mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store) are referenced in D5 R1 and preserved in R2 + R3 per RR-SCOPE-007 but are not currently registered in 0311001 v1_10 §15.12.1 mod: registry. Surfaced as a registry-amendment requirement per TB00160 NSI §8.1; deferred to a future 0311001 increment per TB00165 NSI §8.7 (registry housekeeping outside DR-012 closure scope is out of bounds at Stage K-1). NEW R3 additions with registry-gap status: mod:RegimeEngine (not currently in §15.12.1), rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 (not currently in §15.12.9 — 0211001 dv1_0 §13 hard rules predate the §15.12.9 registry; rule:PA-001 IS registered in §15.12.9), rule:PS-HK-001 (not currently in §15.12.9 — 0611001 dv1_0 §6.2 hard rule), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not currently in §15.12.7), param:half_kelly_applied_pct (not currently in §15.12.8). Stage K-1 preserves these R3 references per the diagram-as-authoritative principle (DD-001) — registry amendments to absorb the references are deferred to a future 0311001 increment after Step 1 + Step 2 + Step 3 completion per TB00165 NSI §8.7. NEW R6 additions with registry-gap status (TB00239 AMENDMENT-3): contract:Sizing_Curve_Per_Module (not currently in 0311001 v1_15 §15.12.3 contract: registry — the CIATS-owned function form factor mapping expected R:R to per-trade allocation, instantiated per parallel-module per v2_38 §9.6); param:per_trade_size_usd (not currently in 0311001 v1_15 §15.12.8 param: registry — CIATS-OWNED PER-MODULE INSTANTIATED, Kraken per-pair minimum ~$0.50 starting per v2_38 §9.17); param:per_trade_ceiling_pct (not currently in §15.12.8 — CIATS-OWNED PER-MODULE INSTANTIATED, 25% of module wallet starting per v2_38 §9.17, hard concentration ceiling per single trade); param:expected_rr_acceptance_rule (not currently in §15.12.8 — CIATS-OWNED, A1 starting per v2_38 §9.10 + §9.17 — reject candidate trades whose point-estimate expected R:R is below 1:1.5). dv1_61 preserves these R6 references per DD-001 + DD-004 NO PROSE-FIRST AUTHORING (R6 architectural identifiers encoded in the diagram FIRST; namespace-registry amendments follow per the established registry-gap-note carry-forward pattern). Registry amendments to absorb the four R6 references are deferred to a future 0311001 housekeeping increment.
+    registry_gap_note: The seven CIATS sub-component mod: tokens (mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store) are referenced in D5 R1 and preserved in R2 + R3 per RR-SCOPE-007 but are not currently registered in 0311001 v1_10 §15.12.1 mod: registry. Surfaced as a registry-amendment requirement per TB00160 NSI §8.1; deferred to a future 0311001 increment per TB00165 NSI §8.7 (registry housekeeping outside DR-012 closure scope is out of bounds at Stage K-1). NEW R3 additions with registry-gap status: mod:RegimeEngine (not currently in §15.12.1), rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 (not currently in §15.12.9 — 0211001 dv1_0 §13 hard rules predate the §15.12.9 registry; rule:PA-001 IS registered in §15.12.9), rule:PS-HK-001 (not currently in §15.12.9 — 0611001 dv1_0 §6.2 hard rule), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not currently in §15.12.7), param:half_kelly_applied_pct (not currently in §15.12.8). Stage K-1 preserves these R3 references per the diagram-as-authoritative principle (DD-001) — registry amendments to absorb the references are deferred to a future 0311001 increment after Step 1 + Step 2 + Step 3 completion per TB00165 NSI §8.7. NEW R6 additions with registry-gap status (TB00239 AMENDMENT-3): contract:Sizing_Curve_Per_Module (not currently in 0311001 v1_15 §15.12.3 contract: registry — the CIATS-owned function form factor mapping expected R:R to per-trade allocation, instantiated per parallel-module per v2_38 §9.6); param:per_trade_size_usd (not currently in 0311001 v1_15 §15.12.8 param: registry — CIATS-OWNED PER-MODULE INSTANTIATED, Kraken per-pair minimum ~$0.50 starting per v2_38 §9.17); param:per_trade_ceiling_pct (not currently in §15.12.8 — CIATS-OWNED PER-MODULE INSTANTIATED, 25% of module wallet starting per v2_38 §9.17, hard concentration ceiling per single trade); param:expected_rr_acceptance_rule (not currently in §15.12.8 — CIATS-OWNED, A1 starting per v2_38 §9.10 + §9.17 — reject candidate trades whose point-estimate expected R:R is below 1:1.5). dv1_61 preserves these R6 references per DD-001 + DD-004 NO PROSE-FIRST AUTHORING (R6 architectural identifiers encoded in the diagram FIRST; namespace-registry amendments follow per the established registry-gap-note carry-forward pattern). Registry amendments to absorb the four R6 references are deferred to a future 0311001 housekeeping increment. NEW R8 additions with registry-binding CLOSED (TB00279 AMENDMENT-ELP-01): evt:ENTRY_PRICE_COMPUTED + evt:ENTRY_PRICE_INVALID + evt:ENTRY_PRICE_SIDE_MISSING ARE registered in 0311001 v1_18 §15.12.7 evt: Event Registry as bundled companion artifact this same session per TB00279 NSI §1.3 scope (b) — deliberate departure from the R6 carry-forward precedent because the three ENTRY_PRICE evt: tokens are bundle-eligible with the AMENDMENT-ELP-01 single-cycle DEC-012 S-2 step. No registry-gap-note carry-forward required for the R8 additions; 0311001 v1_18 §15.12.7 closure is verified at session-close DR-007 HTML scope + companion 0311001 v1_18 delivery.
   </desc>
   <defs>
     <marker id="d5_arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -4148,7 +4148,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
   </text>
 </svg>
   </div>
-  <figcaption>Diagram 5 — CIATS Architecture (R7). Stream 1 EWMA monitors trading health (signals only). Stream 2 Trade Outcome Bus drives statistical inference, PDCA, Proposal Engine, and Regime Library. mod:RegimeEngine feeds asset_regime + market_regime tags into every Trade Outcome Bus record (A3). Half-Kelly persistence path (A2): Statistical Engine → Proposal Engine (HR-CI-009 normalization) → PDCA → Bill approval (HR-CI-011) → Parameter Store at the 200-trade threshold per PS-HK-001. All output writes go to the Parameter Store at inter-trade boundaries (HR-CI-003). R-increment R6 → R7 (TB00246 AMENDMENT-10): ar:AR-043 BOUNDED-SEMAPHORE CONCURRENCY-PROTECTION GOVERNS-LIST EXTENSION per TB00196 §5.1 + §6.5 + §6.8 + §7.1 cluster C5 8-element governs-list gap closure path (residual 1-of-3 closure after TB00245 AMENDMENT-9 D2 R5 close of 2 tokens AR-053 + AR-054; HR-EE-014 + HR-EE-015 → D7 deferred to AMENDMENT-11) + TB00203 §5.1 cluster C5 Risk_Engine BoundedSemaphore ownership + TB00244 SL §3.2 sub-decision (B) elimination outcome + TB00246 NSI §3 AMENDMENT-10 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D5 is the canonical encoding site for CIATS Architecture and Data Flows. AR-043 (BoundedSemaphore concurrency-protection mechanism; 0500000 §4 line 4906; dv1_12) is the CIATS-tracked concurrency-protection primitive owned by mod:Risk_Engine which is architecturally anchored in the CIATS feedback loop encoded by D5: BoundedSemaphore raises ValueError on over-release for bug detection; Gate 7 checks semaphore.locked() non-blocking; Execution Engine acquires before dispatch; position close triggers release; on CIATS max_concurrent update the semaphore is recreated and re-acquired for all currently-open positions. TB00203 §5.1 cluster C5 canonical authority chain: Risk_Engine owns BoundedSemaphore as a CIATS-tracked concurrency-protection parameter; TB00196 §6.8 confirms verbatim "Cluster C1 cross-cuts Risk_Engine (BoundedSemaphore owner) directly"; TB00196 §6.5 explicitly identifies AR-043 → D5 root governs target per per-AR target-diagram identification. Single token addition: ar:AR-043. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00246 NSI §3.4 default determination ("SVG change: NO; governs-list extension only"). No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1200 preserved). All 9 other figures (Tier 1 Context + D1 + D2 + D3 + D4 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-001/DD-002/DD-004/DD-011/DD-012 compliance: AR-043 BoundedSemaphore concurrency-protection mechanism encoded in D5 root governs as canonical architectural binding; subordinate-spec restatement in 0211001 CIATS Specification is derived per DD-012 cross-document authority hierarchy; FP/DP-derivability-test logged at TB00246 chat-turn 1 with explicit four-item log per TB00000 v2_38 §4.5 DD-011 AMENDMENT D — option-set on verification-confirmation sub-decision per TB00246 NSI §3.2 {A. D5 root governs per TB00203 §5.1 + TB00196 §6.5 + §6.8; B. D1 root governs treated as Kraken-API order-dispatch infrastructure}; first-principles analysis — TB00203 §5.1 cluster C5 explicitly establishes Risk_Engine as canonical BoundedSemaphore owner, TB00196 §6.8 explicitly confirms "Cluster C1 cross-cuts Risk_Engine (BoundedSemaphore owner) directly", TB00196 §6.5 explicitly maps AR-043 → D5 root governs, Risk_Engine architecturally anchored in CIATS feedback loop (D5 scope) not Kraken-API wire layer (D1 scope), TB00244 SL §3.2 sub-decision (B) Bill-ratified elimination of B2 AR-043 → D1; elimination — B eliminated; remaining A (D5 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-10 ADD-only scope per TB00246 NSI §3 explicit specification — one ar: token addition to D5 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. Note: AR-043 canonical §4 entry at line 4906 references "max_concurrent position limit" — max_concurrent itself was RETIRED at TB00000 v2_29 per §9.17 RETIRED entry ("concurrent-position count emerges from wallet_balance ÷ per_trade_size_usd arithmetic; No artificial ceiling"); the BoundedSemaphore concurrency-protection PRIMITIVE remains load-bearing for asyncio dispatch race-condition prevention even after the max_concurrent ceiling retirement; AR-043 prose-side reconciliation to remove the stale max_concurrent reference is a SEPARATE AMENDMENT scope (AR-043 prose reconciliation) OUT OF SCOPE this turn per RR-SCOPE-001 + scope-vs-budget discipline — flagged as carry-forward. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00196 §5.1 + §6.5 + §6.8 + §7.1 cluster C5 (Bill-ratified S1EE Gap Register) + TB00203 §5.1 cluster C5 (Bill-ratified S1RE Gap Register) + TB00244 SL §3.2 sub-decision (B) (Bill-ratified prior session log) + TB00246 NSI §3 (this session NSI directive) + TB00000 v2_38 (Bill-ratified Project Instructions §4.5 DD-001/DD-002 + §9.6 PER-MODULE CIATS FRAMEWORK + §9.10 loss-prevention mission). RR-SCOPE-009 four-question origin investigation for AR-043 (load-bearing constraint): introduced dv1_12; problem solved is asyncio concurrency-protection primitive for Execution Engine dispatch path (acquire-before-dispatch + release-on-position-close prevents asyncio dispatch races); still load-bearing as race-prevention primitive even after max_concurrent ceiling retirement at v2_29 (race-prevention function still required by Risk_Engine + Execution Engine dispatch path; AR-043 prose-side max_concurrent reference is stale-reference defect requiring separate prose-reconciliation amendment per CI-005 + DD-002); loss-prevention property is preserving Execution Engine dispatch correctness by preventing asyncio races that could otherwise dispatch concurrent conflicting orders against the same module wallet AND BoundedSemaphore's ValueError-on-over-release provides operational bug-detection signal. RR-SCOPE-010 verbatim-MDR-citation discipline: AR-043 semantics grep-verified verbatim against 0500000 §4 line 4906. AMENDMENT-10 ADD-only scope per TB00246 NSI §3 explicit specification + RR-SCOPE-001 absolute-scope discipline. Prior R-increment narratives preserved verbatim under root &lt;desc&gt; R-increment-prior + R-increment-prior-2 + R-increment-prior-3 fields per CI-005 + CI-006: R5 → R6 narrative (TB00239 AMENDMENT-3 R:R-DRIVEN SIZING CURVE FORM-FACTOR ENCODING — four new identifiers contract:Sizing_Curve_Per_Module + param:per_trade_size_usd + param:per_trade_ceiling_pct + param:expected_rr_acceptance_rule added to root governs per v2_38 §9.10 + §9.17) + R4 → R5 narrative (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION per DD-001/DD-002 diagrams-canonical principle: this diagram canonical source for 23-field CIATS Trade Outcome Bus schema) + R3 → R4 narrative (TB00217 STAGE Phase 1 1011005 Cycle 3 schema cascade Step 1 — 12-field → 23-field schema expansion). R2 → R3 narrative (DR-012 CRITICAL closure: Parameter Store / Half-Kelly / vol_regime architectural elements with A2/A3/L1 additions per TB00153 Diagram Alter/Add/Remove Plan §8) preserved in §14 dv1_50 revision-history entry per visible-stack 3-deep rolling policy.</figcaption>
+  <figcaption>Diagram 5 — CIATS Architecture (R8). Stream 1 EWMA monitors trading health (signals only). Stream 2 Trade Outcome Bus drives statistical inference, PDCA, Proposal Engine, and Regime Library. mod:RegimeEngine feeds asset_regime + market_regime tags into every Trade Outcome Bus record (A3). Half-Kelly persistence path (A2): Statistical Engine → Proposal Engine (HR-CI-009 normalization) → PDCA → Bill approval (HR-CI-011) → Parameter Store at the 200-trade threshold per PS-HK-001. All output writes go to the Parameter Store at inter-trade boundaries (HR-CI-003). R-increment R7 → R8 (TB00279 AMENDMENT-ELP-01): THREE evt: TOKENS GOVERNS-LIST EXTENSION for ENTRY LIMIT PLACEMENT logging events per TB00278 S1ELP Gap Register v1_0 §5.1 (c) ARCHITECTURAL CONTENT NOT IN DIAGRAMS bucket closure + TB00279 NSI §1.3 AMENDMENT-ELP-01 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D5 is the canonical encoding site for CIATS Architecture and Data Flows AND for the Logger event taxonomy that feeds the CIATS Trade Outcome Bus (mod:Logger is the sole CIATS data source per CI-IF-001, encoded in D5 root governs). Three new evt: token additions to D5 governs list (appended after evt:LOG_QUEUE_FULL): evt:ENTRY_PRICE_COMPUTED (every successful entry_limit_price computation per 0811004 dv1_1 §10 with side field added dv1_1 for direction-symmetric scope), evt:ENTRY_PRICE_INVALID (CRITICAL — fires when computed price is zero or negative per 0811004 dv1_1 §10 + HR-ELP-003/004), evt:ENTRY_PRICE_SIDE_MISSING (CRITICAL — NEW dv1_1 — fires when computation request arrives without valid side enum per 0811004 dv1_1 §10 + HR-ELP-006). All three events emitted by the Entry Limit Placement computation owned by AR-069 (canonical entry-limit-price formula encoded in 0500000 §8 lines 5533-5549) and consumed by mod:Logger. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00279 NSI §1.3 default determination ("SVG byte impact: ZERO. Root &lt;desc&gt; text edit only"). No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1200 preserved). All 9 other figures (Tier 1 Context + D1 + D2 + D3 + D4 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-001/DD-002/DD-004/DD-011/DD-012 compliance: three Entry Limit Placement evt: tokens encoded in D5 root governs as canonical architectural binding for the Logger event taxonomy feeding CIATS Trade Outcome Bus; subordinate-spec restatement in 0811004 dv1_1 §10 "WHAT IT LOGS" is derived per DD-012 cross-document authority hierarchy (0811004 is the audit-subject of the active retirement cascade per DEC-012); 0311001 v1_17 → v1_18 §15.12.7 evt: registry extension delivered as companion artifact this session per TB00279 NSI §1.3 scope (b) — registry-binding requirement closure rather than registry-gap-note carry-forward; FP/DP-derivability-test logged at TB00279 chat-turn 1 with explicit four-item log per TB00000 v2_38 §4.5 DD-011 AMENDMENT D — option-set on target-diagram sub-decision per TB00278 S1ELP Gap Register §5.4 + TB00279 NSI §1.3 {A. D5 root governs (Logger event taxonomy + CIATS data source canonical encoding); B. D6 root governs (cross-zone abstraction); C. defer to separate Logger-specific diagram (does not exist; out of DEC-003 Path A scope)}; eliminations — B eliminated because Logger is encoded in D5 not D6, C eliminated because creating new diagram exceeds DEC-003 cadence; remaining option — A (D5 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-ELP-01 ADD-only scope per TB00279 NSI §1.3 explicit specification — three evt: token additions to D5 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00278 S1ELP Gap Register v1_0 §5.1 + §5.4 (Bill-ratified controlled document — Phase 0 audit ratified at TB00278 chat-turn 1) + TB00279 NSI §1.3 (this session NSI directive originating from Bill OCS chat-turn directive) + TB00000 v2_38 + 0811004 dv1_1 §10 (Bill-ratified subordinate-spec source per DD-012). RR-SCOPE-009 four-question origin investigation: all three evt: tokens introduced in 0811004 dv1_0/dv1_1 §10; problem solved is observable record of entry-price computation outcomes for CIATS data integrity + dispatch correctness; still load-bearing per 0811004 dv1_1 §10 + HR-ELP-003/004/006 active enforcement + PA-005 byte-identical paper-live contract; loss-prevention property is ABSOLUTE preservation of CIATS data integrity (ENTRY_PRICE_COMPUTED) and dispatch correctness (ENTRY_PRICE_INVALID + ENTRY_PRICE_SIDE_MISSING prevent malformed entry-order dispatch + direction-blind computation). RR-SCOPE-010 verbatim-MDR-citation discipline: all three evt: token semantics grep-verified verbatim against 0811004 dv1_1 §10 + TB00278 S1ELP Gap Register §5.2 (c) bucket. Cluster C7 SEVENTH consecutive currency-lag finding (TB00197 + TB00198 + TB00199 + TB00200 + TB00201 + TB00202 + TB00278) tracked separately per TB00278 SL §6.2 — 18 ELP-NNN + HR-ELP-NNN identifier-token-registration housekeeping items deferred to Step 3 close-gate currency-lag reconciliation sweep per TB00202 §7.5 (out of scope this AMENDMENT-ELP-01). Prior R-increment narratives preserved verbatim under root &lt;desc&gt; R-increment-prior + R-increment-prior-2 + R-increment-prior-3 fields per CI-005 + CI-006: R6 → R7 narrative (TB00246 AMENDMENT-10 ar:AR-043 BoundedSemaphore concurrency-protection governs-list extension per cluster C5 closure path) + R5 → R6 narrative (TB00239 AMENDMENT-3 R:R-DRIVEN SIZING CURVE FORM-FACTOR ENCODING — four new identifiers added per v2_38 §9.10 + §9.17) + R4 → R5 narrative (TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION — 23-field schema canonical source per DD-001/DD-002). R3 → R4 narrative (TB00217 STAGE Phase 1 1011005 Cycle 3 schema cascade Step 1 — 12-field → 23-field expansion) preserved in §14 dv1_49 revision-history entry; R2 → R3 narrative (DR-012 CRITICAL closure: Parameter Store / Half-Kelly / vol_regime additions per TB00153 Diagram Alter/Add/Remove Plan §8) preserved in §14 dv1_50 revision-history entry per visible-stack 3-deep rolling policy.</figcaption>
 </figure>
 <h2>7. Complete System: One CIATS-Owned Organism</h2>
 <p>
@@ -5023,7 +5023,10 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     (5) Connect private WS + subscribe executions/balances,
                     (6) snap_orders reconciliation -&gt; Position Mirror,
                     (7) Restore ticker subscriptions per position state,
-                    (8) REST warm-up GetOHLCData (AR-044: interval=5, 60, 1440),
+                    (8) REST warm-up GetOHLCData (AR-044: interval=5, 60) per-pair
+                          (interval=1440 daily candles NOT part of per-pair warm-up; daily
+                          regime classification handled independently by mod:Regime_Engine
+                          per OI-NEW-001 closure),
                     (9) First READY pair -&gt; enter OPERATIONAL, (10) Continuous operation.
                     Assign: 1011002 WM-STARTUP-001 through -012, 1011014 (full spec).
   AR-050 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Balances channel — per-module wallet sourcing.
@@ -5260,7 +5263,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Pending Order Registry: reconciled against snap_orders.
                     Pipeline evaluations: PROHIBITED during reconnect. Candle events
                       queued during reconnect are DISCARDED after completion.
-                    Fatal reconnect: 10 attempts over 120 seconds -&gt; log CRITICAL -&gt;
+                    Fatal reconnect: 20 total attempts spanning ~481 seconds (~8 minutes) -&gt; log CRITICAL -&gt;
                       systemd restart -&gt; full startup sequence.
                     Complete specification in 1011014 Section 2.
                     Assign: 1011002 WM-RECONNECT-001 through -015,
@@ -5780,6 +5783,219 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Assign: 1011002 WM-SSS-001 through -008 (RSI formula corrected),
                             0711001 SSS-001 through -012 (RSI formula corrected).
 </pre>
+<pre>
+  AR-077 (dv1_76) ★: cancel_timeout_window = 5.0 seconds — FP/DP DERIVATION.
+                    Source: 0811003 dv1_0 §4.1 verbatim FP/DP analysis preserved per
+                    CI-001..012 source-of-truth principle. Migrated to 0500000 §8
+                    architectural reasoning per DD-012 v2_38 AMENDMENT A 0500000-canonical-
+                    all-docs cascade pre-work for 0811003 retirement (TB00273 SL §6.1
+                    DEC-012 S-2 step + TB00274 NSI §3.3) and per DD-001/DD-002 diagrams-
+                    canonical hierarchy. FP/DP-derivability-test logged TB00273 SL §5
+                    per DD-011 v2_38 AMENDMENT D — Option X DD-011 OUTCOME 1 single-
+                    compliant-option.
+
+                    SEMANTICS: The cancel_timeout_window defines how long mod:Exit_Controller
+                    waits for a cancel_order ACK (exec_type=canceled from channel:kraken_ws_
+                    executions) before triggering the cancel timeout fallback recovery
+                    procedure (I-6 inspection-before-retry protocol per HR-EC governs in
+                    0500000 §4 Layer 1a/1b/2 exit sequences).
+
+                    FIRST PRINCIPLES CONSTRAINTS:
+                      (a) Timeout MUST be &gt;&gt; typical round-trip to avoid false trigger on
+                          legitimate network variation.
+                      (b) Timeout MUST be &lt;&lt; acceptable position exposure window to bound
+                          the fallback recovery window.
+
+                    OBSERVED SYSTEM CHARACTERISTICS:
+                      VPS location: Ashburn VA. Kraken infrastructure: AWS us-east-1 or
+                      co-located data center.
+                      ws_roundtrip_latency_ms (A-3 CIATS signal — mod:CIATS_EWMA_Monitor
+                      stream): typically 5-20ms under normal VPS-to-Kraken network
+                      conditions.
+                      cancel_order response path: TothBot → Kraken network (5-20ms) →
+                      matching engine processing → executions channel push → VPS (~5-20ms).
+                      Total: 10-50ms typical.
+                      Network degradation (congestion, packet loss): adds 100-500ms.
+                      TCP retry on packet loss: up to ~2-3 seconds.
+
+                    DECISION RATIONALE:
+                      5.0 seconds covers all realistic network disruption scenarios
+                      (typical: 10-50ms, worst realistic: 3-4s) with margin. 5 seconds is
+                      well within the 5-minute candle evaluation window. A false timeout
+                      is recoverable (fallback verifies executions channel before acting).
+                      A too-short timeout creates spurious fallback activations that
+                      disrupt the exit sequence unnecessarily.
+
+                    DERIVATION BASIS: VPS-to-Kraken latency characteristics in 0500000 §6
+                    (A-3 monitoring), TCP retry timing (established networking behavior),
+                    and fallback cost analysis.
+
+                    CIATS ADJUSTMENT BASIS: CIATS starts from 5.0s and adjusts based on
+                    actual ws_roundtrip_latency_ms data from A-3 EWMA Monitor stream per
+                    TB00000 v2_38 §9.16 PARAMETER PHILOSOPHY (all values are starting
+                    points) + §9.17 CIATS-OWNED PER-MODULE INSTANTIATED Exit controller
+                    block (param:cancel_timeout_window = 5.0 seconds starting).
+
+                    REGISTRY BINDING: §15.12.4 ar: registry entry — ar:AR-077 (governs:
+                    param:cancel_timeout_window in TB00000 v2_38 §9.17 CIATS-OWNED).
+                    0311001 v1_17 §15.12.4 ar: registry amendment deferred to a future
+                    housekeeping increment per the established registry-gap-note carry-
+                    forward pattern (TB00239 AMENDMENT-3 precedent + TB00244 / TB00245
+                    AMENDMENT-8/9 precedent). dv1_76 preserves this AR-077 entry per
+                    DD-001 + DD-004 NO PROSE-FIRST AUTHORING (architectural identifier
+                    encoded in the diagram-bearing controlled document FIRST; namespace-
+                    registry amendment follows).
+
+                    Assign: 0511004 dv1_6 §6 cancel timeout fallback I-6 protocol
+                    (S-3 cross-reference housekeeping carry-forward to TB00276 per TB00273
+                    SL §6.1 DEC-012 cascade); 0811003 dv1_0 §4.1 (source — being retired
+                    in S-4 at TB00277).
+</pre>
+<pre>
+  AR-078 (dv1_76) ★: mpp_retry_count = 3 — FP/DP DERIVATION.
+                    Source: 0811003 dv1_0 §4.2 verbatim FP/DP analysis preserved per
+                    CI-001..012 source-of-truth principle. Migrated to 0500000 §8
+                    architectural reasoning per DD-012 v2_38 AMENDMENT A 0500000-canonical-
+                    all-docs cascade pre-work for 0811003 retirement (TB00273 SL §6.1
+                    DEC-012 S-2 step + TB00274 NSI §3.3) and per DD-001/DD-002 diagrams-
+                    canonical hierarchy. FP/DP-derivability-test logged TB00273 SL §5
+                    per DD-011 v2_38 AMENDMENT D — Option X DD-011 OUTCOME 1 single-
+                    compliant-option.
+
+                    SEMANTICS: The mpp_retry_count defines how many IOC limit sell attempts
+                    mod:Exit_Controller makes at best_bid - 0.2% increments after a market
+                    sell is rejected by MPP (Market Price Protection) — the C-1 MPP IOC
+                    retry strategy per Layer 1a/1b/2 exit sequences.
+
+                    KRAKEN MPP BEHAVIOR (ar:AR-035, 0411001 WS-MPP-001 through WS-MPP-004):
+                      MPP fires when a market sell would fill at a price more than a
+                      threshold below the current market price.
+                      MPP is always active (no_mpp deprecated Sep 2025).
+                      On MPP rejection: retry with IOC limit at best_bid - 0.2%.
+                      Each retry uses a fresh best_bid from the most recent ticker bbo event
+                      (continuous for open-position pairs).
+
+                    FIRST PRINCIPLES CONSTRAINTS:
+                      (a) Too few retries: position may not exit if spread briefly spikes —
+                          position remains unprotected.
+                      (b) Too many retries: position holds too long in adverse conditions;
+                          each retry adds ~10-50ms latency.
+                      (c) After all retries exhausted: HOLD + CRITICAL alert is correct.
+                          A catastrophically wide spread requires human review.
+
+                    SPREAD ANALYSIS on Kraken spot pairs in monitored universe
+                    ($500k+ USD daily volume per decision:D-04 liquidity floor):
+                      Normal spread: 0.01-0.05% for liquid pairs.
+                      Elevated spread (news event, thin liquidity): 0.2-1.0%.
+                      Extreme spread (liquidity crisis, circuit breaker): &gt;2%.
+                      Gate 2 ($500k min volume) significantly reduces exposure to pairs
+                      with chronic wide spreads.
+                      IOC at best_bid - 0.2%: fills within 1-2 attempts under elevated
+                      spreads. 3 attempts covers near-extreme spread scenarios.
+
+                    RATE COUNTER COST: each IOC retry = +1 add_order unit. 3 retries =
+                    +3 units. Well within 125-unit ceiling per Kraken Pro Intermediate
+                    tier (ar:AR-013).
+
+                    DECISION RATIONALE:
+                      3 retries at best_bid - 0.2% per attempt. After 3 failures: spread
+                      is catastrophically wide. HOLD + CRITICAL alert is the correct
+                      response. Operator must review. CIATS adjusts from first data.
+
+                    CIATS ADJUSTMENT BASIS: CIATS observes the ratio of evt:IOC_LIMIT_FILLED
+                    vs evt:SELL_MPP_EXHAUSTED (HOLD + CRITICAL outcome) across closed
+                    trade records on the Trade Outcome Bus. High exhaustion rate signals
+                    insufficient retries (CIATS proposes increment); near-zero exhaustion
+                    with consistent first-attempt fill signals excess retries (CIATS may
+                    propose decrement). Per TB00000 v2_38 §9.16 PARAMETER PHILOSOPHY +
+                    §9.17 CIATS-OWNED PER-MODULE INSTANTIATED Exit controller block
+                    (param:mpp_retry_count = 3 attempts starting).
+
+                    REGISTRY BINDING: §15.12.4 ar: registry entry — ar:AR-078 (governs:
+                    param:mpp_retry_count in TB00000 v2_38 §9.17 CIATS-OWNED). 0311001
+                    v1_17 §15.12.4 ar: registry amendment deferred to a future housekeeping
+                    increment per the established registry-gap-note carry-forward pattern
+                    (TB00239 AMENDMENT-3 + TB00244/TB00245 AMENDMENT-8/9 precedent). dv1_76
+                    preserves this AR-078 entry per DD-001 + DD-004 NO PROSE-FIRST AUTHORING.
+
+                    Assign: 0511004 dv1_6 §3.3 MPP retry strategy (S-3 cross-reference
+                    housekeeping carry-forward to TB00276 per TB00273 SL §6.1 DEC-012
+                    cascade); 0811003 dv1_0 §4.2 (source — being retired in S-4 at TB00277).
+
+  AR-079 (dv1_77) ★: Full Halt batch_cancel scope (cancel ALL open entries; NOT TP/emergSL;
+                    rate-counter bypass) — ARCHITECTURAL DECISION.
+                    Source: 0811003 dv1_0 §6 EC-020 + EC-021 verbatim architectural decision
+                    preserved per CI-001..012 source-of-truth principle. Migrated to 0500000
+                    §8 architectural reasoning per DD-012 v2_38 AMENDMENT A 0500000-
+                    canonical-all-docs cascade pre-work for 0811003 retirement (TB00273 SL
+                    §6.1 DEC-012 S-2 step + TB00275 NSI §3.3 S-2 continuation) and per
+                    DD-001/DD-002 diagrams-canonical hierarchy. FP/DP-derivability-test
+                    logged TB00275 SL §5 per DD-011 v2_38 AMENDMENT D — Option Y DD-011
+                    OUTCOME 1 single-compliant-option (only one bucket (c) candidate among
+                    five requires dv1_77 amendment per Phase 1 grep results).
+
+                    SEMANTICS: On FULL_HALT declared by mod:Risk_Engine (rule:HR-DD-008),
+                    mod:Exit_Controller issues a single Kraken WS v2 batch_cancel covering
+                    ALL open entry orders (unfilled add_order outputs) and excluding all
+                    resting Take-Profit (TP) limit orders and resting Emergency Stop-Loss
+                    (emergSL) stop-market orders. Open positions remain monitored for
+                    Layer 1 and Layer 2 exit conditions; Full Halt does NOT auto-close
+                    positions — Bill decides on open positions.
+
+                    KRAKEN BATCH_CANCEL BEHAVIOR (ar:AR-019, ar:AR-041, 0411001 WS-CAN-005
+                    through WS-CAN-009):
+                      batch_cancel returns a single count response (number of orders
+                      canceled) — sufficient for Full Halt where per-order ACK tracking is
+                      NOT required (no cancel-timeout-fallback dependency; no market-sell
+                      sequencing dependency).
+                      batch_cancel BYPASSES the rate counter maximum — critical when Full
+                      Halt is triggered by a rate-limit scenario where the rate counter is
+                      already saturated and individual cancel_order calls would be rejected
+                      or queue-deferred.
+                      cancel_order is the per-order alternative; used for Layer 2 MAE exit
+                      cancel sequence where per-order ACK tracking IS required for cancel
+                      timeout fallback (I-6 protocol per ar:AR-077).
+                      cancel_order vs batch_cancel are NOT interchangeable per 0411001
+                      WS-CAN-009 + 0511001 v1_9 WM-CAN-001.
+
+                    FIRST PRINCIPLES CONSTRAINTS:
+                      (a) Full Halt is a system-wide rate-limit or risk-circuit event;
+                          rate-counter capacity may be exhausted at trigger time.
+                          batch_cancel's rate-bypass property is the architectural
+                          requirement that makes Full Halt operationally correct.
+                      (b) TP + emergSL protect open positions. Canceling them during Full
+                          Halt strips position protection — the opposite of Full Halt's
+                          purpose (loss containment). Scope MUST be limited to ENTRY
+                          orders only.
+                      (c) Per-order ACK tracking is not required for Full Halt because
+                          there is no downstream sequencing dependency (no market sell
+                          conditional on cancel confirmation as in Layer 2 MAE exit).
+                          Single count response is sufficient operationally.
+
+                    DERIVATION BASIS: Kraken WS v2 cancel_order vs batch_cancel rate-cost
+                    asymmetry (0411001 WS-CAN-004 cancel_order +8/+6/+1 by age vs
+                    WS-CAN-008 batch_cancel cumulative cost AND WS-CAN-006 rate-counter
+                    bypass), Full Halt trigger conditions (mod:Risk_Engine rule:HR-DD-008
+                    drawdown threshold + ar:AR-019 multi-order cancellation requirement),
+                    and Layer 3 emergSL crash-protection preservation invariant (ar:AR-001
+                    Dead Man's Switch prohibition pattern — same loss-prevention property
+                    of NOT canceling protective orders).
+
+                    REGISTRY BINDING: §15.12.4 ar: registry entry — ar:AR-079 (governs:
+                    rule:Full_Halt_batch_cancel_scope architectural decision). 0311001
+                    v1_17 §15.12.4 ar: registry amendment deferred to a future housekeeping
+                    increment per the established registry-gap-note carry-forward pattern
+                    (TB00239 AMENDMENT-3 + TB00244/TB00245 AMENDMENT-8/9 + TB00274 AR-077/
+                    AR-078 precedent). dv1_77 preserves this AR-079 entry per DD-001 +
+                    DD-004 NO PROSE-FIRST AUTHORING.
+
+                    Assign: 0511004 dv1_6 Full Halt behavior section (S-3 cross-reference
+                    housekeeping carry-forward to TB00276 per TB00273 SL §6.1 DEC-012
+                    cascade); 0811003 dv1_0 §6 EC-020 + EC-021 (source — being retired in
+                    S-4 at TB00277); 0411001 v1_11 §6.9 batch_cancel (Kraken WS v2
+                    operational mechanics); 0511001 v1_9 §9.4 cancel_order vs batch_cancel
+                    (WS Manager use-case distinction).
+</pre>
 <h2>9. Complete CIATS Parameter Registry</h2>
 <p>
 ALL PARAMETERS ARE CIATS-OWNED STARTING VALUES — EXCEPT THE §9.10 SACRED 1:1.5 R:R MINIMUM
@@ -5863,7 +6079,7 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
   No top-N cap. Universe = every Kraken spot pair satisfying AR-070
   conditions (1) quote currency USD/USDC/USDT, (2) instrument status
   online, (3) 24h volume &gt;= min_volume_usd_daily.
-  See §8 AR-070, 0711003 dv1_3 §8, 0611004 dv1_1 §3.
+  See §8 AR-070, 0711003 dv1_3 §8.
 </pre>
 <pre>
   SSS Signal Engine parameters (★ dv1_15 — AR-067; amended dv1_43 — Path 2 long-side reconciliation + short-side addition per TB00180 SL §5 + TB00000 v2_29 §9.17):
@@ -6637,9 +6853,9 @@ prefix taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: mod:WS_Manager
-        constraints: rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime), ar:PA-003
-        consumes: param:paper_trading_mode
-        produces: none
+        constraints: rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime), ar:PA-003, rule:SS-PRE-001, rule:SS-PRE-002, rule:SS-PRE-003, rule:SS-PRE-004, rule:SS-PRE-005, rule:SS-STARTUP-024, rule:SS-STARTUP-025, rule:SS-STARTUP-007_NOTE, rule:SS-STARTUP-009, rule:SS-WARMUP-003_NOTE, rule:SS-WARMUP-HTF_alpha, rule:SS-PAPER-005, rule:SS-PAPER-006, rule:SS-RECON-004, rule:SS-RECON-008, rule:SS-RECON-012, rule:SS-RECON-015, rule:SS-RECON-016, rule:SS-WIRE-001, rule:HR-SS-001, rule:HR-SS-002, rule:HR-SS-007, rule:HR-SS-008, rule:HR-SS-009, rule:HR-SS-010, ar:AR-049, ar:AR-056, ar:AR-044, ar:AR-068, ar:AR-050, ar:AR-038, ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-055, ar:AR-003, ar:AR-026, ar:AR-017, ar:AR-001, ar:AR-004, ar:AR-016, ar:AR-020, ar:AR-029, ar:AR-034, ar:AR-036, ar:AR-039, contract:WM-PACE-001, contract:WM-PACE-002, contract:CIATS_Trade_Outcome_Bus
+        consumes: param:paper_trading_mode, param:portfolio_baseline_USD
+        produces: evt:POSITION_CLOSED_DURING_GAP, evt:INVARIANT_BREACH, evt:INCOMPLETE_PROTECTION, evt:PAPER_TRADING_MODE_ON, evt:PAPER_TRADING_MODE_OFF
         schema_version: 1.0
       </desc>
     <rect x="350" y="298" width="800" height="64" fill="#dcfce7" stroke="#14532d" stroke-width="1.5" rx="4"/>
@@ -7369,6 +7585,1009 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_78  05-14-2026  TB00279 AMENDMENT-ELP-01 — THREE evt:
+                      TOKENS GOVERNS-LIST EXTENSION TO D5 R7
+                      → R8 + 0311001 v1_18 §15.12.7 REGISTRY
+                      EXTENSION (BUNDLED COMPANION ARTIFACT).
+
+                      DEC-012 6-sub-step methodology S-2
+                      step for 0811004 Entry_Limit_Placement_
+                      Specification dv1_1 retirement cascade
+                      per TB00278 S1ELP Gap Register v1_0
+                      §5.1 (c) ARCHITECTURAL CONTENT NOT IN
+                      DIAGRAMS bucket closure.
+
+                      SCOPE OF CHANGES (surgical per
+                      RR-SCOPE-001 absolute-scope discipline
+                      + TB00279 NSI §1.3 specification):
+
+                      (a) D5 root &lt;desc&gt; governs list ADD
+                          3 evt: tokens (appended after
+                          evt:LOG_QUEUE_FULL):
+                            evt:ENTRY_PRICE_COMPUTED
+                            evt:ENTRY_PRICE_INVALID
+                            evt:ENTRY_PRICE_SIDE_MISSING
+                          All 3 events emitted by Entry
+                          Limit Placement computation owned
+                          by AR-069 (canonical entry-limit-
+                          price formula encoded in 0500000
+                          §8 lines 5533-5549) and consumed
+                          by mod:Logger (sole CIATS data
+                          source per CI-IF-001).
+
+                      (b) D5 SVG &lt;title&gt; updated R7 → R8
+                          (diagram_canonical version bump
+                          from Image5_T2_R7 to Image5_T2_R8).
+
+                      (c) D5 &lt;desc&gt; R-increment updated
+                          from R6 → R7 (TB00246 AMENDMENT-10
+                          AR-043 BoundedSemaphore) to new
+                          R7 → R8 narrative covering
+                          AMENDMENT-ELP-01 scope + FP/DP-
+                          derivability-test log per TB00000
+                          v2_38 §4.5 DD-011 AMENDMENT D.
+
+                      (d) D5 R-increment-prior demoted: TB00246
+                          R6 → R7 narrative shifted to
+                          R-increment-prior; TB00239 R5 → R6
+                          narrative shifted to R-increment-
+                          prior-2; TB00218 R4 → R5 narrative
+                          shifted to R-increment-prior-3.
+                          TB00217 R3 → R4 narrative pushed
+                          out of visible stack per CI-005 +
+                          CI-006 visible-stack 3-deep rolling
+                          policy; preserved in §14 dv1_49
+                          revision-history entry verbatim.
+
+                      (e) D5 registry_gap_note updated: NEW R8
+                          additions block added noting the
+                          three ENTRY_PRICE evt: tokens ARE
+                          registered in 0311001 v1_18
+                          §15.12.7 evt: Event Registry as
+                          bundled companion artifact this
+                          same session (deliberate departure
+                          from the R6 carry-forward
+                          precedent because the three tokens
+                          are bundle-eligible with the
+                          AMENDMENT-ELP-01 single-cycle
+                          DEC-012 S-2 step per TB00279 NSI
+                          §1.3 scope (b)). No carry-forward
+                          gap for R8 additions.
+
+                      (f) D5 figcaption updated from "Diagram
+                          5 — CIATS Architecture (R7)" to
+                          "Diagram 5 — CIATS Architecture
+                          (R8)" with AMENDMENT-ELP-01 R7 → R8
+                          summary narrative + prior R-increment
+                          narratives preserved per
+                          visible-stack 3-deep policy.
+
+                      (g) Header updated: DocVersion dv1_77
+                          → dv1_78; DocPath ...dv1_77_Claude_
+                          Source.html → ...dv1_78_Claude_
+                          Source.html; &lt;title&gt; "0500000
+                          System Architecture Overview dv1_77"
+                          → "...dv1_78".
+
+                      SVG VISUAL GEOMETRY PRESERVED BYTE-
+                      IDENTICAL across all 10 diagrams per
+                      TB00279 NSI §1.3 default determination
+                      ("SVG byte impact: ZERO. Root &lt;desc&gt;
+                      text edit only; no &lt;path&gt; / &lt;rect&gt; /
+                      &lt;text&gt; / &lt;g&gt; element changes").
+                      viewBox preserved (1500x1200 for D5).
+                      All 9 other figures (Tier 1 Context +
+                      D1 + D2 + D3 + D4 + D6 + D7 + D8 + D9)
+                      preserved byte-identical per DEC-003
+                      Path A one-diagram-per-session cadence.
+
+                      DD-001/DD-002/DD-004/DD-011/DD-012
+                      COMPLIANCE.
+                      Three evt: tokens encoded in D5 root
+                      governs as canonical architectural
+                      binding for Logger event taxonomy
+                      feeding CIATS Trade Outcome Bus per
+                      DD-001 diagrams-canonical principle.
+                      Subordinate-spec restatement in 0811004
+                      dv1_1 §10 "WHAT IT LOGS" is derived
+                      per DD-012 cross-document authority
+                      hierarchy (0811004 is the audit-subject
+                      of the active retirement cascade per
+                      DEC-012). DD-004 NO PROSE-FIRST
+                      AUTHORING compliance: diagram-side
+                      encoding lands FIRST + bundled
+                      namespace-registry amendment 0311001
+                      v1_18 §15.12.7 lands same session per
+                      TB00279 NSI §1.3 scope (b).
+
+                      FP/DP-DERIVABILITY-TEST LOG (DD-011
+                      v2_38 AMENDMENT D).
+                      Option set: {A. D5 root governs
+                      (Logger event taxonomy + CIATS data
+                      source canonical encoding); B. D6 root
+                      governs (cross-zone abstraction); C.
+                      defer to separate Logger-specific
+                      diagram (does not exist in 0500000)}.
+                      First-principles analysis: TB00278
+                      S1ELP Gap Register §5.4 explicitly
+                      maps the three evt: tokens to D5 root
+                      governs; D5 already encodes mod:Logger
+                      + the existing evt: token taxonomy
+                      (evt:TRADE_CLOSE + evt:KELLY_UPDATE +
+                      evt:KELLY_NEGATIVE + evt:ALERT_SENT +
+                      evt:ALERT_SMTP_FAILED + evt:TRADE_
+                      RECORD_WRITE_FAILED + evt:LOG_QUEUE_
+                      FULL); D5 visual element at line 3824
+                      explicitly labels D5 as "INPUTS —
+                      Logger is sole CIATS data source"
+                      confirming D5 canonical authority;
+                      0811004 dv1_1 §10 cites all three
+                      events. Data sources consulted:
+                      TB00278 S1ELP Gap Register v1_0 §5.1
+                      + §5.4 (Bill-ratified S1ELP audit),
+                      TB00279 NSI §1.3 (this session NSI
+                      directive), TB00000 v2_38 §4.5 DD-001/
+                      DD-002 + §9.10 loss-prevention
+                      mission, 0811004 dv1_1 §10. Elimination
+                      outcomes: B eliminated because Logger
+                      is encoded in D5 not D6 per existing
+                      dv1_77 governs structure; C eliminated
+                      because creating a new diagram exceeds
+                      DEC-003 Path A cadence and DEC-012
+                      S-2 step scope. Remaining option: A
+                      (D5 target). One compliant disposition
+                      surfaced; executed directly under
+                      RR-SCOPE-005 + DD-011 derivable-
+                      decision authority.
+
+                      RR-SCOPE-001 ABSOLUTE-SCOPE COMPLIANCE.
+                      AMENDMENT-ELP-01 ADD-only scope per
+                      TB00279 NSI §1.3 explicit specification
+                      — three evt: token additions to D5
+                      governs list only; NO removal of
+                      existing identifiers; NO geometry
+                      change; NO viewBox change.
+
+                      RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE-
+                      PROHIBITION COMPLIANCE.
+                      Scope sourced from TB00278 S1ELP Gap
+                      Register v1_0 §5.1 + §5.4 (Bill-
+                      ratified controlled document per
+                      TB00278 chat-turn 1 RR-SCOPE-005
+                      derivable-decision execution +
+                      DD-011 v2_38 AMENDMENT D OUTCOME 1
+                      single-compliant-option result) +
+                      TB00279 NSI §1.3 (this session NSI
+                      directive originating from Bill OCS
+                      chat-turn directive bundling
+                      AMENDMENT-ELP-01 execution) +
+                      TB00000 v2_38 (Bill-ratified Project
+                      Instructions §4.5 DD-001/DD-002 +
+                      §9.10 loss-prevention mission) +
+                      0811004 dv1_1 §10 (Bill-ratified
+                      subordinate-spec source per DD-012
+                      cross-document authority hierarchy).
+
+                      RR-SCOPE-009 FOUR-QUESTION ORIGIN
+                      INVESTIGATION.
+                      All three evt: tokens are load-bearing
+                      for paper-as-master CIATS data-source
+                      contract per PA-001 + CI-IF-001 (full
+                      origin investigation logged in R7→R8
+                      &lt;desc&gt; narrative). Summary: introduced
+                      0811004 dv1_0/dv1_1 §10; problem
+                      solved is observable record of entry-
+                      price computation outcomes for CIATS
+                      data integrity + dispatch correctness;
+                      still load-bearing per 0811004 dv1_1
+                      §10 + HR-ELP-003/004/006 active
+                      enforcement + PA-005 byte-identical
+                      paper-live contract; loss-prevention
+                      property is ABSOLUTE preservation of
+                      CIATS data integrity + dispatch
+                      correctness.
+
+                      RR-SCOPE-010 VERBATIM-MDR-CITATION
+                      DISCIPLINE.
+                      All three evt: token semantics grep-
+                      verified verbatim against 0811004
+                      dv1_1 §10 "WHAT IT LOGS" + TB00278
+                      S1ELP Gap Register v1_0 §5.2 (c)
+                      bucket enumeration.
+
+                      DR-007 HTML SCOPE VALIDATION.
+                      Figure count 10 → 10 (identity check
+                      preserved). SVG count 10 → 10 (no
+                      &lt;svg&gt; element additions/removals).
+                      Placeholder count 1 → 1. Section-
+                      heading parity preserved (no new
+                      headings introduced; existing &lt;h2&gt;
+                      and &lt;h3&gt; structure preserved verbatim).
+                      Structural-marker parity preserved
+                      (HTMLParser feed validation at session
+                      close). Word-count parity within
+                      tolerance for the desc-extension scope
+                      (3 evt: token additions + R7→R8
+                      narrative + revision-history entry).
+                      No placeholder/stub tokens introduced.
+                      Revision-history parity preserved
+                      (dv1_78 entry added; all prior entries
+                      dv1_77 through dv1_0 preserved verbatim
+                      per CI-005 + CI-006). HTML well-
+                      formedness gate verified per DR-007.9.
+
+                      CLUSTER C7 SEVENTH CONSECUTIVE
+                      CURRENCY-LAG FINDING.
+                      18 ELP-NNN + HR-ELP-NNN identifier-
+                      token-registration housekeeping items
+                      tracked separately per TB00278 SL §6.2
+                      and deferred to Step 3 close-gate
+                      currency-lag reconciliation sweep per
+                      TB00202 §7.5 (out of scope this
+                      AMENDMENT-ELP-01 per RR-SCOPE-001 +
+                      TB00279 NSI §1.3 surgical scope).
+
+                      COMPANION DELIVERABLES THIS SESSION.
+                      0311001 v1_17 → v1_18 (§15.12.7 evt:
+                      registry ADD 3 entries — scope (b) per
+                      TB00279 NSI §1.3 registry-binding
+                      closure).
+                      TB00279 Session Log v1_0 (session-
+                      close trio member 1).
+                      TB00280 Next Session Instructions v1_0
+                      (session-close trio member 2).
+                      OCS chat-response copy box (session-
+                      close trio member 3; byte-identical to
+                      TB00280 NSI §0 OCS payload).
+
+                      OPEN ITEMS UPDATED.
+                      TB00278 S1ELP Gap Register §5.1 (c)
+                      ARCHITECTURAL CONTENT NOT IN DIAGRAMS
+                      bucket CLOSED at this AMENDMENT-ELP-01
+                      enactment via D5 R8 root governs ADD +
+                      0311001 v1_18 §15.12.7 registry ADD.
+                      0811004 dv1_1 retirement cascade S-2
+                      step CLOSED — S-3 + S-4 + S-5 + S-6
+                      sequenced to TB00280 per TB00279 NSI
+                      §4.2 + TB00278 S1ELP Gap Register §5.4.
+
+                      Bill override: 0500000 dv1_77 →
+                      dv1_78 is enacted under Bill's
+                      standing document-control override
+                      continuing the established scope.
+                      Direct increment dv1_77 → dv1_78;
+                      no rv state.
+
+  dv1_77  05-14-2026  TB00275 S-2 CONTINUATION AMENDMENT —
+                      ONE NEW AR-NNN ENTRY IN §8
+                      ARCHITECTURAL REASONING FOR 0811003
+                      RETIREMENT CASCADE BUCKET (c)
+                      CANDIDATE §6 EC-020 FULL HALT
+                      BATCH_CANCEL SCOPE.
+
+                      One §8 architectural reasoning entry
+                      added for the Full Halt batch_cancel
+                      scope architectural decision (cancel
+                      ALL open entry orders; NOT TP/emergSL;
+                      rate-counter bypass rationale) being
+                      migrated from 0811003 Exit_Controller_
+                      Specification dv1_0 §6 EC-020 + EC-021
+                      prior to 0811003 retirement at TB00277
+                      S-4 step per DD-012 v2_38 AMENDMENT A
+                      0500000-canonical-all-docs cascade
+                      methodology + DEC-012 6-sub-step
+                      methodology.
+
+                      AR-079 Full Halt batch_cancel scope —
+                      ARCHITECTURAL DECISION. Kraken WS v2
+                      batch_cancel behavior (ar:AR-019,
+                      ar:AR-041, 0411001 WS-CAN-005..009);
+                      first-principles constraints (rate-
+                      counter capacity at Full Halt trigger;
+                      protection-order preservation invariant;
+                      no per-order ACK tracking dependency);
+                      derivation basis (cancel_order vs
+                      batch_cancel rate-cost asymmetry +
+                      Full Halt trigger conditions + Layer
+                      3 emergSL crash-protection invariant).
+                      Registry binding §15.12.4 ar:AR-079
+                      governs rule:Full_Halt_batch_cancel_
+                      scope. 0311001 v1_17 §15.12.4 registry
+                      amendment deferred per registry-gap-
+                      note carry-forward pattern (TB00239 +
+                      TB00244/TB00245 + TB00274 AR-077/
+                      AR-078 precedent).
+
+                      BUCKET (c) CANDIDATE DISPOSITION
+                      (Phase 1 dv1_76-grep verification per
+                      TB00275 NSI §3.2 + §3.3):
+
+                      §6 EC-020 Full Halt batch_cancel
+                        rationale — ABSENT from dv1_76 §8 AR
+                        FP/DP-derivation prose; AR-019 and
+                        AR-041 tokens present as one-line
+                        labels only. AMENDMENT REQUIRED.
+                        Migrated as AR-079 above.
+
+                      §7 EC-024 cancel timeout fallback I-6
+                        inspection-before-retry — PRESENT in
+                        dv1_76 D3 Layer 2 panel visible
+                        content (req_id registry / timeout
+                        → check executions / unknown → retry
+                        1x). No amendment required.
+
+                      §7 EC-025 second-timeout HOLD +
+                        CRITICAL alert chain — PRESENT in
+                        dv1_76 D3 Layer 2 panel visible
+                        content + 0511006 dv1_2 §7
+                        CANCEL_TIMEOUT_HOLD CRITICAL alert
+                        routing. No amendment required.
+
+                      §8 EC-028 IOC limit pricing formula
+                        (best_bid × 0.998 = best_bid - 0.2%)
+                        — PRESENT in dv1_76 §8 AR-078
+                        SEMANTICS subsection + KRAKEN MPP
+                        BEHAVIOR subsection. No amendment
+                        required.
+
+                      §10 EC-035 CIATS Trade Outcome Bus
+                        16-field schema — STALE in 0811003;
+                        canonical 23-field schema in dv1_76
+                        D5 stream2_box + D6 ciats_outcome
+                        schema_fields_canonical since dv1_50
+                        (TB00218 schema-citation-architecture
+                        correction per DD-001/DD-002 +
+                        0511006 dv1_2 §6.2 + 1011007 dv1_4
+                        §7 canonical mandatory-field
+                        contract). No amendment required;
+                        stale 0811003 content drops at S-4
+                        git rm.
+
+                      DD-011 v2_38 AMENDMENT D FP/DP-
+                      DERIVABILITY-TEST (executed UP-FRONT
+                      per TB00275 NSI §3.2):
+                        Option-set: {AMEND, NO-AMEND} per
+                          bucket (c) candidate.
+                        First-principles eliminator: dv1_76
+                          grep result — encoding present
+                          (eliminates AMEND) or absent
+                          (eliminates NO-AMEND).
+                        Data sources consulted: dv1_76 §8
+                          AR registry; dv1_76 D3 Layer 2
+                          panel visible content; dv1_76 D5
+                          stream2_box + D6 ciats_outcome
+                          schema_fields_canonical; 0411001
+                          v1_11 §6.9 batch_cancel; 0511001
+                          v1_9 §9.4 cancel_order vs
+                          batch_cancel; 0511006 dv1_2 §6.2
+                          + §7 Trade Outcome Bus +
+                          CANCEL_TIMEOUT_HOLD routing;
+                          0811003 dv1_0 §6/§7/§8/§10.
+                        Elimination outcomes: §6 EC-020 →
+                          AMEND (encoding absent); §7
+                          EC-024 → NO-AMEND (encoded);
+                          §7 EC-025 → NO-AMEND (encoded);
+                          §8 EC-028 → NO-AMEND (encoded);
+                          §10 EC-035 → NO-AMEND (stale,
+                          superseded by canonical).
+                        Remaining options after elimination:
+                          AMEND for §6 EC-020 only.
+                        OUTCOME 1: single-compliant-option;
+                          derivable; executed under
+                          RR-SCOPE-005 derivable-decision
+                          authority without Bill ratification.
+
+                      CLUSTER C7 CURRENCY-LAG FINDING
+                      (continued): 0811003 dv1_0 (04-05-2026)
+                      §10 16-field schema pre-dates the
+                      1011005 schema reconciliation cascade
+                      (TB00217 dv1_49, 05-12-2026 — 23-field
+                      canonical). Eighth-or-ninth consecutive
+                      cluster C7 occurrence in retirement-
+                      cascade audit series; pattern continues
+                      per TB00273 SL §4.5.
+
+                      SVG DIAGRAM BODIES PRESERVED:
+                      All figure SVGs preserved byte-
+                      identical from dv1_76 per DD-001/
+                      DD-002 + DEC-003 Path A. AR-079 is §8
+                      architectural-reasoning prose + future
+                      §15.12.4 ar: registry identifier
+                      registration (deferred per registry-
+                      gap-note pattern). No D-figure SVG
+                      content amendments.
+
+                      DR-007 HTML SCOPE PRE-DELIVERY
+                      VALIDATION (executed at session close):
+                      DR-007.1H asset-reference parity
+                      identity check (figures unchanged from
+                      dv1_76); DR-007.2H section-heading
+                      parity (&lt;h2&gt;/&lt;h3&gt; count
+                      unchanged + revision history entry
+                      added); DR-007.3H structural-marker
+                      parity (AR-079 new marker in §8;
+                      cluster C7 finding tracked);
+                      DR-007.4H word-count parity (+~900
+                      words for one AR-NNN entry + revision
+                      history entry — within tolerance for
+                      the §8 prose-extension scope);
+                      DR-007.5H placeholder/stub scan (zero
+                      new); DR-007.6H revision history
+                      parity preserved (dv1_77 entry added;
+                      all prior entries dv1_76 through
+                      dv1_0 preserved verbatim per CI-005 +
+                      CI-006); DR-007.9 HTML well-formedness
+                      gate (Python html.parser feed
+                      validation at session close).
+
+                      Header DocVersion dv1_76 -&gt; dv1_77.
+                      DocPath updated.
+
+                      Bill override: 0500000 dv1_76 ->
+                      dv1_77 enacted under Bill's standing
+                      document-control override continuing
+                      the scope established in TB00115 et
+                      al. Direct increment dv1_76 -&gt;
+                      dv1_77; no rv state. Per Bill's
+                      TB00275 OCS directive bundling
+                      execution of S-2 continuation
+                      amendment under DD-011 v2_38
+                      AMENDMENT D up-front compliance +
+                      session-close trio budget reservation.
+
+  dv1_76  05-14-2026  TB00274 S-2 AMENDMENT — TWO NEW
+                      AR-NNN ENTRIES IN §8 ARCHITECTURAL
+                      REASONING FOR 0811003 RETIREMENT
+                      CASCADE.
+
+                      Two §8 architectural reasoning
+                      entries added for the cancel_timeout_
+                      window=5.0s and mpp_retry_count=3
+                      FP/DP-derived parameters being
+                      migrated from 0811003 Exit_Controller_
+                      Specification dv1_0 §4.1 + §4.2 prior
+                      to 0811003 retirement at TB00277 S-4
+                      step per DD-012 v2_38 AMENDMENT A
+                      0500000-canonical-all-docs cascade
+                      methodology + DEC-012 6-sub-step
+                      methodology.
+
+                      AR-077 cancel_timeout_window=5.0s
+                      FP/DP DERIVATION — first-principles
+                      constraints (network-latency-vs-
+                      fallback-recovery-window); observed
+                      VPS-to-Kraken latency characteristics
+                      (5-20ms typical, 100-500ms degraded,
+                      2-3s worst); decision rationale (5.0s
+                      covers all realistic scenarios with
+                      margin within 5-min candle window);
+                      CIATS adjustment basis (ws_roundtrip_
+                      latency_ms from A-3 EWMA Monitor).
+                      Registry binding §15.12.4 ar:AR-077
+                      governs param:cancel_timeout_window
+                      in TB00000 v2_38 §9.17 CIATS-OWNED
+                      Exit controller block. 0311001 v1_17
+                      §15.12.4 registry amendment deferred
+                      per registry-gap-note carry-forward
+                      pattern (TB00239 + TB00244/TB00245
+                      precedent).
+
+                      AR-078 mpp_retry_count=3 FP/DP
+                      DERIVATION — Kraken MPP behavior
+                      (ar:AR-035 + 0411001 WS-MPP-001..004);
+                      first-principles constraints (too-
+                      few-vs-too-many retries; HOLD+CRITICAL
+                      on exhaustion); spread analysis on
+                      $500k+ universe (normal 0.01-0.05% /
+                      elevated 0.2-1.0% / extreme &gt;2%);
+                      decision rationale (3 retries covers
+                      near-extreme spread scenarios; rate-
+                      counter cost = +3 units well within
+                      125-unit ceiling); CIATS adjustment
+                      basis (IOC_LIMIT_FILLED vs SELL_MPP_
+                      EXHAUSTED event ratio). Registry
+                      binding §15.12.4 ar:AR-078 governs
+                      param:mpp_retry_count in TB00000
+                      v2_38 §9.17 CIATS-OWNED Exit
+                      controller block. 0311001 v1_17
+                      §15.12.4 registry amendment deferred
+                      per registry-gap-note carry-forward
+                      pattern.
+
+                      SVG VISUAL GEOMETRY: All 10 figures
+                      (Tier 1 Context + D1 through D9)
+                      preserved BYTE-IDENTICAL per DEC-003
+                      Path A one-diagram-amendment-per-
+                      session cadence. AR-077 and AR-078
+                      are §8 architectural-reasoning prose
+                      additions only. No SVG content
+                      amendment. No labeled-group governs-
+                      list extension this session (the new
+                      ARs are registry-encoded in §8 only;
+                      diagram-binding to D3 mod:Exit_
+                      Controller and related groups
+                      deferred to a future Cluster-based
+                      AMENDMENT under DEC-003 Path A
+                      cadence if/when D3 governs-list
+                      extension is sequenced).
+
+                      FP/DP-DERIVABILITY-TEST PROVENANCE:
+                      DD-011 v2_38 AMENDMENT D FP/DP-
+                      derivability-test logged TB00273
+                      SL §5 — option-set X (0500000 §8
+                      AR-NNN entries) vs Y (0511004 dv1_7
+                      prose absorption) vs Z (BOTH) vs W
+                      (NEITHER — git-history of retired
+                      0811003 only); first-principles
+                      analysis applied DD-001/DD-002/
+                      DD-008/DD-012 + RR-SCOPE-009
+                      Chesterton-fence audit; elimination
+                      outcomes eliminated Y/Z/W (Y
+                      contradicts DD-001/DD-002 hierarchy
+                      since 0511004 is AA=05 prose-bearing
+                      not diagram-bearing; Z collapses to
+                      X because Y is eliminated; W
+                      contradicts DD-012 0500000-canonical-
+                      all-docs scope by deferring to git-
+                      history of a retired subordinate
+                      spec); remaining option X DD-011
+                      OUTCOME 1 single-compliant-option;
+                      executed directly under RR-SCOPE-005
+                      derivable-decision authority. AR
+                      slot assignment (AR-077 + AR-078)
+                      is mechanical sequential per
+                      established 0311001 v1_17 §15.12.4
+                      ar: registry convention. SVG byte-
+                      identical preservation is per
+                      DEC-003 Path A explicit default.
+                      0311001 v1_17 §15.12.4 registry
+                      amendment deferral is per established
+                      registry-gap-note carry-forward
+                      pattern (TB00239 / TB00244 / TB00245
+                      precedent). No new decision points
+                      surface this session.
+
+                      DD-001/DD-002/DD-004/DD-011/DD-012
+                      COMPLIANCE: AR-077 + AR-078
+                      architectural reasoning encoded in
+                      0500000 §8 as the canonical source
+                      (DD-001 diagrams-as-canonical extended
+                      to 0500000-canonical-all-docs scope
+                      per DD-012 v2_38 AMENDMENT A);
+                      subordinate-spec 0811003 dv1_0 §4.1 +
+                      §4.2 is the historical seed-prose
+                      being retired (S-4 at TB00277);
+                      subordinate-spec 0511004 dv1_6 §3.3 +
+                      §6 may receive optional cross-
+                      reference housekeeping at TB00276 S-3
+                      per TB00273 SL §6.1 DEC-012 cascade.
+                      DD-004 NO PROSE-FIRST AUTHORING
+                      preserved — AR identifiers encoded in
+                      the diagram-bearing controlled
+                      document FIRST; namespace-registry
+                      (0311001 §15.12.4) amendment follows
+                      per the established carry-forward
+                      pattern.
+
+                      RR-SCOPE-001 absolute-scope compliance:
+                      TB00274 S-2 ADD-only scope per
+                      TB00274 NSI §3.3 explicit
+                      specification — two AR-NNN entries in
+                      §8 + §14 revision history entry +
+                      header refresh. NO removal of
+                      existing identifiers. NO SVG geometry
+                      change. NO viewBox change in any
+                      figure. NO addition of new labeled
+                      groups in any diagram.
+
+                      RR-SCOPE-007 self-authored-NSI-
+                      source-prohibition compliance: scope
+                      sourced from TB00274 NSI §3.3 (this
+                      session NSI directive) + TB00273 SL
+                      §5 + §6.1 (Bill-ratified prior
+                      session log with FP/DP-derivability-
+                      test outcome) + TB00237 v2_38
+                      AMENDMENT B + DEC-012 (Bill-ratified
+                      DD-012 v2_38 AMENDMENT A 0500000-
+                      canonical-all-docs scope extension)
+                      + TB00000 v2_38 §4.5 DD-001/DD-002/
+                      DD-011/DD-012 (Bill-ratified Project
+                      Instructions) + 0811003 dv1_0 §4.1 +
+                      §4.2 (Bill-ratified subordinate-spec
+                      source content for verbatim FP/DP
+                      analysis preservation per CI-001..012).
+
+                      RR-SCOPE-009 four-question origin
+                      investigation for AR-077 + AR-078
+                      (both load-bearing constraints
+                      preserved):
+                        AR-077 (1) introduced in dv1_76
+                          this session — content source
+                          is 0811003 dv1_0 §4.1 (04-05-2026
+                          authoring) which closed OI-003;
+                          (2) problem solved — bounds the
+                          cancel timeout window with
+                          first-principles network-latency
+                          analysis vs fallback recovery
+                          cost; (3) evidence still load-
+                          bearing — Layer 1a/1b/2 exit
+                          sequences in 0500000 §4 + 0511004
+                          dv1_6 actively use cancel_timeout_
+                          window for I-6 inspection-before-
+                          retry protocol; (4) loss-prevention
+                          property — preserves Exit Controller
+                          ability to detect stuck cancels
+                          and trigger fallback recovery
+                          before position exposure window
+                          exceeds 5-min candle evaluation
+                          boundary.
+                        AR-078 (1) introduced in dv1_76
+                          this session — content source
+                          is 0811003 dv1_0 §4.2 (04-05-2026
+                          authoring); (2) problem solved —
+                          bounds the MPP IOC retry attempts
+                          based on spread distribution
+                          analysis on $500k+ universe vs
+                          rate-counter ceiling; (3) evidence
+                          still load-bearing — Layer 1a/1b/2
+                          exit sequences in 0500000 §4 +
+                          0511004 dv1_6 actively use
+                          mpp_retry_count for C-1 MPP IOC
+                          retry strategy; (4) loss-prevention
+                          property — preserves Exit Controller
+                          ability to clear positions through
+                          near-extreme spread scenarios
+                          without burning rate-counter
+                          capacity AND surfaces
+                          catastrophically wide spreads to
+                          operator review via HOLD + CRITICAL
+                          alert.
+
+                      RR-SCOPE-010 verbatim-MDR-citation
+                      discipline: AR-077 + AR-078 content
+                      grep-verified verbatim against 0811003
+                      dv1_0 §4.1 + §4.2 canonical FP/DP-
+                      derivation prose. param:cancel_timeout_
+                      window + param:mpp_retry_count
+                      semantics grep-verified verbatim
+                      against TB00000 v2_38 §9.17 CIATS-
+                      OWNED PER-MODULE INSTANTIATED Exit
+                      controller block. ar:AR-035 + 0411001
+                      WS-MPP-001..004 + decision:D-04
+                      semantics grep-verified verbatim
+                      against current authoritative spec
+                      content.
+
+                      DR-007 HTML SCOPE VALIDATION (pre-
+                      delivery): DR-007.1H asset-reference
+                      parity identity check (10 figures
+                      unchanged; svg count unchanged);
+                      DR-007.2H section-heading parity
+                      (h2/h3 count unchanged + dv1_76
+                      revision history entry added);
+                      DR-007.3H structural-marker parity
+                      (AR-077 + AR-078 new markers in §8;
+                      registry-binding cite to §15.12.4
+                      preserved per carry-forward pattern);
+                      DR-007.4H word-count parity (+~1700
+                      words for two AR entries + revision
+                      history entry — within tolerance for
+                      the §8 prose-extension scope);
+                      DR-007.5H placeholder/stub scan
+                      (zero new); DR-007.6H revision
+                      history parity preserved (dv1_76
+                      entry added; all prior entries
+                      dv1_75 through dv1_0 preserved
+                      verbatim per CI-005 + CI-006);
+                      DR-007.9 HTML well-formedness gate
+                      (Python html.parser feed validation
+                      at session close).
+
+                      Header DocVersion dv1_75 -&gt; dv1_76.
+                      DocPath updated.
+
+                      Bill override: 0500000 dv1_75 ->
+                      dv1_76 enacted under Bill's standing
+                      document-control override continuing
+                      the scope established in TB00115 et
+                      al. Direct increment dv1_75 -&gt;
+                      dv1_76; no rv state. Per Bill's
+                      TB00274 OCS directive bundling
+                      execution of S-2 amendment under
+                      DD-011 v2_38 AMENDMENT D up-front
+                      compliance + session-close trio
+                      budget reservation.
+
+  dv1_75  05-14-2026  TB00270 AMENDMENT-18 — D7 mod:
+                      Startup_Sequence labeled-group
+                      &lt;desc&gt; body extension (25 cluster
+                      C5 rule: + 5 new evt: + ~25
+                      ancillary cross-references) +
+                      PROSE-UPDATE-BY (AR-056 reconnect
+                      10/120 -&gt; 20/481) + PROSE-UPDATE-BZ
+                      (AR-049 remove interval=1440 +
+                      add mod:Regime_Engine deferral
+                      pointer per OI-NEW-001).
+
+                      Three amendment classes in single
+                      controlled-document amendment
+                      cycle:
+
+                      CLASS (i) — D7 mod:Startup_Sequence
+                      &lt;desc&gt; body extension at line 6634.
+                      Tokens distributed by semantic
+                      field per WS_Manager precedent
+                      (line 1582-1589 canonical
+                      convention; per DD-001/DD-002
+                      diagram-canonical authority):
+
+                      constraints: field — 25 cluster C5
+                      rule: tokens added (rule:SS-PRE-001
+                      through SS-PRE-005, rule:SS-STARTUP-
+                      024/025/007_NOTE/009, rule:SS-WARMUP-
+                      003_NOTE/HTF_alpha, rule:SS-PAPER-
+                      005/006, rule:SS-RECON-004/008/012/
+                      015/016, rule:SS-WIRE-001, rule:HR-
+                      SS-001/002/007/008/009/010) + 21
+                      ar: ancillary (AR-049/056/044/068/
+                      050/038/058/059/060/055/003/026/017/
+                      001/004/016/020/029/034/036/039) + 3
+                      contract: ancillary (WM-PACE-001/002,
+                      CIATS_Trade_Outcome_Bus). Existing
+                      constraints entries (rule:HR-WM-021,
+                      ar:PA-003) preserved byte-identical.
+
+                      consumes: field — param:portfolio_
+                      baseline_USD added. Existing param:
+                      paper_trading_mode preserved.
+
+                      produces: field — 5 new evt: tokens
+                      added (evt:POSITION_CLOSED_DURING_
+                      GAP, evt:INVARIANT_BREACH, evt:
+                      INCOMPLETE_PROTECTION, evt:PAPER_
+                      TRADING_MODE_ON, evt:PAPER_TRADING_
+                      MODE_OFF). Prior field value "none"
+                      superseded.
+
+                      NSI-prose field-name terminology
+                      ("governs-list") differed from
+                      canonical SVG field name
+                      ("constraints:"); resolved per
+                      DD-001/DD-002 + RR-SCOPE-010 by
+                      using canonical convention.
+
+                      CLASS (ii) — PROSE-UPDATE-BY.
+                      AR-056 prose at line 5263. Change:
+                      "Fatal reconnect: 10 attempts over
+                      120 seconds" -&gt; "Fatal reconnect:
+                      20 total attempts spanning ~481
+                      seconds (~8 minutes)". Source:
+                      1011014 dv1_8 SS-RECON-015 (since
+                      dv1_6 per OI-020) + 1011002 dv1_26
+                      WM-RECONNECT-002 + WM-RECONNECT-017
+                      historical record.
+
+                      CLASS (iii) — PROSE-UPDATE-BZ.
+                      AR-049 prose at line 5026. Change:
+                      "(8) REST warm-up GetOHLCData
+                      (AR-044: interval=5, 60, 1440),"
+                      -&gt; "(8) REST warm-up GetOHLCData
+                      (AR-044: interval=5, 60) per-pair
+                      (interval=1440 daily candles NOT
+                      part of per-pair warm-up; daily
+                      regime classification handled
+                      independently by mod:Regime_Engine
+                      per OI-NEW-001 closure),". Closes
+                      OI-NEW-001 Call C removal at
+                      0500000 prose layer; 0211003 dv1_0
+                      -&gt; dv1_1 PROSE-UPDATE-BX
+                      propagation deferred to TB00271.
+
+                      SVG VISUAL GEOMETRY: BYTE-IDENTICAL
+                      preserved per DD-001/DD-002. D7
+                      mod:Startup_Sequence rect (line
+                      6645) + text (lines 6646-6647)
+                      unchanged. No SVG visual rendering
+                      changes anywhere in dv1_75.
+
+                      CLUSTER C5 STATUS: 25 GENUINE
+                      bucket (c) rule: tokens registered
+                      in mod:Startup_Sequence constraints:
+                      field per TB00269 SL §4.1 Phase 1
+                      re-classification + §4.2 AMENDMENT-
+                      18 SCOPE enumeration. Cluster C5
+                      diagram-side closure achieved.
+                      1011014 dv1_8 retirement S-4
+                      satisfaction sequenced to TB00272
+                      per TB00269 SL §1 primary result.
+
+                      CLUSTER C7 STATUS (currency-lag):
+                      0500000 prose-side BY + BZ closed
+                      this session. 0211003 dv1_0 -&gt;
+                      dv1_1 PROSE-UPDATE-BX 10-class
+                      amendment cluster deferred to
+                      TB00271 per TB00270 NSI §8.1.
+
+                      DD-011 v2_38 AMENDMENT D FP/DP-
+                      DERIVABILITY-TEST applied UP-FRONT
+                      at chat-turn 1 first action.
+                      Single compliant option survived
+                      elimination (Execute AMENDMENT-18
+                      single-turn). Decision derivable
+                      under RR-SCOPE-005. Executed.
+
+                      RR-SCOPE-010 grep-verification of
+                      every cited identifier against
+                      dv1_74 canonical content +
+                      1011014 dv1_8 source + TB00206
+                      gap register passed. NSI field-
+                      name discrepancy ("governs-list"
+                      vs canonical "constraints:")
+                      surfaced and resolved per DD-002
+                      diagram-governs-prose.
+
+                      Header DocVersion dv1_74 -&gt;
+                      dv1_75. DocPath updated.
+                      DocDate refreshed.
+
+                      Bill override: 0500000 dv1_74 -&gt;
+                      dv1_75 enacted under DEC-012
+                      DD-001/DD-002 0500000-canonical
+                      authority continuing the
+                      direct-increment cadence from
+                      dv1_73 -&gt; dv1_74. Per Bill's
+                      TB00270 OCS directive: "Execute
+                      0500000 dv1_74 -&gt; dv1_75
+                      AMENDMENT-18 ... Apply DD-011
+                      up-front. Deliver SL + NSI + OCS
+                      at session close."
+
+                      Closes TB00270 primary
+                      deliverable per TB00270 NSI §3.1.
+                      dv1_75 is the sole authoritative
+                      version superseding dv1_74.
+
+  dv1_74  05-14-2026  TB00260 0611004 SAFETY_PARAMETER_FRAMEWORK
+                      DV1_1 RETIREMENT CASCADE — §9 PROSE
+                      CROSS-REFERENCE SURGICAL CLEANUP
+                      (1 SITE).
+
+                      Single surgical edit at §9 Complete
+                      CIATS Parameter Registry footnote
+                      block. Line 5866 in dv1_73 contained
+                      LIVE prose cross-reference "See §8
+                      AR-070, 0711003 dv1_3 §8, 0611004
+                      dv1_1 §3." documenting the
+                      monitored_universe_n retirement
+                      context. The 0611004 dv1_1 §3
+                      citation becomes a dangling
+                      reference at 0611004 retirement
+                      (S-4 git rm executed via OCS copy
+                      box this session). Edit removes
+                      the dangling citation:
+
+                        (1) Line 5866 §9 prose footnote
+                            inside &lt;pre&gt; block:
+                            "See §8 AR-070, 0711003 dv1_3
+                              §8, 0611004 dv1_1 §3."
+                              -&gt;
+                            "See §8 AR-070, 0711003 dv1_3
+                              §8."
+                            Retirement context remains
+                            fully documented via §8 AR-070
+                            (LOCKED decision authoritative
+                            statement) + 0711003 dv1_3 §8
+                            (Strategy-side asset selection
+                            retirement statement) +
+                            inline §9 footnote text that
+                            explicitly identifies the
+                            parameter as RETIRED per TB00128
+                            D-08 LOCKED.
+
+                      SVG visual geometry preserved BYTE-
+                      IDENTICAL — prose-only amendment
+                      scope. No SVG diagram changes. No
+                      rect/path/polygon/line byte change.
+                      No viewBox change. All 10 figures
+                      (Tier 1 Context + D1-D7 + D8-D9
+                      Tier-3 sub-figures) preserved byte-
+                      identical per DEC-003 Path A one-
+                      diagram-per-session cadence.
+
+                      HISTORICAL REVISION-HISTORY
+                      REFERENCES PRESERVED:
+                      Two additional "0611004" references
+                      exist in dv1_73 at line 13989 (dv1_47
+                      revision-history entry) and line 20651
+                      (dv1_21 revision-history entry).
+                      Both sit inside historical revision-
+                      history &lt;pre&gt; blocks describing
+                      prior amendment context. Per CI-006
+                      revision-history completeness rule,
+                      historical entries are preserved
+                      verbatim — no edits applied.
+
+                      SAFETY PARAMETER FRAMEWORK
+                      ARCHITECTURE PRESERVATION:
+                      All safety-parameter architectural
+                      identifiers remain canonically
+                      encoded in 0500000 dv1_74 unchanged
+                      from dv1_73:
+                        AR-011 (sacred 1:1.5 R:R net
+                          minimum) — preserved.
+                        rule:Sacred_R_R_1_to_1_5
+                          (governs sole hardcoded
+                          floor) — preserved.
+                        param:full_halt_drawdown,
+                          param:session_pause_drawdown,
+                          param:mae_mult,
+                          param:emergency_sl_mult,
+                          param:per_trade_ceiling_pct,
+                          param:paper_starting_balance —
+                          preserved.
+                        D2 R2 G7 + G8 risk-gate
+                          architecture — preserved.
+                        TB00000 v2_38 §9.10 sacred R:R
+                          floor + §9.17 CIATS-OWNED
+                          PER-MODULE parameter registry
+                          remain canonical sources for
+                          all post-retirement consumers.
+
+                      AA=06 SUB-DOMAIN COMPLETION
+                      MILESTONE: 0611004 retirement
+                      this session closes the AA=06
+                      Risk Rules sub-domain instance-
+                      document chain. Post-TB00260,
+                      0610000 dv1_4 child chain is
+                      empty — the Risk Rules sub-domain
+                      is fully canonical-encoded in
+                      0500000 + TB00000 with only the
+                      anchor remaining.
+
+                      DD-012 CAMPAIGN PROGRESS NOTE:
+                      Fourth AA=06 retirement under
+                      DD-012 v2_38 §4.5 AMENDMENT A
+                      scope (TB00257 0611001 + TB00258
+                      0611002 + TB00259 0611003 +
+                      TB00260 0611004). AA=06
+                      sub-domain COMPLETE. Cascade
+                      crosses to AA=05 at TB00261
+                      with 1011002 WS_Manager_Coding_
+                      Spec dv1_26 next-up per TB00259
+                      SL §7.4 deferred cross-domain
+                      shift ordering.
+
+                      DR-054 NEW in TB00153 MDR v1_20
+                      (0611004 retirement entry).
+                      0610000 dv1_3 -&gt; dv1_4
+                      companion deliverable: instance-
+                      document range "0611003 through
+                      0611004" -&gt; "0611003 only";
+                      §2 child-chain list 0611004 line
+                      removed; §4 sub-domain scope
+                      paragraph amended to reflect
+                      Safety_Parameter_Framework
+                      retirement; §6 Related Documents
+                      0611004 line removed.
+
+                      Header DocVersion dv1_73 -&gt;
+                      dv1_74. DocPath updated. DocDate
+                      05-14-2026. DocTime 23:59:59 UTC.
+
+                      Bill override: 0500000 dv1_73 -&gt;
+                      dv1_74 enacted under DEC-012
+                      retirement-campaign methodology
+                      + TB00260 OCS directive bundling
+                      cascade execution under DD-011
+                      v2_38 AMENDMENT D FP/DP-
+                      derivability-test logging gate
+                      (one compliant option —
+                      RETIREMENT — sole post-elimination
+                      outcome; logged in TB00260 SL
+                      §3). Document Status: supersedes
+                      dv1_73. dv1_74 is the sole
+                      authoritative version.
+
   dv1_73  05-14-2026  TB00258 0611002 DRAWDOWN_AND_HALT_RULES
                       DV1_0 RETIREMENT CASCADE — D7 DRILL_TARGET
                       SURGICAL CLEANUP (3 SITES).

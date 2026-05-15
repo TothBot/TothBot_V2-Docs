@@ -1,8 +1,8 @@
 DocDCN:     0811005
 DocTitle:   Short_Module_Specification
-DocVersion: dv1_1
+DocVersion: dv1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0811005_Short_Module_Specification_dv1_1.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0811005_Short_Module_Specification_dv1_3.txt
 DocDate:    05-15-2026
 DocTime:    23:59:59 UTC
 
@@ -584,13 +584,23 @@ SM-030  tp_order_id and emgsl_order_id populated from
   Writes: short PositionRecord at dispatch and on fill
           (side="short" tagged).
 
-7.5 To Exit Controller (0811003)
+7.5 To Exit Controller (0511004 + 0500000 D5/D6 canonical)
   Position Mirror is the shared state. Short Module writes.
   Exit Controller reads short positions via side="short"
   filter and applies direction-symmetric exit formulas
   (Layer 1 signal-based, Layer 1 TP, Layer 2 MAE with
   short formula = ask - entry_fill_price, Layer 3
-  emergency SL). No direct inter-module call.
+  emergency SL). No direct inter-module call. Exit
+  Controller specification: 0511004 dv1_7 Exit_Controller_
+  Specification (current parent spec). Canonical
+  architectural source: 0500000 dv1_78 Diagram 5 + Diagram
+  6 (Exit Controller flow + Exit Layers) per DD-001/DD-002/
+  DD-012. Prior dv1_1 cross-reference to 0811003
+  Exit_Controller retired at TB00277 per DD-012 cascade;
+  dv1_2 initial redirect cited 0511004 dv1_6 (superseded);
+  this dv1_3 surgical re-amendment corrects citation to
+  0511004 dv1_7 (current authoritative) per RR-SCOPE-010
+  grep-verification at TB00282 chat-turn re-verification.
 
 7.6 To Logger (0511006)
   All log events including Short CIATS Trade Outcome Bus
@@ -909,6 +919,332 @@ per TB00000 v2_29 §9.6.
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_3  05-15-2026  §7.5 EXIT_CONTROLLER CITATION
+                     CORRECTION — TB00282 IN-SESSION
+                     RR-SCOPE-010 RECURRENCE CLOSURE.
+
+                     Surgical RR-SCOPE-001 scope. One
+                     amendment.
+
+                     AMENDMENT 1 — §7.5 0511004 dv1_6
+                     -> dv1_7 CITATION CORRECTION.
+
+                     dv1_2 §7.5 cited 0511004 dv1_6 as
+                     current parent spec. Local C:
+                     working tree grep at TB00282 chat-
+                     turn surfaced 0511004 dv1_7
+                     (DocDate 05-14-2026) present locally
+                     but never pushed to GitHub HEAD or
+                     uploaded to project folder. dv1_7
+                     supersedes dv1_6. dv1_2 citation was
+                     stale at authoring time because
+                     project-knowledge cold-load only
+                     reflected dv1_6 (project folder lag
+                     vs local C: working tree). This
+                     dv1_3 corrects the citation per
+                     RR-SCOPE-010 grep-verification
+                     against local C: authoritative
+                     state.
+
+                     §7.5 body: "0511004 dv1_6
+                     Exit_Controller_Specification" ->
+                     "0511004 dv1_7 Exit_Controller_
+                     Specification". Retirement-history
+                     prose extended to note the dv1_2
+                     intermediate citation + the dv1_3
+                     correction rationale. All other
+                     §7.5 prose preserved byte-identical.
+
+                     RR-SCOPE-010 CUMULATIVE COUNT.
+                     Incremented 5 -> 6 (TB00282 dv1_2
+                     authoring instance — cited dv1_6
+                     without verifying local C: state).
+
+                     CONTRIBUTING-CAUSE — DC-SYNC-002
+                     MULTI-SESSION VIOLATION.
+                     0511004 dv1_7 was authored in a
+                     prior session but never committed
+                     to GitHub HEAD AND never uploaded
+                     to the Claude.ai project folder.
+                     Both pathways failed. Project
+                     knowledge cold-load could not see
+                     dv1_7 existed. This is a DC-SYNC-
+                     002 violation pattern surfaced in
+                     TB00282 chat-turn ~9 multi-session
+                     working-tree drift audit (7 deleted
+                     + 10 untracked files across 6
+                     namespaces). Closure cascade
+                     pending TB00283 carry-forward +
+                     TB00000 v2_38 -> v2_39 amendment
+                     extending DR-008.6 SESSION-CLOSE
+                     TRIO to QUARTET (adding GitHub
+                     upload copy box as mandatory
+                     quartet member with pre-emit-scan
+                     + self-catch enforcement matching
+                     §4.5 DD-class pattern).
+
+                     AMENDMENT SCOPE (surgical per
+                     RR-SCOPE-001).
+
+                       Header — DocVersion dv1_2 ->
+                         dv1_3; DocPath updated to
+                         dv1_3.txt; DocDate 05-15-2026
+                         preserved; DocTime 23:59:59
+                         UTC preserved.
+
+                       §7.5 — body single-line edit
+                         (dv1_6 -> dv1_7) + retirement-
+                         history prose extension noting
+                         dv1_2 intermediate citation +
+                         dv1_3 correction rationale.
+
+                     ALL OTHER CONTENT PRESERVED BYTE-
+                     IDENTICAL from dv1_2.
+
+                     PARENT CHAIN COMPLIANCE.
+                     Per 0311001 v1_18 namespace
+                     specification: DCN 0811005 chain
+                     0811005 -> 0810000 -> 0800000
+                     unchanged. dv1_2 -> dv1_3 single
+                     increment per 0311003 VP-001.
+
+                     Bill override: dv1_2 -> dv1_3
+                     enacted under Bill's standing
+                     document-control override
+                     continuing the scope established
+                     in TB00115 v2_10 → v2_11 through
+                     TB00282 dv1_1 → dv1_2. Direct
+                     increment dv1_2 → dv1_3; no rv
+                     state. Per Bill's TB00282 chat-
+                     turn directives:
+                       "Yes. There were many sessions
+                       where you did not provide
+                       instructions for GitHub, so I
+                       did not know they were necessary.
+                       Many files were deleted."
+                     Implied corrective: re-author dv1_2
+                     citing 0511004 dv1_7 (current local
+                     C: authoritative) instead of dv1_6
+                     (project folder lag version).
+
+                     Document Status updated:
+                     supersedes dv1_2.
+
+  dv1_2  05-15-2026  §7.5 DANGLING-CROSS-REFERENCE
+                     RESOLUTION — TB00282 STAGE M-2
+                     CONTINUATION SURGICAL AMENDMENT
+                     CLOSING TB00281 SL §7.1 + TB00282
+                     NSI §1.3 SUB-A CARRY-FORWARD.
+
+                     Surgical RR-SCOPE-001 scope per
+                     TB00282 NSI §1.3. One amendment
+                     enacted under RR-SCOPE-005 +
+                     DD-011 v2_38 AMENDMENT D
+                     derivable-decision execution.
+
+                     AMENDMENT 1 — §7.5 EXIT CONTROLLER
+                     CROSS-REFERENCE REDIRECT (per
+                     Sub-B FP/DP outcome).
+
+                     §7.5 header changed from "To Exit
+                     Controller (0811003)" to "To Exit
+                     Controller (0511004 + 0500000
+                     D5/D6 canonical)". §7.5 body
+                     extended with explicit redirect
+                     prose: Exit Controller
+                     specification cited as 0511004
+                     dv1_6 Exit_Controller_Specification
+                     (current parent spec); canonical
+                     architectural source cited as
+                     0500000 dv1_78 Diagram 5 + Diagram
+                     6 (Exit Controller flow + Exit
+                     Layers) per DD-001/DD-002/DD-012.
+                     Prior dv1_1 cross-reference to
+                     0811003 Exit_Controller retired at
+                     TB00277 per DD-012 cascade; this
+                     dv1_2 surgical redirect resolves
+                     the dangling reference. All
+                     other §7.5 prose (Position Mirror
+                     shared state, side="short" filter,
+                     Layer 1/2/3 exit semantics, "No
+                     direct inter-module call")
+                     preserved byte-identical.
+
+                     SUB-B FP/DP-DERIVABILITY-TEST LOG
+                     PER DD-011 v2_38 AMENDMENT D.
+
+                     (1) OPTION-SET — redirect target
+                         for §7.5: (a) 0511004 dv1_6
+                         only; (b) 0500000 D5/D6 only;
+                         (c) 0511004 dv1_6 + 0500000
+                         D5/D6 paired; (d) defer.
+
+                     (2) FIRST-PRINCIPLES ANALYSIS.
+                         DD-001/DD-002 establishes
+                         diagrams govern over prose.
+                         0500000 D5/D6 is canonical
+                         per DD-012 0500000-canonical-
+                         all-docs. 0511004 dv1_6 is
+                         the current parent prose
+                         spec citing 0500000 as
+                         canonical source per its
+                         own §11. "To Exit Controller"
+                         cross-reference convention
+                         in §7 expects a specification
+                         target (matches §7.1 / §7.2 /
+                         §7.3 / §7.4 / §7.6 patterns
+                         all citing 0NNNNNN spec
+                         documents).
+
+                     (3) DATA SOURCES CONSULTED.
+                         TB00282 NSI §1.3 Sub-A
+                         explicit directive verbatim:
+                         "cite 0511004 dv1_6
+                         Exit_Controller_Specification
+                         (current parent spec) +
+                         0500000 D5/D6 visual content
+                         (canonical per DD-001/DD-002/
+                         DD-012). Resolution pattern
+                         mirrors TB00281 §12-amendment:
+                         subordinate-spec retirement
+                         -> AR/parent-spec canonical
+                         authority redirect."
+                         0511004 dv1_6 §11 + §12 citing
+                         0500000 D5/D6 as canonical
+                         schema source per DD-002.
+                         0500000 dv1_78 D5/D6
+                         canonical Exit Controller
+                         diagrams. TB00281 §12-
+                         amendment precedent
+                         (TB00153 MDR v1_25 + 0811005
+                         dv1_1 §12 amendment):
+                         subordinate-spec retirement
+                         -> parent-spec + 0500000
+                         canonical authority redirect.
+
+                     (4) ELIMINATION OUTCOMES.
+                         (a) ELIMINATED — violates
+                             DD-001/DD-002 by omitting
+                             0500000 canonical
+                             reference.
+                         (b) ELIMINATED — breaks "To
+                             Exit Controller" cross-
+                             reference convention
+                             (every other §7
+                             subsection cites a spec
+                             document).
+                         (c) COMPLIANT — matches
+                             TB00282 NSI Sub-A +
+                             TB00281 precedent +
+                             DD-001/DD-002/DD-012
+                             compliance + §7
+                             convention.
+                         (d) ELIMINATED — defeats
+                             TB00282 session purpose;
+                             dangling reference
+                             persists.
+
+                     (5) REMAINING OPTIONS: (c) only.
+                         OUTCOME 1 — test eliminates
+                         down to one compliant option.
+                         DERIVABLE. Executed under
+                         RR-SCOPE-005 derivable-
+                         decision authority per
+                         DD-011 v2_38 AMENDMENT D
+                         pre-emit scan verification.
+
+                     DECISION CLASSIFICATION: NOT a
+                     Bill business judgment per DD-011
+                     "does NOT apply when" exception
+                     clause. Governance-rule-bound
+                     technical decision per DD-001/
+                     DD-002/DD-012. Executed under
+                     RR-SCOPE-005 derivable-decision
+                     authority + DD-011 PRE-EMIT SCAN
+                     verification.
+
+                     RR-SCOPE-010 IDENTIFIER-CITATION
+                     DISCIPLINE COMPLIANCE.
+
+                     All identifiers cited in this
+                     amendment grep-verified against
+                     current authoritative spec corpus
+                     at TB00282 cold-load:
+                       0511004 dv1_6 confirmed as
+                         current Exit_Controller_
+                         Specification version (parent
+                         spec for AA=05 sub-domain 1
+                         Exit Controller).
+                       0500000 dv1_78 D5/D6 confirmed
+                         as canonical Exit Controller
+                         diagrams.
+                       DD-001/DD-002/DD-012 confirmed
+                         active in TB00000 v2_38
+                         §4.5.
+                       0811003 confirmed retired at
+                         TB00277 per TB00153 MDR
+                         v1_25.
+
+                     AMENDMENT SCOPE (surgical per
+                     RR-SCOPE-001).
+
+                       Header — DocVersion dv1_1 →
+                         dv1_2; DocPath updated to
+                         dv1_2.txt; DocDate 05-15-2026
+                         preserved; DocTime 23:59:59
+                         UTC preserved.
+
+                       §7.5 — header line redirect
+                         from "0811003" to "0511004 +
+                         0500000 D5/D6 canonical";
+                         body extended with explicit
+                         specification citation
+                         (0511004 dv1_6) + canonical
+                         authority citation (0500000
+                         dv1_78 D5/D6 per DD-001/
+                         DD-002/DD-012) + retirement-
+                         resolution rationale prose.
+
+                     ALL OTHER CONTENT PRESERVED BYTE-
+                     IDENTICAL from dv1_1.
+
+                     PARENT CHAIN COMPLIANCE.
+                     Per 0311001 v1_18 namespace
+                     specification: DCN 0811005 chain
+                     0811005 -> 0810000 -> 0800000
+                     unchanged. mod:Short_Module slot
+                     reservation unchanged. dv1_1 ->
+                     dv1_2 single increment per
+                     0311003 VP-001.
+
+                     Bill override: dv1_1 → dv1_2
+                     enacted under Bill's standing
+                     document-control override
+                     continuing the scope established
+                     in TB00115 v2_10 → v2_11 through
+                     TB00281 dv1_0 → dv1_1. Direct
+                     increment dv1_1 → dv1_2; no rv
+                     state. Per Bill's TB00282 chat-
+                     turn 1 OCS directive: "Cold-load
+                     TB00282_Next_Session_Instructions
+                     _v1_0.txt. Verify TB00281
+                     deliverables landed. Resolve
+                     0811005 dv1_1 §7.5 dangling
+                     cross-reference to retired
+                     0811003 Exit_Controller (0811005
+                     dv1_1 -> dv1_2 §7.5 redirect to
+                     0511004 dv1_6 + 0500000 D5/D6
+                     canonical). Apply DD-011 v2_38
+                     AMENDMENT D up-front. Reserve
+                     session-close trio budget."
+                     + chat-turn "Proceed with
+                     instructions below after providing
+                     the list. Do not pause and wait
+                     for me."
+
+                     Document Status updated:
+                     supersedes dv1_1.
 
   dv1_1  05-15-2026  SM-011 INLINE ROUND_UP RETIREMENT +
                      §12 DANGLING-CROSS-REFERENCE

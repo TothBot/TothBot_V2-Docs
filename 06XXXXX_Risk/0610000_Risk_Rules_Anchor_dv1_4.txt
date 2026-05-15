@@ -1,0 +1,1421 @@
+DocDCN:     0610000
+DocTitle:   Risk_Rules_Anchor
+DocVersion: dv1_4
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0610000_Risk_Rules_Anchor_dv1_4.txt
+DocDate:    05-14-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+RISK RULES ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for the Risk Rules
+sub-domain (AA=06, B=1). It anchors all TothBot V2 Risk
+instance documents to the Risk Domain Document (0600000).
+As of TB00260, the child instance-document chain is EMPTY
+— all four prior instance specs (0611001 Position_Sizing_
+Rules, 0611002 Drawdown_and_Halt_Rules, 0611003
+Concentration_and_Exposure_Rules, 0611004 Safety_Parameter_
+Framework) have been retired under DD-012 0500000-
+canonical-all-docs scope. The Risk Rules sub-domain is
+fully canonical-encoded in 0500000 dv1_74 + TB00000 v2_38
+with only this anchor remaining as the structural chain
+point.
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the Risk Rules sub-domain. The
+anchor remains in force per V-039 universal parent-
+chain-completeness rule (0311001 v1_17 §15.15) even when
+the child chain is empty — the anchor binds the AA=06
+sub-domain to the AA=05 Domain Document (0600000) and
+is the lookup target for any future instance document
+added to this sub-domain.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety        (Domain)
+  0100000  Management               (Domain)
+  0200000  Operations               (Domain)
+  0300000  Governance               (Domain)
+  0400000  Exchange_Interface       (Domain)
+  0500000  System_Architecture_Overview (Domain)
+  0600000  Risk                     (Domain Document)
+  0610000  This document            (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    (empty — AA=06 sub-domain instance-document chain
+     complete; all four instance specs retired per
+     DD-012 cross-document authority hierarchy:
+       0611001 Position_Sizing_Rules dv1_0 retired
+         TB00257.
+       0611002 Drawdown_and_Halt_Rules dv1_0 retired
+         TB00258.
+       0611003 Concentration_and_Exposure_Rules dv1_0
+         retired TB00259.
+       0611004 Safety_Parameter_Framework dv1_1
+         retired TB00260.)
+
+============================================================
+3. TRACEABILITY TO PARENT DOMAIN DOCUMENT
+============================================================
+
+This anchor elaborates the Risk domain defined in 0600000,
+specifically:
+  Section 4    — Risk Architecture Summary (Gate 7,
+                  Gate 8, continuous drawdown monitor)
+  Section 5    — Position Sizing Rules Summary
+  Section 6    — Drawdown and Halt Rules Summary
+  Section 7    — Concentration and Exposure Rules Summary
+  Section 8    — Hard Rules (HR-RISK-001 through
+                  HR-RISK-014)
+  Section 9    — Document Structure (sub-domain and
+                  instance document definitions)
+
+All hard rules (HR-RISK-001 through HR-RISK-014) defined
+in 0600000 Section 8 are binding on every instance
+document in this sub-domain. They are not repeated in
+this anchor. They apply in full.
+
+The sacred constraint (net 1:1.5 R:R minimum floor, per
+TB00000 v2_38 §9.10) is the highest-priority rule in
+this sub-domain. Every instance document must be
+consistent with it. No instance document may define
+any rule or parameter that causes net R:R on any trade
+to fall below the 1:1.5 floor.
+
+Position sizing rules architecture is canonical in
+0500000 dv1_73 D5 R6 (R:R-driven sizing curve form
+factor) + TB00000 v2_38 §9.10 (sacred floor) + §9.17
+(CIATS-OWNED PER-MODULE INSTANTIATED parameter
+registry). Per DD-012 0500000-canonical-all-docs scope,
+the prior instance spec 0611001 Position_Sizing_Rules
+dv1_0 has been retired (TB00257); its content was
+either restatement of 0500000 D5 / TB00000 §9.10 /
+§9.17 canonical encoding (Bucket A per DEC-012) or
+coding-unique Decimal-rounding mechanics already
+migrated to 1011001 Engineering_Best_Practices
+BP-DEC-001..008 (Bucket B). No Bucket C content was
+identified.
+
+Drawdown and halt rules architecture is canonical in
+0500000 dv1_73 AR-052 (drawdown formula + baseline +
+5%/10% per-wallet thresholds) + D7 R4 per-wallet state
+machine (state:NORMAL_per_wallet, state:SESSION_PAUSE_
+per_wallet, state:FULL_HALT_per_wallet, contract:
+Drawdown_Formula, mod:Risk_Engine) + D3 G7 CHECK 1
+(Drawdown halt evaluation in pipeline) + AR-048 (bbo
+ticker continuous evaluation) + AR-056 (portfolio_
+baseline_USD never reset on reconnect, drawdown_pct
+preserved) + TB00000 v2_38 §9.7 (per-wallet drawdown
+halts) + §9.17 (session_pause_drawdown_pct +
+full_halt_drawdown_pct CIATS-owned starting values).
+Per DD-012 0500000-canonical-all-docs scope, the prior
+instance spec 0611002 Drawdown_and_Halt_Rules dv1_0
+has been retired (TB00258); its content was either
+restatement of 0500000 AR-052 + D7 R4 + D3 G7 CHECK 1
++ AR-048 + AR-056 canonical encoding (Bucket A per
+DEC-012) or coding-unique content already canonical
+elsewhere (Bucket B): §13 logging schemas in 0511006
+Logger_Specification, §10 batch_cancel scope in 0411001
+Kraken_WS_v2_Specification AR-041, §11 peak_portfolio_
+USD CIATS-tracking field within 0500000 D5 Trade
+Outcome Bus scope. No Bucket C content was identified
+requiring S-2 diagram amendment. The 0611002 dv1_0
+DD-BASE-001 portfolio-level baseline (single
+spot_usd_balance captured at startup) was a v2_28-era
+formulation contradicted by v2_29+ per-wallet
+architecture in TB00000 v2_38 §9.7 — retirement
+resolves the governance contradiction.
+
+Concentration and exposure rules architecture is
+canonical in 0500000 dv1_73 AR-043 (Pending Order
+Registry) + AR-053 (BoundedSemaphore concentration
+enforcement) + D3 G7 CHECK 2 (concentration check
+in pipeline) + D3 G7 CHECK 3 (available_USD exposure
+check in pipeline) + TB00000 v2_38 §9.10 (sacred R:R
+floor with CIATS-owned sizing curve above) + §9.17
+(per_trade_ceiling_pct CIATS-OWNED PER-MODULE
+INSTANTIATED, 25% of module wallet starting, hard
+concentration ceiling per single trade, CIATS-
+adjustable up or down on evidence). Per DD-012
+0500000-canonical-all-docs scope, the prior instance
+spec 0611003 Concentration_and_Exposure_Rules dv1_0
+has been retired (TB00259); its content was either
+restatement of 0500000 AR-043 + AR-053 + D3 G7
+CHECK 2 + CHECK 3 canonical encoding (Bucket A per
+DEC-012) or coding-unique content already canonical
+elsewhere (Bucket B): §8 logging schemas
+CE-LOG-001..009 in 0511006 Logger_Specification, §5
+Decimal estimated_USD_cost formula in 1011001
+Engineering_Best_Practices BP-DEC. No Bucket C
+content was identified requiring S-2 diagram
+amendment. The 0611003 dv1_0 max_concurrent +
+asyncio.BoundedSemaphore(max_concurrent) enforcement
+was a v2_28-era formulation contradicted by v2_29+
+canonical state in TB00000 v2_38 §9.17 — which
+RETIRED max_concurrent as a parameter (concurrent-
+position count emerges from wallet_balance ÷
+per_trade_size_usd arithmetic, no artificial ceiling)
+and introduced per_trade_ceiling_pct (25% of module
+wallet starting) as the per-trade concentration
+ceiling. Retirement resolves the governance
+contradiction. Same retirement-cascade pattern as
+0611001 dv1_0 (TB00257) and 0611002 dv1_0 (TB00258).
+
+Safety parameter framework architecture is canonical
+in TB00000 v2_38 §9.10 (sole hardcoded floor — net
+1:1.5 R:R minimum — SACRED — NEVER CHANGES) + §9.16
+(parameter philosophy — all values are starting points;
+CIATS owns all parameter values from day one of paper
+trading; PDCA governs all improvement cycles) + §9.17
+(SACRED / OPERATOR / CIATS-OWNED PER-MODULE
+INSTANTIATED parameter registry) + 0500000 dv1_74
+AR-011 (sacred 1:1.5 R:R net minimum architectural
+encoding) + rule:Sacred_R_R_1_to_1_5 (governs token in
+all relevant figures) + D2 R2 G7 + G8 risk-gate
+architecture. Per DD-012 0500000-canonical-all-docs
+scope, the prior instance spec 0611004 Safety_
+Parameter_Framework dv1_1 has been retired (TB00260);
+its content was either restatement of TB00000 §9.10 +
+§9.16 + §9.17 + 0500000 AR-011 canonical encoding
+(Bucket A per DEC-012 — §4 SPF-HC sacred R:R, §5
+SPF-OWN CIATS ownership framework, §6 parameter
+registry, §7 SPF-INIT Parameter Store init sequence,
+§8 SPF-CHG CIATS change constraints, §10 interfaces,
+§11 HR-SPF hard rules) or one-time historical closure
+content (§9 SPF-PL004 old 0511005 retirement —
+PL-004 closed). No Bucket B coding-unique content
+required migration: parameter-change logging schema
+canonical in 0511006 Logger_Specification; CIATS
+ownership semantics canonical in 0211001 CIATS_
+Specification; Parameter Store implementation
+canonical in 0511002 Signal_Pipeline_Specification.
+No Bucket C content was identified requiring S-2
+diagram amendment. The 0611004 dv1_1 §6 parameter
+registry was a v2_13-era formulation referencing
+parameters retired at v2_29 (tradeable_pct, per_
+trade_pct, max_concurrent, portfolio-wide drawdown
+thresholds) — direct contradiction with TB00000 v2_38
+§9.17 per-module / per-wallet architecture.
+Retirement resolves the governance contradiction.
+
+AA=06 SUB-DOMAIN COMPLETION: With 0611004 retirement,
+the AA=06 Risk Rules sub-domain instance-document
+chain is COMPLETE. All four prior instance specs are
+retired; all risk-rule architectural content is
+canonical-encoded in 0500000 + TB00000. This anchor
+remains in force as the structural chain point per
+V-039.
+
+============================================================
+4. SUB-DOMAIN SCOPE
+============================================================
+
+The Risk Rules sub-domain (AA=06, B=1) governs the
+complete specification of every risk rule that TothBot V2
+enforces. As of TB00260, the sub-domain instance-document
+chain is EMPTY. All risk-rule architectural content is
+canonical-encoded in 0500000 dv1_74 + TB00000 v2_38 per
+DD-012 cross-document authority hierarchy:
+
+  Safety parameter framework: TB00000 v2_38 §9.10 +
+    §9.16 + §9.17 + 0500000 dv1_74 AR-011 +
+    rule:Sacred_R_R_1_to_1_5 + D2 R2 G7 + G8.
+  Position sizing rules: 0500000 dv1_74 D5 R6 +
+    TB00000 v2_38 §9.10 + §9.17.
+  Drawdown and halt rules: 0500000 dv1_74 AR-052 +
+    D7 R4 + D3 G7 CHECK 1 + AR-048 + AR-056 + TB00000
+    v2_38 §9.7 + §9.17.
+  Concentration and exposure rules: 0500000 dv1_74
+    AR-043 + AR-053 + D3 G7 CHECK 2 + CHECK 3 +
+    TB00000 v2_38 §9.10 + §9.17.
+
+No new instance documents are required under this
+anchor for the current TothBot V2 risk architecture.
+Future instance documents (if any) would attach
+under this anchor per the standard three-tier
+hierarchy chain.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  Instance Document -> 0610000 (this anchor) -> 0600000
+
+As of TB00260, no instance documents exist in this sub-
+domain. All four prior instance specs (0611001 / 0611002
+/ 0611003 / 0611004) have been retired under DD-012
+cross-document authority hierarchy. This anchor remains
+in force per V-039 universal parent-chain-completeness
+rule (0311001 v1_17 §15.15) and is the structural chain
+point that any future instance document in the AA=06
+Risk Rules sub-domain would attach under. The chain
+requirement (instance document MUST trace through this
+anchor and 0600000) is enforced by validation rule V-012
+in 0311001 Section 13.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0600000  Risk                         (parent Domain Doc)
+  0500000  System_Architecture_Overview (D5 R6 canonical
+                                         source for R:R-
+                                         driven sizing
+                                         curve; AR-011 +
+                                         rule:Sacred_R_R_
+                                         1_to_1_5 + D2 R2
+                                         G7 + G8 canonical
+                                         source for
+                                         safety parameter
+                                         framework
+                                         architecture per
+                                         DD-012; AR-052 +
+                                         D7 R4 + D3 G7
+                                         CHECK 1 + AR-048
+                                         + AR-056 canonical
+                                         source for
+                                         drawdown architecture
+                                         per DD-012; AR-043
+                                         + AR-053 + D3 G7
+                                         CHECK 2 + CHECK 3
+                                         canonical source
+                                         for concentration
+                                         and exposure
+                                         architecture
+                                         per DD-012)
+  TB00000  Project Instructions for Claude (§9.7 per-wallet
+                                            drawdown halts +
+                                            §9.10 sacred
+                                            floor + §9.16
+                                            parameter
+                                            philosophy +
+                                            §9.17
+                                            canonical
+                                            parameter
+                                            registry)
+  0511004  Exit_Controller_Specification (emergSL context)
+  0511006  Logger_Specification          (log event target;
+                                          CE-LOG-001..009
+                                          canonical home)
+  1011001  Engineering_Best_Practices    (BP-DEC-001..008
+                                          Decimal rounding
+                                          canonical
+                                          location)
+  0311001  Namespace_Specification       (governs DCN)
+  0311002  Document_Creation_Workflow    (governs sequence)
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_4  05-14-2026  TB00260 S-5 ANCHOR REVISION — 0611004
+                     INSTANCE-DOCUMENT RETIREMENT CASCADE —
+                     AA=06 SUB-DOMAIN COMPLETION.
+
+                     Companion deliverable to 0611004 dv1_1
+                     retirement (S-4 git rm executed at
+                     TB00260 close per session-close OCS
+                     copy box) under DD-012 0500000-
+                     canonical-all-docs scope per TB00000
+                     v2_38 §4.5 AMENDMENT A.
+
+                     MILESTONE: AA=06 Risk Rules sub-domain
+                     instance-document chain is COMPLETE.
+                     All four prior instance specs retired:
+                       0611001 Position_Sizing_Rules dv1_0
+                         (TB00257).
+                       0611002 Drawdown_and_Halt_Rules dv1_0
+                         (TB00258).
+                       0611003 Concentration_and_Exposure_
+                         Rules dv1_0 (TB00259).
+                       0611004 Safety_Parameter_Framework
+                         dv1_1 (TB00260, this session).
+                     Anchor remains in force per V-039
+                     universal parent-chain-completeness
+                     rule (0311001 v1_17 §15.15) as the
+                     structural chain point for any future
+                     instance document under this sub-
+                     domain.
+
+                     SCOPE OF CHANGES:
+
+                     §1 PURPOSE: rewrote opening paragraphs
+                     to reflect empty child chain post-
+                     0611004 retirement; AA=06 sub-domain
+                     completion milestone explicitly
+                     documented; anchor purpose clarified
+                     as structural chain point persisting
+                     beyond empty-child-chain state per
+                     V-039.
+
+                     §2 PARENT CHAIN: child chain list
+                     replaced with explicit empty marker
+                     enumerating all four retired instance
+                     specs with originating session
+                     references (TB00257 + TB00258 +
+                     TB00259 + TB00260).
+
+                     §3 TRACEABILITY: new closing
+                     paragraph added documenting safety-
+                     parameter-framework canonical-encoding
+                     architecture under DD-012 + DEC-012
+                     three-bucket classification record
+                     from TB00260 S-1 audit. TB00000 v2_38
+                     §9.10 + §9.16 + §9.17 + 0500000
+                     dv1_74 AR-011 + rule:Sacred_R_R_1_
+                     to_1_5 + D2 R2 G7 + G8 canonical
+                     source citations added. Bucket B
+                     migration NO-OP rationale enumerated
+                     (parameter-change logging schema
+                     canonical in 0511006; CIATS
+                     ownership semantics canonical in
+                     0211001; Parameter Store
+                     implementation canonical in 0511002).
+                     v2_13-era governance-contradiction
+                     note added (§6 parameter registry
+                     referenced retired tradeable_pct +
+                     per_trade_pct + max_concurrent +
+                     portfolio-wide drawdown vs v2_29+
+                     per-module / per-wallet architecture
+                     in TB00000 v2_38 §9.17). Added
+                     AA=06 SUB-DOMAIN COMPLETION
+                     milestone paragraph.
+
+                     §4 SUB-DOMAIN SCOPE: completely
+                     rewrote to reflect empty instance-
+                     document chain. All four
+                     risk-rule architectural areas now
+                     enumerated as canonical-encoded in
+                     0500000 dv1_74 + TB00000 v2_38 per
+                     DD-012 cross-document authority
+                     hierarchy. 0611004 full scope block
+                     removed.
+
+                     §5 DOCUMENT CHAIN REQUIREMENT:
+                     rewrote text to reflect empty
+                     instance chain; anchor remains in
+                     force per V-039; chain requirement
+                     (instance MUST trace through anchor
+                     + 0600000) enforced by V-012 for
+                     any future instance documents.
+
+                     §6 RELATED DOCUMENTS: 0611004 line
+                     removed. 0500000 reference extended
+                     with AR-011 + rule:Sacred_R_R_1_
+                     to_1_5 + D2 R2 G7 + G8 canonical
+                     source citation for safety parameter
+                     framework architecture per DD-012.
+                     0500000 version reference dv1_73 ->
+                     dv1_74 (companion deliverable this
+                     session). TB00000 reference extended
+                     with §9.16 parameter philosophy
+                     citation.
+
+                     S-1 AUDIT RECORD (DEC-012 three-bucket
+                     classification of 0611004 dv1_1):
+
+                     Bucket A — Architectural restatement
+                       (drop with retirement):
+                         §4 SPF-HC-001..004 sacred 1:1.5
+                           R:R hardcoded exception →
+                           TB00000 v2_38 §9.10 + 0500000
+                           AR-011 + rule:Sacred_R_R_1_
+                           to_1_5 canonical encoding.
+                         §5 SPF-OWN-001..005 CIATS
+                           ownership framework (200-trade
+                           floor + Bill approves initial
+                           deployment + no mandatory
+                           human review + parameters not
+                           sacred + minimize loss
+                           emphasis + 50-trade interval +
+                           Mann-Whitney p < 0.01) →
+                           TB00000 v2_38 §6.7-§6.8 + §7
+                           statistical thresholds +
+                           §9.16 parameter philosophy +
+                           0211001 CIATS_Specification
+                           canonical encoding.
+                         §6 Parameter Registry (8 risk-
+                           domain params: tradeable_pct,
+                           per_trade_pct, max_concurrent,
+                           mae_mult, emergency_sl_mult,
+                           entry_timeout_sec, session_
+                           pause_drawdown, full_halt_
+                           drawdown) → TB00000 v2_38
+                           §9.17 canonical-and-corrected
+                           registry: SACRED rr_minimum_
+                           net = 1:1.5; OPERATOR paper_
+                           starting_balance_long_usd +
+                           paper_starting_balance_short_
+                           usd; CIATS-OWNED PER-MODULE
+                           per_trade_size_usd + per_
+                           trade_ceiling_pct + session_
+                           pause_drawdown_pct + full_
+                           halt_drawdown_pct + mae_mult
+                           + emergency_sl_mult + cancel_
+                           timeout_window + mpp_retry_
+                           count + max_hold_candles +
+                           entry_timeout_sec + adx_
+                           threshold + atr_percentile_
+                           thresh + atr_rolling_window +
+                           htf_ema_periods + min_volume_
+                           usd_daily + SSS long + common
+                           + Selection Controller + short-
+                           side + VPS deployment +
+                           acceptance rule. RETIRED at
+                           v2_29: tradeable_pct, per_
+                           trade_pct, max_concurrent,
+                           Half-Kelly hardcoded
+                           transition rule.
+                         §7 SPF-INIT-001..004 Parameter
+                           Store init sequence → 0211001
+                           CIATS_Specification + 0511002
+                           Signal_Pipeline_Specification
+                           Parameter Store snapshot
+                           pattern canonical encoding.
+                         §8 SPF-CHG-001..008 CIATS
+                           change constraints → TB00000
+                           v2_38 §6.7-§6.8 Deming PDCA +
+                           statistical methods + §9.16
+                           parameter philosophy + 0211001
+                           CIATS_Specification canonical
+                           encoding.
+                         §10 Interfaces — derived
+                           restatement of 0500000 module
+                           interfaces (Parameter Store +
+                           CIATS + Risk Engine + Logger).
+                         §11 HR-SPF-001..010 hard rules
+                           — derived restatements of
+                           TB00000 v2_38 §9.10 (sacred
+                           R:R) + 0211001 (CIATS rules)
+                           + canonical 0511006 logging.
+
+                     Bucket B — Coding-unique content
+                       (migration target): EMPTY.
+                       Parameter-change logging schema
+                       (parameter_name, old_value,
+                       new_value, trade_count_at_change,
+                       Mann-Whitney p-value, effect_
+                       size, proposal_id) already
+                       canonical in 0511006 Logger_
+                       Specification. CIATS ownership
+                       semantics already canonical in
+                       0211001 CIATS_Specification.
+                       Parameter Store implementation
+                       (Decimal types, snapshot pattern,
+                       startup initialization sequence)
+                       already canonical in 0511002
+                       Signal_Pipeline_Specification.
+                       The §9 SPF-PL004-001..005 old
+                       0511005 retirement statement is
+                       one-time historical closure
+                       (PL-004 closed); preserved as
+                       historical record in this
+                       revision history.
+
+                     Bucket C — Architectural content
+                       not in diagrams (S-2 amendment
+                       required first): EMPTY. All
+                       safety-parameter-framework
+                       architectural elements already
+                       canonical-encoded in 0500000
+                       dv1_74 + TB00000 v2_38.
+
+                     STALE-CONTENT FLAG:
+                     0611004 dv1_1 dated 04-24-2026
+                     with original dv1_0 dated
+                     04-05-2026, derived from "0500000
+                     dv1_18 Section 9, TB00000 v2_13
+                     Section 9.16-9.17". TB00000 has
+                     since incremented through v2_38
+                     with v2_29 (2026-05-10) major
+                     parallel-module rewrite. The §6
+                     parameter list explicitly contains
+                     parameters retired at v2_29
+                     (tradeable_pct, per_trade_pct,
+                     max_concurrent, portfolio-wide
+                     drawdown thresholds) — direct
+                     contradiction with TB00000 v2_38
+                     §9.17 per-module / per-wallet
+                     architecture. The §6 single-
+                     module / single-CIATS / fixed-ratio
+                     / portfolio-wide-sizing world is
+                     retired. Retirement closes the
+                     governance contradiction.
+
+                     SAME RETIREMENT-CASCADE PATTERN
+                     as 0611001 dv1_0 (TB00257) +
+                     0611002 dv1_0 (TB00258) + 0611003
+                     dv1_0 (TB00259).
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00260 0611004 RETIREMENT
+                     CASCADE — AA=06 SUB-DOMAIN
+                     COMPLETION):
+                       0610000 dv1_3 -> dv1_4 (this
+                         document — S-5 anchor revision
+                         + AA=06 completion milestone).
+                       0500000 dv1_73 -> dv1_74 (S-6
+                         §9 prose footnote surgical
+                         cleanup, 1 site at line 5866;
+                         SVG byte-identical preserved).
+                       TB00153 MDR v1_19 -> v1_20
+                         (DR-054 NEW 0611004 retirement
+                         entry).
+                       0611004 dv1_1 ACTUAL DELETE via
+                         git rm + commit + push (S-4 —
+                         Bill action at OCS copy box).
+                       TB00260 Session_Log v1_0 (NEW —
+                         session-close trio member 1).
+                       TB00261 Next_Session_Instructions
+                         v1_0 (NEW — session-close trio
+                         member 2).
+                       OCS chat-response copy box
+                         (session-close trio member 3).
+
+                     OPEN ITEMS UPDATED:
+                     OI-NEW-0611004-RETIREMENT-CASCADE
+                       CLOSED at TB00260 via DD-012 six-
+                       sub-step methodology (S-1 + S-2
+                       no-op + S-3 no-op + S-4 + S-5 +
+                       S-6).
+                     AA=06 SUB-DOMAIN COMPLETION
+                       MILESTONE reached; cascade
+                       crosses to AA=05 at TB00261
+                       with 1011002 WS_Manager_Coding_
+                       Spec dv1_26 next-up per TB00259
+                       SL §7.4 deferred cross-domain
+                       shift ordering.
+
+                     Header DocVersion dv1_3 -> dv1_4.
+                     DocPath updated. DocDate / DocTime
+                     refreshed.
+
+                     Bill override: 0610000 dv1_3 -> dv1_4
+                     enacted under DEC-012 retirement-
+                     campaign methodology (ratified at
+                     TB00190; campaign scope extended at
+                     TB00237 AMENDMENT B) + Bill TB00260
+                     OCS directive bundling cascade
+                     execution under RR-SCOPE-005 +
+                     DD-011 v2_38 AMENDMENT D FP/DP-
+                     derivability-test logging gate
+                     (one compliant option — RETIREMENT
+                     — remained after elimination of
+                     REWRITE and HYBRID on DD-012
+                     grounds; logged in TB00260 SL §3).
+
+                     Document Status updated: supersedes
+                     dv1_3. dv1_4 is the sole authoritative
+                     version.
+
+  dv1_3  05-14-2026  TB00259 S-5 ANCHOR REVISION — 0611003
+                     INSTANCE-DOCUMENT RETIREMENT CASCADE.
+
+                     Companion deliverable to 0611003 dv1_0
+                     retirement (S-4 git rm executed at
+                     TB00259 close per session-close OCS
+                     copy box) under DD-012 0500000-
+                     canonical-all-docs scope per TB00000
+                     v2_38 §4.5 AMENDMENT A.
+
+                     SCOPE OF CHANGES:
+
+                     §1 PURPOSE: instance-document range
+                     "0611003 through 0611004" -> "0611004
+                     only — 0611003 retired".
+
+                     §2 PARENT CHAIN child chain list:
+                     0611003 Concentration_and_Exposure_
+                     Rules line removed.
+
+                     §3 TRACEABILITY: new closing paragraph
+                     added documenting concentration-and-
+                     exposure-rules canonical-encoding
+                     architecture under DD-012 + DEC-012
+                     three-bucket classification record
+                     from TB00259 S-1 audit. AR-043 +
+                     AR-053 + D3 G7 CHECK 2 + CHECK 3
+                     canonical source citations added.
+                     Bucket B content migration destinations
+                     enumerated (0511006 Logger §13 logging
+                     schemas CE-LOG-001..009; 1011001
+                     Engineering_Best_Practices BP-DEC for
+                     Decimal estimated_USD_cost formula).
+                     v2_28-era governance-contradiction
+                     note added (max_concurrent +
+                     asyncio.BoundedSemaphore(max_concurrent)
+                     vs v2_29+ wallet-balance ÷
+                     per_trade_size_usd arithmetic + the
+                     per_trade_ceiling_pct hard concentration
+                     cap).
+
+                     §4 SUB-DOMAIN SCOPE: opening paragraph
+                     amended to reflect Risk Rules sub-
+                     domain no longer covering concentration
+                     and exposure as a separate instance
+                     spec (canonical in 0500000 AR-043 +
+                     AR-053 + D3 G7 CHECK 2 + CHECK 3 +
+                     TB00000 §9.10 + §9.17). 0611003 full
+                     scope block removed. Remaining
+                     instance spec (0611004) scope text
+                     preserved byte-identical.
+
+                     §5 DOCUMENT CHAIN REQUIREMENT:
+                     instance-document range "0611003
+                     through 0611004" -> "0611004 only —
+                     0611003 retired".
+
+                     §6 RELATED DOCUMENTS: 0611003 line
+                     removed. 0500000 reference extended
+                     with AR-043 + AR-053 + D3 G7 CHECK 2
+                     + CHECK 3 canonical source citation
+                     for concentration-and-exposure
+                     architecture per DD-012. 0511006
+                     reference extended with CE-LOG-001..009
+                     canonical-home citation.
+
+                     S-1 AUDIT RECORD (DEC-012 three-bucket
+                     classification of 0611003 dv1_0):
+
+                     Bucket A — Architectural restatement
+                       (drop with retirement):
+                         §4 CE-MC-001..002 max_concurrent
+                           definition → 0500000 AR-053
+                           BoundedSemaphore concentration
+                           enforcement (note: max_concurrent
+                           itself retired v2_29; current
+                           concentration ceiling is
+                           per_trade_ceiling_pct per
+                           TB00000 §9.17).
+                         §4 CE-SEM-001..011 BoundedSemaphore
+                           enforcement, acquire/release
+                           lifecycle, ValueError handling,
+                           CIATS update procedure →
+                           AR-053.
+                         §5 CE-POR-001..019 Pending Order
+                           Registry definition, population,
+                           clearing, hold, exposure check,
+                           reconciliation → 0500000 AR-043
+                           (Pending Order Registry).
+                         §6 Gate 7 three-check sequence →
+                           D3 G7 CHECK 1 (drawdown) + CHECK
+                           2 (concentration) + CHECK 3
+                           (exposure) canonical in 0500000
+                           dv1_73.
+                         §7 interfaces → derivative of D3
+                           architectural encoding.
+                         §9 HR-CE-001..012 hard rules →
+                           AR-043 + AR-053 + D3 G7
+                           architectural sources.
+                         §10 coding-readiness questions →
+                           all derived from D3 + AR-043 +
+                           AR-053.
+
+                     Bucket B — Coding-unique (canonical
+                       elsewhere):
+                         §8 CE-LOG-001..009 logging
+                           schemas → 0511006 Logger_
+                           Specification canonical home.
+                         §5 CE-POR-005 estimated_USD_cost
+                           Decimal formula (order_qty *
+                           entry_limit_price * (1 +
+                           maker_fee_rate)) → 1011001
+                           Engineering_Best_Practices
+                           BP-DEC canonical Decimal
+                           rounding location.
+
+                     Bucket C — Architectural content not
+                       in 0500000 (S-2 gap-fill required):
+                         NONE. The v2_29 retirement of
+                         max_concurrent + introduction of
+                         per_trade_ceiling_pct fully covers
+                         the concentration concept
+                         canonically in TB00000 v2_38 §9.10
+                         + §9.17 + 0500000 D5 R6 + D3 G7.
+                         Pending Order Registry concept is
+                         canonical in AR-043.
+                         BoundedSemaphore enforcement
+                         mechanism is canonical in AR-053.
+                         No 0500000 diagram amendment
+                         required.
+
+                     S-2 + S-3 EXECUTION:
+                     None required per Bucket C empty
+                     finding above. Bucket B content
+                     already canonical-encoded in
+                     destination specs.
+
+                     S-4 EXECUTION:
+                     0611003 dv1_0 actual delete (git rm
+                     + commit + push per §11 standing
+                     practice). Bill executes via OCS
+                     copy box at TB00259 session close.
+
+                     S-5 EXECUTION:
+                     This document amendment (dv1_2 ->
+                     dv1_3). Removes 0611003 from instance-
+                     document range + child chain + §6
+                     RELATED DOCUMENTS list. Updates §3 +
+                     §4 prose for concentration-and-
+                     exposure canonical-encoding architecture
+                     documentation.
+
+                     S-6 EXECUTION:
+                     0500000 dv1_73 grep on "0611003"
+                     returned ZERO LIVE structured-tag
+                     drill_target citations. No 0500000
+                     amendment required. TB00000 §9.10 +
+                     §9.17 already canonical for sacred
+                     R:R floor + per_trade_ceiling_pct +
+                     per_trade_size_usd starting values.
+                     No TB00000 amendment required.
+
+                     STALE-CONTENT FLAG:
+                     0611003 dv1_0 dated 04-05-2026
+                     predates v2_29 (2026-05-10) parallel-
+                     module rewrite. CE-MC-001 cites
+                     max_concurrent CIATS-owned starting
+                     value = 20, but TB00000 v2_38 §9.17
+                     RETIRED max_concurrent as a parameter
+                     entirely ("concurrent-position count
+                     emerges from wallet_balance ÷
+                     per_trade_size_usd arithmetic. No
+                     artificial ceiling."). The v2_29+
+                     per-trade concentration ceiling is
+                     per_trade_ceiling_pct = 25% of module
+                     wallet starting (CIATS-OWNED PER-
+                     MODULE INSTANTIATED, CIATS-adjustable
+                     on evidence). Document is governance-
+                     contradictory with v2_29+ canonical
+                     state. Same class as 0611001 dv1_0
+                     v2_28-era retired-parameter content
+                     (TB00257 DR-050) and 0611002 dv1_0
+                     v2_28-era portfolio-level baseline
+                     (TB00258 DR-052). Retirement closes
+                     the governance contradiction.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0610000 dv1_3 parent chain unchanged
+                     (0000000 + 0100000 + 0200000 +
+                     0300000 + 0400000 + 0500000 + 0600000
+                     + self). Child chain shrinks from
+                     0611003..004 (two instance specs) to
+                     0611004 only (one instance spec).
+                     V-039 universal parent-chain-
+                     completeness rule (0311001 v1_17
+                     §15.15) compliance preserved.
+
+                     Header DocVersion dv1_2 -> dv1_3.
+                     DocPath updated. DocDate / DocTime
+                     refreshed.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00259 0611003 RETIREMENT CASCADE):
+                       0610000 dv1_2 -> dv1_3 (this
+                         document — S-5 anchor revision).
+                       TB00153 MDR v1_18 -> v1_19 (DR-053
+                         NEW 0611003 retirement entry).
+                       0611003 dv1_0 ACTUAL DELETE via
+                         git rm + commit + push (S-4 —
+                         Bill action at OCS copy box).
+                       TB00259 Session_Log v1_0 (NEW —
+                         session-close trio member 1).
+                       TB00260 Next_Session_Instructions
+                         v1_0 (NEW — session-close trio
+                         member 2).
+                       OCS chat-response copy box
+                         (session-close trio member 3).
+
+                     OPEN ITEMS UPDATED:
+                     OI-NEW-0611003-RETIREMENT-CASCADE
+                       CLOSED at TB00259 via DD-012 six-
+                       sub-step methodology (S-1 + S-2
+                       no-op + S-3 no-op + S-4 + S-5 +
+                       S-6 no-op).
+
+                     Bill override: 0610000 dv1_2 -> dv1_3
+                     is enacted under DEC-012 retirement-
+                     campaign methodology (ratified at
+                     TB00190; campaign scope extended at
+                     TB00237 AMENDMENT B) + Bill TB00259
+                     OCS directive bundling cascade
+                     execution under RR-SCOPE-005 +
+                     DD-011 v2_38 AMENDMENT D FP/DP-
+                     derivability-test logging gate
+                     (one compliant option — RETIREMENT
+                     — remained after elimination of
+                     REWRITE and HYBRID on DD-012
+                     grounds; logged in TB00259 SL §3).
+
+                     Document Status updated: supersedes
+                     dv1_2. dv1_3 is the sole authoritative
+                     version.
+
+  dv1_2  05-14-2026  TB00258 S-5 ANCHOR REVISION — 0611002
+                     INSTANCE-DOCUMENT RETIREMENT CASCADE.
+
+                     Companion deliverable to 0611002 dv1_0
+                     retirement (S-4 git rm executed at
+                     TB00258 close per session-close OCS
+                     copy box) under DD-012 0500000-
+                     canonical-all-docs scope per TB00000
+                     v2_38 §4.5 AMENDMENT A.
+
+                     SCOPE OF CHANGES:
+
+                     §1 PURPOSE: instance-document range
+                     "0611002 through 0611004" -> "0611003
+                     through 0611004".
+
+                     §2 PARENT CHAIN child chain list:
+                     0611002 Drawdown_and_Halt_Rules line
+                     removed.
+
+                     §3 TRACEABILITY: new closing paragraph
+                     added documenting drawdown-and-halt-
+                     rules canonical-encoding architecture
+                     under DD-012 + DEC-012 three-bucket
+                     classification record from TB00258
+                     S-1 audit. AR-052 + D7 R4 + D3 G7
+                     CHECK 1 + AR-048 + AR-056 canonical
+                     source citations added. Bucket B
+                     content migration destinations
+                     enumerated (0511006 Logger §13 logging
+                     schemas; 0411001 AR-041 batch_cancel
+                     scope; D5 Trade Outcome Bus
+                     peak_portfolio_USD CIATS-tracking
+                     field). v2_28-era governance-
+                     contradiction note added (DD-BASE-001
+                     portfolio-level baseline vs v2_29+
+                     per-wallet architecture).
+
+                     §4 SUB-DOMAIN SCOPE: opening paragraph
+                     amended to reflect Risk Rules sub-
+                     domain no longer covering drawdown
+                     monitoring as a separate instance
+                     spec (canonical in 0500000 AR-052 +
+                     D7 R4 + D3 G7 CHECK 1 + AR-048 +
+                     AR-056 + TB00000 §9.7 + §9.17).
+                     0611002 full scope block removed.
+                     Remaining instance specs (0611003 +
+                     0611004) scope text preserved
+                     byte-identical.
+
+                     §5 DOCUMENT CHAIN REQUIREMENT:
+                     instance-document range "0611002
+                     through 0611004" -> "0611003 through
+                     0611004".
+
+                     §6 RELATED DOCUMENTS: 0611002 line
+                     removed. 0500000 reference extended
+                     with AR-052 + D7 R4 + D3 G7 CHECK 1
+                     + AR-048 + AR-056 canonical source
+                     citation for drawdown architecture
+                     per DD-012. TB00000 reference extended
+                     with §9.7 per-wallet drawdown halts
+                     citation. 0500000 version reference
+                     dv1_72 -> dv1_73.
+
+                     S-1 AUDIT RECORD (DEC-012 three-bucket
+                     classification of 0611002 dv1_0):
+
+                     Bucket A — Architectural restatement
+                       (drop with retirement):
+                         §4 DD-BASE-001..007 portfolio_
+                           baseline → 0500000 AR-052 lines
+                           5104-5125.
+                         §5 DD-CURR-001..005 MTM formula
+                           → AR-052 + AR-048.
+                         §6 DD-FORM-001..004 drawdown
+                           formula → AR-052.
+                         §7 DD-EVAL-001..004 triggers →
+                           AR-048 (bbo continuous) + D3
+                           G7 CHECK 1 (pipeline eval).
+                         §8 system state machine → D7 R4
+                           state:NORMAL_per_wallet +
+                           state:SESSION_PAUSE_per_wallet
+                           + state:FULL_HALT_per_wallet.
+                         §9 DD-SP-001..005 session pause
+                           → AR-052 5% threshold + D7 R4.
+                         §10 DD-FH-001..006 full halt →
+                           AR-052 10% threshold + D7 R4 +
+                           AR-041 batch_cancel.
+                         §12 interfaces → derivative of
+                           D2/D7 architectural encoding.
+                         §14 HR-DD-001..013 hard rules →
+                           AR-052 + D3 G7 CHECK 1 + AR-041
+                           + AR-048 architectural sources.
+                         §15 coding-readiness questions →
+                           all derived from D7 + AR-052.
+
+                     Bucket B — Coding-unique (canonical
+                       elsewhere):
+                         §13 DD-LOG-001..007 logging
+                           schemas → 0511006 Logger_
+                           Specification canonical.
+                         §10 DD-FH-003 batch_cancel scope
+                           rationale (AR-041 reference) →
+                           0411001 Kraken_WS_v2_
+                           Specification AR-041 canonical.
+                         §11 DD-PEAK-001..005
+                           peak_portfolio_USD CIATS-
+                           tracking field → 0500000 D5
+                           Trade Outcome Bus scope
+                           (contract:CIATS_Trade_Outcome_
+                           Bus schema_fields_canonical
+                           implicit field).
+
+                     Bucket C — Architectural content not
+                       in 0500000 (S-2 gap-fill required):
+                         NONE. peak_portfolio_USD treated
+                         as Bucket B per CIATS Trade
+                         Outcome Bus scope. DD-BASE-007
+                         RATIONALE (CIATS HWM future
+                         evaluation) is forward-looking
+                         architectural placeholder, not
+                         load-bearing per RR-SCOPE-009
+                         four-question audit.
+
+                     S-2 + S-3 EXECUTION:
+                     None required per Bucket C empty
+                     finding above. Bucket B content
+                     already canonical-encoded in
+                     destination specs.
+
+                     S-4 EXECUTION:
+                     0611002 dv1_0 actual delete (git rm
+                     + commit + push per §11 standing
+                     practice). Bill executes via OCS
+                     copy box at TB00258 session close.
+
+                     S-5 EXECUTION:
+                     This document amendment (dv1_1 ->
+                     dv1_2). Removes 0611002 from instance-
+                     document range + child chain + §6
+                     RELATED DOCUMENTS list. Updates §3 +
+                     §4 prose for drawdown canonical-
+                     encoding architecture documentation.
+
+                     S-6 EXECUTION:
+                     TB00000 §9.7 + §9.17 already canonical
+                     for per-wallet drawdown halts +
+                     session_pause_drawdown_pct +
+                     full_halt_drawdown_pct CIATS-owned
+                     starting values. No TB00000 amendment
+                     required.
+
+                     0500000 dv1_72 -> dv1_73 SURGICAL-EDIT
+                     SCOPE:
+                     Per audit at TB00258 session, 0500000
+                     dv1_72 grep occurrences of "0611002"
+                     include 3 LIVE structured-tag drill_
+                     target citations in D7 (lines 6557 +
+                     6691 + 6712). All 3 removed in dv1_73
+                     companion deliverable per DD-012
+                     post-retirement corpus-state requirement.
+                     Remaining "0611002" matches in dv1_73
+                     are all in revision-history entries
+                     (CI-006 preservation).
+
+                     STALE-CONTENT FLAG:
+                     0611002 dv1_0 dated 04-05-2026
+                     predates v2_29 (2026-05-10) parallel-
+                     module rewrite. DD-BASE-001 uses
+                     portfolio-level baseline (single
+                     spot_usd_balance captured at startup),
+                     contradicting TB00000 v2_38 §9.7
+                     per-wallet drawdown halts architecture.
+                     Document is governance-contradictory
+                     with v2_29+ canonical state. Same
+                     class as 0611001 dv1_0 v2_28-era
+                     retired-parameter content retired
+                     TB00257. Retirement closes the
+                     governance contradiction.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0610000 dv1_2 parent chain unchanged
+                     (0000000 + 0100000 + 0200000 +
+                     0300000 + 0400000 + 0500000 + 0600000
+                     + self). Child chain shrinks from
+                     0611002..004 (three instance specs)
+                     to 0611003..004 (two instance specs).
+                     V-039 universal parent-chain-
+                     completeness rule (0311001 v1_17
+                     §15.15) compliance preserved.
+
+                     Header DocVersion dv1_1 -> dv1_2.
+                     DocPath updated. DocDate / DocTime
+                     refreshed.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00258 0611002 RETIREMENT CASCADE):
+                       0500000 dv1_72 -> dv1_73 (D7
+                         drill_target surgical cleanup —
+                         3 sites).
+                       0610000 dv1_1 -> dv1_2 (this
+                         document — S-5 anchor revision).
+                       TB00153 MDR v1_17 -> v1_18 (DR-052
+                         NEW 0611002 retirement entry).
+                       0611002 dv1_0 ACTUAL DELETE via
+                         git rm + commit + push (S-4 —
+                         Bill action at OCS copy box).
+                       TB00258 Session_Log v1_0 (NEW —
+                         session-close trio member 1).
+                       TB00259 Next_Session_Instructions
+                         v1_0 (NEW — session-close trio
+                         member 2).
+                       OCS chat-response copy box
+                         (session-close trio member 3).
+
+                     OPEN ITEMS UPDATED:
+                     OI-NEW-0611002-RETIREMENT-CASCADE
+                       CLOSED at TB00258 via DD-012 six-
+                       sub-step methodology (S-1 + S-2
+                       no-op + S-3 no-op + S-4 + S-5 +
+                       S-6 no-op).
+
+                     Bill override: 0610000 dv1_1 -> dv1_2
+                     is enacted under DEC-012 retirement-
+                     campaign methodology (ratified at
+                     TB00190; campaign scope extended at
+                     TB00237 AMENDMENT B) + Bill TB00258
+                     chat-turn directive bundling OCS
+                     execution + post-correction FP/DP
+                     analysis per DD-011 v2_38 AMENDMENT
+                     D ("did you do a FP/DP analysis ...
+                     If not, do it now. read the fucking
+                     project instructions and fucking
+                     follow the instructions"). Decision
+                     derived under RR-SCOPE-005 + DD-011
+                     v2_38 FP/DP-derivability-test logging
+                     gate (one compliant option — RETIREMENT
+                     — remained after elimination of REWRITE
+                     and HYBRID on DD-012 grounds; logged
+                     in TB00258 SL §3).
+
+                     Document Status updated: supersedes
+                     dv1_1. dv1_2 is the sole authoritative
+                     version.
+
+  dv1_1  05-14-2026  TB00257 S-5 ANCHOR REVISION — 0611001
+                     INSTANCE-DOCUMENT RETIREMENT CASCADE.
+
+                     Companion deliverable to 0611001 dv1_0
+                     retirement (S-4 git rm executed at
+                     TB00257 close per session-close OCS
+                     copy box) under DD-012 0500000-
+                     canonical-all-docs scope per TB00000
+                     v2_38 §4.5 AMENDMENT A.
+
+                     SCOPE OF CHANGES:
+
+                     §1 PURPOSE: instance-document range
+                     "0611001 through 0611004" -> "0611002
+                     through 0611004".
+
+                     §2 PARENT CHAIN child chain list:
+                     0611001 Position_Sizing_Rules line
+                     removed.
+
+                     §3 TRACEABILITY: new closing paragraph
+                     added documenting position-sizing-
+                     rules canonical-encoding architecture
+                     under DD-012 + DEC-012 three-bucket
+                     classification record from TB00257
+                     S-1 audit.
+
+                     §4 SUB-DOMAIN SCOPE: opening paragraph
+                     amended to reflect Risk Rules sub-
+                     domain no longer covering position
+                     sizing as a separate instance spec
+                     (canonical in 0500000 D5 + TB00000
+                     §9.10 + §9.17). 0611001 full scope
+                     block (lines 88-98 of dv1_0) removed.
+                     0611002 scope text updated: drawdown
+                     percentages reframed as per-wallet
+                     CIATS-owned values per TB00000 v2_38
+                     §9.7 + §9.17 (replacing v2_28-era
+                     hardcoded 5%/10% references); alert
+                     routing alert@tothbot.com -> alerts@
+                     tothbot.com per OI-019 closure.
+                     0611003 scope text updated:
+                     max_concurrent reference replaced
+                     with per_trade_ceiling_pct
+                     concentration-ceiling reference per
+                     TB00000 v2_38 §9.10 + §9.17 (v2_29
+                     retired max_concurrent; concentration
+                     enforcement is now wallet-balance ÷
+                     per_trade_size_usd arithmetic + the
+                     per_trade_ceiling_pct hard cap).
+                     0611004 scope text updated: replaces
+                     v2_28-era enumerated parameter list
+                     (tradeable_pct, per_trade_pct, etc.)
+                     with reference to TB00000 v2_38 §9.17
+                     as canonical parameter registry per
+                     DD-012. Sacred-constraint reference
+                     amended from "net 1:1.5 R:R — NOT
+                     CIATS — NEVER CHANGES" to "net 1:1.5
+                     R:R minimum floor — SACRED — NEVER
+                     CHANGES per TB00000 v2_38 §9.10"
+                     reflecting the v2_29 reframe from
+                     fixed ratio to minimum floor with
+                     CIATS-owned sizing curve above.
+
+                     §5 DOCUMENT CHAIN REQUIREMENT:
+                     instance-document range "0611001
+                     through 0611004" -> "0611002 through
+                     0611004".
+
+                     §6 RELATED DOCUMENTS: 0611001
+                     Position_Sizing_Rules line removed.
+                     TB00000 Project Instructions for
+                     Claude line ADDED (citing §9.10 +
+                     §9.17 canonical source). 1011001
+                     Engineering_Best_Practices line
+                     extended with "BP-DEC-001..008
+                     Decimal rounding canonical location"
+                     gloss reflecting the Bucket B
+                     migration record. 0500000 line
+                     extended with "D5 R6 canonical
+                     source for R:R-driven sizing curve
+                     per DD-012" gloss. 1011011
+                     Risk_Engine_Coding_Spec line removed
+                     (1011011 was RETIRED at TB00213 per
+                     v2_30 SL §4 — citation was stale at
+                     dv1_0).
+
+                     REASON FOR CHANGE:
+                     0611001 dv1_0 contained v2_28-era
+                     retired-parameter content (PS-TRADE-
+                     001 tradeable_pct=0.50, PS-PTA-001
+                     per_trade_pct=0.05, PS-HK-001..008
+                     Half-Kelly 200-trade transition,
+                     HR-PS-001 HARDCODED 1:1.5 R:R as
+                     fixed ratio, HR-PS-008 Half-Kelly
+                     activation at exactly 200 closed
+                     trades) directly contradicting v2_29+
+                     canonical state in TB00000 v2_38
+                     §9.10 (sacred-floor R:R minimum with
+                     CIATS-owned sizing curve above) and
+                     §9.17 (per_trade_size_usd Kraken-
+                     minimum starting, CIATS-owned
+                     function of expected R:R from 200-
+                     trade inference threshold; Half-Kelly
+                     no longer a hardcoded transition;
+                     max_concurrent retired; tradeable_pct
+                     retired). Per TB00252 SL conditional-
+                     read finding (cluster C7 systemic
+                     currency-lag class) and per DD-012
+                     v2_38 0500000-canonical-all-docs
+                     scope, 0611001 dv1_0 is DUPLICATIVE
+                     not COMPLEMENTARY for stable
+                     architectural content + STALE for
+                     v2_28-era retired-parameter content.
+                     Retirement is the DD-012-compliant
+                     disposition.
+
+                     S-1 AUDIT (DEC-012 three-bucket
+                     classification, TB00257 session):
+                     Bucket A — Architectural restatement
+                       (drop with retirement):
+                         §4 PS-PORT-001/002/003
+                           (portfolio_USD definition) —
+                           encoded in 0500000 D5 + TB00000
+                           §9 architecture.
+                         §5 PS-TRADE-001/002 — RETIRED
+                           parameter (v2_29).
+                         §6.1 PS-PTA-001/002 — RETIRED
+                           parameter (v2_29).
+                         §6.2 PS-HK-001..007 — RETIRED
+                           hardcoded transition (v2_29
+                           reframed Half-Kelly as CIATS-
+                           candidate methodology).
+                         §6.3 PS-MOD-001/002 (NON_DIR 50%
+                           modifier) — superseded by
+                           CIATS-owned sizing curve per
+                           TB00000 v2_38 §9.10 (R:R-
+                           driven sizing replaces fixed
+                           per-trade allocation
+                           modifiers).
+                         §7 PS-RR-001..008 (Gate 8 R:R
+                           formula 5-value computation) —
+                           canonical in 0500000 D5 R6 +
+                           TB00000 §9.10 sacred floor +
+                           §9.17 mae_mult / emergency_sl_
+                           mult parameters.
+                         §9 PS-MIN-001..004 (minimum
+                           viable position validation) —
+                           Kraken-imposed; encoded in
+                           0411001/0411002/0411003 +
+                           0500000.
+                         §10 PS-OUT-001/002 (Gate 8
+                           output contract) — canonical
+                           in 0500000 D5.
+                     Bucket B — Coding-unique (migrated):
+                         §8 PS-QTY/TP/SL/MAE-* Decimal
+                           rounding mechanics — explicitly
+                           noted in 0611001 dv1_0 line
+                           290 as "BP-DEC-001 through
+                           BP-DEC-008 in 1011001".
+                           Already migrated.
+                         §12 PS-LOG-001/002/003 (logging
+                           schema) — encoded in 0511006
+                           Logger_Specification.
+                     Bucket C — Architectural content
+                       not in 0500000 (S-2 gap-fill
+                       required):
+                         NONE. All architectural content
+                         already canonical-encoded.
+
+                     S-2 + S-3 EXECUTION:
+                     None required per Bucket C empty
+                     finding above.
+
+                     S-4 EXECUTION:
+                     0611001 dv1_0 actual delete (git rm
+                     + commit + push per §11 standing
+                     practice). Bill executes via OCS
+                     copy box at TB00257 session close.
+
+                     S-5 EXECUTION:
+                     This document amendment (dv1_0 ->
+                     dv1_1). Removes 0611001 from instance-
+                     document range + child chain + §6
+                     RELATED DOCUMENTS list. Updates
+                     downstream instance scope summaries
+                     for §4 v2_29-era currency reconciliation.
+
+                     S-6 EXECUTION:
+                     TB00000 §9.17 has no orphaned CIATS-
+                     owned parameter to absorb (all
+                     0611001 CIATS-owned parameters
+                     already retired in v2_29). No
+                     TB00000 amendment required.
+
+                     0500000 dv1_72 PROSE/SVG SURGICAL-
+                     EDIT SCOPE:
+                     Per audit at TB00257 session, the 14
+                     0500000 dv1_72 grep occurrences of
+                     "0611001" are all in revision-
+                     history entries (CI-006 preservation)
+                     or registry-gap-note <desc>
+                     structured-tag elements documenting
+                     prior session work. NO LIVE
+                     structured-tag citations (governs:,
+                     drill_target:, parent_spec:,
+                     assignment-line, §11 RELATED
+                     DOCUMENTS prose) reference 0611001
+                     as the canonical source. CI-006
+                     preservation applies; no 0500000
+                     surgical edit required at this
+                     amendment.
+
+                     F-V038-001 CLOSURE BY RETIREMENT:
+                     The 4 D5 R6 R:R-driven sizing curve
+                     identifiers (contract:Sizing_Curve_
+                     Per_Module, param:per_trade_size_usd,
+                     param:per_trade_ceiling_pct, param:
+                     expected_rr_acceptance_rule) that
+                     were the target of F-V038-001 gap-
+                     fill in 0611001 dv1_1 — gap-fill is
+                     no longer required as 0611001 dv1_0
+                     is retired. The identifiers remain
+                     canonically encoded in 0500000 D5 R6
+                     + TB00000 §9.17. F-V038-001 is CLOSED
+                     BY RETIREMENT in TB00153 MDR v1_17
+                     companion deliverable per the same
+                     RR-SCOPE-005 derivable-decision
+                     authority that drove this retirement
+                     cascade.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0610000 dv1_1 parent chain unchanged
+                     (0000000 + 0100000 + 0200000 +
+                     0300000 + 0400000 + 0500000 + 0600000
+                     + self). Child chain shrinks from
+                     0611001..004 (four instance specs)
+                     to 0611002..004 (three instance
+                     specs). V-039 universal parent-chain-
+                     completeness rule (0311001 v1_17
+                     §15.15) compliance preserved.
+
+                     Header DocVersion dv1_0 -> dv1_1.
+                     DocPath updated. DocDate / DocTime
+                     refreshed.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00257 0611001 RETIREMENT CASCADE):
+                       0610000 dv1_0 -> dv1_1 (this
+                         document — S-5 anchor revision).
+                       TB00153 MDR v1_16 -> v1_17
+                         (DR-050 NEW 0611001 retirement
+                         entry; F-V038-001 CLOSED BY
+                         RETIREMENT).
+                       0611001 dv1_0 ACTUAL DELETE via
+                         git rm + commit + push (S-4 —
+                         Bill action at OCS copy box).
+                       TB00257 Session_Log v1_0 (NEW —
+                         session-close trio member 1).
+                       TB00258 Next_Session_Instructions
+                         v1_0 (NEW — session-close trio
+                         member 2).
+                       OCS chat-response copy box
+                         (session-close trio member 3).
+
+                     OPEN ITEMS UPDATED:
+                     OI-NEW-0611001-RETIREMENT-CASCADE
+                       CLOSED at TB00257 via DD-012 six-
+                       sub-step methodology (S-1 + S-2
+                       no-op + S-3 no-op + S-4 + S-5 +
+                       S-6 no-op).
+                     F-V038-001 CLOSED BY RETIREMENT at
+                       MDR v1_17.
+
+                     Bill override: 0610000 dv1_0 -> dv1_1
+                     is enacted under DEC-012 retirement-
+                     campaign methodology (ratified at
+                     TB00190; campaign scope extended at
+                     TB00237 AMENDMENT B) + Bill TB00257
+                     chat-turn directive "Cold-load
+                     TB00257_Next_Session_Instructions_
+                     v1_0.txt. Ratify 0611001 dv1_0
+                     retirement-vs-rewrite disposition at
+                     chat-turn 1 per §3 (DD-011 exception
+                     (b) Bill business judgment). Execute
+                     ratified path under RR-SCOPE-005.
+                     Deliver SL + NSI + OCS at session
+                     close." Decision derived under
+                     RR-SCOPE-005 + DD-011 v2_38 FP/DP-
+                     derivability-test logging gate (one
+                     compliant option — RETIREMENT —
+                     remained after elimination of REWRITE
+                     and HYBRID on DD-012 grounds; logged
+                     in TB00257 SL §3).
+
+                     Document Status updated: supersedes
+                     dv1_0. dv1_1 is the sole authoritative
+                     version.
+
+  dv1_0  04-05-2026  Initial document. Sub-Domain Anchor
+                     for Risk Rules (AA=06, B=1).
+                     Establishes parent chain from 0600000
+                     through this anchor to four instance
+                     documents (0611001 through 0611004).
+                     Scope defined. Traceability to 0600000
+                     Sections 4-9 (HR-RISK-001 through
+                     HR-RISK-014) established. All instance
+                     document scope summaries written.
+                     Document chain requirement stated.
+                     PL-004 resolution noted (0611004).
+
+============================================================
+END OF DOCUMENT
+============================================================

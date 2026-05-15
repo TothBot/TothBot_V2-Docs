@@ -1,0 +1,1000 @@
+DocDCN:     0211003
+DocTitle:   Startup_Shutdown_Procedure
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211003_Startup_Shutdown_Procedure_dv1_1.txt
+DocDate:    05-14-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+STARTUP SHUTDOWN PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the complete, deterministic startup
+and shutdown sequence for TothBot V2. Every step is
+mandatory. No step may be skipped. No pipeline evaluation
+may occur until the startup sequence is complete and at
+least one pair reaches READY state.
+
+This document governs WHAT TothBot V2 does on startup
+and shutdown and WHY. Implementation details are in
+AA=10 coding specification 1011014 Startup_Sequence_
+Coding_Spec.
+
+PAPER-AS-MASTER SCOPE.
+Per TB00000 v2_38 §4.4 PA-001..010, paper trading is the
+master configuration; live trading mimics paper. The
+startup sequence is byte-identical paper vs live outside
+the PA-004 four divergence points:
+  PA-004 (1) PRIVATE WEBSOCKET CONNECTION — paper does
+             NOT connect to Kraken private WS.
+  PA-004 (2) ORDER DISPATCH — paper simulates locally;
+             no outbound order messages.
+  PA-004 (3) CAPITAL LEDGER — paper synthetic
+             spot_usd_balance from paper_starting_balance.
+  PA-004 (4) POSITION MIRROR SOURCING — paper populated
+             exclusively by the local simulated-fill path.
+The paper-mode gates in §4 are the in-startup-sequence
+manifestations of these four divergence points; every
+other step in §4 executes byte-identically in both modes.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  Operations_CIATS_Anchor        (Sub-Domain Anchor)
+  0211003  This document                  (Instance)
+
+============================================================
+3. PAIR STATES
+============================================================
+
+Every monitored pair is in exactly one of three states
+at all times:
+
+  WARM_UP:  Pair is eligible for trading but per-pair
+            caches are not yet seeded. Not available for
+            pipeline evaluation. Seeding in progress via
+            REST GetOHLCData or incrementally via WS
+            candle events. Transitions to READY when both
+            per-pair caches are populated: ATR(14) and
+            1H EMA(20)/EMA(50).
+
+  READY:    Per-pair caches seeded. Pair participates in
+            the full 8-gate pipeline evaluation on every
+            5-minute candle close. Pipeline evaluation
+            begins as soon as at least one pair reaches
+            READY state.
+
+  BLOCKED:  Pair instrument status is not online or
+            post_only (i.e., reduce_only, work_in_progress,
+            limit_only, delisted, or maintenance). Pair
+            is excluded from all pipeline evaluation.
+            Re-evaluated on each instrument channel
+            update. Transitions to WARM_UP if status
+            returns to online or post_only.
+
+DAILY REGIME OWNERSHIP.
+Daily regime classification is owned independently by
+mod:Regime_Engine, which runs at startup and at 00:00 UTC
+via daily refresh (§4 SS-START-008 NOTE + §4 SS-START-010).
+Daily regime is a SYSTEM-WIDE availability condition, not
+a per-pair WARM_UP-to-READY gate. Gate 3 (regime gate) in
+the 8-gate pipeline blocks pipeline entry if the daily
+regime classification is unavailable for the candidate
+pair. (Per 0500000 dv1_75 AR-049 canonical + 1011014
+dv1_8 §6 Step 8 SS-WARMUP-003 NOTE; OI-NEW-001 +
+DEFECT-SS-004 closure.)
+
+Pair-state transitions are mode-invariant. Paper trading
+and live trading produce identical pair-state semantics
+per PA-005.
+
+============================================================
+4. STARTUP SEQUENCE (10 STEPS)
+============================================================
+
+The startup sequence is governed by AR-049 (0500000
+dv1_75). All 10 steps must complete before pipeline
+evaluation begins. Steps execute in the order listed.
+
+PAPER-MODE DISPATCH BOUNDARY.
+The paper_trading_mode flag is detected at process start
+per SS-PAPER-001 (1011014 dv1_8 paper-mode dispatch
+section). Steps 2, 5, and 6 each contain a paper-mode
+gate that skips private-WS-bound operations per PA-004
+(1) + (4); the synthetic-ledger branch in Step 5 provides
+the paper-mode portfolio_baseline_USD source per PA-004
+(3) + SS-PAPER-003. All other steps execute byte-
+identically in both modes per PA-005.
+
+------------------------------------------------------------
+SS-START-001  STEP 1 — Kraken Status API Check
+------------------------------------------------------------
+
+Query: https://status.kraken.com/api/v2/scheduled-
+       maintenances.json
+
+Check for scheduled maintenance windows. If a maintenance
+event is scheduled within 2 hours: log CRITICAL and alert
+alerts@tothbot.com (OI-019 plural-alert routing per
+TB00000 v2_10). This check is informational only — it
+does not block startup. Bill decides whether to stand
+down.
+
+If the Status API is unavailable: log WARNING and continue.
+A Status API failure does not halt startup.
+
+Step 1 executes identically in paper and live modes per
+PA-005.
+
+------------------------------------------------------------
+SS-START-002  STEP 2 — Acquire WebSocket Token
+------------------------------------------------------------
+
+Call Kraken REST API: GetWebSocketsToken.
+This token authenticates the private WebSocket connection.
+
+The token is valid for 15 minutes. It must be refreshed
+before expiry on every reconnection event. Token
+acquisition failure is fatal: retry 3 times. If all
+retries fail, TothBot cannot establish the authenticated
+WS connection. systemd will restart TothBot on watchdog
+timeout.
+
+Reconnect-attempt-count and window for fatal-reconnect
+behavior are governed by 0511001 WS_Manager_Specification
+dv1_9 and 0500000 dv1_75 AR-056: 20 total attempts
+spanning ~481 seconds (~8 minutes) before fatal log +
+systemd restart (OI-020 propagation per TB00000 v2_10).
+
+PAPER-MODE GATE (PA-004 (1) + SS-PAPER-002).
+In paper mode, Step 2 is SKIPPED because the private
+WS connection is not established (see SS-START-005
+paper-mode gate). The startup sequence proceeds directly
+to Step 3.
+
+------------------------------------------------------------
+SS-START-003  STEP 3 — Connect Public WS and Subscribe
+------------------------------------------------------------
+
+Establish connection to wss://ws.kraken.com/v2.
+
+Subscribe in a single message:
+  - instrument channel (snapshot: true) — pair specs
+  - status channel (snapshot: true) — engine state
+  - ohlc channel, interval=5 (snapshot: true) — system
+    clock
+  - ohlc channel, interval=60 (snapshot: true) — 1H HTF
+    cache
+
+Do NOT subscribe ticker at this step. Ticker subscriptions
+are managed per-pair after Position Mirror is restored
+(Step 7).
+
+NOTE: Kraken WS v2 rejects multiple ohlc intervals per
+symbol with "Already subscribed to one ohlc interval on
+this symbol." (OI-NEW-001 per 1011014 dv1_4 DEFECT-SS-004
+closure.) interval=5 carries the system clock; interval=60
+is the 1H HTF cache. interval=1440 daily candles are NOT
+subscribed here — they are sourced via REST by
+mod:Regime_Engine independently (see SS-START-008 NOTE
+and SS-START-010).
+
+Start the WS ping task (30-second interval) and zombie
+detection task (90-second no-real-data threshold) on this
+connection immediately after subscription.
+
+Step 3 executes identically in paper and live modes per
+PA-005. The public WS connection carries the same market
+data in both modes — paper trading does not synthesize
+market data.
+
+------------------------------------------------------------
+SS-START-004  STEP 4 — Process Instrument Snapshot
+------------------------------------------------------------
+
+Wait for the instrument channel snapshot message.
+Timeout: 10 seconds. On timeout: reconnect and retry
+from Step 3.
+
+For each pair in the snapshot, populate the per-pair
+instrument cache: price_increment, qty_increment, qty_min,
+cost_min, status. All numeric values converted to Decimal
+immediately on parse.
+
+Set initial pair state from instrument status:
+  online or post_only → WARM_UP
+  all other statuses  → BLOCKED
+
+Step 4 executes identically in paper and live modes per
+PA-005.
+
+------------------------------------------------------------
+SS-START-005  STEP 5 — Connect Private WS and Subscribe
+              (LIVE) / Synthetic Ledger Init (PAPER)
+------------------------------------------------------------
+
+PAPER-MODE GATE (PA-004 (1) + (3) + SS-PAPER-002 +
+SS-PAPER-003).
+In paper mode, Step 5 SKIPS the private WS connection
+and SKIPS executions/balances channel subscription.
+Instead:
+  (a) Initialize the synthetic capital ledger with
+      spot_usd_balance = paper_starting_balance per
+      module (paper_starting_balance_long_usd = $5,000;
+      paper_starting_balance_short_usd = $5,000 per
+      TB00000 v2_38 §9.17).
+  (b) Set portfolio_baseline_USD = paper_starting_balance
+      for the relevant module wallet. This is the ONLY
+      time portfolio_baseline_USD is set during a
+      paper-mode TothBot process lifecycle (mirrors
+      HR-SS-002 invariant).
+  (c) No private WS ping task is started (no private
+      connection exists). The public WS ping task
+      started in Step 3 remains the sole WS keep-alive
+      task in paper mode.
+
+LIVE MODE.
+Establish connection to wss://ws-auth.kraken.com/v2
+using the token acquired in Step 2.
+
+Subscribe executions channel with:
+  snap_orders: true  — snapshot of all open orders
+  snap_trades: true  — last 50 fills for gap reconciliation
+  order_status: true — MANDATORY: without this, amended
+                       and restated orders are silently
+                       dropped. Non-negotiable. (AR-026)
+  ratecounter: true  — real-time rate limit monitoring
+
+Extract maxratecount from the executions subscription ACK.
+Use this as the operative rate limit threshold.
+
+Subscribe balances channel with snapshot: true.
+Parse the balances snapshot: extract spot/main wallet
+USD balance only. The top-level balance field is the sum
+across all wallet types — it must NOT be used. Only
+wallets[type="spot"][id="main"].balance is tradeable
+capital (AR-050).
+
+Set portfolio_baseline_USD = spot_usd_balance at this
+exact moment. This is the ONLY time portfolio_baseline_USD
+is set during a live TothBot process lifecycle. It is
+never reset on reconnection. It resets only on full
+process restart.
+
+Start ping task and zombie detection on the private WS
+connection.
+
+------------------------------------------------------------
+SS-START-006  STEP 6 — Reconcile Open Positions
+------------------------------------------------------------
+
+PAPER-MODE GATE (PA-004 (4) + SS-PAPER-004).
+In paper mode, Step 6 SKIPS snap_orders reconciliation.
+The Position Mirror is populated EXCLUSIVELY by the
+local simulated-fill path during operation; at process
+start the Position Mirror is initialized empty. No
+INCOMPLETE_PROTECTION check applies (no real Kraken
+orders exist for paper-mode TothBot strategies). The
+sequence proceeds directly to Step 7.
+
+LIVE MODE.
+Process the snap_orders snapshot received from the
+executions channel subscription in Step 5.
+
+Restore the Position Mirror from the snapshot. For each
+open position found, record: symbol, entry_fill_price
+(from avg_price field), quantity, TP order_id, emergSL
+order_id, cl_ord_id.
+
+If any position has a TP order but no emergSL order, or
+an emergSL order but no TP order: log
+INCOMPLETE_PROTECTION at CRITICAL level and alert
+alerts@tothbot.com (OI-019 plural-alert routing per
+TB00000 v2_10). Do not attempt to auto-repair the missing
+order. Position state is ambiguous — operator
+confirmation is required before any automated action.
+
+Fallback: if the executions channel snapshot contains a
+sequence gap (snap_orders data is incomplete): fall back
+to REST GetOpenOrders for position reconciliation, and
+REST GetAccountBalance for balance verification (AR-021).
+
+------------------------------------------------------------
+SS-START-007  STEP 7 — Restore Ticker Subscriptions
+------------------------------------------------------------
+
+For each pair with an open position in the Position
+Mirror: subscribe ticker with event_trigger:bbo. This
+activates real-time MAE monitoring using bid price (the
+realizable exit price for long positions).
+
+For all other monitored pairs: subscribe ticker with
+event_trigger:trades. This provides volume data for
+Gate 2 and candle updates.
+
+Ticker subscriptions are per-pair and managed
+individually. The WS Manager tracks which event_trigger
+is active for each pair.
+
+Step 7 executes identically in paper and live modes per
+PA-005. In paper mode the Position Mirror is initially
+empty (per SS-START-006 paper-mode gate), so all pairs
+subscribe ticker with event_trigger:trades initially;
+event_trigger transitions to bbo occur on simulated-fill
+events thereafter.
+
+------------------------------------------------------------
+SS-START-008  STEP 8 — REST Warm-Up (GetOHLCData)
+------------------------------------------------------------
+
+For all WARM_UP pairs, execute REST GetOHLCData calls to
+seed the per-pair indicator caches. Two calls per pair,
+staggered 1.1 seconds apart within the same pair to
+avoid rate limit violations. Calls for different pairs
+may run concurrently.
+
+  Call A — interval=5 (5-minute candles): seed ATR(14).
+    Use response[:-1] only. The last entry (response[-1])
+    is the current not-yet-committed candle. Including
+    it corrupts ATR and all regime calculations (AR-017).
+
+  Call B — interval=60 (1-hour candles): seed 1H EMA(20)
+    and EMA(50) for Gate 4 HTF confirmation cache. Use
+    response[:-1] only.
+
+NOTE: Call C (interval=1440 daily candles) is NOT part
+of per-pair warm-up. Daily regime classification is
+handled independently by mod:Regime_Engine, which runs
+at startup and at 00:00 UTC via daily refresh per
+SS-START-010. Per-pair warm-up contains only Call A and
+Call B. (OI-NEW-001 + DEFECT-SS-004 closure per 1011014
+dv1_4; canonical at 0500000 dv1_75 AR-049 + 1011014
+dv1_8 §6 Step 8 SS-WARMUP-003 NOTE.)
+
+A pair transitions from WARM_UP to READY when both of
+the following are true:
+  (a) ATR(14) seeded (from Call A, or after 14 candle
+      close events if REST failed).
+  (b) 1H EMA(20) and EMA(50) seeded (from Call B).
+
+Daily regime availability is a system-wide condition
+owned by mod:Regime_Engine and enforced at Gate 3 in
+the pipeline. It is NOT a per-pair WARM_UP-to-READY gate
+(per §3 DAILY REGIME OWNERSHIP).
+
+Pairs where REST warm-up fails remain in WARM_UP and
+seed incrementally via WS candle close events. This is
+slower but acceptable. TothBot does not wait for all
+pairs — pipeline begins as soon as Step 9 is satisfied.
+
+Step 8 executes identically in paper and live modes per
+PA-005. REST GetOHLCData carries the same market data
+in both modes.
+
+------------------------------------------------------------
+SS-START-009  STEP 9 — First READY Pair: Enter
+              OPERATIONAL
+------------------------------------------------------------
+
+TothBot V2 enters OPERATIONAL state when at least one
+pair reaches READY state. This is the canonical READY=1
+trigger criterion, unanimous across 1011014 dv1_8
+SS-STARTUP-022/026 + 0500000 dv1_75 AR-049 (9) + this
+specification.
+
+Send sd_notify READY=1 to systemd at this moment, AFTER
+the first-READY-pair condition is satisfied (HR-SS-009).
+READY=1 is NEVER sent before Step 9. systemd transitions
+the service from activating to active upon receipt of
+READY=1.
+
+WARM_UP pairs continue seeding in the background and
+transition to READY organically. BLOCKED pairs are
+re-evaluated on each instrument channel update event.
+
+Pipeline evaluation runs only for READY pairs. WARM_UP
+and BLOCKED pairs are excluded at the pipeline level
+before Gate 1.
+
+Step 9 executes identically in paper and live modes per
+PA-005.
+
+------------------------------------------------------------
+SS-START-010  STEP 10 — Continuous Operation
+------------------------------------------------------------
+
+TothBot V2 operates continuously from OPERATIONAL state.
+
+Daily at 00:00 UTC: mod:Regime_Engine calls GetOHLCData
+(interval=1440) for all monitored pairs to refresh the
+daily regime classification. Calls are staggered to
+avoid rate limit violations (AR-036). The daily regime
+refresh is owned by mod:Regime_Engine and is NOT a
+per-pair warm-up activity — it operates independently
+of the WARM_UP / READY / BLOCKED state machine.
+
+The systemd watchdog task sends sd_notify WATCHDOG=1
+every 30 seconds. systemd detects a frozen event loop
+if no ping arrives within 120 seconds and restarts
+TothBot automatically.
+
+On restart: the full 10-step startup sequence executes
+from Step 1.
+
+Step 10 executes identically in paper and live modes
+per PA-005.
+
+============================================================
+5. MID-SESSION RECONNECTION
+============================================================
+
+A WebSocket disconnection during live operation triggers
+a reconnection sequence that is distinct from startup.
+The reconnection sequence is specified in 0511001
+WS_Manager_Specification dv1_9.
+
+Reconnect-attempt-count and window for fatal-reconnect
+behavior: 20 total attempts spanning ~481 seconds (~8
+minutes) before FATAL_RECONNECT_FAILED is logged
+CRITICAL and alerts@tothbot.com is alerted (OI-019 +
+OI-020 per TB00000 v2_10; canonical at 0500000 dv1_75
+AR-056 + 0511001 dv1_9 + 1011014 dv1_8 SS-RECON-015).
+
+PAPER-MODE GATE (PA-004 (1) + SS-PAPER-006).
+In paper mode, the private WS connection does not exist;
+the reconnect sequence operates only on the public WS
+connection. All private-WS-bound reconnect steps
+(executions resubscribe, balances resubscribe,
+snap_orders gap reconciliation) are SKIPPED in paper
+mode. Public WS reconnect proceeds identically.
+
+The following invariants MUST be preserved across every
+reconnection event. They are stated here as operational
+requirements — they are never negotiable. They apply to
+both paper and live modes; mode-specific behaviors are
+noted where relevant.
+
+  INVARIANT 1: portfolio_baseline_USD is NEVER reset
+    during reconnection. It was set once at startup
+    (Step 5 — live-mode balances snapshot or
+    paper-mode synthetic-ledger init). It survives all
+    reconnection events. It resets only on full TothBot
+    process restart.
+
+  INVARIANT 2: drawdown_pct is NEVER reset during
+    reconnection. Drawdown is measured continuously
+    from the startup baseline. Reconnection does not
+    restart the drawdown clock.
+
+  INVARIANT 3: system_state (NORMAL, SESSION_PAUSE,
+    FULL_HALT) is PRESERVED across reconnection. A
+    halt condition that existed before disconnect is
+    still active after reconnect.
+
+  INVARIANT 4: Any position that closed during the
+    disconnection gap (TP filled or emergSL fired
+    while offline) must be detected via Position
+    Mirror vs snap_orders reconciliation. The CIATS
+    Trade Outcome Bus must be fired for each gap-
+    closed position before the pipeline resumes. In
+    paper mode this invariant degenerates trivially
+    — no Kraken orders exist for paper-mode
+    strategies, so no gap-closed positions can occur
+    via Kraken-side fills; the simulated-fill path
+    continues uninterrupted on public WS resubscribe.
+
+  INVARIANT 5: candle close events that fired during
+    the reconnection gap are DISCARDED. The system
+    does not attempt to replay missed pipeline
+    evaluations.
+
+============================================================
+6. SHUTDOWN PROCEDURE
+============================================================
+
+------------------------------------------------------------
+SS-STOP-001  NORMAL SHUTDOWN
+------------------------------------------------------------
+
+A normal shutdown is one where TothBot is stopped
+deliberately by Bill with no positions open.
+
+Preferred sequence:
+  1. Wait for all open positions to close naturally
+     (TP fills, signal-based exits, or MAE exits).
+  2. Confirm Position Mirror is empty.
+  3. Confirm no pending orders in Pending Order
+     Registry.
+  4. Stop TothBot process (systemctl stop tothbot).
+  5. TothBot sends graceful WS close on both
+     connections (live mode) or on the public WS only
+     (paper mode).
+  6. systemd logs service stop.
+
+------------------------------------------------------------
+SS-STOP-002  SHUTDOWN WITH OPEN POSITIONS
+------------------------------------------------------------
+
+If TothBot must be stopped while positions are open
+(maintenance, migration, emergency):
+
+  MANDATORY BEFORE STOPPING (LIVE MODE):
+  (a) Confirm that an active emergSL order exists on
+      the Kraken matching engine for every open
+      position. The emergSL provides crash protection
+      during the offline period. TothBot must never be
+      stopped with an unprotected open position.
+  (b) Verify emergSL orders via REST GetOpenOrders or
+      Kraken web interface before stopping the process.
+
+  PAPER MODE.
+  No real Kraken orders exist for paper-mode
+  strategies. Stopping TothBot in paper mode does not
+  expose any real capital to risk. The Position Mirror
+  state is held in process memory; on restart, the
+  Position Mirror initializes empty per SS-START-006
+  paper-mode gate. Paper-mode open positions
+  effectively vanish on shutdown (this is the expected
+  behavior — paper trading does not move real money).
+
+  PROHIBITED (LIVE MODE):
+  cancel_all_orders_after (DMS) must NEVER be called
+  before shutdown. Calling DMS cancels the emergSL
+  orders that protect open positions — this removes
+  crash protection entirely. DMS is prohibited in all
+  TothBot V2 code under any circumstance (AR-001,
+  AR-055).
+
+  AFTER STOPPING (LIVE MODE):
+  Open positions remain protected by the resting
+  emergSL orders on the Kraken matching engine. These
+  orders remain active regardless of TothBot's process
+  state. Bill monitors positions manually during any
+  offline period.
+
+------------------------------------------------------------
+SS-STOP-003  CRASH OR WATCHDOG RESTART
+------------------------------------------------------------
+
+On crash or watchdog-triggered restart, systemd
+automatically restarts TothBot after RestartSec=5
+seconds. systemd-level restart governance is bounded by
+StartLimitBurst=3 attempts within
+StartLimitIntervalSec=600 seconds (TB00000 v2_38 §9.17).
+
+The full 10-step startup sequence executes on restart.
+
+LIVE MODE.
+Position Mirror is restored from snap_orders in Step 6.
+Any positions that closed during the downtime gap are
+detected and CIATS Trade Outcome Bus is fired for each.
+During the restart window, all open positions remain
+protected by their resting emergSL orders on the Kraken
+matching engine. These orders fire automatically if the
+stop-price is reached — no TothBot process required.
+
+PAPER MODE.
+Position Mirror initializes empty per SS-START-006
+paper-mode gate. No persistence of paper-mode positions
+across process restarts is provided by this
+specification (consistent with paper-trading expected
+behavior — no real capital at risk).
+
+------------------------------------------------------------
+SS-STOP-004  FULL HALT SHUTDOWN
+------------------------------------------------------------
+
+A Full Halt (per-wallet drawdown_pct ≥
+full_halt_drawdown_pct per TB00000 v2_38 §9.7) does not
+stop the TothBot process. It halts new entry pipeline
+evaluations only for the affected module. Existing
+positions in that module continue to be monitored and
+exited by the Exit Controller. Per-wallet halts do not
+cascade to other modules.
+
+Bill decides whether to stop the TothBot process after
+a Full Halt. If Bill stops TothBot after a Full Halt,
+SS-STOP-002 procedure applies.
+
+============================================================
+7. HARD RULES
+============================================================
+
+  HR-SS-001  No pipeline evaluation may occur before at
+             least one pair reaches READY state (Step 9).
+             Applies identically in paper and live modes
+             per PA-005.
+
+  HR-SS-002  portfolio_baseline_USD is set ONCE at
+             startup Step 5 (live-mode balances snapshot
+             or paper-mode synthetic-ledger init per
+             SS-PAPER-003). It is never reset on
+             reconnection. It resets only on full
+             process restart.
+
+  HR-SS-003  snap_orders: true is the PREFERRED
+             reconciliation method at live-mode startup
+             and reconnect. REST GetOpenOrders is the
+             fallback only (AR-003). In paper mode,
+             snap_orders is not used (PA-004 (4) +
+             SS-PAPER-004).
+
+  HR-SS-004  order_status: true is MANDATORY on every
+             live-mode executions channel subscription.
+             It must never be omitted (AR-026). Not
+             applicable in paper mode (no executions
+             channel subscription per PA-004 (1) +
+             SS-PAPER-002).
+
+  HR-SS-005  response[-1] (the uncommitted current
+             candle) must ALWAYS be excluded from all
+             GetOHLCData calculations. Use response[:-1]
+             only (AR-017). Applies identically in both
+             modes.
+
+  HR-SS-006  cancel_all_orders_after (DMS) is
+             PROHIBITED in all TothBot V2 code under any
+             circumstance. DMS cancels emergSL orders
+             and destroys crash protection (AR-001,
+             AR-055). Applies to live mode by physical
+             consequence; the prohibition is universal
+             at the code level per PA-005.
+
+  HR-SS-007  TothBot must never be stopped with an open
+             live-mode position that has no emergSL
+             order active on the Kraken matching engine.
+             Paper mode has no equivalent constraint
+             (no real Kraken orders exist for paper-mode
+             strategies).
+
+  HR-SS-008  Incomplete position protection (TP without
+             emergSL or vice versa) must be logged
+             CRITICAL and alerted to alerts@tothbot.com.
+             It must not be auto-repaired without
+             operator confirmation. Applies to live mode
+             only.
+
+  HR-SS-009  sd_notify READY=1 is sent only AFTER Step 9
+             (at least one READY pair). Never before any
+             of Steps 1-8 complete. Applies identically
+             in both modes.
+
+  HR-SS-010  The 10-step startup sequence executes in
+             full on every TothBot process start
+             including crash restarts. No step is
+             skippable, with the SOLE exception of the
+             paper-mode gates in Step 2 (token skip per
+             SS-PAPER-002), Step 5 (private-WS skip +
+             synthetic-ledger init per SS-PAPER-002 +
+             SS-PAPER-003), and Step 6 (snap_orders
+             skip per SS-PAPER-004). These paper-mode
+             gates are NOT optional skips within paper
+             mode — they are mandatory mode-dependent
+             behaviors.
+
+  HR-SS-011  Paper mode does NOT connect to the Kraken
+             private WS (PA-004 (1) + SS-PAPER-002).
+             Step 2 (token acquisition) and Step 5
+             (private WS subscribe) are skipped in
+             paper mode.
+
+  HR-SS-012  Paper mode does NOT dispatch outbound
+             orders (PA-004 (2)). All order operations
+             are simulated locally by the paper-mode
+             simulated-fill path.
+
+  HR-SS-013  Paper-mode portfolio_baseline_USD is the
+             synthetic-ledger value paper_starting_
+             balance per module (PA-004 (3) +
+             SS-PAPER-003 + TB00000 v2_38 §9.17). The
+             synthetic ledger uses the same fee
+             schedule as live trading (FEE_MAKER_PCT,
+             FEE_TAKER_PCT).
+
+  HR-SS-014  Paper-mode Position Mirror is populated
+             EXCLUSIVELY by the local simulated-fill
+             path (PA-004 (4) + SS-PAPER-004). At
+             process start the Position Mirror is
+             initialized empty in paper mode.
+
+============================================================
+8. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                    (parent Domain
+                                          Doc)
+  0210000  Operations_CIATS_Anchor       (parent anchor)
+  0211002  Operations_Infrastructure_Specification dv1_2
+  0211005  Paper_Trading_Operations_Procedure dv1_3
+  0511001  WS_Manager_Specification      dv1_9
+  0511005  Position_Mirror_Specification dv1_1
+  0500000  System_Architecture_Overview  dv1_75
+             AR-003, AR-017, AR-021, AR-026, AR-036,
+             AR-049, AR-050, AR-055, AR-056
+  1011014  Startup_Sequence_Coding_Spec  dv1_8
+  0411001  Kraken_WS_v2_Specification    dv1_11
+  0311001  Namespace_Specification       v1_17
+  0311002  Document_Creation_Workflow    v1_12
+  0311006  Known_Platform_Limitations    dv1_2
+  TB00000  TothBot_V2_Project_Instructions_for_Claude
+                                          v2_38
+             §4.4 PA-001..010 paper-as-master absolute
+             standing rule
+             §9.17 CIATS Parameter Registry (paper
+             starting balances, StartLimitBurst,
+             StartLimitIntervalSec)
+
+============================================================
+9. REVISION HISTORY
+============================================================
+
+  dv1_1  05-14-2026  TB00271 PROSE-UPDATE-BX 10-class
+                     amendment cluster per TB00269 SL
+                     §5.3 + §3 READY-CRITERION RIPPLE
+                     ADJUSTMENT (Option α per TB00271
+                     chat-turn 3 FP/DP-derivability
+                     analysis under DD-011 v2_38
+                     AMENDMENT D).
+
+                     CLASS (1) — PAPER-MODE BINDINGS.
+                     §1 PURPOSE expanded with PAPER-AS-
+                     MASTER SCOPE block citing TB00000
+                     v2_38 §4.4 PA-001..010 +
+                     enumerating PA-004 (1)-(4)
+                     divergence points. §3 PAIR STATES
+                     mode-invariance noted. §4 STARTUP
+                     SEQUENCE header expanded with
+                     PAPER-MODE DISPATCH BOUNDARY
+                     block. SS-START-005 split into
+                     LIVE / PAPER branches with
+                     synthetic-ledger init for paper
+                     mode (SS-PAPER-002 + SS-PAPER-003
+                     bindings; portfolio_baseline_USD
+                     = paper_starting_balance per
+                     module per TB00000 v2_38 §9.17).
+                     SS-START-006 paper-mode gate
+                     SKIPS snap_orders reconciliation
+                     (SS-PAPER-004). SS-START-007
+                     mode-identical with initial-
+                     empty-mirror note for paper mode.
+
+                     CLASS (2) + (7) — OI-019 ALERTS
+                     PLURAL PROPAGATION.
+                     SS-START-001 line: "alert@tothbot
+                     .com" -> "alerts@tothbot.com".
+                     SS-START-006 INCOMPLETE_PROTECTION
+                     line: same change. OI-019
+                     citation appended at both sites.
+
+                     CLASS (3) + (9) — OI-020 RECONNECT
+                     20/481 PROPAGATION.
+                     SS-START-002 reconnect-attempt-
+                     count forward-reference clause
+                     added: 20 attempts / ~481 seconds
+                     per 0511001 dv1_9 + 0500000
+                     dv1_75 AR-056. §5 MID-SESSION
+                     RECONNECTION explicit reconnect-
+                     attempt-count + window statement
+                     added with same values + OI-019
+                     + OI-020 citations.
+
+                     CLASS (4) + (8) — OI-NEW-001 CALL
+                     C INTERVAL=1440 REMOVAL.
+                     SS-START-008 §4 Step 8 REST
+                     warm-up rewritten: per-pair
+                     warm-up is Call A (interval=5) +
+                     Call B (interval=60) ONLY. Call C
+                     interval=1440 explicitly removed
+                     from per-pair warm-up. NOTE block
+                     added citing OI-NEW-001 +
+                     DEFECT-SS-004 + canonical source
+                     0500000 dv1_75 AR-049 + 1011014
+                     dv1_8 §6 Step 8 SS-WARMUP-003
+                     NOTE. WARM_UP -> READY transition
+                     criterion updated to two
+                     conditions (ATR + 1H EMAs).
+                     SS-START-010 daily regime refresh
+                     explicit Regime_Engine ownership
+                     note added. SS-START-003 NOTE
+                     added documenting Kraken WS
+                     single-interval-per-symbol
+                     constraint (OI-NEW-001 closure
+                     trace).
+
+                     §3 READY-CRITERION RIPPLE
+                     ADJUSTMENT (Option α). The dv1_0
+                     §3 READY definition specified
+                     three per-pair caches: ATR(14),
+                     1H EMA(20)/EMA(50), AND current
+                     daily regime. With Class (4) +
+                     (8) removal of Call C from
+                     per-pair warm-up and 0500000
+                     dv1_75 AR-049 + 1011014 dv1_8
+                     SS-WARMUP-003 NOTE both placing
+                     daily regime ownership at
+                     mod:Regime_Engine system-wide,
+                     the per-pair daily-regime READY
+                     gate is no longer load-bearing
+                     (per RR-SCOPE-009 Chesterton's
+                     Fence four-question audit: pre-
+                     OI-NEW-001 origin; pre-OI-NEW-001
+                     problem; canonical sources
+                     confirm problem retired; Gate 3
+                     in pipeline preserves loss-
+                     prevention property). §3 READY
+                     amended to two per-pair caches
+                     (ATR + 1H EMAs); daily regime
+                     stated as SYSTEM-WIDE
+                     availability condition owned by
+                     mod:Regime_Engine and enforced
+                     at Gate 3. DAILY REGIME OWNERSHIP
+                     subsection added in §3. §4
+                     SS-START-008 WARM_UP-to-READY
+                     transition criterion conforming
+                     amendment.
+
+                     CLASS (5) — HR-SS-NNN PAPER-MODE
+                     BINDINGS.
+                     HR-SS-001..010 each annotated
+                     with mode-applicability
+                     statement (identical / live-only
+                     / paper-only). HR-SS-006
+                     universal prohibition clarified.
+                     HR-SS-010 paper-mode-gate
+                     exception enumerated.
+                     HR-SS-011..014 ADDED binding to
+                     PA-004 (1)-(4) respectively +
+                     SS-PAPER-002/003/004 + TB00000
+                     v2_38 §4.4 + §9.17.
+
+                     CLASS (6) — §8 RELATED DOCUMENTS
+                     VERSION-CITATION REFRESH.
+                     0500000 dv1_18 -> dv1_75 + AR-list
+                     expanded to include AR-036 +
+                     AR-056. 1011014 dv1_2 -> dv1_8.
+                     0511001 dv1_0 -> dv1_9. 0511005
+                     dv1_0 -> dv1_1. 0211002 dv1_0 ->
+                     dv1_2. Added: 0211005 dv1_3,
+                     0311006 dv1_2, TB00000 v2_38
+                     (with §4.4 + §9.17 sub-
+                     references), 0311001 v1_17,
+                     0311002 v1_12.
+
+                     CLASS (10) — sd_notify READY=1
+                     CRITERIA ENUMERATION.
+                     HR-SS-009 strengthened with
+                     explicit "AFTER Step 9" + "NEVER
+                     before any of Steps 1-8 complete"
+                     language. SS-START-009 prose
+                     strengthened with "canonical
+                     READY=1 trigger criterion,
+                     unanimous across 1011014 dv1_8
+                     SS-STARTUP-022/026 + 0500000
+                     dv1_75 AR-049 (9) + this
+                     specification" framing.
+
+                     SS-STOP-002 PAPER-MODE SECTION
+                     ADDED. SS-STOP-003 paper-mode
+                     branch added. SS-STOP-004
+                     amended to per-wallet drawdown
+                     framing per TB00000 v2_38 §9.7
+                     per-wallet drawdown halts +
+                     StartLimitBurst /
+                     StartLimitIntervalSec citation.
+
+                     PROVENANCE / GOVERNANCE
+                     COMPLIANCE.
+                     RR-SCOPE-007 v2_30 SELF-AUTHORED-
+                     NSI-SOURCE-PROHIBITION: all 10
+                     classes trace to Bill chat-turn
+                     directives + Bill-ratified
+                     governance: OI-019 (TB00109);
+                     OI-020 (TB00105/post-process);
+                     OI-NEW-001 + DEFECT-SS-004
+                     (TB00151j cascade); TB00151j
+                     paper-as-master + PA-001..010
+                     (TB00145 v1_1 cascade + TB00000
+                     v2_18); per_module starting
+                     balances (TB00179 / TB00000
+                     v2_29); StartLimitBurst /
+                     StartLimitIntervalSec (TB00228
+                     / TB00000 v2_36). §3 READY-
+                     CRITERION RIPPLE (Option α)
+                     derived under DD-011 v2_38
+                     AMENDMENT D from 0500000 dv1_75
+                     AR-049 (Bill-ratified TB00270)
+                     + 1011014 dv1_8 SS-WARMUP-003
+                     NOTE (Bill-ratified TB00151j) +
+                     RR-SCOPE-009 four-question audit
+                     confirming constraint no longer
+                     load-bearing.
+
+                     RR-SCOPE-009 ORIGIN INVESTIGATION
+                     (§3 daily-regime-per-pair-gate
+                     removal):
+                     (1) Introduced 0211003 dv1_0
+                         04-05-2026, pre-OI-NEW-001
+                         architecture where daily
+                         regime was per-pair Call C
+                         result.
+                     (2) Problem solved: pair could
+                         not enter READY without
+                         per-pair Call C regime.
+                     (3) Evidence problem gone:
+                         OI-NEW-001 + DEFECT-SS-004
+                         moved regime ownership to
+                         mod:Regime_Engine system-
+                         wide; 0500000 dv1_75 AR-049
+                         + 1011014 dv1_8 confirm.
+                     (4) Loss-prevention preserved:
+                         Gate 3 pipeline regime gate
+                         blocks entry if daily regime
+                         unavailable. Per-pair READY
+                         gate is redundant with Gate
+                         3 protection.
+
+                     DD-001/DD-002 DIAGRAMS-AS-
+                     CANONICAL COMPLIANCE: this
+                     amendment is prose-follows-
+                     diagram. 0500000 dv1_75 AR-049
+                     + AR-056 are the canonical
+                     encoding; this prose now matches.
+                     0211003 is AA=02 (Operations);
+                     DD-012 SCOPE is AA=04/06/07/08/
+                     10 — 0211003 is OUT OF DD-012
+                     SCOPE per TB00000 v2_38 §4.5
+                     DD-012.
+
+                     PARENT CHAIN COMPLIANCE: 0211003
+                     instance -> 0210000 Operations_
+                     CIATS_Anchor -> 0200000
+                     Operations domain -> 0000000
+                     Ethics_and_Safety domain. Chain
+                     unbroken.
+
+  dv1_0  04-05-2026  Initial document. Complete
+                     startup and shutdown procedure.
+                     Three pair states defined
+                     (WARM_UP, READY, BLOCKED). 10-
+                     step startup sequence (SS-START-
+                     001 through SS-START-010) per
+                     AR-049. Step 1: Status API check.
+                     Step 2: WS token. Step 3: Public
+                     WS + subscribe. Step 4:
+                     Instrument snapshot + pair
+                     states. Step 5: Private WS +
+                     executions + balances +
+                     portfolio_baseline_USD. Step 6:
+                     snap_orders reconciliation,
+                     INCOMPLETE_PROTECTION rule, REST
+                     fallback. Step 7: Ticker restore
+                     per position state. Step 8: REST
+                     warm-up GetOHLCData (3 calls per
+                     pair). Step 9: First READY pair
+                     + READY=1. Step 10: Continuous
+                     operation + daily regime
+                     refresh. Five reconnection
+                     invariants (portfolio_baseline_
+                     USD, drawdown_pct, system_state,
+                     gap-closed positions, discarded
+                     candles). Shutdown procedure:
+                     normal (SS-STOP-001), with open
+                     positions (SS-STOP-002), crash/
+                     watchdog (SS-STOP-003), Full
+                     Halt (SS-STOP-004). DMS
+                     prohibition stated. Hard rules
+                     HR-SS-001 through HR-SS-010
+                     defined.
+
+============================================================
+END OF DOCUMENT
+============================================================

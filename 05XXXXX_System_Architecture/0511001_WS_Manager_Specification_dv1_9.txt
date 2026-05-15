@@ -1,10 +1,10 @@
 DocDCN:     0511001
 DocTitle:   WS_Manager_Specification
-DocVersion: dv1_6
+DocVersion: dv1_9
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511001_WS_Manager_Specification_dv1_6.txt
-DocDate:    05-11-2026
-DocTime:    05:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511001_WS_Manager_Specification_dv1_9.txt
+DocDate:    05-14-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 WS MANAGER SPECIFICATION
@@ -185,6 +185,227 @@ Primary outputs:
   All REST calls via aiohttp (AR-025). asyncio.gather()
   for parallel calls across different pairs. asyncio.sleep
   (1.1) between sequential calls to same pair (AR-036).
+
+3.4 Connection Template and Application Ping
+
+  WM-CONN-002  Connection template applies to ALL
+               connections (every public shard 0..N_conns-1,
+               the private connection, and every reconnect
+               path):
+
+                 from websockets.asyncio.client import connect
+
+                 conn = await connect(
+                     uri,
+                     max_size=10 * 1024 * 1024,  # 10MB (AR-029)
+                     open_timeout=10,             # 10s (AR-029)
+                     max_queue=None,              # Unlimited (AR-058)
+                     ping_interval=None,          # Disabled (AR-059)
+                 )
+
+               All connections at runtime use identical
+               connection parameters. The shard count
+               N_conns is determined at runtime per §3.1.1;
+               there is no hardcoded connection count.
+
+  WM-CONN-005  Application-level JSON ping format (A-7).
+               Every 30 seconds on EACH active connection
+               (every public shard runs its own 30-second
+               ping; private runs its own 30-second ping):
+
+                 {"method": "ping", "req_id": <ping_req_id>}
+
+               Expected response within 10 seconds:
+
+                 {"method": "pong", "req_id": <ping_req_id>}
+
+               No pong in 10s on a given connection: log
+               PING_TIMEOUT (level=ERROR, with shard_index
+               or "private"), reconnect that connection
+               ONLY (per §11 per-shard / private reconnect
+               semantics). Application JSON ping is the
+               SOLE keepalive; library TCP PING frames are
+               disabled per WM-CONN-004 / AR-059. Zombie
+               detection (A-8) is an independent health
+               check per §7.2; both must be active.
+
+3.5 Token Management and REST Private-Call Signing
+    (AR-035, AR-060)
+
+  WM-TOKEN-001  WS auth token valid 900 seconds (15
+                minutes). Acquire fresh token at startup
+                (Step 1 of §4.2) and on EVERY reconnect
+                via REST GetWebSocketsToken. Call MUST
+                be signed per WM-REST-SIGN-001.
+
+  WM-TOKEN-002  Use TRADE API key (not DATA key) for
+                token acquisition. Token grants private
+                WS access.
+
+  WM-TOKEN-003  Token stored as instance variable. Never
+                persisted to disk. Regenerate on every
+                reconnect — do not reuse expired tokens.
+
+  WM-REST-SIGN-001  Every private Kraken REST call made
+                    by WS Manager MUST carry both the
+                    API-Key header and the API-Sign
+                    header. Attaching only API-Key
+                    (without API-Sign) is a defect and
+                    MUST fail code review. Kraken rejects
+                    every such request with EAPI:Invalid
+                    key. Authoritative contract: 0411002
+                    Kraken_REST_API_Specification dv1_1
+                    REST-AUTH-001 and REST-AUTH-003.
+                    Private endpoints currently called by
+                    WS Manager under this rule:
+                      /0/private/GetWebSocketsToken
+                        (WM-TOKEN-001)
+                      /0/private/OpenOrders
+                        (executions gap fallback, AR-035)
+                      /0/private/Balance
+                        (balances gap fallback, AR-035)
+                    Any private endpoint added in future
+                    versions MUST go through the same
+                    signing path.
+
+  WM-REST-SIGN-002  The signature MUST be computed per
+                    the exact formula mandated by 0411002
+                    REST-AUTH-001:
+
+                      message   = URI_path +
+                                  SHA256(nonce +
+                                         POST_data_string)
+                      signature = HMAC-SHA512(
+                                    message,
+                                    base64_decode(api_secret))
+                      API-Sign  = base64_encode(signature)
+
+                    URI_path is the path segment only
+                    (e.g. "/0/private/GetWebSocketsToken"),
+                    not the full URL. POST_data_string
+                    is the urlencoded body (e.g.
+                    "nonce=1700000000000"). nonce is a
+                    millisecond epoch string,
+                    monotonically increasing per the
+                    constraint in REST-AUTH-007.
+                    Implementation MUST live in a single
+                    private helper on WSManager:
+
+                      _sign_rest_request(
+                        url_path: str,
+                        data: dict,
+                        api_secret: str,
+                      ) -> tuple[str, str]
+
+                    returning (post_data_string,
+                    signature_b64). The helper is the
+                    ONLY place in the code base where
+                    Kraken REST signing is implemented.
+                    Call sites invoke the helper; they
+                    do not inline the algorithm.
+
+  WM-REST-SIGN-003  The body transmitted to Kraken MUST
+                    be the exact post_data_string
+                    returned by _sign_rest_request — not
+                    the source dict. Any drift between
+                    the signed body and the transmitted
+                    body (e.g. re-urlencoding the dict
+                    a second time, re-ordering keys,
+                    re-typing nonce) breaks the
+                    signature and Kraken returns
+                    EAPI:Invalid key. Call-site pattern:
+
+                      data = {"nonce": str(int(
+                               time.time() * 1000))}
+                      post_data, signature = \
+                          self._sign_rest_request(
+                              url_path, data, trade_secret)
+                      resp = await session.post(
+                          f"{REST_BASE_URL}{url_path}",
+                          headers={
+                              "API-Key": trade_key,
+                              "API-Sign": signature,
+                              "Content-Type":
+                                "application/x-www-form-urlencoded",
+                          },
+                          data=post_data,
+                      )
+
+                    All call sites MUST follow this
+                    pattern verbatim. Deviation is a
+                    defect (originating instance:
+                    DEFECT-WM-REST-SIGN-001, OI-041,
+                    corrected dv1_22 of the prior
+                    coding spec).
+
+3.6 ShardState Dataclass Layout
+
+  WM-SHARD-003  SHARD DATA STRUCTURE. Each public WS
+                shard is represented by a WSShard
+                object with at minimum these fields:
+
+                  class WSShard:
+                      shard_index: int
+                      connection: websockets connection
+                      connection_id: int  # from status ack
+                      symbols: List[Pair]  # owned symbols
+                      last_real_data_time: float
+                      last_pong_time: float
+                      pair_states: Dict[Pair, PairState]
+                      # PairState enum:
+                      #   INITIAL, SUBSCRIBED,
+                      #   DATA_PENDING, DATA_READY
+
+                The WSManager holds:
+
+                  shards: List[WSShard]   # length N_conns
+                  pair_to_shard_index: Dict[Pair, int]
+                  private_connection: WSConnection or None
+                                      # None in paper mode
+
+                pair_to_shard_index is the lookup used
+                by per-pair subscribe routing
+                (WM-SHARD-005 in 1011002) and per-pair
+                inbound dispatch (WM-SHARD-006). The
+                PairState enum is the subscription
+                lifecycle state machine per §5.6
+                WM-PS-001..006 (population mechanics).
+
+3.7 run() TaskGroup Exception Extraction
+
+  WM-RUN-001  run() exception handling MUST extract
+              sub-exceptions from ExceptionGroup
+              (Python 3.11+ asyncio.TaskGroup raises
+              ExceptionGroup on task failure — str(exc)
+              only shows the outer wrapper message,
+              permanently losing the actual root
+              cause).
+
+              Required implementation in the except
+              block of run():
+
+                import traceback
+
+                tb_str = traceback.format_exc()
+                sub_msgs: list[str] = []
+                if isinstance(exc, ExceptionGroup):
+                    for i, sub in enumerate(exc.exceptions):
+                        sub_tb = "".join(
+                            traceback.format_tb(sub.__traceback__)
+                        )
+                        sub_msgs.append(
+                            f"[{i}] {type(sub).__name__}: {sub} "
+                            f"| tb: {sub_tb}"
+                        )
+                log WS_MGR_FATAL (CRITICAL) with fields:
+                  error:          str(exc)
+                  traceback:      tb_str[-2000:]
+                  sub_exceptions: sub_msgs or None
+
+              This is the ONLY correct way to surface
+              the actual TaskGroup crash cause.
+              DEFECT-WM-CRASH-001 was caused by the
+              absence of this extraction.
 
 ============================================================
 4. STARTUP SEQUENCE
@@ -576,6 +797,137 @@ Primary outputs:
   req_id_registry:             dict[int, RequestRecord]
                                req_id → {method, timestamp, symbol}
 
+5.6 Pair Status Cache Population Mechanics
+
+  Formal contracts governing pair_status cache + universe
+  construction from the Kraken WS v2 instrument channel
+  snapshot at startup Step 3 + AR-070 silent-narrowing
+  guard. Cascaded into the coding spec at 1011002 dv1_26
+  §9.1 (source).
+
+  WM-PS-001  PAIR_STATUS CACHE BUILD.
+             Build pair_status cache from the instrument
+             channel snapshot at startup Step 3.
+
+  WM-PS-002  MONITORED_UNIVERSE POPULATION CRITERIA.
+             Populate monitored_universe from the
+             instrument snapshot per ALL THREE criteria
+             (all three must pass):
+               (1) quote_currency in {"USD", "USDC",
+                   "USDT"} (D-03: full universe, no
+                   quote-currency exclusions per
+                   AR-070 amended). quote_currency is
+                   DERIVED from the symbol name —
+                   symbol.split("/")[1] — NOT read
+                   from the instrument snapshot field
+                   (which is not reliably provided by
+                   Kraken WS v2; see WM-PS-006 +
+                   DEFECT-SS-008).
+               (2) status == "online".
+               (3) 24h volume >= min_volume_usd_daily,
+                   obtained from REST Ticker
+                   (WM-LIQ-001) NOT the instrument
+                   channel (instrument channel provides
+                   no volume data; HR-WM-022 + DEFECT-
+                   SS-006).
+
+  WM-PS-003  NO TOP-N CAP.
+             Universe size is uncapped. ALL pairs
+             satisfying WM-PS-002 (1) + (2) + (3)
+             become members of monitored_universe.
+             D-08 LOCKED: Top-N universe cap RETIRED.
+             Cascaded from 0500000 dv1_21 §8 AR-070
+             + 0711003 dv1_3 AS-002. BTC/USD ALWAYS
+             included regardless of volume ranking
+             per AR-074 (include even if BTC/USD
+             does not meet min_volume_usd_daily).
+             Volume ranking is preserved for
+             downstream consumers (Selection
+             Controller volume tiers) but is NOT
+             used to truncate the universe. The
+             CIATS parameter monitored_universe_n
+             is RETIRED and MUST NOT appear in
+             code, config, or pair_cache logic.
+
+  WM-PS-004  PER-PAIR SNAPSHOT CAPTURE (AR-028).
+             Per pair, capture from the instrument
+             snapshot:
+               price_increment: dict[str, Decimal]
+               qty_increment:   dict[str, Decimal]
+               qty_min:         dict[str, Decimal]
+               cost_min:        dict[str, Decimal]
+             Convert ALL values via Decimal(str(value)).
+             Used for all order rounding and validation.
+
+  WM-PS-005  PIPELINE SKIP FOR NON-ONLINE PAIRS.
+             Skip pipeline evaluation for pairs whose
+             pair_status is not "online". Also skip:
+               reduce_only, work_in_progress,
+               delisted, limit_only.
+
+  WM-PS-006  QUOTE_CURRENCY DERIVATION RULE.
+             quote_currency in pair_cache MUST be
+             derived from the symbol name by splitting
+             on "/" at index [1]. NEVER read from the
+             Kraken WS v2 instrument snapshot field.
+             Rationale: Kraken WS v2 instrument
+             snapshot does NOT provide a
+             "quote_currency" field (confirmed
+             DEFECT-SS-008). pair.get("quote_currency",
+             "") always returns "" causing candidates =
+             [] in _warm_up_all_pairs() and
+             _build_monitored_universe() — all three
+             USD, USDC, and USDT (D-03) filters
+             silently produce no results. Consequence:
+             LIQUIDITY_SEED_FAILED on every startup;
+             Gate 2 blocks all entries.
+             Required derivation:
+               symbol.split("/")[1] if "/" in symbol
+                 else ""
+             All Kraken WS v2 symbols are "BASE/QUOTE"
+             format (e.g., "BTC/USD", "ETH/USDC",
+             "BTC/USDT"). The quote asset is ALWAYS
+             the right side of "/". pair_cache stores
+             this derived value under key
+             "quote_currency" for downstream use.
+
+  WM-PS-008  AR-070 SILENT-NARROWING PROHIBITION.
+             tradeable_universe (the canonical universe
+             set) MUST NOT be mutated outside the
+             explicit Universe Re-evaluation procedure
+             (CIATS-owned, cadence TBD). Specifically
+             prohibited code patterns include
+             tradeable_universe.remove(pair), in-place
+             comprehension reassignments, slice
+             truncations such as tradeable_universe[
+             :max_concurrent] or tradeable_universe[:N],
+             and IMPLICIT narrowing in loops where
+             pairs are silently skipped without
+             explicit state marking.
+             Required pattern for runtime data
+             availability: tradeable_universe stays
+             FULL universe always; per-pair state is
+             held SEPARATELY in shard.pair_states
+             per WM-PS-007 + WM-SHARD-010. Signal
+             evaluation reads BOTH the universe AND
+             the state, but NEVER mutates the
+             universe.
+             Any code path that reduces the size of
+             tradeable_universe outside Universe
+             Re-evaluation is a session-halting
+             AR-070 defect.
+             Originating defect: AR-070 silent-
+             narrowing in earlier ws_manager.py
+             versions where DATA_PENDING-equivalent
+             pairs were silently dropped from the
+             subscribe set, producing a degraded
+             universe that masqueraded as the full
+             D-03 universe.
+
+  (WM-PS-007 PER-PAIR DATA-AVAILABILITY STATE MACHINE
+  is covered by HR-WM-030 in §14 and §5.1 connection-
+  health-related state; not re-stated here.)
+
 ============================================================
 6. CANDLE-CLOSE DETECTION (AR-045)
 ============================================================
@@ -716,43 +1068,163 @@ ALL 10 values explicitly (AR-023):
 
   use reason field (not cancel_reason — deprecated, AR-022).
 
-8.1 TP Partial Fill Handling (AR-066)
+8.1 TP Partial Fill Handling (AR-066, WM-EC-004..008)
 
-  When exec_type=trade for a TP order (identified by
-  order_id matching TP order_id in Position Mirror):
-    remaining_qty = tp_order_qty - cum_qty
-    Update Position Mirror qty to remaining_qty
-    Amend emergSL to remaining_qty via amend_order
-      (NOT cancel+resubmit — saves rate counter + preserves
-      queue position)
-    Rate counter: amend_order (+1 fixed) vs cancel_order
-      (+8 <5s) + add_order (+1) = +9 total — amend saves 8.
-    If remaining_qty < qty_min OR remaining_qty * bid < cost_min:
-      cancel emergSL → immediate market sell → clear Mirror
-  Fire CIATS Trade Outcome Bus ONCE on full position close
-  (aggregate all partial fill data). Not on each partial.
-  On exec_type=filled (full TP): L1b logic unchanged.
+  WM-EC-004  TP partial fill occurs when exec_type=trade
+             for a TP order (identified by matching
+             order_id against tp_order_id in Position
+             Mirror).
 
-8.2 Entry Partial Fill + Expiry/Cancel (AR-054)
+  WM-EC-005  Identification sequence on trade exec_type:
+             (1) Check order_id against tp_order_id in
+                 Position Mirror for all open positions.
+             (2) If TP match found → PARTIAL_TP_FILL path.
+             (3) If entry match → entry partial update
+                 path (§8.2 / WM-DISP-021).
+
+  WM-EC-006  Partial TP fill sequence:
+               remaining_qty = tp_order_qty - cum_qty
+               Update Position Mirror qty to remaining_qty.
+               Amend emergSL to remaining_qty via
+                 amend_order (NOT cancel+resubmit).
+               If remaining_qty < qty_min OR
+                  remaining_qty * bid < cost_min:
+                 cancel emergSL → dispatch_market_sell
+                 → clear Position Mirror.
+               Log TP_PARTIAL_FILL with filled_qty,
+                 remaining_qty, avg_exit_price,
+                 emergsl_amended_to.
+
+  WM-EC-007  Why amend_order, NOT cancel+resubmit:
+               cancel_order (emergSL <5s): +8 rate units.
+               add_order (new emergSL):    +1 rate unit.
+               Total cancel+resubmit:      +9 rate units.
+               amend_order (resting >300s): +1+1 = +2.
+             Saves 7 rate counter units per TP partial
+             fill. Also preserves queue position on
+             Kraken book — important during high-
+             volatility events when rate limits may
+             already be under pressure.
+
+  WM-EC-008  Full TP fill (exec_type=filled for TP):
+             Existing L1b logic unchanged. Cancel
+             emergSL, clear Position Mirror, fire CIATS
+             Trade Outcome Bus. No qty amendment needed.
+             Fire CIATS Trade Outcome Bus ONCE per full
+             position close — aggregate all partial fill
+             data. NOT on each individual partial fill.
+
+8.2 Entry Partial Fill + Expiry/Cancel (AR-054, WM-DISP-020..023)
 
   GTD post_only entry orders can receive partial fills
-  before expiry or cancel. When exec_type=="expired" OR
-  exec_type=="canceled" AND cum_qty > 0 (REAL position,
-  no TP, no emergSL):
-    CASE A (expired, cum_qty > 0) or CASE B (canceled, cum_qty > 0):
-      1. Clear Pending Order Registry for this cl_ord_id.
-      2. Extract qty=Decimal(str(cum_qty)),
-         entry=Decimal(str(avg_price)).
-      3. Validate qty >= qty_min AND qty*entry >= cost_min.
-         If fails: dispatch market sell immediately.
-      4. Recalculate TP and emergSL from actual entry price
-         using current ATR(14) and mae_mult / sl_mult.
-         Verify net_gain = net_loss * 1.5 (sacred R:R).
-      5. Dispatch batch_add: TP limit + emergSL stop.
-      6. Enter Position Mirror with cum_qty and avg_price.
-      7. Log ENTRY_PARTIAL_FILL_PROTECTED.
-    CASE C (expired or canceled, cum_qty == 0):
-      No fill. Clear registry. Log. No position.
+  before expiry or cancel.
+
+  WM-DISP-020  Detection trigger:
+                 CASE A: exec_type=="expired"  AND cum_qty > 0
+                 CASE B: exec_type=="canceled" AND cum_qty > 0
+
+  WM-DISP-021  CASE A and CASE B handler:
+               (1) Clear cl_ord_id from Pending Order
+                   Registry.
+               (2) Extract qty=Decimal(str(cum_qty)),
+                   entry=Decimal(str(avg_price)).
+               (3) Validate qty >= qty_min AND
+                   qty*entry >= cost_min. If fails:
+                   dispatch_market_sell(symbol, qty).
+                   Log and return. No position created.
+               (4) Recalculate TP and emergSL from ACTUAL
+                   entry (fill price, not limit price):
+                     mae_pct  = ATR(14) * mae_mult / entry
+                     net_loss = mae_pct + 0.0016 + 0.0026
+                     net_gain = net_loss * 1.5  ← SACRED R:R
+                     Verify net_gain = net_loss * 1.5.
+               (5) Dispatch batch_add: TP limit at
+                   gross_target price + emergSL stop at
+                   sl_trigger_price. Mandatory: deadline,
+                   cl_ord_id, stp_type, emergSL triggers
+                   block.
+               (6) Update Position Mirror with cum_qty
+                   and avg_price.
+               (7) Log ENTRY_PARTIAL_FILL_PROTECTED.
+
+  WM-DISP-022  CASE C: exec_type==expired OR canceled
+               AND cum_qty == 0. No fill. Clear Pending
+               Order Registry. Log. No position. No
+               action.
+
+  WM-DISP-023  Entry partial fill protection preserves
+               sacred 1:1.5 R:R. All TP/emergSL
+               calculations use ACTUAL fill price
+               (cum_qty, avg_price) — not the original
+               limit price.
+
+8.3 amended exec_type Handler (AR-057, WM-DISP-024..026)
+
+  WM-DISP-024  amended is in the exec_type dispatch
+               table. TothBot V2 never sends amend_order
+               to amend its own orders during normal
+               operation. (emergSL qty amendment from TP
+               partial fill is sent by WM but received as
+               amend confirmation, not as an inbound
+               amended exec_type.) Any inbound amended
+               event = UNEXPECTED.
+
+  WM-DISP-025  handle_amended(event):
+                 Log UNEXPECTED_ORDER_AMENDED (CRITICAL)
+                   with order_id, cl_ord_id,
+                   new_limit_price, new_qty.
+                 Alert HIGH-priority operator notification.
+                 Cross-reference Position Mirror: if
+                   order_id matches a tp_order_id, log
+                   AMENDED_ORDER_IS_TP (CRITICAL) and
+                   alert "sacred R:R may be violated".
+                   If order_id matches emergsl_order_id,
+                   log AMENDED_ORDER_IS_EMERGSL
+                   (CRITICAL) and alert "crash protection
+                   altered".
+
+  WM-DISP-026  NO auto-correction on amended. TothBot
+               does not attempt to re-amend back to
+               original params. Amendment source
+               unknown; auto-correction could conflict
+               with intentional operator action. Bill
+               must review and act. Pipeline continues
+               normally; existing positions protected
+               as-is until Bill intervenes.
+
+8.4 last_qty and last_price Capture (AR-061, WM-EXE-014..016)
+
+  WM-EXE-014  Capture both fill-level and cumulative
+              values on every exec_type=trade event:
+                last_qty_decimal   = Decimal(str(
+                                       event.get("last_qty", 0)))
+                last_price_decimal = Decimal(str(
+                                       event.get("last_price", 0)))
+                cum_qty_decimal    = Decimal(str(event["cum_qty"]))
+                avg_price_decimal  = Decimal(str(event["avg_price"]))
+
+  WM-EXE-015  Data usage:
+                Position Mirror and sizing: use cum_qty,
+                  avg_price.
+                Fill-level logging and CIATS analytics:
+                  use last_qty, last_price.
+                Slippage analysis (CIATS EWMA Monitor):
+                  slippage_pct = (last_price -
+                                  intended_price)
+                                  / intended_price
+              Feeds into CIATS rejection_rate and
+              execution quality monitoring streams.
+
+  WM-EXE-016  Log FILL_EVENT with all four values:
+                logger.log("FILL_EVENT",
+                    order_id=order_id,
+                    cl_ord_id=cl_ord_id,
+                    symbol=symbol,
+                    last_qty=last_qty_decimal,
+                    last_price=last_price_decimal,
+                    cum_qty=cum_qty_decimal,
+                    avg_price=avg_price_decimal,
+                    exec_type="trade")
 
 ============================================================
 9. OUTBOUND WS MESSAGES
@@ -790,6 +1262,33 @@ ALL 10 values explicitly (AR-023):
                 counter maximum. Use for Full Halt ONLY
                 (count sufficient; rate bypass ensures
                 execution when rate-limited). (AR-019)
+
+  WM-CAN-001  INDIVIDUAL CANCEL — PER-ORDER ACK TRACKING.
+              cancel_order is the individual-cancel WS
+              method. Per-order ACK tracking is REQUIRED
+              for cancel timeout fallback resolution.
+              DO NOT use batch_cancel for Layer 2 MAE
+              exit cancel sequences — batch_cancel returns
+              a single count response and provides no
+              per-order ACK basis for timeout-fallback
+              decisions.
+
+              Resolution sequence on cancel_order dispatch
+              (cancel_timeout_window = 5.0s starting,
+              CIATS-owned per TB00000 v2_38 §9.17):
+                On ACK received: confirmed canceled →
+                  proceed to sell (Layer 2 market sell).
+                No ACK in timeout window: check executions
+                  channel state. Confirmed canceled in
+                  executions feed → proceed to sell.
+                  State unknown → alert operator, hold
+                  position, do NOT issue market sell.
+              NEVER issue market sell with ambiguous order
+              state (prevents double-sell on stale TP
+              order racing the cancel).
+
+              Cascaded into coding spec at 1011002 dv1_26
+              §6.6 WM-CAN-001 (source).
 
 9.5 Dead Man's Switch — EXPLICITLY PROHIBITED (AR-055)
 
@@ -913,6 +1412,158 @@ Fatal reconnect (per shard or private): 10 attempts over
     or "private") →
   systemd restarts TothBot process → full startup sequence
   (full re-shard).
+
+11.1 Hard-Rule Identifier Map (WM-RECONNECT-002..010, 014,
+     017, 018)
+
+  WM-RECONNECT-002  Fatal reconnect threshold:
+                    MAX_RECONNECT_ATTEMPTS = 10 over
+                    120 seconds without success →
+                      Log FATAL_RECONNECT_FAILURE
+                        (CRITICAL).
+                      Alert operator (CRITICAL).
+                      systemd restarts TothBot process
+                        → full startup sequence.
+
+  WM-RECONNECT-003  Reconnect Step 1 — acquire new WS
+                    token via REST GetWebSocketsToken.
+                    Fresh token on EVERY reconnect
+                    (WM-TOKEN-001 / §3.5). NEVER reuse
+                    a prior token.
+
+  WM-RECONNECT-004  Reconnect Step 2 — connect public
+                    shard (or private) with standard
+                    connection parameters per WM-CONN-002
+                    template (§3.4). Identical kwargs to
+                    startup connection.
+
+  WM-RECONNECT-005  Reconnect Step 3 — subscribe all
+                    channels with same parameters as
+                    startup Steps 2-5:
+                      instrument, status, ohlc(5) [NOT
+                        ohlc(60) — Kraken rejects
+                        second ohlc interval per
+                        symbol, HR-WM-021].
+                      ticker (per-pair mode as before).
+                      executions (with all flags
+                        including order_status:true).
+                      balances.
+                    Parse subscription ACK warnings[].
+                    Extract new maxratecount from
+                    executions ACK. Log connection_id
+                    from status channel.
+
+  WM-RECONNECT-006  Reconnect Step 4 — process
+                    snap_orders from executions
+                    subscription. Compare against pre-
+                    disconnect Position Mirror. Detect
+                    gap-closed positions.
+
+  WM-RECONNECT-007  Reconnect Step 5 — for each
+                    position closed during gap:
+                      Fire CIATS Trade Outcome Bus with
+                        available data (partial — no
+                        exit price precision).
+                      Log GAP_CLOSED_POSITION.
+
+  WM-RECONNECT-008  Reconnect Step 6 — reconcile
+                    Pending Order Registry. Remove
+                    entries not found in snap_orders.
+                    Add new entries found with
+                    pending_new/new status that were
+                    dispatched before disconnect.
+
+  WM-RECONNECT-009  Reconnect Step 7 — reset sequence
+                    counters:
+                      executions_last_seq = 0
+                      balances_last_seq = 0
+                    DO NOT gap-detect across sessions.
+                    Sequence tracking is per-
+                    subscription only.
+
+  WM-RECONNECT-010  Reconnect Step 8 — resume ticker
+                    subscriptions:
+                      event_trigger:bbo for open-
+                        position pairs.
+                      event_trigger:trades for no-
+                        position pairs.
+
+  WM-RECONNECT-014  ATR/EMA caches: PRESERVED unless
+                    gap > 15 minutes (stale threshold).
+                    If gap > 15m: re-seed from REST
+                    GetOHLCData per pair (same as
+                    startup Steps 7a-7b). Otherwise
+                    indicator state continues from
+                    pre-disconnect cache.
+
+  WM-RECONNECT-017  _initiate_reconnect() retry
+                    schedule:
+                      MAX_RECONNECT_ATTEMPTS    = 10
+                      RECONNECT_BACKOFF_BASE_SEC  = 1.0 s
+                      RECONNECT_BACKOFF_CAP_SEC   = 30.0 s
+                      RECONNECT_BACKOFF_FACTOR    = 2.0
+                    Matches WM-RECONNECT-002 (10
+                    attempts, cap 30s). Worst-case
+                    wall time across all attempts:
+                      1 + 2 + 4 + 8 + 16 + 30 + 30 +
+                      30 + 30 + 30 = 181s
+                    (upper bound on sleep — actual
+                    attempt latency adds).
+                    FATAL_RECONNECT_FAILURE MUST be
+                    raised ONLY after all N attempts
+                    have been exhausted. Each failed
+                    attempt logs
+                    RECONNECT_ATTEMPT_FAILED
+                    (level=WARN, non-fatal). Each
+                    successful reconnect logs
+                    RECONNECT_COMPLETE (level=INFO)
+                    with "attempts" count. All four
+                    numbers are module-level constants
+                    declared at the top of
+                    ws_manager.py — no magic numbers.
+
+  WM-RECONNECT-018  The _main_loop() TaskGroup MUST
+                    receive ONLY truly fatal
+                    conditions. Transient WS
+                    disconnect errors
+                    (ConnectionClosedError,
+                    ConnectionClosedOK,
+                    ConnectionResetError) MUST be
+                    fully handled at loop level. If
+                    the TaskGroup ever observes any
+                    of the three transient types as a
+                    sub-exception, that is a loop-
+                    level catch defect.
+
+                    Implementation gate:
+                      self._reconnect_done_event:
+                        asyncio.Event
+                    Cleared by _initiate_reconnect on
+                    entry; set in its finally block
+                    on every exit path (success,
+                    fatal, or re-entry). Concurrent
+                    disconnect detection by both recv
+                    loops collapses to a single
+                    reconnect cycle: whichever loop
+                    reaches _initiate_reconnect first
+                    drives the retry schedule; the
+                    other awaits the event and
+                    returns without starting a second
+                    cycle.
+
+                    Terminal flag:
+                      self._fatal_reconnect_failure:
+                        bool
+                    Set by _initiate_reconnect
+                    immediately before raising the
+                    final RuntimeError. Prevents
+                    siblings that awaken from the
+                    event wait from starting a fresh
+                    retry cycle while TaskGroup
+                    teardown is in flight. Recv
+                    loops and send helpers check
+                    this flag and short-circuit when
+                    set.
 
 ============================================================
 12. INTERFACES
@@ -1323,6 +1974,144 @@ Fatal reconnect (per shard or private): 10 attempts over
                           per-module ledger was
                           mutated.
 
+13.7.1 Hard-Rule Identifier Map (WM-PAPER-LEDGER-002,
+       -003, -004)
+
+  WM-PAPER-LEDGER-002  ENTRY-FILL DEBIT. In
+                       _simulate_entry_fill(cl_ord_id,
+                       symbol, price, qty), AFTER
+                       position_mirror is populated
+                       and BEFORE invoking the
+                       Execution Engine entry
+                       callback:
+
+                         entry_cost = qty * price
+                         entry_fee  = entry_cost *
+                                      FEE_MAKER_PCT
+                         spot_usd_balance_<module>
+                                  -= (entry_cost +
+                                      entry_fee)
+
+                       PositionRecord MUST capture
+                       fees_entry_usd = entry_fee for
+                       downstream exit P/L
+                       computation (consumed by Exit
+                       Controller's _close_position
+                       per WM-PAPER-EXIT-001..004).
+                       Module routing: side=long →
+                       spot_usd_balance_long;
+                       side=short →
+                       spot_usd_balance_short. Cross-
+                       module writes PROHIBITED per
+                       TB00000 v2_29 §9.6.
+                       Rationale: paper entry uses
+                       limit order at limit price;
+                       limit-order fills incur maker
+                       fee per Kraken fee schedule
+                       (FEE_MAKER_PCT = Decimal
+                       ("0.0016") per 0411003).
+                       Log emission per
+                       WM-PAPER-LEDGER-004.
+
+  WM-PAPER-LEDGER-003  EXIT-FILL CREDIT. Triggered by
+                       paper exit paths per
+                       WM-PAPER-EXIT-001..004. The
+                       exit path computes exit_price
+                       and fees_exit, applies the
+                       ledger credit:
+
+                         exit_proceeds = qty *
+                                         exit_price
+                         spot_usd_balance_<module>
+                                  += (exit_proceeds -
+                                      fees_exit)
+
+                       Fee schedule by exit type:
+                         TP fill (limit, maker):
+                           fees_exit = exit_proceeds *
+                                       FEE_MAKER_PCT
+                         emergSL trigger / Layer 2
+                         MAE breach / Layer 1 signal
+                         exit / time expiry / regime
+                         exit (market sell, taker):
+                           fees_exit = exit_proceeds *
+                                       FEE_TAKER_PCT
+                       FEE_MAKER_PCT = Decimal
+                       ("0.0016"). FEE_TAKER_PCT =
+                       Decimal("0.0026"). Order of
+                       operations:
+                         (1) Compute exit_price +
+                             fees_exit (in
+                             ws_manager.py paper-exit
+                             code path).
+                         (2) Apply ledger credit per
+                             this rule.
+                         (3) Pass exit_price +
+                             fees_exit to Exit
+                             Controller's
+                             _close_position(...) per
+                             WM-PAPER-EXIT-001..004.
+                         (4) Exit Controller emits
+                             TRADE_CLOSE log record
+                             with full P/L payload.
+                         (5) Exit Controller clears
+                             position_mirror,
+                             releases semaphore,
+                             updates Selection
+                             Controller state.
+                       Ledger update MUST occur
+                       BEFORE _close_position() so
+                       that any downstream drawdown
+                       computation triggered during
+                       position close reads a
+                       consistent ledger state.
+
+  WM-PAPER-LEDGER-004  PAPER_LEDGER_UPDATED LOG
+                       EMISSION. Every ledger
+                       mutation (initialization,
+                       entry-fill debit, exit-fill
+                       credit) emits a structured log
+                       record:
+
+                         event:       PAPER_LEDGER_
+                                      UPDATED
+                         level:       INFO
+                         component:   WS_MGR
+                         event_type:  "INIT" |
+                                      "ENTRY_FILL" |
+                                      "EXIT_FILL"
+                         module:      "Long_Module" |
+                                      "Short_Module"
+                         side:        "long" | "short"
+                         symbol:      trading pair
+                                      (or "" for INIT)
+                         delta_usd:   Decimal — net
+                                      change to
+                                      spot_usd_balance
+                                      _<module>
+                                      (negative for
+                                      debit, positive
+                                      for credit)
+                         fee_usd:     Decimal — fee
+                                      component of
+                                      the transaction
+                         new_balance: Decimal —
+                                      spot_usd_balance
+                                      _<module> AFTER
+                                      the mutation
+                         exit_reason: str — for
+                                      EXIT_FILL
+                                      events; "" for
+                                      INIT and
+                                      ENTRY_FILL
+
+                       CIATS log-file polling reads
+                       PAPER_LEDGER_UPDATED records
+                       to verify paper-mode capital
+                       evolution matches live-mode
+                       balances-channel evolution
+                       wherever physically possible.
+
 13.8 Paper Exit Routing Through Exit Controller
      (NEW dv1_5)
 
@@ -1431,6 +2220,91 @@ Fatal reconnect (per shard or private): 10 attempts over
     ledger update, then call Exit Controller for the
     rest of the close sequence.
 
+13.8.1 dispatch_market_sell PAPER MODE Return Path
+       (WM-PAPER-EXIT-004)
+
+  WM-PAPER-EXIT-004  The dv1_25 paper branch of
+                     dispatch_market_sell() directly
+                     popped the position from
+                     position_mirror and returned.
+                     This is RETIRED in dv1_26 (and
+                     in this spec at dv1_5+ for the
+                     paper-routes-through-EC path).
+                     New behavior:
+
+                       async def dispatch_market_sell(
+                           self, symbol, qty,
+                       ) -> tuple[Decimal, Decimal]:
+                           """
+                           Returns (exit_price,
+                           fees_exit) for paper mode
+                           so Exit Controller can
+                           receive the realized
+                           values for
+                           _close_position. Live-mode
+                           return is also
+                           (exit_price, fees_exit)
+                           computed from the actual
+                           fill — uniform return
+                           contract per HR-WM-033 /
+                           1011005 dv1_3 EC-MS-001.
+                           """
+                           if self.paper_mode:
+                               bid = self.latest_bid.get(
+                                   symbol, Decimal("0"))
+                               if bid <= Decimal("0"):
+                                   log
+                                     PAPER_MARKET_SELL_NO_BID
+                                     (level=WARN,
+                                      symbol=symbol)
+                                   return (Decimal("0"),
+                                           Decimal("0"))
+                               exit_price = bid
+                               exit_proceeds = qty *
+                                               exit_price
+                               fees_exit = exit_proceeds *
+                                           FEE_TAKER_PCT
+                               # WM-PAPER-LEDGER-003
+                               # exit-fill credit.
+                               spot_usd_balance_<module>
+                                   += (exit_proceeds -
+                                       fees_exit)
+                               log PAPER_LEDGER_UPDATED
+                                   (per
+                                   WM-PAPER-LEDGER-004).
+                               log
+                                 PAPER_MARKET_SELL_SIMULATED
+                                   (level=INFO,
+                                    symbol=symbol,
+                                    qty=qty,
+                                    exit_price=exit_price,
+                                    fees_exit=fees_exit).
+                               return (exit_price,
+                                       fees_exit)
+
+                           # Live path. Live return
+                           # value is computed by
+                           # _market_sell_with_retry
+                           # helper (in
+                           # exit_controller.py) from
+                           # the actual exec_type=trade
+                           # event captured on the
+                           # executions channel.
+
+                     ws_manager.py paper-mode
+                     dispatch_market_sell MUST NOT
+                     directly pop position_mirror;
+                     Exit Controller's
+                     _close_position handles that
+                     after receiving the
+                     (exit_price, fees_exit) tuple.
+                     Module routing is determined by
+                     the position's side attribute
+                     in position_mirror[symbol]:
+                     side=long → spot_usd_balance_
+                     long; side=short →
+                     spot_usd_balance_short.
+
 ============================================================
 14. HARD RULES
 ============================================================
@@ -1474,9 +2348,13 @@ HR-WM-010  cancel_all_orders_after: EXPLICITLY PROHIBITED
 HR-WM-011  portfolio_baseline_USD: set once at startup.
            NEVER updated or reset during operation or on
            reconnect (AR-052). In paper mode: set from
-           config paper_starting_balance (default $1,000
-           per D-05). In live mode: set from snap_orders
-           spot_usd_balance at Step 11.
+           config per-module paper_starting_balance_
+           <module>_usd (paper_starting_balance_long_usd
+           and paper_starting_balance_short_usd; $5,000
+           per-module default per TB00000 v2_29 §9.4 +
+           §9.17 superseding v2_28-era single-pool
+           $1,000 per D-05). In live mode: set from
+           snap_orders spot_usd_balance at Step 11.
 
 HR-WM-012  Pipeline evaluations PROHIBITED during reconnect.
            Candle events queued during reconnect discarded.
@@ -1602,13 +2480,25 @@ HR-WM-031  SUBSCRIBE-COUNT vs MAX-CONCURRENT
            DECOUPLING. The number of pairs subscribed
            on the WS layer is determined by the D-03
            universe filter (~748 pairs at TB00142
-           snapshot). It is NOT bounded by
-           max_concurrent (CIATS-owned position cap).
-           Universe scope ≠ position count. Any code
-           that conflates the two — for example, by
+           snapshot). It is NOT bounded by any
+           per-module position cap. Universe scope ≠
+           position count. (Historical context: prior
+           v2_28-era spec referenced max_concurrent
+           = 20 as a CIATS-owned position cap;
+           max_concurrent was RETIRED at TB00000
+           v2_29 §9.17 — concurrent-position count
+           now emerges arithmetically from
+           wallet_balance ÷ per_trade_size_usd per
+           per-module wallet architecture, with no
+           artificial ceiling. The anti-AR-070 rule
+           below remains load-bearing under the
+           retired-cap regime.) Any code that
+           conflates subscribe-count with any
+           position-count metric — for example, by
            reducing the subscribe set to a small
-           multiple of max_concurrent — is an AR-070
-           silent-narrowing defect.
+           multiple of an inferred or computed
+           position ceiling — is an AR-070 silent-
+           narrowing defect.
 
 HR-WM-032  PAPER LEDGER UPDATE (AMENDED dv1_6 —
            direction-symmetric per TB00000 v2_29
@@ -1723,6 +2613,39 @@ HR-WM-033  PAPER EXITS ROUTE THROUGH EXIT CONTROLLER
            FINDING-TB00147-08 (paper exits bypass
            Exit Controller).
 
+HR-WM-034  OUTBOUND SUBSCRIBE PACING — TOKEN BUCKET
+           (NEW dv1_7 — cluster C4 closure absorbed
+           from 1011002 dv1_26 §17 verbatim per
+           TB00194 §5.2 PROSE-UPDATE-H + DD-012
+           1011002 cascade). Every outbound subscribe
+           to Kraken MUST pass through the process-
+           singleton token bucket per contract:
+           WM-PACE-001 through contract:WM-PACE-010
+           (canonical token-bucket contracts in
+           0500000 D1 governs). There is NO bypass
+           for any subscribe pathway: startup, per-
+           shard reconnect, full-process-restart,
+           universe re-evaluation, ad-hoc, or
+           authenticated-channel are ALL bound by
+           the same bucket. This is the design-level
+           fix for OI-060 (rate-limit storm) per
+           TB00143 STREAM 4 FP/DP analysis.
+           Architecture alone (PATH 2 sharding) does
+           NOT bound IP-level subscribe rate against
+           back-to-back-restart scenarios; only the
+           bucket does. Any code path that emits a
+           Kraken WS subscribe outside the bucket is
+           a session-halting defect. Complementary
+           operational-layer defense at the systemd
+           level: contract:VD-SYS-008 StartLimitBurst
+           = 3 over StartLimitIntervalSec = 600s
+           rolling window caps back-to-back restarts.
+           Loss-prevention property: prevents
+           Kraken IP-level rate-limit storm +
+           Cloudflare 429 cascade → VPS disconnect →
+           missed candle closes → missed signals →
+           market exposure during disconnect.
+
 ============================================================
 15. WHAT TRIGGERS IT
 ============================================================
@@ -1811,6 +2734,227 @@ symbol (where applicable), connection_id, level.
                       WS Manager) — same log schema
                       as live-mode TRADE_CLOSE records.
   ERRORS:             UNKNOWN_MESSAGE_TYPE (WARN), any exception
+
+16.1 Log Event Format Map (PROSE-UPDATE-G —
+     WM-PACE-005, WM-ZOM-001..007, WM-STATUS-001,
+     WM-LIQ-002..011, FILL_EVENT)
+
+  Cross-references log emission rules from 1011002
+  dv1_26 §3.x and §9.6 into the parent spec. Every
+  log identifier below is a contract on the
+  PAYLOAD FIELDS the emitting code path MUST
+  populate; the emitting code paths live in
+  ws_manager.py and are governed by §16 of this
+  spec plus 0511006 Logger_Specification.
+
+  WM-PACE-005    BUCKET STATE LOGGING. Subscribe-rate
+                 token bucket emits:
+                   SUBSCRIBE_PACE_WAIT
+                     (level=DEBUG; fields:
+                      wait_ms, tokens_remaining,
+                      channel, symbol)
+                     — emitted when a subscribe call
+                       waited on the bucket.
+                   SUBSCRIBE_PACE_BATCH_COMPLETE
+                     (level=INFO; fields:
+                      batch_kind ["startup",
+                                  "reconnect",
+                                  "univ_reeval"],
+                      shard_index, total_subscribes,
+                      elapsed_s, mean_rate)
+                     — emitted at end of every
+                       startup / reconnect /
+                       universe-reevaluation
+                       subscribe batch.
+                 These logs are CIATS sole data
+                 source per 0511006 for empirical
+                 validation of WM-PACE-002 starting
+                 values (SUBSCRIBE_RATE_PER_SEC,
+                 SUBSCRIBE_BURST_CAPACITY).
+
+  WM-ZOM-001     Zombie connection class definition.
+                 A WS connection can appear alive
+                 (ping/pong passing) while delivering
+                 no real market data. Upstream stops
+                 sending events without closing the
+                 TCP connection.
+
+  WM-ZOM-002     Track last_real_data_time_public
+                 and last_real_data_time_private
+                 using time.monotonic(). Reset ONLY
+                 on real channel events. MUST NOT
+                 reset on: heartbeat, pong, ACK.
+
+  WM-ZOM-003     Zombie threshold = 90 seconds.
+                 Detection:
+                   if (time.monotonic() -
+                       last_real_data_time > 90):
+                     log ZOMBIE_CONNECTION_DETECTED
+                       (CRITICAL)
+                     alert operator (HIGH)
+                     reconnect immediately
+
+  WM-ZOM-004     Real data events that RESET zombie
+                 timer:
+                   ohlc channel messages
+                   ticker channel messages
+                   instrument channel messages
+                   executions channel messages
+                   balances channel messages
+                   status channel messages
+
+  WM-ZOM-005     Non-resetting events (DO NOT reset
+                 zombie timer):
+                   pong responses
+                   subscription ACK messages
+                   heartbeat-only messages
+
+  WM-ZOM-006     Zombie action sequence:
+                   (1) Log ZOMBIE_CONNECTION_DETECTED
+                       (CRITICAL).
+                   (2) Alert operator (HIGH).
+                   (3) Initiate reconnect sequence
+                       immediately.
+                 Zombie is treated as a connection
+                 failure.
+
+  WM-ZOM-007     Zombie detection remains active
+                 throughout normal operation.
+                 Separate timer per connection
+                 (every public shard and the private
+                 connection tracked independently).
+
+  WM-STATUS-001  Log connection_id from status
+                 channel on every new WS connection
+                 (public shard and private). On
+                 status channel message
+                 (type="update"):
+                   connection_id =
+                     msg["data"][0]["connection_id"]
+                   system_status =
+                     msg["data"][0]["system"]
+                   api_version =
+                     msg["data"][0]["api_version"]
+                   log WS_CONNECTED
+                     (endpoint="public|private",
+                      shard_index (public) or
+                        "private",
+                      connection_id, system,
+                      api_version).
+                 Store connection_id as instance
+                 variable for the connection's
+                 lifetime. Include in all reconnect,
+                 disconnect, and gap log entries.
+                 On reconnect:
+                   log WS_RECONNECTED
+                     (old_connection_id,
+                      new_connection_id,
+                      shard_index or "private").
+
+  WM-LIQ-002     _rest_get_ticker(candidates: list[str])
+                 method emits per-batch diagnostics:
+                   REST_GET_TICKER_BATCH
+                     (level=DEBUG; fields:
+                      pairs_count, elapsed_s,
+                      errors_count).
+
+  WM-LIQ-003     Kraken pair-name mapping records:
+                   PAIR_MAP_RESOLVED
+                     (level=DEBUG; fields:
+                      ws_name, classic_name).
+                 Emitted on every name-resolution
+                 lookup hit during _rest_get_ticker.
+
+  WM-LIQ-004     Startup liquidity-seed call sequence
+                 emits:
+                   LIQUIDITY_SEED_START (INFO;
+                     pairs_count).
+                   LIQUIDITY_SEED_COMPLETE (INFO;
+                     pairs_count, elapsed_s).
+
+  WM-LIQ-005     _liquidity_refresh_loop() async task
+                 logs every cycle:
+                   LIQUIDITY_REFRESH_CYCLE (DEBUG;
+                     cycle_index, elapsed_s,
+                     pairs_refreshed).
+
+  WM-LIQ-006     Task launch emits LIQUIDITY_LOOP_
+                 STARTED (INFO).
+
+  WM-LIQ-007     CIATS parameter snapshot read
+                 emits LIQUIDITY_PARAM_SNAPSHOT
+                 (DEBUG;
+                  min_volume_usd_daily, refresh_
+                  interval_sec).
+
+  WM-LIQ-008     Error-handling logs:
+                   LIQUIDITY_REFRESH_FAILED (WARN;
+                     timestamp_utc, error).
+                   LIQUIDITY_LOOP_EXCEPTION (ERROR;
+                     timestamp_utc, error,
+                     traceback).
+                 Never raise out of
+                 _liquidity_refresh_loop() — catch
+                 all, log, sleep, retry next cycle.
+
+  WM-LIQ-009     Required event payloads:
+                   LIQUIDITY_SEEDED:
+                     pairs_count, threshold (=
+                       min_volume_usd_daily),
+                     usd_volume per pair (INFO).
+                   LIQUIDITY_REFRESHED:
+                     pairs_count, timestamp_utc.
+                   LIQUIDITY_REFRESH_FAILED:
+                     timestamp_utc, error.
+                   LIQUIDITY_SEED_FAILED:
+                     timestamp_utc, reason=
+                       startup_failure.
+                   LIQUIDITY_PAIR_NOT_FOUND:
+                     pair=ws_name,
+                     classic_name=attempted.
+                   PAIR_MAPS_BUILT:
+                     level=INFO, pairs_mapped=N.
+                   PAIR_MAP_BUILD_FAILED:
+                     level=WARN, reason=
+                       str(error_or_exception).
+
+  WM-LIQ-010     Fail-safe guarantee: if
+                 liquidity_24h is empty or a pair
+                 has no entry, Gate 2 returns
+                 Decimal("0") <
+                 min_volume_usd_daily → GATE_2_FAIL.
+                 System safe by default. No entry
+                 is possible until liquidity data
+                 is populated. Log emission of
+                 LIQUIDITY_SEED_FAILED is the
+                 alert path on this fail-safe
+                 condition.
+
+  WM-LIQ-011     _rest_build_pair_maps() emits
+                 PAIR_MAPS_BUILT (INFO;
+                 pairs_mapped) on success and
+                 PAIR_MAP_BUILD_FAILED (WARN;
+                 reason) on API error or exception.
+                 Never raises. Gate 2 blocks all
+                 entries on failure per WM-LIQ-010.
+
+  FILL_EVENT     Per WM-EXE-016 (§8.4). Emitted on
+                 every exec_type=trade event:
+                   logger.log("FILL_EVENT",
+                     order_id=order_id,
+                     cl_ord_id=cl_ord_id,
+                     symbol=symbol,
+                     last_qty=last_qty_decimal,
+                     last_price=last_price_decimal,
+                     cum_qty=cum_qty_decimal,
+                     avg_price=avg_price_decimal,
+                     exec_type="trade")
+                 Both fill-level (last_qty,
+                 last_price) and cumulative
+                 (cum_qty, avg_price) values are
+                 carried so CIATS slippage analysis
+                 and Position Mirror updates read
+                 the correct field per WM-EXE-015.
 
 ============================================================
 17. ARCHITECTURAL DECISION RECORD: PATH 2 MULTI-CONNECTION
@@ -2040,6 +3184,749 @@ symbol (where applicable), connection_id, level.
 ============================================================
 19. REVISION HISTORY
 ============================================================
+
+  dv1_9  05-14-2026  S-3 PROSE-UPDATE-A + C + E + F + G
+                     FULL BATCH — TB00265 1011002 DD-012
+                     RETIREMENT CASCADE S-3 FINAL SUB-
+                     STEP — §3 + §8 + §11 + §13 + §16
+                     CONTRACT ADDITIONS UNDER DD-012 +
+                     DEC-003 PATH A (PROSE-ONLY; SVG
+                     BYTE-IDENTICAL PRESERVED IN 0500000
+                     dv1_74).
+
+                     Five amendments in this batch
+                     (all bucket (b) migrations per
+                     TB00194 §5.2 — content sourced
+                     verbatim from 1011002 dv1_26 per
+                     RR-SCOPE-008 bash-grep ground-
+                     truth verification mandated by
+                     TB00262 SL §7.3 + TB00263 SL §3
+                     + TB00264 SL §3 sub-requirement):
+
+                       (1) PROSE-UPDATE-A §3 WS
+                           CONNECTIONS. Four new
+                           subsections added:
+                             §3.4 Connection Template
+                               and Application Ping
+                               (WM-CONN-002,
+                                WM-CONN-005).
+                             §3.5 Token Management
+                               and REST Private-Call
+                               Signing (WM-TOKEN-001,
+                                -002, -003;
+                                WM-REST-SIGN-001,
+                                -002, -003).
+                             §3.6 ShardState Dataclass
+                               Layout (WM-SHARD-003).
+                             §3.7 run() TaskGroup
+                               Exception Extraction
+                               (WM-RUN-001).
+                           Source: 1011002 dv1_26
+                           lines 295-526.
+
+                       (2) PROSE-UPDATE-C §8 INBOUND
+                           DISPATCH. §8.1 + §8.2
+                           reframed with explicit
+                           identifier anchors
+                           (WM-EC-004..008,
+                            WM-DISP-020..023); new
+                           §8.3 amended exec_type
+                           handler (WM-DISP-024,
+                           -025, -026); new §8.4
+                           last_qty + last_price
+                           capture (WM-EXE-014,
+                           -015, -016) including
+                           FILL_EVENT log payload.
+                           Source: 1011002 dv1_26
+                           lines 1217-1432.
+
+                       (3) PROSE-UPDATE-E §11 MID-
+                           SESSION RECONNECT. New
+                           §11.1 Hard-Rule Identifier
+                           Map appended after the
+                           existing §11 operational
+                           prose:
+                             WM-RECONNECT-002 fatal
+                               threshold (10 attempts
+                               / 120s).
+                             WM-RECONNECT-003..010
+                               per-step pseudocode
+                               (token acquire,
+                               connect, subscribe,
+                               snap_orders process,
+                               gap-close CIATS fire,
+                               pending registry
+                               reconcile, seq reset,
+                               ticker resume).
+                             WM-RECONNECT-014 ATR/EMA
+                               cache preservation
+                               with 15-minute stale
+                               threshold.
+                             WM-RECONNECT-017
+                               _initiate_reconnect()
+                               retry schedule
+                               constants.
+                             WM-RECONNECT-018
+                               TaskGroup transient
+                               exception handling
+                               (_reconnect_done_event,
+                               _fatal_reconnect_
+                               failure flag).
+                           Source: 1011002 dv1_26
+                           lines 2668-2818.
+
+                       (4) PROSE-UPDATE-F §13 PAPER
+                           TRADING MODE. New §13.7.1
+                           Hard-Rule Identifier Map
+                           appended to §13.7 Paper
+                           Synthetic Ledger:
+                             WM-PAPER-LEDGER-002
+                               entry-fill debit
+                               arithmetic.
+                             WM-PAPER-LEDGER-003
+                               exit-fill credit
+                               arithmetic with maker/
+                               taker fee schedule.
+                             WM-PAPER-LEDGER-004
+                               PAPER_LEDGER_UPDATED
+                               log emission payload
+                               schema.
+                           New §13.8.1
+                           dispatch_market_sell
+                           PAPER MODE return path
+                           (WM-PAPER-EXIT-004):
+                             paper-mode tuple return
+                             (exit_price, fees_exit);
+                             ws_manager.py MUST NOT
+                             directly pop
+                             position_mirror; module
+                             routing by side
+                             attribute.
+                           Source: 1011002 dv1_26
+                           lines 2945-3210.
+
+                       (5) PROSE-UPDATE-G §16 WHAT IT
+                           LOGS. New §16.1 Log Event
+                           Format Map appended:
+                             WM-PACE-005 bucket-state
+                               log format
+                               (SUBSCRIBE_PACE_WAIT +
+                               SUBSCRIBE_PACE_BATCH_
+                               COMPLETE).
+                             WM-ZOM-001..007 zombie
+                               detection rules and
+                               log events
+                               (ZOMBIE_CONNECTION_
+                               DETECTED;
+                               real-data-event reset
+                               table; non-resetting
+                               event table; action
+                               sequence; per-
+                               connection separate
+                               timers).
+                             WM-STATUS-001
+                               connection_id capture
+                               and WS_CONNECTED /
+                               WS_RECONNECTED log
+                               payloads.
+                             WM-LIQ-002..011 REST
+                               liquidity-refresh log
+                               event family
+                               (per-batch diagnostics,
+                               pair-map resolution,
+                               seed lifecycle, error
+                               handling, fail-safe
+                               guarantee, pair-map
+                               builder).
+                             FILL_EVENT cross-
+                               reference back to
+                               §8.4 / WM-EXE-016.
+                           Source: 1011002 dv1_26
+                           lines 920-985, 1676-1716,
+                           1436-1457, 2200-2400.
+
+                     REASON FOR CHANGE.
+                     TB00265 PRIMARY scope per TB00265
+                     NSI §3.3 + §4.2 — finish the S-3
+                     PROSE-UPDATE queue under the
+                     1011002 DD-012 retirement cascade.
+                     Prior session TB00264 closed
+                     PROSE-UPDATE-D + PROSE-UPDATE-B
+                     producing dv1_8. Prior session
+                     TB00263 closed PROSE-UPDATE-H/I/J
+                     producing dv1_7. This dv1_9
+                     increment closes the remaining
+                     5 items (A + C + E + F + G) in
+                     a single batch.
+
+                     DD-011 v2_38 AMENDMENT D
+                     FP/DP-DERIVABILITY-TEST APPLIED
+                     UP-FRONT at chat-turn 1 first
+                     action. Option-set: {NSI-order
+                     execution A→C→E→F→G; reorder by
+                     complexity; reorder by
+                     dependency}. First-principles:
+                     NSI items map to 0511001
+                     sections §3, §8, §11, §13, §16
+                     in section order; reordering
+                     breaks diff coherence and offers
+                     zero benefit; dependencies are
+                     independent. Elimination: one
+                     option remains compliant — NSI-
+                     order execution. DERIVABLE per
+                     RR-SCOPE-005. Executed without
+                     surfacing as Bill ratification
+                     question.
+
+                     RR-SCOPE-008 BASH-GREP GROUND-
+                     TRUTH VERIFICATION. Performed
+                     per-item before authoring each
+                     amendment:
+                       (a) Confirmed each
+                           PROSE-UPDATE identifier
+                           token absent from dv1_8
+                           (genuine gap).
+                       (b) Located verbatim source
+                           content in 1011002 dv1_26
+                           at the lines cited above.
+                       (c) Verified bucket (b)
+                           classification — every
+                           identifier is a contract
+                           on payload/arithmetic/
+                           sequencing fields, not
+                           coding-unique or
+                           architectural-only
+                           content.
+
+                     RR-SCOPE-007 v2_30 + v2_37
+                     COMPLIANCE. Every identifier
+                     cited traces to Bill-ratified
+                     governance (DEC-012 DD-012
+                     1011002 retirement cascade
+                     per TB00237 enactment) or to
+                     mechanical derivation from
+                     1011002 dv1_26 source content
+                     plus TB00194 §5.2 PROSE-UPDATE-
+                     A/C/E/F/G specifications. No
+                     scope restriction sourced from
+                     Claude-authored NSI sentences;
+                     all scope from Bill-ratified
+                     TB00194 §5.2 + TB00237 DEC-012.
+
+                     SVG BYTE-IDENTICAL PRESERVATION.
+                     0500000 dv1_74 NOT amended this
+                     session per DEC-003 Path A
+                     prose-only-cadence — prose
+                     updates do NOT consume DEC-003
+                     Path A diagram-slot budget.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00265 SESSION-CLOSE).
+                       0511001 dv1_8 -> dv1_9.txt
+                         (this document — S-3 full
+                         remaining batch).
+                       TB00265 Session_Log v1_0
+                         (session-close trio
+                         member 1).
+                       TB00266 Next_Session_
+                         Instructions v1_0
+                         (session-close trio
+                         member 2; directs S-4
+                         1011002 dv1_26 retirement
+                         per TB00265 NSI §8.2).
+                       OCS chat-response copy box
+                         (session-close trio
+                         member 3, byte-identical
+                         to TB00266 §0).
+
+                     OPEN ITEMS UPDATED.
+                     1011002 DD-012 RETIREMENT
+                     CASCADE S-3 SUB-STEP CLOSED
+                     in full at this session. S-4
+                     (1011002 dv1_26 git rm + commit
+                     + push per TB00000 v2_38 §11
+                     retired-document standing
+                     practice) becomes the next-
+                     phase deliverable per TB00266
+                     NSI.
+
+                     Per TB00237 DD-011 v2_38
+                     AMENDMENT D FP/DP-DERIVABILITY-
+                     TEST GATE: this revision was
+                     authored without exception (b)
+                     classification — derivability
+                     test placed the decision in
+                     OUTCOME 1 (derivable; one
+                     compliant option remained;
+                     executed under RR-SCOPE-005)
+                     not OUTCOME 3 (Bill business
+                     judgment). No DD-011
+                     surfacing-as-ratification
+                     pattern emitted.
+
+  dv1_8  05-14-2026  S-3 PROSE-UPDATE-D + PROSE-UPDATE-B
+                     PARTIAL BATCH — TB00264 1011002
+                     DD-012 RETIREMENT CASCADE S-3 SUB-
+                     STEP — §5 + §9 SURGICAL CONTRACT
+                     ADDITIONS UNDER DD-012 + DEC-003
+                     PATH A (PROSE-ONLY; SVG BYTE-
+                     IDENTICAL PRESERVED IN 0500000
+                     dv1_74).
+
+                     Two amendments in surgical scope:
+
+                       (1) PROSE-UPDATE-D §9 OUTBOUND.
+                           §9.4 cancel_order vs
+                           batch_cancel — WM-CAN-001
+                           INDIVIDUAL CANCEL — PER-ORDER
+                           ACK TRACKING contract added
+                           after the existing
+                           cancel_order / batch_cancel
+                           descriptors. Body sourced
+                           verbatim from 1011002 dv1_26
+                           §6.6 WM-CAN-001. Codifies
+                           per-order ACK tracking
+                           requirement, cancel-timeout
+                           resolution sequence
+                           (cancel_timeout_window =
+                           5.0s starting per TB00000
+                           v2_38 §9.17 CIATS-owned),
+                           Layer 2 MAE exit cancel
+                           sequence, and the
+                           ambiguous-state hold-
+                           position rule preventing
+                           double-sell. Closes TB00194
+                           §5.2 PROSE-UPDATE-D.
+
+                           RR-SCOPE-009 four-question
+                           origin investigation: (1)
+                           WM-CAN-001 originated in
+                           1011002 §6.6 to fix cancel-
+                           sequence ambiguity during
+                           Layer 2 MAE exits. (2)
+                           Problem solved: double-sell
+                           risk when batch_cancel
+                           returns single count without
+                           per-order ACK; ambiguous-
+                           state racing. (3) Evidence
+                           still load-bearing: YES —
+                           Layer 2 MAE exit cancel
+                           sequence still requires
+                           per-order resolution. (4)
+                           Loss-prevention property:
+                           prevents double-sell during
+                           timeout-window race
+                           condition. ADD-ONLY
+                           amendment (not a removal);
+                           RR-SCOPE-009 N/A as a
+                           removal gate.
+
+                       (2) PROSE-UPDATE-B §5 PER-SYMBOL
+                           STATE. New §5.6 Pair Status
+                           Cache Population Mechanics
+                           added after §5.5 Connection
+                           Health State and before §6
+                           Candle-Close Detection.
+                           Formal contracts WM-PS-001
+                           through WM-PS-006 + WM-PS-
+                           008 added as labeled callouts
+                           with rule bodies. WM-PS-001
+                           covers pair_status cache
+                           build at startup Step 3.
+                           WM-PS-002 codifies
+                           monitored_universe population
+                           criteria (1) quote_currency
+                           in {USD, USDC, USDT} per
+                           D-03 / AR-070 + (2) status
+                           == online + (3) 24h volume
+                           >= min_volume_usd_daily from
+                           REST Ticker per WM-LIQ-001
+                           NOT instrument channel per
+                           HR-WM-022 + DEFECT-SS-006.
+                           WM-PS-003 codifies NO TOP-N
+                           CAP rule per D-08 LOCKED +
+                           BTC/USD always-included rule
+                           per AR-074. WM-PS-004
+                           codifies per-pair snapshot
+                           capture (price_increment,
+                           qty_increment, qty_min,
+                           cost_min) per AR-028.
+                           WM-PS-005 codifies pipeline
+                           skip for non-online pairs
+                           (status not in {online} or
+                           reduce_only /
+                           work_in_progress /
+                           delisted / limit_only).
+                           WM-PS-006 codifies
+                           quote_currency derivation
+                           rule (symbol.split("/")[1])
+                           per DEFECT-SS-008 — Kraken
+                           WS v2 instrument snapshot
+                           does NOT provide a reliable
+                           quote_currency field.
+                           WM-PS-008 codifies AR-070
+                           silent-narrowing prohibition
+                           on tradeable_universe
+                           mutations (prohibited code
+                           patterns enumerated;
+                           required pattern documented).
+                           WM-PS-007 (per-pair data-
+                           availability state machine)
+                           NOT re-stated here — covered
+                           by HR-WM-030 in §14 and §5.1
+                           connection-health-related
+                           state per the v1_2 prose
+                           reorganization. Closes
+                           TB00194 §5.2 PROSE-UPDATE-B.
+
+                           RR-SCOPE-009 four-question
+                           origin investigation: (1)
+                           WM-PS-001..006 + WM-PS-008
+                           originate from the
+                           1011002 §9.1 cascade closing
+                           AR-070 / DEFECT-SS-006 /
+                           DEFECT-SS-008. (2) Problem
+                           solved: pair_status /
+                           universe / quote_currency
+                           silent narrowing and
+                           startup population defects.
+                           (3) Evidence still load-
+                           bearing: YES — all rules
+                           remain in force per current
+                           0500000 + 0711003 + 1011002
+                           canonical content. (4)
+                           Loss-prevention property:
+                           prevents silent universe
+                           narrowing (AR-070 class
+                           defect with 105-session
+                           persistence history per
+                           TB00139 governance record)
+                           and prevents LIQUIDITY_SEED
+                           _FAILED startup defects.
+                           ADD-ONLY amendment; RR-SCOPE-
+                           009 N/A as a removal gate.
+
+                     PROSE-UPDATE-A + C + E + F + G
+                     DEFERRED to TB00265 pending per-
+                     item bash-grep ground-truth
+                     verification + per-item bucket-
+                     classification audit. Estimated
+                     1 additional session to close
+                     remaining 5 prose updates per
+                     TB00194 §5.2 scope.
+
+                     DD-011 v2_38 AMENDMENT D FP/DP-
+                     derivability-test applied UP-
+                     FRONT at TB00264 chat-turn 1 first
+                     action per TB00264 NSI §3.1
+                     directive. Four-item log
+                     documented in TB00264 SL §3.
+                     OUTCOME 1 (derivable; single
+                     compliant option) selected and
+                     executed under RR-SCOPE-005
+                     authority.
+
+                     RR-SCOPE-007 v2_30 SELF-AUTHORED-
+                     NSI-SOURCE-PROHIBITION compliance:
+                     PROSE-UPDATE-D + PROSE-UPDATE-B
+                     trace to Bill OCS verbatim
+                     directive + TB00194 §5.2
+                     specifications (Bill-ratified
+                     audit source) + bash-grep ground-
+                     truth verification of source
+                     content (1011002 dv1_26 §6.6 +
+                     §9.1) and insertion-point
+                     absence (0511001 dv1_7 §5.5+ and
+                     §9.4 confirmed no pre-existing
+                     formal contracts).
+
+                     RR-SCOPE-008 tools-exhaustion +
+                     bash-grep ground-truth verification
+                     performed before any authoring
+                     action per TB00262 SL §7.3 sub-
+                     requirement.
+
+                     PARENT CHAIN COMPLIANCE: 0511001
+                     parent chain per 0311001 v1_17:
+                     0500000 (Domain) -> 0510000 (Sub-
+                     Domain Anchor) -> 0511001
+                     (Instance). All parent
+                     dependencies satisfied at current
+                     versions. No companion document
+                     amendments required (cascade is
+                     prose-only within 0511001).
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00264 SESSION-CLOSE):
+                       0511001 dv1_7 -> dv1_8.txt
+                         (this document).
+                       TB00264 Session_Log v1_0
+                         (session-close trio member 1).
+                       TB00265 Next_Session_Instructions
+                         v1_0 (session-close trio
+                         member 2; carries forward
+                         PROSE-UPDATE-A + C + E + F +
+                         G remaining queue).
+                       OCS chat-response copy box
+                         (session-close trio member 3,
+                         byte-identical to TB00265 §0).
+
+                     OPEN ITEMS UPDATED.
+                     PROSE-UPDATE-D + PROSE-UPDATE-B
+                       CLOSED.
+                     PROSE-UPDATE-A + C + E + F + G
+                       OPEN — TB00265 PRIMARY scope.
+                     1011002 retirement cascade S-4
+                       still gated on full S-3 closure.
+
+                     Bill override: 0511001 dv1_7 ->
+                     dv1_8 enacted under Bill's
+                     standing document-control
+                     override + TB00264 OCS execution
+                     directive ("Execute S-3
+                     remaining PROSE-UPDATE-A..G queue
+                     ... Apply DD-011 v2_38
+                     AMENDMENT D FP/DP-derivability-
+                     test up-front. Deliver SL + NSI +
+                     OCS at session close.") under
+                     1011002 DD-012 retirement cascade
+                     + DEC-003 Path A.
+
+                     Document Status updated:
+                     supersedes dv1_7.
+
+  dv1_7  05-14-2026  S-3 PROSE-UPDATE-H/I/J BATCH —
+                     TB00263 1011002 DD-012 RETIREMENT
+                     CASCADE S-3 SUB-STEP — §14 HARD
+                     RULES SURGICAL EDITS UNDER DD-012
+                     + DEC-003 PATH A (PROSE-ONLY; SVG
+                     BYTE-IDENTICAL PRESERVED IN
+                     0500000 dv1_74).
+
+                     Three amendments in surgical scope:
+
+                       (1) PROSE-UPDATE-H (PRIMARY)
+                           §14 HARD RULES — HR-WM-034
+                           OUTBOUND SUBSCRIBE PACING —
+                           TOKEN BUCKET. NEW entry
+                           inserted after HR-WM-033,
+                           before §15 header. Content
+                           sourced verbatim from 1011002
+                           dv1_26 §17 HR-WM-034 + cross-
+                           referenced to 0500000 dv1_74
+                           D1 R5 governs list (rule:HR-
+                           WM-034 already registered per
+                           TB00261 Phase 0 audit
+                           verification). Closes TB00194
+                           §5.2 PROSE-UPDATE-H + cluster
+                           C4 HR-WM-034 PROSE-NARRATION
+                           GAP (TB00194 §3.58 + §6.2 C4).
+
+                           RR-SCOPE-009 four-question
+                           origin investigation per
+                           TB00263 NSI §3.2 STEP 4:
+                             (1) Origin: HR-WM-034 was
+                                 renumbered from
+                                 HR-WM-032 in 1011002
+                                 dv1_25 → dv1_26 to make
+                                 room for cascaded HR-
+                                 WM-032/033 from 0511001
+                                 dv1_5; underlying token-
+                                 bucket rule originates
+                                 from TB00141 + TB00142
+                                 STREAM 4 FP/DP analysis
+                                 closing OI-060.
+                             (2) Problem solved: OI-060
+                                 WS_SUBSCRIBE_RATE_LIMIT_
+                                 STORM. Without HR-WM-034,
+                                 any subscribe path
+                                 outside the bucket can
+                                 trigger Kraken IP-level
+                                 rate-limit storm.
+                             (3) Evidence still load-
+                                 bearing: YES. Token
+                                 bucket is the design-
+                                 level fix for IP-level
+                                 rate limiting. PATH 2
+                                 sharding is
+                                 architectural complement
+                                 but does not replace the
+                                 bucket. Both required
+                                 (token bucket at WS
+                                 layer + StartLimitBurst
+                                 at systemd layer per
+                                 VD-SYS-008).
+                             (4) Loss-prevention property:
+                                 prevents Kraken IP-level
+                                 rate-limit storm and
+                                 Cloudflare 429 cascade
+                                 → VPS disconnect →
+                                 missed candle closes →
+                                 missed signals → market
+                                 exposure during
+                                 disconnect.
+
+                           HR-WM-034 add is LOAD-BEARING
+                           required addition.
+
+                       (2) PROSE-UPDATE-I (BUNDLED)
+                           §14 HARD RULES — HR-WM-011
+                           portfolio_baseline_USD
+                           paper-mode reference updated
+                           from v2_28-era single-pool
+                           paper_starting_balance
+                           ($1,000 default per D-05) to
+                           v2_29 per-module
+                           paper_starting_balance_long_
+                           usd + paper_starting_balance_
+                           short_usd ($5,000 per-module
+                           default per TB00000 v2_29
+                           §9.4 + §9.17). Cluster
+                           C1-cascaded prose correction
+                           per TB00194 §3.59 + §5.2
+                           PROSE-UPDATE-I. UNBLOCKED at
+                           TB00262 RE-DERIVATION
+                           (AMENDMENT-1 closure
+                           dependency removed per
+                           TB00263 NSI §1.3).
+
+                           Bash-grep ground-truth
+                           verification per RR-SCOPE-008
+                           confirmed stale text present
+                           (line 1474-1479 pre-amendment
+                           "default $1,000 per D-05").
+                           Post-amendment text canonical
+                           against TB00000 v2_38 §9.4 +
+                           §9.17 per-module wallet
+                           architecture.
+
+                       (3) PROSE-UPDATE-J (BUNDLED;
+                           per TB00263 NSI §3.3
+                           redirect from TB00194 §5.2
+                           §4.2/§5.4 scope to HR-WM-031
+                           review scope) §14 HARD
+                           RULES — HR-WM-031
+                           SUBSCRIBE-COUNT vs MAX-
+                           CONCURRENT DECOUPLING
+                           terminology amendment.
+                           Anti-AR-070 silent-narrowing
+                           rule retained as load-bearing
+                           per TB00263 NSI §3.3 bash-
+                           grep verification (rule body
+                           verified load-bearing,
+                           NOT stale). max_concurrent
+                           reference qualified with
+                           historical-context
+                           parenthetical noting
+                           retirement at TB00000 v2_29
+                           §9.17 (concurrent-position
+                           count now emerges
+                           arithmetically from
+                           wallet_balance ÷ per_trade_
+                           size_usd; no artificial
+                           ceiling). Rule body retained;
+                           terminology aligned with
+                           current per-module wallet
+                           architecture.
+
+                     PROSE-UPDATE-A through G DEFERRED
+                     to TB00264 per scope-discipline
+                     (each requires per-item TB00194
+                     §5.2 bucket-classification audit
+                     not sourced in current cold-load
+                     context; bundling without audit
+                     would risk RR-SCOPE-007 v2_30
+                     SELF-AUTHORED-NSI-SOURCE-
+                     PROHIBITION violation).
+
+                     RR-SCOPE-007 v2_30 SELF-AUTHORED-
+                     NSI-SOURCE-PROHIBITION compliance:
+                     all three PROSE-UPDATE items in
+                     this amendment trace to Bill OCS
+                     verbatim "Execute S-3 PROSE-UPDATE-H
+                     ... plus bundleable PROSE-UPDATE-
+                     A..G/I/J as dependency gating
+                     permits" + TB00194 S1WSM Gap
+                     Register §5.2 audit specifications
+                     (Bill-ratified per the DD-012
+                     campaign methodology) + bash-grep
+                     ground-truth verification per
+                     RR-SCOPE-008 + TB00262 SL §7.3
+                     sub-requirement.
+
+                     DD-001/DD-002 DIAGRAMS-AS-CANONICAL
+                     compliance: 0500000 dv1_74 D1 R5
+                     governs list already contains
+                     rule:HR-WM-034 (verified at TB00261
+                     Phase 0 audit). This prose
+                     amendment follows the diagram per
+                     DD-002 (prose-follows-diagram); no
+                     SVG amendment required. DEC-003
+                     Path A diagram-slot budget NOT
+                     consumed (prose-only).
+
+                     DD-012 0500000-CANONICAL-ALL-DOCS
+                     compliance: this amendment is an
+                     S-3 sub-step of the 1011002 DD-012
+                     retirement cascade. PROSE-UPDATE-H
+                     migrates HR-WM-034 from 1011002
+                     dv1_26 §17 (RETIRING target) to
+                     0511001 dv1_7 §14 (PARENT-SPEC
+                     PRESERVED target per DD-012 S-3
+                     methodology). S-4 (1011002 git rm)
+                     gated on full S-3 closure per
+                     TB00194 §5.3.
+
+                     PARENT CHAIN COMPLIANCE: 0511001
+                     dv1_7 chain to 0510000 dv1_0
+                     (System_Components_Anchor) →
+                     0500000 dv1_74 (System_Architecture
+                     _Overview) → 0500000 Tier-1 Domain
+                     Document. Chain unbroken.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00263 SESSION-CLOSE):
+                       0511001 dv1_6 → dv1_7.txt (this
+                         document).
+                       TB00263 Session_Log v1_0.
+                       TB00264 Next_Session_Instructions
+                         v1_0.
+                       OCS chat-response copy box.
+
+                     OPEN ITEMS UPDATED:
+                       TB00194 §5.2 PROSE-UPDATE-H —
+                         CLOSED via this amendment.
+                       TB00194 §5.2 PROSE-UPDATE-I —
+                         CLOSED (HR-WM-011 staleness
+                         eliminated).
+                       TB00194 §5.2 PROSE-UPDATE-J —
+                         CLOSED (per TB00263 NSI §3.3
+                         redirect; HR-WM-031 terminology
+                         updated; rule body retained).
+                       Cluster C4 HR-WM-034 PROSE-
+                         NARRATION GAP CLOSED.
+                       TB00194 §5.2 PROSE-UPDATE-A
+                         through G — DEFERRED to
+                         TB00264.
+                       1011002 cascade S-3 sub-step
+                         partial closure (H/I/J done;
+                         A-G remain). S-4 (1011002
+                         git rm) remains gated.
+
+                     Bill override: 0511001 dv1_6 →
+                     dv1_7 is enacted under Bill's
+                     standing document-control
+                     override continuing the scope
+                     established in TB00115 through
+                     TB00237. Direct increment dv1_6
+                     → dv1_7; no rv state. Per Bill's
+                     TB00263 OCS directive: "Execute
+                     S-3 PROSE-UPDATE-H ... plus
+                     bundleable PROSE-UPDATE-A..G/I/J
+                     as dependency gating permits."
+
+                     Document Status updated:
+                     supersedes dv1_6.
 
   dv1_6  05-11-2026  HR-WM-032 SHORT P&L FORMULA AMENDMENT
                      + PER-MODULE LEDGER ROUTING —

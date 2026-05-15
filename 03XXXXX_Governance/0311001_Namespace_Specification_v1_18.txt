@@ -1,9 +1,9 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_16
+DocVersion: v1_18
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_16.txt
-DocDate:    05-13-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_18.txt
+DocDate:    05-14-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -1325,6 +1325,66 @@ MUST use the formal reference syntax.
          §4.5 / §15.14 standing-rule layer;
          V-038 is the validation-layer companion.
 
+  V-039  Parent-chain-completeness. APPLIES to
+         every controlled document with multiple
+         parent documents at every authoring /
+         amendment cycle. Per §15.15 (NEW v1_17)
+         and TB00000 §1.2 PRIMARY MISSION loss-
+         prevention dependency-visibility
+         requirement: every coding specification
+         (AA=10), every architectural artifact,
+         and every instance specification MUST
+         cite every parent specification whose
+         rules it implements OR whose module it
+         depicts in its parent chain section
+         (§2 PARENT CHAIN, §11 RELATED DOCUMENTS,
+         or equivalent parent-citation section).
+         The canonical form is 4-parent canonical
+         (or N-parent canonical for an N-parent
+         document set): all N parent specifications
+         must be cited; no omissions.
+
+         Violations:
+           V-039.1 Coding spec parent chain
+                   incomplete. The AA=10 spec
+                   §2 PARENT CHAIN omits one or
+                   more AA=04/06/07/08 parent
+                   specifications whose rules it
+                   implements. Defect requires
+                   amendment to add the missing
+                   parent citation.
+           V-039.2 Architectural-artifact parent
+                   citation incomplete. The
+                   0500000 diagram-bearing prose
+                   omits a reference to a parent
+                   specification for a module
+                   depicted in the diagram.
+                   Defect requires amendment to
+                   add the missing parent
+                   reference in the diagram-
+                   bearing prose.
+           V-039.3 Instance-spec parent citation
+                   incomplete. The instance-spec
+                   §11 RELATED DOCUMENTS (or
+                   equivalent) omits a parent
+                   specification cited elsewhere
+                   in the document body. Defect
+                   requires amendment to add the
+                   missing parent citation.
+
+         Enforcement: Pre-amendment cross-check
+         per §15.15.3; session-open pre-flight
+         per 0311002 DC-PREFLIGHT (future
+         amendment); pre-retirement gate on any
+         subordinate-spec subject to DD-012
+         retirement campaign.
+
+         Closure of TB00255 §3.1 universal
+         parent-chain-completeness rule
+         ratification is at the §15.15 standing-
+         rule layer; V-039 is the validation-
+         layer companion.
+
 ------------------------------------------------------------
 15.8 Rendering Contract for Derived Formats
 ------------------------------------------------------------
@@ -2334,6 +2394,12 @@ REGISTRY CONVENTIONS:
   evt:ALERT_SMTP_FAILED              (0511006)
   evt:TRADE_RECORD_WRITE_FAILED      (0511006)
   evt:LOG_QUEUE_FULL                 (0511006)
+  evt:ENTRY_PRICE_COMPUTED           (0811004 dv1_1
+                                      §10)
+  evt:ENTRY_PRICE_INVALID            (0811004 dv1_1
+                                      §10)
+  evt:ENTRY_PRICE_SIDE_MISSING       (0811004 dv1_1
+                                      §10 NEW dv1_1)
 
 ------------------------------------------------------------
 15.12.8 param: Parameter Registry
@@ -3173,6 +3239,194 @@ violations; V-038 (§15.7) catches §15.14
 violations. Both validation rules apply at
 every diagram-bearing document amendment.
 
+------------------------------------------------------------
+15.15 UNIVERSAL PARENT-CHAIN-COMPLETENESS RULE
+      (NEW v1_17)
+------------------------------------------------------------
+
+15.15.1 PURPOSE
+
+§15.15 establishes the namespace-level
+enforcement of the universal parent-chain-
+completeness rule. Per TB00000 §1.2 PRIMARY
+MISSION loss-prevention dependency-visibility
+requirement: every controlled document with
+multiple parent documents MUST cite every
+parent in its parent chain. Missing parent
+citations are V-039 defects requiring amendment
+to add the missing citation.
+
+15.15.2 SCOPE
+
+§15.15 applies to:
+
+  (a) AA=10 Coding Specifications. The §2 PARENT
+      CHAIN section MUST cite every AA=04 / AA=06
+      / AA=07 / AA=08 parent specification whose
+      rules the coding spec implements.
+
+  (b) Instance Specifications (Tier 3). The §11
+      RELATED DOCUMENTS section (or equivalent
+      parent-citation section) MUST cite every
+      parent specification whose rules the
+      instance spec depends on or whose content
+      it cross-references.
+
+  (c) Architectural Artifacts (0500000 diagram-
+      bearing prose, sub-domain anchors, domain
+      documents). Prose references to a module
+      depicted in the diagram MUST cite the
+      parent specification(s) for that module.
+
+§15.15 does NOT apply to:
+
+  (d) Governance documents (0311XXX) where the
+      "parent chain" is the three-tier
+      hierarchy itself rather than a multi-
+      parent dependency set.
+
+  (e) Session logs and Next Session Instructions
+      (TB00XXX) which are out of the controlled
+      document corpus.
+
+  (f) Tombstone-document supersession notes for
+      retired documents.
+
+15.15.3 4-PARENT CANONICAL — RATIFIED FORM
+
+Per TB00255 §3.1 chat-turn 1 ratification under
+RR-SCOPE-005 derivable-decision execution +
+DD-011 v2_38 FP/DP-derivability-test gate
+applied fresh with §1.2 PRIMARY MISSION loss-
+prevention dimension as the eliminator:
+
+  RATIFIED: 4-PARENT CANONICAL (or N-PARENT
+  CANONICAL for an N-parent document set).
+
+  Every coding specification, every instance
+  specification, and every architectural
+  artifact MUST cite every parent specification
+  whose rules it implements or whose module it
+  depicts. There are no permitted omissions.
+  Where a child document has N parent
+  specifications, ALL N parents MUST be cited.
+
+REJECTED alternatives:
+
+  (i) 3-parent canonical (partial citation
+      acceptable): REJECTED. Dominated by
+      4-parent on every loss-prevention
+      dimension; accepting partial visibility =
+      AR-070 silent-narrowing pattern at smaller
+      scale.
+
+  (ii) No universal rule (per-document author
+       judgment): REJECTED. Fails RR-SCOPE-009
+       no-constraint-acceptance-without-origin-
+       investigation; mirrors AR-070 governance
+       failure that persisted approximately 105
+       sessions.
+
+15.15.4 V-039 NEW VALIDATION RULE
+
+V-039 (defined in §15.7 above) is the parent-
+chain-completeness validation rule. At every
+controlled-document authoring / amendment
+cycle, the document is cross-checked:
+
+  (1) Enumerate every parent specification
+      referenced in the document body
+      (architectural identifiers cited from
+      AA=04/06/07/08 parent specs; module
+      depictions in 0500000 diagrams; rule
+      implementations citing parent rule
+      identifiers).
+
+  (2) Enumerate every parent citation present
+      in the document's parent-citation section
+      (§2 PARENT CHAIN for AA=10; §11 RELATED
+      DOCUMENTS for instance specs; equivalent
+      sections for other document classes).
+
+  (3) Compute the symmetric difference. Each
+      parent specification cited in document
+      body but absent from the parent-citation
+      section surfaces as a V-039.1 / V-039.2 /
+      V-039.3 defect candidate.
+
+  (4) Defects are recorded in the Master
+      Defect Register and resolved per §15.14.3
+      (diagram governs; document prose updated
+      to add missing parent citations).
+
+V-039 is enforced at session-open pre-flight
+(future 0311002 amendment) and at pre-delivery
+DR-007 sweep extension.
+
+15.15.5 RETROACTIVE APPLICATION
+
+§15.15 applies PROSPECTIVELY to all controlled-
+document authoring and amendment cycles from
+TB00255 forward. Retroactive enforcement against
+the existing corpus is BOUNDED by the DD-012
+0500000-canonical-all-docs retirement campaign:
+
+  (a) Subordinate specs subject to retirement
+      under DD-012 are NOT subject to V-039
+      defect remediation; their parent-chain-
+      completeness gaps are subsumed by
+      retirement.
+
+  (b) Surviving subordinate specs (AA=10 specs
+      retained post-DD-012 retirement campaign;
+      instance specs not on the retirement list)
+      are subject to V-039 at their next
+      amendment cycle. Pre-existing gaps surfaced
+      during the next amendment MUST be closed
+      in the same amendment cycle.
+
+  (c) New documents authored from TB00255
+      forward MUST satisfy V-039 at initial
+      authoring.
+
+15.15.6 INTERACTION WITH §15.14 V-038
+
+§15.14 V-038 covers diagram-vs-prose authority
+parity (within-document and cross-document
+relative to 0500000 canonical diagrams). §15.15
+V-039 covers parent-citation completeness
+(parent-specification references in the parent-
+citation section vs body content). The two
+rules are complementary:
+
+  - V-038 catches: prose asserts architectural
+    identifier not encoded in diagram.
+  - V-039 catches: parent specification cited
+    in body but absent from parent-citation
+    section.
+
+A document can pass V-038 (all architectural
+identifiers encoded in diagrams) and still
+fail V-039 (parent-citation section incomplete
+relative to body content). Both rules apply at
+every amendment cycle.
+
+15.15.7 CLOSES
+
+TB00255 §3.1 universal parent-chain-completeness
+rule ratification (DD-011 v2_38 FP/DP-
+derivability-test gate applied fresh; §1.2
+PRIMARY MISSION loss-prevention dimension
+eliminator). Originating diagnosis: TB00209
+Gate 4 F-07 + F-15 FP/DP analysis (RECOMMENDED
+4-parent canonical on diagrams-canonical +
+loss-prevention + ongoing-audit-drift grounds).
+TB00254 SL §6 derivability test (initially
+classified DD-011 exception (b); revised by
+TB00255 fresh test inclusion of §1.2
+loss-prevention dimension as eliminator).
+Enacted TB00255 close.
+
 ============================================================
 16. RELATED DOCUMENTS
 ============================================================
@@ -3185,12 +3439,324 @@ every diagram-bearing document amendment.
   1011001  Engineering_Best_Practices (BP-HDR code file rules)
   TB00000  Project Instructions for Claude (§4.2 ABSOLUTE
            STANDING RULE; §4.5 DIAGRAMS AS CANONICAL DESIGN
-           DOCUMENTS — referenced by §15.14; §11
-           authoritative path tree)
+           DOCUMENTS — referenced by §15.14; §1.2 PRIMARY
+           MISSION loss-prevention dimension — referenced
+           by §15.15; §11 authoritative path tree)
 
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_18  05-15-2026  TB00279 AMENDMENT-ELP-01 SCOPE (b) —
+                     §15.12.7 evt: REGISTRY THREE-TOKEN
+                     ADDITION (REGISTRY-BINDING CLOSURE,
+                     BUNDLED WITH 0500000 dv1_77 -> dv1_78).
+
+                     Single surgical edit closing scope (b)
+                     of TB00279 AMENDMENT-ELP-01 (DEC-012
+                     S-2 step under DEC-003 Path A). Three
+                     evt: tokens enumerated in 0811004 dv1_1
+                     §10 WHAT IT LOGS are added to the
+                     canonical evt: Event Registry in source
+                     order after evt:LOG_QUEUE_FULL
+                     (0511006):
+
+                       evt:ENTRY_PRICE_COMPUTED
+                         (0811004 dv1_1 §10) — emitted on
+                         successful canonical AR-069 entry-
+                         limit-price computation.
+                       evt:ENTRY_PRICE_INVALID
+                         (0811004 dv1_1 §10) — emitted on
+                         price < 0.0001 sanity-floor failure
+                         (HR-ELP-004).
+                       evt:ENTRY_PRICE_SIDE_MISSING
+                         (0811004 dv1_1 §10 NEW dv1_1) —
+                         emitted on side ∉ {BUY,SELL} side-
+                         enum-discipline failure (HR-ELP-
+                         003).
+
+                     BUNDLING RATIONALE (REGISTRY-BINDING
+                     CLOSURE PATTERN).
+                     This v1_18 amendment is bundled with
+                     0500000 dv1_77 -> dv1_78 (scope (a)
+                     D5 R7 -> R8 root governs ADD of the
+                     same three evt: tokens) in a single
+                     atomic AMENDMENT-ELP-01 transaction.
+                     This is a deliberate departure from
+                     the TB00246 R6 carry-forward precedent
+                     (registry-binding deferred one session
+                     creating a single-session registry
+                     gap). REASON: Under DR-008.6 session-
+                     close trio budget and the visible
+                     scope of the (c) bucket (3 tokens, all
+                     citing the same parent 0811004 dv1_1
+                     §10), single-transaction closure
+                     eliminates the gap-tracking burden,
+                     eliminates a downstream registry-
+                     binding obligation on TB00280, and
+                     preserves byte-identical paper-live
+                     across both files simultaneously.
+
+                     FP/DP-DERIVABILITY-TEST LOG
+                     (DD-011 v2_38 AMENDMENT D).
+                     Single compliant option (OUTCOME 1):
+                     ADD-only insertion in source order
+                     after evt:LOG_QUEUE_FULL preserving
+                     full registry stratification. No
+                     alternative ordering satisfies RR-
+                     SCOPE-001 absolute-scope (ADD-only,
+                     no reorder of pre-existing entries).
+
+                     RR-SCOPE COMPLIANCE.
+                     RR-SCOPE-001: ADD-only — three new
+                       entries appended in source order;
+                       zero pre-existing entries modified
+                       or reordered.
+                     RR-SCOPE-005: derivable-decision
+                       authority — token names sourced
+                       verbatim from 0811004 dv1_1 §10
+                       (paper-as-master per PA-001).
+                     RR-SCOPE-007: self-authored-NSI-
+                       source-prohibition — no NSI-self-
+                       sourced content; 0811004 dv1_1 is
+                       the user-authored paper-master.
+                     RR-SCOPE-009: four-question origin
+                       investigation — all three tokens
+                       trace to user-authored 0811004
+                       dv1_1 §10 WHAT IT LOGS; emission
+                       sites trace to AR-069 / HR-ELP-003
+                       / HR-ELP-004 canonical formula and
+                       hard rules in 0500000 §8.
+                     RR-SCOPE-010: verbatim-MDR-citation
+                       — parent citations cite paper-
+                       master file + section number
+                       verbatim.
+
+                     COMPANION DELIVERABLE.
+                     0500000 dv1_77 -> dv1_78
+                       (System_Architecture_Overview_Claude_
+                       Source.html) — D5 R7 -> R8 root
+                       governs ADD of same three evt:
+                       tokens + figcaption R7 -> R8 +
+                       SVG title T2_R7 -> T2_R8 + §14
+                       revision history dv1_78 entry.
+                     0500000 dv1_78 registry_gap_note
+                       cross-references this v1_18 entry
+                       as the binding-closure landing
+                       site (no carry-forward gap).
+
+                     REASON FOR CHANGE.
+                     TB00278 close-of-session 3-bucket
+                     roll-up identified (c) bucket = 3
+                     evt: tokens requiring D5 root governs
+                     ADD + §15.12.7 evt: registry ADD.
+                     TB00279 AMENDMENT-ELP-01 executes
+                     both ADDs as a single bundled
+                     transaction under DEC-012 S-2 step
+                     of the 0811004 retirement cascade
+                     (DEC-003 Path A one-diagram-per-
+                     session cadence preserved: D5 only).
+
+                     Additional surgical edits:
+                       Header refresh: DocVersion v1_17 ->
+                         v1_18, DocPath update, DocDate
+                         05-15-2026.
+
+                     EXPECTED FOLLOW-UP.
+                     TB00280 PRIMARY: 0811004 retirement
+                     cascade S-4 + S-5 + S-6 closure
+                     (git rm 0811004 dv1_1; 0810000
+                     dv1_1 -> dv1_2 cascade-anchor
+                     revision; TB00153 MDR v1_24 ->
+                     v1_25 DR entry for 0811004
+                     retirement).
+
+  v1_17  05-14-2026  TB00255 AMENDMENT-17 — UNIVERSAL
+                     PARENT-CHAIN-COMPLETENESS RULE
+                     CODIFICATION (§3.1 RATIFICATION).
+
+                     Two amendments closing TB00255 §3.1
+                     universal parent-chain-completeness
+                     rule ratification:
+
+                     AMENDMENT 1 — V-039 NEW in §15.7.
+                     New parent-chain-completeness validation
+                     rule inserted after V-038. Codifies the
+                     ratified 4-parent canonical form: every
+                     coding spec, every instance spec, and
+                     every architectural artifact MUST cite
+                     every parent specification whose rules
+                     it implements or whose module it depicts
+                     in its parent-citation section. Three
+                     violation classes (V-039.1 / V-039.2 /
+                     V-039.3) enumerate AA=10 / architectural-
+                     artifact / instance-spec defect patterns.
+
+                     AMENDMENT 2 — §15.15 NEW.
+                     New section §15.15 UNIVERSAL PARENT-
+                     CHAIN-COMPLETENESS RULE inserted after
+                     §15.14. Seven sub-sections:
+                       §15.15.1 Purpose.
+                       §15.15.2 Scope (3 IN-scope classes;
+                                3 OUT-of-scope classes).
+                       §15.15.3 4-parent canonical RATIFIED
+                                form + REJECTED alternatives.
+                       §15.15.4 V-039 NEW validation rule
+                                4-step cross-check procedure.
+                       §15.15.5 Retroactive application
+                                bounded by DD-012 retirement
+                                campaign.
+                       §15.15.6 Interaction with §15.14 V-038
+                                (complementary not redundant).
+                       §15.15.7 Closes TB00255 §3.1
+                                ratification.
+
+                     Additional surgical edits:
+                       §16 RELATED DOCUMENTS — TB00000 entry
+                         extended to reference §1.2 PRIMARY
+                         MISSION + §15.15.
+                       Header refresh: DocVersion v1_16 ->
+                         v1_17, DocPath update, DocDate
+                         05-14-2026.
+
+                     REASON FOR CHANGE.
+                     TB00255 chat-turn 1 ratification under
+                     RR-SCOPE-005 derivable-decision execution
+                     authority. Per Bill standing "do not
+                     pause" directive in TB00255 OCS prefix,
+                     applied DD-011 v2_38 FP/DP-derivability-
+                     test gate fresh with §1.2 PRIMARY MISSION
+                     loss-prevention dimension included as
+                     eliminator. Result: 1 compliant option
+                     remained — 4-parent canonical. DD-011
+                     exception (b) classification revised
+                     from TB00254 SL §6 (which omitted §1.2
+                     dimension) to RR-SCOPE-005 derivable.
+
+                     FP/DP ANALYSIS (LOGGED PER DD-011
+                     AMENDMENT D FP/DP-DERIVABILITY-TEST
+                     LOGGING GATE).
+
+                     Option-set:
+                       (i)  4-parent canonical.
+                       (ii) 3-parent canonical.
+                       (iii) no universal rule.
+
+                     First-principles analysis:
+                       (i)  Strong on DD-001/002 diagrams-
+                            canonical, DD-012 0500000-
+                            canonical-all-docs, RR-SCOPE-009
+                            origin investigation, §1.2 loss-
+                            prevention dependency-visibility.
+                            Higher authoring churn but
+                            mitigated by small surviving
+                            AA=10 corpus post-retirement
+                            campaign.
+                       (ii) Dominated by (i) on every
+                            loss-prevention dimension.
+                            Partial parent visibility =
+                            AR-070 silent-narrowing pattern
+                            at smaller scale.
+                       (iii) Fails RR-SCOPE-009 — no standing
+                            rule = constraint-acceptance-
+                            without-origin-investigation.
+
+                     Data sources consulted:
+                       TB00209 Gate 4 FP/DP — RECOMMENDED (i)
+                         on diagrams-canonical + loss-
+                         prevention + ongoing-audit-drift
+                         grounds (5 criteria; 4 favored (i);
+                         0 favored (ii) or (iii)).
+                       TB00254 SL §6 derivability log —
+                         classified DD-011 exception (b);
+                         omitted §1.2 loss-prevention
+                         dimension.
+                       TB00000 v2_38 §1.2 PRIMARY MISSION
+                         — "Loss prevention takes priority
+                         over profit generation. Everything
+                         else is secondary."
+                       DD-001/002 diagrams-canonical
+                         (TB00000 v2_23 §4.5).
+                       DD-012 0500000-canonical-all-docs
+                         (TB00000 v2_38 §4.5 AMENDMENT A).
+                       RR-SCOPE-009 origin investigation
+                         (TB00000 v2_17 §4.3.1).
+                       MDR v1_14 DR-044 §7 carry-forward (b)
+                         (universal parent-chain rule
+                         OPEN status).
+                       AR-070 silent-narrowing 105-session
+                         precedent (closes via RR-SCOPE-007
+                         enactment TB00139 v2_15).
+
+                     Elimination outcomes:
+                       (iii) eliminated on RR-SCOPE-009
+                         grounds.
+                       (ii) dominated by (i) on every loss-
+                         prevention dimension; §1.2 PRIMARY
+                         MISSION makes loss-prevention the
+                         eliminator when other dimensions
+                         are tied or weak.
+
+                     Remaining options: 1 — (i) 4-parent
+                       canonical. DD-011 exception (b)
+                       classification revised to RR-SCOPE-005
+                       derivable-decision execution.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311001 chain: 0311001 (Tier 3 instance)
+                     -> 0310000 (Tier 2 anchor) -> 0300000
+                     (Tier 1 domain). All parents present.
+                     Per V-039 (this amendment) bootstrapping:
+                     0311001 v1_17 §16 RELATED DOCUMENTS
+                     cites all parent governance documents
+                     consistent with the new rule. Self-
+                     compliance verified.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00255 SESSION-CLOSE):
+                       0311001 v1_16 -> v1_17.txt (this
+                         document — §3.1 rule codification).
+                       0211002 dv1_1 -> dv1_2.txt (§3.2
+                         F-18 closure).
+                       TB00153 MDR v1_14 -> v1_15.txt
+                         (DR-045 NEW rule codification +
+                         DR-046 NEW F-18 closure).
+                       TB00255 Session_Log v1_0 (session-
+                         close trio member 1).
+                       TB00256 Next_Session_Instructions
+                         v1_0 (session-close trio member 2).
+                       OCS chat-response copy box (session-
+                         close trio member 3).
+
+                     OPEN ITEMS UPDATED.
+                     §3.1 universal parent-chain-completeness
+                       rule CODIFIED at governance layer via
+                       this v1_17 amendment.
+                     §3.3 F-15 separate-audit DEFERRED to
+                       TB00256 per RR-SCOPE-001 scope-vs-
+                       budget discipline.
+                     V-038 systematic audit DEFERRED to
+                       TB00256.
+                     Downstream subordinate-spec parent-chain
+                       corrections DEFERRED to TB00256 (per
+                       §15.15.5 retroactive application
+                       bounded by DD-012 retirement campaign).
+
+                     Bill override: 0311001 v1_16 -> v1_17
+                     is enacted under Bill's standing
+                     document-control override continuing
+                     the scope established at TB00115 +
+                     successor sessions. Per Bill TB00255
+                     chat-turn directive "Do not pause and
+                     wait for me. Proceed with instructions
+                     below after providing the list."
+                     applied under RR-SCOPE-005 derivable-
+                     decision execution per DD-011 v2_38
+                     FP/DP-derivability-test gate applied
+                     fresh.
+
+                     Document Status updated: supersedes
+                     v1_16.
 
   v1_16  05-13-2026  TB00250 AMENDMENT-14 — F-V038-002
                      REGISTRY HOUSEKEEPING CLOSURE FOR
