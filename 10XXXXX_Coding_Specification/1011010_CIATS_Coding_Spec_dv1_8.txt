@@ -1,10 +1,10 @@
 DocDCN:     1011010
 DocTitle:   CIATS_Coding_Spec
-DocVersion: dv1_7
+DocVersion: dv1_8
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011010_CIATS_Coding_Spec_dv1_7.txt
-DocDate:    05-11-2026
-DocTime:    12:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011010_CIATS_Coding_Spec_dv1_8.txt
+DocDate:    05-15-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 CIATS CODING SPECIFICATION
@@ -435,16 +435,54 @@ CIATS-ISO-005  CROSS-MODULE DATA CONTAMINATION
 ------------------------------------------------------------
 
 CIATS-MON-001  Each per-module CIATS instance subscribes
-               to CANDLE_EVAL and related events from
-               Logger filtered by its own module
-               identifier. Fires on every 5m candle close
-               for pairs in that module's universe.
+               to the following Logger event classes,
+               filtered by its own module identifier:
+
+                 (a) CANDLE_EVAL — fires on every 5m
+                     candle close for pairs in that
+                     module's universe. Drives the
+                     baseline EWMA cadence.
+                 (b) ENTRY_POST_ONLY_REJECTED — fires
+                     when an entry order is canceled
+                     by Kraken with reason=post_only
+                     (order crossed spread on arrival)
+                     per 0811001 §5.4 LM-017. Each
+                     occurrence increments the
+                     rejection_rate_by_regime numerator
+                     for the current regime tag
+                     (signal 1 — see CIATS-MON-003
+                     below). Fields consumed: symbol,
+                     regime, rejection_code.
+                 (c) ENTRY_CANCELED_NO_FILL — fires
+                     when an entry order is canceled
+                     without fill for any other reason.
+                     Counted as a pipeline rejection
+                     for rejection_rate_by_regime
+                     consistency.
+                 (d) WS_ROUNDTRIP_LATENCY observations
+                     from WS Manager — drives
+                     ws_roundtrip_latency_ms signal
+                     (signal 3).
+                 (e) Order-submission emissions —
+                     drive rate_counter_by_pair
+                     signal (signal 2).
+
+               Events with a non-matching module
+               identifier are IGNORED by that instance
+               per CIATS-TOB-004 routing semantics
+               (§6.3). Events lacking a module
+               identifier are logged as
+               CIATS_EVENT_ROUTING_ERROR at WARNING
+               level and dropped.
+
                Valid from per-instance eval 50 onward
                (~4 hours).
                THREE monitoring signals per instance
                (never parameter changes):
                  (1) rejection_rate_by_regime (per
-                     instance's own pipeline rejections)
+                     instance's own pipeline rejections
+                     AND order-execution rejections per
+                     (b) + (c) above)
                  (2) rate_counter_by_pair (per instance's
                      own order submission rates)
                  (3) ws_roundtrip_latency_ms (shared
@@ -458,6 +496,43 @@ CIATS-MON-002  EWMA update per instance on each signal
                instance's EWMA output.
                CUSUM signal triggers PDCA PLAN phase
                within the originating instance.
+
+CIATS-MON-003  rejection_rate_by_regime construction
+               (signal 1 definition).
+
+               Numerator: count of pipeline-rejection
+               events AND order-execution-rejection
+               events observed by this instance within
+               the current regime tag, per Logger event
+               classes (b) + (c) in CIATS-MON-001 plus
+               any pipeline Gate 1-8 rejection event
+               carrying this instance's module
+               identifier.
+
+               Denominator: count of CANDLE_EVAL
+               observations for this instance within
+               the current regime tag.
+
+               Update: numerator and denominator are
+               accumulated separately on each Logger
+               event. The ratio numerator/denominator
+               is the per-candle x_t input to the EWMA
+               update at next CANDLE_EVAL boundary.
+
+               Architectural binding: this signal is
+               the canonical encoding of "pipeline
+               rejection rate" called out in 0500000 D5
+               root governs and 0211001 CI-DS-001
+               Signal 1. The per-module CIATS instance
+               consumes events from its own module's
+               Signal_Pipeline gate rejections AND its
+               own module's order-execution rejections
+               (LM-017 ENTRY_POST_ONLY_REJECTED is the
+               most common order-execution rejection
+               class; ENTRY_CANCELED_NO_FILL covers
+               other canceled-without-fill paths).
+               Cross-module event contamination is
+               prohibited per CIATS-TOB-004.
 
 ------------------------------------------------------------
 6.3 Stream 2 — Trade Outcome Bus (Module-Routed)
@@ -688,6 +763,224 @@ trade pool only.
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_8  05-15-2026  TB00294 0811001 RETIREMENT CASCADE
+                     S-3 SUB-TARGET v COVERAGE GAP-FILL —
+                     LM-017 ENTRY_POST_ONLY_REJECTED ->
+                     rejection_rate_by_regime INCREMENT
+                     BINDING.
+
+                     SCOPE OF CHANGES (two amendments):
+
+                     CHANGE 1 — HEADER REFRESH.
+                     DocVersion dv1_7 -> dv1_8.
+                     DocPath updated to dv1_8 filename.
+                     DocDate 05-11-2026 -> 05-15-2026.
+                     DocTime 12:30:00 UTC -> 23:59:59
+                     UTC.
+
+                     CHANGE 2 — §6.2 CIATS-MON-001
+                     LOGGER-EVENT SUBSCRIPTION
+                     ENUMERATION + NEW CIATS-MON-003
+                     rejection_rate_by_regime
+                     CONSTRUCTION RULE.
+
+                     dv1_7 §6.2 CIATS-MON-001 stated
+                     the EWMA Monitor "subscribes to
+                     CANDLE_EVAL and related events
+                     from Logger filtered by its own
+                     module identifier" without
+                     enumerating which Logger events
+                     beyond CANDLE_EVAL fall under "and
+                     related events." This vagueness
+                     left a coding-contract gap on the
+                     constituent event sources that
+                     drive the rejection_rate_by_regime
+                     monitoring signal.
+
+                     0811001 dv1_0 §5.4 LM-017
+                     explicitly states that
+                     ENTRY_POST_ONLY_REJECTED events
+                     (emitted when an entry order is
+                     canceled by Kraken with reason
+                     post_only because the order
+                     crossed the spread on arrival)
+                     drive the CIATS EWMA Monitor's
+                     rejection_rate_by_regime signal-1
+                     increment per the A-1 signal
+                     binding. This contract was not
+                     present in 1011010 dv1_7 prose.
+
+                     0500000 dv1_78 D5 (CIATS
+                     Architecture) canonically encodes
+                     rejection_rate_by_regime as the
+                     signal-1 Stream 1 EWMA Monitor
+                     output (per root governs list and
+                     §3.1 G6 prose). 0211001 dv1_0
+                     CI-DS-001 Signal 1 names the
+                     signal source as "Gate rejection
+                     codes from EWMA Monitor feed."
+                     The architectural binding
+                     (rejection events -> rejection_
+                     rate_by_regime increment) is
+                     therefore already encoded in the
+                     canonical 0500000 D5 diagram +
+                     0211001 parent specification.
+                     The dv1_8 amendment adds the
+                     coding-implementation contract
+                     (specific Logger event names the
+                     EWMA Monitor subscribes to) to
+                     the AA=10 coding spec per
+                     DEC-012(c)(b) bucket (b)
+                     coding-unique migrate-to-parent-
+                     AA=10-spec-prose classification.
+
+                     §6.2 CIATS-MON-001 amended to
+                     enumerate five subscribed Logger
+                     event classes:
+                       (a) CANDLE_EVAL — baseline EWMA
+                           cadence.
+                       (b) ENTRY_POST_ONLY_REJECTED —
+                           order-execution rejection
+                           per LM-017; increments
+                           rejection_rate_by_regime.
+                       (c) ENTRY_CANCELED_NO_FILL —
+                           other canceled-without-fill
+                           paths; rejection_rate_by_
+                           regime numerator
+                           consistency.
+                       (d) WS_ROUNDTRIP_LATENCY — drives
+                           signal 3.
+                       (e) Order-submission emissions
+                           — drive signal 2.
+                     Signal-1 description amended to
+                     "per instance's own pipeline
+                     rejections AND order-execution
+                     rejections per (b) + (c) above"
+                     for explicit binding.
+
+                     NEW CIATS-MON-003 added
+                     immediately after CIATS-MON-002
+                     (Bucket b coding-unique
+                     elaboration of the architectural
+                     signal):
+                       - Numerator: per-instance
+                         pipeline-rejection +
+                         order-execution-rejection
+                         events within current regime
+                         tag.
+                       - Denominator: per-instance
+                         CANDLE_EVAL observations
+                         within current regime tag.
+                       - Update: per-event accumulation;
+                         numerator/denominator ratio is
+                         the per-candle x_t input to
+                         the EWMA update at next
+                         CANDLE_EVAL boundary.
+                       - Architectural binding cite to
+                         0500000 D5 + 0211001
+                         CI-DS-001 Signal 1.
+
+                     REASON FOR CHANGE.
+                     S-3 sub-target v coverage
+                     verification of 1011010
+                     CIATS_Coding_Spec for 0811001
+                     §5.4 LM-017 migration scope
+                     per TB00207 §5.3 (v migration
+                     scope: §5.4 CIATS EWMA Monitor
+                     rejection_rate_by_regime
+                     increment trigger). FP/DP
+                     verification at TB00294 cold-load
+                     identified PARTIAL coverage:
+                     signal NAME present (3 sites);
+                     event-source BINDING absent.
+                     Per NSI §4 derivability test:
+                     Bucket (b) coding-unique migrate
+                     to parent AA=10 spec prose.
+                     Bucket (c) architectural
+                     escalation rejected (signal is
+                     already canonically encoded in
+                     0500000 D5).
+
+                     FP/DP ANALYSIS — BUCKET
+                     CLASSIFICATION.
+                     Option A (Bucket b — coding-unique
+                       enumeration of Logger event
+                       names in 1011010 §6.2 prose) —
+                       ACCEPTED. The architectural
+                       binding (rejection events ->
+                       rejection_rate_by_regime) is
+                       already encoded in 0500000 D5
+                       canonical diagram + 0211001
+                       parent spec. The gap is the
+                       coding-implementation contract
+                       on WHICH specific Logger event
+                       names constitute "rejection
+                       events" — a coding-contract
+                       elaboration of the
+                       architectural signal per
+                       DEC-012(c)(b) classification.
+                     Option B (Bucket c — escalate
+                       to S-2 diagram amendment in
+                       0500000 D5) — REJECTED. D5
+                       already canonically encodes
+                       rejection_rate_by_regime as
+                       signal 1. The constituent
+                       Logger event names are coding-
+                       implementation detail, not
+                       architectural detail. Per
+                       DD-002 prose-follows-diagram +
+                       DD-012 diagram-canonical
+                       scope, implementation-contract
+                       elaboration of an already-
+                       canonical signal does not
+                       require diagram amendment.
+                     Option C (Bucket a — drop with
+                       retirement, no amendment) —
+                       REJECTED. The Logger event
+                       subscription enumeration is not
+                       elsewhere documented in
+                       1011010; gap-fill required.
+
+                     Decision: Option A.
+
+                     PARENT CHAIN COMPLIANCE.
+                     1011010 -> 1010000 Trading_System_
+                     Coding_Anchor -> 1000000 Coding_
+                     Specification. Parent chain
+                     intact. Section 7 Revision
+                     History updated.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00294 SESSION-CLOSE):
+                       1011010 dv1_7 -> dv1_8 (this
+                         document — S-3 sub-target v
+                         coverage gap-fill).
+                       TB00294 Session_Log v1_0
+                         (session-close trio member 1).
+                       TB00295 Next_Session_
+                         Instructions v1_0 (session-
+                         close trio member 2).
+                       OCS chat-response copy box
+                         (session-close trio member
+                         3, byte-identical to TB00295
+                         NSI §0).
+                       GitHub upload copy box per
+                         CANONICAL REPO ROUTING (TB00000
+                         v2_42 §4.1.2 DR-008.6
+                         OPERATION 4):
+                           1011010 dv1_8 ->
+                             TothBot_V2-Docs.
+                           TB00294 SL + TB00295 NSI ->
+                             TothBot_V2-SessionLogs.
+
+                     OPEN ITEMS UPDATED.
+                     0811001 retirement cascade S-3
+                       sub-target v CLOSED via this
+                       1011010 dv1_8 amendment.
+                       S-3 cascade complete. S-4 /
+                       S-5 / S-6 downstream
+                       sequence into TB00295+.
 
   dv1_7  05-11-2026  STAGE M-5 — PER-MODULE CIATS
                      FRAMEWORK INSTANTIATION.
