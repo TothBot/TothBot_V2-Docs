@@ -1,10 +1,10 @@
 DocDCN:     0811005
 DocTitle:   Short_Module_Specification
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0811005_Short_Module_Specification_dv1_0.txt
-DocDate:    05-10-2026
-DocTime:    23:55:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0811005_Short_Module_Specification_dv1_1.txt
+DocDate:    05-15-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 SHORT MODULE SPECIFICATION
@@ -239,17 +239,30 @@ SM-010  All price and quantity values MUST be sent as
         Decimal(str()) throughout. No float values.
         Identical rule to LM-010.
 
-SM-011  Entry limit price formula (AR-069 direction-
-        symmetric):
-          entry_limit_price_raw = last_complete_candle
-                                   [symbol].close
-          entry_limit_price = entry_limit_price_raw
-                              .quantize(price_increment,
-                                        rounding=ROUND_UP)
-        Conservative rounding for short post_only fill:
-        higher limit → more likely SELL post_only fill
-        above bid. Direction-symmetric to LM (long uses
-        ROUND_DOWN to keep BUY limit below ask).
+SM-011  Entry limit price formula — DEFERS TO AR-069
+        CANONICAL.
+        Per DD-001/DD-002 diagrams-canonical principle
+        and DD-012 0500000-canonical-all-docs principle
+        (TB00000 v2_38 §4.5), the entry-limit-price
+        formula for Short_Module dispatch is governed
+        canonically by AR-069 (amended dv1_42 — M-2
+        short-direction) in 0500000 dv1_78 §8:
+          Short entry: entry_limit_price =
+            entry_limit_price_raw.quantize
+              (price_increment, ROUND_UP)
+          per AR-047 direction-symmetric (conservative:
+          higher limit → more likely post_only SELL fill
+          above bid).
+        Direction-symmetric to long-side AR-069 formula
+        (ROUND_DOWN to keep BUY limit below ask).
+        Short_Module dispatch uses the candle close from
+        the triggering 5-minute ohlc(5m) event with side
+        enum = "short" passed to the entry-limit-price
+        computation.
+        Inline ROUND_UP formula retired at dv1_1 per
+        DD-012 retirement of duplicative subordinate-spec
+        prose (TB00281 amendment closing dv1_0 ->
+        retired-0811004-cross-reference dangling pattern).
 
 ------------------------------------------------------------
 5.3 Pending Order Registry (AR-053 — direction-symmetric)
@@ -862,9 +875,15 @@ per TB00000 v2_29 §9.6.
   0810000  Trading_System_Modules_Anchor
   0811001  Long_Module_Specification (parallel sibling
            — direction-symmetric pattern reference)
-  0811004  Entry_Limit_Placement_Specification (shared;
-           direction-symmetric ROUND_DOWN / ROUND_UP per
-           AR-069)
+  0500000  System_Architecture_Overview (AR-006/007/008/
+           009/048/069 direction-symmetric prose per M-2
+           amendments in dv1_42; AR-069 canonical entry-
+           limit-price formula in dv1_78 §8 governs short
+           ROUND_UP per DD-012 0500000-canonical-all-docs.
+           0811004 Entry_Limit_Placement_Specification
+           retired at TB00280 per DD-012 retirement
+           cascade; entry-limit-price formula canonical
+           authority is now AR-069 in 0500000 dv1_78 §8.)
   0511003  Execution_Engine_Specification (AA=05
            reference; dispatch seam at D7 — Short_Module
            labeled-group addition sequenced to M-4 per
@@ -880,16 +899,242 @@ per TB00000 v2_29 §9.6.
            directional cascade enabling short entry
            on TRENDING_NEGATIVE; current rule blocks
            entry unconditionally)
-  0500000  System_Architecture_Overview (AR-006/007/008/
-           009/048/069 direction-symmetric prose per M-2
-           amendments in dv1_42)
-  TB00000  Project_Instructions_for_Claude v2_29 (sacred
+  TB00000  Project_Instructions_for_Claude v2_38 (sacred
            floor + parallel-module framework + per-module
-           CIATS + per-wallet drawdowns)
+           CIATS + per-wallet drawdowns; DD-001/DD-002/
+           DD-012 diagrams-canonical and 0500000-canonical-
+           all-docs principles governing this dv1_1
+           amendment.)
 
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_1  05-15-2026  SM-011 INLINE ROUND_UP RETIREMENT +
+                     §12 DANGLING-CROSS-REFERENCE
+                     RESOLUTION — TB00281 STAGE M-2
+                     CONTINUATION GOVERNANCE AMENDMENT
+                     CLOSING TB00280 RETIREMENT-CASCADE
+                     CARRY-FORWARD.
+
+                     Surgical RR-SCOPE-001 scope per
+                     TB00281 NSI §1.3. Two amendments
+                     enacted under RR-SCOPE-005 +
+                     DD-011 v2_38 AMENDMENT D
+                     derivable-decision execution.
+
+                     AMENDMENT 1 — SM-011 RETIREMENT
+                     (per Sub-B FP/DP outcome (i)).
+
+                     SM-011 inline ROUND_UP formula
+                     retired in favor of AR-069
+                     canonical 0500000 dv1_78 §8.
+                     The SM-011 identifier is
+                     preserved; its body now defers
+                     to AR-069 canonical authority
+                     per DD-001/DD-002 prose-follows-
+                     diagram and DD-012 0500000-
+                     canonical-all-docs principles.
+
+                     FP/DP-DERIVABILITY-TEST LOG
+                     PER DD-011 v2_38 AMENDMENT D:
+                     (1) Option-set: (i) retire SM-011
+                         inline + defer to AR-069
+                         canonical; (ii) retain SM-011
+                         inline + cite AR-069 as
+                         authority.
+                     (2) First-principles: DD-001/002
+                         prose-follows-diagram;
+                         DD-012 0500000-canonical-
+                         subordinate-retired.
+                     (3) Data sources: AR-069 amended
+                         dv1_42 verbatim in 0500000
+                         dv1_78 §8 covers BOTH long
+                         ROUND_DOWN AND short ROUND_UP
+                         direction-symmetric per
+                         AR-047 (verified via
+                         project_knowledge_search
+                         per RR-SCOPE-008 tools-
+                         exhaustion); TB00280 SL
+                         0811004 retirement-of-
+                         entire-spec precedent in
+                         favor of AR-069 canonical.
+                     (4) Elimination: option (ii)
+                         FAILS DD-012 compliance
+                         (DD-012 explicitly classifies
+                         duplicative subordinate-spec
+                         prose as retirement candidate,
+                         not preservation candidate;
+                         retention violates the rule's
+                         core principle).
+                     (5) Remaining: option (i) — RETIRE
+                         inline ROUND_UP, defer to
+                         AR-069 canonical.
+
+                     DECISION CLASSIFICATION: NOT a
+                     Bill business judgment per DD-011
+                     "does NOT apply when" exception
+                     clause. Governance-rule-bound
+                     technical decision per DD-001/
+                     DD-002/DD-012. Executed under
+                     RR-SCOPE-005 derivable-decision
+                     authority + DD-011 PRE-EMIT SCAN
+                     verification.
+
+                     AMENDMENT 2 — §12 DANGLING-CROSS-
+                     REFERENCE RESOLUTION (per Sub-A).
+
+                     §12 Related Documents entry
+                     citing 0811004 Entry_Limit_
+                     Placement_Specification removed
+                     (0811004 retired at TB00280 S-4
+                     per TB00153 MDR v1_25 DR-058).
+                     0500000 entry expanded to absorb
+                     AR-069 canonical authority
+                     citation. AR-069 in 0500000
+                     dv1_78 §8 is now the canonical
+                     entry-limit-price formula
+                     reference for Short_Module.
+
+                     NSI FRAMING DISCREPANCY NOTED
+                     (RR-SCOPE-010 cumulative
+                     tracking).
+                     TB00281 NSI §1.3 Sub-A states
+                     "§7.5 cross-reference: cite
+                     0811004 dv1_1 for entry_limit_
+                     price formula." Actual 0811005
+                     dv1_0 §7.5 cross-references
+                     0811003 Exit_Controller (not
+                     0811004). Actual 0811004 cross-
+                     reference was in §12 Related
+                     Documents (line 865 of dv1_0).
+                     Amendment executed at the
+                     correct §12 section location
+                     per NSI scope intent (resolve
+                     dangling 0811004 reference).
+                     RR-SCOPE-010 cumulative count
+                     incremented; §7.5/0811003
+                     separate dangling reference
+                     flagged for TB00282 NSI carry-
+                     forward.
+
+                     AMENDMENT SCOPE (surgical per
+                     RR-SCOPE-001).
+
+                       Header — DocVersion dv1_0 →
+                         dv1_1; DocPath updated to
+                         dv1_1.txt; DocDate 05-10-2026
+                         → 05-15-2026; DocTime
+                         23:55:00 UTC → 23:59:59 UTC.
+
+                       §5.2 SM-011 — inline ROUND_UP
+                         formula retired; identifier
+                         preserved; body now defers
+                         to AR-069 canonical 0500000
+                         dv1_78 §8 with verbatim
+                         short-side formula citation.
+
+                       §12 Related Documents — 0811004
+                         entry removed (retired);
+                         0500000 entry expanded with
+                         AR-069 canonical authority
+                         citation; TB00000 entry
+                         updated v2_29 → v2_38
+                         + DD-001/DD-002/DD-012
+                         governance citation added.
+
+                     PRE-AMENDMENT BASELINE PRESERVED
+                     VERBATIM PER CI-005 + CI-006.
+
+                     dv1_0 SM-011 baseline (VERBATIM):
+                       "SM-011  Entry limit price
+                        formula (AR-069 direction-
+                        symmetric):
+                          entry_limit_price_raw =
+                            last_complete_candle
+                              [symbol].close
+                          entry_limit_price =
+                            entry_limit_price_raw
+                              .quantize(price_increment,
+                                        rounding=ROUND_UP)
+                        Conservative rounding for short
+                        post_only fill: higher limit →
+                        more likely SELL post_only fill
+                        above bid. Direction-symmetric
+                        to LM (long uses ROUND_DOWN to
+                        keep BUY limit below ask)."
+
+                     dv1_0 §12 0811004 entry baseline
+                     (VERBATIM):
+                       "0811004  Entry_Limit_Placement_
+                        Specification (shared; direction-
+                        symmetric ROUND_DOWN / ROUND_UP
+                        per AR-069)"
+
+                     OUT-OF-SCOPE THIS AMENDMENT
+                     (forward-tracked, not silently
+                     dropped):
+                       §7.5 To Exit Controller (0811003)
+                         dangling cross-reference —
+                         0811003 retired at TB00277 per
+                         DD-012 cascade; §7.5 cites
+                         retired DCN. TB00282 NSI
+                         carry-forward target for
+                         separate amendment cycle.
+                       1011004 Execution_Engine_Coding_
+                         Spec amendment to reflect SM-011
+                         retirement — forward-tracked
+                         (cascade target for AA=10
+                         coding-spec layer).
+                       Out-of-scope items inherited from
+                         dv1_0 forward-tracking list
+                         (HR-REGIME-007 M-3 amendment;
+                         D3/D4/D7 SVG amendments M-4;
+                         Short CIATS analysis hooks M-5;
+                         margin-eligible subset D-03;
+                         paper short collateral D-05;
+                         HR-WM-032 short P&L formula)
+                         remain forward-tracked
+                         unchanged.
+
+                     CASCADE TARGETS.
+                     0500000 dv1_78 AR-069 amended
+                       text — already in place;
+                       this dv1_1 reconciles the
+                       Short_Module spec layer to
+                       the diagram-canonical
+                       architectural baseline per
+                       TB00000 v2_38 §4.5 DD-001..
+                       DD-012.
+                     1011004 Execution_Engine_Coding_
+                       Spec — forward-tracked (next
+                       1011004 dv increment).
+
+                     PARENT CHAIN COMPLIANCE.
+                     Per 0311001 v1_18 namespace
+                     specification: DCN 0811005 =
+                     AABCDDD = 08 (Trading_System) +
+                     1 (sub-domain Trading_System_
+                     Modules) + 1 (instance document)
+                     + 005 (fifth instance). Parent
+                     chain 0811005 -> 0810000 ->
+                     0800000 verified intact at
+                     dv1_1.
+
+                     Bill override: dv1_0 → dv1_1
+                     is enacted under Bill's
+                     standing document-control
+                     override for the TB00281
+                     session per Bill chat-turn
+                     directive "Do not pause and
+                     wait for me. Proceed with
+                     instructions below." Direct
+                     dv increment; no rv state.
+                     RR-SCOPE-005 derivable-
+                     decision execution per DD-011
+                     v2_38 AMENDMENT D FP/DP-
+                     derivability-test logging gate
+                     above.
 
   dv1_0  05-10-2026  Initial document. Short Module
                      complete trading-module specification
