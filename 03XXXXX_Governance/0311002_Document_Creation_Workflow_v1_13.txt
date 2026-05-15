@@ -1,9 +1,9 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_12
+DocVersion: v1_13
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_12.txt
-DocDate:    05-13-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_13.txt
+DocDate:    05-15-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -1357,13 +1357,17 @@ closed by DC-PREFLIGHT-001.
 DC-PREFLIGHT-002  CHECK 2 — GIT-STATE PRE-FLIGHT
 ------------------------------------------------------------
 
-Bill executes git-state verification on both repos:
+Bill executes git-state verification on all three repos:
 
   cd C:\Users\wstot\GitHub\TothBot\TothBot_V2-Docs
   git log -1 --oneline
   git status
 
   cd C:\Users\wstot\GitHub\TothBot\TothBot_V2-Code
+  git log -1 --oneline
+  git status
+
+  cd C:\Users\wstot\GitHub\TothBot\TBXXXXX_Session_Logs
   git log -1 --oneline
   git status
 
@@ -1385,6 +1389,19 @@ across TB00121-TB00125. TB00138 corrective established
 the git-state pre-flight as a TB-by-TB practice. This
 DC-PREFLIGHT-002 entry formalizes that practice as a
 mandatory rule.
+
+THIRD-REPO EXTENSION (v1_13 AMENDMENT per TB00289
+PART A (c)).
+At v1_13 enactment the TBXXXXX_Session_Logs working
+tree is added as the third tracked repo. The folder
+became a git repo at TB00288 close per Q1 Option J
+phased migration (initial commit 9e77bdd). Forward
+sessions commit SL+NSI+TB00000 to this repo per
+TB00000 v2_42 §4.1.2 DR-008.6 OPERATION 4 canonical
+repo routing rule (i). The pre-flight git-state
+check extends symmetrically — drift detection,
+non-clean working tree handling, and HALT semantics
+apply identically to all three repos.
 
 ------------------------------------------------------------
 DC-PREFLIGHT-003  CHECK 3 — NSI CODE-EDIT-LIST
@@ -2405,6 +2422,156 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_13  05-15-2026  TB00289 PART A AMENDMENT (c) —
+                     DC-PREFLIGHT-002 THIRD-REPO
+                     EXTENSION (TothBot_V2-SessionLogs).
+
+                     One amendment to STEP 8.2.5
+                     DC-PREFLIGHT-002 CHECK 2 — GIT-
+                     STATE PRE-FLIGHT block: extend
+                     git-state verification sequence
+                     from two repos to three repos.
+                     Adds a third cd block targeting
+                     C:\Users\wstot\GitHub\TothBot\
+                     TBXXXXX_Session_Logs (the local
+                     working tree of the new
+                     TothBot_V2-SessionLogs repo
+                     created at TB00288 close). Adds
+                     THIRD-REPO EXTENSION rationale
+                     block citing TB00000 v2_42
+                     §4.1.2 DR-008.6 OPERATION 4
+                     canonical repo routing rule (i)
+                     for SL + NSI + TB00000
+                     deliverable class. HALT
+                     semantics and drift-detection
+                     rules apply symmetrically across
+                     all three repos.
+
+                     REASON FOR CHANGE.
+                     TB00288 SL v1_1 §3.5.5 (c)
+                     carry-forward governance
+                     reconciliation requirement for
+                     the new TothBot_V2-SessionLogs
+                     repo. TB00289 NSI v1_1 §1.1
+                     PART A (c) enumerated this
+                     amendment as session scope.
+                     Companion amendments enacted
+                     same session: TB00000 v2_41
+                     -> v2_42 (PART A (a) §11
+                     STORAGE + PART A (b) §4.1.2
+                     DR-008.6 OPERATION 4).
+
+                     FP/DP ANALYSIS — RR-SCOPE-005
+                     DERIVABLE-DECISION EXECUTION.
+                     Decision class: governance-
+                     rule-bound technical decision
+                     (NOT Bill business judgment per
+                     DD-011 v2_38 AMENDMENT D
+                     derivability-test outcome).
+                     Per TB00289 NSI v1_1 §4
+                     derivability-test log + same-
+                     session TB00000 v2_42 enactment:
+                       (1) Option-set: A (codify
+                           DC-PREFLIGHT-002
+                           extension this session as
+                           companion to TB00000 v2_42
+                           PART A); B (defer to a
+                           future session); C
+                           (separate dedicated
+                           session).
+                       (2) First-principles
+                           governance dimensions:
+                           §4.3.1 RR-SCOPE-005
+                           (derivable path
+                           execution); DD-011 v2_38
+                           (FP/DP test requirement);
+                           coupling with TB00000
+                           v2_42 PART A amendments
+                           (b) and (a) - amendment
+                           (c) is co-dependent for
+                           session-open
+                           verification of the new
+                           repo).
+                       (3) Data sources: TB00288
+                           SL v1_1 §3.5.5 (c); TB00289
+                           NSI v1_1 §1.1 PART A;
+                           current DC-PREFLIGHT-002
+                           two-repo block content.
+                       (4) Elimination outcomes:
+                           B + C - REJECTED.
+                           Deferral leaves the
+                           pre-flight gate at two
+                           repos while TB00000 v2_42
+                           §11 STORAGE registers the
+                           third repo - asymmetric
+                           governance state until
+                           amendment (c) lands.
+                           A - ACCEPTED. Single
+                           compliant option.
+                       (5) Remaining: A. Single
+                           compliant option.
+                           DERIVABLE.
+
+                     Decision: A.
+
+                     Execution under RR-SCOPE-005
+                     derivable-decision authority +
+                     DD-011 v2_38 PRE-EMIT SCAN
+                     verification.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0311002 is Tier-3 instance
+                     document under 0310000
+                     Governance_Procedures_Anchor
+                     under 0300000 Governance Domain
+                     Document. Parent chain intact.
+                     DCN 0311002 unchanged. Section
+                     18 Revision History updated.
+
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00289 SESSION-CLOSE
+                     FOUR-OPERATION SEQUENTIAL):
+                       TB00000 v2_41 -> v2_42.txt
+                         (PART A AMENDMENTS 1 + 2).
+                       0311002 v1_12 -> v1_13.txt
+                         (this document - PART A
+                         AMENDMENT 3).
+                       TB00289 Session_Log v1_0.
+                       TB00290 Next_Session_
+                         Instructions v1_0.
+                       OCS chat-response copy box.
+                       GitHub upload copy box
+                         targeting BOTH TothBot_V2-
+                         Docs (this 0311002 v1_13)
+                         AND TothBot_V2-SessionLogs
+                         (TB00000 v2_42 + TB00289
+                         SL + TB00290 NSI).
+
+                     OPEN ITEMS UPDATED.
+                     TB00288 SL v1_1 §3.5.5 (c)
+                       CLOSED at governance layer
+                       via this v1_13 amendment.
+
+                     Bill override: 0311002 v1_12
+                     -> v1_13 is enacted under
+                     Bill's standing document-
+                     control override continuing
+                     the scope established for
+                     governance additions in
+                     TB00115 onward. Direct
+                     increment v1_12 -> v1_13; no
+                     rv state. Per Bill's TB00289
+                     OCS directive "Author
+                     governance amendments
+                     registering new repo
+                     (TB00000 §11 + DR-008.6 +
+                     0311002)" applied under
+                     RR-SCOPE-005 derivable-
+                     decision execution authority.
+
+                     Document Status updated:
+                     supersedes v1_12.
 
   v1_12  05-13-2026  TB00234 IN-SESSION ENACTMENT —
                      DC-CLEANUP-008 NEW CLEANUP-LIST
