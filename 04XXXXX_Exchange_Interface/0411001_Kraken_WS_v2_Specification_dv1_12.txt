@@ -1,9 +1,9 @@
 DocDCN:     0411001
 DocTitle:   Kraken_WS_v2_Specification
-DocVersion: dv1_11
+DocVersion: dv1_12
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/04XXXXX_Exchange_Interface/0411001_Kraken_WS_v2_Specification_dv1_11.txt
-DocDate:    04-04-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/04XXXXX_Exchange_Interface/0411001_Kraken_WS_v2_Specification_dv1_12.txt
+DocDate:    05-15-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -769,6 +769,7 @@ WS-BA-002   batch_add standard template on entry fill:
                       "symbol": symbol,
                       "limit_price": tp_price_str,
                       "order_qty": fill_qty_str,
+                      "post_only": true,
                       "cl_ord_id": tp_cl_ord_id,
                       "stp_type": "cancel_newest",
                       "deadline": deadline_iso8601
@@ -782,7 +783,8 @@ WS-BA-002   batch_add standard template on entry fill:
                       "cl_ord_id": emerg_sl_cl_ord_id,
                       "triggers": {
                         "reference": "last",
-                        "price": emerg_sl_trigger_str
+                        "price": emerg_sl_trigger_str,
+                        "price_type": "static"
                       },
                       "stp_type": "cancel_newest",
                       "deadline": deadline_iso8601
@@ -792,6 +794,24 @@ WS-BA-002   batch_add standard template on entry fill:
                   "req_id": req_id
                 }
               }
+
+            FIELD NOTES (dv1_12):
+              post_only:true on TP leg guarantees maker
+              fee (0.16%) on the TP exit. TP limit-sell
+              must NOT cross the spread as a taker;
+              taker fills on the TP exit violate the
+              fee baseline assumed by the sacred R:R
+              floor calculation (AR-007 / AR-046).
+
+              triggers.price_type:"static" on emergSL
+              leg specifies a fixed trigger price (vs
+              trailing). emergSL is a fixed-price
+              crash-protection stop, not a trailing
+              stop; "static" is the correct price_type.
+              Omitting price_type lets Kraken default,
+              which may not be "static" — risk of
+              wrong stop semantics. Always set
+              explicitly.
 
 WS-BA-003   emergSL triggers.reference MUST be "last".
             "last" = last traded price. This is the
@@ -1204,6 +1224,77 @@ WS-EXIT-005  HOLD procedure for cancel_only/maintenance:
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_12  05-15-2026  TB00287 S-3 (i) gap-fill amendment
+                      under 0811001 retirement cascade
+                      (DD-012). Two field additions to
+                      §6.6 WS-BA-002 batch_add template:
+
+                      (1) "post_only": true added to TP
+                          leg (limit-sell on long-side TP
+                          exit). Field present in 0811001
+                          dv1_0 LM-025 long-side template
+                          and 0811005 dv1_3 SM-026 short-
+                          side template; absent from
+                          0411001 dv1_11 WS-BA-002. The
+                          field guarantees maker fee on
+                          TP exit; absence risks taker
+                          fill which violates the fee
+                          baseline assumed by the sacred
+                          R:R floor.
+
+                      (2) "price_type": "static" added to
+                          triggers object on emergSL leg
+                          (stop-loss). Field present in
+                          0811001 dv1_0 LM-025 and 0811005
+                          dv1_3 SM-026; absent from 0411001
+                          dv1_11 WS-BA-002. The field
+                          specifies fixed trigger price
+                          (vs trailing). Omission lets
+                          Kraken default which may not
+                          be "static" - risk of wrong
+                          stop semantics.
+
+                      FIELD NOTES paragraph added to
+                      WS-BA-002 documenting the rationale
+                      for both fields. No removal of
+                      existing fields. No other content
+                      changes. SVG visual geometry not
+                      applicable (text document).
+
+                      Source provenance per RR-SCOPE-007:
+                      0811001 LM-025 + 0811005 SM-026
+                      verbatim field-set comparison.
+                      Authority chain per RR-SCOPE-010:
+                      0500000 dv1_78 D1 R5 governs
+                      includes ar:AR-007 (batch_add) +
+                      ar:AR-032 (stp_type underscore) +
+                      ar:AR-033 (deadline) + ar:AR-046
+                      (emergSL trigger) - 0411001 is the
+                      canonical Kraken WS v2 wire-contract
+                      spec subordinate to D1 per DD-002
+                      prose-follows-diagram and DD-012
+                      cross-document authority hierarchy.
+
+                      Closes TB00287 NSI §3.3 + §3.4
+                      S-3 (i) Phase 3 + Phase 4 amendment
+                      requirement. S-3 (i) target now
+                      fully covers add_order JSON
+                      (WS-ADD-001 - already covered in
+                      dv1_11) + batch_add JSON (WS-BA-002
+                      - this amendment closes gap) +
+                      stp_type underscore (WS-STP-001
+                      through -003 - already covered in
+                      dv1_11). 0411001 S-3 (i) COMPLETE.
+
+                      Bill override: per TB00287 OCS
+                      directive enacted under RR-SCOPE-005
+                      + DD-011 v2_38 AMENDMENT D
+                      derivable-decision authority
+                      (FP/DP analysis: ITEM 2 partial
+                      coverage with two specific field
+                      gaps; one compliant disposition is
+                      add the missing fields).
 
   dv1_11  04-04-2026  Promoted from WD placeholder to
                       complete coding-ready specification.
