@@ -1,0 +1,577 @@
+DocDCN:     0810000
+DocTitle:   Trading_System_Modules_Anchor
+DocVersion: dv1_3
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0810000_Trading_System_Modules_Anchor_dv1_3.txt
+DocDate:    05-15-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+TRADING_SYSTEM_MODULES_ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for AA=08 Sub-Domain
+1 — Trading_System_Modules. It anchors the instance
+documents that specify TothBot V2 trading module rules to
+the Trading System Domain Document (0800000).
+
+This document defines the governance chain, the scope
+boundary of Sub-Domain 1, and the mandatory reading and
+dependency order for all instance documents in this
+sub-domain.
+
+============================================================
+2. GOVERNING DOCUMENTS
+============================================================
+
+  0800000  Trading_System       (Domain Document — parent)
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+  0500000  System_Architecture_Overview (primary source)
+
+============================================================
+3. SUB-DOMAIN 1 SCOPE
+============================================================
+
+Sub-Domain 1 (Trading_System_Modules) governs:
+
+  - Long Module entry dispatch rules and order lifecycle
+  - Short Module entry dispatch rules and order lifecycle
+  - Selection Controller 6-gate quality filtering rules
+  - Exit Controller 3-layer exit architecture and rules
+  - Entry Limit Placement price computation rules
+  - Position protection (TP + emergSL) placement rules
+  - Cancel timeout fallback rules
+  - MPP IOC retry rules
+  - CIATS Trade Outcome Bus reporting rules
+
+Sub-Domain 1 does NOT govern:
+
+  - WS connection management (AA=05, 0511001)
+  - SSS signal computation (AA=07, 0711001)
+  - Regime classification (AA=07, 0711002)
+  - Asset universe selection (AA=07, 0711003)
+  - Risk sizing formulas (AA=06, 0611001)
+  - Drawdown circuit breaker thresholds (AA=06, 0611002)
+  - Kraken WS v2 wire protocol formats (AA=04, 0411001)
+
+NOTE: Exit Controller 3-layer exit architecture and rules,
+Cancel timeout fallback rules, and MPP IOC retry rules are
+canonically encoded in 0500000 System_Architecture_Overview
+§8 (AR-077 cancel_timeout_window FP/DP derivation; AR-078
+mpp_retry_count FP/DP derivation; AR-079 Full Halt
+batch_cancel architectural decision) and Diagram body per
+DD-001/DD-002 diagrams-as-canonical-design-documents and
+DD-012 v2_38 AMENDMENT A 0500000-canonical-all-docs scope.
+The retired 0811003 Exit_Controller_Specification dv1_0
+previously held the AA=08 spec for these rules; per DEC-012
+retirement-campaign methodology, 0500000 is now the
+canonical source. The Sub-Domain 1 scope statement above
+identifies these as Sub-Domain 1 governance topics; the
+authoritative spec source for each is 0500000.
+
+NOTE: Entry Limit Placement price computation rules are
+canonically encoded in 0500000 System_Architecture_Overview
+§8 (AR-069 entry_limit_price = candle close quantized DOWN
+to price_increment) and Diagram body per DD-001/DD-002 +
+DD-012 v2_38 AMENDMENT A. The retired 0811004 Entry_Limit_
+Placement_Specification dv1_1 previously held the AA=08
+spec for these rules; per DEC-012 retirement-campaign
+methodology, 0500000 is now the canonical source. The
+Sub-Domain 1 scope statement above identifies Entry Limit
+Placement as a Sub-Domain 1 governance topic; the
+authoritative spec source is 0500000.
+
+NOTE: Long Module entry dispatch rules and order lifecycle
+are canonically encoded in 0500000 System_Architecture_
+Overview Tier 1 Context (mod:Long_Module structured tag
+line 2332-2352 with canonical / tier / parent_diagram /
+drill_targets / constraints / consumes / produces fields),
+D2 Trading Pipeline (mod:Long_Module dispatch context),
+and D7 Dispatch Seam (mod:Long_Module labeled group
+lm_above_seam with emergency-IOC arrow through seam) per
+DD-001/DD-002 diagrams-as-canonical-design-documents and
+DD-012 v2_38 AMENDMENT A 0500000-canonical-all-docs scope.
+AR-006 add_order construction, AR-007 batch_add TP+emergSL
+on fill, AR-008 R:R from actual fill price, AR-002 cl_ord_id
+at dispatch, AR-053 Pending Order Registry, and AR-054
+Partial Fill Protection are all canonical AR identifiers
+governing Long Module behavior in 0500000 dv1_78. The
+retired 0811001 Long_Module_Specification dv1_0 previously
+held the AA=08 spec for these rules; per DEC-012
+retirement-campaign methodology, 0500000 is now the
+canonical source. The Sub-Domain 1 scope statement above
+identifies Long Module entry dispatch as a Sub-Domain 1
+governance topic; the authoritative spec source is
+0500000.
+
+============================================================
+4. DOCUMENT INVENTORY — SUB-DOMAIN 1
+============================================================
+
+  0810000  Trading_System_Modules_Anchor   [This document]
+           Tier: Sub-Domain Anchor
+           Depends on: 0800000
+
+  0811002  Selection_Controller_Specification
+           Tier: Instance Document
+           Depends on: 0810000, 0711001
+           Content: Gate 5 quality filter. 6 SC gates
+           (AR-072): SSS PASS, candle body, no position,
+           cooldown, size viability, consecutive losses.
+           State management dicts (AR-073): cooldown +
+           consecutive loss. Gate reject codes. CIATS
+           EWMA monitoring. Hard rules. Interfaces. Logging.
+
+  0811005  Short_Module_Specification
+           Tier: Instance Document
+           Depends on: 0810000
+           Content: Short-side entry order dispatch
+           parallel-module sibling to retired 0811001
+           Long_Module_Specification per TB00000 v2_29
+           parallel-module framework. Margin-eligible
+           subset of D-03 universe. leverage_cap_short.
+           Mirror long-side AR-006/007 contract
+           structure with short-direction parameters.
+           Hard rules. Interfaces. Logging events.
+
+NOTE: 0811001 Long_Module_Specification dv1_0 RETIRED at
+TB00295 (2026-05-15) under DD-012 v2_38 AMENDMENT A
+0500000-canonical-all-docs scope + DEC-012 6-sub-step
+retirement-campaign methodology. Canonical source for
+Long Module entry dispatch rules and order lifecycle:
+0500000 System_Architecture_Overview Tier 1 Context
+(mod:Long_Module structured tag), D2 Trading Pipeline,
+D7 Dispatch Seam (mod:Long_Module labeled group
+lm_above_seam), and §8 AR-006/AR-007/AR-008/AR-002/
+AR-053/AR-054 architectural reasoning. See TB00153
+Master_Defect_Register retirement entry (logged S-6
+post-TB00296). Git history preserves dv1_0 at the
+original path; `git log --follow` retrieves full version
+history. See TB00000 v2_42 §11 retired-document standing
+practice.
+
+NOTE: 0811003 Exit_Controller_Specification dv1_0 RETIRED
+at TB00277 (2026-05-14) under DD-012 v2_38 AMENDMENT A
+0500000-canonical-all-docs scope + DEC-012 6-sub-step
+retirement-campaign methodology. Canonical source for
+Exit Controller architecture and rules: 0500000
+System_Architecture_Overview §8 (AR-077, AR-078, AR-079)
+and Diagram body. See TB00153 Master_Defect_Register DR-057
+retirement entry. Git history preserves dv1_0 at the
+original path; `git log --follow` retrieves full version
+history. See TB00000 v2_38 §11 retired-document standing
+practice.
+
+NOTE: 0811004 Entry_Limit_Placement_Specification dv1_1
+RETIRED at TB00280 (2026-05-15) under DD-012 v2_38
+AMENDMENT A 0500000-canonical-all-docs scope + DEC-012
+6-sub-step retirement-campaign methodology. Canonical
+source for Entry Limit Placement rules: 0500000
+System_Architecture_Overview §8 (AR-069 entry_limit_price
+quantization) and Diagram body. See TB00153 Master_Defect_
+Register DR-058 retirement entry. Git history preserves
+dv1_1 + prior versions at the original path. See TB00000
+v2_38 §11 retired-document standing practice.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  0811002 -> 0810000 -> 0800000
+  0811005 -> 0810000 -> 0800000
+
+This chain is mandatory and unbroken. No instance document
+in this sub-domain may be committed to GitHub without
+both 0810000 and 0800000 already present and committed.
+
+============================================================
+6. DEPENDENCY ORDER
+============================================================
+
+Commit order:
+  1. 0800000 Trading_System (Domain Document)
+  2. 0810000 This anchor
+  3. 0811002, 0811005 (any order)
+
+Within Sub-Domain 1, the surviving instance documents are
+independent of each other. All may be committed in any
+order provided 0810000 and 0800000 are committed.
+
+External dependencies:
+  0811002 depends on 0711001 (SSS_Signal_Model_Specification)
+    for SSS PASS signal definition (SC-GATE-1).
+  0711001 and its parent chain (0710000, 0700000)
+  must be on GitHub before 0811002 is committed.
+
+System Architecture references:
+  0811005 references 0511003 (Execution_Engine_Specification)
+    and 0511005 (Position_Mirror_Specification)
+    (short-direction parallel-module sibling).
+  Long Module entry dispatch architecture and rules
+  previously documented in retired 0811001 are now
+  canonical in 0500000 Tier 1 Context (mod:Long_Module
+  structured tag) + D2 Trading Pipeline + D7 Dispatch
+  Seam (mod:Long_Module labeled group) + §8 AR-006/
+  AR-007/AR-008/AR-002/AR-053/AR-054 per DD-001/DD-002
+  + DD-012; AA=05 system-component cross-references
+  remain as documented in surviving 05XXXXX specs
+  (0511003 Execution_Engine_Specification dv1_X,
+  0511005 Position_Mirror_Specification dv1_X).
+  Entry Limit Placement architecture and rules previously
+  documented in retired 0811004 are now canonical in
+  0500000 §8 (AR-069) + Diagram body per DD-001/DD-002
+  + DD-012; AA=05 system-component cross-references
+  remain as documented in surviving 05XXXXX specs.
+  Exit Controller architecture and rules previously
+  documented in retired 0811003 are now canonical in
+  0500000 §8 (AR-077, AR-078, AR-079) + Diagram body
+  per DD-001/DD-002 + DD-012; 0511004 Exit_Controller_
+  Specification dv1_7 (AA=05) provides system-component
+  cross-reference housekeeping per TB00276 S-3 closure.
+  These are reference-only relationships. The AA=05 docs
+  must exist. The AA=08 docs are not copies — they define
+  the trading-module rules at the AA=08 level.
+
+============================================================
+7. RELATED DOCUMENTS
+============================================================
+
+  0800000  Trading_System               (Domain Document)
+  0811002  Selection_Controller_Specification
+  0811005  Short_Module_Specification
+  0500000  System_Architecture_Overview
+  0511003  Execution_Engine_Specification
+  0511004  Exit_Controller_Specification (AA=05)
+  0511005  Position_Mirror_Specification
+  0411001  Kraken_WS_v2_Specification
+  0711001  SSS_Signal_Model_Specification
+  0611001  Position_Sizing_Rules
+  0311001  Namespace_Specification
+  0311002  Document_Creation_Workflow
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_3  05-15-2026  TB00296 0811001 LONG_MODULE_SPECIFICATION
+                     DV1_0 RETIREMENT CASCADE S-5 CASCADE-
+                     ANCHOR REVISION.
+
+                     S-5 step of DEC-012 6-sub-step
+                     retirement-campaign methodology
+                     (S-1 audit completed TB00207
+                     v1_0 + S-2 0500000 dv1_78 verified
+                     canonical encoding of mod:Long_Module
+                     in Tier 1 Context + D2 + D7 + §8 AR
+                     identifiers + S-3 sub-targets a-v
+                     CLOSED across TB00207-TB00294 +
+                     S-4 git rm 0811001 dv1_0 executed
+                     at TB00295 close via OPERATION 4
+                     merge per DR-008.6 v2_42 CANONICAL
+                     REPO ROUTING multi-class batch rule
+                     + S-5 cascade-anchor revision this
+                     document + S-6 TB00153 MDR v1_25 ->
+                     v1_26 + Decision_Register v1_5 ->
+                     v1_6 sequenced to TB00297+).
+
+                     SCOPE OF CHANGES:
+
+                     CHANGE 1 — §3 SUB-DOMAIN 1 SCOPE.
+                     Scope bullets preserved byte-
+                     identical (RR-SCOPE-007 silent-
+                     narrowing prohibition). The "Long
+                     Module entry dispatch rules and
+                     order lifecycle" bullet remains
+                     in the "governs" list — the topic
+                     remains Sub-Domain 1 governance;
+                     only the canonical source changes
+                     per DD-012 retirement-campaign
+                     methodology. Added third NOTE
+                     paragraph after the §3 NOTE
+                     paragraphs established at dv1_1
+                     (0811003) and dv1_2 (0811004),
+                     identifying Long Module entry
+                     dispatch as Sub-Domain 1 governance
+                     with canonical source in 0500000
+                     Tier 1 Context (mod:Long_Module
+                     structured tag) + D2 Trading
+                     Pipeline + D7 Dispatch Seam
+                     (mod:Long_Module labeled group
+                     lm_above_seam) + §8 AR-006/AR-007/
+                     AR-008/AR-002/AR-053/AR-054 per
+                     DD-001/DD-002/DD-012.
+
+                     CHANGE 2 — §4 DOCUMENT INVENTORY.
+                     Removed 0811001 Long_Module_
+                     Specification entry. Added NOTE
+                     paragraph after surviving instance
+                     entries documenting 0811001
+                     retirement with TB00153 MDR cross-
+                     reference (logged S-6 post-TB00296)
+                     + TB00000 v2_42 §11 git history
+                     retrieval. Existing NOTE paragraphs
+                     for 0811003 retirement (dv1_1) and
+                     0811004 retirement (dv1_2) preserved
+                     byte-identical.
+
+                     CHANGE 3 — §5 DOCUMENT CHAIN
+                     REQUIREMENT.
+                     Removed "0811001 -> 0810000 ->
+                     0800000" chain entry. Two surviving
+                     chains (0811002, 0811005).
+
+                     CHANGE 4 — §6 DEPENDENCY ORDER.
+                     "0811001, 0811002, 0811005 (any
+                     order)" -> "0811002, 0811005
+                     (any order)". External dependencies
+                     block: byte-identical preserved
+                     (0811002 -> 0711001 dependency
+                     unchanged). System Architecture
+                     references block: removed "0811001
+                     references 0511003 (Execution_Engine_
+                     Specification) and 0511005
+                     (Position_Mirror_Specification)"
+                     line; added paragraph documenting
+                     that Long Module entry dispatch
+                     architecture is canonical in 0500000
+                     Tier 1 Context + D2 + D7 + §8 AR
+                     identifiers per DD-001/DD-002 +
+                     DD-012. Existing paragraphs for
+                     Entry Limit Placement (dv1_2) and
+                     Exit Controller (dv1_2) canonical-
+                     in-0500000 cross-references preserved
+                     byte-identical.
+
+                     CHANGE 5 — §7 RELATED DOCUMENTS.
+                     Removed "0811001 Long_Module_
+                     Specification" line.
+
+                     CHANGE 6 — §8 REVISION HISTORY.
+                     This dv1_3 entry added.
+
+                     ALL CHANGES OUTSIDE §3/§4/§5/§6/§7/§8
+                     PRESERVED BYTE-IDENTICAL FROM dv1_2.
+
+                     DD-011 v2_38 AMENDMENT D FP/DP-
+                     DERIVABILITY-TEST APPLIED UP-FRONT.
+
+                     Option set for S-5 scope:
+                       A. Minimal mechanical — remove
+                          0811001 citation only (§4 +
+                          §5 + §6 + §7 + §8 revision).
+                       B. Minimal + §3 NOTE paragraph
+                          addition pattern-matched to
+                          dv1_1 (0811003) and dv1_2
+                          (0811004) precedents.
+                       C. Comprehensive — also amend
+                          §3 scope bullets (remove
+                          Long Module bullet).
+                       D. Defer — surface to Bill.
+
+                     First-principles analysis:
+                       Bill TB00296 OCS verbatim:
+                       "Execute 0811001 retirement
+                       cascade S-5 (0810000 dv1_2 ->
+                       dv1_3 anchor revision)." TB00296
+                       NSI §3.3 enumerates three S-5
+                       sub-tasks: (a) remove 0811001
+                       from child-document list,
+                       (b) verify mod:Long_Module
+                       canonical authority in 0500000
+                       D2 + D7 + Tier 1 Context, (c)
+                       update revision history.
+
+                       Per RR-SCOPE-007 v2_30 SELF-
+                       AUTHORED-NSI-SOURCE-PROHIBITION:
+                       all S-5 sub-tasks trace to
+                       TB00207 §5.5 S-5 specification
+                       (Bill-ratified TB00207 v1_0
+                       authoring + TB00280 SL §3.7
+                       Bill-recognized methodology
+                       acceptance for 0811004 cascade
+                       which set the dv1_1 -> dv1_2
+                       precedent applied here). Trace
+                       chain to Bill-direction source
+                       verified.
+
+                       Per RR-SCOPE-007 v2_37
+                       OPERATIONAL-ARTIFACT-SCOPE-
+                       EXTENSION: scope changes traced
+                       line-by-line to (1) Bill OCS
+                       directs S-5 anchor revision +
+                       (2) TB00207 §5.5 specifies
+                       remove-child-list + verify-
+                       canonical-encoding + update-
+                       revision-history sub-tasks +
+                       (3) dv1_1 (TB00277) + dv1_2
+                       (TB00280) established pattern
+                       precedents for the NOTE-
+                       paragraph addition matching
+                       previous retirement cascades.
+
+                       Scope-statement §3 Long Module
+                       bullet preservation traced: the
+                       bullet was in dv1_0 baseline
+                       and was NOT removed at 0811003
+                       or 0811004 retirement (both of
+                       those retirements similarly
+                       preserved Exit Controller and
+                       Entry Limit Placement bullets
+                       in §3 governance topic list).
+                       Removing the Long Module bullet
+                       would silent-narrow §3
+                       governance scope; this is
+                       prohibited by RR-SCOPE-007
+                       silent-scope-narrowing
+                       prohibition.
+
+                     Data sources consulted:
+                       TB00296 NSI §0 OCS directive.
+                       TB00296 NSI §3.3 S-5 sub-task
+                         specification.
+                       TB00207 §5.5 S-5 cascade-anchor-
+                         revision methodology.
+                       0810000 dv1_2 (current state;
+                         dv1_1 -> dv1_2 precedent for
+                         pattern-matching).
+                       0500000 dv1_78 Tier 1 Context
+                         line 2332-2352
+                         (mod:Long_Module structured
+                         tag) + D7 R5 line 6772-6773
+                         (mod:Long_Module governs list
+                         + drill_targets).
+                       TB00153 Decision_Register v1_5
+                         DEC-012 6-sub-step methodology.
+                       TB00000 v2_42 §4.5 DD-012 + §11
+                         retired-document standing
+                         practice.
+                       RR-SCOPE-007 v2_30 + v2_37 sub-
+                         requirements.
+
+                     Elimination outcomes:
+                       Option A eliminated — would
+                         omit §3 NOTE paragraph
+                         addition matching the dv1_1
+                         + dv1_2 precedent pattern
+                         for retired specs (Exit
+                         Controller, Entry Limit
+                         Placement). The pattern is
+                         established practice; not
+                         applying it to Long Module
+                         retirement creates §3
+                         documentation asymmetry
+                         where two retired specs
+                         have explicit canonical-
+                         source NOTE paragraphs and
+                         the third (Long Module)
+                         does not. Compliance gap
+                         relative to established
+                         pattern.
+                       Option C eliminated — §3
+                         scope-bullet removal violates
+                         RR-SCOPE-007 silent-scope-
+                         narrowing prohibition. The
+                         topic remains Sub-Domain 1
+                         governance; only the
+                         canonical source changes.
+                       Option D eliminated — Bill OCS
+                         directive is explicit;
+                         RR-SCOPE-005 derivable-
+                         decision execution applies;
+                         user chat-turn directive
+                         "Do not pause and wait for
+                         me. Proceed with OCS
+                         instructions below"
+                         reinforces.
+
+                     Remaining: Option B. OUTCOME 1
+                     (single compliant option).
+                     Executed under RR-SCOPE-005
+                     derivable-decision authority
+                     per DD-011 v2_38 AMENDMENT D.
+
+                     DD-002 PROSE-FOLLOWS-DIAGRAM
+                     COMPLIANCE.
+                     0500000 dv1_78 Tier 1 Context
+                     (mod:Long_Module structured tag
+                     line 2332-2352) + D2 Trading
+                     Pipeline + D7 R5 Dispatch Seam
+                     (mod:Long_Module labeled group
+                     lm_above_seam line 6772-6773
+                     governs list + drill_targets) +
+                     §8 AR-006/AR-007/AR-008/AR-002/
+                     AR-053/AR-054 are canonical for
+                     Long Module entry dispatch
+                     architecture and rules. This
+                     dv1_3 adds NO new architectural
+                     content; redirects readers at
+                     the canonical source. Compliance
+                     verified.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0810000 -> 0800000 chain
+                     preserved. 0800000 Trading_System
+                     dv1_0 §8 DOCUMENT STRUCTURE
+                     separately lists 0811001 +
+                     0811003 + 0811004 in its
+                     Sub-Domain 1 inventory; future
+                     0800000 dv1_0 -> dv1_1 amendment
+                     is a downstream cascade carry-
+                     forward to a later session per
+                     RR-SCOPE-007 narrow-scope-bound
+                     TB00296 OCS directive. 0800000
+                     update is NOT in scope for this
+                     session (matches dv1_1 and
+                     dv1_2 carry-forward pattern).
+
+                     BILL OVERRIDE.
+                     This dv1_2 -> dv1_3 increment is
+                     enacted under DEC-012 retirement-
+                     campaign methodology (ratified
+                     at TB00190; campaign scope
+                     extended at TB00237 AMENDMENT B)
+                     + Bill TB00296 OCS directive
+                     executing 0811001 retirement
+                     cascade S-5 + user chat-turn
+                     directive "Do not pause and wait
+                     for me. Proceed with OCS
+                     instructions below." Direct
+                     increment dv1_2 -> dv1_3; no rv
+                     state.
+
+                     Document Status: this document
+                     is the sole authoritative
+                     version of 0810000 post-
+                     supersession; dv1_2 is retired
+                     to git history per TB00000 v2_42
+                     §11 retired-document standing
+                     practice.
+
+  dv1_2  05-15-2026  TB00280 0811004 ENTRY_LIMIT_PLACEMENT_
+                     SPECIFICATION DV1_1 RETIREMENT CASCADE
+                     S-5 CASCADE-ANCHOR REVISION + 0811005
+                     INVENTORY ADDITION. (Full text
+                     preserved in git history.)
+
+  dv1_1  05-14-2026  TB00277 0811003 EXIT_CONTROLLER_
+                     SPECIFICATION DV1_0 RETIREMENT CASCADE
+                     S-5 CASCADE-ANCHOR REVISION. (Full
+                     text preserved in git history.)
+
+  dv1_0  04-05-2026  Initial document. Sub-Domain 1
+                     Anchor for AA=08 Trading_System_
+                     Modules. Defines sub-domain scope,
+                     document inventory (4 instance
+                     documents), document chain requirement,
+                     and dependency order. Anchors 0811001,
+                     0811002, 0811003, 0811004 to 0800000.
+                     (Full text preserved in git history.)
+
+============================================================
+END OF DOCUMENT
+============================================================
