@@ -1,0 +1,464 @@
+DocDCN:     1010000
+DocTitle:   Trading_System_Coding_Anchor
+DocVersion: dv1_19
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1010000_Trading_System_Coding_Anchor_dv1_19.txt
+DocDate:    05-15-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+TRADING SYSTEM CODING ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for all AA=10
+Coding Specification documents governing the TothBot V2
+Trading System (Pathway 2). It anchors Sub-Domain 1
+(DCN 101XXXX) to the AA=10 Domain Document (1000000).
+
+All trading system coding specification documents descend
+from this anchor. No 101XXXX instance document may be
+committed without this anchor in the repository.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  1000000  Coding_Specification        (Domain Document)
+  1010000  This document               (Sub-Domain Anchor)
+
+============================================================
+3. PATHWAY 2 — TRADING SYSTEM SCOPE
+============================================================
+
+Pathway 2 governs the TothBot V2 automated cryptocurrency
+spot trading system running on Kraken exchange, plus its
+supporting operational scripts.
+
+Execution environment:
+  Platform:    Hetzner VPS (87.99.141.44)
+  OS:          Ubuntu 24.04.4 LTS
+  Python:      3.12.3
+  Exchange:    Kraken Spot (WebSocket v2 + REST)
+  Clock:       Kraken OHLC 5-minute candle close (WS push)
+  Repository:  github.com/TothBot/TothBot_V2-Code
+
+Pathway 2 runs ONLY on the VPS. It never runs in GitHub
+Actions. It has no awareness of document control state.
+See TB00000 Section 3.4.3 — Pathway Separation Rules.
+
+Repository subfolder layout (TothBot_V2-Code):
+  tothbot/      Python package — trading system modules
+  operations/   Operational support scripts
+  tests/        Test suites (pytest).
+
+============================================================
+4. INSTANCE DOCUMENTS — POST-DD-012-CAMPAIGN STATE
+============================================================
+
+Per TB00000 v2_38 §4.5 DD-012 0500000-CANONICAL-ALL-DOCS
+retirement campaign, the Sub-Domain 1 surviving 10XXXXX
+specs are:
+
+  4.1   1011001  Engineering_Best_Practices    (preserved
+                 per DEC-012(c) bucket-classification —
+                 coding-unique standards corpus).
+  4.10  1011010  CIATS_Coding_Spec             (preserved
+                 per DEC-012(c) bucket-classification —
+                 coding-unique statistical methodology
+                 corpus).
+
+Retired (per DD-012 0500000-canonical-all-docs scope,
+DEC-012 6-sub-step methodology):
+
+  4.2   1011002  WS_Manager_Coding_Spec        RETIRED
+                 (TB00299).
+  4.3   1011003  Signal_Pipeline_Coding_Spec   RETIRED
+                 (TB00224 — see TB00153 MDR).
+  4.4   1011004  Execution_Engine_Coding_Spec  RETIRED
+                 (TB00213).
+  4.5   1011005  Exit_Controller_Coding_Spec   RETIRED
+                 (TB00220).
+  4.6   1011006  Position_Mirror_Coding_Spec   RETIRED
+                 (TB00225).
+  4.7   1011007  Logger_Coding_Spec            RETIRED
+                 (TB00230).
+  4.8   1011008  Long_Module_Coding_Spec       RETIRED
+                 (TB00221).
+  4.9   1011009  Selection_Controller_Coding_Spec
+                 RETIRED (TB00226).
+  4.11  1011011  Risk_Engine_Coding_Spec       RETIRED
+                 (TB00213).
+  4.12  1011012  Regime_Engine_Coding_Spec     RETIRED
+                 (TB00227).
+  4.13  1011013  VPS_Deployment_Coding_Spec    RETIRED
+                 (TB00228).
+  4.14  1011014  Startup_Sequence_Coding_Spec  RETIRED
+                 (TB00272).
+
+Retirement removes the spec from HEAD via `git rm` per
+TB00000 v2_42 §11 standing practice. Git history
+preserves all prior versions. The architectural content
+that was canonical in the retired spec is now canonical
+in 0500000 dv1_78 (and successor versions) per DD-012
+diagram-canonical-all-docs principle. CIATS-owned
+parameter starting values are canonical in TB00000
+v2_42 §9.17.
+
+------------------------------------------------------------
+4.2  1011002  WS_Manager_Coding_Spec
+------------------------------------------------------------
+
+Status: RETIRED at TB00299 (2026-05-15) per DD-012
+0500000-canonical-all-docs retirement campaign.
+
+Retirement rationale: Per TB00208 S1WSM DD-012 Phase 1
+Gap Register three-bucket classification:
+  Bucket (a) ARCHITECTURAL RESTATEMENT — ~95 elements
+    across all 1011002 dv1_26 sections (WS Manager
+    architecture, connection state, token management,
+    keepalive, zombie detection, sequence gap detection,
+    per-pair instrument status cache, candle-close
+    detection, startup warm-up and indicator seeding,
+    mid-session reconnect, Pending Order Registry,
+    drawdown state, Selection Controller state, WS
+    dispatch routing). Canonical source: 0500000 dv1_78
+    D1 R5 Kraken WS Connection Architecture +
+    D7 R5 Dispatch Seam + Tier 1 Context Diagram
+    mod:WS_Manager structured tag + §8 architectural
+    rules. Drop with retirement.
+  Bucket (b) CODING-UNIQUE — ~35 elements migrated to
+    0511001 dv1_9 parent spec via S-3 (PROSE-UPDATE-A
+    through PROSE-UPDATE-J across dv1_7-dv1_9 chain).
+  Bucket (c) ARCHITECTURAL CONTENT NOT IN DIAGRAMS — 0
+    elements. All four cluster gaps from prior TB00194
+    pre-DD-012 gap register (per-module wallet parameter
+    registry, per-wallet drawdown halt machine,
+    R:R-driven sizing curve form factor, HR-WM-034
+    prose-narration gap) CLOSED in current canonical
+    baselines (0500000 D7 R5 + D5 R6 + 0511001 dv1_7-9).
+    S-2 NO-OP.
+  Bucket (d) CHESTERTON'S FENCE — 0 elements.
+
+Pre-retirement prerequisites satisfied:
+  S-1 Phase 1 gap-audit — CLOSED at TB00298 via
+    TB00208 v1_0 authoring.
+  S-2 diagram amendments — NO-OP (bucket (c) empty;
+    all four cluster gaps closed in prior diagram
+    increments through 0500000 dv1_78).
+  S-3 parent-spec gap-fill — CLOSED in 0511001
+    dv1_7 / dv1_8 / dv1_9 chain (PROSE-UPDATE-A
+    through PROSE-UPDATE-J ten-PROSE-UPDATE cluster).
+  Pre-S4 Chesterton's-fence verification — PASS at
+    TB00299 chat-turn 1 (grep-confirmed HR-WM-034 at
+    0511001 dv1_9 line 2616 + HR-WM-011 at line 2348 +
+    HR-WM-031 at line 2479 + WM-PS-001..006 at lines
+    808-868 + WM-PS-008 at line 894 + WM-CAN-001 at
+    line 1266).
+
+No CIATS-owned starting value absorption into TB00000
+§9.17 was required for this retirement. The WS Manager
+CIATS-owned tunable parameters (token-bucket pacing,
+keepalive interval, zombie timeout, reconnect attempts,
+etc.) were absorbed into TB00000 §9.17 across the v2_20
+through v2_42 governance amendment chain prior to this
+retirement.
+
+Code coverage: ws_manager.py governance now inherits
+from 0500000 dv1_78 (architectural) + 0511001 dv1_9
+(coding-ready) + TB00000 v2_42 §9.17 (parameter
+starting values).
+
+Closes TB00299 Phase 3 cascade-anchor revision per
+DD-012 S-5.
+
+S-5 ANCHOR-IDENTIFICATION CORRECTION RECORD.
+TB00299 NSI v1_0 §3.4 and TB00208 v1_0 §5.5 both cited
+"0510000 System_Components_Anchor" as the S-5 anchor
+target. Per DCN AABCDDD governance (0311001 v1_18 §11
+sub-domain anchor child-document inventory rules),
+1011002 has DCN starting with "101" (AA=10, B=1) and
+therefore descends from 1010000 (AA=10, B=1 anchor),
+not 0510000 (AA=05, B=1 anchor for 0511001-0511006).
+The S-5 anchor for the 1011002 retirement cascade is
+1010000. Correction enacted under RR-SCOPE-005
+derivable-decision execution + RR-SCOPE-007
+SELF-AUTHORED-NSI-SOURCE-PROHIBITION (TB00208 + NSI
+sentences had no Bill-quote backing) + DD-011 v2_38
+FP/DP-derivability-test gate.
+
+============================================================
+5. CODE FILE REGISTRY
+============================================================
+
+Per 0311002 v1_13 STEP 8.2.1 mandatory maintenance rule.
+The registry is maintained at each TothBot_V2-Code session
+boundary. Spec version references in the registry track
+the canonical architecture source post-DD-012-campaign
+(0500000 dv1_78 + 0211003 dv1_1 + TB00000 v2_42 §9.17 +
+preserved AA=10 specs 1011001 + 1011010).
+
+Code file ↔ canonical-architecture-source mapping is
+out-of-scope for this dv1_19 increment (1011002
+retirement S-5 cascade-anchor revision is the sole
+scope). Full registry refresh sequenced for a dedicated
+cascade-anchor cleanup session to align all §5 entries
+with post-DD-012-campaign canonical sources.
+
+============================================================
+6. REVISION HISTORY
+============================================================
+
+  dv1_19 2026-05-15  TB00299 1011002 RETIREMENT CASCADE
+                     S-5 CASCADE-ANCHOR REVISION.
+
+                     One amendment: §4.2 entry status
+                     updated from "RETIRED cascade in
+                     progress (Phase 0 audit logged at
+                     TB00261; subsequent phases sequenced
+                     per DEC-012 methodology)" to
+                     "RETIRED (TB00299)" with full
+                     three-bucket classification
+                     rationale (per TB00208 S1WSM
+                     DD-012 Phase 1 Gap Register) and
+                     prerequisite-satisfaction record
+                     (S-1 TB00298 + S-2 NO-OP + S-3
+                     0511001 dv1_7-9 PROSE-UPDATE-A
+                     through PROSE-UPDATE-J chain +
+                     pre-S4 Chesterton's-fence
+                     verification PASS at TB00299).
+
+                     S-5 ANCHOR-IDENTIFICATION
+                     CORRECTION.
+                     TB00299 NSI v1_0 §3.4 + TB00208
+                     v1_0 §5.5 both cited "0510000
+                     System_Components_Anchor" as S-5
+                     target. Per DCN AABCDDD governance
+                     (0311001 v1_18 §11 sub-domain
+                     anchor child-document inventory
+                     rules), 1011002 = AA=10 B=1 C=1
+                     DDD=002 -> parent anchor = 1010000
+                     (AA=10 B=1 C=0 DDD=000). 0510000
+                     is AA=05 B=1 anchor for 0511001-
+                     0511006 and contains no 1011002
+                     reference. Pattern precedent:
+                     0811001 retirement (TB00295-TB00296
+                     cascade) amended 0810000 (AA=08
+                     B=1 anchor). Correction executed
+                     under RR-SCOPE-005 derivable-
+                     decision authority + RR-SCOPE-007
+                     SELF-AUTHORED-NSI-SOURCE-
+                     PROHIBITION (v2_30 amendment;
+                     NSI/TB00208 sentences had no
+                     Bill-quote backing) + DD-011 v2_38
+                     FP/DP-derivability-test gate
+                     (Option B single compliant
+                     remaining option; OUTCOME 1
+                     derivable).
+
+                     SCOPE LIMIT.
+                     §4.2 1011002 retirement entry is
+                     the sole substantive content
+                     change. §4 framing already reflects
+                     post-DD-012-campaign state from
+                     dv1_18 (which closed the cumulative
+                     backlog of §4.2-§4.13 retirement
+                     entries from prior cascades).
+                     §4.2 sub-section moved from
+                     "RETIRED cascade in progress"
+                     short-form to full retirement-
+                     rationale long-form matching the
+                     §4.14 1011014 retirement entry
+                     pattern established at dv1_18.
+
+                     DD-011 v2_38 AMENDMENT D FP/DP-
+                     DERIVABILITY-TEST APPLIED UP-FRONT.
+                     Per TB00299 chat-turn 1
+                     derivability log on the S-5
+                     anchor-identification correction:
+                       option set (A author 0510000
+                         dv1_1 per NSI literal text;
+                         B author 1010000 dv1_19 per
+                         AA=10 anchor + DCN rules);
+                       first-principles analysis
+                         (DCN AABCDDD governance per
+                         0311001 v1_18 §11; 0510000 =
+                         AA=05 not AA=10; precedent
+                         pattern from 0811001 cascade
+                         amended 0810000 AA=08 anchor);
+                       data sources (0510000 dv1_0
+                         content read at cold-load
+                         showing 0511001-0511006
+                         children with no 1011002
+                         reference; 1010000 dv1_18
+                         §4.2 explicitly lists 1011002
+                         with status "RETIRED cascade
+                         in progress"; TB00296 SL §1
+                         precedent for AA=08 cascade
+                         amending 0810000);
+                       elimination (A rejected: 0510000
+                         contains no 1011002 reference;
+                         amending it would be no-op
+                         error + RR-SCOPE-007 violation
+                         propagating Claude-authored
+                         NSI sentence error);
+                       remaining: Option B. OUTCOME 1
+                         (single compliant option).
+                       Decision executed under
+                         RR-SCOPE-005 derivable-decision
+                         authority. No DD-011 violation
+                         this session.
+
+                     PARENT CHAIN COMPLIANCE.
+                     1010000 chains to 1000000 Coding_
+                     Specification (Domain Document,
+                     dv1_0). No DCN chain changes.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00299 1011002 RETIREMENT CASCADE):
+                       1010000 dv1_18 -> dv1_19.txt
+                         (this document — S-5 cascade-
+                         anchor revision).
+                       TB00153 MDR v1_26 -> v1_27.txt
+                         (S-6 (a) DR-NEW 1011002
+                         retirement entry).
+                       TB00153 Decision_Register v1_6 ->
+                         v1_7.txt (S-6 (b) DEC-NEW
+                         paired top-level decision
+                         entry).
+                       Phase 3 — 1011002 dv1_26 ACTUAL
+                         DELETE + git rm copy box for
+                         Bill execution at session-
+                         close OPERATION 4.
+                       TB00299 Session_Log v1_0
+                         (session-close OPERATION 3
+                         trio member 1).
+                       TB00300 Next_Session_Instructions
+                         v1_0 (session-close OPERATION
+                         3 trio member 2).
+                       OCS chat-response copy box
+                         (session-close OPERATION 1).
+                       GitHub upload copy box
+                         (session-close OPERATION 4
+                         with canonical repo routing
+                         per TB00000 v2_42 §4.1.2
+                         DR-008.6 + §11 STORAGE).
+
+                     Bill override: 1010000 dv1_18 ->
+                     dv1_19 enacted under DEC-012
+                     retirement-campaign methodology
+                     (ratified at TB00190; campaign
+                     scope extended at TB00237
+                     AMENDMENT B) + DEC-014 paired
+                     decision entry this session +
+                     TB00299 OCS directive bundling
+                     S-4 + S-5 + S-6 execution +
+                     Bill explicit "Do not pause and
+                     wait for me. Proceed with OCS
+                     instructions below." (Section I
+                     preamble TB00299 chat-turn 1).
+                     Direct increment dv1_18 -> dv1_19.
+
+                     Document Status updated:
+                     supersedes dv1_18.
+
+  dv1_18 2026-05-14  TB00272 1011014 RETIREMENT CASCADE
+                     PHASE 4 CASCADE-ANCHOR REVISION.
+                     §4.14 entry status updated to
+                     RETIRED at TB00272 with full
+                     three-bucket classification
+                     rationale. §4 section header
+                     rewritten to reflect post-DD-012-
+                     campaign state (1011001 + 1011010
+                     preserved; all other 10XXXXX
+                     retired). Cumulative backlog of
+                     individual §4.2-§4.13 retirement
+                     entries from prior cascades closed
+                     within DD-012 methodology by
+                     listing all retired specs in the
+                     new §4 framing. (Full text preserved
+                     in git history.)
+
+  dv1_17 2026-04-25  TB00135 Phase 5 CIATS Parameter
+                     Registry Reconciliation closure +
+                     OI-055-CAND-D3 deferral entry. Five
+                     defect groups documented with
+                     parallel-notation preservation per
+                     Option (iii) resolution policy.
+                     (Full text preserved in git
+                     history.)
+
+  dv1_16 04-24-2026  TB00135 D-03 + D-08 AA=10 cascade
+                     closure. (Full text in git history.)
+
+  dv1_15 04-24-2026  TB00133 Phase 5 CIATS Parameter
+                     Registry Reconciliation Phase 5 of
+                     5-phase spec cascade. (Full text in
+                     git history.)
+
+  dv1_14 04-24-2026  TB00132 Phase 2 + Phase 3 AA=10
+                     cascade. (Full text in git history.)
+
+  dv1_13 04-23-2026  TB00131 Phase 1 of TB00131 §4.3
+                     5-phase spec cascade plan. (Full
+                     text in git history.)
+
+  dv1_12 04-23-2026  TB00120 OI-039 operations/ subfolder
+                     authorization. (Full text in git
+                     history.)
+
+  dv1_11 04-21-2026  TB00108 bundled AI-1 + AI-2 + AI-3
+                     deploy. (Full text in git history.)
+
+  dv1_10 04-20-2026  Bundled AI-1 + AI-2 + AI-3 deploy
+                     per TB00105 / TB00106. (Full text
+                     in git history.)
+
+  dv1_9  04-19-2026  TB00104 OI-018 DEFECT-WM-RECONNECT-
+                     001 observation start. (Full text
+                     in git history.)
+
+  dv1_8  04-18-2026  TB00102 OI-014 startup_sequence
+                     stale xrefs initial fix attempt.
+                     (Full text in git history.)
+
+  dv1_7  04-17-2026  TB00097 Section 4 status update
+                     post-Phase 8 completion. (Full
+                     text in git history.)
+
+  dv1_6  04-15-2026  TB00086 Section 5.5 root
+                     configuration files registry.
+                     (Full text in git history.)
+
+  dv1_5  04-14-2026  TB00082 Section 5 Code File
+                     Registry refresh post-TB00081
+                     OI-001. (Full text in git history.)
+
+  dv1_4  04-13-2026  TB00080 Section 5.5 + Section 5.6
+                     commit hash procedures. (Full text
+                     in git history.)
+
+  dv1_3  04-12-2026  TB00076 Section 5 Code File
+                     Registry initial population. (Full
+                     text in git history.)
+
+  dv1_2  04-11-2026  TB00075 EC-011 added Section 8.
+                     (Full text in git history.)
+
+  dv1_1  04-11-2026  TB00073 Section 4 status update
+                     post-Phase 8 start. (Full text in
+                     git history.)
+
+  dv1_0  04-05-2026  Initial working draft. Phase 8
+                     Sub-Domain 1 anchor. Full inventory
+                     of 14 instance documents with
+                     status, parent specs, and scope.
+                     Coding sequence by tier. Engineering
+                     constraints. Locked ARs.
+
+============================================================
+END OF DOCUMENT
+============================================================
