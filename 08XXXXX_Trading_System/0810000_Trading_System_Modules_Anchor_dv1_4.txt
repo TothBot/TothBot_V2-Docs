@@ -1,8 +1,8 @@
 DocDCN:     0810000
 DocTitle:   Trading_System_Modules_Anchor
-DocVersion: dv1_3
+DocVersion: dv1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0810000_Trading_System_Modules_Anchor_dv1_3.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/08XXXXX_Trading_System/0810000_Trading_System_Modules_Anchor_dv1_4.txt
 DocDate:    05-15-2026
 DocTime:    23:59:59 UTC
 
@@ -109,6 +109,28 @@ identifies Long Module entry dispatch as a Sub-Domain 1
 governance topic; the authoritative spec source is
 0500000.
 
+NOTE: Selection Controller 6-gate quality filtering rules
+are canonically encoded in 0500000 System_Architecture_
+Overview Tier 1 Context (mod:Selection_Controller
+structured tag with canonical / tier / parent_diagram /
+drill_targets / constraints / consumes / produces fields),
+D2 Trading Pipeline (gate:G5_Selection_Controller
+labeled group g5_selection), D6 Logger Async Bounded
+Queue (mod:Logger governs SC reject events), and §8
+architectural rules (AR-072 Selection Controller gate
+parameters; AR-073 Exit Controller as SOLE updater of
+Selection Controller state via WS Manager path;
+HR-EC-014 binding in parent spec 0511004 dv1_6) per
+DD-001/DD-002 diagrams-as-canonical-design-documents and
+DD-012 v2_38 AMENDMENT A 0500000-canonical-all-docs
+scope. The retired 0811002 Selection_Controller_
+Specification dv1_0 previously held the AA=08 spec for
+these rules; per DEC-012 retirement-campaign methodology,
+0500000 is now the canonical source. The Sub-Domain 1
+scope statement above identifies Selection Controller as
+a Sub-Domain 1 governance topic; the authoritative spec
+source is 0500000.
+
 ============================================================
 4. DOCUMENT INVENTORY — SUB-DOMAIN 1
 ============================================================
@@ -116,16 +138,6 @@ governance topic; the authoritative spec source is
   0810000  Trading_System_Modules_Anchor   [This document]
            Tier: Sub-Domain Anchor
            Depends on: 0800000
-
-  0811002  Selection_Controller_Specification
-           Tier: Instance Document
-           Depends on: 0810000, 0711001
-           Content: Gate 5 quality filter. 6 SC gates
-           (AR-072): SSS PASS, candle body, no position,
-           cooldown, size viability, consecutive losses.
-           State management dicts (AR-073): cooldown +
-           consecutive loss. Gate reject codes. CIATS
-           EWMA monitoring. Hard rules. Interfaces. Logging.
 
   0811005  Short_Module_Specification
            Tier: Instance Document
@@ -178,11 +190,31 @@ Register DR-058 retirement entry. Git history preserves
 dv1_1 + prior versions at the original path. See TB00000
 v2_38 §11 retired-document standing practice.
 
+NOTE: 0811002 Selection_Controller_Specification dv1_0
+RETIRED at TB00302 (2026-05-15) under DD-012 v2_38
+AMENDMENT A 0500000-canonical-all-docs scope + DEC-012
+6-sub-step retirement-campaign methodology. Canonical
+source for Selection Controller 6-gate quality filtering
+rules and state-management architecture: 0500000
+System_Architecture_Overview Tier 1 Context
+(mod:Selection_Controller structured tag), D2 Trading
+Pipeline (gate:G5_Selection_Controller labeled group
+g5_selection with drill_targets gate:G1..G8 and
+constraints), D6 Logger Async Bounded Queue (mod:Logger
+governs SELECTION_REJECTED events), and §8 AR-072 (SC
+gate parameters) + AR-073 (Exit Controller as SOLE
+updater of SC state via WS Manager path) + HR-EC-014
+binding in parent spec 0511004 dv1_6 (canonical SOLE-
+UPDATER authority). See TB00153 Master_Defect_Register
+DR-061 retirement entry. Git history preserves dv1_0
+at the original path; `git log --follow` retrieves full
+version history. See TB00000 v2_42 §11 retired-document
+standing practice.
+
 ============================================================
 5. DOCUMENT CHAIN REQUIREMENT
 ============================================================
 
-  0811002 -> 0810000 -> 0800000
   0811005 -> 0810000 -> 0800000
 
 This chain is mandatory and unbroken. No instance document
@@ -196,22 +228,18 @@ both 0810000 and 0800000 already present and committed.
 Commit order:
   1. 0800000 Trading_System (Domain Document)
   2. 0810000 This anchor
-  3. 0811002, 0811005 (any order)
+  3. 0811005
 
-Within Sub-Domain 1, the surviving instance documents are
-independent of each other. All may be committed in any
-order provided 0810000 and 0800000 are committed.
+The sole surviving instance document in Sub-Domain 1 is
+0811005. It may be committed at any time after 0810000
+and 0800000 are committed.
 
 External dependencies:
-  0811002 depends on 0711001 (SSS_Signal_Model_Specification)
-    for SSS PASS signal definition (SC-GATE-1).
-  0711001 and its parent chain (0710000, 0700000)
-  must be on GitHub before 0811002 is committed.
-
-System Architecture references:
   0811005 references 0511003 (Execution_Engine_Specification)
     and 0511005 (Position_Mirror_Specification)
     (short-direction parallel-module sibling).
+
+System Architecture references:
   Long Module entry dispatch architecture and rules
   previously documented in retired 0811001 are now
   canonical in 0500000 Tier 1 Context (mod:Long_Module
@@ -222,6 +250,14 @@ System Architecture references:
   remain as documented in surviving 05XXXXX specs
   (0511003 Execution_Engine_Specification dv1_X,
   0511005 Position_Mirror_Specification dv1_X).
+  Selection Controller architecture and rules previously
+  documented in retired 0811002 are now canonical in
+  0500000 Tier 1 Context (mod:Selection_Controller
+  structured tag) + D2 (gate:G5_Selection_Controller
+  labeled group) + D6 (mod:Logger governs SELECTION_
+  REJECTED events) + §8 AR-072/AR-073 per DD-001/DD-002
+  + DD-012; HR-EC-014 canonical SOLE-UPDATER authority
+  remains in parent spec 0511004 dv1_6.
   Entry Limit Placement architecture and rules previously
   documented in retired 0811004 are now canonical in
   0500000 §8 (AR-069) + Diagram body per DD-001/DD-002
@@ -242,7 +278,6 @@ System Architecture references:
 ============================================================
 
   0800000  Trading_System               (Domain Document)
-  0811002  Selection_Controller_Specification
   0811005  Short_Module_Specification
   0500000  System_Architecture_Overview
   0511003  Execution_Engine_Specification
@@ -258,194 +293,232 @@ System Architecture references:
 8. REVISION HISTORY
 ============================================================
 
-  dv1_3  05-15-2026  TB00296 0811001 LONG_MODULE_SPECIFICATION
-                     DV1_0 RETIREMENT CASCADE S-5 CASCADE-
-                     ANCHOR REVISION.
+  dv1_4  05-15-2026  TB00302 0811002 SELECTION_CONTROLLER_
+                     SPECIFICATION DV1_0 RETIREMENT CASCADE
+                     S-5 CASCADE-ANCHOR REVISION.
 
                      S-5 step of DEC-012 6-sub-step
                      retirement-campaign methodology
-                     (S-1 audit completed TB00207
-                     v1_0 + S-2 0500000 dv1_78 verified
-                     canonical encoding of mod:Long_Module
-                     in Tier 1 Context + D2 + D7 + §8 AR
-                     identifiers + S-3 sub-targets a-v
-                     CLOSED across TB00207-TB00294 +
-                     S-4 git rm 0811001 dv1_0 executed
-                     at TB00295 close via OPERATION 4
-                     merge per DR-008.6 v2_42 CANONICAL
-                     REPO ROUTING multi-class batch rule
-                     + S-5 cascade-anchor revision this
-                     document + S-6 TB00153 MDR v1_25 ->
-                     v1_26 + Decision_Register v1_5 ->
-                     v1_6 sequenced to TB00297+).
+                     (S-1 audit completed TB00300
+                     TB00209 v1_0 + S-2 NO-OP per
+                     Option B derivability test (cluster
+                     (c-1) SC-024 EC-as-sole-updater
+                     contract drops naturally with
+                     retirement; HR-EC-014 binding
+                     canonical in 0511004 dv1_6) + S-3
+                     PROSE-UPDATE-A1/A2 HR-SC-005 +
+                     HR-SC-006 migration to 0511002
+                     dv1_1 §14 closed at TB00301 + S-4
+                     git rm 0811002 dv1_0 + S-5
+                     cascade-anchor revision this
+                     document + S-6 TB00153 MDR v1_27
+                     -> v1_28 + Decision_Register v1_7
+                     -> v1_8 — all S-4/S-5/S-6
+                     executed at TB00302 close via
+                     OPERATION 4 commit per DR-008.6
+                     v2_42 CANONICAL REPO ROUTING
+                     multi-class batch rule).
 
                      SCOPE OF CHANGES:
 
                      CHANGE 1 — §3 SUB-DOMAIN 1 SCOPE.
                      Scope bullets preserved byte-
                      identical (RR-SCOPE-007 silent-
-                     narrowing prohibition). The "Long
-                     Module entry dispatch rules and
-                     order lifecycle" bullet remains
-                     in the "governs" list — the topic
-                     remains Sub-Domain 1 governance;
-                     only the canonical source changes
-                     per DD-012 retirement-campaign
-                     methodology. Added third NOTE
+                     narrowing prohibition). "Selection
+                     Controller 6-gate quality filtering
+                     rules" bullet remains in the
+                     "governs" list — the topic remains
+                     Sub-Domain 1 governance; only the
+                     canonical source changes per
+                     DD-012 retirement-campaign
+                     methodology. Added fourth NOTE
                      paragraph after the §3 NOTE
                      paragraphs established at dv1_1
-                     (0811003) and dv1_2 (0811004),
-                     identifying Long Module entry
-                     dispatch as Sub-Domain 1 governance
-                     with canonical source in 0500000
-                     Tier 1 Context (mod:Long_Module
-                     structured tag) + D2 Trading
-                     Pipeline + D7 Dispatch Seam
-                     (mod:Long_Module labeled group
-                     lm_above_seam) + §8 AR-006/AR-007/
-                     AR-008/AR-002/AR-053/AR-054 per
-                     DD-001/DD-002/DD-012.
+                     (0811003), dv1_2 (0811004), and
+                     dv1_3 (0811001), identifying
+                     Selection Controller 6-gate
+                     quality filtering as Sub-Domain 1
+                     governance with canonical source
+                     in 0500000 Tier 1 Context
+                     (mod:Selection_Controller
+                     structured tag) + D2 (gate:G5_
+                     Selection_Controller labeled group
+                     g5_selection) + D6 (mod:Logger
+                     governs SELECTION_REJECTED events)
+                     + §8 AR-072/AR-073 + HR-EC-014
+                     binding in parent spec 0511004
+                     dv1_6 per DD-001/DD-002/DD-012.
 
                      CHANGE 2 — §4 DOCUMENT INVENTORY.
-                     Removed 0811001 Long_Module_
-                     Specification entry. Added NOTE
-                     paragraph after surviving instance
-                     entries documenting 0811001
-                     retirement with TB00153 MDR cross-
-                     reference (logged S-6 post-TB00296)
-                     + TB00000 v2_42 §11 git history
-                     retrieval. Existing NOTE paragraphs
-                     for 0811003 retirement (dv1_1) and
-                     0811004 retirement (dv1_2) preserved
-                     byte-identical.
+                     Removed 0811002 Selection_
+                     Controller_Specification entry.
+                     Added NOTE paragraph after the
+                     existing three retirement NOTE
+                     paragraphs (0811001 + 0811003 +
+                     0811004) documenting 0811002
+                     retirement with TB00153 MDR
+                     DR-061 cross-reference + TB00000
+                     v2_42 §11 git-history retrieval.
+                     Existing NOTE paragraphs for
+                     0811001 (dv1_3), 0811003 (dv1_1),
+                     and 0811004 (dv1_2) retirements
+                     preserved byte-identical.
 
                      CHANGE 3 — §5 DOCUMENT CHAIN
                      REQUIREMENT.
-                     Removed "0811001 -> 0810000 ->
-                     0800000" chain entry. Two surviving
-                     chains (0811002, 0811005).
+                     Removed "0811002 -> 0810000 ->
+                     0800000" chain entry. One
+                     surviving chain remains:
+                     "0811005 -> 0810000 -> 0800000".
 
                      CHANGE 4 — §6 DEPENDENCY ORDER.
-                     "0811001, 0811002, 0811005 (any
-                     order)" -> "0811002, 0811005
-                     (any order)". External dependencies
-                     block: byte-identical preserved
-                     (0811002 -> 0711001 dependency
-                     unchanged). System Architecture
-                     references block: removed "0811001
-                     references 0511003 (Execution_Engine_
-                     Specification) and 0511005
-                     (Position_Mirror_Specification)"
-                     line; added paragraph documenting
-                     that Long Module entry dispatch
-                     architecture is canonical in 0500000
-                     Tier 1 Context + D2 + D7 + §8 AR
-                     identifiers per DD-001/DD-002 +
-                     DD-012. Existing paragraphs for
-                     Entry Limit Placement (dv1_2) and
-                     Exit Controller (dv1_2) canonical-
-                     in-0500000 cross-references preserved
+                     "0811002, 0811005 (any order)" ->
+                     "0811005" (single surviving
+                     instance document). Prose
+                     describing "any order" between
+                     two siblings updated to single-
+                     document framing (0811005 alone).
+                     External dependencies block:
+                     removed "0811002 depends on
+                     0711001 (SSS_Signal_Model_
+                     Specification) for SSS PASS
+                     signal definition (SC-GATE-1).
+                     0711001 and its parent chain
+                     (0710000, 0700000) must be on
+                     GitHub before 0811002 is
+                     committed." paragraph (0811002
+                     retired; no SSS dependency for
+                     0811005 sole surviving instance
+                     document at the 0810000 child
+                     level). System Architecture
+                     references block: added
+                     paragraph documenting that
+                     Selection Controller architecture
+                     is canonical in 0500000 Tier 1
+                     Context + D2 + D6 + §8 AR-072/
+                     AR-073 + HR-EC-014 binding in
+                     parent spec 0511004 dv1_6 per
+                     DD-001/DD-002 + DD-012. Existing
+                     paragraphs for Long Module
+                     (dv1_3), Entry Limit Placement
+                     (dv1_2), and Exit Controller
+                     (dv1_1) canonical-in-0500000
+                     cross-references preserved
                      byte-identical.
 
                      CHANGE 5 — §7 RELATED DOCUMENTS.
-                     Removed "0811001 Long_Module_
-                     Specification" line.
+                     Removed "0811002 Selection_
+                     Controller_Specification" line.
+                     0711001 SSS_Signal_Model_
+                     Specification line preserved
+                     (0711001 remains a canonical
+                     reference target for the
+                     SELECTION_REJECTED gate logic
+                     encoded in 0500000 D2; only the
+                     subordinate-spec link from
+                     0811002 to 0711001 retires).
 
                      CHANGE 6 — §8 REVISION HISTORY.
-                     This dv1_3 entry added.
+                     This dv1_4 entry added. dv1_3
+                     entry condensed to short-form
+                     per established pattern (dv1_1,
+                     dv1_2 short-form; full text
+                     preserved in git history).
 
                      ALL CHANGES OUTSIDE §3/§4/§5/§6/§7/§8
-                     PRESERVED BYTE-IDENTICAL FROM dv1_2.
+                     PRESERVED BYTE-IDENTICAL FROM dv1_3.
 
                      DD-011 v2_38 AMENDMENT D FP/DP-
                      DERIVABILITY-TEST APPLIED UP-FRONT.
 
                      Option set for S-5 scope:
                        A. Minimal mechanical — remove
-                          0811001 citation only (§4 +
+                          0811002 citation only (§4 +
                           §5 + §6 + §7 + §8 revision).
                        B. Minimal + §3 NOTE paragraph
                           addition pattern-matched to
-                          dv1_1 (0811003) and dv1_2
-                          (0811004) precedents.
+                          dv1_1 (0811003), dv1_2
+                          (0811004), and dv1_3 (0811001)
+                          precedents.
                        C. Comprehensive — also amend
                           §3 scope bullets (remove
-                          Long Module bullet).
+                          Selection Controller bullet).
                        D. Defer — surface to Bill.
 
                      First-principles analysis:
-                       Bill TB00296 OCS verbatim:
-                       "Execute 0811001 retirement
-                       cascade S-5 (0810000 dv1_2 ->
-                       dv1_3 anchor revision)." TB00296
-                       NSI §3.3 enumerates three S-5
-                       sub-tasks: (a) remove 0811001
-                       from child-document list,
-                       (b) verify mod:Long_Module
-                       canonical authority in 0500000
-                       D2 + D7 + Tier 1 Context, (c)
-                       update revision history.
+                       Bill TB00302 OCS verbatim:
+                       "Execute 0811002 cascade S-4
+                       (git rm after pre-S4
+                       Chesterton's-fence verification
+                       per TB00209 §6) + S-5 (0810000
+                       dv1_3 -> dv1_4) + S-6 (MDR +
+                       DR amendments)." TB00302 NSI
+                       §3.4 + §3.5 + §3.6 + §3.7
+                       enumerate S-4/S-5/S-6 sub-tasks.
 
                        Per RR-SCOPE-007 v2_30 SELF-
                        AUTHORED-NSI-SOURCE-PROHIBITION:
                        all S-5 sub-tasks trace to
-                       TB00207 §5.5 S-5 specification
-                       (Bill-ratified TB00207 v1_0
-                       authoring + TB00280 SL §3.7
-                       Bill-recognized methodology
-                       acceptance for 0811004 cascade
-                       which set the dv1_1 -> dv1_2
-                       precedent applied here). Trace
-                       chain to Bill-direction source
-                       verified.
+                       TB00209 §5 cascade-method
+                       specification (Bill-ratified
+                       TB00300 close) + dv1_1 (TB00277)
+                       + dv1_2 (TB00280) + dv1_3
+                       (TB00296) established pattern
+                       precedents. Trace chain to
+                       Bill-direction source verified.
 
                        Per RR-SCOPE-007 v2_37
                        OPERATIONAL-ARTIFACT-SCOPE-
                        EXTENSION: scope changes traced
                        line-by-line to (1) Bill OCS
                        directs S-5 anchor revision +
-                       (2) TB00207 §5.5 specifies
-                       remove-child-list + verify-
-                       canonical-encoding + update-
-                       revision-history sub-tasks +
-                       (3) dv1_1 (TB00277) + dv1_2
-                       (TB00280) established pattern
-                       precedents for the NOTE-
-                       paragraph addition matching
-                       previous retirement cascades.
+                       (2) TB00209 + DEC-012 6-sub-step
+                       specifies remove-child-list +
+                       verify-canonical-encoding +
+                       update-revision-history sub-
+                       tasks + (3) three prior
+                       precedents (dv1_1, dv1_2,
+                       dv1_3) established the NOTE-
+                       paragraph addition pattern.
 
-                       Scope-statement §3 Long Module
-                       bullet preservation traced: the
-                       bullet was in dv1_0 baseline
-                       and was NOT removed at 0811003
-                       or 0811004 retirement (both of
-                       those retirements similarly
-                       preserved Exit Controller and
-                       Entry Limit Placement bullets
-                       in §3 governance topic list).
-                       Removing the Long Module bullet
-                       would silent-narrow §3
+                       Scope-statement §3 Selection
+                       Controller bullet preservation
+                       traced: the bullet was in dv1_0
+                       baseline and was NOT removed
+                       at 0811001/0811003/0811004
+                       retirements (all preserved
+                       their respective bullets in §3
+                       governance topic list). Removing
+                       the Selection Controller
+                       bullet would silent-narrow §3
                        governance scope; this is
                        prohibited by RR-SCOPE-007
                        silent-scope-narrowing
                        prohibition.
 
                      Data sources consulted:
-                       TB00296 NSI §0 OCS directive.
-                       TB00296 NSI §3.3 S-5 sub-task
+                       TB00302 NSI §0 OCS directive.
+                       TB00302 NSI §3.4/§3.5/§3.6/§3.7
+                         S-4/S-5/S-6 sub-task
+                         specifications.
+                       TB00209 v1_0 §5 cascade-method
                          specification.
-                       TB00207 §5.5 S-5 cascade-anchor-
-                         revision methodology.
-                       0810000 dv1_2 (current state;
-                         dv1_1 -> dv1_2 precedent for
+                       0810000 dv1_3 (current state;
+                         dv1_2 -> dv1_3 precedent for
                          pattern-matching).
                        0500000 dv1_78 Tier 1 Context
-                         line 2332-2352
-                         (mod:Long_Module structured
-                         tag) + D7 R5 line 6772-6773
-                         (mod:Long_Module governs list
-                         + drill_targets).
-                       TB00153 Decision_Register v1_5
+                         (mod:Selection_Controller
+                         structured tag) + D2 (gate:G5_
+                         Selection_Controller labeled
+                         group g5_selection drill_
+                         targets) + D6 (mod:Logger
+                         governs list) + §8 AR-072 +
+                         AR-073 architectural
+                         reasoning.
+                       0511004 dv1_6 HR-EC-014
+                         canonical SOLE-UPDATER
+                         binding.
+                       TB00153 Decision_Register v1_7
                          DEC-012 6-sub-step methodology.
                        TB00000 v2_42 §4.5 DD-012 + §11
                          retired-document standing
@@ -457,21 +530,16 @@ System Architecture references:
                        Option A eliminated — would
                          omit §3 NOTE paragraph
                          addition matching the dv1_1
-                         + dv1_2 precedent pattern
-                         for retired specs (Exit
-                         Controller, Entry Limit
-                         Placement). The pattern is
-                         established practice; not
-                         applying it to Long Module
+                         + dv1_2 + dv1_3 precedent
+                         pattern for retired specs.
+                         The pattern is established
+                         practice (three prior
+                         instances); not applying it
+                         to Selection Controller
                          retirement creates §3
-                         documentation asymmetry
-                         where two retired specs
-                         have explicit canonical-
-                         source NOTE paragraphs and
-                         the third (Long Module)
-                         does not. Compliance gap
-                         relative to established
-                         pattern.
+                         documentation asymmetry.
+                         Compliance gap relative to
+                         established pattern.
                        Option C eliminated — §3
                          scope-bullet removal violates
                          RR-SCOPE-007 silent-scope-
@@ -498,59 +566,107 @@ System Architecture references:
                      DD-002 PROSE-FOLLOWS-DIAGRAM
                      COMPLIANCE.
                      0500000 dv1_78 Tier 1 Context
-                     (mod:Long_Module structured tag
-                     line 2332-2352) + D2 Trading
-                     Pipeline + D7 R5 Dispatch Seam
-                     (mod:Long_Module labeled group
-                     lm_above_seam line 6772-6773
-                     governs list + drill_targets) +
-                     §8 AR-006/AR-007/AR-008/AR-002/
-                     AR-053/AR-054 are canonical for
-                     Long Module entry dispatch
-                     architecture and rules. This
-                     dv1_3 adds NO new architectural
+                     (mod:Selection_Controller
+                     structured tag) + D2 (gate:G5_
+                     Selection_Controller labeled
+                     group g5_selection) + D6
+                     (mod:Logger governs list) + §8
+                     AR-072 + AR-073 architectural
+                     reasoning are canonical for
+                     Selection Controller architecture
+                     and rules. 0511004 dv1_6
+                     HR-EC-014 is canonical for SC
+                     SOLE-UPDATER authority. This
+                     dv1_4 adds NO new architectural
                      content; redirects readers at
-                     the canonical source. Compliance
-                     verified.
+                     the canonical sources.
+                     Compliance verified.
+
+                     PRE-S4 CHESTERTON'S-FENCE
+                     VERIFICATION (per TB00209 §6
+                     five grep-verify targets).
+                     Executed at TB00302 chat-turn 1
+                     via bash grep:
+                       (1) mod:Selection_Controller
+                           drill_target binding in
+                           0500000 dv1_78 — 7
+                           occurrences PRESENT.
+                       (2) ar:AR-072 (40 occurrences)
+                           + ar:AR-073 (64
+                           occurrences) PRESENT in
+                           0500000 dv1_78.
+                       (3) HR-EC-014 binding in
+                           0511004 dv1_6 — 3
+                           occurrences PRESENT.
+                       (4) contract:Parameter_Store_
+                           Snapshot binding in 0500000
+                           dv1_78 — 25 occurrences
+                           PRESENT.
+                       (5) evt:GATE5_PASS binding in
+                           0500000 dv1_78 D6
+                           mod:Logger group governs —
+                           ABSENT from canonical
+                           (only internal to 0811002
+                           dv1_0 lines 364, 404).
+                           Confirmed bucket-(a) stale
+                           restatement; Logger
+                           canonical consumes 54
+                           distinct evt: identifiers
+                           but not GATE5_PASS (pass
+                           forwards signal; only
+                           rejects are logged).
+                           Retirement removes orphan
+                           reference cleanly.
+                     All five verification targets
+                     yield Chesterton's-fence PASS.
+                     Retirement is safe.
 
                      PARENT CHAIN COMPLIANCE.
                      0810000 -> 0800000 chain
                      preserved. 0800000 Trading_System
                      dv1_0 §8 DOCUMENT STRUCTURE
                      separately lists 0811001 +
-                     0811003 + 0811004 in its
-                     Sub-Domain 1 inventory; future
+                     0811003 + 0811004 + 1011002 in
+                     its Sub-Domain inventory; future
                      0800000 dv1_0 -> dv1_1 amendment
-                     is a downstream cascade carry-
-                     forward to a later session per
-                     RR-SCOPE-007 narrow-scope-bound
-                     TB00296 OCS directive. 0800000
-                     update is NOT in scope for this
-                     session (matches dv1_1 and
-                     dv1_2 carry-forward pattern).
+                     adding 0811002 to retired-spec
+                     inventory is a downstream
+                     cascade carry-forward to a later
+                     session per RR-SCOPE-007 narrow-
+                     scope-bound TB00302 OCS
+                     directive. 0800000 update is NOT
+                     in scope for this session
+                     (matches dv1_1/dv1_2/dv1_3
+                     carry-forward pattern).
 
                      BILL OVERRIDE.
-                     This dv1_2 -> dv1_3 increment is
+                     This dv1_3 -> dv1_4 increment is
                      enacted under DEC-012 retirement-
                      campaign methodology (ratified
                      at TB00190; campaign scope
                      extended at TB00237 AMENDMENT B)
-                     + Bill TB00296 OCS directive
-                     executing 0811001 retirement
+                     + Bill TB00302 OCS directive
+                     executing 0811002 retirement
                      cascade S-5 + user chat-turn
                      directive "Do not pause and wait
                      for me. Proceed with OCS
                      instructions below." Direct
-                     increment dv1_2 -> dv1_3; no rv
+                     increment dv1_3 -> dv1_4; no rv
                      state.
 
                      Document Status: this document
                      is the sole authoritative
                      version of 0810000 post-
-                     supersession; dv1_2 is retired
+                     supersession; dv1_3 is retired
                      to git history per TB00000 v2_42
                      §11 retired-document standing
                      practice.
+
+  dv1_3  05-15-2026  TB00296 0811001 LONG_MODULE_
+                     SPECIFICATION DV1_0 RETIREMENT
+                     CASCADE S-5 CASCADE-ANCHOR
+                     REVISION. (Full text preserved
+                     in git history.)
 
   dv1_2  05-15-2026  TB00280 0811004 ENTRY_LIMIT_PLACEMENT_
                      SPECIFICATION DV1_1 RETIREMENT CASCADE
