@@ -1,13 +1,13 @@
-DocDCN:     0511003
-DocTitle:   Execution_Engine_Specification
-DocVersion: dv1_1
+DocDCN:     0511006
+DocTitle:   Logger_Specification
+DocVersion: dv1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511003_Execution_Engine_Specification_dv1_1.txt
-DocDate:    05-07-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511006_Logger_Specification_dv1_4.txt
+DocDate:    05-16-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
-EXECUTION ENGINE SPECIFICATION
+LOGGER SPECIFICATION
 ============================================================
 
 ============================================================
@@ -15,1251 +15,1461 @@ EXECUTION ENGINE SPECIFICATION
 ============================================================
 
 This document is the system-level specification for the
-Execution Engine component of TothBot V2. It defines what
-the Execution Engine does, its interfaces, its hard rules,
-what triggers it, and what it logs. It is the authoritative
-parent document for 1011004 Execution_Engine_Coding_Spec.
+Logger component of TothBot V2. It defines what the Logger
+does, its interfaces, its hard rules, what triggers it, and
+what it logs (i.e., what data CIATS depends on). It is the
+authoritative parent document for 1011007 Logger_Coding_Spec.
 
-The Execution Engine owns all order dispatch to Kraken
-for position entry and TP/emergSL placement. It receives
-the sizing output from Gate 8 of the Signal Pipeline and
-translates it into precisely-constructed WS v2 messages.
+The Logger is the sole data interface between TothBot and
+CIATS. Everything CIATS knows about TothBot's operation,
+it knows from the Logger. The Logger must never block the
+trading hot path. Every logged event is a potential CIATS
+data point.
 
-In paper trading mode, the Execution Engine code path is
-byte-identical to live mode (PA-005). Mode is read once at
-WSManager.__init__ and enforced at the WSManager dispatch
-seam (0500000 dv1_24 §12.3). The Execution Engine is
-mode-blind by architectural intent; it never reads
-paper_trading_mode and never branches on mode. Per
-TB00000 v2_20 §4.4 PA-001..010 PAPER-AS-MASTER
-PRINCIPLE.
+From dv1_1: the Logger operates a TWO-STREAM RECORD
+ARCHITECTURE on disk (contract:Two_Stream_Record_Architecture
+— diagram-canonical per 0500000 dv1_57 D5 R5 + D6 R6 root
+governs). The diagnostic stream (finite-
+retention rotating file) and the permanent stream
+(append-only, no-rotation, annual-segmented trade record
+file) are distinct components with distinct retention
+contracts and distinct governing concerns (diagnostics /
+CIATS live read vs. compliance, tax, audit). See
+Section 3.3.
 
 ============================================================
 2. COMPONENT SUMMARY
 ============================================================
 
 What it does:
-  Receives Gate 8 sizing output. Assigns cl_ord_id to the
-  entry order. Constructs and sends add_order (entry) via
-  the WSManager dispatch seam. On execution fill confirmation,
-  constructs and sends batch_add (TP limit + emergSL stop-
-  market atomic) via the WSManager dispatch seam. Updates
-  Position Mirror at dispatch. Populates Pending Order
-  Registry. Handles entry rejection and expiry. Transfers
-  rate counter cost to CIATS monitor. Behavior is byte-
-  identical between paper and live modes per §5A
-  EE-PAPER-001.
+  Receives log entries from all TothBot components via an
+  in-memory bounded queue. Writes entries asynchronously
+  to disk via a background thread. Dispatches to two
+  persistent disk sinks (Section 3.3). Provides real-time
+  data stream to CIATS (two streams: EWMA Monitor and
+  Trade Outcome Bus). Never blocks the trading hot path.
+  Provides operator alert routing for CRITICAL and HIGH
+  level events, with positive-delivery confirmation events.
 
 Primary inputs:
-  Gate 8 output dict from Signal Pipeline (0511002):
-    {symbol, entry_limit_price, entry_qty,
-     tp_price, sl_trigger_price, entry_timeout_sec,
-     regime_context, signal_params}
-  executions channel fill/expiry events (live) OR
-  _simulate_entry_fill callback (paper) — mode-opaque
-  to the Execution Engine per §5A EE-PAPER-004.
+  Log call from any TothBot component (WS Manager, Signal
+  Pipeline, Execution Engine, Exit Controller, Position
+  Mirror, Regime Engine)
 
 Primary outputs:
-  WS v2 add_order message (entry) handed to WSManager
-    seam — paper gates and simulates; live transmits.
-  WS v2 batch_add message (TP + emergSL, on fill) handed
-    to WSManager seam — paper gates and simulates; live
-    transmits.
-  Position Mirror update (0511005)
-  Pending Order Registry update (via WS Manager)
-  Logger calls (0511006)
+  (1) Diagnostic disk log file (structured — CIATS-readable,
+      finite retention via rotation). Receives ALL events.
+  (2) Permanent trade record file (structured — append-only,
+      annual-segmented, no rotation). Receives TRADE_CLOSE
+      events only. Authoritative long-term source for
+      CIATS's 200-trade statistical floor, IRS Form 8949 /
+      26 CFR 1.6001-1 tax records, and audit trail.
+  (3) Operator alerts for CRITICAL and HIGH events (email)
+      plus positive-delivery confirmation events
+      (ALERT_SENT) and failure events (ALERT_SMTP_FAILED)
+      emitted back through the Logger itself.
 
 ============================================================
-3. PHASE 1 — ENTRY ORDER DISPATCH
+3. IMPLEMENTATION ARCHITECTURE (AR-014, AR-063)
 ============================================================
 
-3.1 cl_ord_id Assignment
+3.1 Queue Implementation
 
-  Assigned at dispatch before Kraken response.
-  Format: up to 18 characters. Must be unique per order.
-  Suggested format: symbol prefix + timestamp in ms.
-  Example: "BTCUSD1712230000001"
-  cl_ord_id is recorded in Position Mirror immediately at
-  dispatch — no async gap (A-2). Pending Order Registry
-  populated at same time.
+  CORRECT implementation (AR-063):
+    import queue
+    import logging.handlers
 
-3.2 req_id Assignment
+    log_queue = queue.Queue(maxsize=10000)
+    queue_handler = logging.handlers.QueueHandler(log_queue)
+    log_listener = logging.handlers.QueueListener(
+        log_queue, file_handler, alert_handler,
+        trade_record_handler)
+    log_listener.start()
 
-  Each outbound message carries req_id (unique integer).
-  WS Manager req_id_registry tracks: {method, timestamp,
-  symbol} keyed by req_id. Used for cancel timeout
-  fallback (I-6) and response correlation.
+  NOT asyncio.Queue (ar:AR-063 — diagram-canonical per 0500000
+    dv1_57 D1 R2 + D5 R5 root governs):
+    QueueListener runs in a separate non-asyncio thread
+    and is not compatible with asyncio.Queue. An asyncio
+    coroutine writer would compete with the event loop
+    for scheduling. stdlib queue.Queue is correct.
 
-3.3 add_order Construction (AR-006)
+  queue.Queue(maxsize=10000):
+    10,000 entries bounded queue (AR-014, FP/DP validated).
+    Derivation: 20 positions x 10 events/candle x 50-candle
+    buffer = 10,000 entries = 50-candle burst absorption.
+    (Source: 0500000 dv1_18 Section 6, I-5.)
 
-  All fields required. No optional fields omitted.
+  QueueHandler: Non-blocking. Called on the asyncio event
+    loop — puts entry into queue and returns immediately.
+  QueueListener: Runs in its own background thread. Reads
+    from queue and dispatches to ALL attached handlers
+    (diagnostic file handler, alert handler, permanent
+    trade record handler). Never blocks the asyncio event
+    loop. Per-handler exception isolation via
+    logging.Handler.handleError ensures that a failure
+    in one handler does not prevent the others from
+    processing the same record.
 
-  {
-    "method": "add_order",
-    "params": {
-      "order_type": "limit",
-      "side":       "buy",
-      "symbol":     <symbol>,
-      "limit_price": <entry_limit_price>,
-      "order_qty":  <entry_qty_quantized>,
-      "post_only":  true,
-      "time_in_force": "gtd",
-      "expire_time":   <ISO 8601 UTC now + entry_timeout_sec>,
-      "cl_ord_id":  <assigned cl_ord_id>,
-      "stp_type":   "cancel_newest",
-      "deadline":   <ISO 8601 UTC now + 5s>
-    },
-    "req_id": <assigned req_id>
-  }
+3.2 On Queue Full (rule:HR-LG-011 — diagram-canonical per
+    0500000 dv1_57 D1 R2 + D5 R5 + D6 R6 root governs)
 
-  Field notes:
-    time_in_force = "gtd" (Good Til Date) — self-expiring.
-    entry_timeout_sec: 30-60s (CIATS-owned starting range).
-    stp_type: "cancel_newest" WITH UNDERSCORE (AR-032).
-              REST API uses "cancel-newest" (hyphen).
-              WS v2 ALWAYS uses underscore. Never confuse.
-    deadline: UTC now + 5 seconds ISO 8601 string (AR-033).
-    post_only: true — guarantees maker fill or rejection.
-               No fill on spread crossing — NEVER taker.
+  If log_queue.Full exception raised on put():
+    Write directly to sys.stderr: "LOG QUEUE FULL — entry
+    dropped: {timestamp} {event_type} {symbol}"
+    Alert operator HIGH immediately.
+    Skip the queued entry — NEVER block the caller.
+    NEVER raise an exception back to the trading hot path.
 
-  Construction is byte-identical between paper and live
-  modes. The dispatch boundary is the WSManager seam per
-  §5A EE-PAPER-002 and 0500000 dv1_24 §12.3.
+3.3 Two-Stream Record Architecture (dv1_1)
+    (contract:Two_Stream_Record_Architecture — diagram-
+    canonical per 0500000 dv1_57 D5 R5 + D6 R6 root governs)
 
-3.4 Pending Order Registry Population (AR-053)
+  The Logger produces TWO persistent disk streams with
+  distinct and independent retention contracts. Both
+  streams are written from the single QueueListener
+  background thread. Neither blocks the hot path.
 
-  On add_order dispatch:
-    estimated_cost = entry_qty * entry_limit_price *
-                     (1 + maker_fee_rate)
-    pending_orders[entry_cl_ord_id] = estimated_cost
-  Gate 7 available_USD uses this registry to prevent
-  capital overcommitment when multiple pairs fire
-  simultaneously. Identical behavior in paper and live.
+  STREAM 1 — DIAGNOSTIC (tothbot.log)
+    Handler:     RotatingFileHandler
+    Location:    /home/tothbot/logs/tothbot.log
+    Contents:    ALL log events from all components
+    Format:      NDJSON (one JSON object per line)
+    Retention:   Rotating — 90 files x 50 MB (AA=10 spec
+                 1011007 LG-FILE-002). Finite.
+    Consumers:   CIATS real-time tail (live read),
+                 operator forensics, on-VPS grep/jq.
+    Rationale:   High-volume diagnostic stream. Must not
+                 grow unbounded. CIATS monitors live.
 
-3.5 Entry Rate Counter Cost
+  STREAM 2 — PERMANENT TRADE RECORD (trades_<YYYY>.jsonl)
+    Handler:     TothBotTradeRecordHandler
+    Location:    /home/tothbot/records/trades_<YYYY>.jsonl
+                 where <YYYY> is the current UTC calendar
+                 year at time of write.
+    Contents:    TRADE_CLOSE events ONLY. All other event
+                 types are a no-op for this handler.
+    Format:      JSONL — identical per-record payload to
+                 Stream 1 (same pre-serialized JSON line,
+                 plus "\\n"). No divergent serialization.
+    Retention:   PERMANENT. Append-only. No rotation.
+                 No size cap. No truncation. 0o644
+                 permissions hard-pinned on create.
+                 fsync after each write.
+    Consumers:   Tax preparation (IRS Form 8949,
+                 Schedule D, 26 CFR 1.6001-1 — 3-year
+                 minimum; longer in audit-extension),
+                 CIATS 200-trade statistical corpus
+                 (future — currently served by Stream 1
+                 tail; OI-024 parking lot in 1010000
+                 dv1_11 Section 4.10), forensic audit of
+                 any historical trade, operator
+                 dashboards.
+    Rationale:   The CIATS 200-trade statistical floor,
+                 tax compliance, and audit trail require
+                 a trade record horizon longer than the
+                 diagnostic stream's bounded retention
+                 can guarantee (TB00107 observed ~6 days
+                 of tothbot.log retention on the live
+                 VPS — orders of magnitude short of the
+                 3-year tax minimum and structurally
+                 insufficient for the 200-trade CIATS
+                 corpus at realistic paper-trading
+                 throughput).
 
-  add_order fixed cost: +1 rate counter unit.
-  Rate counter monitored via executions channel (A-1)
-  in live mode. In paper mode, rate counter is not
-  Kraken-pushed (no private WS connection per HR-EE-014);
-  CIATS rate-counter telemetry is mode-agnostic and uses
-  the +1 unit attribution at dispatch.
-  If rate counter near ceiling (approaching maxratecount
-  from subscription ACK): log RATE_COUNTER_WARNING.
+  Contract between the two streams:
+    (a) TRADE_CLOSE payload is BYTE-FOR-BYTE IDENTICAL on
+        both streams (enforced by 1011007 dv1_4
+        LG-TOB-003). The permanent stream is not a
+        derived transform — it is the same record,
+        written twice.
+    (b) Diagnostic-stream TRADE_CLOSE within current
+        retention window is an operational fallback if
+        the permanent-stream write fails
+        (TRADE_RECORD_WRITE_FAILED HIGH alert fires;
+        operator can recover from tothbot.log until
+        root cause is resolved).
+    (c) The streams are INDEPENDENT from a failure-domain
+        perspective: QueueListener dispatches each record
+        to each handler with per-handler handleError
+        isolation. A failing permanent-stream write does
+        not prevent the diagnostic write, and vice versa.
 
-============================================================
-4. ENTRY ORDER OUTCOMES
-============================================================
+3.4 Shutdown (rule:HR-LG-004 — diagram-canonical per
+    0500000 dv1_57 D1 R2 + D5 R5 root governs)
 
-4.1 exec_type = filled (full fill at entry)
-
-  Trigger Phase 2 (TP + emergSL placement).
-  Extract: qty = Decimal(str(cum_qty)),
-           entry_fill_price = Decimal(str(avg_price)).
-  Clear pending_orders[entry_cl_ord_id].
-  Log ENTRY_FILLED.
-
-  Live source: executions channel exec_type=filled.
-  Paper source: _simulate_entry_fill callback per
-                §5A EE-PAPER-004 (fill price = entry
-                limit price, fill qty = full qty).
-  EE handles both sources via the same callback path —
-  EE does not branch on source.
-
-4.2 exec_type = trade (partial fill while open)
-
-  Order is still active — partially filled.
-  Update Pending Order Registry: hold entry (do NOT clear).
-  No TP/emergSL dispatch yet. Wait for filled or expiry.
-  Log ENTRY_PARTIAL_TRADE (cum_qty, avg_price).
-
-4.3 exec_type = expired (GTD window elapsed)
-
-  If cum_qty == 0: no fill. Clear registry. Log
-    ENTRY_EXPIRED_NO_FILL. No position opened.
-  If cum_qty > 0: partial fill exists. No TP/emergSL.
-    CRITICAL: unprotected position. Partial fill
-    protection triggered per AR-054 (handled by
-    WS Manager dispatch — see 0511001 Section 8.2).
-    Log ENTRY_EXPIRED_PARTIAL_FILL.
-
-4.4 exec_type = canceled
-
-  Same handling as expired (AR-054 applies).
-  Log ENTRY_CANCELED_PARTIAL_FILL or ENTRY_CANCELED_NO_FILL.
-
-4.5 exec_type = new (order accepted on book)
-
-  No action. Log ENTRY_ACCEPTED_ON_BOOK.
-
-4.6 post_only rejection (exec_type = canceled, reason = post_only)
-
-  Order hit spread — post_only prevented taker fill.
-  Clear pending_orders. Log ENTRY_POST_ONLY_REJECTED.
-  CIATS EWMA Monitor: rejection_rate_by_regime increments
-  (signal 1 — Finding 6 of dv1_10).
-
-============================================================
-5. PHASE 2 — TP + EMERGENCY SL PLACEMENT (batch_add)
-============================================================
-
-5.1 batch_add Construction (AR-007, AR-046, AR-032, AR-033)
-
-  Dispatched atomically on confirmed full entry fill.
-  Two legs: TP limit order + emergSL stop-market order.
-
-  {
-    "method": "batch_add",
-    "params": [
-      {
-        "order_type":  "limit",
-        "side":        "sell",
-        "symbol":      <symbol>,
-        "limit_price": <tp_price>,
-        "order_qty":   <entry_fill_qty>,
-        "post_only":   true,
-        "cl_ord_id":   <tp_cl_ord_id>,
-        "stp_type":    "cancel_newest",
-        "deadline":    <ISO 8601 UTC now + 5s>
-      },
-      {
-        "order_type":  "stop-loss",
-        "side":        "sell",
-        "symbol":      <symbol>,
-        "order_qty":   <entry_fill_qty>,
-        "cl_ord_id":   <emg_sl_cl_ord_id>,
-        "stp_type":    "cancel_newest",
-        "deadline":    <ISO 8601 UTC now + 5s>,
-        "triggers":    {
-          "reference":  "last",
-          "price":      <sl_trigger_price>,
-          "price_type": "static"
-        }
-      }
-    ],
-    "req_id": <assigned req_id>
-  }
-
-  Field notes:
-    TP order: post_only=true → resting limit on book.
-    emergSL: stop-market. Fires on match with trigger price.
-    triggers.reference = "last" (AR-046). MANDATORY.
-      Uses Kraken internal last-traded price — always
-      available. reference="index" uses external feeds
-      that may be unavailable during crash scenarios.
-      NEVER rely on API defaults for crash protection.
-    stp_type: "cancel_newest" (underscore, WS v2, AR-032).
-    deadline: UTC now + 5s on BOTH legs (AR-033).
-    batch_add rate cost: +(n/2) = +(2/2) = +1 unit.
-
-  Construction is byte-identical between paper and live
-  modes. Dispatch boundary is the WSManager seam.
-
-5.2 Position Mirror Update (0511005)
-
-  Position Mirror updated with actual fill data:
-    symbol (key), entry_fill_price (avg_price),
-    qty (cum_qty), tp_order_id, tp_cl_ord_id,
-    emergSL_order_id, emergSL_cl_ord_id.
-  All recorded immediately at batch_add dispatch —
-  no async gap (A-2). This is the record-at-dispatch
-  rule: TothBot knows the orders exist before Kraken
-  confirms them.
-
-  In paper mode, tp_order_id and emergSL_order_id carry
-  the prefix "PAPER_TP_" / "PAPER_SL_" per 0511001 dv1_5
-  §13.2. In live mode, IDs are the Kraken-assigned values
-  from the batch_add ACK. Both populate Position Mirror
-  via the same pm.update_resting_orders() pathway per
-  §5A EE-PAPER-003.
-
-5.3 BoundedSemaphore Acquisition (AR-043)
-
-  Execution Engine acquires asyncio.BoundedSemaphore
-  before entry dispatch. Released by Exit Controller
-  on position close. On CIATS max_concurrent update:
-  recreate semaphore, re-acquire for all open positions.
-  BoundedSemaphore raises ValueError on over-release
-  (bug detection). Identical behavior in paper and live.
+  log_listener.stop() on TothBot shutdown.
+  stop() drains remaining queue entries and joins the
+  background thread. No log entries lost on clean shutdown.
+  Queued TRADE_CLOSE records are dispatched to BOTH
+  Stream 1 and Stream 2 handlers during drain.
 
 ============================================================
-5A. PAPER MODE EXECUTION BEHAVIOR (EE-PAPER) — NEW dv1_1
+4. LOG ENTRY FORMAT
 ============================================================
 
-This section specifies how the Execution Engine behaves
-in paper mode. Per TB00000 v2_20 §4.4 PA-001..010
-PAPER-AS-MASTER and 0500000 dv1_24 §12 Paper-Mode
-Dispatch Boundary Architecture, paper trading is the
-empirically-validated master configuration; live trading
-is built to MIMIC paper. Outside the four PA-004
-divergence points (private WS connection; order dispatch;
-capital ledger; Position Mirror sourcing), paper and live
-operation MUST be byte-identical (PA-005).
+4.1 Minimum required fields on every entry:
 
-The Execution Engine sits ABOVE the WSManager dispatch
-seam per 0500000 dv1_24 §12.3. EE does NOT participate in
-mode selection. EE does NOT inspect mode state. EE
-constructs Kraken WS v2 messages identically in both
-modes and hands them to WSManager seam methods, which
-gatekeep the paper-vs-live behavioral divergence.
+  timestamp_utc:  ISO 8601 string (UTC, nanosecond if available,
+                  millisecond minimum)
+  event_type:     str (see Section 5 — event type registry)
+  level:          str (DEBUG | INFO | WARN | ERROR | CRITICAL)
+  component:      str (WS_MGR | SIGNAL_PIPELINE |
+                       EXEC_ENG | EXIT_CTRL | POS_MIRROR |
+                       REGIME_ENG | LOGGER | CIATS)
 
-------------------------------------------------------------
-5A.1 Architectural Principle
-------------------------------------------------------------
+4.2 Additional fields per event type:
 
-EE-PAPER-001  PAPER-LIVE BYTE-IDENTICAL EE PATH.
+  symbol:         str (where applicable)
+  connection_id:  uint64 (all WS connection events, AR-064)
+  req_id:         int (all outbound WS message events)
+  cl_ord_id:      str (all order events)
+  order_id:       str (all fill/cancel events)
+  All numeric values: Decimal (stored as string in log)
+    (rule:HR-LG-009 — diagram-canonical per 0500000 dv1_57
+    D1 R2 + D5 R5 root governs)
 
-           The Execution Engine code path is byte-
-           identical between paper and live modes. Every
-           cl_ord_id assignment, every req_id assignment,
-           every add_order construction, every batch_add
-           construction, every pending_orders update,
-           every Position Mirror update, every rate
-           counter attribution, every log emission, and
-           every BoundedSemaphore acquire/release in the
-           Execution Engine MUST execute identically
-           regardless of mode. Mode-conditional branching
-           in the Execution Engine is PROHIBITED per
-           HR-EE-013.
+4.3 Log file format: (rule:HR-LG-010 — diagram-canonical
+    per 0500000 dv1_57 D1 R2 + D5 R5 root governs)
 
-           The ONLY physical divergence between paper
-           and live, viewed from the Execution Engine,
-           is the SOURCE of the entry-fill confirmation
-           (per EE-PAPER-004) and the underlying transport
-           of the constructed WS v2 message (per
-           EE-PAPER-002). Both divergences are absorbed
-           by the WSManager seam per 0500000 dv1_24 §12.3
-           and are invisible to the Execution Engine.
-
-           Per 0500000 dv1_24 §12.2: "Execution Engine
-           does NOT read [paper_trading_mode] directly.
-           Calls WSManager order methods. Per HR-EE-013,
-           EE has NO mode-conditional branching."
-
-EE-PAPER-002  ENTRY DISPATCH MODE-OPACITY.
-
-           The Execution Engine calls WSManager.add_order()
-           to dispatch entry orders. The seam method is
-           mode-opaque to the caller per 0500000 dv1_24
-           §12.3 CALLER CONTRACT:
-
-             PAPER MODE (self.paper_mode == True):
-               WSManager gates at entry, logs
-               PAPER_ORDER_SIMULATED, schedules
-               _simulate_entry_fill via
-               asyncio.create_task, and returns WITHOUT
-               calling _send_private().
-
-             LIVE MODE (self.paper_mode == False):
-               WSManager constructs the Kraken WS v2
-               message per AR-006 and calls
-               _send_private() to transmit.
-
-           The Execution Engine receives identical
-           post-conditions in both cases:
-             - cl_ord_id is registered with WSManager for
-               callback.
-             - Pending Order Registry is populated.
-             - ENTRY_DISPATCHED log record is emitted by
-               EE (mode-agnostic event).
-             - The entry fill callback path is invoked
-               on completion (asyncio.create_task in
-               paper; executions channel in live;
-               EE-PAPER-004 governs).
-
-           The Execution Engine MUST NOT inspect the
-           return value to determine mode. The
-           Execution Engine MUST NOT hold a reference to
-           ws_manager._ws_private. The Execution Engine
-           MUST NOT construct a Kraken order JSON
-           message and pass it to any send method other
-           than the WSManager seam (HR-EE-014).
-
-EE-PAPER-003  BATCH_ADD POSITION MIRROR PARITY.
-
-           The Execution Engine calls WSManager.batch_add()
-           on confirmed full entry fill to dispatch the
-           atomic TP + emergSL pair. The seam method is
-           mode-opaque per EE-PAPER-002.
-
-             PAPER MODE: WSManager populates Position
-             Mirror with synthetic order IDs prefixed
-             "PAPER_TP_" / "PAPER_SL_" per 0511001 dv1_5
-             §13.2 and logs PAPER_BATCH_ADD_SIMULATED.
-             No outbound Kraken transmission.
-
-             LIVE MODE: WSManager constructs the batch_add
-             message per AR-007 and calls _send_private().
-             Kraken-assigned order IDs populate Position
-             Mirror on batch_add ACK.
-
-           The Execution Engine receives identical
-           post-conditions in both cases:
-             - Position Mirror entry has tp_order_id,
-               tp_cl_ord_id, emergSL_order_id,
-               emergSL_cl_ord_id populated via the same
-               pm.update_resting_orders() pathway.
-             - TP_EMGSL_DISPATCHED log record is emitted
-               by EE (mode-agnostic event).
-             - The position is now under multi-layer
-               exit governance per the Exit Controller.
-
-           Position Mirror updates on batch_add are
-           ATOMIC at dispatch (record-at-dispatch rule,
-           A-2). This atomicity is preserved in both
-           modes — the WSManager seam is responsible for
-           ordering ledger and Mirror updates correctly
-           (per 0511001 dv1_5 §13.2 and 1011002 dv1_26
-           §16A).
-
-EE-PAPER-004  ENTRY FILL CALLBACK MODE-OPACITY.
-
-           The Execution Engine receives entry fill
-           confirmations via a single mode-agnostic
-           callback path. The originating event differs
-           by mode; the callback signature and downstream
-           handling are byte-identical:
-
-             LIVE MODE: executions channel exec_type=filled
-               event arrives via private WS. WSManager
-               routes it to the EE entry fill handler with
-               (symbol, cum_qty, avg_price, fees, cl_ord_id).
-
-             PAPER MODE: WSManager._simulate_entry_fill
-               (an asyncio.create_task scheduled from
-               WSManager.add_order in paper mode) invokes
-               the same EE entry fill handler with
-               (symbol, qty=full_qty, price=entry_limit_price,
-               fees=0_or_synthesized, cl_ord_id). Per
-               1011002 dv1_26 WM-PAPER-LEDGER-002, the
-               WSManager applies the synthetic ledger
-               entry-fill debit BEFORE invoking the EE
-               callback so that downstream EE Phase 2
-               batch_add construction sees a consistent
-               capital state.
-
-           The Execution Engine MUST NOT branch on the
-           originating source of the fill. The handler
-           reads (symbol, cum_qty, avg_price) from the
-           callback arguments and proceeds to Phase 2
-           batch_add dispatch (§5).
-
-           Per 0500000 dv1_24 §12.3 CALLER CONTRACT:
-           "On entry order add_order: a cl_ord_id is
-           registered for callback. In paper, a simulated
-           fill arrives via asyncio.create_task. In live,
-           an executions message arrives via the private
-           WS. Both result in the same ENTRY_FILLED log
-           record and the same Phase 2 batch_add
-           invocation."
-
-EE-PAPER-005  fees_entry_usd CAPTURE PARITY.
-
-           Per 1011002 dv1_26 WM-PAPER-LEDGER-002, the
-           PositionRecord captures fees_entry_usd at
-           entry-fill time so that Exit Controller's
-           _close_position can compute net P/L on close
-           (per 0511004 dv1_3 §6A EC-PAPER-004 and 1011005
-           dv1_3 EC-PAPER-CODE-003(a)). This field is
-           populated in BOTH modes:
-
-             PAPER MODE: WSManager._simulate_entry_fill
-             populates fees_entry_usd from
-             (entry_qty * entry_price * FEE_MAKER_PCT)
-             per WM-PAPER-LEDGER-002.
-
-             LIVE MODE: The EE-driven entry fill handler
-             populates fees_entry_usd from the
-             executions channel exec_type=filled event's
-             fees field (Kraken-reported maker fee).
-
-           The Execution Engine handler MUST populate
-           fees_entry_usd in the PositionRecord on every
-           entry fill in both modes. Failure to do so in
-           live mode is a defect that breaks PA-005
-           byte-identical CIATS data flow. Per 1011005
-           dv1_3 EC-PAPER-CODE-003(a), Exit Controller
-           does NOT recompute entry fees — they are
-           consumed from PositionRecord on exit.
-
-------------------------------------------------------------
-5A.2 What This Section Does NOT Change
-------------------------------------------------------------
-
-  - Phase 1 entry order dispatch (§3) is unchanged. EE
-    constructs add_order identically in both modes.
-  - Entry order outcomes (§4) are unchanged. The
-    callback signature is mode-opaque per EE-PAPER-004.
-  - Phase 2 batch_add construction (§5) is unchanged.
-    EE constructs batch_add identically in both modes.
-  - Rate counter summary (§6) is unchanged. EE
-    attributes +1 unit to add_order, +1 unit to
-    batch_add in both modes; CIATS rate-counter
-    telemetry consumes the attribution.
-  - Hard rules HR-EE-001 through HR-EE-012 are
-    unchanged.
-  - Live-mode behavior is unchanged.
-  - Log emissions §10 are unchanged. EE emits
-    ENTRY_DISPATCHED, ENTRY_ACCEPTED, ENTRY_FILLED, etc.
-    These are mode-agnostic events. PAPER_* events
-    (PAPER_ORDER_SIMULATED, PAPER_BATCH_ADD_SIMULATED,
-    PAPER_LEDGER_UPDATED, etc.) are emitted by WSManager
-    at the dispatch seam per 0500000 dv1_24 §12.6 — NOT
-    by the Execution Engine.
-
-------------------------------------------------------------
-5A.3 Closes
-------------------------------------------------------------
-
-This §5A EE-PAPER section closes the parent-spec layer of
-the Execution Engine paper-as-master cascade. It elevates
-the paper-live parity binding from D-06 / 0211005 dv1_1
-PT-MODE-005 / HR-PT-008 (the framework under which
-1011004 dv1_0 originally encoded HR-EE-013) to TB00000
-v2_20 §4.4 PA-001..010 PAPER-AS-MASTER absolute standing
-rule + 0500000 dv1_24 §12 Paper-Mode Dispatch Boundary
-Architecture.
-
-Cascade alignment:
-  0500000 dv1_24 §12.0 — first-class architectural
-                          element status.
-  0500000 dv1_24 §12.1 — PA-004 four divergence points
-                          (this spec binds to all four).
-  0500000 dv1_24 §12.2 — paper_trading_mode flag read
-                          ONCE at WSManager.__init__;
-                          EE does NOT read it.
-  0500000 dv1_24 §12.3 — WSManager dispatch seam SOLE
-                          gatekeeper; EE delegates to it.
-  0500000 dv1_24 §12.4 — synthetic capital ledger
-                          single-owner architecture
-                          (WSManager); EE consumes
-                          fees_entry_usd from PositionRecord
-                          per EE-PAPER-005.
-  0500000 dv1_24 §12.5 — paper exit routing through Exit
-                          Controller (cross-spec; sibling
-                          to this §5A).
-  0500000 dv1_24 §12.6 — paper telemetry event taxonomy
-                          (WSManager-emitted; EE log
-                          §10 is mode-agnostic).
-  0500000 dv1_24 §12.8 — Phase 1 close gate compliance
-                          mapping. With this amendment,
-                          0511003 enters compliance.
-  TB00000 v2_20 §4.4    — PA-001..010 paper-as-master
-                          principle binding.
-
-The implementation contract for the Execution Engine
-remains in 1011004 Execution_Engine_Coding_Spec dv1_0
-with HR-EE-013 paper-live behavioral parity. A future
-1011004 cascade may update HR-EE-013's source citation
-from D-06 / PT-MODE-005 / HR-PT-008 to v2_20 §4.4
-PA-001..010 + 0500000 dv1_24 §12 — that binding update
-is OUT OF SCOPE for this amendment per RR-SCOPE-002
-scope-constrictor.
+  Structured (newline-delimited JSON recommended).
+  Each line: one JSON object with all fields.
+  CIATS reads log file for all statistical computation.
+  File format governs CIATS data access.
+  Rotation policy for STREAM 1 (diagnostic): defined in
+  1011007 AA=10 coding spec.
+  Rotation policy for STREAM 2 (permanent trade record):
+  NONE. Explicit architectural contract — see 3.3.
 
 ============================================================
-6. RATE COUNTER SUMMARY (per action type)
+5. EVENT TYPE REGISTRY (minimum required event types)
 ============================================================
 
-  add_order (entry):          +1 fixed
-  batch_add (TP + emergSL):   +1 fixed (n/2 = 1)
-  cancel_order (< 300s old):  +1 per cancel
-  cancel_order (< 10s old):   +6 per cancel
-  cancel_order (< 5s old):    +8 per cancel
-  amend_order (< 5s old):     +1 fixed + 3 = +4 total
-  amend_order (< 10s old):    +1 fixed + 2 = +3 total
-  amend_order (< 15s old):    +1 fixed + 1 = +2 total
-  amend_order (>= 15s old):   +1 fixed
-  Rate counter ceiling: maxratecount from subscription ACK.
-  Decay: 2.34 units/second.
+5.1 WS Manager Events
 
-  Rate counter attribution is mode-agnostic per
-  EE-PAPER-001. CIATS rate-counter-by-pair telemetry
-  consumes the attribution identically in both modes.
+  WS_TOKEN_ACQUIRED
+  WS_CONNECTED                — connection_id, url
+  WS_DISCONNECTED             — connection_id, reason
+  INSTRUMENT_SNAPSHOT_COMPLETE — pair_count
+  SUBSCRIPTION_ACK            — channel, warnings (if any)
+  MAXRATECOUNT_SET            — value from ACK
+  PAIR_WARM_UP_STARTED        — symbol
+  PAIR_READY                  — symbol
+  ALL_PAIRS_WARM_UP_COMPLETE  — pair_count
+  PING_SENT                   — connection_id
+  PONG_RECEIVED               — connection_id, latency_ms
+  PING_TIMEOUT                — connection_id (CRITICAL)
+  ZOMBIE_CONNECTION_DETECTED  — connection_id, elapsed_seconds
+  RECONNECT_INITIATED         — connection_id, attempt_number
+  RECONNECT_COMPLETE          — connection_id
+  FATAL_RECONNECT_FAILURE     — attempt_count (CRITICAL)
+  KRAKEN_MAINTENANCE_SCHEDULED — within_hours
+  CONNECTION_ID_LOGGED        — connection_id (AR-064)
+  EXECUTIONS_SEQUENCE_GAP     — expected, received (CRITICAL)
+  BALANCES_SEQUENCE_GAP       — expected, received (HIGH)
+  CANDLE_CLOSE                — symbol, interval_begin, OHLC,
+                                 atr_14, rsi_14, ema_9, ema_21
+  EXEC_TRADE                  — order_id, cum_qty, avg_price,
+                                 last_qty, last_price (ar:AR-061
+                                 — diagram-canonical per 0500000
+                                 dv1_57 D1 R2 + D5 R5 root governs)
+  EXEC_FILLED                 — order_id, cum_qty, avg_price,
+                                 fees
+  EXEC_CANCELED               — order_id, reason
+  EXEC_EXPIRED                — order_id, cum_qty
+  EXEC_RESTATED               — order_id (warn if resting)
+  UNEXPECTED_ORDER_AMENDED    — order_id (CRITICAL, ar:AR-057
+                                 — diagram-canonical per 0500000
+                                 dv1_57 D1 R2 + D6 R6 root governs)
+  UNKNOWN_EXEC_TYPE           — raw_exec_type (WARN)
+  UNKNOWN_MESSAGE_TYPE        — raw_channel (WARN)
+  ENTRY_PARTIAL_FILL_PROTECTED — symbol, cum_qty, avg_price
+  GAP_CLOSED_POSITION         — symbol, estimated_PL
+  DRAWDOWN_UPDATE             — drawdown_pct, portfolio_USD
+  SESSION_PAUSE_TRIGGERED     — drawdown_pct
+  FULL_HALT_TRIGGERED         — drawdown_pct, open_count
+  BATCH_CANCEL_SENT           — count
+  BATCH_CANCEL_RESULT         — count_confirmed
+  RATE_COUNTER_UPDATE         — symbol, value, maxratecount
+
+5.2 Signal Pipeline Events
+
+  PIPELINE_START              — symbol, candle_ts
+  INSTRUMENT_STATUS_BLOCKED   — symbol, status
+  GATE_1_PASS/FAIL            — engine_state
+  GATE_2_PASS/FAIL            — volume_usd, threshold
+  GATE_3_PASS/FAIL            — regime, vol_regime
+  GATE_4_PASS/FAIL            — htf_ema_20, htf_ema_50
+  SSS_RESULT                  — rsi_14, ema_9, ema_21,
+                                 volume_ratio, sss_pass
+  GATE_5_RESULT               — sc_gate_failed (if any),
+                                 all 6 gate outcomes
+  GATE_6_RESULT               — sizing_modifier
+  GATE_7_RESULT               — drawdown_pct, semaphore,
+                                 available_USD
+  GATE_8_RESULT               — entry_qty, entry_price,
+                                 tp_price, sl_trigger,
+                                 mae_mult, sl_mult
+  PIPELINE_PASS               — symbol, all sizing params
+  PIPELINE_FAIL               — symbol, gate, rejection_code
+
+  Rejection codes:
+    INSTRUMENT_STATUS_BLOCKED, SYSTEM_STATE_BLOCKED,
+    LIQUIDITY_REJECTED, REGIME_BLOCKED, HTF_GATE_REJECTED,
+    SSS_SIGNAL_FAIL, WEAK_CANDLE_BODY, POSITION_ALREADY_OPEN,
+    PAIR_IN_COOLDOWN, POSITION_TOO_SMALL,
+    CONSECUTIVE_LOSSES_EXCEEDED, MAX_CONCURRENT_REACHED,
+    SESSION_PAUSE_DRAWDOWN, FULL_HALT_DRAWDOWN,
+    SKIP_INSUFFICIENT_USD
+
+5.3 Execution Engine Events
+
+  ENTRY_DISPATCHED            — symbol, limit_price, qty,
+                                 cl_ord_id, req_id, timeout_sec
+  ENTRY_ACCEPTED_ON_BOOK      — symbol, req_id
+  ENTRY_FILLED                — symbol, avg_price, cum_qty, fees
+  ENTRY_PARTIAL_TRADE         — symbol, cum_qty, avg_price
+  ENTRY_EXPIRED_NO_FILL       — symbol, cl_ord_id
+  ENTRY_EXPIRED_PARTIAL_FILL  — symbol, cl_ord_id, cum_qty
+  ENTRY_CANCELED_NO_FILL      — symbol
+  ENTRY_CANCELED_PARTIAL_FILL — symbol, cum_qty
+  ENTRY_POST_ONLY_REJECTED    — symbol, regime (for CIATS)
+  PARTIAL_FILL_BELOW_MINIMUM  — symbol, cum_qty, avg_price,
+                                qty_min, cost_min (HIGH;
+                                emitted by Long_Module
+                                AR-054 partial-fill-protection
+                                handler step 2 — exec_type=
+                                expired/canceled with
+                                cum_qty>0 fails Gate-8
+                                post-fill validation
+                                qty>=qty_min AND
+                                qty*avg_price>=cost_min;
+                                emergency market sell
+                                dispatched immediately to
+                                reduce unprotected stub to
+                                zero; CIATS Trade Outcome
+                                Bus fired with this event
+                                as the close-cause record)
+  TP_EMGSL_DISPATCHED         — symbol, tp_price, sl_trigger,
+                                 tp_cl_ord_id, emgsl_cl_ord_id,
+                                 batch_add req_id
+  TP_EMGSL_CONFIRMED          — symbol, tp_order_id, emgsl_id
+  RATE_COUNTER_WARNING        — symbol, current_value
+
+5.3.S Short Module Events (dv1_4)
+      Per 0811005 Short_Module_Specification dv1_3 §10
+      and TB00000 v2_44 §9.6 per-module CIATS routing.
+      All Short Module log events carry the side="short"
+      tag. Logger routes short trade outcomes to Short
+      CIATS pool per TB00000 v2_29 §9.6. Mirror of §5.3
+      Execution Engine Events with _SHORT suffix per
+      0811005 §10.
+
+  ENTRY_ACCEPTED_ON_BOOK_SHORT      — symbol, cl_ord_id,
+                                      limit_price
+  ENTRY_FILLED_SHORT                — symbol, fill_price,
+                                      qty, fees,
+                                      leverage_used
+  ENTRY_PARTIAL_TRADE_SHORT         — symbol, cum_qty,
+                                      avg_price
+  ENTRY_EXPIRED_NO_FILL_SHORT       — symbol, cl_ord_id
+  ENTRY_CANCELED_NO_FILL_SHORT      — symbol, cl_ord_id,
+                                      reason
+  ENTRY_EXPIRED_PARTIAL_FILL_SHORT  — symbol, cum_qty,
+                                      avg_price
+  ENTRY_CANCELED_PARTIAL_FILL_SHORT — symbol, cum_qty,
+                                      reason
+  ENTRY_POST_ONLY_REJECTED_SHORT    — symbol, regime,
+                                      rejection_code
+  ENTRY_PARTIAL_FILL_PROTECTED_SHORT — symbol, cum_qty,
+                                       tp_price,
+                                       emgSL_trigger
+  PARTIAL_FILL_BELOW_MINIMUM_SHORT  — symbol, cum_qty
+                                      (emergency cover-buy)
+  TP_PLACED_SHORT                   — symbol, tp_price,
+                                      qty (buy-side close)
+  EMGSL_PLACED_SHORT                — symbol, trigger_price,
+                                      qty (buy-side cover)
+  POSITION_OPENED_SHORT             — symbol, fill_price,
+                                      qty, tp_price,
+                                      emgSL_trigger,
+                                      leverage_used,
+                                      asset_regime,
+                                      market_regime,
+                                      signal_params
+
+  CIATS routing per TB00000 v2_29 §9.6: side="short" tag
+  on every event routes the trade outcome to the Short
+  CIATS pool. Long-side events without _SHORT suffix
+  (§5.3 above) route to Long CIATS pool. Per-module
+  statistical pool independence preserved per TB00000
+  §9.6 cross-module-data-contamination prohibition.
+
+5.4 Exit Controller Events
+
+  L1A_TRIGGERED               — symbol, trigger (L1A-001/002/003)
+  L1B_TP_FILL_DETECTED        — symbol, tp_order_id
+  L2_MAE_BREACH_DETECTED      — symbol, bid, entry, ATR, threshold
+  CANCEL_TP_SENT              — symbol, tp_order_id, req_id
+  CANCEL_EMGSL_SENT           — symbol, emgsl_order_id, req_id
+  CANCEL_CONFIRMED            — symbol, req_id, order_id
+  CANCEL_TIMEOUT_HOLD         — symbol, req_id (CRITICAL)
+  MARKET_SELL_SENT            — symbol, qty, req_id
+  MARKET_SELL_FILLED          — symbol, exit_price, fees
+  MPP_REJECTION               — symbol, retry_count
+  MAE_HOLD_AMBIGUOUS          — symbol (CRITICAL)
+  POSITION_CLOSED             — symbol, exit_reason, net_PL_USD
+  PAIR_LIMIT_ONLY_EXIT        — symbol
+  PAIR_CANCEL_ONLY_HOLD       — symbol (CRITICAL)
+  PAIR_MAINTENANCE_HOLD       — symbol (CRITICAL)
+  EMERGENCY_SL_FIRED          — symbol (CRITICAL — restart detect)
+
+5.5 Position Mirror Events
+
+  POSITION_RECORD_CREATED     — symbol, cl_ord_id, qty
+  POSITION_FILL_CONFIRMED     — symbol, avg_price, cum_qty
+  POSITION_ORDERS_SET         — symbol, tp_order_id, emgsl_id
+  POSITION_QTY_UPDATED        — symbol, new_qty
+  POSITION_CLOSED             — symbol, close_source
+  GAP_CLOSED_POSITION         — symbol
+  UNEXPECTED_OPEN_ORDER       — order_id (WARN)
+  RECONCILIATION_COMPLETE     — confirmed_count, gap_closed_count
+
+5.6 Regime Engine Events
+
+  REGIME_COMPUTATION_STARTED  — pair_count
+  REGIME_COMPUTED             — symbol, asset_regime, vol_regime
+  REGIME_COMPUTATION_COMPLETE — pair_count, elapsed_ms
+  REGIME_STALE_WARNING        — symbol (if data gap detected)
+
+5.7 Logger Self-Observability Events (dv1_1)
+    (evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_
+    WRITE_FAILED, evt:LOG_QUEUE_FULL — all diagram-canonical
+    per 0500000 dv1_57 D5 R5 + D6 R6 root governs)
+
+  ALERT_SENT                  — to, subject,
+                                triggering_event (INFO;
+                                emitted after SMTP
+                                sendmail returns without
+                                exception)
+  ALERT_SMTP_FAILED           — to, subject,
+                                triggering_event, error
+                                (HIGH; ALERT-EXEMPT — does
+                                not trigger SMTP alert so
+                                a persistent SMTP outage
+                                does not self-trigger
+                                recursively)
+  TRADE_RECORD_WRITE_FAILED   — path, error (HIGH;
+                                emitted when Stream 2
+                                write fails for any
+                                reason — disk full,
+                                permission error, etc.)
+  LOG_QUEUE_FULL              — (HIGH; stderr-only fallback
+                                per queue-full contract;
+                                no queue-enqueued record
+                                because queue is full)
+
+  Full field definitions and level rationale in 1011007
+  dv1_4 Section 6.9.
 
 ============================================================
-7. INTERFACES
+6. CIATS DATA STREAMS
 ============================================================
 
-7.1 From Signal Pipeline (0511002)
-  Receives Gate 8 output dict.
-  Triggered on full 8-gate pipeline pass.
+6.1 Stream 1 — EWMA Monitor
 
-7.2 From WS Manager (0511001)
-  Receives executions fill events routed from dispatch
-  table (live mode) OR _simulate_entry_fill callbacks
-  (paper mode), via the same EE entry fill handler
-  signature per §5A EE-PAPER-004. Execution Engine
-  handlers called by WS Manager.
+  CIATS reads these fields for the EWMA Monitor:
+  (288 candle evals/day, valid at 50 evals, lambda=0.2)
 
-7.3 To WS Manager (0511001)
-  Returns constructed WS v2 messages for dispatch via
-  the WSManager dispatch seam (add_order, batch_add,
-  cancel_order, amend_order, batch_cancel,
-  dispatch_market_sell). The seam is the SOLE
-  gatekeeper of paper-vs-live behavioral divergence
-  per 0500000 dv1_24 §12.3 and HR-EE-014.
+  Signal 1: rejection_rate_by_regime (F6)
+    Source: GATE_5_RESULT events + regime from GATE_3_RESULT
+    Fields needed: symbol, rejection_code, regime,
+                   vol_regime, timestamp_utc
 
-7.4 To Position Mirror (0511005)
-  Updates Position Mirror on batch_add dispatch.
-  WS Manager is the physical writer — Execution Engine
-  provides data. fees_entry_usd is captured on entry
-  fill per §5A EE-PAPER-005.
+  Signal 2: rate_counter_by_pair (A-1)
+    Source: RATE_COUNTER_UPDATE events
+    Fields needed: symbol, value, maxratecount, timestamp_utc
 
-7.5 To Logger (0511006)
-  All dispatch events, fill confirmations, rejections,
-  and rate counter data logged (non-blocking). EE log
-  records are mode-agnostic per §5A.2 and 0500000 dv1_24
-  §12.6.
+  Signal 3: ws_roundtrip_latency_ms (A-3)
+    (rule:HR-LG-007 — diagram-canonical per 0500000 dv1_57
+    D1 R2 + D5 R5 root governs)
+    Source: PONG_RECEIVED event — latency_ms field
+    Fields needed: connection_id, latency_ms, timestamp_utc
+    WS v2 responses include time_in and time_out to
+    nanosecond precision. Logger MUST capture both fields
+    where present (A-3).
 
-7.6 To CIATS EWMA Monitor
-  rejection_rate_by_regime updated on post_only rejection.
-  rate_counter_by_pair updated on each order action.
-  CIATS data flow is mode-agnostic per PA-005.
+  All three are MONITORING SIGNALS ONLY. The EWMA Monitor
+  never drives parameter changes. It is a fast warning
+  stream. Valid at 50 candle evals (~4 hours).
 
-============================================================
-8. HARD RULES
-============================================================
+6.2 Stream 2 — Trade Outcome Bus
 
-HR-EE-001  post_only=true on ALL entry add_order. No entry
-           may be placed as a taker order.
+  CIATS reads these fields for statistical analysis.
+  Fires ONCE on each complete position close.
+  Source: POSITION_CLOSED or MARKET_SELL_FILLED events
+  combined with entry data.
 
-HR-EE-002  stp_type="cancel_newest" (underscore) on ALL WS
-           v2 add_order and batch_add (AR-032). REST uses
-           hyphen. Never confuse the two.
+  Record type: TRADE_CLOSE (see 1011007 dv1_4 Section 7
+  for the complete mandatory-field contract).
 
-HR-EE-003  deadline = UTC now + 5 seconds (ISO 8601) on ALL
-           add_order and batch_add (AR-033).
+  From dv1_1: TRADE_CLOSE records are written to BOTH
+  the diagnostic log (Stream 1 in Section 3.3) AND the
+  permanent trade record file (Stream 2 in Section 3.3).
+  The Trade Outcome Bus is therefore backed by a
+  permanent on-disk source regardless of diagnostic-log
+  rotation.
 
-HR-EE-004  triggers.reference = "last" on ALL emergSL
-           stop orders in batch_add (AR-046). MANDATORY.
-           Never use reference="index". Never omit.
-
-HR-EE-005  TP and emergSL placed via batch_add atomic on
-           fill. OTO conditional orders: REJECTED (AR-008).
-           OTO uses limit price not fill price — violates
-           sacred R:R.
-
-HR-EE-006  cl_ord_id assigned at dispatch BEFORE Kraken
-           response. Position Mirror cl_ord_id recorded
-           at same moment — no async gap (A-2).
-
-HR-EE-007  Pending Order Registry populated on every
-           add_order dispatch. Cleared on filled, expired,
-           or canceled (with cum_qty == 0) (AR-053).
-
-HR-EE-008  All Decimal values: Decimal(str()) conversion
-           on all WS message numeric fields (AR-047).
-
-HR-EE-009  net_gain = net_loss * 1.5 is HARDCODED in Phase 1
-           Gate 8 sizing. Not a parameter. Not CIATS-owned.
-
-HR-EE-010  entry_qty_quantized >= qty_min AND
-           entry_qty * price >= cost_min MUST be validated
-           before dispatch. Failure: log, skip pair (AR-028).
-
-HR-EE-011  amend_order is the primary order amendment method.
-           edit_order is DEPRECATED and MUST NOT be used
-           (AR-018).
-
-HR-EE-012  Execution Engine does NOT send cancel_all_orders
-           _after under any circumstance (AR-055).
-
-HR-EE-013  PAPER-LIVE BEHAVIORAL PARITY (NEW dv1_1).
-           Execution Engine has NO mode-conditional
-           branching. Paper and live execute byte-
-           identical EE code paths in every method,
-           every loop, every callback, every log
-           emission, every Position Mirror update, and
-           every BoundedSemaphore acquire/release. The
-           paper-vs-live behavioral divergence is
-           absorbed by the WSManager dispatch seam per
-           0500000 dv1_24 §12.3 and is invisible to the
-           Execution Engine. Per TB00000 v2_20 §4.4
-           PA-005 byte-identical paper-live outside
-           PA-004 four divergence points. Closes parent-
-           spec layer of TB00148 cluster 1 audit
-           findings 09, 29, 30 (paper-mode dispatch
-           seam undefined). Cascaded to 1011004 dv1_0
-           HR-EE-013 (existing rule; binding update from
-           D-06 / PT-MODE-005 / HR-PT-008 to v2_20 §4.4
-           + 0500000 dv1_24 §12 is OUT OF SCOPE for
-           this amendment per RR-SCOPE-002).
-
-HR-EE-014  NO DIRECT PRIVATE-WS ACCESS (NEW dv1_1).
-           Execution Engine MUST NOT:
-             (a) Hold a reference to
-                 ws_manager._ws_private.
-             (b) Construct a Kraken order JSON message
-                 and transmit it via any path other
-                 than a WSManager seam method
-                 (add_order, batch_add, cancel_order,
-                 amend_order, batch_cancel,
-                 dispatch_market_sell).
-             (c) Bypass the WSManager seam by calling
-                 private helpers (e.g., _send_private)
-                 on WSManager.
-           ALL Execution Engine outbound order
-           operations MUST pass through the seam. Per
-           0500000 dv1_24 §12.3 NO DIRECT PRIVATE-WS
-           ACCESS BY ANY OTHER MODULE. Violation is a
-           session-halting defect under PA-001 (paper
-           is master) and HR-WM-023 (paper-mode
-           dispatch isolation).
-
-HR-EE-015  MODE-OPAQUE CALLER CONTRACT (NEW dv1_1).
-           Execution Engine treats every WSManager seam
-           method as mode-opaque. EE MUST NOT:
-             (a) Read paper_trading_mode anywhere in EE
-                 code.
-             (b) Read ws_manager.paper_mode anywhere in
-                 EE code.
-             (c) Inspect the return value or post-
-                 conditions of a seam method to infer
-                 the mode.
-             (d) Branch on mode to alter dispatch
-                 behavior, log emission, Position
-                 Mirror handling, or callback handling.
-           Post-conditions of each seam method are
-           identical in both modes per 0500000 dv1_24
-           §12.3 CALLER CONTRACT. Per 0500000 dv1_24
-           §12.2 WHO READS IT: "Execution Engine: Does
-           NOT read directly. Calls WSManager order
-           methods. Per HR-EE-013, EE has NO mode-
-           conditional branching."
+  Feed: Statistical Engine → Proposal Engine (at 200 trades)
+        Regime Library (at 600 trades, 100+ per bucket)
+        Half-Kelly computation (at 200+ trades)
 
 ============================================================
-9. WHAT TRIGGERS IT
+7. ALERT ROUTING
 ============================================================
 
-  Gate 8 output from Signal Pipeline on 8-gate pass.
-  exec_type=filled from executions channel on entry fill
-    (live) OR _simulate_entry_fill callback (paper); the
-    EE handler is mode-opaque per §5A EE-PAPER-004.
+  Level CRITICAL:
+    Events: PING_TIMEOUT, ZOMBIE_CONNECTION_DETECTED,
+    FATAL_RECONNECT_FAILURE, EXECUTIONS_SEQUENCE_GAP,
+    UNEXPECTED_ORDER_AMENDED, CANCEL_TIMEOUT_HOLD,
+    MAE_HOLD_AMBIGUOUS, FULL_HALT_TRIGGERED,
+    PAIR_CANCEL_ONLY_HOLD, PAIR_MAINTENANCE_HOLD,
+    EMERGENCY_SL_FIRED, any unhandled exception
+    Routing: alerts@tothbot.com (immediate email alert).
+             (OI-019 dv1_3 code / dv1_3 spec — plural:
+             real Proton mailbox. Singular does not
+             exist — catch-all reservation.)
+
+  Level HIGH:
+    Events: BALANCES_SEQUENCE_GAP, SESSION_PAUSE_TRIGGERED,
+            BATCH_CANCEL_SENT, LOG_QUEUE_FULL,
+            UNEXPECTED_OPEN_ORDER,
+            TRADE_RECORD_WRITE_FAILED (dv1_1),
+            ALERT_SMTP_FAILED (dv1_1 — ALERT-EXEMPT;
+            written to Stream 1 but does NOT trigger
+            SMTP alert; anti-recursion per rule:LG-ALERT-005
+            — diagram-canonical per 0500000 dv1_57 D5 R5
+            root governs; coding-spec ref 1011007 dv1_4
+            LG-ALERT-005)
+    Routing: alerts@tothbot.com.
+
+  Level WARN:
+    Events: UNKNOWN_EXEC_TYPE, UNKNOWN_MESSAGE_TYPE,
+            RATE_COUNTER_WARNING, REGIME_STALE_WARNING
+    Routing: log file only (no email)
+
+  All CRITICAL and HIGH: also written to stderr as fallback
+  in case Logger queue is unavailable.
+
+  Positive-delivery confirmation (dv1_1): after SMTP
+  sendmail returns without exception, an ALERT_SENT (INFO)
+  event is emitted via the standard Logger path. This
+  provides operator observability of successful alert
+  delivery — closing the gap observed during TB00107
+  investigation where bounces were visible externally
+  but no structured positive or negative signal existed
+  in tothbot.log.
 
 ============================================================
-10. WHAT IT LOGS
+8. INTERFACES
 ============================================================
 
-  ENTRY_DISPATCHED   — symbol, entry_limit_price,
-                       entry_qty, cl_ord_id, req_id,
-                       entry_timeout_sec, regime_context
-  ENTRY_ACCEPTED     — Kraken ACK (req_id matched);
-                       paper-mode equivalent emitted on
-                       _simulate_entry_fill schedule
-  ENTRY_FILLED       — cum_qty, avg_price, fees
-  ENTRY_PARTIAL_TRADE — cum_qty, avg_price (order still open)
-  ENTRY_EXPIRED_NO_FILL
-  ENTRY_EXPIRED_PARTIAL_FILL (triggers AR-054)
-  ENTRY_CANCELED_NO_FILL
-  ENTRY_CANCELED_PARTIAL_FILL (triggers AR-054)
-  ENTRY_POST_ONLY_REJECTED — regime context for CIATS
-  TP_EMGSL_DISPATCHED — tp_price, sl_trigger_price,
-                         tp_cl_ord_id, emgSL_cl_ord_id,
-                         batch_add req_id
-  TP_EMGSL_CONFIRMED — Kraken ACK on batch_add
-  RATE_COUNTER_WARNING — when approaching maxratecount
-  All entries: timestamp_utc, symbol, component=EXEC_ENG
+8.1 From all TothBot components
+  All components call Logger. Logger is the universal
+  output sink. Non-blocking from caller perspective.
 
-  All EE log records are mode-agnostic. PAPER_*
-  telemetry events (PAPER_ORDER_SIMULATED,
-  PAPER_BATCH_ADD_SIMULATED, PAPER_LEDGER_UPDATED,
-  PAPER_DISPATCH_BLOCKED, etc.) are emitted by the
-  WSManager dispatch seam per 0500000 dv1_24 §12.6 —
-  NOT by the Execution Engine.
+8.2 To disk (two streams — see 3.3)
+  QueueListener background thread writes to BOTH:
+    STREAM 1: RotatingFileHandler → tothbot.log
+              (diagnostic, finite retention, all events)
+    STREAM 2: TothBotTradeRecordHandler →
+              trades_<YYYY>.jsonl (permanent, append-only,
+              TRADE_CLOSE only, annual-segmented)
+  Neither involves the asyncio event loop.
+
+8.3 To CIATS
+  CIATS reads from log files directly. Logger does not
+  push to CIATS. CIATS is fully asynchronous and reads
+  only from Logger output. CIATS never blocks TothBot.
+
+  Current CIATS implementation tails STREAM 1
+  (tothbot.log). Migration to STREAM 2 (trades_<YYYY>.jsonl)
+  for the 200-trade statistical corpus is in the parking
+  lot as OI-024 (see 1010000 dv1_11 Section 4.10) —
+  once trade throughput surfaces the corpus-truncation
+  risk that STREAM 1's finite retention creates.
+
+8.4 To operator
+  CRITICAL and HIGH events: email to alerts@tothbot.com.
+  Routing implementation in AA=10 coding spec. Positive-
+  delivery confirmation via ALERT_SENT (INFO) events
+  (dv1_1). Failure observability via ALERT_SMTP_FAILED
+  (HIGH, ALERT-EXEMPT) events (dv1_1).
 
 ============================================================
-11. RELATED DOCUMENTS
+9. HARD RULES
+============================================================
+
+HR-LG-001  Logger NEVER blocks the trading hot path under
+           any condition (AR-014). Queue full → drop entry
+           → alert → continue. NEVER block caller. This
+           applies to BOTH disk streams (Section 3.3).
+           Stream 2 writes occur in the QueueListener
+           background thread, not on the hot path;
+           per-write fsync on Stream 2 does not violate
+           HR-LG-001.
+
+HR-LG-002  MUST use queue.Queue (stdlib), NOT asyncio.Queue.
+           QueueListener runs in its own non-asyncio thread
+           (AR-063). asyncio.Queue is incompatible with
+           QueueListener thread model.
+
+HR-LG-003  maxsize=10,000 (AR-014). Derived from FP/DP:
+           20 positions x 10 events/candle x 50-candle buffer.
+           Queue size is CIATS-owned starting value.
+
+HR-LG-004  log_listener.stop() called on clean shutdown.
+           Drains and joins background thread. No log loss,
+           on EITHER stream.
+
+HR-LG-005  Trade Outcome Bus: ALL fields in Section 6.2 are
+           mandatory on every position close event. No
+           optional fields. Missing fields break CIATS
+           statistical computation. TRADE_CLOSE payload is
+           byte-for-byte identical on STREAM 1 and
+           STREAM 2 — enforced by 1011007 dv1_4 LG-TOB-003.
+
+HR-LG-006  Trade Outcome Bus fires ONCE per complete position
+           close. Not on each partial fill (AR-066).
+
+HR-LG-007  EWMA Monitor Signal 3 (ws_roundtrip_latency_ms):
+           time_in and time_out fields from WS v2 responses
+           captured on Logger where present (A-3).
+
+HR-LG-008  connection_id (AR-064) logged on every WS
+           connection event and included in all reconnect,
+           disconnect, and gap log entries.
+
+HR-LG-009  All numeric values stored as string representation
+           of Decimal in log. No float storage.
+
+HR-LG-010  Log file format must be structured (JSON preferred)
+           and machine-readable. CIATS reads it directly.
+           Human-readable format secondary to CIATS readability.
+
+HR-LG-011  Queue full event: write to stderr AND alert HIGH.
+           The trade that was dropped must be recoverable
+           from other sources if possible. Alert is the signal
+           that queue sizing needs to be reviewed.
+
+HR-LG-012  STREAM 2 (dv1_1) permanent trade record file:
+           (rule:HR-LG-012 — diagram-canonical per 0500000
+           dv1_57 D5 R5 + D6 R6 root governs)
+             (a) Append-only. Never truncate. Never rotate.
+             (b) Annual segmentation at /home/tothbot/records/
+                 trades_<YYYY>.jsonl — UTC calendar year
+                 at time of write.
+             (c) File permissions 0o644 hard-pinned via the
+                 mode argument to os.open with O_CREAT,
+                 independent of runtime umask. Deming 6.1
+                 — build quality in.
+             (d) fsync after every write. Compliance-grade
+                 records must survive VPS power loss /
+                 kernel panic. Cost is negligible because
+                 TRADE_CLOSE frequency is low and fsync
+                 runs in the QueueListener thread.
+             (e) Write failure emits TRADE_RECORD_WRITE_FAILED
+                 (HIGH) via the standard Logger path. Does
+                 not raise. Does not block STREAM 1 write.
+
+============================================================
+10. WHAT TRIGGERS IT
+============================================================
+
+  Any TothBot component log() call:
+    WS Manager (highest volume — every event)
+    Signal Pipeline (every gate evaluation)
+    Execution Engine (order dispatch and fills)
+    Exit Controller (exit sequences)
+    Position Mirror (state changes)
+    Regime Engine (daily computation)
+
+============================================================
+11. WHAT IT LOGS
+============================================================
+
+  The Logger logs everything. It is the audit trail of the
+  entire system. Every event from every component passes
+  through it. The full event type registry is in Section 5.
+
+  Volume estimate:
+    288 candle evals/day x 20 pairs = 5,760 pipeline evals
+    Each eval: ~8-15 log entries = ~60,000 entries/day
+    Plus: WS events, fills, pings, heartbeats
+    Total: ~80,000-120,000 entries/day (estimate)
+    Queue absorption: 10,000 entries = ~10-minute burst buffer
+
+  STREAM 2 (dv1_1) volume is negligible by comparison:
+  one TRADE_CLOSE event per closed position. At target
+  paper-trade throughput of ~20-50 trades/day, STREAM 2
+  grows at ~500-800 bytes per event = ~10-40 KB/day.
+  Annual file size at that throughput: ~4-15 MB.
+  Well under any practical filesystem concern.
+
+============================================================
+12. RELATED DOCUMENTS
 ============================================================
 
   0510000  System_Components_Anchor         (parent anchor)
-  0500000  System_Architecture_Overview     (ARs binding;
-                                             dv1_24 §12
-                                             paper-mode
-                                             dispatch
-                                             boundary
-                                             architectural
-                                             blueprint)
-  0411001  Kraken_WS_v2_Specification       (wire contract)
-  0511001  WS_Manager_Specification         (dispatch seam
-                                             owner; dv1_5
-                                             HR-WM-022,
-                                             HR-WM-032,
-                                             HR-WM-033 +
-                                             §13 PAPER
-                                             TRADING MODE)
-  0511002  Signal_Pipeline_Specification    (input source)
-  0511004  Exit_Controller_Specification    (sibling
-                                             paper cascade;
-                                             dv1_3 §6A
-                                             EC-PAPER +
-                                             HR-EC-013/
-                                             014/015)
-  0511005  Position_Mirror_Specification    (output target)
-  0511006  Logger_Specification             (log recipient)
-  0211005  Paper_Trading_Operations_Procedure (operational
-                                             procedure;
-                                             dv1_3
-                                             PT-MODE-001
-                                             ..007)
-  1011002  WS_Manager_Coding_Spec           (dv1_26 §16A
-                                             WM-PAPER-LEDGER
-                                             + §16A.2
-                                             WM-PAPER-EXIT)
-  1011004  Execution_Engine_Coding_Spec     (AA=10 child;
-                                             dv1_0
-                                             HR-EE-013
-                                             paper-live
-                                             parity)
-  1011005  Exit_Controller_Coding_Spec      (sibling
-                                             paper cascade;
-                                             dv1_3 §10A
-                                             EC-PAPER-CODE)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0511001  WS_Manager_Specification         (primary caller)
+  0511002  Signal_Pipeline_Specification    (caller)
+  0511003  Execution_Engine_Specification   (caller)
+  0511004  Exit_Controller_Specification    (CIATS TOB source)
+  0511005  Position_Mirror_Specification    (caller)
+  0200000  Operations                       (CIATS domain)
+  0211001  CIATS_Specification              (reads Logger)
+  1011007  Logger_Coding_Spec  dv1_4        (AA=10 child)
 
 ============================================================
-12. REVISION HISTORY
+13. REVISION HISTORY
 ============================================================
 
-  dv1_0  04-04-2026  Initial document. Derived from
-                     0500000 dv1_18 Sections 2, 4, 8, 9,
-                     11. add_order and batch_add fully
-                     specified including all required fields.
-                     All AR entries assigned to Execution
-                     Engine included. Hard rules HR-EE-001
-                     through HR-EE-012 defined.
+  dv1_4  05-16-2026  TB00304 PHASE 7 PROSE-UPDATE-A —
+                     0811005 RETIREMENT CASCADE S-3
+                     BUCKET (b) MIGRATION: SHORT MODULE
+                     EVENTS ADDED TO §5 EVENT TYPE
+                     REGISTRY.
 
-  dv1_1  05-07-2026  PAPER-AS-MASTER AMENDMENT — TB00151h
-                     STREAM D Session 1 of 3.
+                     Closes the BUCKET (b) coding-unique
+                     migration of 13 _SHORT-suffixed log
+                     events from 0811005 Short_Module_
+                     Specification dv1_3 §10 (lines
+                     784-815) into 0511006 §5 EVENT TYPE
+                     REGISTRY as new sub-section §5.3.S
+                     Short Module Events.
 
-                     Cascade of TB00000 v2_20 §4.4
-                     PA-001..010 PAPER-AS-MASTER
-                     PRINCIPLE and 0500000 dv1_24 §12
-                     Paper-Mode Dispatch Boundary
-                     Architecture (incl. Diagram 7).
+                     SCOPE.
+                     One new sub-section §5.3.S Short
+                     Module Events inserted between §5.3
+                     (Execution Engine Events — long-side
+                     mirror) and §5.4 (Exit Controller
+                     Events). Sub-section enumerates 13
+                     event types with payload schemas:
+                       ENTRY_ACCEPTED_ON_BOOK_SHORT
+                       ENTRY_FILLED_SHORT
+                       ENTRY_PARTIAL_TRADE_SHORT
+                       ENTRY_EXPIRED_NO_FILL_SHORT
+                       ENTRY_CANCELED_NO_FILL_SHORT
+                       ENTRY_EXPIRED_PARTIAL_FILL_SHORT
+                       ENTRY_CANCELED_PARTIAL_FILL_SHORT
+                       ENTRY_POST_ONLY_REJECTED_SHORT
+                       ENTRY_PARTIAL_FILL_PROTECTED_SHORT
+                       PARTIAL_FILL_BELOW_MINIMUM_SHORT
+                       TP_PLACED_SHORT
+                       EMGSL_PLACED_SHORT
+                       POSITION_OPENED_SHORT
+                     CIATS routing trailer paragraph
+                     documenting per-module statistical-
+                     pool independence per TB00000 v2_29
+                     §9.6.
 
-                     SECTIONS AMENDED:
+                     SOURCE CONTENT (verbatim from 0811005
+                     dv1_3 §10 lines 784-815):
+                     All 13 event types and payload
+                     schemas preserved byte-identical from
+                     0811005 §10 with addition of
+                     descriptive trailer linking to TB00000
+                     v2_29 §9.6 per-module CIATS routing.
 
-                       Header: dv1_0 -> dv1_1.
-                                DocPath updated.
-                                DocDate / DocTime updated.
+                     RATIONALE FOR ADDITION.
+                     0811005 dv1_3 §10 enumerates 13
+                     _SHORT-suffixed events for the Short
+                     Module trading flow. 0511006 dv1_3
+                     §5 EVENT TYPE REGISTRY contained zero
+                     _SHORT-suffixed events at TB00304
+                     cold-load (grep-verified). Per
+                     DD-012 v2_38 0500000-CANONICAL-ALL-
+                     DOCS principle: 0811005 dv1_3 is a
+                     bucket (b) coding-unique source for
+                     log events (architecturally
+                     subordinate to 0500000 dv1_78
+                     diagrams but coding-unique for the
+                     Logger event registry). Cascade S-3
+                     PROSE-UPDATE-A migrates the events
+                     to 0511006 (the parent spec retained
+                     after 0811005 retirement). Pattern
+                     mirrors dv1_3 TB00290 PARTIAL_FILL_
+                     BELOW_MINIMUM migration from 0811001
+                     §10 long-side.
 
-                       §1 PURPOSE: appended a paragraph
-                                stating EE is mode-blind
-                                by architectural intent;
-                                paper-live parity binding
-                                cited.
+                     FP/DP ANALYSIS - RR-SCOPE-005
+                     DERIVABLE-DECISION EXECUTION.
+                     Decision class: governance-rule-bound
+                     technical decision (NOT Bill business
+                     judgment per DD-011 v2_38 AMENDMENT D
+                     derivability-test outcome). Option-
+                     set: A (migrate 13 events to 0511006
+                     §5.3.S sub-section this session);
+                     B (NO-OP — leave gap); C (defer to
+                     TB00305).
+                     Elimination:
+                       B REJECTED. CI-007/CI-008 silent-
+                         loss prohibition: 13 events
+                         present in 0811005 dv1_3 with
+                         zero coverage in 0511006 dv1_3
+                         is information drift at the
+                         spec layer.
+                       C REJECTED. TB00304 NSI v1_1 §3.7
+                         + §5 sequencing places S-3
+                         disposition in current session
+                         scope; deferral conflicts with
+                         Bill NSI directive.
+                       A ACCEPTED. Single compliant
+                         option. DERIVABLE per DD-011
+                         v2_38 OUTCOME 1.
 
-                       §2 COMPONENT SUMMARY: appended
-                                "byte-identical between
-                                paper and live modes per
-                                §5A EE-PAPER-001"; added
-                                paper-mode entry-fill
-                                source (asyncio.create_task
-                                via _simulate_entry_fill)
-                                to Primary Inputs;
-                                clarified Primary Outputs
-                                are dispatched via the
-                                WSManager seam.
+                     Decision: A.
 
-                       §3.3 add_order Construction: added
-                                a paragraph stating
-                                construction is byte-
-                                identical between modes;
-                                the dispatch boundary is
-                                the WSManager seam.
-
-                       §3.4 Pending Order Registry: added
-                                "Identical behavior in
-                                paper and live."
-
-                       §3.5 Entry Rate Counter Cost: added
-                                paragraph clarifying paper-
-                                mode rate-counter telemetry
-                                is mode-agnostic and
-                                attributed at dispatch.
-
-                       §4.1 exec_type=filled: added
-                                paragraph identifying live
-                                source (executions channel)
-                                vs paper source
-                                (_simulate_entry_fill);
-                                EE handler is mode-opaque.
-
-                       §5.1 batch_add Construction: added
-                                paragraph stating byte-
-                                identical construction in
-                                both modes.
-
-                       §5.2 Position Mirror Update: added
-                                paragraph identifying
-                                paper-mode "PAPER_TP_" /
-                                "PAPER_SL_" prefix vs
-                                live-mode Kraken-assigned
-                                IDs; both populate Mirror
-                                via same pathway per
-                                §5A EE-PAPER-003.
-
-                       §5.3 BoundedSemaphore: added
-                                "Identical behavior in
-                                paper and live."
-
-                       §5A PAPER MODE EXECUTION BEHAVIOR
-                          (EE-PAPER) NEW. Five sub-rules
-                          EE-PAPER-001 through EE-PAPER-005
-                          covering byte-identical EE path,
-                          entry dispatch mode-opacity,
-                          batch_add Position Mirror parity,
-                          entry fill callback mode-opacity,
-                          and fees_entry_usd capture parity.
-                          Plus §5A.2 "What This Section
-                          Does NOT Change" and §5A.3
-                          "Closes" subsections matching
-                          the 0511004 dv1_3 §6A EC-PAPER
-                          structural pattern.
-
-                       §6 RATE COUNTER SUMMARY: appended
-                                paragraph "Rate counter
-                                attribution is mode-agnostic
-                                per EE-PAPER-001."
-
-                       §7 INTERFACES: amended §7.2 to
-                                identify paper-mode
-                                callback source; amended
-                                §7.3 to cite the WSManager
-                                dispatch seam as SOLE
-                                gatekeeper; amended §7.4
-                                to cite EE-PAPER-005
-                                fees_entry_usd capture;
-                                amended §7.5 / §7.6 to
-                                state log records are
-                                mode-agnostic; CIATS data
-                                flow is mode-agnostic
-                                per PA-005.
-
-                       §8 HARD RULES:
-                          HR-EE-013 (NEW) — PAPER-LIVE
-                            BEHAVIORAL PARITY. Cascaded
-                            from TB00000 v2_20 §4.4
-                            PA-005 + 0500000 dv1_24
-                            §12.3. Closes parent-spec
-                            layer of TB00148 cluster 1
-                            audit findings 09, 29, 30.
-                          HR-EE-014 (NEW) — NO DIRECT
-                            PRIVATE-WS ACCESS. Cascaded
-                            from 0500000 dv1_24 §12.3.
-                          HR-EE-015 (NEW) — MODE-OPAQUE
-                            CALLER CONTRACT. Cascaded
-                            from 0500000 dv1_24 §12.2 +
-                            §12.3.
-
-                       §9 WHAT TRIGGERS IT: appended
-                                paper-mode trigger source
-                                (_simulate_entry_fill).
-
-                       §10 WHAT IT LOGS: appended
-                                paragraph clarifying EE
-                                log records are mode-
-                                agnostic; PAPER_* events
-                                are emitted by WSManager
-                                seam per 0500000 dv1_24
-                                §12.6.
-
-                       §11 RELATED DOCUMENTS: added
-                                citations:
-                                0500000 dv1_24 (§12 paper-
-                                  mode dispatch boundary
-                                  architectural blueprint);
-                                0511001 dv1_5 (dispatch
-                                  seam owner; HR-WM-022 /
-                                  032 / 033 + §13 PAPER
-                                  TRADING MODE);
-                                0511004 dv1_3 (sibling
-                                  paper cascade; §6A
-                                  EC-PAPER + HR-EC-013 /
-                                  014 / 015);
-                                0211005 dv1_3 (operational
-                                  procedure;
-                                  PT-MODE-001..007);
-                                1011002 dv1_26 (WS Manager
-                                  coding spec; §16A
-                                  WM-PAPER-LEDGER + §16A.2
-                                  WM-PAPER-EXIT);
-                                1011005 dv1_3 (sibling
-                                  paper cascade; §10A
-                                  EC-PAPER-CODE).
-
-                       §12 (this entry).
-
-                     REASON FOR CHANGE.
-
-                     0511003 dv1_0 (04-04-2026) pre-dates
-                     the v2_18 §4.4 PAPER-AS-MASTER
-                     framework (enacted TB00145 ->
-                     TB00146; further codified in
-                     TB00147 cascade). At dv1_0 authoring
-                     time, paper-live parity was governed
-                     by D-06 LOCKED ratification + 0211005
-                     dv1_1 PT-MODE-005 + HR-PT-008. The
-                     child coding spec 1011004 dv1_0
-                     codified HR-EE-013 paper-live parity
-                     under that earlier framework.
-                     However, the PARENT spec 0511003
-                     carried zero paper-as-master content —
-                     verified by content grep at TB00151h
-                     cold load (BASELINE-DRIFT DEFENSE
-                     PASS per ERROR-TB00151g-01
-                     corrective: zero matches for
-                     "HR-WM-032", "HR-EE-PAPER",
-                     "WM-PAPER-LEDGER", "PT-MODE",
-                     "PA-001", "PAPER-AS-MASTER" in
-                     0511003 dv1_0).
-
-                     TB00147 PAPER-AS-MASTER cascade
-                     (2026-05-03) elevated paper-live
-                     parity from D-06 ratified decision
-                     to TB00000 v2_18 §4.4 PA-001..010
-                     PAPER-AS-MASTER absolute standing
-                     rule and authored 0500000 dv1_22
-                     -> dv1_24 §12 Paper-Mode Dispatch
-                     Boundary Architecture as the first-
-                     class architectural element (per
-                     TB00148 cluster 1 audit findings
-                     09, 29, 30 in deployed code at
-                     fb5de32). The TB00147 cascade
-                     closed 5 of 7 Phase 1 close-gate
-                     specs:
-                       0511001 dv1_4 -> dv1_5
-                       1011002 dv1_25 -> dv1_26
-                       0511004 dv1_2 -> dv1_3
-                       1011005 dv1_2 -> dv1_3
-                       0211005 dv1_1 -> dv1_3
-
-                     Three specs remained pre-PA-001
-                     (verified TB00151g via
-                     conversation_search + project
-                     content grep):
-                       0511003 dv1_0 (this amendment).
-                       0511005 dv1_0 (TB00151i — next).
-                       1011014 dv1_7 (TB00151j — final).
-
-                     This amendment elevates 0511003
-                     parent-spec to v2_20 §4.4 governance
-                     and binds it to 0500000 dv1_24 §12
-                     architectural blueprint. After
-                     TB00151i and TB00151j, Phase 1 close
-                     gate PASSES and Phase 2 code
-                     rebuild authorized to begin per
-                     0500000 dv1_24 §12.8.
-
-                     FP/DP ANALYSIS.
-
-                     OPTION A — Defer 0511003 parent-
-                     spec amendment; rely on child
-                     1011004 dv1_0 HR-EE-013 alone.
-                       REJECTED. Parent spec MUST contain
-                       the architectural binding so that
-                       downstream readers (Claude in
-                       future sessions, Bill, future code
-                       reviewers, audit cycles) have a
-                       single authoritative entry point
-                       for "what does 0511003 say about
-                       paper mode." Child-only encoding
-                       fragments authority and creates a
-                       class of defects where the parent
-                       spec disagrees (silently or by
-                       omission) with the child. Per
-                       TB00148 cluster 1 audit, exactly
-                       this fragmentation was the root
-                       cause of 24 unique defects in
-                       deployed code at fb5de32. The
-                       0500000 dv1_24 §12.0 architectural
-                       origin paragraph cites this
-                       finding explicitly: "the dispatch
-                       boundary was never promoted to a
-                       first-class architectural element
-                       in 0500000 ... This was not a code
-                       defect — it was a specification
-                       gap at the architectural level."
-                       Parent-spec encoding is the
-                       loss-prevention measure with
-                       highest leverage.
-
-                     OPTION B — Amend 0511003 with full
-                     §5A EE-PAPER section (5 rules) plus
-                     HR-EE-013 / HR-EE-014 / HR-EE-015
-                     hard rules plus §11 cascade
-                     citations plus §12 FP/DP analysis,
-                     binding to TB00000 v2_20 §4.4 +
-                     0500000 dv1_24 §12.
-                       ACCEPTED. Matches the 0511004
-                       dv1_3 §6A EC-PAPER pattern that
-                       was successful for the analogous
-                       Exit Controller cascade. Parent
-                       spec carries architectural
-                       binding; child 1011004 continues
-                       to carry implementation contract.
-                       Per RR-SCOPE-002 scope-constrictor,
-                       the 1011004 HR-EE-013 source
-                       citation update (from D-06 /
-                       PT-MODE-005 / HR-PT-008 to v2_20
-                       §4.4 + 0500000 dv1_24 §12) is
-                       OUT OF SCOPE for this amendment
-                       — that is a future cascade if
-                       and when authored.
-
-                     OPTION C — Extensive rewrite of
-                     0511003 absorbing parts of 0511001
-                     dispatch-boundary content.
-                       REJECTED. Per RR-SCOPE-007 anti-
-                       silent-narrowing and 0500000
-                       dv1_24 §12.3 SOLE gatekeeper
-                       architecture: WSManager owns the
-                       dispatch seam. EE delegates to
-                       the seam. Absorbing seam content
-                       into EE would invert the
-                       architecture and create a class
-                       of defects where two modules
-                       attempt to gatekeep the same
-                       boundary (multi-writer race
-                       analog of TB00148 finding 15
-                       Position Mirror multi-writer
-                       ambiguity). Gatekeeper
-                       single-owner architecture is a
-                       PA-005 byte-identical property
-                       in both modes — preserving it
-                       is loss-prevention.
-
-                     DECISION: OPTION B.
-
-                     RR-SCOPE-007 NOTE. This amendment
-                     is constraint-additive. It does
-                     NOT narrow user-specified scope.
-                     It does NOT introduce new scope
-                     restrictions on universe, regime,
-                     parameter values, or trade
-                     selection. D-01 through D-08
-                     LOCKED are unaffected.
-
-                     RR-SCOPE-009 NOTE. This amendment
-                     retires no constraints. It is
-                     pure addition. No four-question
-                     origin investigation is required.
-
-                     PA-008 PRE-EMIT SCAN. Direction-
-                     of-mimicry framing reviewed. All
-                     §5A and §8 hard-rule text frames
-                     paper as the master ("Per TB00000
-                     v2_20 §4.4 PA-001..010 paper-as-
-                     master ..."; "byte-identical
-                     between paper and live modes
-                     [PA-005]"; "EE is mode-blind by
-                     architectural intent"). No
-                     wrong-direction "live-canonical
-                     with paper diverging" framing
-                     authored. PA-MASTER self-catch
-                     not fired. PA-009 cumulative
-                     paper-as-master violation count
-                     unchanged at 1 (ERROR-TB00145-
-                     CHAT-02 historical).
+                     Execution under RR-SCOPE-005
+                     derivable-decision authority +
+                     DD-011 v2_38 PRE-EMIT SCAN compliance.
+                     No Bill chat-turn ratification
+                     question surfaced per DD-011
+                     prohibition on surfacing derivable
+                     decisions.
 
                      PARENT CHAIN COMPLIANCE.
+                     0511006 Logger_Specification is
+                     an AA=05 instance-tier controlled
+                     document under DCN 0500000 parent
+                     domain. Parent chain (0500000 ->
+                     0510000 -> 0511006) intact. dv1_3
+                     -> dv1_4 increment per 0311003
+                     versioning procedure: direct
+                     increment under Bill's standing
+                     document-control override for
+                     content amendments closing
+                     cascade migrations. No rv state.
 
-                     0511003 is a Tier 3 Instance
-                     Document under 0510000
-                     System_Components_Anchor (Tier 2
-                     Sub-Domain Anchor) under 0500000
-                     System_Architecture_Overview
-                     (Tier 1 Domain Document). Chain
-                     unbroken. Per 0311001 v1_6
-                     namespace specification.
+                     CLOSES.
+                     TB00304 NSI v1_1 §3.7 PHASE 7
+                     directive (PROSE-UPDATE-A
+                     authoring conditional on grep-
+                     verify outcome). Grep-verify
+                     performed TB00304 cold-load
+                     confirmed gap. 0811005 cascade
+                     S-3 disposition: PROSE-UPDATE-A
+                     EXECUTED. Originating diagnosis:
+                     TB00210 v1_0 audit deliverable
+                     (Phase 1 / S-1 complete; bucket
+                     (b) coding-unique migration item
+                     identified). Enacted: TB00304
+                     dv1_4 under Bill's standing
+                     document-control override
+                     continuing the scope established
+                     in TB00115 (TB00000 v2_10 ->
+                     v2_11) through TB00303
+                     (TB00000 v2_42 -> v2_43).
 
                      COMPANION DELIVERABLES THIS SESSION
-                     (TB00151h batch):
-                       0511003 dv1_0 -> dv1_1 (this
+                     (TB00304 SESSION-CLOSE FOUR-OPERATION
+                     SEQUENTIAL):
+                       TB00000 v2_43 -> v2_44 (governance
+                         amendments).
+                       0511006 dv1_3 -> dv1_4 (this
                          document).
-                       TB00151h Session Log v1_0 (NEW —
-                         to be authored at session
-                         close per 0311002 v1_10).
-                       TB00151i Next Session Instructions
-                         v1_0 (NEW — to be authored
-                         directing TB00151i to amend
-                         0511005 dv1_0 -> dv1_1).
+                       TB00304 Session_Log v1_0.
+                       TB00305 Next_Session_Instructions
+                         v1_0.
 
-                     OPEN ITEMS UPDATED.
+                     Document Status: dv1_4 supersedes
+                     dv1_3.
 
-                       OI-073 PAPER-AS-MASTER VIOLATION
-                         RECURRENCE TRACKING: cumulative
-                         count = 1 (unchanged). No new
-                         violation in TB00151h. PA-008
-                         self-catch did not fire (no
-                         direction-of-mimicry violation
-                         attempted).
-                       OI-NEW-TB00151g-01 NSI-BASELINE-
-                         LIST-CARRY-FORWARD-DRIFT:
-                         mitigated by TB00151h NSI v1_1
-                         §3.5 BASELINE-DRIFT DEFENSE
-                         which executed PASS this
-                         session.
-                       OI-080 cumulative content-
-                         integrity violation count = 2
-                         (unchanged; .txt scope so
-                         standard DR-007 applies; no
-                         binary deliverable).
+  dv1_3  05-15-2026  TB00290 — 0811001 RETIREMENT CASCADE
+                     S-3 (iv) BUCKET (b) MIGRATION:
+                     PARTIAL_FILL_BELOW_MINIMUM EVENT
+                     ADDED TO §5.3 EXECUTION ENGINE EVENT
+                     REGISTRY.
 
-                     CASCADE PROVENANCE.
+                     Closes the BUCKET (b) coding-unique
+                     migration of one log event from
+                     0811001 Long_Module_Specification
+                     dv1_0 §10 13-event registry + §5.5
+                     LM-019 AR-054 partial-fill-protection
+                     handler step 2.
 
-                     Authored under TB00151h NSI v1_1
-                     directive "STREAM D Session 1 —
-                     0511003 Execution_Engine_
-                     Specification dv1_0 -> dv1_1
-                     PAPER-AS-MASTER amendment." Bill
-                     standing document-control override
-                     scope established TB00115 (v2_10
-                     -> v2_11) and continued through
-                     subsequent TB00000 increments
-                     governs this dv1_0 -> dv1_1
-                     direct increment of a Working-
-                     Draft spec. No rv state required
-                     (Working-Draft authoring under
-                     standing project override).
+                     SOURCE CONTENT (verbatim from
+                     0811001 dv1_0 §10 line 436 +
+                     §5.5 LM-019):
+                       PARTIAL_FILL_BELOW_MINIMUM —
+                       symbol, cum_qty (emergency sell).
+                       LM-019 step (2): Validate
+                       qty >= qty_min AND qty *
+                       entry_fill_price >= cost_min.
+                       If fails: dispatch market sell
+                       immediately. Log
+                       PARTIAL_FILL_BELOW_MINIMUM.
+                       Fire CIATS Trade Outcome Bus.
 
-                     CODING-READINESS VERIFICATION.
+                     RATIONALE FOR ADDITION.
+                     AR-054 (canonical in 0500000
+                     dv1_78 D2 R5 per TB00245
+                     AMENDMENT-9) is the direction-
+                     symmetric emergency-exit handler
+                     for exec_type=expired/canceled
+                     with cum_qty>0 — a partially
+                     filled position with NO TP and
+                     NO emergSL protection. Step 2
+                     of the handler validates the
+                     partial fill against Kraken
+                     qty_min and cost_min before
+                     attempting batch_add TP+emergSL
+                     placement. If validation fails,
+                     batch_add cannot succeed (Kraken
+                     would reject below-minimum
+                     orders), and the unprotected stub
+                     must be reduced to zero
+                     IMMEDIATELY via a market sell.
+                     This validation-failure emergency-
+                     sell path requires a dedicated
+                     log event so CIATS can distinguish
+                     it from L2 MAE-triggered exits
+                     (which emit MARKET_SELL_SENT in
+                     §5.4 Exit Controller scope) and
+                     from successful AR-054 protection
+                     (which emits ENTRY_PARTIAL_FILL_
+                     PROTECTED in §5.1).
 
-                     Per TB00000 v2_20 §3.2, the five
-                     coding-readiness questions are
-                     answered:
+                     FIELD-LIST EVOLUTION.
+                     0811001 dv1_0 §10 listed minimal
+                     fields (symbol, cum_qty). dv1_3
+                     extends the field list to:
+                       symbol, cum_qty, avg_price,
+                       qty_min, cost_min
+                     The extension records BOTH
+                     validation thresholds Kraken
+                     applied AND the actual partial-
+                     fill state at validation time —
+                     CIATS needs both pieces to
+                     analyze the failure mode
+                     (was this a tiny fill vs the
+                     min, or was this a normal-sized
+                     fill against a high min?). The
+                     extension is consistent with the
+                     CIATS-data-completeness pattern
+                     established by 0511006 dv1_2's
+                     other §5.3 events (e.g.,
+                     ENTRY_FILLED carries avg_price,
+                     cum_qty, fees rather than just
+                     avg_price).
 
-                       (1) What does EE do? — §1
-                           Purpose + §2 Component
-                           Summary + §3 Phase 1 + §4
-                           Outcomes + §5 Phase 2 +
-                           §5A EE-PAPER.
+                     LEVEL ASSIGNMENT.
+                     HIGH per the same pattern as
+                     CRITICAL/HIGH events in §7
+                     ALERT ROUTING. PARTIAL_FILL_
+                     BELOW_MINIMUM signals a position
+                     that exists at Kraken with NO
+                     TP and NO emergSL protection
+                     and must be emergency-reduced
+                     to zero. This is operator-
+                     visibility-required (HIGH) but
+                     not session-halting (CRITICAL).
 
-                       (2) What are the interfaces? —
-                           §7 Interfaces (six bullets)
-                           + §11 Related Documents.
+                     S-3 (iv) COVERAGE VERIFICATION
+                     SUMMARY.
+                     0811001 §10 13-event registry vs
+                     0511006 dv1_3 (post-amendment):
+                       Events 1-9 (ENTRY_ACCEPTED_ON_
+                         BOOK through ENTRY_PARTIAL_
+                         FILL_PROTECTED): VERIFIED
+                         COVERED in 0511006 dv1_2
+                         §5.3 + §5.1.
+                       Event 10 (PARTIAL_FILL_BELOW_
+                         MINIMUM): MIGRATED to
+                         0511006 dv1_3 §5.3 this
+                         amendment.
+                       Events 11-12 (TP_PLACED,
+                         EMGSL_PLACED): SUPERSEDED
+                         by AR-007 atomic batch_add
+                         architecture — replaced by
+                         0511006 §5.3 TP_EMGSL_
+                         DISPATCHED + TP_EMGSL_
+                         CONFIRMED partition.
+                         BUCKET (a) drop-with-
+                         retirement per DD-012.
+                       Event 13 (POSITION_OPENED):
+                         SUPERSEDED by AR-052/AR-053
+                         dispatch-vs-ACK timing
+                         architecture — replaced by
+                         0511006 §5.5 POSITION_
+                         RECORD_CREATED + POSITION_
+                         FILL_CONFIRMED + POSITION_
+                         ORDERS_SET partition.
+                         BUCKET (a) drop-with-
+                         retirement per DD-012.
 
-                       (3) What are its hard rules? —
-                           §8 HR-EE-001..015 (12 from
-                           dv1_0 + 3 new in dv1_1).
+                     0811001 §5.4 6 entry-outcome
+                     handler events (LM-013..LM-018):
+                       ALL 6 events VERIFIED COVERED
+                       in 0511006 dv1_2 §5.3 prior
+                       to this amendment.
 
-                       (4) What triggers it? — §9
-                           (Gate 8 output; entry fill
-                           callback in either mode).
+                     DD-012 + DD-001/DD-002 +
+                     DD-011 COMPLIANCE.
+                     DD-011 v2_38 FP/DP-derivability-
+                     test PRE-EMIT SCAN applied at
+                     TB00290 chat-turn 1 with explicit
+                     four-item log:
+                       (1) Option-set:
+                         A. NO AMENDMENT — verified
+                            covered (treating events
+                            10-13 as superseded
+                            artifacts).
+                         B. AMEND adding 4 missing
+                            events (treating all 4
+                            as genuine gaps).
+                         C. AMEND adding only the
+                            1 truly-missing event
+                            PARTIAL_FILL_BELOW_
+                            MINIMUM (treating
+                            events 11-13 as
+                            superseded under DD-012
+                            BUCKET (a)).
+                       (2) First-principles analysis:
+                         AR-054 is canonical in
+                         0500000 D2 R5 governs
+                         (TB00245 AMENDMENT-9; line
+                         5180). Step 2 of LM-019
+                         requires a log event
+                         distinct from MARKET_SELL_
+                         SENT (Exit Controller scope)
+                         and ENTRY_PARTIAL_FILL_
+                         PROTECTED (successful-
+                         protection scope). 0511006
+                         dv1_2 lacks any event for
+                         this defensive code path.
+                         Events 11-13 are obsolete
+                         single-event proposals
+                         superseded by AR-007 +
+                         AR-052/053 multi-event
+                         partitions in 0511006 dv1_2;
+                         these are BUCKET (a) per
+                         DD-012 §1.4(a).
+                       (3) Data sources:
+                         0811001 dv1_0 §10 + §5.4 +
+                           §5.5 (verbatim).
+                         0511006 dv1_2 §5.1 + §5.3
+                           + §5.5 (verbatim).
+                         0500000 dv1_78 D2 R5
+                           AR-053 + AR-054 governs
+                           encoding (line 5122 +
+                           5180).
+                         DD-012 + DD-001/DD-002
+                           cross-document authority
+                           hierarchy.
+                         TB00207 §4.2 BUCKET (b)
+                           classification framework.
+                         TB00290 NSI §3.3 partial-
+                           coverage amendment directive.
+                       (4) Elimination outcomes:
+                         B REJECTED — events 11-13
+                         are not genuine gaps;
+                         adding them would duplicate
+                         the AR-007 / AR-052/053
+                         evolved partition with
+                         obsolete single-event names.
+                         A REJECTED — event 10
+                         PARTIAL_FILL_BELOW_MINIMUM
+                         is a genuine gap; treating
+                         it as "covered" would leave
+                         the AR-054 validation-
+                         failure emergency-sell
+                         path silently logged via
+                         generic MARKET_SELL_SENT,
+                         contaminating CIATS L2-
+                         MAE-exit statistics.
+                         C ACCEPTED — single
+                         compliant option.
+                       (5) DERIVABLE. Executed under
+                         RR-SCOPE-005 derivable-
+                         decision authority.
 
-                       (5) What does it log? — §10
-                           (mode-agnostic events;
-                           PAPER_* events out of
-                           scope per §5A.2 + §10
-                           appended paragraph).
+                     DD-002 PROSE-FOLLOWS-DIAGRAM.
+                     AR-054 architectural primitive
+                     is encoded in 0500000 dv1_78 D2
+                     R5 governs (canonical). The
+                     specific log event name
+                     PARTIAL_FILL_BELOW_MINIMUM is
+                     an implementation contract,
+                     not an architectural primitive
+                     — it is BUCKET (b) coding-
+                     unique per TB00207 §4.2.
+                     No 0500000 diagram amendment
+                     required (no S-2 escalation).
 
-                     Per TB00000 v2_20 §3.3, no
-                     ambiguous terms used. All values
-                     explicit. All conditions
-                     deterministic. All behaviors
-                     unambiguous.
+                     PARENT CHAIN COMPLIANCE.
+                     0511006 is AA=05 Instance
+                     Document under 0510000
+                     System_Components_Anchor
+                     (per 0311001 v1_18 three-tier
+                     hierarchy). No amendment
+                     required to parent anchor or
+                     domain document. Header
+                     refresh: DocVersion dv1_2 ->
+                     dv1_3, DocPath updated,
+                     DocDate 05-13-2026 ->
+                     05-15-2026, DocTime
+                     refreshed.
 
-                     Document Status updated:
-                     supersedes dv1_0.
+                     COMPANION DELIVERABLES THIS
+                     SESSION (TB00290 0811001
+                     RETIREMENT CASCADE S-3 (iv)):
+                       0511006 dv1_2 -> dv1_3.txt
+                         (this document — Phase 4
+                         amendment authoring).
+                       TB00290 Session_Log v1_0.txt
+                         (session-close trio
+                         member 1).
+                       TB00291 Next_Session_
+                         Instructions v1_0.txt
+                         (session-close trio
+                         member 2; carries S-3
+                         (v) 1011010 + S-4/S-5/S-6
+                         downstream cascade
+                         forward).
+                       OCS chat-response copy box
+                         (session-close trio
+                         member 3; byte-identical
+                         to TB00291 §0).
+                       GitHub upload copy box
+                         (session-close quartet
+                         member 4; routes 0511006
+                         dv1_3 to TothBot_V2-Docs
+                         + SL/NSI to
+                         TothBot_V2-SessionLogs
+                         per TB00000 v2_42 §4.1.2
+                         DR-008.6 OPERATION 4
+                         CANONICAL REPO ROUTING).
+
+                     GOVERNANCE-RULE COMPLIANCE
+                     LOG.
+                     RR-SCOPE-001 absolute-scope
+                     compliance: amendment scope is
+                     exactly the §5.3 single-event
+                     addition + §13 revision history
+                     entry + header refresh per
+                     TB00290 NSI §3.3 partial-
+                     coverage amendment directive.
+                     No silent scope additions.
+                     RR-SCOPE-007 OPERATIONAL-
+                     ARTIFACT-SCOPE-EXTENSION
+                     compliance: scope provenance
+                     traces to TB00290 NSI §3.3
+                     (Bill-ratified NSI directive)
+                     + TB00207 §4.2 + §5.3 (iii)
+                     (Bill-ratified gap register).
+                     RR-SCOPE-009 four-question
+                     origin investigation:
+                       (1) PARTIAL_FILL_BELOW_
+                           MINIMUM introduced
+                           0811001 dv1_0 §10 +
+                           §5.5 LM-019 step 2
+                           (04-05-2026).
+                       (2) Problem solved: gives
+                           CIATS a distinct close-
+                           cause signal for AR-054
+                           validation-failure
+                           emergency-sell distinct
+                           from L2 MAE exit
+                           emergency-sell or
+                           normal AR-054
+                           successful-protection.
+                       (3) Still load-bearing:
+                           AR-054 canonical in
+                           0500000 D2 R5; LM-019
+                           handler logic is active
+                           in the Long_Module
+                           code path; CIATS
+                           statistical pool
+                           depends on event-level
+                           close-cause partition.
+                       (4) Loss-prevention
+                           property: enables CIATS
+                           to detect a Kraken-side
+                           minimum-validation
+                           failure class
+                           independently from
+                           other emergency-sell
+                           paths — a recurring
+                           PARTIAL_FILL_BELOW_
+                           MINIMUM signal would
+                           indicate Gate 8 sizing
+                           is producing trades
+                           too small relative to
+                           Kraken minimums.
+                     RR-SCOPE-010 verbatim-MDR-
+                     citation discipline: 0811001
+                     dv1_0 §10 PARTIAL_FILL_BELOW_
+                     MINIMUM grep-verified
+                     verbatim against /mnt/project/
+                     0811001_Long_Module_
+                     Specification_dv1_0.txt
+                     line 436. LM-019 step (2)
+                     grep-verified verbatim
+                     against same file lines
+                     206-212.
+
+                     LEVEL-OF-EFFORT.
+                     Single-event addition; one
+                     §5.3 row insert; one §13
+                     entry addition. Single
+                     authoring pass; no diagram
+                     amendment; no other spec
+                     amendment.
+
+  dv1_2  05-13-2026  TB00230 TURN 2 — PROSE-UPDATE-AH..AT
+                     ENACTMENT: 13 PROSE CITATIONS UPGRADED TO
+                     DIAGRAM-CANONICAL PER DD-002 PROSE-FOLLOWS-
+                     DIAGRAM, CLOSING AMENDMENT-11 CROSS-
+                     REFERENCE LAYER PER TB00199 v1_0 §5.2.
+
+                     Companion deliverable to 0500000 dv1_56 ->
+                     dv1_57 AMENDMENT-11 (TB00230 Turn 1 — root
+                     <desc> governs list additions across D1 R2
+                     + D5 R5 + D6 R6 promoting the C5 cluster
+                     Logger architectural identifiers to
+                     diagram-canonical status). dv1_2 closes
+                     the cross-reference layer: each affected
+                     prose site in 0511006 now cites the
+                     architectural identifier in canonical
+                     namespace-token form with explicit
+                     diagram-canonical pointer to the 0500000
+                     dv1_57 governing block per DD-002.
+
+                     PROSE UPDATES APPLIED (13 sites):
+                     AH §3.1 NOT asyncio.Queue paragraph —
+                        ar:AR-063 citation upgraded to diagram-
+                        canonical (0500000 dv1_57 D1 R2 + D5 R5
+                        root governs).
+                     AI §3.2 On Queue Full heading —
+                        rule:HR-LG-011 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 + D6 R6
+                        root governs).
+                     AJ §3.3 Two-Stream Record Architecture
+                        heading — contract:Two_Stream_Record_
+                        Architecture citation added (0500000
+                        dv1_57 D5 R5 + D6 R6 root governs).
+                     AK §3.4 Shutdown heading — rule:HR-LG-004
+                        citation added (0500000 dv1_57 D1 R2
+                        + D5 R5 root governs).
+                     AL §4.2 Decimal numeric fields —
+                        rule:HR-LG-009 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 root
+                        governs).
+                     AM §4.3 Log file format heading —
+                        rule:HR-LG-010 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 root
+                        governs).
+                     AN §5.1 EXEC_TRADE row — bare AR-061
+                        promoted to ar:AR-061 diagram-
+                        canonical (0500000 dv1_57 D1 R2 + D5
+                        R5 root governs).
+                     AO §5.1 UNEXPECTED_ORDER_AMENDED row —
+                        bare AR-057 promoted to ar:AR-057
+                        diagram-canonical (0500000 dv1_57 D1
+                        R2 + D6 R6 root governs).
+                     AP §5.7 Logger Self-Observability Events
+                        heading — 4 evt: citations added
+                        (evt:ALERT_SENT + evt:ALERT_SMTP_FAILED
+                        + evt:TRADE_RECORD_WRITE_FAILED +
+                        evt:LOG_QUEUE_FULL; all diagram-
+                        canonical per 0500000 dv1_57 D5 R5 +
+                        D6 R6 root governs).
+                     AQ §6.1 Stream 1 Signal 3 ws_roundtrip_
+                        latency_ms paragraph — rule:HR-LG-007
+                        citation added (0500000 dv1_57 D1 R2
+                        + D5 R5 root governs).
+                     AR §7 Level HIGH ALERT_SMTP_FAILED row —
+                        rule:LG-ALERT-005 anti-recursion
+                        citation upgraded to diagram-canonical
+                        (0500000 dv1_57 D5 R5 root governs;
+                        coding-spec ref 1011007 dv1_4 LG-ALERT
+                        -005 retained as historical seed
+                        pointer until 1011007 retired at
+                        Phase 3).
+                     AS §9 HR-LG-012 paragraph — rule:HR-LG-012
+                        citation upgraded to diagram-canonical
+                        (0500000 dv1_57 D5 R5 + D6 R6 root
+                        governs).
+                     AT §1 two-stream mission statement —
+                        contract:Two_Stream_Record_Architecture
+                        citation added (0500000 dv1_57 D5 R5 +
+                        D6 R6 root governs).
+
+                     METHODOLOGY CITATION.
+                     TB00199 v1_0 §5.2 PROSE-UPDATE-AH..AT.
+                     TB00229 SL §6.1 ratified PROSE-UPDATE
+                     scope. TB00230 NSI v1_0 §4.3 Turn 2
+                     execution directive. DD-001 / DD-002
+                     diagrams-canonical principle: every
+                     architectural identifier added in these
+                     13 prose sites is canonical in the
+                     0500000 dv1_57 root <desc> governs lists
+                     for D1 R2 + D5 R5 + D6 R6. Prose layer
+                     of 0511006 dv1_2 follows the diagram
+                     layer per DD-002 prose-follows-diagram
+                     rule.
+
+                     REGISTRY-GAP NOTE.
+                     Six rule: tokens (HR-LG-004 / HR-LG-007 /
+                     HR-LG-009 / HR-LG-010 / HR-LG-011 /
+                     HR-LG-012), one contract: token (Two_
+                     Stream_Record_Architecture), four evt:
+                     tokens (ALERT_SENT / ALERT_SMTP_FAILED /
+                     TRADE_RECORD_WRITE_FAILED / LOG_QUEUE_
+                     FULL), and one anti-recursion rule:
+                     token (LG-ALERT-005) cited in the
+                     prose updates are not currently
+                     registered in 0311001 v1_13 §15.12.3 /
+                     §15.12.7 / §15.12.9 registries.
+                     Disposition: registry-gap-note convention
+                     applies per TB00229 SL §6.3 tertiary
+                     carry-forward. AMENDMENT-11 enactment
+                     surfaces a §15.12 housekeeping
+                     requirement deferred to a future 0311001
+                     increment. Cited tokens use the same
+                     namespace-token form they will take when
+                     registered.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0511006 is AA=05 Instance Document under
+                     0510000 System_Components_Anchor (per
+                     0311001 v1_13 three-tier hierarchy). No
+                     amendment required to parent anchor or
+                     domain document. Header refresh: DocVersion
+                     dv1_1 -> dv1_2, DocPath updated, DocDate
+                     04-21-2026 -> 05-13-2026, DocTime updated.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00230 RANK 8 PHASE 2):
+                       0500000 dv1_56 -> dv1_57.html (Turn 1
+                         AMENDMENT-11 enactment).
+                       0511006 dv1_1 -> dv1_2.txt (this
+                         document — Turn 2 PROSE-UPDATE-AH..AT
+                         enactment).
+                       Phase 3 bundling decision per TB00230
+                         §4.4 (0500000 dv1_57 -> dv1_58 + 1011007
+                         git rm + TB00153 MDR amendment, OR
+                         deferred to TB00231 if scope exceeded).
+                       TB00230 SL v1_0.txt (session-close).
+                       TB00231 NSI v1_0.txt (session-close).
+                       OCS chat-response copy box (session-close
+                         trio member 3; byte-identical to
+                         TB00231 §0).
+
+  dv1_1  04-21-2026  TB00108 AI-1 — OI-023 DEFECT-TRADE-
+                     RECORD-001 (CRITICAL) architectural
+                     uplift.
+
+                     The dv1_0 component summary and
+                     interface model described a single
+                     disk output stream. OI-023 introduces
+                     a second, semantically and
+                     contractually distinct disk output
+                     (permanent, append-only, annual-
+                     segmented, no rotation, driven by
+                     tax / CIATS / audit retention
+                     requirements that the existing
+                     rotating diagnostic stream cannot
+                     satisfy). This is an architectural
+                     change in the Logger's output
+                     interface — not a coding-spec-level
+                     implementation detail — and therefore
+                     requires a bump at this level.
+
+                     Specific changes:
+                       Section 1: purpose text adds
+                         explicit two-stream statement.
+                       Section 2: Primary outputs list
+                         expanded to enumerate both
+                         streams plus positive-delivery
+                         alert confirmation.
+                       Section 3.3 NEW: Two-Stream Record
+                         Architecture subsection.
+                         Documents STREAM 1 (diagnostic,
+                         tothbot.log, rotating) and
+                         STREAM 2 (permanent,
+                         trades_<YYYY>.jsonl, append-
+                         only) as distinct components
+                         with distinct retention
+                         contracts. States the
+                         contractual invariants between
+                         them (byte-for-byte identical
+                         TRADE_CLOSE payload,
+                         operational fallback
+                         relationship, per-handler
+                         failure isolation).
+                       Section 3.4: Shutdown note
+                         updated for both streams.
+                       Section 4.3: rotation policy
+                         statement split by stream.
+                       Section 5.7 NEW: Logger Self-
+                         Observability Events —
+                         ALERT_SENT, ALERT_SMTP_FAILED,
+                         TRADE_RECORD_WRITE_FAILED,
+                         LOG_QUEUE_FULL. Introduced by
+                         TB00108 AI-2 (OI-022) and
+                         AI-1 (OI-023).
+                       Section 6.2: Trade Outcome Bus
+                         note expanded to record that
+                         the TOB is now backed by a
+                         permanent on-disk source.
+                       Section 7: CRITICAL / HIGH alert
+                         routing updated for OI-019
+                         plural address; HIGH list
+                         extended with
+                         TRADE_RECORD_WRITE_FAILED and
+                         ALERT_SMTP_FAILED (ALERT-
+                         EXEMPT). Positive-delivery
+                         confirmation paragraph added.
+                       Section 8.1-8.4: interface
+                         descriptions updated for both
+                         streams and for positive /
+                         negative alert observability.
+                         Section 8.3 also records the
+                         CIATS migration parking-lot
+                         item (OI-024 in 1010000 dv1_11
+                         Section 4.10).
+                       Section 9 HARD RULES: HR-LG-012
+                         NEW — STREAM 2 contract
+                         (append-only, annual
+                         segmentation, 0o644 hard-pin
+                         via os.open, fsync per write,
+                         failure path emits HIGH event).
+                         HR-LG-005 clarified to state
+                         payload identity between the
+                         two streams.
+                       Section 11: volume estimate
+                         reconfirmed for STREAM 1;
+                         STREAM 2 volume estimate
+                         added.
+                       Section 12: 1011007 version
+                         reference updated to dv1_4.
+
+                     Governs 1011007 dv1_4.
+
+  dv1_0  04-04-2026  Initial document. Derived from 0500000
+                     dv1_18 Sections 2, 6, 8, 9, 11. Logger
+                     architecture specified: queue.Queue
+                     (not asyncio.Queue, AR-063), maxsize=
+                     10,000 (AR-014), QueueHandler +
+                     QueueListener pattern. Complete event
+                     type registry Section 5 defined. CIATS
+                     two-stream data model specified (EWMA
+                     Monitor + Trade Outcome Bus). All
+                     mandatory Trade Outcome Bus fields listed.
+                     Alert routing defined. Hard rules
+                     HR-LG-001 through HR-LG-011 defined.
 
 ============================================================
 END OF DOCUMENT
