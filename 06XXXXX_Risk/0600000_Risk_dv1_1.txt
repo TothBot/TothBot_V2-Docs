@@ -1,0 +1,918 @@
+DocDCN:     0600000
+DocTitle:   Risk
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0600000_Risk_dv1_1.txt
+DocDate:    05-17-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+RISK
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Domain Document for AA=06 Risk. It
+defines the entire Risk domain: its purpose, scope,
+governing principles, hard rules, and the complete
+structure of all controlled documents within it.
+
+The Risk domain governs every rule, formula, threshold,
+and decision that controls how much capital TothBot V2
+commits to any trade or set of trades, when TothBot pauses
+or halts due to adverse performance, and how position
+concentration and capital exposure are bounded at all times.
+
+Nothing that touches capital allocation, drawdown, or
+position exposure is unspecified. Nothing is assumed.
+Everything is explicitly defined in this domain or in the
+canonical governance sources cited herein (TB00000 v2_49
++ 0500000 dv1_80).
+
+============================================================
+2. SCOPE
+============================================================
+
+The Risk domain owns:
+
+  - Position sizing framework: per-module trading wallets
+    (wallet_balance_long_usd / wallet_balance_short_usd
+    per TB00000 v2_49 §9.4), the R:R-driven sizing curve
+    above the sacred 1:1.5 R:R floor (TB00000 §9.10), the
+    per_trade_ceiling_pct concentration cap, and the Gate 8
+    Position Sizer computation
+  - Drawdown monitoring: per-module portfolio_baseline
+    definition (per TB00000 v2_49 §9.7 PER-WALLET DRAWDOWN
+    HALTS), drawdown formula, evaluation triggers, and the
+    two per-wallet circuit breaker thresholds (session pause
+    and full halt) evaluated independently per module
+  - Concentration rules: the per_trade_ceiling_pct hard cap
+    per single trade (TB00000 §9.17 — concurrent-position
+    count emerges from wallet_balance / per_trade_size_usd
+    arithmetic), asyncio.BoundedSemaphore enforcement
+    mechanism
+  - Exposure rules: Pending Order Registry, available_USD
+    computation, USD sufficiency check at Gate 7
+  - Safety parameter framework: the complete registry of
+    all CIATS-owned risk parameters lives in TB00000 v2_49
+    §9.17 (canonical) and is mirrored in 0500000 dv1_80 §9
+  - The one hardcoded constraint: net 1:1.5 R:R MINIMUM
+    FLOOR. This constraint is NOT CIATS-owned. It never
+    changes. It is the sole parameter sacred from CIATS
+    authority. CIATS owns the sizing curve ABOVE the floor.
+
+The Risk domain does NOT own:
+
+  - Trading strategy signals or entry criteria (AA=07)
+  - Order dispatch and execution mechanics (AA=08)
+  - Exchange wire protocol (AA=04)
+  - CIATS improvement cycle procedures (AA=02)
+  - System component architecture (AA=05)
+  - The emergSL stop-market order itself (AR-008)
+    Risk defines the emergSL price. Exchange Interface
+    defines the order type. WS Manager places the order.
+
+The boundary is financial exposure. The Risk domain owns
+every rule that governs how much money is at risk and under
+what conditions TothBot stops committing more.
+
+============================================================
+3. GOVERNING PRINCIPLES
+============================================================
+
+3.1 Loss Prevention Takes Priority Over Profit Generation
+
+This is the most critical mission function. Every risk
+rule is designed first to prevent loss, second to enable
+profit. When these objectives conflict, loss prevention
+wins. This is not negotiable. It is encoded in the
+1:1.5 R:R minimum floor, the per-wallet drawdown
+thresholds, and the per_trade_ceiling_pct cap.
+
+3.2 The Sacred Constraint — Net 1:1.5 R:R Minimum Floor
+
+Net 1:1.5 risk-to-reward is the MINIMUM expected R:R on
+every trade. It is the only hardcoded constraint in
+TothBot V2. CIATS does not own the floor. Bill does not
+change it. It never changes. Every trade must target at
+minimum 1.5 units of net gain for every 1 unit of net
+risk, after fees. This is the floor below which no trade
+may be placed.
+
+CIATS owns the sizing curve ABOVE the floor — trades with
+expected R:R above 1:1.5 may receive larger per-trade
+allocations than baseline, bounded above by
+per_trade_ceiling_pct (TB00000 v2_49 §9.10 + §9.17).
+
+Sacred constraint canonical sources:
+  TB00000 v2_49 §9.10 (rule statement + acceptance rule A1).
+  0500000 dv1_80 §4 AR-011 (architectural reasoning
+    canonical source).
+  0500000 dv1_80 rule:Sacred_R_R_1_to_1_5 (governs
+    registry entry).
+  0500000 dv1_80 D2 R2 G7+G8 risk-gate architecture.
+
+3.3 All Parameters Are CIATS-Owned Starting Values
+
+Every risk parameter except net 1:1.5 R:R minimum floor
+is a starting value subject to data-driven optimization
+by CIATS. No parameter is sacred. No parameter is
+permanent. CIATS replaces every starting value with data
+after the 200-trade floor is reached. PDCA governs all
+changes. Parameter philosophy canonical source: TB00000
+v2_49 §9.16. Parameter values canonical source: TB00000
+v2_49 §9.17 + 0500000 dv1_80 §9 Complete CIATS Parameter
+Registry mirror.
+
+3.4 Cash Is the Sizing Basis — MTM Is the Drawdown Basis
+
+Position sizing uses per-module trading wallet cash
+balance only. Drawdown monitoring uses current per-module
+wallet value including mark-to-market of open positions
+held by that module. These are two separate computations
+with two different wallet-value definitions. They must
+never be conflated.
+
+  Sizing:   wallet_balance (cash only per module)
+  Drawdown: current_wallet_value = cash + sum(bid * qty)
+            evaluated per module independently
+
+3.5 No Parameter Change Without the 200-Trade Floor
+
+Statistical inference is not valid below 200 closed trades.
+CIATS monitoring is active below 200 trades (EWMA at 50
+candle evals). CIATS parameter changes are prohibited
+below 200 trades. The Proposal Engine does not activate
+until the 200-trade floor is reached. Per-module CIATS
+framework applies (TB00000 v2_49 §9.6) — each module's
+200-trade threshold is independent.
+
+3.6 The System Does Not Auto-Close on Halt
+
+A full halt (per-wallet full_halt_drawdown_pct breach,
+10% starting per TB00000 v2_49 §9.17) blocks all new
+entries on that module's wallet and alerts Bill. It does
+NOT auto-close open positions. Bill decides whether and
+how to close open positions after a halt. Existing
+resting TP and emergSL protection remains active on all
+open positions through and after a halt.
+
+============================================================
+4. RISK ARCHITECTURE SUMMARY
+============================================================
+
+The Risk domain operates at two points in the trading
+pipeline and one continuous monitoring loop:
+
+------------------------------------------------------------
+4.1 Gate 7 — Risk Guard (Pipeline Entry Check)
+------------------------------------------------------------
+
+Fires on every 5-minute OHLC candle close event, after
+the Selection Controller passes a candidate pair.
+
+Gate 7 checks (in order):
+  (1) Drawdown check: is per-wallet drawdown_pct below
+      both thresholds?
+      If >= full_halt_drawdown_pct (10% starting):
+        HALT this module's wallet. Block all entries.
+      If >= session_pause_drawdown_pct (5% starting):
+        PAUSE this module's wallet. Block entries.
+      Resumes automatically when drawdown recovers below
+      the session-pause threshold.
+      Full halt requires manual operator action to resume.
+      Per-wallet evaluation: a Long_Module halt does NOT
+      halt Short_Module, and vice versa.
+  (2) Concentration check: is per_trade_ceiling_pct
+      respected?
+      asyncio.BoundedSemaphore enforces concurrent-
+      position bookkeeping. Concurrent-position count is
+      not artificially capped; it emerges from
+      wallet_balance / per_trade_size_usd arithmetic per
+      TB00000 v2_49 §9.17 RETIRED rationale.
+  (3) Exposure check: is available_USD >= per_trade_USD?
+      available_USD = wallet_balance
+                      - sum(pending_orders.values())
+      Pending Order Registry tracks all unconfirmed entries.
+
+Gate 7 NEVER blocks on size calculation. If Gate 7 passes,
+Gate 8 fires unconditionally. Canonical architecture
+source: 0500000 dv1_80 Image 8 + D2 R2 governs.
+
+------------------------------------------------------------
+4.2 Gate 8 — Position Sizer (Size Calculation)
+------------------------------------------------------------
+
+Fires immediately after Gate 7 pass. Never blocks.
+Computes three values in Decimal arithmetic:
+
+  order_qty:    how much base currency to buy
+  tp_price:     resting TP limit price (1:1.5 R:R net
+                minimum; CIATS sizing curve above the
+                floor)
+  emergSL_price: emergency stop-market price (ATR x
+                emergency_sl_mult, 3.0x starting)
+
+All quantities and prices computed using Python Decimal.
+All rounding uses Decimal.quantize() only. float
+arithmetic and math.floor/ceil are PROHIBITED (BP-DEC-001
+through BP-DEC-008 in 1011001). Canonical architecture
+source: 0500000 dv1_80 Image 9 + D2 R2 governs.
+
+------------------------------------------------------------
+4.3 Continuous Drawdown Monitor (Between Pipeline Events)
+------------------------------------------------------------
+
+Drawdown is NOT evaluated only at Gate 7. It is evaluated
+continuously on every bbo ticker event for any pair with
+an open position. This ensures a rapid market move between
+pipeline evaluations triggers the halt in real time, not
+at the next candle close. Evaluation is per-module-wallet
+independent.
+
+Drawdown formula (per module):
+  drawdown_pct = max(0,
+      (wallet_baseline - current_wallet_value)
+      / wallet_baseline)
+
+max(..., 0): wallet gains are not counted as negative
+drawdown. The circuit breaker is one-directional.
+Canonical architecture source: 0500000 dv1_80 §4
+AR-052 + AR-048 + D5 architecture.
+
+============================================================
+5. POSITION SIZING RULES SUMMARY
+============================================================
+
+Per-module wallet funding + R:R-driven sizing curve
+framework. Canonical parameter values: TB00000 v2_49
+§9.17 (canonical CIATS Parameter Registry) + 0500000
+dv1_80 §9 (mirror registry).
+
+Framework summary:
+  - Each trading module (Long_Module, Short_Module,
+    future modules) operates against its own trading
+    wallet funded by Bill with affordable-loss capital
+    per TB00000 v2_49 §9.4.
+  - Per-trade size is a CIATS-owned function of expected
+    R:R, starting at the Kraken per-pair minimum and
+    evolving from the 200-trade inference threshold
+    forward per TB00000 v2_49 §9.17 sizing-curve entry.
+  - Per-trade allocation is bounded above by
+    per_trade_ceiling_pct (25% of wallet starting,
+    CIATS-adjustable per TB00000 v2_49 §9.17).
+  - The 1:1.5 R:R minimum floor is enforced at signal
+    acceptance per TB00000 v2_49 §9.10 acceptance rule
+    A1. CIATS may never propose, size, or accept a trade
+    below the floor.
+
+Retired starting values (formerly enumerated in this
+section per dv1_0; retired at TB00000 v2_29):
+  tradeable_pct = 0.50 (50% of portfolio_USD) - REPLACED
+    by operator-controlled per-module wallet funding per
+    TB00000 v2_49 §9.4.
+  per_trade_pct = 0.05 (5% of tradeable_USD) - REPLACED
+    by per_trade_size_usd starting at Kraken per-pair
+    minimum and evolving as CIATS-owned function of
+    expected R:R per TB00000 v2_49 §9.17.
+  max_concurrent = 20 positions - REPLACED by emergent
+    arithmetic (wallet_balance / per_trade_size_usd); no
+    artificial concurrent-position ceiling.
+  Hardcoded Half-Kelly transition at 200 trades -
+    REPLACED. Half-Kelly remains a candidate sizing
+    methodology CIATS may adopt as the underlying
+    sizing-curve form; it is no longer a hardcoded
+    transition rule.
+
+Full sizing-curve canonical source: TB00000 v2_49 §9.10
++ §9.17 sizing-curve subsection.
+
+============================================================
+6. DRAWDOWN AND HALT RULES SUMMARY
+============================================================
+
+Per-module wallet drawdown framework. Drawdown thresholds
+are evaluated per-module-wallet independently per TB00000
+v2_49 §9.7.
+
+Baseline definition (per module):
+  wallet_baseline = module wallet_balance captured ONCE
+  at startup (after snap_orders processing in startup
+  sequence). NEVER updated during operation. NEVER reset
+  on mid-session reconnect. Resets only on full TothBot
+  process restart.
+
+Current wallet value definition (for drawdown monitoring,
+per module):
+  current_wallet_value = wallet_balance
+      + sum(bid_price[sym] * position_qty[sym]
+            for sym in position_mirror
+            where module owns position)
+  Uses bid price (realizable exit value). Conservative.
+
+Per-wallet circuit breakers (TB00000 v2_49 §9.17
+starting values):
+  session_pause_drawdown_pct (5% starting):
+    Block all new entries for this module's wallet.
+    Alert Bill.
+    Existing positions monitored normally.
+    Resumes automatically when this module's drawdown
+    recovers below the session-pause threshold.
+    Other modules' wallets unaffected.
+
+  full_halt_drawdown_pct (10% starting):
+    HALT this module's wallet. Block all new entries on
+    this module. Alert Bill immediately.
+    Does NOT auto-close positions. Bill decides.
+    Requires manual operator action to resume.
+    Other modules' wallets unaffected.
+
+Both thresholds are CIATS-owned per-module starting
+values per TB00000 v2_49 §9.7 + §9.17. CIATS may
+propose adjustments from the per-module 200-trade
+inference threshold forward.
+
+============================================================
+7. CONCENTRATION AND EXPOSURE RULES SUMMARY
+============================================================
+
+Per-trade concentration cap framework. Replaces the
+retired max_concurrent ceiling (TB00000 v2_29 retirement;
+TB00000 v2_49 §9.17 RETIRED rationale: concurrent-position
+count emerges from wallet_balance / per_trade_size_usd
+arithmetic; no artificial ceiling).
+
+Per-trade ceiling:
+  per_trade_ceiling_pct: 25% of module wallet starting
+  (CIATS-owned, CIATS-adjustable per TB00000 v2_49
+  §9.17). Hard concentration ceiling per single trade.
+  Prevents a wrong R:R estimate at high allocation from
+  wiping the wallet in one trade.
+
+Concurrent-position bookkeeping:
+  asyncio.BoundedSemaphore tracks concurrent positions
+  per module for accounting integrity. BoundedSemaphore
+  raises ValueError on over-release. ValueError =
+  critical bug. Log and alert immediately. The semaphore
+  is NOT a hard concurrent-position cap; it is a
+  bookkeeping enforcement mechanism.
+
+Pending Order Registry:
+  pending_orders: dict[str, Decimal]
+    maps cl_ord_id -> estimated_USD_cost
+  Populated on entry dispatch:
+    estimated_cost = order_qty * entry_limit_price
+                     * (1 + FEE_MAKER_PCT)
+  Cleared on: exec_type=filled, expired, or canceled.
+  Held (not cleared) on: exec_type=trade (partial fill
+  — order still open, position partially entered).
+  Reconciled at startup and on every mid-session reconnect:
+    snap_orders "new"/"pending_new" -> populate registry.
+    orders NOT in snap_orders -> clear from registry.
+  Canonical source: 0500000 dv1_80 §4 AR-053 + AR-056.
+
+Available USD check (Gate 7 exposure check):
+  available_USD = wallet_balance
+                  - sum(pending_orders.values())
+  If available_USD < per_trade_USD: SKIP_INSUFFICIENT_USD.
+
+============================================================
+8. HARD RULES
+============================================================
+
+HR-RISK-001  Net 1:1.5 R:R is SACRED and HARDCODED as a
+             MINIMUM FLOOR. CIATS does not own the floor.
+             Bill does not change it. It never changes.
+             Every trade must achieve at minimum 1.5
+             units of net gain per 1 unit of net risk
+             after fees. CIATS owns the sizing curve
+             above the floor. No exception below the
+             floor.
+
+HR-RISK-002  Per-module wallet_balance for SIZING uses
+             cash only. wallet_balance is the module's
+             allocated spot USD cash (per TB00000 v2_49
+             §9.4 operator-controlled per-module
+             funding). Mark-to-market value of open
+             positions is NEVER included in the sizing
+             wallet.
+
+HR-RISK-003  Per-module wallet_baseline is set ONCE at
+             startup. It is NEVER updated during
+             operation and NEVER reset on mid-session
+             reconnect. It resets only on full TothBot
+             process restart. Each module's baseline is
+             independent per TB00000 v2_49 §9.7.
+
+HR-RISK-004  Drawdown monitoring uses mark-to-market.
+             current_wallet_value = cash + bid * qty
+             for all open positions owned by the module.
+             Bid price is used (conservative realizable
+             exit value).
+
+HR-RISK-005  Gate 7 uses available_USD not wallet_balance.
+             available_USD deducts all pending order
+             commitments from wallet_balance before
+             checking USD sufficiency.
+
+HR-RISK-006  Full halt does NOT auto-close positions.
+             Existing resting TP and emergSL protection
+             remains active through and after a halt.
+             Bill decides on position disposition.
+
+HR-RISK-007  Session pause auto-resumes.
+             When per-module drawdown_pct recovers below
+             session_pause_drawdown_pct, that module
+             automatically resumes accepting entries.
+             No manual action required.
+
+HR-RISK-008  Full halt requires manual operator action.
+             TothBot does NOT auto-resume from a full
+             halt. Bill must intervene to resume
+             operation. Per-module evaluation.
+
+HR-RISK-009  BoundedSemaphore ValueError = critical bug.
+             If ValueError is raised on semaphore release,
+             log at CRITICAL, alert Bill immediately, and
+             halt. This indicates a position accounting
+             defect. It must never occur in normal
+             operation.
+
+HR-RISK-010  All financial computations use Python
+             Decimal. float arithmetic is PROHIBITED for
+             any price, quantity, or financial calculation
+             in the Risk Engine (BP-DEC-001 through
+             BP-DEC-008).
+
+HR-RISK-011  RETIRED at dv1_0 -> dv1_1 housekeeping
+             amendment (TB00317). Prior text asserted
+             hardcoded Half-Kelly activation at 200
+             closed trades. Per TB00000 v2_29 RETIRED
+             list (carried forward through v2_49 §9.17):
+             "Hardcoded Half-Kelly transition at 200
+             trades - Half-Kelly remains a candidate
+             sizing methodology CIATS may adopt as the
+             underlying sizing-curve form. It is no
+             longer a hardcoded transition rule."
+             CIATS owns the sizing-curve form above the
+             sacred 1:1.5 R:R floor per TB00000 v2_49
+             §9.10 + §9.17.
+
+HR-RISK-012  CIATS parameter changes require the
+             200-trade floor. No risk parameter may be
+             changed by CIATS below 200 closed trades.
+             EWMA monitoring is active below 200 trades
+             but does not drive parameter changes.
+             Per-module: each module's 200-trade
+             threshold is independent per TB00000 v2_49
+             §9.6.
+
+HR-RISK-013  Drawdown evaluates continuously between
+             candles. Every bbo ticker event for any pair
+             with an open position triggers a per-module
+             drawdown evaluation. The per-wallet circuit
+             breaker is not deferred to the next candle
+             close.
+
+HR-RISK-014  Pending Order Registry is reconciled at
+             startup and on every mid-session reconnect.
+             Stale registry entries are a capital
+             accounting defect.
+
+============================================================
+9. DOCUMENT STRUCTURE
+============================================================
+
+The Risk domain contains one sub-domain:
+
+  Sub-Domain 1 — Risk_Rules (B=1)
+    Anchor: 0610000 Risk_Rules_Anchor (post-cascade
+      child-chain empty)
+    Instance documents: NONE
+
+NOTE: All four instance documents originally enumerated
+under Sub-Domain 1 in dv1_0 (0611001 Position_Sizing_Rules,
+0611002 Drawdown_and_Halt_Rules, 0611003
+Concentration_and_Exposure_Rules, 0611004
+Safety_Parameter_Framework) were retired in the
+TB00257-TB00260 cascade under DD-012 v2_38 AMENDMENT A
+scope. The complete Risk domain architectural content is
+now canonically encoded in 0500000 dv1_80 (Image 8 +
+Image 9 + D2 R2 + AR-011/043/048/051/052/053 + §4 AR
+registry) + TB00000 v2_49 §9.17 CIATS Parameter Registry.
+0610000 Risk_Rules_Anchor remains as the Sub-Domain Anchor
+per 0311001 v1_18 §8 Three-Tier Document Hierarchy.
+
+------------------------------------------------------------
+9.1 Sub-Domain Status
+------------------------------------------------------------
+
+Sub-Domain 1 — Risk_Rules (B=1): POST-CASCADE COMPLETE.
+
+  Anchor 0610000 dv1_4: ACTIVE at HEAD. Child-chain
+    empty post-TB00260.
+
+  Instance documents originally specified in dv1_0:
+    0611001 Position_Sizing_Rules — RETIRED at TB00257
+      per DD-012 v2_38 AMENDMENT A. Content canonically
+      encoded in 0500000 dv1_80 Image 9 + AR-051 +
+      TB00000 v2_49 §9.10 + §9.17 sizing-curve.
+    0611002 Drawdown_and_Halt_Rules — RETIRED at TB00258
+      per DD-012 v2_38 AMENDMENT A. Content canonically
+      encoded in 0500000 dv1_80 §4 AR-052 + D5 +
+      TB00000 v2_49 §9.7 + §9.17.
+    0611003 Concentration_and_Exposure_Rules — RETIRED
+      at TB00259 per DD-012 v2_38 AMENDMENT A. Content
+      canonically encoded in 0500000 dv1_80 §4 AR-053 +
+      AR-056 + TB00000 v2_49 §9.17 per_trade_ceiling_pct.
+    0611004 Safety_Parameter_Framework — RETIRED at
+      TB00260 per DD-012 v2_38 AMENDMENT A. Content
+      canonically encoded in TB00000 v2_49 §9.17
+      (canonical CIATS Parameter Registry) + 0500000
+      dv1_80 §9 mirror.
+
+Future Sub-Domain 1 instance documents may be authored
+if a new risk-domain governance need arises that is not
+covered by the canonical 0500000 + TB00000 sources. The
+0610000 Anchor remains in place for that purpose per
+0311001 v1_18 §8 Three-Tier Document Hierarchy.
+
+------------------------------------------------------------
+9.2 Document Chain Requirement
+------------------------------------------------------------
+
+  Instance Document -> 0610000 (Anchor) -> 0600000 (Domain)
+
+This chain is mandatory and unbroken. No instance document
+in AA=06 may be committed to GitHub without both 0610000
+and 0600000 already present and approved on GitHub.
+Canonical governance source: 0311001 v1_18 §8.
+
+============================================================
+10. RELATIONSHIPS TO OTHER DOMAINS
+============================================================
+
+  AA=05 System_Architecture_Overview (0500000 dv1_80)
+    0500000 §4 AR registry (AR-011 + AR-043 + AR-048 +
+    AR-051 + AR-052 + AR-053 + AR-056) + Image 8 (Gate 7
+    Risk Guard) + Image 9 (Gate 8 Position Sizer) + D2 R2
+    risk-gate architecture + D5 continuous-monitor
+    architecture are the canonical source of record for
+    all Risk domain architectural decisions. Per DD-001
+    + DD-002 diagrams-canonical principle and DD-012
+    cross-document authority hierarchy, 0500000 governs;
+    0600000 narrates the diagrams at the Domain Document
+    layer.
+
+  AA=08 Trading_System
+    Gate 7 (Risk Guard) and Gate 8 (Position Sizer) are
+    implemented in the trading-system code per the
+    canonical 0500000 dv1_80 Image 8 + Image 9 +
+    AR-011/043/048/051/052/053 encoding. The prior
+    1011011 Risk_Engine_Coding_Spec citation was RETIRED
+    at TB00203/TB00222 under DD-012 v2_38 cascade. Risk
+    Engine architecture is now canonically encoded in
+    0500000 dv1_80 + parameter values in TB00000 v2_49
+    §9.17.
+
+  AA=04 Exchange_Interface
+    When a full halt is triggered, the execution mechanism
+    is batch_cancel (AR-041, 0411001 WS-CAN-001 through
+    -007). Risk defines the trigger condition. Exchange
+    Interface defines the order type and behavior.
+    Risk does not own batch_cancel. It owns the decision
+    to invoke it.
+
+  AA=02 Operations / CIATS (0211001)
+    CIATS owns all risk parameters in the Parameter Store
+    (except 1:1.5 R:R minimum floor). CIATS writes
+    parameter updates at inter-trade boundaries only.
+    CIATS reads from Logger (sole data interface). Risk
+    rules define the parameters. CIATS evolves their
+    values through PDCA. Per TB00000 v2_49 §9.6 each
+    trading module has its own CIATS instance with its
+    own statistical pool.
+
+  AA=07 Strategy
+    Strategy produces signals that pass through the
+    trading pipeline. Risk gates those signals. Strategy
+    does not define risk rules. Risk does not define
+    signals. The dependency is one-way: Risk consumes
+    Pipeline output, not Strategy internals.
+
+============================================================
+11. OPEN ITEMS
+============================================================
+
+  None at dv1_1 supersession.
+
+  All risk architectural decisions are fully resolved in
+  0500000 dv1_80 (AR-011, AR-043, AR-048, AR-051, AR-052,
+  AR-053, AR-056) + TB00000 v2_49 §9.10 + §9.17. All
+  risk parameter values are defined in the canonical
+  TB00000 §9.17 registry mirrored in 0500000 §9. All
+  formulas are locked. This domain document captures no
+  open items.
+
+============================================================
+12. RELATED DOCUMENTS
+============================================================
+
+  0000000  Ethics_and_Safety           (root Domain Document)
+  0500000  System_Architecture_Overview dv1_80
+                                       (primary source)
+  0610000  Risk_Rules_Anchor           (Sub-Domain 1
+                                        Anchor; child-chain
+                                        empty post-TB00260)
+  TB00000  TothBot_V2_Project_Instructions_for_Claude
+                                       v2_49 (parameter
+                                        registry §9.17 +
+                                        sacred constraint
+                                        §9.10)
+  0311001  Namespace_Specification     (governs DCN
+                                        structure)
+  0311002  Document_Creation_Workflow  (governs sequence)
+
+Retired references (formerly enumerated in dv1_0):
+  0611001 Position_Sizing_Rules — RETIRED at TB00257.
+  0611002 Drawdown_and_Halt_Rules — RETIRED at TB00258.
+  0611003 Concentration_and_Exposure_Rules — RETIRED at
+    TB00259.
+  0611004 Safety_Parameter_Framework — RETIRED at TB00260.
+  1011011 Risk_Engine_Coding_Spec — RETIRED at TB00203/
+    TB00222.
+
+============================================================
+13. REVISION HISTORY
+============================================================
+
+  dv1_1  05-17-2026  HOUSEKEEPING AMENDMENT per TB00317
+                     execution of TB00214 v1_0
+                     eleven-CHANGE-block scope closing
+                     GD-1 through GD-8 governance-drift
+                     findings under DEC-022 PRESERVE-
+                     with-housekeeping disposition and
+                     DR-067 PARTIAL-CLOSED -> FULL-
+                     CLOSED status update.
+
+                     ELEVEN CHANGE BLOCKS:
+
+                     CHANGE 1 - section 2 SCOPE.
+                     Refreshed scope assertion to reflect
+                     per-module wallet framework + R:R-
+                     driven sizing curve + sacred 1:1.5
+                     R:R MINIMUM FLOOR (rather than fixed
+                     ratio) per TB00000 v2_29 + v2_49
+                     §9.3 + §9.4 + §9.10. Replaced
+                     references to tradeable_pct,
+                     per_trade_pct, portfolio_USD,
+                     Half-Kelly activation with per-
+                     module wallet language + R:R-driven
+                     sizing curve language. Updated final
+                     scope paragraph to cite TB00000
+                     v2_49 + 0500000 dv1_80 as canonical
+                     sources.
+
+                     CHANGE 2 - section 3.2 Sacred
+                     Constraint. Refreshed from "only
+                     hardcoded constraint... below which
+                     no trade may be placed" (fixed-ratio
+                     framing) to "MINIMUM FLOOR" (CIATS
+                     owns sizing curve above the floor)
+                     per TB00000 v2_29 + v2_49 §9.10.
+                     Retired duplicate worked-example
+                     formulas (net_loss, net_gain,
+                     gross_target, emergSL_dist) at the
+                     Domain Document layer; redirected
+                     to TB00000 v2_49 §9.10 + 0500000
+                     dv1_80 AR-011 + rule:Sacred_R_R_
+                     1_to_1_5 + D2 R2 G7+G8 canonical
+                     sources per DD-001/DD-002 prose-
+                     follows-diagram.
+
+                     CHANGE 3 - section 5 Position
+                     Sizing Rules Summary. Retired
+                     stale starting-value enumeration
+                     (tradeable_pct = 0.50, per_trade_
+                     pct = 0.05, max_concurrent = 20)
+                     and stale Phase 1/Phase 2 sizing
+                     formulas including hardcoded
+                     Half-Kelly activation. Redirected
+                     to TB00000 v2_49 §9.17 canonical
+                     CIATS Parameter Registry + 0500000
+                     dv1_80 §9 mirror per TB00000 v2_29
+                     retirement record carried forward
+                     through v2_49. Added "Retired
+                     starting values" sub-block
+                     preserving forensic record per
+                     CI-006.
+
+                     CHANGE 4 - section 6 Drawdown and
+                     Halt Rules Summary. Refreshed
+                     portfolio-level drawdown language
+                     to per-wallet language per TB00000
+                     v2_29 + v2_49 §9.7 PER-WALLET
+                     DRAWDOWN HALTS framework.
+                     Replaced portfolio_baseline_USD +
+                     current_portfolio_USD references
+                     with wallet_baseline +
+                     current_wallet_value (per module).
+                     Updated session_pause /
+                     full_halt threshold descriptions
+                     with "_pct" suffix matching TB00000
+                     v2_49 §9.17 canonical parameter
+                     names + "Long_Module drawdown halt
+                     does NOT halt Short_Module" per-
+                     wallet independence statement.
+
+                     CHANGE 5 - section 7 Concentration
+                     and Exposure Rules Summary.
+                     Retired stale max_concurrent = 20
+                     ceiling per TB00000 v2_29
+                     retirement. Replaced with
+                     per_trade_ceiling_pct framework
+                     (25% wallet starting, CIATS-owned)
+                     per TB00000 v2_49 §9.17. Updated
+                     concurrent-position bookkeeping
+                     description: BoundedSemaphore is
+                     accounting mechanism, not hard
+                     concurrent-position cap.
+                     Refreshed pending-order-registry
+                     fee-rate reference to FEE_MAKER_
+                     PCT canonical name per TB00000
+                     v2_47 §9.17 fee schedule entry
+                     (carried through v2_49).
+                     Refreshed available_USD formula
+                     to wallet_balance (per-module).
+
+                     CHANGE 6 - section 8 Hard Rules.
+                     Refreshed HR-RISK-002 portfolio_USD
+                     phrasing to per-module
+                     wallet_balance phrasing per
+                     TB00000 v2_29 + v2_49 §9.4.
+                     Refreshed HR-RISK-003
+                     portfolio_baseline_USD phrasing
+                     to per-module wallet_baseline
+                     phrasing with per-module
+                     independence note per TB00000
+                     v2_49 §9.7. Refreshed HR-RISK-004
+                     current_portfolio_USD reference
+                     to current_wallet_value.
+                     Refreshed HR-RISK-005
+                     wallet_balance reference.
+                     Refreshed HR-RISK-007 session-
+                     pause auto-resume description
+                     with per-module language.
+                     Refreshed HR-RISK-008 full halt
+                     description with per-module
+                     evaluation note. RETIRED
+                     HR-RISK-011 (former hardcoded
+                     Half-Kelly activation rule) per
+                     TB00000 v2_29 retirement; replaced
+                     entry body with retirement marker
+                     and forensic record preservation.
+                     Refreshed HR-RISK-012 200-trade-
+                     floor description with per-module
+                     CIATS framework reference per
+                     TB00000 v2_49 §9.6.
+                     Refreshed HR-RISK-013 continuous-
+                     drawdown evaluation description
+                     with per-module evaluation note.
+
+                     CHANGE 7 - section 9 Document
+                     Structure. Reduced instance
+                     documents list to NONE. Added
+                     NOTE paragraph documenting
+                     0611001-0611004 retirements per
+                     TB00257-TB00260 cascade under
+                     DD-012 v2_38 AMENDMENT A scope.
+                     Cited canonical replacement
+                     sources (0500000 dv1_80 + TB00000
+                     v2_49 §9.17). Confirmed 0610000
+                     Risk_Rules_Anchor preservation
+                     per 0311001 v1_18 §8 Three-Tier
+                     Document Hierarchy. Pattern
+                     matches DEC-017 0800000 dv1_1 §8
+                     NOTE paragraph + 0810000 dv1_5 §4
+                     NOTE paragraph precedent.
+
+                     CHANGE 8 - section 9.1 Sub-Domain
+                     Status. Replaced four-instance-
+                     description block with Sub-Domain
+                     Status block documenting post-
+                     cascade-complete state. Each
+                     retired instance document
+                     individually documented with
+                     retirement session + canonical
+                     replacement source. Pattern
+                     matches 0800000 dv1_1 §8.1.
+
+                     CHANGE 9 - section 10
+                     Relationships. Refreshed AA=05
+                     paragraph to cite canonical 0500000
+                     dv1_80 architecture (Image 8 +
+                     Image 9 + D2 R2 + D5 + AR
+                     registry) per DD-001/DD-002 + DD-
+                     012. Refreshed AA=08 paragraph to
+                     remove 1011011 Risk_Engine_Coding_
+                     Spec citation (RETIRED at TB00203/
+                     TB00222); redirected to canonical
+                     0500000 dv1_80 encoding + TB00000
+                     v2_49 §9.17 parameters. Updated
+                     AA=02 paragraph with per-module
+                     CIATS framework reference per
+                     TB00000 v2_49 §9.6.
+
+                     CHANGE 10 - section 11 Open Items
+                     + section 13 Revision History.
+                     Refreshed 0500000 dv1_18 citation
+                     to current dv1_80 (62-version
+                     drift through TB00314 PHASE 7
+                     amendment). Added AR-048 + AR-056
+                     to canonical AR enumeration.
+                     Updated parameter-source citation
+                     to TB00000 v2_49 §9.10 + §9.17.
+                     Added dv1_1 revision-history
+                     entry (this entry) per CI-005 +
+                     CI-006 revision-history
+                     completeness.
+
+                     CHANGE 11 - section 12 Related
+                     Documents. Removed retired
+                     0611001/0611002/0611003/0611004
+                     + 1011011 from active citation
+                     list. Added TB00000 v2_49 to
+                     active citation list (parameter
+                     registry + sacred constraint
+                     canonical source). Refreshed
+                     0500000 citation to dv1_80.
+                     Added "Retired references" sub-
+                     block preserving forensic record
+                     per CI-005 + CI-006.
+
+                     GOVERNANCE PROVENANCE.
+                     Bill TB00317 chat-turn 1 OCS
+                     directive: Option A (0600000
+                     dv1_0 -> dv1_1 housekeeping
+                     amendment execution per DR-067
+                     eleven-CHANGE-block scope).
+                     FP/DP-derivability-test per DD-011
+                     v2_38 AMENDMENT D OUTCOME 1
+                     DERIVABLE (Option A single
+                     compliant option after B + C
+                     elimination on loss-prevention +
+                     carry-forward-closure + scope-
+                     efficiency + error/rework-risk
+                     dimensions). Executed under
+                     RR-SCOPE-005 derivable-decision
+                     authority.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0600000 -> (no parent; Domain
+                     Document is Tier 1). Section 13
+                     Revision History updated. Header
+                     DocVersion + DocPath + DocDate +
+                     DocTime refreshed.
+
+                     DD-001/DD-002/DD-012 COMPLIANCE.
+                     V-038 cross-check: all
+                     architectural assertions in dv1_1
+                     prose trace to canonical 0500000
+                     dv1_80 encoding (AR-011 + AR-043
+                     + AR-048 + AR-051 + AR-052 +
+                     AR-053 + AR-056 + Image 8 +
+                     Image 9 + D2 R2 + D5) OR
+                     canonical TB00000 v2_49 encoding
+                     (§9.4 + §9.6 + §9.7 + §9.10 +
+                     §9.16 + §9.17). No prose-first
+                     architectural authoring; all
+                     content is prose-follows-diagram
+                     per DD-002 + DD-012.
+
+                     CI-006 REVISION-HISTORY
+                     COMPLETENESS.
+                     Full dv1_0 revision history entry
+                     retained below this dv1_1 entry
+                     per CI-006.
+
+  dv1_0  04-05-2026  Initial document. Risk Domain Document
+                     for TothBot V2. Defines domain scope,
+                     governing principles (6), hard rules
+                     (HR-RISK-001 through HR-RISK-014),
+                     risk architecture summary (Gate 7,
+                     Gate 8, continuous drawdown monitor),
+                     position sizing summary, drawdown and
+                     halt rules summary, concentration and
+                     exposure rules summary, document
+                     structure (one sub-domain, four
+                     instance documents), and domain
+                     relationships. All content derived
+                     from FP/DP validated 0500000 dv1_18
+                     AR-011, AR-043, AR-051, AR-052,
+                     AR-053.
+
+============================================================
+END OF DOCUMENT
+============================================================
