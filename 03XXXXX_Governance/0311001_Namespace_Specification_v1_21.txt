@@ -1,8 +1,8 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_20
+DocVersion: v1_21
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_20.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_21.txt
 DocDate:    05-18-2026
 DocTime:    23:59:59 UTC
 
@@ -2595,6 +2595,7 @@ candidate identifier evaluated and rejected at
   ar:AR-072                          (1011009)
   ar:AR-074                          (1011012)
   ar:AR-076                          (0511002)
+  ar:AR-077                          (0500000 §8)
   ar:AR-080                          (0500000 §8)
 
 ------------------------------------------------------------
@@ -3465,6 +3466,102 @@ Enacted TB00255 close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_21  05-18-2026  TB00341 AMENDMENT — §15.12.4 ar: REGISTRY
+                     ADD-ONLY AMENDMENT BINDING ar:AR-077
+                     CANCEL_TIMEOUT_WINDOW FP/DP-DERIVATION AR.
+
+                     Single ADD-only surgical edit closing the
+                     ar:AR-077 §15.12.4 ar: registry binding
+                     carry-forward from TB00274 registry-gap-
+                     note precedent. Per established carry-
+                     forward pattern (TB00239 AMENDMENT-3 +
+                     TB00244/TB00245 AMENDMENT-8/9 + TB00274
+                     AR-077/AR-078 + TB00275 AR-079 + TB00340
+                     AR-080 precedent). AR-registration session
+                     (0500000 dv1_76) and §15.12.4-binding
+                     session (this TB00341 amendment) decoupled
+                     by design per the established pattern.
+
+                     EDIT — §15.12.4 ar: AR Registry. ADDED
+                     (1 token) AT position after ar:AR-076
+                     in numerical sequence:
+                       ar:AR-077                          (0500000 §8)
+
+                     Canonical authority source: AR-077 =
+                     cancel_timeout_window = 5.0 seconds —
+                     FP/DP-derivation governing
+                     param:cancel_timeout_window in TB00000
+                     v2_38 §9.17 CIATS-OWNED. Registered to
+                     0500000 §8 Locked Architectural Decisions
+                     AR registry at dv1_76. Source: 0500000
+                     dv1_76 §8 AR-077 entry text. AR-077
+                     governs the cancel-and-retry timeout
+                     window enforced by Exit Controller MPP
+                     (Maker-Preferred Patient) protocol for
+                     non-fill order management in I-6 cancel-
+                     timeout-fallback protocol per 0511004
+                     dv1_6 §6.
+
+                     FP/DP-DERIVABILITY-TEST logged TB00341
+                     SL §5 per TB00000 v2_56 §4.5 DD-011
+                     v2_38 AMENDMENT D + CHAT-TURN-1
+                     INDEPENDENT FP/DP-DERIVABILITY-TEST
+                     GATE — OUTCOME 1 single-compliant-option
+                     NEW-D' (J alone — ar:AR-077 §15.12.4
+                     binding) per RR-SCOPE-011 one-primary-
+                     mission rule strict interpretation (J+K+L
+                     bundling rejected — three identifiers in
+                     one document does NOT fit RR-SCOPE-011
+                     exception (c) "single-line surgical
+                     correction propagating through multiple
+                     documents"; TB00340 G+H precedent fit
+                     exception (c) precisely because it
+                     propagated ONE identifier AR-080 across
+                     TWO documents; J+K+L is structurally
+                     distinct). Executed under RR-SCOPE-005
+                     derivable-decision execution authority +
+                     DD-011 v2_56 OUTCOME 1 EXECUTION
+                     MANDATORY clause. NOT surfaced to Bill
+                     as ratification question.
+
+                     RR-SCOPE-001 absolute-scope compliance:
+                     ADD-only single-token edit; NO removal
+                     of existing identifiers; NO modification
+                     to surrounding entries. RR-SCOPE-007
+                     self-authored-NSI-source-prohibition
+                     compliance: scope sourced from TB00341
+                     NSI §1.1 Candidate J + §2.2 registry-
+                     gap-note carry-forward as informational
+                     labels only, with execution authority
+                     deriving from 0500000 dv1_76 §8 AR-077
+                     entry text + established registry-gap-
+                     note carry-forward pattern + TB00000
+                     v2_56 Bill-ratified Project Instructions.
+
+                     REGISTRY-GAP-NOTE CARRY-FORWARD STATUS
+                     POST-TB00341:
+                       ar:AR-077 §15.12.4 binding — CLOSED
+                         this session (this v1_21 amendment).
+                       ar:AR-078 §15.12.4 binding — OPEN
+                         (registry-gap-note carry-forward
+                         from TB00274; future housekeeping).
+                       ar:AR-079 §15.12.4 binding — OPEN
+                         (registry-gap-note carry-forward
+                         from TB00275; future housekeeping).
+                       ar:AR-080 §15.12.4 binding — CLOSED
+                         (TB00340 v1_20 amendment).
+
+                     Bill override: 0311001 v1_20 -> v1_21
+                     is enacted under Bill's standing
+                     document-control override continuing
+                     the scope established in TB00115
+                     through TB00340. Direct increment
+                     v1_20 -> v1_21; no rv state. Per Bill
+                     TB00337 chat-turn 2 derivable-decision
+                     execution authority directive + TB00000
+                     v2_56 §4.5 DD-011 CHAT-TURN-1 GATE
+                     OUTCOME 1 EXECUTION MANDATORY clause.
 
   v1_20  05-18-2026  TB00340 AMENDMENT — §15.12.4 ar: REGISTRY
                      ADD-ONLY AMENDMENT BINDING ar:AR-080
