@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_79</title>
+<title>0500000 System Architecture Overview dv1_81</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,10 +132,10 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_79</td></tr>
+  <tr><td>DocVersion</td><td>dv1_81</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_79_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>05-16-2026</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_81_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>05-18-2026</td></tr>
   <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
 <p class="format-note">
@@ -3329,8 +3329,8 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment: R1 -&gt; R2 (regime-count reconciliation per DR-008 D4: 5 nominal -&gt; 6 canonical 3x2 grid per 0711002 dv1_0 + 1011012 dv1_5 + 0311001 v1_7 §15.12.6 registry; namespace-token labeled-group tagging per DR-009 D4: 0 -&gt; 12 groups) | R2 -&gt; R3 (HR-REGIME-007 directional cascade per 0711002 dv1_1: TRENDING_NEGATIVE regimes 5 + 6 amended from long-only unconditional block to directional cascade — LONG blocked, SHORT permitted via mod:Short_Module dispatch per ar:AR-009 amended dv1_41 Kraken margin trading + ar:AR-072 SC-GATE-1 variant + ar:AR-073 per-side state management; closes DR-043 #4 D4 SVG portion per DEC-011 Option C Stage M-4 sub-step 1 + DEC-003 Path A one-diagram-per-session cadence)
-    governs: regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, mod:Regime_Engine, mod:Signal_Pipeline, mod:Long_Module, mod:Short_Module, mod:Logger, mod:CIATS, mod:Risk_Engine, contract:CIATS_Trade_Outcome_Bus, channel:kraken_rest_GetOHLCData, indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, gate:G3_Regime_Filter, gate:G6_Regime_Sizer, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods, rule:HR-REGIME-007, ar:AR-009, ar:AR-017, ar:AR-072, ar:AR-073, ar:AR-074, decision:D-08_Top_N_Cap_Retired, decision:DEC-011
+    R-increment: R3 -&gt; R4 (TB00329 BUCKET (C) GAP CLOSURE per TB00218 v1_0 §6.2 CHANGE 3 + Bill TB00328 chat-turn 3 FP/DP-directed R8 REFINED + TB00000 v2_51 §4.5 DD-001/DD-002/DD-012 diagrams-canonical principle. D4 is the canonical encoding site for Regime Taxonomy; param:atr_rolling_window = 50 days starting governs the historical window over which param:atr_percentile_thresh = 67th percentile is computed (already in D4 governs); ar:AR-036 governs Regime Engine REST call staggering at 1.1s intervals between calls for the same pair (0500000 §4 line 4864). Both identifiers were already encoded in TB00000 v2_51 §9.17 + 0500000 §9 mirror via prior absorption cascades but were absent from D4 governs-list. Two token additions: param:atr_rolling_window + ar:AR-036. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope. Closes MDR v1_41 DR-071 bucket (c-1) + (c-2) findings.) | R-increment-prior: R1 -&gt; R2 (regime-count reconciliation per DR-008 D4: 5 nominal -&gt; 6 canonical 3x2 grid per 0711002 dv1_0 + 1011012 dv1_5 + 0311001 v1_7 §15.12.6 registry; namespace-token labeled-group tagging per DR-009 D4: 0 -&gt; 12 groups) | R-increment-prior-2: R2 -&gt; R3 (HR-REGIME-007 directional cascade per 0711002 dv1_1: TRENDING_NEGATIVE regimes 5 + 6 amended from long-only unconditional block to directional cascade — LONG blocked, SHORT permitted via mod:Short_Module dispatch per ar:AR-009 amended dv1_41 Kraken margin trading + ar:AR-072 SC-GATE-1 variant + ar:AR-073 per-side state management; closes DR-043 #4 D4 SVG portion per DEC-011 Option C Stage M-4 sub-step 1 + DEC-003 Path A one-diagram-per-session cadence)
+    governs: regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, mod:Regime_Engine, mod:Signal_Pipeline, mod:Long_Module, mod:Short_Module, mod:Logger, mod:CIATS, mod:Risk_Engine, contract:CIATS_Trade_Outcome_Bus, channel:kraken_rest_GetOHLCData, indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, gate:G3_Regime_Filter, gate:G6_Regime_Sizer, param:adx_threshold, param:atr_percentile_thresh, param:atr_rolling_window, param:htf_ema_periods, rule:HR-REGIME-007, ar:AR-009, ar:AR-017, ar:AR-036, ar:AR-072, ar:AR-073, ar:AR-074, decision:D-08_Top_N_Cap_Retired, decision:DEC-011
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
   </desc>
   <defs>
@@ -3709,7 +3709,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
   </g>
 </svg>
   </div>
-  <figcaption>Diagram 4 — Regime Taxonomy (R3). 6-regime 3x2 grid (3 directional × 2 volatility) per 0711002 dv1_1 + 0311001 v1_13 §15.12.6. Each cell is a labeled namespace-token group. Two independent computations (asset_regime per-pair, market_regime BTC/USD anchor) tag every closed trade for CIATS regime-segmented optimization at 600+ trades / 100+ per bucket. R-increment R2 → R3 closes DR-043 #4 D4 SVG portion: HR-REGIME-007 amended dv1_1 long-only unconditional block → directional cascade (LONG blocked + SHORT permitted via mod:Short_Module dispatch per ar:AR-009 amended dv1_41 Kraken margin trading + ar:AR-072 + ar:AR-073) reflected in Regime 5 + Regime 6 cell text and Signal Pipeline cell summary; root governs list expanded for short-side identifiers per V-038 diagram-prose parity. R3 (dv1_55) also resolves Regime 2 + Regime 3 SPEC DISCREPANCY (TB00158 SL §7) via 1011012 retirement TB00227 — 0711002 dv1_1 RE-003 is sole canonical authority per DD-001/DD-002. All other 7 figures preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence + DEC-011 Option C Stage M-4 sub-step 1.</figcaption>
+  <figcaption>Diagram 4 — Regime Taxonomy (R4). 6-regime 3x2 grid (3 directional × 2 volatility) per 0711002 dv1_2 + 0311001 v1_18 §15.12.6. Each cell is a labeled namespace-token group. Two independent computations (asset_regime per-pair, market_regime BTC/USD anchor) tag every closed trade for CIATS regime-segmented optimization at 600+ trades / 100+ per bucket. R-increment R3 -&gt; R4 (TB00329 BUCKET (C) GAP CLOSURE): adds param:atr_rolling_window + ar:AR-036 to root governs list per TB00218 v1_0 §6.2 CHANGE 3 + Bill TB00328 chat-turn 3 FP/DP-directed R8 REFINED selection; param:atr_rolling_window = 50 days starting governs the historical window for param:atr_percentile_thresh computation; ar:AR-036 mandates 1.1s staggering between Regime Engine REST GetOHLCData calls for same pair. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment. Closes MDR v1_41 DR-071 bucket (c-1) + (c-2) findings. R-increment R2 → R3 (dv1_55) closes DR-043 #4 D4 SVG portion: HR-REGIME-007 amended dv1_1 long-only unconditional block → directional cascade (LONG blocked + SHORT permitted via mod:Short_Module dispatch per ar:AR-009 amended dv1_41 Kraken margin trading + ar:AR-072 + ar:AR-073) reflected in Regime 5 + Regime 6 cell text and Signal Pipeline cell summary; root governs list expanded for short-side identifiers per V-038 diagram-prose parity. R3 (dv1_55) also resolves Regime 2 + Regime 3 SPEC DISCREPANCY (TB00158 SL §7) via 1011012 retirement TB00227 — 0711002 dv1_2 RE-003 is sole canonical authority per DD-001/DD-002. All other 7 figures preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence.</figcaption>
 </figure>
 
 <h2>6. CIATS Architecture and Data Flows</h2>
@@ -4343,7 +4343,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       drill_targets: none
       constraints: none
       consumes: none
-      produces: channel:kraken_rest_GetWebSocketsToken, channel:kraken_rest_GetOHLCData, channel:kraken_rest_GetOpenOrders, channel:kraken_rest_GetAccountBalance, channel:kraken_rest_CancelAllOrders
+      produces: channel:kraken_rest_GetWebSocketsToken, channel:kraken_rest_GetOHLCData, channel:kraken_rest_GetOpenOrders, channel:kraken_rest_GetAccountBalance, channel:kraken_rest_CancelAllOrders, channel:kraken_rest_StatusAPI, channel:kraken_rest_Ticker, channel:kraken_rest_QueryOrdersInfo
       schema_version: 1.0
     </desc>
     <rect x="40" y="400" width="430" height="80" fill="#fef3c7" stroke="#92400e" stroke-width="1.5" rx="4"/>
@@ -6066,6 +6066,12 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
   Regime engine + signal model:
   adx_threshold            = 25 starting
   atr_percentile_thresh    = 67th percentile starting
+  atr_rolling_window       = 50 days starting (historical window
+                             for atr_percentile_thresh computation;
+                             CIATS-owned per 0711002 dv1_2 RE-002 +
+                             RE-010; canonical source TB00000 v2_52
+                             §9.17; closes TB00218 v1_0 §6.2 CHANGE 3
+                             bucket (c-1) at canonical 0500000 §9 mirror)
   htf_ema_periods          = 20/50 daily starting
   min_volume_usd_daily     = $500k USD starting
 
@@ -6081,6 +6087,59 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
                              contract; governs the cache TTL on
                              channel:kraken_rest_Ticker liquidity
                              probe at universe load + refresh cycle)
+
+  Fee schedule (UNIVERSAL — same values apply to all Kraken spot
+  trades for the account, not per-module):
+  FEE_MAKER_PCT            = 0.0016 (0.16%) starting (CIATS-owned
+                             per 0411003 FEE-BASE-001 + FEE-CALC-001;
+                             binds to Kelly sizing math through net-P/L
+                             computation on Trade Outcome Bus per
+                             AR-012 + AR-065; under-stated value
+                             produces optimistic Kelly sizing and
+                             capital over-commitment, so
+                             loss-prevention-adjacent)
+  FEE_TAKER_PCT            = 0.0026 (0.26%) starting (CIATS-owned
+                             per 0411003 FEE-BASE-001 + FEE-CALC-002;
+                             same Kelly net-P/L binding as
+                             FEE_MAKER_PCT; applies to all market
+                             orders and emergency-exit fills)
+
+  Threshold-monitoring (UNIVERSAL — same values apply to the single
+  account-level monitoring cycles, not per-module; closes TB00213
+  v1_0 §3.3 bucket (c-3) through (c-8) findings):
+  rl_warning_threshold_pct = 0.80 (80%) starting (CIATS-owned per
+                             0411003 RL-MON-002; logging-cadence
+                             trigger when rate_counter_by_pair EWMA
+                             crosses warning threshold; canonical
+                             source TB00000 v2_52 §9.17)
+  rl_critical_threshold_pct = 0.95 (95%) starting (CIATS-owned per
+                             0411003 RL-MON-003; triggers entry-order
+                             suppression when rate_counter_by_pair
+                             EWMA crosses critical threshold;
+                             loss-prevention-adjacent; canonical
+                             source TB00000 v2_52 §9.17)
+  fee_tier_divergence_threshold     = 0.0002 (2 basis points)
+                             starting (CIATS-owned per 0411003
+                             CIATS-FEE-003; EWMA divergence threshold
+                             for fee-tier-change detection; canonical
+                             source TB00000 v2_52 §9.17)
+  fee_tier_divergence_sustained_trades = 50 trades starting
+                             (CIATS-owned per 0411003 CIATS-FEE-003;
+                             sustained-trade window for fee-tier
+                             divergence confirmation; canonical
+                             source TB00000 v2_52 §9.17)
+  rejection_rate_regime_threshold_pct = 0.30 (30%) starting
+                             (CIATS-owned per 0411003 CIATS-REJ-003;
+                             per-regime rejection-rate guard
+                             threshold; rejection_rate_by_regime
+                             encoded as EWMA Monitor Stream 1 signal
+                             F6 in D5; canonical source TB00000
+                             v2_52 §9.17)
+  rejection_rate_eval_window_count  = 50 evaluations starting
+                             (CIATS-owned per 0411003 CIATS-REJ-003;
+                             evaluation-count window for
+                             rejection-rate threshold check;
+                             canonical source TB00000 v2_52 §9.17)
 </pre>
 <pre>
   Note: monitored_universe_n parameter RETIRED per TB00128 D-08 LOCKED.
@@ -7593,6 +7652,316 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_81  05-18-2026  TB00329 BUCKET (C) GAP CLOSURE AMENDMENT
+                      per Bill TB00328 chat-turn 3 FP/DP-directed
+                      R8 REFINED selection. Three closures in
+                      0500000 per TB00329 NSI v1_0 §1.1 primary
+                      deliverable scope:
+
+                      (1) CHANGE 3 (TB00327 deferral closure
+                          per TB00218 v1_0 §6.2): D4 Regime
+                          Taxonomy R3 -&gt; R4 governs-list
+                          desc-only extension adding two tokens
+                          param:atr_rolling_window + ar:AR-036.
+                          §9 mirror Regime-engine subsection
+                          adds atr_rolling_window = 50 days
+                          starting line between
+                          atr_percentile_thresh and
+                          htf_ema_periods.
+
+                      (2) TB00213 bucket (c-3..c-8) closure:
+                          §9 mirror new "Threshold-monitoring"
+                          subsection appended after Fee schedule
+                          subsection enumerating six CIATS-owned
+                          UNIVERSAL threshold parameters with
+                          0411003 RL-MON-002/003 + CIATS-FEE-003
+                          + CIATS-REJ-003 origin citations and
+                          TB00000 v2_52 §9.17 canonical-source
+                          references:
+                            rl_warning_threshold_pct = 0.80
+                            rl_critical_threshold_pct = 0.95
+                            fee_tier_divergence_threshold =
+                              0.0002
+                            fee_tier_divergence_sustained_trades
+                              = 50
+                            rejection_rate_regime_threshold_pct
+                              = 0.30
+                            rejection_rate_eval_window_count =
+                              50
+
+                          Bucket (c-9) param:cloudflare_
+                          reconnect_limit_per_window (150 / 10-
+                          min window / IP per RL-MON-004)
+                          DEFERRED this amendment per TB00329
+                          NSI §1.1 scope (2) permitted-deferral
+                          clause: c-9 is a Kraken/Cloudflare
+                          external fact (not CIATS-owned) and
+                          a LOW-priority AR-registration
+                          candidate. Different amendment class
+                          (AR registration, not CIATS-parameter
+                          registry absorption). Carry-forward to
+                          future session as AR-registration
+                          candidate.
+
+                      (3) 0500000 line 4346 gap closure: Tier-1
+                          Context container:Kraken_REST_API
+                          produces list extended from 5 channels
+                          to 8 channels by adding the three
+                          channels already present in the Tier-2
+                          drill_targets list at line 1509:
+                          channel:kraken_rest_StatusAPI +
+                          channel:kraken_rest_Ticker +
+                          channel:kraken_rest_QueryOrdersInfo.
+                          Closes TB00314 SL §9.4 finding.
+
+                      SVG VISUAL GEOMETRY PRESERVED.
+                      All edits are desc-only governs-list
+                      extensions and §9 mirror prose additions.
+                      D4 SVG visual geometry preserved
+                      BYTE-IDENTICAL. All 9 other figures
+                      preserved byte-identical per DEC-003 Path A
+                      one-diagram-per-session cadence (this
+                      amendment targets only D4 governs +
+                      Tier-1 Context desc).
+
+                      FP/DP ANALYSIS — TB00329 EXECUTION.
+                      Mission scope predetermined by TB00328
+                      chat-turn 3 FP/DP-directed R8 REFINED
+                      selection (TB00328 SL §5 single compliant
+                      option DERIVABLE under DD-011 v2_38
+                      OUTCOME 1). TB00329 cold-load executed
+                      mission per RR-SCOPE-005 derivable-decision
+                      authority. Single sub-decision this session:
+                      c-9 inclusion vs deferral. FP/DP OUTCOME 1:
+                      Option B deferral DERIVABLE (c-9 is
+                      external-fact AR-registration candidate;
+                      structurally different from CIATS-owned
+                      parameter absorption class; LOW priority;
+                      NSI §1.1 scope (2) explicit permitted-
+                      deferral clause).
+
+                      DD-001/DD-002/DD-012 compliance: param +
+                      ar tokens encoded in D4 root governs as
+                      canonical architectural binding. §9 mirror
+                      additions track canonical TB00000 §9.17
+                      registry. Subordinate-spec restatements in
+                      0711002 dv1_2 RE-002 + RE-010 + 0411003
+                      dv1_0 §3 + §6 are derived per DD-012
+                      cross-document authority hierarchy.
+
+                      RR-SCOPE-001 absolute-scope compliance:
+                      ADD-only scope. No removal of existing
+                      identifiers. No geometry change. No viewBox
+                      change.
+
+                      RR-SCOPE-009 four-question origin
+                      investigation: atr_rolling_window
+                      introduced 1011012 dv1_5 (retired TB00227);
+                      absorbed into TB00000 §9.17 at v2_35 +
+                      0711002 dv1_1 RE-002/010 canonical-source
+                      preserved. AR-036 introduced 0500000 dv1_10
+                      governs Regime Engine REST staggering.
+                      All six TB00213 c-3..c-8 threshold
+                      parameters introduced 0411003 dv1_0
+                      (RL-MON-002/003 + CIATS-FEE-003 +
+                      CIATS-REJ-003); all load-bearing per active
+                      monitoring contracts. Line 4346 gap is a
+                      Tier-1-vs-Tier-2 parity defect (Tier-2
+                      drill_targets had 8 channels but Tier-1
+                      produces had only 5); closure restores
+                      cross-tier parity per V-038 diagram-prose
+                      authority hierarchy.
+
+                      RR-SCOPE-010 verbatim-citation discipline:
+                      all parameter values + identifier
+                      semantics grep-verified verbatim against
+                      0411003 dv1_0 + TB00213 v1_0 §3.3 +
+                      0500000 §4 line 4864 (AR-036).
+
+                      DR-007 HTML scope validation at session
+                      close.
+
+                      Bill override: 0500000 dv1_80 -&gt; dv1_81 is
+                      enacted under Bill's standing document-
+                      control override continuing the scope
+                      established throughout the TB00115 onward
+                      cascade. Per Bill's TB00328 chat-turn 3
+                      FP/DP-directed R8 REFINED selection +
+                      TB00329 NSI v1_0 §1.1 primary mission
+                      directive.
+
+                      COMPANION DELIVERABLES THIS SESSION:
+                        0500000 dv1_80 -&gt; dv1_81.html (this
+                          document).
+                        TB00000 v2_51 -&gt; v2_52.txt (§9.17
+                          parameter absorption — six new threshold
+                          parameters absorbed in canonical
+                          registry).
+                        TB00153 MDR v1_41 -&gt; v1_42.txt (DR-066
+                          PARTIAL-CLOSED -&gt; CLOSED via c-3..c-8
+                          closure with c-9 remaining as deferred
+                          carry-forward; DR-071 PRESERVE-WITH-
+                          HOUSEKEEPING bucket (c-1) + (c-2)
+                          closure annotation; DR-NEW LINE-4346-GAP
+                          CLOSED entry).
+                        TB00153 DR v1_21 -&gt; v1_22.txt (DEC-028
+                          NEW paired-DEC entry recording R8
+                          REFINED bucket (c) closure under
+                          DEC-012(a-extended) diagrams-canonical
+                          advancement).
+                        TB00329 Session_Log v1_0.
+                        TB00330 Next_Session_Instructions v1_0.
+
+  dv1_80  05-16-2026  TB00314 PHASE 7 EDGE-CASE-CLOSURE
+                      AMENDMENT (PART 1 OF 2; companion =
+                      TB00000 v2_46 -&gt; v2_47 §9.17
+                      amendment same session).
+
+                      Two bucket (c) ARCHITECTURAL CONTENT
+                      NOT IN DIAGRAMS findings closed per
+                      DEC-020 + DR-066 dispositions ratified
+                      at TB00313 close. Originating
+                      identifications: TB00213 Phase 1 Gap
+                      Register §3.3 bucket (c-1) +
+                      bucket (c-2) candidate edge cases
+                      (HIGH-priority loss-prevention-adjacent
+                      fee param canonical-registry gaps).
+                      PHASE 2 grep-verify outcomes confirmed
+                      OUTCOME I at TB00313 MDR v1_33 DR-066
+                      (both ABSENT from canonical registries;
+                      narrative-only at AR-012 / §10 / §11).
+
+                      SCOPE OF CHANGES:
+
+                      (a) §9 Complete CIATS Parameter
+                          Registry: appended new "Fee
+                          schedule:" subsection at end of
+                          CIATS-OWNED PER-MODULE INSTANTIATED
+                          block (after Liquidity cache
+                          subsection). New entries:
+                          FEE_MAKER_PCT = 0.0016 (0.16%)
+                          starting (CIATS-owned per 0411003
+                          FEE-BASE-001 + FEE-CALC-001) +
+                          FEE_TAKER_PCT = 0.0026 (0.26%)
+                          starting (CIATS-owned per 0411003
+                          FEE-BASE-001 + FEE-CALC-002).
+                          Both UNIVERSAL — same values apply
+                          to all Kraken spot trades for the
+                          account, not per-module (Kraken
+                          fee tier applies per account, not
+                          per strategy module). Closes EDGE
+                          CASE c-1 + EDGE CASE c-2 per
+                          DR-066.
+
+                      (b) Header refresh: DocVersion dv1_79
+                          -&gt; dv1_80. DocPath updated to
+                          ...dv1_80_Claude_Source.html.
+                          DocDate 05-16-2026 preserved.
+                          DocTime 23:59:59 UTC preserved.
+                          &lt;title&gt; element refreshed to
+                          "0500000 System Architecture
+                          Overview dv1_80".
+
+                      OUT-OF-SCOPE CLARIFICATION.
+                      Bucket (c-3) through (c-8) MEDIUM-
+                      priority CIATS-owned threshold-param
+                      gaps (fee_tier_divergence_threshold,
+                      fee_tier_divergence_sustained_trades,
+                      rl_warning_threshold_pct,
+                      rl_critical_threshold_pct,
+                      rejection_rate_regime_threshold_pct,
+                      rejection_rate_eval_window_count) and
+                      bucket (c-9) LOW-priority external-
+                      fact AR-registration candidate
+                      (cloudflare_reconnect_limit_per_window)
+                      remain CARRY-FORWARD per Option A
+                      MINIMUM closure scope selected at
+                      TB00314 chat-turn under RR-SCOPE-005 +
+                      DD-011 v2_38 AMENDMENT D derivable-
+                      decision authority (single compliant
+                      option after eliminating Option B by
+                      pattern-mismatch risk of bundling c-9
+                      AR-style registration with param-style
+                      items and Option C by §1.2 loss-
+                      minimization priority). Carry-forward
+                      to TB00315 or later session.
+
+                      The line 4346 Tier 1 Context
+                      produces-list gap (StatusAPI missing;
+                      noted in dv1_79 revision history)
+                      remains OUT OF SCOPE this amendment.
+                      Surgical-edit candidate at future
+                      0500000 dv1_80 -&gt; dv1_81 amendment.
+
+                      Per RR-SCOPE-001 + RR-SCOPE-002
+                      absolute scope; per RR-SCOPE-007
+                      OPERATIONAL-ARTIFACT-SCOPE-EXTENSION
+                      v2_37 provenance trace to TB00314 NSI
+                      §1.1 + TB00314 chat-turn FP/DP-
+                      derivability-test log selecting
+                      Option A.
+
+                      DEC-020 RATIFICATION CHAIN.
+                      Originating diagnosis: TB00213 §3.3 +
+                      §6.1-§6.5 (bucket (c) candidate edge
+                      cases).
+                      FP/DP analysis + Bill ratification:
+                      TB00313 PHASE 3 derivability-test
+                      OUTCOME 1 single compliant option
+                      DERIVABLE = PRESERVE 0411003
+                      disposition (DEC-020 + DR-066);
+                      PHASE 7 scope-selection deferred to
+                      TB00314 per DD-011 v2_38 AMENDMENT D
+                      exception (b) Bill business-judgment
+                      classification.
+                      TB00314 Bill correction at chat-turn 2:
+                      Claude initially classified PHASE 7
+                      scope as Bill business judgment
+                      (exception (b)) without running an
+                      independent FP/DP-derivability-test
+                      log; Bill rejected the surface and
+                      directed FP/DP analysis. Claude
+                      executed the test, eliminated Option
+                      B (pattern-mismatch risk) + Option C
+                      (loss-minimization violation), and
+                      identified Option A as single
+                      compliant option DERIVABLE under
+                      RR-SCOPE-005 + DD-011 OUTCOME 1.
+                      DD-011 v2_38 violation logged in
+                      TB00314 SL §8 (exception (b)
+                      classification deferred to NSI text
+                      without independent test).
+
+                      Bill override: 0500000 dv1_79 -&gt;
+                      dv1_80 is enacted under Bill's
+                      standing document-control override
+                      continuing the scope established in
+                      TB00115 (v2_10 -&gt; v2_11) through
+                      TB00313 close. Direct increment
+                      dv1_79 -&gt; dv1_80; no rv state. Per
+                      Bill's TB00314 chat-turn 2 directive
+                      "do FP/DP analysis and follow the
+                      project instructions" + RR-SCOPE-005
+                      derivable-decision execution
+                      authority.
+
+                      Document Status block: not applicable
+                      to 0500000 (no separate Status block;
+                      DocVersion field in dc-header table
+                      is authoritative).
+
+                      Companion deliverable: TB00000 v2_46
+                      -&gt; v2_47 §9.17 amendment same session
+                      (Fee schedule subsection +
+                      FEE_MAKER_PCT + FEE_TAKER_PCT
+                      entries).
+
+                      Closes EDGE CASE c-1 + EDGE CASE c-2
+                      at the canonical-diagram-mirror layer
+                      per DR-066. PHASE 7 MINIMUM closure
+                      objective complete; bucket (c-3)
+                      through (c-9) remain CARRY-FORWARD.
+
   dv1_79  05-16-2026  TB00311 PHASE 7 EDGE-CASE-CLOSURE
                       AMENDMENT (PART 1 OF 2; companion =
                       TB00000 v2_44 -&gt; v2_45 §9.17
