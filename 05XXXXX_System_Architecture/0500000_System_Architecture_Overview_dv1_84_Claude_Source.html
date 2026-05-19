@@ -132,10 +132,10 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_83</td></tr>
+  <tr><td>DocVersion</td><td>dv1_84</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_83_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>05-18-2026</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_84_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>05-19-2026</td></tr>
   <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
 <p class="format-note">
@@ -232,7 +232,7 @@ Tier 2 diagrams (D1 - D7) below.
         tier: 1
         parent_dcn: 0500000
         schema_version: 1.0
-        R-increment: R0 (initial authoring under HTML canonical format per 0311001 v1_6 §15.13)
+        R-increment: R0 -&gt; R1 (TB00352 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16. Per-component q1_do / q4_triggers / q5_logs fields added to all 15 component &lt;desc&gt; blocks (4 organism containers + 5 actors/external containers + 6 flow contracts/arrows). Figcaption replaced with V-040 attestation block per §15.16.3. SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption scope only; no rect/path/polygon/line/text-position byte change; no viewBox change (1500x1200 preserved). All 9 other figures (D1+D2+D3+D4+D5+D6+D7+D8+D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. FP/DP-derivability-test logged TB00352 chat-turn 1 per DD-011 v2_57 CHAT-TURN-1 GATE — OUTCOME 1 Option R (Tier 1 first + cross-diagram interface audit + per-diagram registry batching + dependency-ordered subsequent sequence). RR-SCOPE-001 absolute-scope compliance: ADD-only scope. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from Bill mission preamble + TB00351 chat-turn 2 OUTCOME 1 Option R ratification. RR-SCOPE-009 four-question origin investigation N/A (no constraint removed). RR-SCOPE-010 verbatim-MDR-citation N/A (no MDR field cited). R0 narrative preserved in §14 dv1_83 historical revision history entry per CI-005 + CI-006 visible-stack policy.)
         governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 v2_20 §4.4 paper-as-master) + ar:AR-001..AR-076 (system-level architectural rules cumulative through 0500000 dv1_24) + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
         drill_targets: 0500000_Image1_T2_Kraken_API_Connection_Architecture, 0500000_Image2_T2_Trading_Pipeline, 0500000_Image3_T2_Exit_Architecture, 0500000_Image4_T2_Regime_Taxonomy, 0500000_Image5_T2_CIATS_Architecture, 0500000_Image6_T2_Complete_System, 0500000_Image7_T2_Paper_Mode_Dispatch_Boundary
         Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
@@ -279,6 +279,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005
             consumes: none
             produces: none
+            q1_do: wraps the three-system organism (Kraken role + TothBot role + CIATS role) as one controlled unit at three time scales; provides PA-001 paper-master + PA-005 byte-identical paper/live boundary
+            q4_triggers: triggered by container instantiation at system boot; triggers no children directly (children are independent containers Kraken_Zone + TothBot_Zone + CIATS_Zone)
+            q5_logs: none directly (delegated to constituent containers - tothbot.log inside TothBot_Zone is the operational log)
             schema_version: 1.0
           </desc>
         <rect x="80" y="160" width="950" height="580" fill="#f0f9ff" stroke="#0c4a6e" stroke-width="3" stroke-dasharray="6,4" rx="8"/>
@@ -298,6 +301,9 @@ Tier 2 diagrams (D1 - D7) below.
               constraints: ar:AR-001, ar:AR-002, ar:AR-014, ar:AR-038, ar:AR-039, decision:D-04
               consumes: channel:kraken_ws_ohlc_5m, channel:kraken_ws_ohlc_60m, channel:kraken_ws_ticker, channel:kraken_ws_instrument, channel:kraken_ws_status, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:OHLC_5m_System_Clock, evt:WS_RECONNECT, evt:WS_SUBSCRIBE_RATE_LIMIT
+              q1_do: external event-source container providing system clock - 5m OHLC candle close as universal trigger for TothBot processing; exposes Public WS + Private WS + REST endpoints; ar:AR-001 + AR-002 + AR-014 govern
+              q4_triggers: triggered by Kraken exchange tick (external); triggers contract:OHLC_5m_System_Clock + evt:WS_RECONNECT on connection loss + evt:WS_SUBSCRIBE_RATE_LIMIT on subscribe-storm
+              q5_logs: WS connection-state transitions + reconnect attempts logged by WS_Manager via Logger to tothbot.log (Pathway 2 inside TothBot_Zone)
               schema_version: 1.0
             </desc>
           <rect x="100" y="230" width="285" height="480" fill="#fef3c7" stroke="#d4a017" stroke-width="2" rx="6"/>
@@ -336,6 +342,9 @@ Tier 2 diagrams (D1 - D7) below.
               constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-076
               consumes: contract:OHLC_5m_System_Clock, contract:Parameter_Store_Snapshot, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:WSManager_Dispatch_Seam, contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE, evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
+              q1_do: event-processor container - receives Kraken events, runs 8-gate trading pipeline, sizes + dispatches orders, manages exits; hosts WS_Manager + Signal_Pipeline + Execution_Engine + Exit_Controller + Position_Mirror + Logger + Selection_Controller + Risk_Engine + Regime_Engine + Long_Module
+              q4_triggers: triggered by evt:CANDLE_CLOSE_TRIGGER every 5 min from contract:OHLC_5m_System_Clock; triggers evt:ENTRY_SUBMITTED + evt:ENTRY_FILLED + evt:TRADE_CLOSE + evt:PAPER_DISPATCH_BLOCKED via WSManager_Dispatch_Seam
+              q5_logs: tothbot.log (all decision events, CRITICAL/HIGH/MEDIUM/LOW levels per Logger taxonomy) + Mail_Alerts dispatch at CRITICAL + HIGH levels via Logger Alert Out Of Band flow
               schema_version: 1.0
             </desc>
           <rect x="410" y="230" width="285" height="480" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="6"/>
@@ -374,6 +383,9 @@ Tier 2 diagrams (D1 - D7) below.
               constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned), decision:D-08 (Top-N retired)
               consumes: contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE
               produces: contract:Parameter_Store_Snapshot, param:tradeable_pct, param:per_trade_pct, param:mae_mult, param:emergency_sl_mult, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods, param:min_volume_usd_daily
+              q1_do: continuous-improvement container - consumes contract:CIATS_Trade_Outcome_Bus + evt:TRADE_CLOSE; produces contract:Parameter_Store_Snapshot with CIATS-owned starting values; applies Mann-Whitney U + Sharpe + Spearman + CUSUM + Half-Kelly statistics at 200+ trade threshold
+              q4_triggers: triggered by evt:TRADE_CLOSE on Trade Outcome Bus + 50-eval EWMA monitor + 200-trade HARD FLOOR inference gate + 600-trade per-regime gate; triggers Parameter_Store_Snapshot updates consumed by TothBot_Zone
+              q5_logs: CIATS analysis events + parameter-change proposals logged via Logger to tothbot.log; parameter-change proposals requiring Bill ratification emitted at HIGH alert level to alerts@tothbot.com
               schema_version: 1.0
             </desc>
           <rect x="720" y="230" width="285" height="480" fill="#fef9c3" stroke="#a16207" stroke-width="2" rx="6"/>
@@ -413,6 +425,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:TB00000_v2_20_§1_sole_operator_acknowledgment
             consumes: evt:ALERT_DELIVERED (via mail boundary)
             produces: ssh:operational_command, github:commit_event
+            q1_do: external sole-operator actor - ratifies decisions, commits documents to GitHub, deploys VPS via SSH, receives alerts via alerts@tothbot.com read-only inbox; authoritative for all PA-006 + RR-SCOPE-009 overrides per TB00000 sole-operator acknowledgment
+            q4_triggers: triggered by evt:ALERT_DELIVERED via Mail boundary read; triggers ssh:operational_command (to VPS) + git:push to TothBot_V2-Docs and TothBot_V2-Code repos
+            q5_logs: none directly (external actor - operational actions logged inside VPS auth.log and GitHub commit history)
             schema_version: 1.0
           </desc>
         <rect x="1060" y="160" width="410" height="130" fill="#f8fafc" stroke="#475569" stroke-width="2" rx="6"/>
@@ -439,6 +454,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:TB00000_v2_20_§11_storage_authoritative
             consumes: ssh:operational_command (from Bill), git:pull (from TothBot_V2-Code)
             produces: file:tothbot.log, mail:alert_send (via Mail_Alerts)
+            q1_do: hosting-boundary container - hosts tothbot.service systemd process 24/7/365 on Ubuntu 24.04.4 LTS + Python 3.12.3 at 87.99.141.44 Ashburn VA Hetzner CPX22; runs TothBot V2 process + operations/ scripts (Pathway 2 only per HR-TP002)
+            q4_triggers: triggered by systemd at boot + git:pull deploy event from TothBot_V2-Code; triggers tothbot.service start/restart + mail:alert_send on Logger CRITICAL/HIGH/MEDIUM emission
+            q5_logs: tothbot.log on local filesystem (rotated per logrotate config) captures all Logger output from tothbot.service; auth.log captures Bill SSH sessions
             schema_version: 1.0
           </desc>
         <rect x="1060" y="310" width="410" height="130" fill="#f8fafc" stroke="#475569" stroke-width="2" rx="6"/>
@@ -465,6 +483,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:TB00000_v2_20_§9.7_alert_routing, ar:OI-019_singular_to_plural_endpoint_correction
             consumes: mail:alert_send (from Logger via VPS)
             produces: mail:alert_inbox_delivery (to Bill)
+            q1_do: alert-delivery-boundary actor - receives mail:alert_send from Logger via VPS SMTP; routes to alerts@tothbot.com endpoint (plural - OI-019 singular-to-plural fix); supports CRITICAL HIGH MEDIUM LOW levels per Logger taxonomy; singular alert@ rejected by Proton catch-all
+            q4_triggers: triggered by mail:alert_send SMTP push from VPS Logger; triggers mail:alert_inbox_delivery to Bill_Operator inbox at alerts@tothbot.com
+            q5_logs: none directly (delivery success/failure logged in VPS SMTP client logs and Proton inbox event log; alert content itself is the inbox message)
             schema_version: 1.0
           </desc>
         <rect x="1060" y="460" width="410" height="100" fill="#f8fafc" stroke="#475569" stroke-width="2" rx="6"/>
@@ -487,6 +508,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:TB00000_v2_20_§11_storage_authoritative, rule:HR-TP001..HR-TP007_pathway_separation
             consumes: git:push (from Bill)
             produces: git:pull (to VPS), github_actions:trigger (Pathway 1 only)
+            q1_do: source-of-truth-boundary actor - hosts TothBot_V2-Docs (controlled docs + diagrams + DC automation Pathway 1) + TothBot_V2-Code (tothbot Python package + operations scripts + tests Pathway 2) + TothBot_V2-SessionLogs (TB-prefix files per DD-013); authoritative repo for governance per TB00000 sec 11
+            q4_triggers: triggered by git:push from Bill_Operator; triggers github_actions:trigger (Pathway 1 commits only on TothBot_V2-Docs) + git:pull events on scheduled VPS pulls from TothBot_V2-Code
+            q5_logs: GitHub Actions audit log captures Pathway 1 workflow runs; git commit history on all three repos captures every commit author + timestamp + diff
             schema_version: 1.0
           </desc>
         <rect x="1060" y="580" width="410" height="160" fill="#f8fafc" stroke="#475569" stroke-width="2" rx="6"/>
@@ -511,6 +535,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:PA-004 (1)(2) (paper-mode private-WS suppression and order-dispatch suppression), ar:AR-001..AR-007
             consumes: ws_subscribe:public_v2, ws_subscribe:private_v2 (live mode only), rest:get_account_balance, rest:get_open_orders, rest:get_ohlc_data, rest:get_websockets_token
             produces: channel:kraken_ws_ohlc_5m, channel:kraken_ws_ohlc_60m, channel:kraken_ws_ticker, channel:kraken_ws_instrument, channel:kraken_ws_status, channel:kraken_ws_executions, channel:kraken_ws_balances
+            q1_do: external spot-exchange-infrastructure container providing three endpoint surfaces - Public WS v2 wss://ws.kraken.com/v2 (instrument/status/ohlc/ticker, no auth, PA-005 byte-identical paper/live); Private WS v2 wss://ws-auth.kraken.com/v2 (executions/balances/order events, GetWebSocketsToken auth, PA-004(1) NOT connected in paper); REST API api.kraken.com (GetWebSocketsToken/GetOHLCData/GetOpenOrders/GetAccountBalance, PA-005 byte-identical paper/live)
+            q4_triggers: triggered by ws_subscribe:public_v2 + ws_subscribe:private_v2 + REST requests from TothBot_Zone via WS_Manager; triggers channel:kraken_ws_* push streams (ohlc_5m + ohlc_60m + ticker + instrument + status + executions + balances) + REST response payloads
+            q5_logs: none directly (external infrastructure - WS connection/auth/subscribe events logged inside TothBot_Zone by WS_Manager to tothbot.log; Kraken exchange itself maintains internal logs not visible to TothBot)
             schema_version: 1.0
           </desc>
         <rect x="80" y="770" width="1390" height="175" fill="#fef2f2" stroke="#dc2626" stroke-width="2" rx="6"/>
@@ -546,6 +573,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: ar:AR-001, ar:AR-002, decision:D-04
             consumes: channel:kraken_ws_ohlc_5m, channel:kraken_ws_ticker, channel:kraken_ws_instrument, channel:kraken_ws_status
             produces: evt:CANDLE_CLOSE_TRIGGER (TothBot internal)
+            q1_do: Public WS v2 OHLC push contract - provides 5-min OHLC candle close as universal system clock for TothBot processing; consumes channel:kraken_ws_ohlc_5m + kraken_ws_ticker + kraken_ws_instrument + kraken_ws_status from Kraken_Zone; produces evt:CANDLE_CLOSE_TRIGGER (TothBot internal) consumed by Signal_Pipeline + Selection_Controller + Regime_Engine
+            q4_triggers: triggered by Kraken WS push every 5 min on candle close for every subscribed pair; triggers evt:CANDLE_CLOSE_TRIGGER consumed by Signal_Pipeline + Selection_Controller + Regime_Engine inside TothBot_Zone
+            q5_logs: WS push receipt events logged by WS_Manager to tothbot.log at LOW level (frequency every 5 min per subscribed pair); aggregated subscribe-storm events logged at HIGH if rate-limit threshold breached
             schema_version: 1.0
           </desc>
         <line x1="240" y1="780" x2="240" y2="715" stroke="#1e40af" stroke-width="2.5" marker-end="url(#arrow_b)"/>
@@ -563,6 +593,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:PA-004 (1) private WS NOT connected in paper, rule:PA-004 (2) order dispatch NOT transmitted in paper
             consumes: channel:kraken_ws_executions, channel:kraken_ws_balances
             produces: evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
+            q1_do: Private WS v2 order-and-fill-stream contract - bidirectional dispatch seam for order placement (TothBot to Kraken) and execution events (Kraken to TothBot); consumes channel:kraken_ws_executions + channel:kraken_ws_balances; produces evt:ENTRY_SUBMITTED + evt:ENTRY_FILLED + evt:PAPER_DISPATCH_BLOCKED; PA-004(1) + PA-004(2) the canonical paper/live divergence boundary
+            q4_triggers: triggered by Execution_Engine dispatch in live mode (PA-004(2) blocks in paper mode) + Kraken execution events from private WS; triggers evt:ENTRY_FILLED consumed by Position_Mirror + evt:PAPER_DISPATCH_BLOCKED in paper mode + evt:ENTRY_SUBMITTED consumed by Logger
+            q5_logs: order-dispatch events + execution events + paper-dispatch-blocked events logged by WS_Manager + Execution_Engine + Logger to tothbot.log at HIGH level for dispatched orders, CRITICAL for paper-dispatch-blocked
             schema_version: 1.0
           </desc>
         <line x1="700" y1="780" x2="700" y2="715" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrow_r)"/>
@@ -580,6 +613,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: ar:AR-007, ar:AR-009 (REST snapshot + executions seq gap reconcile)
             consumes: rest:get_account_balance, rest:get_open_orders, rest:get_ohlc_data, rest:get_websockets_token
             produces: evt:RECONCILE_COMPLETE
+            q1_do: Kraken REST snapshot + reconcile contract - provides REST endpoints for snapshot (GetAccountBalance + GetOpenOrders) + warm-up (GetOHLCData) + authentication (GetWebSocketsToken); consumes REST request payloads; produces evt:RECONCILE_COMPLETE per ar:AR-007 + ar:AR-009 executions-seq-gap reconciliation contract
+            q4_triggers: triggered by WS_Manager reconcile cycle on executions-seq gap detection + indicator warm-up at startup + GetWebSocketsToken refresh on token expiry; triggers evt:RECONCILE_COMPLETE consumed by Position_Mirror + Signal_Pipeline
+            q5_logs: REST request/response events + reconcile completion events logged by WS_Manager to tothbot.log at MEDIUM level (normal reconcile) or HIGH level (executions-seq gap recovery)
             schema_version: 1.0
           </desc>
         <line x1="1180" y1="780" x2="1180" y2="715" stroke="#1e40af" stroke-width="2.5" marker-end="url(#arrow_b)"/>
@@ -597,6 +633,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: ar:AR-008 (Net 1:1.5 R:R sacred), decision:D-08 (Top-N retired)
             consumes: contract:Parameter_Store_Snapshot (TOTHBOT reads CIATS values)
             produces: evt:TRADE_CLOSE (TOTHBOT publishes outcomes to CIATS)
+            q1_do: bidirectional internal contract carrying trade outcomes from TothBot_Zone to CIATS_Zone and Parameter_Store_Snapshot from CIATS_Zone to TothBot_Zone; consumes contract:Parameter_Store_Snapshot (TothBot reads CIATS values) + evt:TRADE_CLOSE; produces parameter updates consumed by Signal_Pipeline + Execution_Engine + Exit_Controller; ar:AR-008 Net 1:1.5 R:R sacred floor + decision:D-08 Top-N retired
+            q4_triggers: triggered by trade close in Exit_Controller (Layer 1 signal + Layer 2 MAE + Layer 3 emergSL exits) + parameter snapshot refresh in CIATS at 50/200/600 trade thresholds; triggers CIATS statistical analysis + Parameter_Store_Snapshot consumption by Signal_Pipeline + Execution_Engine + Exit_Controller
+            q5_logs: trade close outcomes + parameter snapshot reads + CIATS parameter proposals logged by Logger to tothbot.log; parameter proposals requiring Bill ratification escalated to HIGH alert via Mail_Alerts
             schema_version: 1.0
           </desc>
         <line x1="695" y1="490" x2="720" y2="490" stroke="#1e40af" stroke-width="2" marker-end="url(#arrow_b)"/>
@@ -613,6 +652,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:TB00000_v2_20_§9.7_alert_routing, ar:OI-019
             consumes: evt:LOGGER_CRITICAL, evt:LOGGER_HIGH, evt:LOGGER_MEDIUM
             produces: mail:alert_send
+            q1_do: out-of-band alert-delivery flow from Logger to Mail boundary - consumes evt:LOGGER_CRITICAL + evt:LOGGER_HIGH + evt:LOGGER_MEDIUM emitted by Logger inside TothBot_Zone; produces mail:alert_send SMTP push to Mail_Alerts boundary; ar:OI-019 plural-endpoint correction
+            q4_triggers: triggered by Logger emitting CRITICAL or HIGH or MEDIUM-level event; triggers mail:alert_send SMTP push to Mail_Alerts (alerts@tothbot.com) consumed downstream by Bill_Operator inbox
+            q5_logs: alert-send dispatch events logged by Logger inside the calling event record at the alert source-event level - every alert dispatched leaves a record in tothbot.log with alert-id + level + recipient
             schema_version: 1.0
           </desc>
         <line x1="1030" y1="510" x2="1060" y2="510" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
@@ -628,6 +670,9 @@ Tier 2 diagrams (D1 - D7) below.
             constraints: rule:TB00000_v2_20_§1_sole_operator, rule:HR-TP001..HR-TP007_pathway_separation
             consumes: ssh:operational_command, git:push
             produces: vps:command_response, github:commit_event
+            q1_do: operational-channel bundle for Bill_Operator - SSH commands to VPS (deploy + monitor + maintenance) + git:push to TothBot_V2-Docs and TothBot_V2-Code and TothBot_V2-SessionLogs (governance + code + session-log commits) + inbound alert delivery via Mail boundary; rule:HR-TP001..HR-TP007 pathway-separation governs
+            q4_triggers: triggered by Bill_Operator action (interactive SSH session + git push from local working tree + alert-read in inbox); triggers vps:command_response + github:commit_event + (consequential) github_actions:trigger on Pathway 1 commits
+            q5_logs: SSH session logs on VPS auth.log + git commit history on all three GitHub repos + (no log on inbox read - pull-based; Bill alert read leaves no trace inside TothBot system)
             schema_version: 1.0
           </desc>
         <line x1="1180" y1="290" x2="1180" y2="310" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
@@ -685,9 +730,44 @@ Tier 2 diagrams (D1 - D7) below.
     </svg>
   </div>
   <figcaption>
-    Tier 1 System Context — parent of Diagrams 1-7. Drill into any inner container
-    or external actor to navigate to its detailed Tier 2 view. R0 — initial
-    authoring under HTML canonical format per 0311001 v1_6 §15.13 (TB00154 Stage A).
+    Tier 1 System Context — parent of Diagrams D1-D9 (10 diagrams total counting this Tier 1 root). R-increment R0 -&gt; R1 (TB00352 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16). First per-diagram design-completeness amendment under the DD-014 + V-040 governance frame enacted at TB00349 close.
+
+    <strong>§15.16.3 DESIGN-COMPLETENESS ATTESTATION.</strong>
+
+    <strong>(a) Diagram identifier and revision:</strong> Tier 1 Context Diagram (0500000_Context_T1_R1_System_Context) 0500000 dv1_84.
+
+    <strong>(b) Per-component Q1-Q5 PASS enumeration:</strong> 15 components × 5 questions = 75 cells. All 75 cells PASS.
+
+    Component-by-component PASS table:
+    [1] container:TothBot_V2_Organism — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [2] container:Kraken_Zone — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [3] container:TothBot_Zone — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [4] container:CIATS_Zone — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [5] actor:Bill_Operator — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [6] container:VPS (actor_hetzner_vps) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [7] actor:Mail_Alerts — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [8] actor:GitHub_Repositories — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [9] container:Kraken_Exchange — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [10] contract:OHLC_5m_System_Clock (flow1_pub_ws) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [11] contract:WSManager_Dispatch_Seam (flow2_priv_ws) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [12] contract:Reconciliation_REST (flow3_rest) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [13] contract:CIATS_Trade_Outcome_Bus (flow4_tothbot_ciats) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [14] arrow:Logger_Alert_Out_Of_Band (flow5_alerts) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [15] arrow:Bill_Operational_Channels (flow6_bill_ops) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+
+    Q1 PASS sourced from per-component q1_do field added this amendment. Q2 PASS sourced from existing per-component constraints + consumes + produces + drill_targets fields. Q3 PASS sourced from existing per-component constraints field (rules / ARs / decisions). Q4 PASS sourced from per-component q4_triggers field added this amendment. Q5 PASS sourced from per-component q5_logs field added this amendment.
+
+    <strong>(c) "From the diagram alone" confirmation:</strong> All 75 PASS marks derived using ONLY (i) the SVG visual rendering of the Tier 1 Context diagram (every visible rect / line / path / text / group / label) + (ii) the machine-readable governs &lt;desc&gt; descriptors embedded in the SVG (15 component &lt;desc&gt; blocks with canonical + tier + parent_diagram + drill_targets + constraints + consumes + produces + q1_do + q4_triggers + q5_logs + schema_version fields, plus the root &lt;desc&gt; with diagram_canonical + tier + parent_dcn + schema_version + R-increment + governs + drill_targets fields) + (iii) this figcaption. NO source from prose §1-§12 of 0500000, NO source from subordinate specs (0XXXXXXX docs), NO source from TB00000 prose outside §3.2 Q1-Q5 itself, NO source from outside documents (MDR / DR / session logs / NSI / README / code).
+
+    <strong>(d) FAIL disposition:</strong> None. All 75 cells PASS. Amendment ACCEPTED at namespace validation per §15.16.4 V-040 step (5).
+
+    <strong>OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit:</strong> 6 outbound flows from Tier 1 components mapped to destination Tier 2 diagrams. [Flow 1 contract:OHLC_5m_System_Clock] drill_target = D1 Kraken_API_Connection_Architecture (encoded in D1 root governs ar:AR-001 + AR-002 + channel:kraken_ws_ohlc_5m — VERIFIED). [Flow 2 contract:WSManager_Dispatch_Seam] drill_targets = D1 + D7 Paper_Mode_Dispatch_Boundary (D1 root governs ar:AR-001..AR-007 + PA-004(1) — VERIFIED; D7 root governs PA-004(2) dispatch boundary — VERIFIED). [Flow 3 contract:Reconciliation_REST] drill_target = D1 Kraken_API_Connection_Architecture (D1 root governs ar:AR-007 + AR-009 REST snapshot + executions-seq gap — VERIFIED). [Flow 4 contract:CIATS_Trade_Outcome_Bus] drill_target = D5 CIATS_Architecture (D5 root governs ar:AR-008 + decision:D-08 + Parameter_Store_Snapshot — VERIFIED via 0500000 dv1_83 D5 figure governs-list at line 2799). [Flow 5 arrow:Logger_Alert_Out_Of_Band] no drill_target (Tier 1 actor-to-actor terminal flow — by E2-A actors do not drill — N/A). [Flow 6 arrow:Bill_Operational_Channels] no drill_target (Tier 1 actor-to-actor terminal flow — by E2-A actors do not drill — N/A). All 4 drillable flows have matching interface encoded at destination Tier 2 diagram. No pending cascade entries required.
+
+    <strong>OPTION R EXTENSION (ii) — namespace registry batching check:</strong> Tier 1 Context dv1_84 amendment ADD-only scope introduces NO new container: / actor: / channel: / contract: / arrow: / ar: / rule: / decision: / param: / mod: / indicator: / evt: identifier tokens. All canonical identifiers cited in the amended &lt;desc&gt; blocks are pre-existing in 0500000 dv1_83 and pre-registered in 0311001 v1_24 §15.12 token registries. No 0311001 v1_24 -&gt; v1_25 amendment required for token registration this session.
+
+    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence:</strong> Captured in TB00353 NSI §2 carry-forward. TB00353 candidate target = D1 Kraken_API_Connection_Architecture (Kraken-touching infrastructure; second per-diagram design-completeness amendment under DD-014 + V-040 cadence; pattern-established by this Tier 1 amendment).
+
+    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption preserved verbatim in §14 dv1_83 revision history entry (the historical R0 "initial authoring under HTML canonical format" caption).
   </figcaption>
 </figure>
 
@@ -7809,6 +7889,179 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_84  05-19-2026  TB00352 AMENDMENT — TIER 1 CONTEXT DIAGRAM
+                      R0 -&gt; R1 V-040 DESIGN-COMPLETENESS EXTENSION
+                      (FIRST PER-DIAGRAM DESIGN-COMPLETENESS
+                      AMENDMENT UNDER TB00000 v2_57 §4.5 DD-014 +
+                      0311001 v1_24 §15.16 GOVERNANCE FRAME).
+
+                      Single diagram-amendment scope: Tier 1 Context
+                      Diagram (0500000_Context_T1 root tier 1) root
+                      &lt;desc&gt; R-increment R0 -&gt; R1 + 15 component
+                      &lt;desc&gt; blocks extended with q1_do + q4_triggers
+                      + q5_logs fields per TB00000 §3.2 Q1-Q5 design-
+                      completeness criterion bound to diagrams by §4.5
+                      DD-014 + 0311001 v1_24 §15.16 V-040 validation
+                      rule + §15.16.3 attestation contract.
+
+                      Components amended (15 total, all design-complete
+                      PASS post-amendment):
+                      4 organism containers — TothBot_V2_Organism,
+                      Kraken_Zone, TothBot_Zone, CIATS_Zone.
+                      5 actors/external containers — Bill_Operator,
+                      VPS (Hetzner), Mail_Alerts, GitHub_Repositories,
+                      Kraken_Exchange.
+                      6 flow contracts/arrows — OHLC_5m_System_Clock
+                      (Flow 1 pub WS), WSManager_Dispatch_Seam (Flow 2
+                      priv WS), Reconciliation_REST (Flow 3 REST),
+                      CIATS_Trade_Outcome_Bus (Flow 4 TothBot/CIATS),
+                      Logger_Alert_Out_Of_Band (Flow 5 alerts),
+                      Bill_Operational_Channels (Flow 6 ops).
+
+                      V-040 attestation per §15.16.3 contract:
+                      (a) diagram identifier + revision cited;
+                      (b) per-component Q1-Q5 PASS enumeration =
+                          15 × 5 = 75 cells all PASS;
+                      (c) "from the diagram alone" confirmation —
+                          SVG visual + governs &lt;desc&gt; + figcaption
+                          only;
+                      (d) FAIL disposition = none. Amendment ACCEPTED
+                          at namespace validation per §15.16.4 V-040
+                          step (5).
+
+                      Option R extensions (TB00351 chat-turn 2 +
+                      TB00352 chat-turn 1 FP/DP OUTCOME 1):
+                      (i) cross-diagram interface (Q2) audit — 4 of 6
+                          flows have drill_target Tier 2 diagrams; all
+                          4 destination interfaces VERIFIED encoded at
+                          destination (Flow 1 -&gt; D1; Flow 2 -&gt; D1+D7;
+                          Flow 3 -&gt; D1; Flow 4 -&gt; D5); 2 flows are
+                          actor-to-actor terminal with no drill_target
+                          per E2-A actors-do-not-drill rule.
+                      (ii) namespace registry batching check — zero
+                           new identifier tokens introduced; no
+                           0311001 v1_24 -&gt; v1_25 amendment required.
+                      (iii) subsequent-session dependency-ordered
+                            sequence — D1 candidate first per
+                            TB00353 NSI §2.
+
+                      SVG visual geometry preserved BYTE-IDENTICAL —
+                      &lt;desc&gt; + figcaption scope only; no rect/path/
+                      polygon/line/text-position byte change; no
+                      viewBox change (1500x1200 preserved). All 9
+                      other figures (D1 + D2 + D3 + D4 + D5 + D6 + D7
+                      + D8 + D9) preserved byte-identical per DEC-003
+                      Path A one-diagram-per-session cadence.
+
+                      FP/DP-DERIVABILITY-TEST LOGGED TB00352
+                      CHAT-TURN 1 PER DD-011 v2_57 CHAT-TURN-1 GATE.
+                      Option-set expanded beyond TB00352 NSI A/B/C/R
+                      candidates per CHAT-TURN-1 GATE (1): A = D2
+                      Trading Pipeline first; B = Tier 1 Context base;
+                      C = D3-D9/Tier3 first; L = audit-all-first;
+                      M = registry-batching-first;
+                      N = interface-inventory-document-first;
+                      R = Tier 1 + cross-diagram audit + registry
+                      batching + dependency-ordered subsequent
+                      sequence; S = defer; T = surface-for-re-
+                      ratification. Discriminating criterion (Bill
+                      TB00351 chat-turn 2 verbatim + Bill TB00352
+                      chat-turn 1 mission preamble) = least errors
+                      and rework toward making 0500000 diagrams
+                      canonical, authoritative, complete for coding
+                      TothBot V2. Eliminations: A REJECTED (least-
+                      rework fail — D2 highest density, pattern-
+                      establishment on most complex case = highest
+                      rework risk); C REJECTED (all Tier 2 D2-D9 have
+                      parent_diagram = Tier 1, forward-drift class
+                      same as A); L REJECTED (audit-first pattern
+                      Bill-corrected to P3 audit-AND-amend); M
+                      REJECTED (consequential per DD-002 prose-
+                      follows-diagram); N REJECTED (violates DD-001
+                      diagrams-are-design-source); B base REJECTED
+                      (missing F1+F4 extension closures); S REJECTED
+                      (Bill mission preamble = active direction); T
+                      REJECTED (no ratification ambiguity). R
+                      SURVIVES — single compliant option. OUTCOME 1
+                      DERIVABLE — Option R. Executed under
+                      RR-SCOPE-005 derivable-decision execution
+                      authority + DD-011 v2_57 OUTCOME 1 EXECUTION
+                      MANDATORY clause.
+
+                      RR-SCOPE-001 absolute-scope compliance:
+                      AMENDMENT ADD-only scope per TB00352 NSI
+                      mission specification — q1_do/q4_triggers/q5_logs
+                      field additions to existing &lt;desc&gt; blocks +
+                      figcaption replacement (R0 caption -&gt; V-040
+                      attestation block) + root &lt;desc&gt; R-increment
+                      update. NO removal of existing identifiers from
+                      governs lists. NO removal of existing
+                      consumes/produces/constraints lists. NO SVG
+                      geometry change. NO viewBox change.
+
+                      RR-SCOPE-007 self-authored-NSI-source-
+                      prohibition compliance: scope sourced from Bill
+                      TB00349 chat-turn 5 verbatim mission statement
+                      ("Produce 0500000 diagrams that show all
+                      interfaces, gates, and information flows ... The
+                      diagrams ARE the design source.") + Bill TB00351
+                      chat-turn 2 verbatim OUTCOME 1 Option R
+                      ratification + Bill TB00352 chat-turn 1 verbatim
+                      mission preamble — all Bill-direction sources.
+                      TB00352 NSI §1.2 captured FP/DP analysis treated
+                      as informational input per DD-011 v2_57
+                      CHAT-TURN-1 GATE (3) (NSI-authored classification
+                      not authoritative); independent re-run executed
+                      at TB00352 chat-turn 1 yielding same OUTCOME 1.
+
+                      RR-SCOPE-009 four-question origin investigation
+                      N/A — no existing constraint, parameter cap, or
+                      validation gate is REMOVED or RELAXED by this
+                      amendment. All amendments are ADD-only
+                      &lt;desc&gt; field extensions + figcaption
+                      replacement.
+
+                      RR-SCOPE-010 verbatim-MDR-citation discipline
+                      N/A — no MDR / DR / spec field cited as
+                      authoritative disposition in this amendment.
+
+                      DR-005.1H canonical HTML filename pattern
+                      compliance: 0500000_System_Architecture_
+                      Overview_dv1_84_Claude_Source.html — matches
+                      [DCN]_[DocTitle]_[DocVersion]_Claude_Source.html
+                      canonical pattern per TB00000 v2_55 DR-005.1H
+                      pre-emit-scan enforcement gate.
+
+                      DD-013 v2_48 REPO-ROUTING pre-emit scan
+                      compliance: 0500000 dv1_84 routes to
+                      TothBot_V2-Docs/05XXXXX_System_Architecture/
+                      per §11 STORAGE rule (ii) DCN-numbered files.
+
+                      Prior R-increment narrative preserved verbatim
+                      in this revision history entry per CI-005 +
+                      CI-006 visible-stack 3-deep rolling policy:
+                      R0 (initial authoring under HTML canonical
+                      format per 0311001 v1_6 §15.13 — TB00154
+                      Stage A). No R-increment-prior in root &lt;desc&gt;
+                      required — Tier 1 Context only has two
+                      revisions (R0 initial + R1 this amendment).
+
+                      Closes TB00352 NSI §1.1 primary mission
+                      specification + §1.2 FP/DP-derivability-test
+                      OUTCOME 1 Option R + §1.3 mission execution
+                      contract steps (1)-(8). Cumulative DD-014
+                      violation count at TB00352 close = 0 (DD-014
+                      enacted at TB00349 close; campaign begins this
+                      session with first design-complete diagram).
+                      9 remaining diagrams (D1-D9 Tier 2 + 0 Tier 3
+                      sub-figures — Tier 3 candidates interspersed
+                      where parent Tier 2 amendment lands) pending
+                      under DEC-003 Path A one-diagram-per-session
+                      cadence. Campaign duration projection: 9
+                      additional sessions minimum (TB00353 candidate
+                      D1 + TB00354+ candidates per dependency
+                      sequence).
+
   dv1_83  05-18-2026  TB00340 AMENDMENT — D1 R5 → R6 SINGLE-TOKEN
                       ar:AR-080 CLOUDFLARE RECONNECT RATE LIMIT
                       GOVERNS-LIST EXTENSION.
