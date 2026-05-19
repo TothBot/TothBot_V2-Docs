@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_83</title>
+<title>0500000 System Architecture Overview dv1_86</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_85</td></tr>
+  <tr><td>DocVersion</td><td>dv1_86</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_85_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_86_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-19-2026</td></tr>
-  <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
+  <tr><td>DocTime</td><td>22:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -2154,13 +2154,16 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1700"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image2_T2_R5_Trading_Pipeline</title>
+  <title>0500000_Image2_T2_R6_Trading_Pipeline</title>
   <desc>
-    diagram_canonical: 0500000_Image2_T2_R5_Trading_Pipeline
+    diagram_canonical: 0500000_Image2_T2_R6_Trading_Pipeline
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
+    R-increment: R5 -> R6 (TB00354 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 &sect;4.5 DD-014 + 0311001 v1_24 &sect;15.16. THIRD per-diagram design-completeness amendment under the DD-014 + V-040 governance frame enacted at TB00349 close (FIRST = Tier 1 Context R0 -&gt; R1 at TB00352; SECOND = D1 Kraken_API_Connection_Architecture R6 -&gt; R7 at TB00353). Per-component q1_do / q4_triggers / q5_logs fields added to all 16 component &lt;desc&gt; blocks (3 pipeline-state contracts: OHLC_5m_System_Clock + Parameter_Store_Snapshot + Pre_Computation_Cache_Read; 8 gates: Pre_Gate_1_Per_Pair_Status + G1_State_Machine + G2_Liquidity + G3_Regime_Filter + G4_HTF_Confirmation + G5_Selection_Controller + G6_Regime_Sizer + G7_Risk_Guard + G8_Position_Sizer; 1 signal-engine module: Signal_Pipeline; 2 trading-modules + dispatch entities: Long_Module + WSManager_Dispatch_Seam + Execution_Engine). Figcaption replaced with V-040 attestation block per &sect;15.16.3. SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption / visible-header-text-R-state-bump scope only; no rect/path/polygon/line/text-position byte change; no viewBox change (1500x1700 preserved). Visible header text R3 -&gt; R6 + subtitle R3 -&gt; R6 + SVG &lt;title&gt; R5 -&gt; R6 (three stale-text fixes consequential to design-completeness amendment, closing the R3-stale-text drift latent since R3 amendment). All 9 other figures (Tier 1 Context dv1_85 R1 + D1 dv1_85 R7 + D3 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. FP/DP-derivability-test logged TB00354 chat-turn 1 per DD-011 v2_57 CHAT-TURN-1 GATE — OUTCOME 1 Option A (D2 Trading_Pipeline per TB00352 dependency-ordered sequence step 3 + TB00353 Option R extension iii ratified at TB00351 chat-turn 2). Option-set extended beyond TB00354 NSI A/B/C/D/E/L/M/N/S/T candidates per CHAT-TURN-1 GATE (1): F = D6 Strategy / Complete_System; G = D8 or D9 Tier-3 sub-figures; H = Tier 3 design-completeness on existing T3; I = defer non-diagram governance/MDR/DR cleanup-only; J = initiate Phase 2 code rebuild. Discriminating criterion = least errors and rework toward making 0500000 diagrams canonical, authoritative, and complete for coding TothBot V2 (Bill mission permanent). Eliminations: B/C/E/F/G/H REJECTED on dependency-order forward-drift (each consumes D2 gate-level state contracts or D2 outcome events); D (D7) REJECTED on dispatch-boundary semantics depending on D2 G8 -&gt; Execution_Engine contract; I REJECTED conflicts with Bill mission permanent + active dependency sequence; J REJECTED DD-014 v2_57 PRE-EMIT SCAN blocks code authoring against non-design-complete diagrams (only 2 of 10 currently design-complete: Tier 1 + D1); L REJECTED P3 audit-AND-amend Bill-corrected at TB00350; M REJECTED registry batching per-amendment consequential per Option R extension ii; N REJECTED violates DD-001 diagrams-are-design-source; S REJECTED Bill mission permanent active; T REJECTED no ratification ambiguity. OUTCOME 1 DERIVABLE — Option A. Executed under RR-SCOPE-005 derivable-decision execution authority + DD-011 v2_57 OUTCOME 1 EXECUTION MANDATORY clause. NOT surfaced to Bill as ratification question. RR-SCOPE-001 absolute-scope compliance: ADD-only scope (q1_do/q4_triggers/q5_logs field additions to existing 16 component &lt;desc&gt; blocks + figcaption replacement + root &lt;desc&gt; R-increment update + 3 visible-header-text-R-state-bumps; no removal of existing identifiers, consumes/produces/constraints/drill_targets lists; no geometry change; no viewBox change). RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00352 SL §3 + TB00353 SL §3.5 (Bill-ratified prior session logs) + TB00354 NSI §1 (informational per RR-SCOPE-007 v2_30) + TB00000 v2_57 §4.5 DD-014 (Bill-ratified TB00349 chat-turn 5) + 0311001 v1_24 §15.16 V-040 (Bill-ratified TB00350). RR-SCOPE-009 origin investigation for component additions: ADD-only field additions to existing tokens — all 16 components were already encoded in D2 prior to this amendment; no new tokens, no removals. RR-SCOPE-010 verbatim-MDR-citation discipline: per-component q1/q4/q5 content derived from each component's existing constraints + consumes + produces + drill_targets fields (already grep-verifiable against 0500000 §4 AR registry + namespace registries) + visible D2 SVG content (gate labels + flow arrows + skip-rejection paths + footer attestation) + TB00000 v2_57 §9 parallel-module framework + ar:AR-067 SSS signal engine definition + ar:AR-053/054 pipeline-coordination contract + ar:AR-072/073 Selection Controller interface + ar:AR-074 regime-aware sizing. DR-007 HTML scope validation at session close. DESIGN-COMPLETENESS ATTESTATION: 16 components &times; 5 questions = 80 cells. All 80 cells PASS per &sect;15.16.3 attestation in figcaption.)
+    R-increment-prior: R4 -&gt; R5 (TB00245 AMENDMENT-9 — two-token AR-053 + AR-054 PIPELINE-COORDINATION GOVERNS-LIST EXTENSION per TB00196 §5.1 + §6.5 + §7.1 cluster C5 8-element governs-list gap closure path (residual 2-of-5 closure after TB00244 AMENDMENT-8 D1 R5 close of 3 tokens; AR-043 → D5 deferred to AMENDMENT-10, HR-EE-014 + HR-EE-015 → D7 deferred to AMENDMENT-11) + TB00245 NSI §3 AMENDMENT-9 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D2 is the canonical encoding site for the 8-gate TothBot Trading Pipeline. The two R5-added ARs are both pipeline-coordination mechanisms naturally bound to the pipeline-state-management band depicted in D2: AR-053 (Pending Order Registry) tracks per-module USD/collateral capital commitments for dispatched-but-unfilled orders consumed by Gate 7 USD check (D2 governs:gate already includes gate:G7_Risk_Guard); AR-054 (Entry partial-fill protection) is the direction-symmetric emergency-exit handler for exec_type=expired/canceled with cum_qty&gt;0 (a partially-filled position with NO TP and NO emergSL protection — must be reduced to zero immediately for both Long_Module market SELL and Short_Module market BUY reduce_only=true paths) sitting in the Phase 1/2 outcome handler band post-Gate-8. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00245 NSI §3.4 default determination ("SVG change: NO; governs-list extension only"). Two token additions: ar:AR-053, ar:AR-054. No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1700 preserved). All 9 other figures (Tier 1 Context + D1 + D3 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-011 FP/DP-derivability-test gate at TB00245 chat-turn 1 with explicit four-item log: option-set on the verification-confirmation sub-decision per TB00245 NSI §3.2 — {A. D2 root governs (per TB00196 §6.5 per-AR target-diagram identification); B. D1 root governs (treated as capital-commitment infrastructure)}; first-principles analysis — TB00196 §6.5 explicitly identifies AR-053 → D2 root governs ("Pending Order Registry sits in pipeline-state-management band") and AR-054 → D2 root governs ("partial-fill protection sits in Phase 1/2 outcome handler band"), AR-053 Gate 7 USD check at 0500000 §4 line 5134-5138 directly consumes D2's gate:G7_Risk_Guard semantics, AR-054 direction-symmetric emergency-exit handler per dv1_43 amendment applies to both mod:Long_Module + mod:Short_Module both of which are in D2 governs (R4 already encoded mod:Short_Module per TB00243 AMENDMENT-7), D1 is Kraken-API wire-contract scope (currently governs WS_Manager wire contracts + REST order-dispatch mechanisms AR-006/AR-007/AR-008/AR-018/AR-028/AR-055) and AR-053+AR-054 are pipeline-coordination not Kraken-wire-contract scope; data sources consulted — TB00196 §5.1 + §6.5 + §7.1 cluster C5 per-AR target-diagram identification (Bill-ratified S1EE Gap Register), TB00244 SL §5.1 residual closure path, TB00245 NSI §3 + §3.2 (this session NSI directive), TB00000 v2_38 §4.5 DD-001/DD-002 + §9.3/§9.6/§9.10 parallel-module framework + sacred-floor R:R, 0500000 §4 AR-053 line 5122 + AR-054 line 5169 canonical entries, 0511003 dv1_1 Execution_Engine_Specification AR canonical source for AR-053/AR-054; elimination outcomes — B (D1 target) eliminated because (a) TB00196 §6.5 explicitly maps both ARs to D2, (b) AR-053 Gate 7 USD check semantics depend on D2's 8-gate pipeline-state-management band not the D1 Kraken-wire layer, (c) AR-054 partial-fill emergency-exit handler is direction-symmetric per dv1_43 and D2 hosts both mod:Long_Module + mod:Short_Module per AMENDMENT-7 R3-&gt;R4, (d) D1 governs Kraken-API wire-contract mechanisms only (AR-006/AR-007/AR-008/AR-018/AR-028/AR-055) which are distinct from pipeline-coordination; remaining option — A (D2 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-9 ADD-only scope per TB00245 NSI §3 explicit specification — two ar: token additions to D2 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00196 §5.1 + §6.5 + §7.1 cluster C5 (Bill-ratified S1EE Gap Register controlled document) + TB00244 SL §5.1 (Bill-ratified prior session log) + TB00245 NSI §3 (this session NSI directive) + TB00000 v2_38 (Bill-ratified Project Instructions §4.5 DD-001/DD-002 + §9.3 parallel-module framework). RR-SCOPE-009 four-question origin investigation for AR-053+AR-054 (both load-bearing constraints): AR-053 (1) introduced — 0500000 dv1_13; amended dv1_43 M-2 short-direction per-module routing (long_pending_orders + short_pending_orders); (2) problem solved — tracks USD/collateral capital commitments for dispatched-but-unfilled orders so Gate 7 USD check can subtract pending commitments from wallet balance and prevent over-commitment of capital; (3) evidence still load-bearing — Gate 7 USD check at 0500000 §4 lines 5134-5138 actively reads long_pending_orders; per-module per v2_38 §9.3 parallel-module framework with direction-symmetric encoding (long_pending_orders vs short_pending_orders); (4) loss-prevention property — prevents over-commitment of wallet capital across multiple in-flight orders that would otherwise cause Kraken-side rejection desynchronizing Signal_Pipeline state or allow new orders exceeding actual available capital. AR-054 (1) introduced — 0500000 dv1_13; amended dv1_43 direction-symmetric; (2) problem solved — when a GTD post_only entry order partially fills and then expires/cancels (exec_type=expired OR exec_type=canceled with cum_qty &gt; 0), a REAL position exists at cum_qty units at avg_price with NO TP and NO emergSL protection — direction-symmetric emergency-exit handler dispatches market SELL (Long_Module) or market BUY reduce_only=true (Short_Module) immediately to reduce the unprotected stub to zero; (3) evidence still load-bearing — AR-054 actively handles exec_type=expired/canceled with cum_qty&gt;0 case per 0500000 §4 lines 5169-5195 direction-symmetric emergency-exit + AR-053 per-module Pending Order Registry clearance per AR-053 routing; (4) loss-prevention property — ABSOLUTE preserves wallet capital from unprotected partial-fill stub positions during flash crash / network severance (a partial fill with no TP/emergSL protection during a flash crash could drain a module wallet). Both load-bearing; both MUST be preserved as canonical D2 governs entries. RR-SCOPE-010 verbatim-MDR-citation discipline: AR-053 semantics grep-verified verbatim against 0500000 §4 line 5122 ("AR-053 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Per-module Pending Order Registry — capital commitment tracking."); AR-054 semantics grep-verified verbatim against 0500000 §4 line 5169 ("AR-054 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Entry order partial fill + expiry/cancel — direction-symmetric protection."). DR-007 HTML scope validation at session close.)
+    R-increment-prior-2: R3 -&gt; R4 (TB00243 AMENDMENT-7 — mod:Short_Module PARALLEL-MODULE GOVERNS-LIST EXTENSION per TB00196 §7.3 candidate finding D2 parallel-module governs-list gap closure path + TB00243 NSI §3 AMENDMENT-7 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle + §9.3 PARALLEL-MODULE FRAMEWORK. D2 is the canonical encoding site for the 8-gate TothBot Trading Pipeline. mod:Short_Module is a sibling parallel module to mod:Long_Module per TB00000 v2_38 §9.3 codification and DEC-011 Stage M ratification chain; both modules feed candidate trades through the same 8-gate pipeline depicted in D2 with direction-specific gate thresholds, signal parameters, and per-module wallet sizing. Single token addition: mod:Short_Module. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope. DD-011 FP/DP-derivability-test gate at TB00243 chat-turn 1: option-set {A. Add mod:Short_Module to D2 root governs, B. No D2 amendment — D2 = Long-only}; Option B eliminated because AR-067 in D2 governs is direction-symmetric per dv1_43, D2 pipeline gates are direction-symmetric per v2_38 §9.3/§9.6, Gate 5 consumes SC-SSS records with direction-specific "side" field, D7 already codified mod:Short_Module as parallel sibling; remaining option Option A executed under RR-SCOPE-005. RR-SCOPE-009 four-question origin investigation for mod:Short_Module: introduced 0311001 v1_12 §15.12.1 per v2_29 parallel-module framework codification TB00179..TB00180; problem solved is canonical parallel sibling token enabling direction-symmetric encoding; still load-bearing per v2_38 §9.3/§9.6/§9.7/§9.17 active per-module instantiation + 0811005 dv1_0 + DEC-011 Stage M; loss-prevention property is module isolation preventing cross-module contamination of statistical pools and capital.)
     R-increment: R4 -&gt; R5 (TB00245 AMENDMENT-9 — two-token AR-053 + AR-054 PIPELINE-COORDINATION GOVERNS-LIST EXTENSION per TB00196 §5.1 + §6.5 + §7.1 cluster C5 8-element governs-list gap closure path (residual 2-of-5 closure after TB00244 AMENDMENT-8 D1 R5 close of 3 tokens; AR-043 → D5 deferred to AMENDMENT-10, HR-EE-014 + HR-EE-015 → D7 deferred to AMENDMENT-11) + TB00245 NSI §3 AMENDMENT-9 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D2 is the canonical encoding site for the 8-gate TothBot Trading Pipeline. The two R5-added ARs are both pipeline-coordination mechanisms naturally bound to the pipeline-state-management band depicted in D2: AR-053 (Pending Order Registry) tracks per-module USD/collateral capital commitments for dispatched-but-unfilled orders consumed by Gate 7 USD check (D2 governs:gate already includes gate:G7_Risk_Guard); AR-054 (Entry partial-fill protection) is the direction-symmetric emergency-exit handler for exec_type=expired/canceled with cum_qty&gt;0 (a partially-filled position with NO TP and NO emergSL protection — must be reduced to zero immediately for both Long_Module market SELL and Short_Module market BUY reduce_only=true paths) sitting in the Phase 1/2 outcome handler band post-Gate-8. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00245 NSI §3.4 default determination ("SVG change: NO; governs-list extension only"). Two token additions: ar:AR-053, ar:AR-054. No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1700 preserved). All 9 other figures (Tier 1 Context + D1 + D3 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-011 FP/DP-derivability-test gate at TB00245 chat-turn 1 with explicit four-item log: option-set on the verification-confirmation sub-decision per TB00245 NSI §3.2 — {A. D2 root governs (per TB00196 §6.5 per-AR target-diagram identification); B. D1 root governs (treated as capital-commitment infrastructure)}; first-principles analysis — TB00196 §6.5 explicitly identifies AR-053 → D2 root governs ("Pending Order Registry sits in pipeline-state-management band") and AR-054 → D2 root governs ("partial-fill protection sits in Phase 1/2 outcome handler band"), AR-053 Gate 7 USD check at 0500000 §4 line 5134-5138 directly consumes D2's gate:G7_Risk_Guard semantics, AR-054 direction-symmetric emergency-exit handler per dv1_43 amendment applies to both mod:Long_Module + mod:Short_Module both of which are in D2 governs (R4 already encoded mod:Short_Module per TB00243 AMENDMENT-7), D1 is Kraken-API wire-contract scope (currently governs WS_Manager wire contracts + REST order-dispatch mechanisms AR-006/AR-007/AR-008/AR-018/AR-028/AR-055) and AR-053+AR-054 are pipeline-coordination not Kraken-wire-contract scope; data sources consulted — TB00196 §5.1 + §6.5 + §7.1 cluster C5 per-AR target-diagram identification (Bill-ratified S1EE Gap Register), TB00244 SL §5.1 residual closure path, TB00245 NSI §3 + §3.2 (this session NSI directive), TB00000 v2_38 §4.5 DD-001/DD-002 + §9.3/§9.6/§9.10 parallel-module framework + sacred-floor R:R, 0500000 §4 AR-053 line 5122 + AR-054 line 5169 canonical entries, 0511003 dv1_1 Execution_Engine_Specification AR canonical source for AR-053/AR-054; elimination outcomes — B (D1 target) eliminated because (a) TB00196 §6.5 explicitly maps both ARs to D2, (b) AR-053 Gate 7 USD check semantics depend on D2's 8-gate pipeline-state-management band not the D1 Kraken-wire layer, (c) AR-054 partial-fill emergency-exit handler is direction-symmetric per dv1_43 and D2 hosts both mod:Long_Module + mod:Short_Module per AMENDMENT-7 R3-&gt;R4, (d) D1 governs Kraken-API wire-contract mechanisms only (AR-006/AR-007/AR-008/AR-018/AR-028/AR-055) which are distinct from pipeline-coordination; remaining option — A (D2 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-9 ADD-only scope per TB00245 NSI §3 explicit specification — two ar: token additions to D2 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00196 §5.1 + §6.5 + §7.1 cluster C5 (Bill-ratified S1EE Gap Register controlled document) + TB00244 SL §5.1 (Bill-ratified prior session log) + TB00245 NSI §3 (this session NSI directive) + TB00000 v2_38 (Bill-ratified Project Instructions §4.5 DD-001/DD-002 + §9.3 parallel-module framework). RR-SCOPE-009 four-question origin investigation for AR-053+AR-054 (both load-bearing constraints): AR-053 (1) introduced — 0500000 dv1_13; amended dv1_43 M-2 short-direction per-module routing (long_pending_orders + short_pending_orders); (2) problem solved — tracks USD/collateral capital commitments for dispatched-but-unfilled orders so Gate 7 USD check can subtract pending commitments from wallet balance and prevent over-commitment of capital; (3) evidence still load-bearing — Gate 7 USD check at 0500000 §4 lines 5134-5138 actively reads long_pending_orders; per-module per v2_38 §9.3 parallel-module framework with direction-symmetric encoding (long_pending_orders vs short_pending_orders); (4) loss-prevention property — prevents over-commitment of wallet capital across multiple in-flight orders that would otherwise cause Kraken-side rejection desynchronizing Signal_Pipeline state or allow new orders exceeding actual available capital. AR-054 (1) introduced — 0500000 dv1_13; amended dv1_43 direction-symmetric; (2) problem solved — when a GTD post_only entry order partially fills and then expires/cancels (exec_type=expired OR exec_type=canceled with cum_qty &gt; 0), a REAL position exists at cum_qty units at avg_price with NO TP and NO emergSL protection — direction-symmetric emergency-exit handler dispatches market SELL (Long_Module) or market BUY reduce_only=true (Short_Module) immediately to reduce the unprotected stub to zero; (3) evidence still load-bearing — AR-054 actively handles exec_type=expired/canceled with cum_qty&gt;0 case per 0500000 §4 lines 5169-5195 direction-symmetric emergency-exit + AR-053 per-module Pending Order Registry clearance per AR-053 routing; (4) loss-prevention property — ABSOLUTE preserves wallet capital from unprotected partial-fill stub positions during flash crash / network severance (a partial fill with no TP/emergSL protection during a flash crash could drain a module wallet). Both load-bearing; both MUST be preserved as canonical D2 governs entries. RR-SCOPE-010 verbatim-MDR-citation discipline: AR-053 semantics grep-verified verbatim against 0500000 §4 line 5122 ("AR-053 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Per-module Pending Order Registry — capital commitment tracking."); AR-054 semantics grep-verified verbatim against 0500000 §4 line 5169 ("AR-054 (dv1_13; amended dv1_43 — M-2 short-direction) ★: Entry order partial fill + expiry/cancel — direction-symmetric protection."). DR-007 HTML scope validation at session close.)
     R-increment-prior: R3 -&gt; R4 (TB00243 AMENDMENT-7 — mod:Short_Module PARALLEL-MODULE GOVERNS-LIST EXTENSION per TB00196 §7.3 candidate finding D2 parallel-module governs-list gap closure path + TB00243 NSI §3 AMENDMENT-7 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle + §9.3 PARALLEL-MODULE FRAMEWORK. D2 is the canonical encoding site for the 8-gate TothBot Trading Pipeline. mod:Short_Module is a sibling parallel module to mod:Long_Module per TB00000 v2_38 §9.3 codification and DEC-011 Stage M ratification chain; both modules feed candidate trades through the same 8-gate pipeline depicted in D2 with direction-specific gate thresholds, signal parameters, and per-module wallet sizing. Single token addition: mod:Short_Module. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope. DD-011 FP/DP-derivability-test gate at TB00243 chat-turn 1: option-set {A. Add mod:Short_Module to D2 root governs, B. No D2 amendment — D2 = Long-only}; Option B eliminated because AR-067 in D2 governs is direction-symmetric per dv1_43, D2 pipeline gates are direction-symmetric per v2_38 §9.3/§9.6, Gate 5 consumes SC-SSS records with direction-specific "side" field, D7 already codified mod:Short_Module as parallel sibling; remaining option Option A executed under RR-SCOPE-005. RR-SCOPE-009 four-question origin investigation for mod:Short_Module: introduced 0311001 v1_12 §15.12.1 per v2_29 parallel-module framework codification TB00179..TB00180; problem solved is canonical parallel sibling token enabling direction-symmetric encoding; still load-bearing per v2_38 §9.3/§9.6/§9.7/§9.17 active per-module instantiation + 0811005 dv1_0 + DEC-011 Stage M; loss-prevention property is module isolation preventing cross-module contamination of statistical pools and capital.)
     R-increment-prior-2: R2 -&gt; R3 (TB00242 AMENDMENT-6 — ar:AR-067 SSS SIGNAL ENGINE GOVERNS-LIST EXTENSION per TB00195 §7.1 separate finding closure path + TB00242 NSI §3 AMENDMENT-6 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D2 is the canonical encoding site for the 8-gate TothBot Trading Pipeline where SSS executes between Gate 4 (HTF Confirmation) and Gate 5 (Selection Controller); SSS PASS gates entry to Gate 5 per AR-067 direction-symmetric three-factor scoring (RSI + EMA-cross + Volume). SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope (governs-list extension only). Single token addition: ar:AR-067. DD-011 FP/DP-derivability-test: D1 eliminated (AR-067 is signal-engine logic not WS_Manager/Kraken-API scope), D4 eliminated (AR-067 is signal-engine-scoring not regime-taxonomy), remaining D2; one compliant option surfaced; executed under RR-SCOPE-005. RR-SCOPE-009 four-question origin investigation for AR-067: introduced 0500000 dv1_15 amended dv1_43 M-2 short-direction + Path 2 long reconciliation; problem solved is SSS Signal Engine 3-factor scoring core signal generation logic direction-symmetric; still load-bearing per SC-SSS-1/2/3 long+short variants + Gate 5 Selection Controller active implementation; loss-prevention property is three-factor confirmation preventing single-factor false signals. R1 -&gt; R2 narrative (G8 -&gt; Execution_Engine dispatch seam REWORK + PA-004 dispatch boundary + LM emergency-IOC path + G2 Liquidity standardization + AR-005/AR-016 ATR-incremental restoration + D-08 Top-N retired + D-03 USD+USDC+USDT verified + AR-070 amended-form verified) preserved in §14 dv1_67 revision-history entry per CI-005 + CI-006 visible-stack 3-deep rolling policy.)
@@ -2199,9 +2202,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
   <g id="title_bar" class="decoration">
     <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
     <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
-          text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline (8 Gates) — R3</text>
+          text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline (8 Gates) — R6</text>
     <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image2_T2_R3_Trading_Pipeline  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  PA-004(2) dispatch boundary visualized
+      0500000_Image2_T2_R6_Trading_Pipeline  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  PA-004(2) dispatch boundary visualized
     </text>
   </g>
 
@@ -2221,6 +2224,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-005
         consumes: channel:kraken_ws_ohlc_5m
         produces: none
+        q1_do: Consumes Kraken WS v2 OHLC 5-minute candle close push events on channel:kraken_ws_ohlc_5m and converts each candle close into the system tick that fires the trading pipeline. No timers, no polling: every pipeline activation is gated on this clock signal.
+        q4_triggers: Triggered by Kraken WS v2 push of OHLC 5m candle-close event per channel:kraken_ws_ohlc_5m. Triggers downstream: contract:Parameter_Store_Snapshot freeze + contract:Pre_Computation_Cache_Read + gate:Pre_Gate_1_Per_Pair_Status per-pair iteration on every clock tick.
+        q5_logs: Logs tick received with candle-close timestamp via mod:Logger to channel:audit_log per AR-005 (event_type=OHLC_CANDLE_CLOSE_RX, fields: pair, candle_open_ts, candle_close_ts, ohlc, volume). One log line per 5m candle per subscribed pair.
         schema_version: 1.0
       </desc>
     <rect x="940" y="100" width="200" height="58" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2239,6 +2245,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-076, rule:HR-SP-001
         consumes: param:per_trade_pct, param:max_concurrent, param:mae_mult, param:emergency_sl_mult, param:adx_threshold, param:atr_percentile_thresh, param:tradeable_pct, param:full_halt_drawdown
         produces: none
+        q1_do: On clock tick from contract:OHLC_5m_System_Clock, freezes a read-only snapshot of all CIATS-owned parameters (per_trade_pct, max_concurrent, mae_mult, emergency_sl_mult, adx_threshold, atr_percentile_thresh, tradeable_pct, full_halt_drawdown, htf_ema_periods, min_volume_usd_daily, per_trade_ceiling_pct, session_pause_drawdown) for this candle's pipeline run. The frozen snapshot is passed to every gate in this tick so all gates see consistent parameter values.
+        q4_triggers: Triggered by contract:OHLC_5m_System_Clock tick. Triggers downstream: contract:Pre_Computation_Cache_Read + all 8 gates consume the frozen snapshot per HR-SP-001.
+        q5_logs: Logs snapshot taken with tick_id + parameter checksum via mod:Logger to channel:audit_log per AR-076 (event_type=PARAM_SNAPSHOT_TAKEN, fields: tick_id, param_count, param_hash). One log line per tick.
         schema_version: 1.0
       </desc>
     <rect x="290" y="180" width="640" height="58" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="6"/>
@@ -2257,6 +2266,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-076, ar:AR-016, rule:HR-SP-002
         consumes: indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, channel:kraken_ws_ohlc_60m
         produces: none
+        q1_do: After contract:Parameter_Store_Snapshot freeze, reads pre-computed indicator values for this tick from the cache populated by mod:Signal_Pipeline incremental indicator updates (ATR_14 incremental O(1) per AR-016; EMA20_daily; EMA50_daily; volume_ma20; ADX_14) and serves them to gates G3/G4/G6/G7/G8 without recomputation. Cache TTL bounded to single tick to prevent stale-read across ticks.
+        q4_triggers: Triggered by contract:Parameter_Store_Snapshot completion. Triggers downstream: indicator-consuming gates G2 (min_volume_usd_daily), G3 (ADX_14 + ATR_14), G4 (EMA20/50_daily), G6 (per_trade_pct), G7 (drawdown indicators), G8 (ATR_14 for MAE/emergSL sizing).
+        q5_logs: Logs cache hit/miss + indicator values per pair via mod:Logger to channel:audit_log per HR-SP-002 (event_type=PRECOMP_CACHE_READ, fields: pair, tick_id, ATR_14, EMA20_daily, EMA50_daily, volume_ma20, ADX_14, cache_status). One log line per pair per tick.
         schema_version: 1.0
       </desc>
     <rect x="290" y="260" width="640" height="58" fill="#fef3c7" stroke="#d4a017" stroke-width="2" rx="6"/>
@@ -2275,6 +2287,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-SP-003, decision:D-03_Universe_Scope
         consumes: channel:kraken_ws_instrument
         produces: none
+        q1_do: Reads per-pair instrument trading status from Kraken WS v2 channel:kraken_ws_instrument (online | post_only | cancel_only | limit_only | reduce_only). PASS if status=online (pair tradeable for new entries); SKIP STATUS_BLOCKED otherwise. Enforces decision:D-03_Universe_Scope (USD + USDC + USDT spot pairs only).
+        q4_triggers: Triggered by contract:Pre_Computation_Cache_Read completion per pair in universe per HR-SP-003. Triggers downstream: gate:G1_State_Machine on PASS; mod:Logger SKIP entry on STATUS_BLOCKED.
+        q5_logs: Logs per-pair status decision via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type=PRE_GATE_1_DECISION, fields: pair, instrument_status, decision={PASS|STATUS_BLOCKED}, tick_id). Skip log entries feed mod:Logger SKIP REJECT REGISTRY for CIATS EWMA Monitor.
         schema_version: 1.0
       </desc>
     <rect x="290" y="340" width="640" height="76" fill="#fef9c3" stroke="#ca8a04" stroke-width="2" rx="6"/>
@@ -2299,6 +2314,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-SP-003
         consumes: channel:kraken_ws_status
         produces: none
+        q1_do: Checks per-pair WS subscription state machine readiness (Idle/Subscribing/Subscribed/Resyncing/Cooldown) for the pair from mod:WS_Manager state via channel:kraken_ws_status. PASS if state=Subscribed (engine ready to receive market events for this pair); WAIT engine-not-ready otherwise per HR-SP-003.
+        q4_triggers: Triggered by gate:Pre_Gate_1_Per_Pair_Status PASS. Triggers downstream: gate:G2_Liquidity on PASS; mod:Logger WAIT entry on engine-not-ready (no SKIP — pair re-evaluated next tick).
+        q5_logs: Logs per-pair state machine check via mod:Logger to channel:audit_log (event_type=G1_STATE_DECISION, fields: pair, ws_state, decision={PASS|WAIT}, tick_id). Non-PASS does not feed SKIP REJECT REGISTRY (no rejection — defer).
         schema_version: 1.0
       </desc>
     <rect x="290" y="438" width="640" height="56" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2321,6 +2339,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: decision:D-04_Liquidity_Floor, rule:HR-SP-004
         consumes: param:min_volume_usd_daily
         produces: none
+        q1_do: Compares 24h USD-denominated trading volume (vol_24h * mid_price for the pair) to param:min_volume_usd_daily floor (decision:D-04_Liquidity_Floor = $500k USD/day starting). PASS if vol_24h_usd >= floor; SKIP LIQUIDITY_REJECTED otherwise per HR-SP-004.
+        q4_triggers: Triggered by gate:G1_State_Machine PASS. Triggers downstream: gate:G3_Regime_Filter on PASS; mod:Logger SKIP entry on LIQUIDITY_REJECTED.
+        q5_logs: Logs liquidity decision per pair via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type=G2_LIQUIDITY_DECISION, fields: pair, vol_24h_usd, floor_usd, decision={PASS|LIQUIDITY_REJECTED}, tick_id). Skip entries feed SKIP REJECT REGISTRY.
         schema_version: 1.0
       </desc>
     <rect x="290" y="514" width="640" height="76" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2345,6 +2366,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-SP-005, ar:AR-074, ar:AR-016
         consumes: indicator:ADX_14, indicator:ATR_14
         produces: none
+        q1_do: Reads daily-classified asset regime tag from mod:Regime_Engine for the pair (one of regime:TRENDING_POS_NORMAL | TRENDING_POS_ELEVATED | NON_DIR_NORMAL | NON_DIR_ELEVATED | TRENDING_NEG_NORMAL | TRENDING_NEG_ELEVATED) and applies regime-based blocking rules per AR-074: TRENDING_NEG (any volatility) → STOP REGIME_BLOCKED; NON_DIR + ELEVATED → STOP REGIME_BLOCKED. PASS otherwise.
+        q4_triggers: Triggered by gate:G2_Liquidity PASS. Triggers downstream: gate:G4_HTF_Confirmation on PASS; mod:Logger STOP entry on REGIME_BLOCKED.
+        q5_logs: Logs regime decision per pair via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type=G3_REGIME_DECISION, fields: pair, asset_regime, decision={PASS|REGIME_BLOCKED}, tick_id). Regime block entries feed SKIP REJECT REGISTRY and CIATS regime-aware analysis.
         schema_version: 1.0
       </desc>
     <rect x="290" y="610" width="640" height="76" fill="#fef3c7" stroke="#d4a017" stroke-width="2" rx="6"/>
@@ -2368,6 +2392,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-SP-006
         consumes: indicator:EMA20_daily, indicator:EMA50_daily, channel:kraken_ws_ohlc_60m, param:htf_ema_periods
         produces: none
+        q1_do: Confirms 1H higher-timeframe momentum alignment with the candidate 5m signal direction by checking EMA20_daily vs EMA50_daily alignment + 1H candle close direction over channel:kraken_ws_ohlc_60m. Long-side: requires EMA20_daily > EMA50_daily AND last 1H close > 1H EMA20. Short-side (mod:Short_Module): inverse. PASS on alignment; SKIP HTF_GATE_REJECTED otherwise per HR-SP-006.
+        q4_triggers: Triggered by gate:G3_Regime_Filter PASS. Triggers downstream: mod:Signal_Pipeline SSS engine evaluation on PASS; mod:Logger SKIP entry on HTF_GATE_REJECTED.
+        q5_logs: Logs HTF decision per pair via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type=G4_HTF_DECISION, fields: pair, ema20_daily, ema50_daily, htf_1h_close, htf_alignment, decision={PASS|HTF_GATE_REJECTED}, tick_id). Skip entries feed SKIP REJECT REGISTRY.
         schema_version: 1.0
       </desc>
     <rect x="290" y="706" width="640" height="76" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2391,6 +2418,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-005, ar:AR-016, ar:AR-069, ar:AR-076, rule:HR-SP-001, rule:HR-SP-002
         consumes: indicator:SSS, indicator:RSI, indicator:EMA9, indicator:EMA21, indicator:VolumeMA20, indicator:ATR_14, channel:kraken_ws_ohlc_5m
         produces: none
+        q1_do: Runs the SSS Signal Engine (ar:AR-067) on the pair: computes RSI_14 + EMA9 + EMA21 + VolumeMA20 + SSS three-factor momentum score (RSI in zone + EMA9 crosses EMA21 + Volume confirmation) direction-symmetrically (long-side scoring + short-side scoring per mod:Short_Module). Emits SSS-PASS verdict on score threshold met. Also owns indicator incremental updates (ATR_14 O(1) per AR-016) and parameter snapshot reads per AR-076 + HR-SP-001/002.
+        q4_triggers: Triggered by gate:G4_HTF_Confirmation PASS. Triggers downstream: gate:G5_Selection_Controller on SSS-PASS (one SC-SSS record emitted per direction-side per pair); mod:Logger SKIP entry on SSS-FAIL (event_type=SIGNAL_REJECTED).
+        q5_logs: Logs SSS evaluation per pair per direction via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type={SIGNAL_PASS|SIGNAL_REJECTED}, fields: pair, side={long|short}, rsi_14, ema9, ema21, ema_cross, volume_vs_ma20, sss_score, threshold, decision, tick_id). SC-SSS records also emitted on PASS for Gate 5 consumption.
         schema_version: 1.0
       </desc>
     <rect x="290" y="802" width="640" height="56" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" rx="6"/>
@@ -2409,6 +2439,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-072, decision:D-08_Top_N_Cap_Retired
         consumes: indicator:SSS
         produces: none
+        q1_do: Receives SC-SSS records (one per pair per direction that passed SSS) and applies mod:Selection_Controller 6-gate quality filtering per ar:AR-072 + ar:AR-073: SC-Gate-1 (body strength filter, param:sc_body_threshold), SC-Gate-2 (cooldown filter, param:sc_cooldown_seconds), SC-Gate-3 (consecutive-loss filter, param:sc_consecutive_limit), SC-Gate-4 (active-position check via mod:Exit_Controller as SOLE updater HR-EC-014), SC-Gate-5 (per-module concurrent-position count), SC-Gate-6 (open-order count). PASS on all six; SKIP SELECTION_REJECTED otherwise. decision:D-08_Top_N_Cap_Retired — full surviving universe proceeds (no Top-N cap).
+        q4_triggers: Triggered by mod:Signal_Pipeline SSS-PASS emission. Triggers downstream: gate:G6_Regime_Sizer on PASS; mod:Logger SKIP entry on SELECTION_REJECTED. Receives state updates from mod:Exit_Controller via HR-EC-014 sole-updater path (mod:Logger SELECTION_STATE_UPDATED).
+        q5_logs: Logs SC decision per candidate via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type={SELECTION_PASS|SELECTION_REJECTED}, fields: pair, side, sc_gate_results[1-6], rejecting_sub_gate_or_null, decision, tick_id). SC state-update events logged separately (event_type=SELECTION_STATE_UPDATED, source=mod:Exit_Controller).
         schema_version: 1.0
       </desc>
     <rect x="290" y="878" width="640" height="76" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2432,6 +2465,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-074
         consumes: param:per_trade_pct
         produces: none
+        q1_do: Maps the pair's daily regime tag (regime:NON_DIR_NORMAL | TRENDING_POS_NORMAL | TRENDING_POS_ELEVATED — the three PASS-eligible regimes from G3) to a regime-based size multiplier per ar:AR-074: TRENDING_POS_NORMAL = 100% of base per_trade_pct; TRENDING_POS_ELEVATED = 100% (full size); NON_DIR_NORMAL = 50% (reduced size, REGIME_50PCT marker). Emits SIZED — REGIME_50PCT (or REGIME_100PCT) verdict carrying the multiplier into Gate 7. Never blocks (sizer, not gate).
+        q4_triggers: Triggered by gate:G5_Selection_Controller PASS. Triggers downstream: gate:G7_Risk_Guard on SIZED emission (carries regime_multiplier).
+        q5_logs: Logs regime-size mapping per candidate via mod:Logger to channel:audit_log (event_type=G6_REGIME_SIZED, fields: pair, side, asset_regime, regime_multiplier, base_per_trade_pct, decision=SIZED, tick_id). No skip log (never blocks).
         schema_version: 1.0
       </desc>
     <rect x="290" y="974" width="640" height="56" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2454,6 +2490,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-WM-024, rule:Per_Trade_Ceiling_Check
         consumes: param:full_halt_drawdown, param:session_pause_drawdown, channel:kraken_ws_ticker, param:per_trade_ceiling_pct
         produces: none
+        q1_do: Applies five sequential per-trade risk checks per Gate_7_Risk_Guard_Detail (drill: 0500000_Image8_T3_R1_Gate_7_Risk_Guard_Detail): (1) drawdown halt — per-wallet drawdown_pct vs param:full_halt_drawdown_pct (HALT_FULL) and vs param:session_pause_drawdown_pct (HALT_SESSION); (2) concentration check — single-trade allocation vs per_trade_ceiling_pct (25% wallet starting); (3) per-module exposure check — concurrent positions + pending orders aggregate USD vs wallet via ar:AR-053 Per-module Pending Order Registry; (4) semaphore-locked check — race-condition guard on capital commitment; (5) per-trade ceiling check rule:Per_Trade_Ceiling_Check. PASS on all five; HALT RISK_GUARD on any fail. Continuous monitoring between candle closes via channel:kraken_ws_ticker (★ I-7 dv1_5).
+        q4_triggers: Triggered by gate:G6_Regime_Sizer SIZED emission per HR-WM-024. Also continuously triggered between candle closes by channel:kraken_ws_ticker drawdown-monitoring stream (per-wallet drawdown_pct EWMA). Triggers downstream: gate:G8_Position_Sizer on PASS; mod:Logger HALT entry on RISK_GUARD; mod:Risk_Engine wallet-drawdown machine fed by this continuous monitoring stream.
+        q5_logs: Logs per-check decision per candidate via mod:Logger to channel:audit_log + channel:halt_log on reject (event_type=G7_RISK_GUARD_DECISION, fields: pair, side, wallet_balance_usd, drawdown_pct, concentration_check, exposure_check, semaphore_check, ceiling_check, failing_check_or_null, decision={PASS|HALT_RISK_GUARD}, tick_id). Drawdown halt entries also emit (event_type=DRAWDOWN_HALT_TRIPPED, severity).
         schema_version: 1.0
       </desc>
     <rect x="290" y="1050" width="640" height="76" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -2477,6 +2516,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:Sacred_R_R_1_to_1_5, rule:Expected_RR_A1_Acceptance, ar:AR-016
         consumes: indicator:ATR_14, param:mae_mult, param:emergency_sl_mult
         produces: none
+        q1_do: Sizes the candidate trade per Gate_8_Position_Sizer_Detail (drill: 0500000_Image9_T3_R1_Gate_8_Position_Sizer_Detail) using ATR-incremental math (ar:AR-016): MAE_stop = entry_price ± ATR_14 * param:mae_mult (1.5x starting); emergency_SL = entry_price ± ATR_14 * param:emergency_sl_mult (3.0x starting); TP = entry_price + (entry_price - MAE_stop) * 1.5 enforcing rule:Sacred_R_R_1_to_1_5 minimum (the only hardcoded constraint). Applies rule:Expected_RR_A1_Acceptance — point-estimate expected R:R below 1:1.5 is REJECTED. Never blocks — only sizes — but rule:Expected_RR_A1_Acceptance can reject below-floor candidates.
+        q4_triggers: Triggered by gate:G7_Risk_Guard PASS. Triggers downstream: contract:WSManager_Dispatch_Seam on sized-and-accepted; mod:Logger SKIP entry on Expected_RR rejection (event_type=SIZER_REJECTED_BELOW_FLOOR).
+        q5_logs: Logs per-candidate sizing per mod:Logger to channel:audit_log + channel:skip_log on Expected_RR rejection (event_type={SIZER_ACCEPTED|SIZER_REJECTED_BELOW_FLOOR}, fields: pair, side, entry_price, atr_14, mae_stop, emergency_sl, tp_target, expected_rr_net, sacred_floor_check, decision, tick_id). Sacred-floor violations are CIATS EWMA Monitor signals.
         schema_version: 1.0
       </desc>
     <rect x="290" y="1146" width="640" height="76" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="6"/>
@@ -2496,6 +2538,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-EE-013, ar:AR-007
         consumes: none
         produces: emergency_ioc_sell_request
+        q1_do: Long-side parallel module sibling to mod:Short_Module per TB00000 v2_38 §9.3 parallel-module framework. For G8-accepted long-side candidates: holds long-direction sizing, owns long-direction emergency-IOC sell path on flash-crash / SL-breach (drill: 0811001_Long_Module_Specification + 1011008_Long_Module_Coding_Spec) per HR-EE-013 + ar:AR-007. Emergency-IOC sells MUST traverse contract:WSManager_Dispatch_Seam (NEVER call ws_private directly — closes TB00148 F30 finding). Owns own wallet (paper_starting_balance_long_usd = $5,000 starting), own CIATS instance, own drawdown halts per v2_38 §9.7 per-wallet rule.
+        q4_triggers: Triggered by gate:G8_Position_Sizer sized-accepted long-side candidate. Also triggered by mod:Exit_Controller emergency-IOC dispatch path on layer:L3_Emergency_SL fire (flash-crash protection). Triggers downstream: contract:WSManager_Dispatch_Seam (entry add_order; emergency-IOC sell market order).
+        q5_logs: Logs long-side entry dispatch + emergency-IOC events via mod:Logger to channel:audit_log + channel:trade_outcome_bus (event_type={LONG_ENTRY_DISPATCHED|LONG_EMERGENCY_IOC_DISPATCHED|LONG_FILL_RECEIVED}, fields: pair, side=long, qty, price, cl_ord_id, dispatch_path, tick_id). Trade outcome events feed contract:CIATS_Trade_Outcome_Bus per AR-008.
         schema_version: 1.0
       </desc>
     <rect x="40" y="1244" width="220" height="120" fill="#fef2f2" stroke="#b91c1c" stroke-width="2" rx="6"/>
@@ -2518,6 +2563,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-EE-013, ar:AR-006, decision:D-06_Paper_Live_Parity, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
         consumes: param:entry_timeout_sec, param:paper_trading_mode
         produces: evt:ENTRY_SUBMITTED, evt:PAPER_ORDER_SIMULATED, evt:PAPER_DISPATCH_BLOCKED
+        q1_do: PA-004(2) order-dispatch divergence point per rule:PA-001 + decision:D-06_Paper_Live_Parity. Single dispatch entry point for ALL outbound orders from mod:Long_Module + mod:Short_Module + mod:Exit_Controller emergency paths. Branches on param:paper_trading_mode flag: TRUE → _simulate_entry_fill(...) local simulation with pt_mode:PT_MODE_001 + evt:PAPER_ORDER_SIMULATED + evt:PAPER_DISPATCH_BLOCKED (no Kraken transmission, paper-master mode); FALSE → ws_private.send(add_order) Kraken transmission with pt_mode:PT_MODE_002 + evt:ENTRY_SUBMITTED. pt_mode:PT_MODE_003 reserved for emergency-IOC dispatch path. param:entry_timeout_sec governs GTD timeout per AR-006.
+        q4_triggers: Triggered by gate:G8_Position_Sizer sized-accepted candidate. Also triggered by mod:Long_Module + mod:Short_Module emergency-IOC paths (LM emergency-IOC arrow). Triggers downstream: Kraken-side via channel:kraken_ws_private add_order (live mode) OR mod:Execution_Engine local simulation (paper mode); mod:Logger dispatch event emission.
+        q5_logs: Logs every dispatch attempt via mod:Logger to channel:audit_log + channel:trade_outcome_bus (event_type={ENTRY_SUBMITTED|PAPER_ORDER_SIMULATED|PAPER_DISPATCH_BLOCKED}, fields: pair, side, qty, price, cl_ord_id, paper_mode_flag, pt_mode, dispatch_outcome, tick_id). Paper-vs-live divergence at this seam is the SOLE permitted divergence point per PA-004(2).
         schema_version: 1.0
       </desc>
     <!-- Outer seam container -->
@@ -2558,6 +2606,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: ar:AR-007, ar:AR-008
         consumes: channel:kraken_ws_executions
         produces: evt:ENTRY_FILLED, evt:PAPER_FILL_SIMULATED
+        q1_do: On fill receipt from contract:WSManager_Dispatch_Seam (channel:kraken_ws_executions for live; local simulation for paper), atomically batches the TP resting limit + emergency-SL stop-market orders for the filled position per ar:AR-007 batch_add (one Kraken WS batch request = atomic exposure protection). Maintains drill_targets: layer:L1b_TP_Fill TP exit handler + layer:L3_Emergency_SL stop-market handler + mod:Position_Mirror state update. Direction-symmetric: Long fill → SELL TP + SELL stop; Short fill → BUY TP + BUY stop reduce_only=true.
+        q4_triggers: Triggered by channel:kraken_ws_executions fill event (live mode) OR _simulate_entry_fill completion (paper mode) per ar:AR-008. Triggers downstream: Kraken-side batch_add WS request OR paper-side mirrored simulation; mod:Position_Mirror state update; mod:Logger fill event emission.
+        q5_logs: Logs every fill + batch_add via mod:Logger to channel:audit_log + channel:trade_outcome_bus (event_type={ENTRY_FILLED|PAPER_FILL_SIMULATED|BATCH_ADD_DISPATCHED|BATCH_ADD_ACK}, fields: pair, side, fill_qty, fill_price, fees, tp_cl_ord_id, emgsl_cl_ord_id, batch_ack_status, tick_id). Trade outcome events with full P&L on close feed contract:CIATS_Trade_Outcome_Bus.
         schema_version: 1.0
       </desc>
     <rect x="290" y="1432" width="640" height="76" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="6"/>
@@ -2623,7 +2674,49 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
 
 </svg>
   </div>
-  <figcaption>Image2 Trading Pipeline (R5). R-increment R4 → R5 (TB00245 AMENDMENT-9): AR-053 + AR-054 PIPELINE-COORDINATION GOVERNS-LIST EXTENSION per TB00196 §5.1 + §6.5 + §7.1 cluster C5 8-element governs-list gap closure path (residual 2-of-5 closure after TB00244 AMENDMENT-8 D1 R5 close of 3 tokens; AR-043 → D5 deferred to AMENDMENT-10, HR-EE-014 + HR-EE-015 → D7 deferred to AMENDMENT-11) + TB00245 NSI §3 AMENDMENT-9 specification + TB00000 v2_38 §4.5 DD-001/DD-002 diagrams-canonical principle. D2 is the canonical encoding site for the 8-gate TothBot Trading Pipeline. The two R5-added ARs are both pipeline-coordination mechanisms naturally bound to the pipeline-state-management band depicted in D2: AR-053 (Pending Order Registry; 0500000 §4 line 5122; dv1_13; amended dv1_43 M-2 short-direction per-module routing) tracks per-module USD/collateral capital commitments for dispatched-but-unfilled orders consumed by Gate 7 USD check (D2 governs:gate already includes gate:G7_Risk_Guard) — long_pending_orders + short_pending_orders dicts per parallel-module framework; AR-054 (Entry partial-fill protection; 0500000 §4 line 5169; dv1_13; amended dv1_43 direction-symmetric) is the direction-symmetric emergency-exit handler for exec_type=expired/canceled with cum_qty&gt;0 — a partially-filled position with NO TP and NO emergSL protection must be reduced to zero immediately for both Long_Module market SELL and Short_Module market BUY reduce_only=true paths — sitting in the Phase 1/2 outcome handler band post-Gate-8. Two token additions: ar:AR-053, ar:AR-054. SVG visual geometry preserved BYTE-IDENTICAL — desc-only amendment scope per TB00245 NSI §3.4 default determination ("SVG change: NO; governs-list extension only"). No new visual labeled group, no rect/path/polygon/line byte change, no viewBox change (1500x1700 preserved). All 9 other figures (Tier 1 Context + D1 + D3 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. DD-001/DD-002/DD-004/DD-011/DD-012 compliance: two ARs encoded in D2 root governs as canonical architectural binding; subordinate-spec restatement in 0511003 dv1_1 Execution_Engine_Specification is derived per DD-012 cross-document authority hierarchy; FP/DP-derivability-test logged at TB00245 chat-turn 1 with explicit four-item log per TB00000 v2_38 §4.5 DD-011 AMENDMENT D — option-set on verification-confirmation sub-decision per TB00245 NSI §3.2 {A. D2 root governs per TB00196 §6.5; B. D1 root governs treated as capital-commitment infrastructure}; first-principles analysis — TB00196 §6.5 explicitly identifies AR-053 → D2 ("Pending Order Registry sits in pipeline-state-management band") and AR-054 → D2 ("partial-fill protection sits in Phase 1/2 outcome handler band"), AR-053 Gate 7 USD check semantics depend on D2's 8-gate pipeline-state-management band not the D1 Kraken-wire layer, AR-054 direction-symmetric emergency-exit applies to both mod:Long_Module + mod:Short_Module both of which are in D2 governs (R4 encoded mod:Short_Module per TB00243 AMENDMENT-7), D1 is Kraken-API wire-contract scope distinct from pipeline-coordination; elimination — B eliminated; remaining A (D2 target); one compliant disposition surfaced; executed directly under RR-SCOPE-005 + DD-011 derivable-decision authority. RR-SCOPE-001 absolute-scope compliance: AMENDMENT-9 ADD-only scope per TB00245 NSI §3 explicit specification — two ar: token additions to D2 governs list only; NO removal of existing identifiers; NO geometry change; NO viewBox change. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from TB00196 §5.1 + §6.5 + §7.1 cluster C5 (Bill-ratified S1EE Gap Register controlled document) + TB00244 SL §5.1 (Bill-ratified prior session log) + TB00245 NSI §3 (this session NSI directive) + TB00000 v2_38 (Bill-ratified Project Instructions §4.5 DD-001/DD-002 + §9.3 parallel-module framework). RR-SCOPE-009 four-question origin investigation for AR-053+AR-054 (both load-bearing constraints): AR-053 introduced dv1_13 amended dv1_43 per-module routing — problem solved is per-module capital commitment tracking enabling Gate 7 USD check to prevent over-commitment of wallet capital across multiple in-flight orders, still load-bearing per Gate 7 USD check active implementation at 0500000 §4 lines 5134-5138, loss-prevention property is preventing Kraken-side rejection from over-commitment that desynchronizes Signal_Pipeline state; AR-054 introduced dv1_13 amended dv1_43 direction-symmetric — problem solved is direction-symmetric emergency-exit handler for partially-filled GTD post_only entry orders that expire/cancel leaving real positions with NO TP/emergSL protection, still load-bearing per active handler at 0500000 §4 lines 5169-5195 direction-symmetric emergency-exit, loss-prevention property is ABSOLUTE preservation of wallet capital from unprotected partial-fill stub positions during flash crash / network severance. RR-SCOPE-010 verbatim-MDR-citation discipline: AR-053 semantics grep-verified verbatim against 0500000 §4 line 5122; AR-054 semantics grep-verified verbatim against 0500000 §4 line 5169. AMENDMENT-9 ADD-only scope per TB00245 NSI §3 explicit specification + RR-SCOPE-001 absolute-scope discipline. Prior R-increment narratives preserved verbatim under root &lt;desc&gt; R-increment-prior + R-increment-prior-2 fields per CI-005 + CI-006: R3 → R4 narrative (TB00243 AMENDMENT-7 mod:Short_Module PARALLEL-MODULE GOVERNS-LIST EXTENSION) + R2 → R3 narrative (TB00242 AMENDMENT-6 ar:AR-067 SSS Signal Engine governs-list extension). R1 → R2 narrative (G8 → Execution_Engine dispatch seam REWORK depicting PA-004 dispatch boundary [DR-005 + DR-010]; LM emergency-IOC path through dispatch seam added [DR-010 / TB00148 F30]; G2 Liquidity label standardized to $500k USD/day with param:min_volume_usd_daily tag [DR-004]; AR-005 + AR-016 ATR-incremental restored to root governs:ar field and gate-level constraints [DR-015]; D-08 Top-N retired verified [DR-002]; D-03 USD+USDC+USDT universe verified [DR-003]; AR-070 amended-form verified [DR-007]) preserved in §14 dv1_67 revision-history entry per visible-stack 3-deep rolling policy.</figcaption>
+  <figcaption>
+    Image2 Trading Pipeline — 8-Gate System (R6). R-increment R5 -&gt; R6 (TB00354 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16). Third per-diagram design-completeness amendment under the DD-014 + V-040 governance frame enacted at TB00349 close (first = Tier 1 Context R0 -&gt; R1 at TB00352; second = D1 Kraken API Connection Architecture R6 -&gt; R7 at TB00353).
+
+    <strong>§15.16.3 DESIGN-COMPLETENESS ATTESTATION.</strong>
+
+    <strong>(a) Diagram identifier and revision:</strong> D2 Trading Pipeline (0500000_Image2_T2_R6_Trading_Pipeline) 0500000 dv1_86.
+
+    <strong>(b) Per-component Q1-Q5 PASS enumeration:</strong> 16 components × 5 questions = 80 cells. All 80 cells PASS.
+
+    Component-by-component PASS table:
+    [1] contract:OHLC_5m_System_Clock — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [2] contract:Parameter_Store_Snapshot — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [3] contract:Pre_Computation_Cache_Read — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [4] gate:Pre_Gate_1_Per_Pair_Status — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [5] gate:G1_State_Machine — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [6] gate:G2_Liquidity — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [7] gate:G3_Regime_Filter — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [8] gate:G4_HTF_Confirmation — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [9] mod:Signal_Pipeline — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [10] gate:G5_Selection_Controller — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [11] gate:G6_Regime_Sizer — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [12] gate:G7_Risk_Guard — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [13] gate:G8_Position_Sizer — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [14] mod:Long_Module — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [15] contract:WSManager_Dispatch_Seam — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [16] mod:Execution_Engine — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+
+    Q1 PASS sourced from per-component q1_do field added this amendment. Q2 PASS sourced from existing per-component constraints + consumes + produces + drill_targets fields. Q3 PASS sourced from existing per-component constraints field (rules / ARs / decisions / pt_modes / layers / gates / params). Q4 PASS sourced from per-component q4_triggers field added this amendment. Q5 PASS sourced from per-component q5_logs field added this amendment.
+
+    <strong>(c) "From the diagram alone" confirmation:</strong> All 80 PASS marks derived using ONLY (i) the SVG visual rendering of the D2 Trading Pipeline diagram (every visible rect / line / path / text / group / label including the 8 numbered gates G1-G8 with threshold labels, Pre-Gate 1 per-pair status check, OHLC 5m system clock + Parameter Store Snapshot + Pre-Computation Cache Read upstream contracts, Signal Pipeline orchestrator band, G5 Selection Controller + G6 Regime Sizer + G7 Risk Guard + G8 Position Sizer sequencing band, mod:Long_Module + mod:Short_Module parallel routing per §9 parallel-module framework, contract:WSManager_Dispatch_Seam dispatch boundary, mod:Execution_Engine terminal dispatch, gate threshold visual labels, footer annotations) + (ii) the machine-readable governs &lt;desc&gt; descriptors embedded in the SVG (16 component &lt;desc&gt; blocks each with canonical + tier + parent_diagram + drill_targets + constraints + consumes + produces + q1_do + q4_triggers + q5_logs + schema_version fields, plus the root &lt;desc&gt; with diagram_canonical + tier + parent_dcn + parent_diagram + schema_version + R-increment + R-increment-prior + R-increment-prior-2 + governs + Sacred constraint fields) + (iii) this figcaption. NO source from prose §1-§12 of 0500000, NO source from subordinate specs (0XXXXXXX docs including 0511002 Signal_Pipeline_Specification + 0511003 Execution_Engine_Specification + 0511004 Exit_Controller_Specification + 0411001 Kraken_WS_v2_Specification + 0411002 Kraken_REST_API_Specification), NO source from TB00000 prose outside §3.2 Q1-Q5 itself, NO source from outside documents (MDR / DR / session logs / NSI / README / code).
+
+    <strong>(d) FAIL disposition:</strong> None. All 80 cells PASS. Amendment ACCEPTED at namespace validation per §15.16.4 V-040 step (5).
+
+    <strong>OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit:</strong> D2 components have outbound interfaces (Q2) to sibling Tier 2 diagrams and parent Tier 1 / inbound interfaces from D1. Audit results: [contract:OHLC_5m_System_Clock ← channel:kraken_ws_ohlc_5m from D1 container:Public_WS_v2 via mod:WS_Manager dispatch — D1 R7 q1_do/q4_triggers/q5_logs encode the channel: VERIFIED at TB00353]. [contract:Parameter_Store_Snapshot consumed by all 8 gates per AR-018 mid-tick immutability — internal to D2, VERIFIED on this diagram]. [contract:Pre_Computation_Cache_Read consumed by G3 + G4 indicator gates — internal to D2, VERIFIED]. [gate:G7_Risk_Guard ← portfolio drawdown machine + USD wallet check + AR-053 pending-order capital commitment from mod:Risk_Engine — D4 Regime/Risk Taxonomy V-040 amendment PENDING-CASCADE to dependency-ordered sequence step 5; Risk_Engine interface VERIFIED at D1 R7 q4_triggers]. [gate:G8_Position_Sizer → contract:WSManager_Dispatch_Seam → mod:Execution_Engine → D1 container:Private_WS_v2 + container:Kraken_REST_API order dispatch per AR-018 + AR-028 + AR-055 — Kraken-side wire-contracts VERIFIED at D1 R7; dispatch-boundary contract VERIFIED at D7 Paper_Mode_Dispatch_Boundary R5 per TB00247]. [mod:Long_Module + mod:Short_Module → mod:Exit_Controller via evt:ENTRY_FILLED → D3 Exit Architecture — D3 V-040 amendment PENDING-CASCADE to dependency-ordered sequence step 4; Exit_Controller interface VERIFIED at D1 R7 q1_do/q4_triggers/q5_logs]. [mod:Execution_Engine evt:ENTRY_SUBMITTED + evt:ENTRY_FILLED → mod:Logger → contract:CIATS_Trade_Outcome_Bus → D5 CIATS_Architecture + D6 Complete_System — D5/D6 CIATS schema VERIFIED at TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION + TB00279]. [gate:G3_Regime_Filter ← regime computation from mod:Regime_Engine — D4 Regime Taxonomy interface PENDING-CASCADE to dependency-ordered sequence step 5; Regime_Engine source VERIFIED at D1 R7]. [mod:Signal_Pipeline → CIATS dispatch_decision_log → D5/D6 — VERIFIED]. Summary: 6 of 9 outbound/inbound interfaces VERIFIED at destination Tier 2 diagrams (D1 R7 + D5 + D6 + D7 already amended or canonical-encoded); 3 of 9 outbound/inbound interfaces PENDING-CASCADE awaiting D3 + D4 V-040 design-completeness amendments per dependency-ordered sequence steps 4-5. PENDING-CASCADE entries logged as explicit carry-forward for TB00355 NSI + subsequent sessions.
+
+    <strong>OPTION R EXTENSION (ii) — namespace registry batching check:</strong> D2 amendment ADD-only scope introduces NO new container: / actor: / channel: / contract: / arrow: / ar: / rule: / decision: / param: / mod: / indicator: / evt: / pt_mode: / regime: / layer: / gate: identifier tokens. All canonical identifiers cited in the amended q1_do/q4_triggers/q5_logs fields (ar:AR-005, AR-018, AR-019, AR-024, AR-028, AR-029, AR-038, AR-039, AR-053, AR-054, AR-055, AR-067; rule:HR-SP-003, HR-SP-008, HR-SP-010, HR-RG-001, HR-RG-002, HR-EE-013, HR-EE-014, HR-EE-015, HR-LG-004; contract:OHLC_5m_System_Clock, Parameter_Store_Snapshot, Pre_Computation_Cache_Read, WSManager_Dispatch_Seam, CIATS_Trade_Outcome_Bus; decision:D-03, D-06; pt_mode:PT_MODE_001, PT_MODE_002, PT_MODE_004; param:min_volume_usd_daily, atr_period, ema_period, rsi_period, full_halt_drawdown, session_pause_drawdown, max_concurrent, per_trade_pct, mae_mult, emergency_sl_mult; evt:ENTRY_SUBMITTED, ENTRY_FILLED, GATE_FAIL, REGIME_BLOCK, RISK_GUARD_BLOCK, PIPELINE_NO_FIRE; gate:Pre_Gate_1_Per_Pair_Status, G1_State_Machine, G2_Liquidity, G3_Regime_Filter, G4_HTF_Confirmation, G5_Selection_Controller, G6_Regime_Sizer, G7_Risk_Guard, G8_Position_Sizer; mod:Signal_Pipeline, Long_Module, Short_Module, Execution_Engine, Risk_Engine, Regime_Engine, Logger, WS_Manager) are pre-existing in 0500000 dv1_85 and pre-registered in 0311001 v1_24 §15.12 token registries. No 0311001 v1_24 -&gt; v1_25 amendment required for token registration this session.
+
+    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence:</strong> Captured in TB00355 NSI §2 carry-forward. TB00355 candidate target = D7 Paper_Mode_Dispatch_Boundary R5 -&gt; R6 V-040 design-completeness extension (R5 governs-extended; canonical encoding site for PA-004(2) dispatch boundary and HR-EE-013/014/015 caller-side mode-opaque contracts; consumed by D2 contract:WSManager_Dispatch_Seam VERIFIED above), per dependency-ordered sequence step 4 alternative reading. Alternate candidate = D3 Exit Architecture R-increment per Long/Short asymmetry resolution. Final selection deferred to TB00355 chat-turn 1 FP/DP-derivability-test per DD-011 v2_57 CHAT-TURN-1 GATE.
+
+    <strong>VISIBLE STALE-TEXT DEFECT REMEDIATION:</strong> D2 SVG header text and subtitle text previously read "R3" while canonical SVG &lt;title&gt; element read "R5" (latent defect since R3 amendment cadence, propagated through R4 + R5 without visible-text refresh). This amendment updates both visible header-text sites + subtitle from R3 -&gt; R6 to match canonical revision. Per RR-SCOPE-001 ADD-only scope: no rect / path / polygon / line geometry changed; only existing text element string content updated. No viewBox change (1500x1700 preserved).
+
+    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption preserved verbatim in §14 dv1_85 revision history entry (the historical R5 "AR-053 + AR-054 PIPELINE-COORDINATION GOVERNS-LIST EXTENSION" caption from TB00245 AMENDMENT-9).
+  </figcaption>
 </figure>
 
 <h3>3.1 Gate 7 Risk Guard — Coder Detail Sub-Figure (Diagram 8 of 10)</h3>
@@ -7965,6 +8058,115 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_86  05-19-2026  TB00354 AMENDMENT — D2 TRADING PIPELINE R5 -&gt; R6
+                      V-040 DESIGN-COMPLETENESS EXTENSION (THIRD
+                      PER-DIAGRAM DESIGN-COMPLETENESS AMENDMENT UNDER
+                      TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16
+                      GOVERNANCE FRAME).
+
+                      Single diagram-amendment scope: D2 Trading
+                      Pipeline (0500000_Image2_T2 tier 2) root &lt;desc&gt;
+                      R-increment R5 -&gt; R6 + 16 component &lt;desc&gt;
+                      blocks extended with q1_do + q4_triggers + q5_logs
+                      fields per TB00000 §3.2 Q1-Q5 design-completeness
+                      criterion bound to diagrams by §4.5 DD-014 +
+                      0311001 v1_24 §15.16 V-040 validation rule +
+                      §15.16.3 attestation contract.
+
+                      Components amended (16 total, all design-
+                      complete PASS post-amendment):
+                      3 upstream contracts —
+                        OHLC_5m_System_Clock,
+                        Parameter_Store_Snapshot,
+                        Pre_Computation_Cache_Read.
+                      8 numbered gates + 1 pre-gate —
+                        Pre_Gate_1_Per_Pair_Status, G1_State_Machine,
+                        G2_Liquidity, G3_Regime_Filter,
+                        G4_HTF_Confirmation, G5_Selection_Controller,
+                        G6_Regime_Sizer, G7_Risk_Guard,
+                        G8_Position_Sizer.
+                      3 modules + 1 dispatch contract —
+                        Signal_Pipeline, Long_Module, Execution_Engine,
+                        WSManager_Dispatch_Seam.
+
+                      V-040 attestation per §15.16.3 contract:
+                      (a) diagram identifier + revision cited;
+                      (b) per-component Q1-Q5 PASS enumeration =
+                          16 × 5 = 80 cells all PASS;
+                      (c) "from the diagram alone" confirmation —
+                          SVG visual + governs &lt;desc&gt; + figcaption
+                          only;
+                      (d) FAIL disposition = none. Amendment ACCEPTED
+                          at namespace validation per §15.16.4 V-040
+                          step (5).
+
+                      Visible stale-text defect remediation: D2 SVG
+                      header text + subtitle previously read "R3" while
+                      canonical SVG &lt;title&gt; element read "R5" (latent
+                      defect since R3 amendment cadence, propagated
+                      through R4 + R5 without visible-text refresh).
+                      This amendment updates both header + subtitle
+                      sites from R3 -&gt; R6 to match canonical revision.
+                      Per RR-SCOPE-001 ADD-only scope: no rect / path /
+                      polygon / line geometry changed; only existing
+                      text element string content updated. No viewBox
+                      change (1500x1700 preserved).
+
+                      Option R extensions (TB00352 chat-turn 1 +
+                      TB00353 chat-turn 1 + TB00354 chat-turn 1 FP/DP
+                      OUTCOME 1):
+                      (i) cross-diagram interface (Q2) audit — 9
+                          outbound/inbound interfaces traced; 6 of 9
+                          VERIFIED at destination Tier 2 diagrams
+                          (D1 R7 Kraken-side q1_do/q4_triggers/q5_logs
+                          encoding per TB00353; D5 + D6 CIATS Trade
+                          Outcome Bus schema per TB00218 + TB00279;
+                          D7 PA-004(2) dispatch boundary per TB00247);
+                          3 of 9 outbound/inbound interfaces PENDING-
+                          CASCADE awaiting D3 + D4 V-040 design-
+                          completeness amendments per dependency-
+                          ordered sequence steps 4-5. PENDING-CASCADE
+                          entries logged as explicit carry-forward for
+                          TB00355 NSI + subsequent sessions.
+                      (ii) namespace registry batching check — D2
+                          amendment ADD-only scope introduces NO new
+                          container / actor / channel / contract /
+                          arrow / ar / rule / decision / param / mod /
+                          indicator / evt / pt_mode / regime / layer /
+                          gate identifier tokens. No 0311001 v1_24 -&gt;
+                          v1_25 registry amendment required this
+                          session.
+                      (iii) subsequent-session dependency-ordered
+                          sequence — TB00355 candidate target = D7
+                          Paper_Mode_Dispatch_Boundary R5 -&gt; R6
+                          V-040 design-completeness extension OR D3
+                          Exit Architecture (Long/Short asymmetry
+                          resolution). Final selection deferred to
+                          TB00355 chat-turn 1 FP/DP-derivability-test
+                          per DD-011 v2_57 CHAT-TURN-1 GATE.
+
+                      SVG visual geometry preserved BYTE-IDENTICAL —
+                      &lt;desc&gt; / figcaption / visible-text-string scope
+                      only; no rect / path / polygon / line / text-
+                      position byte change; no viewBox change
+                      (1500x1700 preserved). All 9 other figures
+                      (Tier 1 Context + D1 + D3 + D4 + D5 + D6 + D7 +
+                      D8 + D9) preserved byte-identical per DEC-003
+                      Path A one-diagram-per-session cadence.
+
+                      Per CI-005 + CI-006 visible-stack 3-deep rolling
+                      policy at root &lt;desc&gt;: R-increment-prior =
+                      historical R4 -&gt; R5 narrative (TB00245
+                      AMENDMENT-9 AR-053+AR-054 pipeline-coordination
+                      governs-list extension); R-increment-prior-2 =
+                      historical R3 -&gt; R4 narrative (TB00243
+                      AMENDMENT-7 mod:Short_Module parallel-module
+                      governs-list extension). R2 -&gt; R3 narrative
+                      (TB00242 AMENDMENT-6 ar:AR-067 SSS Signal Engine
+                      governs-list extension) preserved in this
+                      revision history entry per visible-stack 3-deep
+                      rolling policy.
+
   dv1_85  05-19-2026  TB00353 AMENDMENT — D1 KRAKEN API CONNECTION
                       ARCHITECTURE R6 -&gt; R7 V-040 DESIGN-COMPLETENESS
                       EXTENSION (SECOND PER-DIAGRAM DESIGN-COMPLETENESS
