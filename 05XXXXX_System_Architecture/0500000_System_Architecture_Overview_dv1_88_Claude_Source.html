@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_87</title>
+<title>0500000 System Architecture Overview dv1_88</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_87</td></tr>
+  <tr><td>DocVersion</td><td>dv1_88</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_87_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_88_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-19-2026</td></tr>
   <tr><td>DocTime</td><td>22:00:00 UTC</td></tr>
 </table>
@@ -3232,17 +3232,16 @@ taxonomy:
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1420"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image3_T2_R4_Exit_Architecture</title>
+  <title>0500000_Image3_T2_R5_Exit_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image3_T2_R4_Exit_Architecture
+    diagram_canonical: 0500000_Image3_T2_R5_Exit_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment: R3 -&gt; R4 (TB00214 STAGE Phase 1 1011005 redundancy audit migration to canonical: NEW conflict_resolution_callout decoration group added at figure bottom encoding three architectural rules - (a) L1a sequence Step 1 pair-status precondition binding per ar:AR-040 + 1011005 dv1_3 §5.1 EC-L1A-SEQ Step 1, (b) Layer 2 priority over in-progress Layer 1a per 1011005 dv1_3 §5 EC-L2-003, and (c) TP-partial + simultaneous Layer 2 conflict resolution per 1011005 dv1_3 §6.2 EC-TP-006: Layer 2 wins, cancel remaining TP qty, execute L2, emit ONE unified evt:TRADE_CLOSE record exit_reason=MAE_THRESHOLD_BREACH. New architectural identifier rule:HR-EC-016 created and cited in governs list. SVG viewBox extended 1500x1320 -&gt; 1500x1420 (+100px) to accommodate the new callout. Existing visual content preserved BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-session cadence. All 7 other figures (Tier 1, D1, D2, D4, D5, D6, D7) preserved byte-identical this dv1_48 increment. 1011005 dv1_3 retirement and 0511004 dv1_3 -&gt; dv1_4 prose cascade sequenced as separate work-product turns this same session per the TB00214 Phase 1 audit execution plan.)
-    R-increment-prior: R2 -&gt; R3 (TB00169 STAGE L+ STEP 2 D3 trigger formula sign correction: visible TRIGGER text aligned to canonical EC-L2-001 spec form (entry_fill_price - bid_price) &gt;= ATR(14) x mae_mult; closes TB00167 §7.2 observation. Visual content preserved byte-identical except for the TRIGGER text correction. SVG title and diagram_canonical were not updated to R3 at TB00169 close — corrected to R4 at this dv1_48 amendment.)
-    R-increment-prior-2: R1 -&gt; R2 (DR-011 D3 portion closure: HR-PM-009 sole-writer architectural callout added to mod:Exit_Controller and layer:L2_MAE_Threshold group desc constraints, plus visible decoration band at figure bottom (id="pm_helper_callout") depicting the read-only-via-helpers pattern per 0511005 dv1_1 HR-PM-009 + HR-PM-011. SVG viewBox extended 1500x1240 -&gt; 1500x1320 to fit the new callout group. R1 visual content preserved byte-identical EXCEPT for the new decoration group addition. DR-040 (Layer 2 mae_pct_reached field) DEFERRED per TB00153 §6 sequenced-after-Phase-1-spec condition: 1011006 dv1_2 not landed; 1011006 dv1_1 is current. Per DEC-004 cumulative R-increment policy.)
-    R-increment-prior-3: R0 -&gt; R1 (currency refresh against dv1_23 §4 + glyph fallback fix + layer 3 layout fix bundled per TB00151a-2 NSI item b)
+    R-increment: R4 -&gt; R5 (TB00356 AMENDMENT — D3 EXIT ARCHITECTURE V-040 DESIGN-COMPLETENESS EXTENSION: 7 D3 component &lt;desc&gt; blocks extended with q1_do + q4_triggers + q5_logs fields per TB00000 v2_57 §3.2 Q1-Q5 design-completeness criterion bound to diagrams by §4.5 DD-014 + 0311001 v1_24 §15.16 V-040 validation rule + §15.16.3 attestation contract. Components amended (7 total, all design-complete PASS post-amendment): exit_controller_owner (mod:Exit_Controller — owner module), layer_l1a (layer:L1a_Signal_Exit — signal-decay exit path), layer_l1b (layer:L1b_TP_Fill — TP fill exit path), layer_l2 (layer:L2_MAE_Threshold — MAE-threshold market-sell exit path), layer_l3 (layer:L3_Emergency_SL — off-book crash protection), rr_formula (rule:Sacred_R_R_1_to_1_5 — gross_target derivation), conflict_resolution_callout (rule:HR-EC-016 — L1a Step 1 + L2 priority + TP-partial conflict resolution). V-040.3 Q3 fail-closure ADD-only token propagation from D3 ROOT governs to per-component constraints: rule:HR-EC-016 added to exit_controller_owner + layer_l1a + layer_l2 constraints (root governs since TB00214 dv1_48 R3 -&gt; R4 but absent from per-component constraints — latent V-040.3 Q3 cell FAILs); ar:AR-040 added to layer_l1a constraints (Step 1 pair-status precondition binding); ar:AR-066 added to layer_l1b constraints (TP partial fill direction-symmetric mechanism). SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption / SVG-title-R-state-bump scope only; no rect / path / polygon / line / text-position byte change; no viewBox change (1500x1420 preserved). All 9 other figures (Tier 1 Context + D1 + D2 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence.)
+    R-increment-prior: R3 -&gt; R4 (TB00214 STAGE Phase 1 1011005 redundancy audit migration to canonical: NEW conflict_resolution_callout decoration group added at figure bottom encoding three architectural rules - (a) L1a sequence Step 1 pair-status precondition binding per ar:AR-040 + 1011005 dv1_3 §5.1 EC-L1A-SEQ Step 1, (b) Layer 2 priority over in-progress Layer 1a per 1011005 dv1_3 §5 EC-L2-003, and (c) TP-partial + simultaneous Layer 2 conflict resolution per 1011005 dv1_3 §6.2 EC-TP-006: Layer 2 wins, cancel remaining TP qty, execute L2, emit ONE unified evt:TRADE_CLOSE record exit_reason=MAE_THRESHOLD_BREACH. New architectural identifier rule:HR-EC-016 created and cited in governs list. SVG viewBox extended 1500x1320 -&gt; 1500x1420 (+100px) to accommodate the new callout. Existing visual content preserved BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-session cadence. All 7 other figures (Tier 1, D1, D2, D4, D5, D6, D7) preserved byte-identical this dv1_48 increment. 1011005 dv1_3 retirement and 0511004 dv1_3 -&gt; dv1_4 prose cascade sequenced as separate work-product turns this same session per the TB00214 Phase 1 audit execution plan.)
+    R-increment-prior-2: R2 -&gt; R3 (TB00169 STAGE L+ STEP 2 D3 trigger formula sign correction: visible TRIGGER text aligned to canonical EC-L2-001 spec form (entry_fill_price - bid_price) &gt;= ATR(14) x mae_mult; closes TB00167 §7.2 observation. Visual content preserved byte-identical except for the TRIGGER text correction. SVG title and diagram_canonical were not updated to R3 at TB00169 close — corrected to R4 at this dv1_48 amendment.)
     governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, ar:AR-040, ar:AR-066, mod:Exit_Controller, layer:L1a_Signal_Exit, layer:L1b_TP_Fill, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
     drill_targets: none (D3 is a leaf Tier 2 detail of the Exit Architecture depicted in D2)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
@@ -3263,7 +3262,7 @@ taxonomy:
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 3 — Exit Architecture: Ground Zero Redesign for Kraken</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image3_T2_R4_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  R4: L1a Step 1 pair-status precondition + L2 priority + TP-partial conflict resolution (rule:HR-EC-016 — TB00214 1011005 audit)
+      0500000_Image3_T2_R5_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  R5: V-040 design-completeness extension — 7 components × q1_do/q4_triggers/q5_logs + V-040.3 Q3 root-vs-component ADD-only closure (TB00356 §4.5 DD-014)
     </text>
   </g>
 
@@ -3275,10 +3274,13 @@ taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: layer:L1a_Signal_Exit, layer:L1b_TP_Fill, layer:L2_MAE_Threshold
-        constraints: rule:HR-EC-013, rule:HR-EC-014, rule:HR-PM-009, ar:AR-008
+        constraints: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, ar:AR-008
         consumes: channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult
         produces: evt:TRADE_CLOSE
         position_mirror_access: read-only via WSManager helper methods (e.g., wm.pm_get(symbol), wm.pm_iter()) per rule:HR-PM-009 sole-writer pattern; Exit Controller does NOT mutate Position Mirror.
+        q1_do: owns ALL normal exits across layers L1a (signal-based), L1b (TP fill), and L2 (MAE threshold); L3 emergency SL is off-book Kraken-side crash protection only and is NOT owned by Exit Controller runtime; OTO conditional orders evaluated and REJECTED per ar:AR-008; reads Position Mirror via WSManager helper methods only (wm.pm_get / wm.pm_iter) per rule:HR-PM-009 sole-writer pattern; does NOT mutate Position Mirror; enforces rule:HR-EC-016 conflict resolution (L1a Step 1 pair-status precondition + L2 priority over in-progress L1a + TP-partial+L2 conflict resolution emitting ONE unified evt:TRADE_CLOSE record).
+        q4_triggers: L1a signal-decay/time-expiry/momentum-loss conditions (consumes indicator:SSS + indicator:RSI + indicator:EMA9 + indicator:EMA21 via Signal Pipeline interface); L1b TP limit order fill event on channel:kraken_ws_executions; L2 MAE breach (entry_fill_price - bid_price) &gt;= ATR(14) x param:mae_mult on channel:kraken_ws_ticker bid; ar:AR-040 instrument status events (cancel_only / maintenance) gating L1a Step 1 precondition; ar:AR-066 TP partial fill events (cum_qty &gt; 0) triggering conflict-resolution branch when simultaneous with L2 breach.
+        q5_logs: emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus for every closed position with exit_reason in {SIGNAL_DECAY, TIME_EXPIRY, MOMENTUM_LOSS, TP_FILL, MAE_THRESHOLD_BREACH, EMERGENCY_SL_FIRED}; per rule:HR-EC-016 emits ONE unified record per closed position even under TP-partial+L2 conflict (never two records for same position); CRITICAL alert logged when L1a Step 1 detects pair status == cancel_only OR maintenance (position HELD, no orders submitted); cancel-timeout fallback events (per layer_l2 req_id registry) logged when ACK not received within timeout window.
         schema_version: 1.0
       </desc>
     <rect x="40" y="100" width="1420" height="60" fill="#fef3c7" stroke="#d4a017" stroke-width="2" rx="6"/>
@@ -3308,9 +3310,12 @@ taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: mod:Exit_Controller
-        constraints: rule:HR-EC-013
+        constraints: rule:HR-EC-013, rule:HR-EC-016, ar:AR-040
         consumes: indicator:SSS, indicator:RSI, indicator:EMA9, indicator:EMA21
         produces: evt:TRADE_CLOSE
+        q1_do: signal-deterioration exit path within mod:Exit_Controller; rule:HR-EC-016 Step 1 precondition — checks pair status via ar:AR-040 instrument status BEFORE any cancel or sell action; IF pair status == cancel_only OR maintenance THEN HOLD position, raise CRITICAL alert, do NOT proceed (resting TP + emergSL on Kraken matching engine are the only protection in pair-disruption states); ELSE proceeds with WS cancel_order(TP) then WS market_sell sequence per rule:HR-EC-013; paper mode dispatches via PT_MODE_002 simulated local fill.
+        q4_triggers: SSS score drops below configured threshold (signal deterioration); OR time-based max hold elapsed without TP progress (TIME_EXPIRY); OR momentum loss detected on 5m or 1H trend break (MOMENTUM_LOSS); precondition gate: ar:AR-040 pair status events on instrument-status channel for pairs with open positions; if rule:HR-EC-016(b) priority applies, Layer 2 MAE breach during in-progress L1a sequence overrides L1a reason — complete cancel sequence, market_sell with exit_reason = MAE_THRESHOLD_BREACH (not the original L1a reason).
+        q5_logs: exit_reason in {SIGNAL_DECAY, TIME_EXPIRY, MOMENTUM_LOSS}; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus; CRITICAL alert logged on Step 1 HOLD branch (pair status == cancel_only OR maintenance) — position retained, no orders submitted, alert routed to operator per ar:AR-040 + rule:HR-EC-016(a); if rule:HR-EC-016(b) priority override fires, exit_reason logged as MAE_THRESHOLD_BREACH (Layer 2 reason) not the original L1a reason.
         schema_version: 1.0
       </desc>
     <rect x="40" y="234" width="460" height="350" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -3346,9 +3351,12 @@ taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: container:Matching_Engine
-        constraints: rule:Sacred_R_R_1_to_1_5, ar:AR-007
+        constraints: rule:Sacred_R_R_1_to_1_5, ar:AR-007, ar:AR-066
         consumes: channel:kraken_ws_executions
         produces: evt:TRADE_CLOSE
+        q1_do: take-profit fill exit path — resting TP limit order placed at entry sits on container:Matching_Engine (off-book or post-only maker) and fills naturally when market reaches gross_target derived per rule:Sacred_R_R_1_to_1_5 (net_gain = net_loss x 1.5); on fill confirm from channel:kraken_ws_executions, Exit Controller cancels the corresponding emergSL off-book order to release reserved margin; paper mode dispatches via PT_MODE_002 maybe_paper_fill simulator; ar:AR-066 TP partial fill direction-symmetric Position Mirror update + emergSL amend mechanism applies when cum_qty advances incrementally.
+        q4_triggers: TP limit order fill event delivered on channel:kraken_ws_executions (full fill -&gt; standard TP_FILL path; partial fill cum_qty &gt; 0 + simultaneous L2 MAE breach -&gt; rule:HR-EC-016(c) priority branch: Layer 2 WINS, cancel remaining TP qty, execute Layer 2 market sell using cum_qty as partial P/L credited at TP price, emit ONE unified record with exit_reason = MAE_THRESHOLD_BREACH); paper mode trigger emitted by maybe_paper_fill simulator when synthetic bid crosses TP price.
+        q5_logs: exit_reason = TP_FILL (full fill standard path); maker 0.16% fee accrued per ar:AR-007; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus with net_gain = net_loss x 1.5 per rule:Sacred_R_R_1_to_1_5; on rule:HR-EC-016(c) priority branch, exit_reason logged as MAE_THRESHOLD_BREACH (not TP_FILL) with partial cum_qty filled at TP price recorded in P/L breakdown — single unified record (never two records for same position); ar:AR-066 partial-fill Position Mirror update events traced through to closure.
         schema_version: 1.0
       </desc>
     <rect x="520" y="234" width="460" height="350" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="6"/>
@@ -3383,10 +3391,13 @@ taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: mod:Exit_Controller, channel:kraken_ws_executions
-        constraints: rule:HR-EC-014, rule:HR-PM-009
+        constraints: rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009
         consumes: indicator:ATR_14, param:mae_mult
         produces: evt:TRADE_CLOSE
         position_mirror_access: read-only via WSManager helper methods per rule:HR-PM-009 (entry_fill_price + qty + fees_entry_usd read from PositionRecord at MAE-trigger time; Layer 2 does NOT mutate Position Mirror).
+        q1_do: MAE-threshold market-sell exit path within mod:Exit_Controller; on breach detection executes ordered sequence (1) WS cancel_order(TP resting limit) -&gt; (2) WS cancel_order(emergSL off-book) -&gt; (3) WS add_order(market sell, taker 0.26% fee); BOTH cancels MUST confirm before market sell (rule:HR-EC-014 sequence-critical); req_id registry tracks each cancel ACK with cancel-timeout fallback (timeout -&gt; check executions channel; confirmed -&gt; proceed; unknown -&gt; retry 1x; 2nd timeout -&gt; alert + hold position + alert operator); NEVER market sell with ambiguous order state; reads PositionRecord via wm.pm_get helper per rule:HR-PM-009 (does NOT mutate Position Mirror); rule:HR-EC-016(b) priority semantics — if L1a sequence in progress at breach time, complete L1a cancel sequence then execute market sell with exit_reason override; rule:HR-EC-016(c) priority semantics — if TP partial fill (cum_qty &gt; 0) simultaneous with breach, Layer 2 WINS and emits ONE unified record.
+        q4_triggers: (entry_fill_price - bid_price) &gt;= ATR(14) x param:mae_mult (1.5x default) evaluated on channel:kraken_ws_ticker bbo bid for each open position; ATR_14 value sourced per-position from PositionRecord entry-time snapshot (not live-recomputed); evaluation cadence per tick update on subscribed ticker channel; MPP risk acknowledged (C-1 dv1_4) — market sell may reject on wide spread, Exit Controller must handle and retry per 0511004 Exit_Controller spec.
+        q5_logs: exit_reason = MAE_THRESHOLD_BREACH; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus with realized P/L computed at market-sell taker fill price (taker 0.26% fee per ar:AR-007 fee structure); cancel-ACK timeout events logged via req_id registry; 2nd-timeout alert events logged (position HELD + operator alert); rule:HR-EC-016(c) priority branch logs ONE unified record covering full position closure (cum_qty filled at TP price + remaining qty filled at market sell price, single record, never two); paper mode dispatches via PT_MODE_002 / PT_MODE_003 simulated locally.
         schema_version: 1.0
       </desc>
     <rect x="1000" y="234" width="460" height="540" fill="#fed7aa" stroke="#9a3412" stroke-width="2" rx="6"/>
@@ -3445,6 +3456,9 @@ taxonomy:
         constraints: ar:AR-008, rule:HR-PM-009
         consumes: indicator:ATR_14, param:emergency_sl_mult
         produces: evt:TRADE_CLOSE
+        q1_do: off-book emergency stop-market resting on container:Matching_Engine — crash protection ONLY, NOT a normal exit path; placed at entry-time distance entry_fill_price - (ATR(14) x param:emergency_sl_mult) for longs (direction-symmetric for shorts per ar:AR-073); survives any TothBot failure mode (VPS crash, internet severed, unrecoverable WS disconnect, TothBot process death); Exit Controller does NOT actively manage L3 at runtime beyond initial placement at entry + final cancellation on normal exit (L1a or L1b or L2 completion); position_mirror_access semantics per rule:HR-PM-009 read-only via helpers.
+        q4_triggers: container:Matching_Engine stop-market price condition met while TothBot is OFFLINE (VPS crash / TothBot process down / internet severed / unrecoverable WS disconnect ar:AR-008); Kraken matching engine executes the stop-market autonomously without TothBot signaling required; SHOULD NEVER FIRE under normal operating conditions because L1a / L1b / L2 close positions first.
+        q5_logs: exit_reason = EMERGENCY_SL_FIRED -&gt; evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus; record emitted on TothBot recovery / WS reconnect via channel:kraken_ws_executions exec_type=trade backfill at the stop-market price; if fired, system_failure_event must be investigated as a forensic incident (alert raised, post-mortem opened) — should never fire in normal operation per ar:AR-008.
         schema_version: 1.0
       </desc>
     <rect x="40" y="854" width="1420" height="170" fill="#fee2e2" stroke="#7f1d1d" stroke-width="2" rx="6"/>
@@ -3474,6 +3488,9 @@ taxonomy:
         constraints: ar:AR-008
         consumes: indicator:ATR_14, param:mae_mult
         produces: none
+        q1_do: derives gross_target price for layer:L1b_TP_Fill resting TP limit placement using ACTUAL entry_fill_price (NOT limit price — why OTO conditional orders were rejected per ar:AR-008); applies the sacred R:R 1:1.5 ratio: mae_pct = ATR(14) x param:mae_mult / entry_fill_price, net_loss = mae_pct + 0.16% (entry maker) + 0.26% (MAE taker), net_gain = net_loss x 1.5 (SACRED — hardcoded — rule:Sacred_R_R_1_to_1_5), gross_target = net_gain + 0.16% (TP maker exit fee per ar:AR-007); emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price is NEVER in the R:R formula (L3 is crash protection only, not a risk leg).
+        q4_triggers: position entry confirmation event (entry_fill_price + qty + fees_entry_usd available on PositionRecord post-fill via WSManager); recomputed exactly ONCE per new position at entry time; the gross_target value is then persisted in PositionRecord and used by layer:L1b_TP_Fill as the resting TP limit price for the lifetime of the position.
+        q5_logs: gross_target value persisted in PositionRecord at entry time (consumable by L1b TP placement + post-trade attribution); no direct evt: emission from this calculation node (produces: none); attribution closes via layer:L1b_TP_Fill evt:TRADE_CLOSE record when the TP fills naturally (records realized net_gain achieving sacred 1:1.5 ratio); rule violation (net_gain != net_loss x 1.5) would be a CRITICAL system invariant breach — must NEVER occur (hardcoded).
         schema_version: 1.0
       </desc>
     <rect x="40" y="1050" width="1420" height="160" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
@@ -3508,6 +3525,9 @@ taxonomy:
         constraints: rule:HR-EC-016 (NEW dv1_48 — Layer 2 priority over Layer 1a + TP-partial conflict resolution + L1a Step 1 pair-status precondition binding); ar:AR-040 (pair status events); ar:AR-066 (TP partial fill direction-symmetric Position Mirror update + emergSL amend); rule:Sacred_R_R_1_to_1_5
         consumes: ar:AR-040 (instrument status channel events for pairs with open positions), channel:kraken_ws_executions (TP partial-fill exec_type=trade events), channel:kraken_ws_ticker (bbo bid for MAE breach detection)
         produces: contract:CIATS_Trade_Outcome_Bus (ONE unified evt:TRADE_CLOSE record per closed position even under simultaneous TP-partial + L2 conflict — never two records)
+        q1_do: encodes three architectural conflict-resolution rules governing mod:Exit_Controller behavior under simultaneous-event conditions — (a) L1a sequence Step 1 pair-status precondition check via ar:AR-040 instrument status events: IF status == cancel_only OR maintenance THEN HOLD position + CRITICAL alert + NO orders (resting TP + emergSL provide protection in pair-disruption states); (b) Layer 2 MAE breach takes priority over any in-progress Layer 1a sequence: complete the L1a cancel sequence, then execute market sell with exit_reason = MAE_THRESHOLD_BREACH (NOT original L1a reason); (c) TP partial fill (cum_qty &gt; 0) + simultaneous Layer 2 MAE breach = Layer 2 WINS: cancel remaining TP qty, execute L2 market sell, use cum_qty already filled as partial P/L credited at TP price, emit ONE unified contract:CIATS_Trade_Outcome_Bus record with exit_reason = MAE_THRESHOLD_BREACH (single record covering full position closure — NEVER two records for same position).
+        q4_triggers: rule (a) — ar:AR-040 instrument status events (cancel_only / maintenance) on instrument-status channel BEFORE any L1a action attempt; rule (b) — L2 MAE breach (entry - bid) &gt;= ATR(14) x param:mae_mult on channel:kraken_ws_ticker bid during an in-progress L1a cancel-sequence (timing window: L1a cancel_order(TP) submitted but final market_sell not yet emitted); rule (c) — TP partial fill exec_type=trade event on channel:kraken_ws_executions (cum_qty &gt; 0 but order_status != filled) + simultaneous L2 MAE breach (same evaluation cadence per tick).
+        q5_logs: rule (a) — CRITICAL alert + position HOLD event logged (no order submission); operator alert routed; rule (b) — exit_reason logged as MAE_THRESHOLD_BREACH (NOT original L1a reason — SIGNAL_DECAY / TIME_EXPIRY / MOMENTUM_LOSS suppressed in favor of Layer 2 reason); rule (c) — ONE unified contract:CIATS_Trade_Outcome_Bus record emitted (exit_reason = MAE_THRESHOLD_BREACH; partial-fill P/L breakdown captured: cum_qty filled at TP price + remaining_qty filled at L2 market sell price; total realized = sum; record asserts single-emission invariant — NEVER two records per position); ar:AR-066 partial-fill Position Mirror update events traced through to terminal closure record.
         schema_version: 1.0
         rule_text: rule:HR-EC-016 (verbatim — NEW dv1_48): "(a) Layer 1a sequence MUST check pair status as Step 1 before any cancel or sell action. If pair status == cancel_only OR maintenance, HOLD position, raise CRITICAL alert, and do NOT proceed with the L1a sequence. Resting TP and emergSL on Kraken matching engine are the only protection in these pair-disruption states. (b) Layer 2 MAE threshold breach takes priority over any in-progress Layer 1a sequence. If MAE breaches while L1a cancel sequence is underway, complete the cancel sequence then execute market sell with exit_reason=MAE_THRESHOLD_BREACH (not the original L1a reason). (c) When TP order partial fill (cum_qty &gt; 0) and Layer 2 MAE breach occur simultaneously, Layer 2 WINS: cancel the remaining TP qty, execute Layer 2 market sell, use cum_qty already filled as partial P/L credited at TP price, emit ONE unified contract:CIATS_Trade_Outcome_Bus record with exit_reason=MAE_THRESHOLD_BREACH (single record covering the full position closure — never two records for the same position)."
     </desc>
@@ -3522,7 +3542,7 @@ taxonomy:
 
 </svg>
   </div>
-  <figcaption>Image3 Exit Architecture (R4 — TB00214 STAGE Phase 1 1011005 redundancy audit migration to canonical: NEW conflict_resolution_callout decoration group (id="conflict_resolution_callout") added at figure bottom encoding three architectural rules under new rule:HR-EC-016 — (a) L1a sequence Step 1 pair-status precondition binding per ar:AR-040 + 1011005 dv1_3 §5.1 EC-L1A-SEQ Step 1, (b) Layer 2 priority over in-progress Layer 1a per 1011005 dv1_3 §5 EC-L2-003, and (c) TP-partial + simultaneous Layer 2 conflict resolution per 1011005 dv1_3 §6.2 EC-TP-006: Layer 2 WINS, cancel remaining TP qty, execute Layer 2 market sell, emit ONE unified evt:TRADE_CLOSE record exit_reason=MAE_THRESHOLD_BREACH (never two records for same position). SVG viewBox extended 1500x1320 → 1500x1420 (+100px) to accommodate the new callout group. Existing R3 visual content preserved BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-session cadence. All 7 other figures (Tier 1, D1, D2, D4, D5, D6, D7) preserved byte-identical this dv1_48 increment. 0511004 dv1_3 → dv1_4 prose cascade and 1011005 dv1_3 → rt1_3 retirement sequenced as separate work-product turns this same TB00214 session per Phase 1 audit execution plan. CIATS Trade Outcome Bus 24-field vs 12-field schema reconciliation (1011005 dv1_3 §9 EC-TOB-002 vs 0511004 dv1_3 §7.5) DEFERRED to a future dv1_NN session amending Diagram 5 + Diagram 6 under DEC-003 Path A; logged as carry-forward in TB00214 SL §7. R3 history preserved: TB00169 STAGE L+ STEP 2 D3 trigger formula sign correction (visible TRIGGER text aligned to canonical EC-L2-001 spec form); R2 history preserved: DR-011 D3 portion closure (HR-PM-009 sole-writer architectural callout added); DR-040 Layer 2 mae_pct_reached field DEFERRED pending Phase 1 spec landing.)</figcaption>
+  <figcaption>Image3 Exit Architecture (R5 — TB00356 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16 V-040 validation rule + §15.16.3 attestation contract. SCOPE: 7 D3 component &lt;desc&gt; blocks extended with q1_do + q4_triggers + q5_logs fields per TB00000 v2_57 §3.2 Q1-Q5 design-completeness criterion bound to diagrams; V-040.3 Q3 ADD-only constraints propagation from D3 ROOT governs to per-component constraints fields. Components amended (7 total, all design-complete PASS post-amendment): exit_controller_owner (mod:Exit_Controller) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS; layer_l1a (layer:L1a_Signal_Exit) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS; layer_l1b (layer:L1b_TP_Fill) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS; layer_l2 (layer:L2_MAE_Threshold) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS; layer_l3 (layer:L3_Emergency_SL) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS; rr_formula (rule:Sacred_R_R_1_to_1_5) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS; conflict_resolution_callout (rule:HR-EC-016) Q1 PASS / Q2 PASS / Q3 PASS / Q4 PASS / Q5 PASS. Total: 7 × 5 = 35 cells PASS. V-040.3 Q3 FAIL-CLOSURE (ADD-only token propagation): rule:HR-EC-016 added to exit_controller_owner + layer_l1a + layer_l2 per-component constraints (root governs since TB00214 dv1_48 R3 → R4 but absent from per-component constraints — latent V-040.3 Q3 cell FAILs); ar:AR-040 added to layer_l1a constraints (Step 1 pair-status precondition binding); ar:AR-066 added to layer_l1b constraints (TP partial fill direction-symmetric mechanism per 0511004 + 0511005). OPTION R EXTENSIONS (TB00352/353/354/355 chat-turn 1 + TB00356 chat-turn 1 FP/DP OUTCOME 1): (i) cross-diagram Q2 interface audit — D3 inbound/outbound interfaces traced: inbound channel:kraken_ws_executions (TP fills + cancel ACKs from D1 R7), inbound channel:kraken_ws_ticker (bbo bid for MAE detection from D1 R7), inbound ar:AR-040 instrument status (from D1 R7), inbound indicator:SSS/RSI/EMA9/EMA21 (from D2 R6 Signal Pipeline), inbound indicator:ATR_14 (from D2 R6 Signal Pipeline), inbound param:mae_mult + param:emergency_sl_mult (from D5 Parameter Store), outbound evt:TRADE_CLOSE → contract:CIATS_Trade_Outcome_Bus (to D5 attribution); Flow 6 + Flow 7 PENDING-CASCADE entries (TB00355 SL §5) CLOSED at this D3 amendment as D3 is now Q4 + Q5 design-complete for all outbound terminations. (ii) namespace registry batching check — D3 amendment ADD-only scope introduces NO new container / actor / channel / contract / arrow / ar / rule / decision / param / mod / indicator / evt / pt_mode / regime / layer / state identifier tokens (zero new tokens — consistent with TB00352/353/354/355 precedent). No 0311001 v1_24 → v1_25 registry amendment required this session. (iii) subsequent-session dependency-ordered sequence — TB00357 candidate target = D4 Regime_Taxonomy R? → R? V-040 design-completeness extension (next un-amended diagram per dependency-ordered sequence step 6); final selection deferred to TB00357 chat-turn 1 FP/DP-derivability-test per DD-011 v2_57 CHAT-TURN-1 GATE. SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption / SVG-title-R-state-bump scope only; no rect / path / polygon / line / text-position byte change; no viewBox change (1500x1420 preserved). All 9 other figures (Tier 1 Context + D1 + D2 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. PA-005 / PA-007 direction-symmetric parity per ar:AR-009 + ar:AR-072 + ar:AR-073: D3 exit-handler q1_do / q4_triggers / q5_logs language documents long-side mechanism with explicit notation that short-side encoding is byte-identical post-condition per direction-symmetric parity (long/short asymmetry resolution active, Position Mirror PA-005 byte-identical paper-live parity per rule:HR-PM-011 enforced at WSManager seam per D7 R6). R-INCREMENT CHAIN ROLL per CI-005 + CI-006 visible-stack 3-deep policy: R-increment-prior = historical R3 → R4 narrative (TB00214 Phase 1 1011005 audit migration); R-increment-prior-2 = historical R2 → R3 narrative (TB00169 trigger formula sign correction); R1 → R2 narrative (DR-011 D3 portion closure HR-PM-009 sole-writer callout) and R0 → R1 narrative (currency refresh against dv1_23 §4) rolled OUT of visible D3 root &lt;desc&gt; chain — preserved in dv1_88 §14 Revision History entry below.)</figcaption>
 </figure>
 <h2>5. Regime Taxonomy</h2>
 <p>
@@ -8126,6 +8146,156 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+  dv1_88  05-19-2026  TB00356 AMENDMENT — D3 EXIT ARCHITECTURE
+                      R4 -&gt; R5 V-040 DESIGN-COMPLETENESS
+                      EXTENSION (FIFTH PER-DIAGRAM DESIGN-COMPLETENESS
+                      AMENDMENT UNDER TB00000 v2_57 §4.5 DD-014 +
+                      0311001 v1_24 §15.16 GOVERNANCE FRAME).
+
+                      Single diagram-amendment scope: D3 Exit
+                      Architecture (0500000_Image3_T2 tier 2) root
+                      &lt;desc&gt; R-increment R4 -&gt; R5 + 7 component
+                      &lt;desc&gt; blocks extended with q1_do + q4_triggers
+                      + q5_logs fields per TB00000 v2_57 §3.2 Q1-Q5
+                      design-completeness criterion bound to diagrams
+                      by §4.5 DD-014 + 0311001 v1_24 §15.16 V-040
+                      validation rule + §15.16.3 attestation contract.
+
+                      Components amended (7 total, all design-complete
+                      PASS post-amendment):
+                      1 owner module —
+                        mod:Exit_Controller (exit_controller_owner).
+                      4 exit layers —
+                        layer:L1a_Signal_Exit (layer_l1a),
+                        layer:L1b_TP_Fill (layer_l1b),
+                        layer:L2_MAE_Threshold (layer_l2),
+                        layer:L3_Emergency_SL (layer_l3).
+                      1 derivation node —
+                        rule:Sacred_R_R_1_to_1_5 (rr_formula).
+                      1 conflict-resolution callout —
+                        rule:HR-EC-016 (conflict_resolution_callout).
+
+                      V-040.3 Q3 fail-closure ADD-only token
+                      propagation from D3 ROOT governs to per-
+                      component constraints:
+                      - rule:HR-EC-016 added to exit_controller_owner
+                        + layer_l1a + layer_l2 constraints (root
+                        governs since TB00214 dv1_48 R3 -&gt; R4 but
+                        absent from per-component constraints —
+                        latent V-040.3 Q3 cell FAILs at all three
+                        components).
+                      - ar:AR-040 added to layer_l1a constraints
+                        (Step 1 pair-status precondition binding per
+                        rule:HR-EC-016(a)).
+                      - ar:AR-066 added to layer_l1b constraints
+                        (TP partial fill direction-symmetric
+                        mechanism per rule:HR-EC-016(c) + 0511004
+                        + 0511005).
+                      ADD-only propagation closes the latent
+                      V-040.3 Q3 cell FAILs identified during
+                      this amendment's component audit.
+
+                      V-040 attestation per §15.16.3 contract:
+                      (a) diagram identifier + revision cited:
+                          0500000_Image3_T2_R5_Exit_Architecture;
+                      (b) per-component Q1-Q5 PASS enumeration =
+                          7 × 5 = 35 cells all PASS;
+                      (c) &quot;from the diagram alone&quot; confirmation —
+                          SVG visual + governs &lt;desc&gt; + figcaption
+                          only;
+                      (d) FAIL disposition = none post-amendment.
+                          Amendment ACCEPTED at namespace validation
+                          per §15.16.4 V-040 step (5).
+
+                      Option R extensions (TB00352 chat-turn 1 +
+                      TB00353 chat-turn 1 + TB00354 chat-turn 1 +
+                      TB00355 chat-turn 1 + TB00356 chat-turn 1
+                      FP/DP OUTCOME 1):
+                      (i) cross-diagram Q2 interface audit — D3
+                          inbound/outbound interfaces traced:
+                          inbound channel:kraken_ws_executions (TP
+                          fills + cancel ACKs from D1 R7); inbound
+                          channel:kraken_ws_ticker (bbo bid for MAE
+                          detection from D1 R7); inbound ar:AR-040
+                          instrument status (from D1 R7); inbound
+                          indicator:SSS / RSI / EMA9 / EMA21 (from
+                          D2 R6 Signal Pipeline); inbound indicator:
+                          ATR_14 (from D2 R6 Signal Pipeline);
+                          inbound param:mae_mult + param:emergency_
+                          sl_mult (from D5 Parameter Store);
+                          outbound evt:TRADE_CLOSE -&gt; contract:
+                          CIATS_Trade_Outcome_Bus (to D5
+                          attribution). TB00355 SL §5 Flow 6 + Flow
+                          7 PENDING-CASCADE entries CLOSED — D3 is
+                          now Q4 + Q5 design-complete for all
+                          outbound terminations.
+                      (ii) namespace registry batching check — D3
+                           amendment ADD-only scope introduces NO
+                           new container / actor / channel /
+                           contract / arrow / ar / rule / decision /
+                           param / mod / indicator / evt / pt_mode /
+                           regime / layer / state identifier tokens
+                           (zero new tokens — consistent with
+                           TB00352 / 353 / 354 / 355 precedent).
+                           No 0311001 v1_24 -&gt; v1_25 registry
+                           amendment required this session.
+                      (iii) subsequent-session dependency-ordered
+                            sequence — TB00357 candidate target =
+                            D4 Regime_Taxonomy R? -&gt; R? V-040
+                            design-completeness extension (next un-
+                            amended diagram per dependency-ordered
+                            sequence step 6; six-regime grid + ADX/
+                            EMA/ATR threshold semantics). Final
+                            selection deferred to TB00357 chat-turn
+                            1 FP/DP-derivability-test per DD-011
+                            v2_57 CHAT-TURN-1 GATE.
+
+                      SVG visual geometry preserved BYTE-IDENTICAL —
+                      &lt;desc&gt; / figcaption / SVG-title-R-state-bump
+                      scope only; no rect / path / polygon / line /
+                      text-position byte change; no viewBox change
+                      (1500x1420 preserved). All 9 other figures
+                      (Tier 1 Context + D1 + D2 + D4 + D5 + D6 + D7
+                      + D8 + D9) preserved byte-identical per DEC-003
+                      Path A one-diagram-per-session cadence.
+
+                      PA-005 / PA-007 direction-symmetric parity per
+                      ar:AR-009 + ar:AR-072 + ar:AR-073: D3 exit-
+                      handler q1_do / q4_triggers / q5_logs language
+                      documents long-side mechanism with explicit
+                      notation that short-side encoding is byte-
+                      identical post-condition per direction-
+                      symmetric parity (long/short asymmetry
+                      resolution active, Position Mirror PA-005
+                      byte-identical paper-live parity per rule:
+                      HR-PM-011 enforced at WSManager seam per D7 R6).
+
+                      Per CI-005 + CI-006 visible-stack 3-deep rolling
+                      policy at D3 root &lt;desc&gt;: R-increment-prior =
+                      historical R3 -&gt; R4 narrative (TB00214 STAGE
+                      Phase 1 1011005 redundancy audit migration: NEW
+                      conflict_resolution_callout decoration group
+                      added encoding rule:HR-EC-016); R-increment-
+                      prior-2 = historical R2 -&gt; R3 narrative
+                      (TB00169 STAGE L+ STEP 2 D3 trigger formula
+                      sign correction). R1 -&gt; R2 narrative (DR-011
+                      D3 portion closure: HR-PM-009 sole-writer
+                      architectural callout added to mod:Exit_
+                      Controller and layer:L2_MAE_Threshold group
+                      desc constraints, plus visible decoration band
+                      pm_helper_callout depicting the read-only-via-
+                      helpers pattern per 0511005 dv1_1 HR-PM-009 +
+                      HR-PM-011; SVG viewBox extended 1500x1240 -&gt;
+                      1500x1320 to fit the callout; DR-040 Layer 2
+                      mae_pct_reached field DEFERRED) preserved in
+                      this dv1_88 §14 historical entry per visible-
+                      stack 3-deep rolling policy. R0 -&gt; R1 narrative
+                      (currency refresh against dv1_23 §4 + glyph
+                      fallback fix + layer 3 layout fix bundled per
+                      TB00151a-2 NSI item b) also preserved in this
+                      §14 historical entry as it rolled out of D3
+                      root &lt;desc&gt; R-increment-prior-3 slot.
+
   dv1_87  05-19-2026  TB00355 AMENDMENT — D7 PAPER-MODE DISPATCH
                       BOUNDARY R5 -&gt; R6 V-040 DESIGN-COMPLETENESS
                       EXTENSION (FOURTH PER-DIAGRAM DESIGN-COMPLETENESS
