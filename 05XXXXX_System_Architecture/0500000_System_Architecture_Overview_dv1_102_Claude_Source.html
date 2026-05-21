@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_101</title>
+<title>0500000 System Architecture Overview dv1_102</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_101</td></tr>
+  <tr><td>DocVersion</td><td>dv1_102</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_101_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_102_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-20-2026</td></tr>
-  <tr><td>DocTime</td><td>17:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:59:59 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -2031,11 +2031,11 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
 </svg>
   </div>
   <figcaption>
-    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R8). R-increment R7 -&gt; R8 (TB00365 V-041 PRODUCER-BINDING AMENDMENT — P-CC1 INDICATOR-TOKEN PRODUCER-SIDE CLOSURE per TB00000 v2_58 §4.5 DD-001 + DD-002 + DD-014 diagrams-canonical-authoritative-complete mission + 0311001 v1_24 §15.16 V-041 + TB00362 V-041 FAIL List §3 P-CC1). V-041 producer-binding amendment: mod:Signal_Pipeline.produces extended with 6 indicator: tokens (ATR_14, EMA21, EMA9, RSI, SSS, VolumeMA20); mod:Regime_Engine.produces replaced "none" with 4 indicator: tokens (ADX_14, ATR_14, EMA20_daily, EMA50_daily). V-040 design-completeness 10/10 PRESERVED — no per-component q1/q2/q3/q4/q5 cell regression; pre-TB00365 V-040 attestation block per §15.16.3 below remains in force for the 65 D1 attestation cells.
+    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R9). V-040 INDEPENDENT VERIFICATION (TB00376) — 13 components × 5 questions = 65 cells, all PASS confirmed from dv1_102 SVG + governs descs + figcaption per §15.16.5(b) independent audit methodology. Figcaption visible header text catch-up R8 → R9 applied this amendment (TB00368 housekeeping applied SVG title + diagram_canonical R8 → R9 but figcaption visible text was not updated at that time; corrected here). Prior R-increment R7 → R8 (TB00365 V-041 P-CC1 INDICATOR-TOKEN PRODUCER-SIDE CLOSURE — mod:Signal_Pipeline.produces extended with 6 indicator: tokens; mod:Regime_Engine.produces replaced "none" with 4 indicator: tokens). Prior R-increment R8 → R9 (TB00367/TB00368 V-041 P-CC5 PRODUCER-BINDING — ws_subscribe:public_v2 added to Public_WS_v2.produces; ws_subscribe:private_v2 added to Private_WS_v2.produces). V-040 design-completeness 10/10 PRESERVED — no per-component q1/q2/q3/q4/q5 cell regression.
 
     <strong>§15.16.3 DESIGN-COMPLETENESS ATTESTATION.</strong>
 
-    <strong>(a) Diagram identifier and revision:</strong> D1 Kraken API Connection Architecture (0500000_Image1_T2_R7_Kraken_API_Connection_Architecture) 0500000 dv1_85.
+    <strong>(a) Diagram identifier and revision:</strong> D1 Kraken API Connection Architecture (0500000_Image1_T2_R9_Kraken_API_Connection_Architecture) 0500000 dv1_102.
 
     <strong>(b) Per-component Q1-Q5 PASS enumeration:</strong> 13 components × 5 questions = 65 cells. All 65 cells PASS.
 
@@ -2054,19 +2054,19 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
     [12] contract:CIATS_Trade_Outcome_Bus — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
     [13] rule:Sacred_R_R_1_to_1_5 — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
 
-    Q1 PASS sourced from per-component q1_do field added this amendment. Q2 PASS sourced from existing per-component constraints + consumes + produces + drill_targets fields. Q3 PASS sourced from existing per-component constraints field (rules / ARs / decisions / pt_modes / layers). Q4 PASS sourced from per-component q4_triggers field added this amendment. Q5 PASS sourced from per-component q5_logs field added this amendment.
+    Q1 PASS confirmed from per-component q1_do field present in current dv1_102 SVG. Q2 PASS confirmed from per-component constraints + consumes + produces + drill_targets fields. Q3 PASS confirmed from per-component constraints field (rules / ARs / decisions / pt_modes / layers). Q4 PASS confirmed from per-component q4_triggers field. Q5 PASS confirmed from per-component q5_logs field. All 65 cells independently verified at TB00376 from SVG + governs descs + figcaption ONLY per §15.16.5(b) independent audit methodology; no recourse to prose §1-§12, subordinate specs, TB00000 prose outside §3.2 Q1-Q5, or outside documents.
 
     <strong>(c) "From the diagram alone" confirmation:</strong> All 65 PASS marks derived using ONLY (i) the SVG visual rendering of the D1 Kraken API Connection Architecture diagram (every visible rect / line / path / text / group / label including PATH 2 multi-shard structure, KRAKEN/TOTHBOT/CIATS column headers, inter-column flow arrows, decoration groups for rate limits / systemd / param balance / API keys / DMS-rejected / CIATS streams / param store / proposal / regime library / thresholds / Kelly / sacred R:R / rejected / PATH 2 ADR + footer) + (ii) the machine-readable governs &lt;desc&gt; descriptors embedded in the SVG (13 component &lt;desc&gt; blocks with canonical + tier + parent_diagram + drill_targets + constraints + consumes + produces + q1_do + q4_triggers + q5_logs + schema_version fields, plus the root &lt;desc&gt; with diagram_canonical + tier + parent_dcn + parent_diagram + schema_version + R-increment + R-increment-prior + R-increment-prior-2 + governs + Sacred constraint fields) + (iii) this figcaption. NO source from prose §1-§12 of 0500000, NO source from subordinate specs (0XXXXXXX docs including 0411001 Kraken_WS_v2_Specification + 0411002 Kraken_REST_API_Specification + 0511001 WS_Manager_Specification + 0511002 Signal_Pipeline_Specification + 0511003 Execution_Engine_Specification + 0511004 Exit_Controller_Specification + 0511005 Position_Mirror_Specification + 0511006 Logger_Specification), NO source from TB00000 prose outside §3.2 Q1-Q5 itself, NO source from outside documents (MDR / DR / session logs / NSI / README / code).
 
-    <strong>(d) FAIL disposition:</strong> None. All 65 cells PASS. Amendment ACCEPTED at namespace validation per §15.16.4 V-040 step (5).
+    <strong>(d) FAIL disposition:</strong> None. All 65 cells PASS. V-040 INDEPENDENT VERIFICATION COMPLETE per §15.16.5(b). Prior attestation (R7, dv1_85): all 65 PASS. Current independent verification (TB00376, dv1_102): all 65 PASS confirmed. No SVG content amendment required — PASS is confirmed, not first-authored this amendment.
 
-    <strong>OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit:</strong> D1 components have outbound interfaces (Q2) to sibling Tier 2 diagrams and parent Tier 1. Audit results: [container:Public_WS_v2 → mod:WS_Manager → mod:Signal_Pipeline + mod:Exit_Controller + mod:Risk_Engine via channel:kraken_ws_ohlc_5m + channel:kraken_ws_ticker — D2 Trading Pipeline consumes Signal_Pipeline output, D3 Exit Architecture consumes Exit_Controller output, audit PENDING-CASCADE because D2/D3 have not yet undergone V-040 design-completeness amendment under DD-014; will be VERIFIED when D2 + D3 receive R-increment amendments per dependency-ordered sequence steps 3 + 4]. [container:Private_WS_v2 → mod:WS_Manager dispatch seam → D7 Paper_Mode_Dispatch_Boundary via contract:WSManager_Dispatch_Seam — D7 root governs PA-004(2) dispatch boundary already encoded per TB00247 AMENDMENT-11, this interface VERIFIED at D7 governs-list audit]. [container:Kraken_REST_API → mod:WS_Manager contract:Reconciliation_REST + mod:Regime_Engine GetOHLCData — Tier 1 Flow 3 contract:Reconciliation_REST drill_target = D1 VERIFIED at TB00352; mod:Regime_Engine interface PENDING-CASCADE to D4 Regime Taxonomy V-040 amendment]. [container:Matching_Engine evt:ENTRY_FILLED + evt:TRADE_CLOSE → mod:Logger → contract:CIATS_Trade_Outcome_Bus → D5 CIATS_Architecture + D6 Complete_System — D5 + D6 contain canonical 23-field schema encoding per TB00218 SCHEMA CITATION ARCHITECTURE CORRECTION, this interface VERIFIED at D5/D6 governs-list audit]. [mod:WS_Manager contract:WSManager_Dispatch_Seam → D7 mode-opaque caller contract per rule:HR-EE-013/014/015 — VERIFIED at D7 governs-list audit per TB00247]. [mod:Exit_Controller evt:TRADE_CLOSE → contract:CIATS_Trade_Outcome_Bus → D5/D6 — VERIFIED]. [mod:Logger 10 consumed events → channel:logger_async_queue → D5 CIATS data source per CI-IF-001 — VERIFIED]. Summary: 4 of 7 outbound interfaces VERIFIED at destination Tier 2 diagrams (D5, D6, D7 already amended or canonical-encoded); 3 of 7 outbound interfaces PENDING-CASCADE awaiting D2 + D3 + D4 V-040 design-completeness amendments per dependency-ordered sequence steps 3-5. PENDING-CASCADE entries logged as explicit carry-forward for TB00354 NSI + subsequent sessions.
+    <strong>OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit:</strong> D1 components have outbound interfaces (Q2) to sibling Tier 2 diagrams and parent Tier 1. Audit results: [container:Public_WS_v2 → mod:WS_Manager → mod:Signal_Pipeline + mod:Exit_Controller + mod:Risk_Engine via channel:kraken_ws_ohlc_5m + channel:kraken_ws_ticker — D2 Trading Pipeline consumes Signal_Pipeline output, D3 Exit Architecture consumes Exit_Controller output, audit PENDING-CASCADE because D2/D3 have not yet undergone V-040 independent verification; will be VERIFIED when D2 + D3 receive independent verification amendments per §15.16.5(b) cadence]. [container:Private_WS_v2 → mod:WS_Manager dispatch seam → D7 Paper_Mode_Dispatch_Boundary via contract:WSManager_Dispatch_Seam — D7 root governs PA-004(2) dispatch boundary encoded per TB00247 AMENDMENT-11, interface VERIFIED at D7 V-040 design-completeness amendment (TB00355)]. [container:Kraken_REST_API → mod:WS_Manager contract:Reconciliation_REST + mod:Regime_Engine GetOHLCData — Tier 1 Flow 3 contract:Reconciliation_REST drill_target = D1 VERIFIED at TB00352; mod:Regime_Engine interface PENDING-CASCADE to D4 V-040 independent verification]. [container:Matching_Engine evt:ENTRY_FILLED + evt:TRADE_CLOSE → mod:Logger → contract:CIATS_Trade_Outcome_Bus → D5 CIATS_Architecture + D6 Complete_System — D5 (V-040 complete TB00358) + D6 (V-040 complete TB00359) canonical 23-field schema encoding VERIFIED]. [mod:WS_Manager contract:WSManager_Dispatch_Seam → D7 mode-opaque caller contract — VERIFIED at D7 TB00355 V-040 governs-list audit]. [mod:Exit_Controller evt:TRADE_CLOSE → contract:CIATS_Trade_Outcome_Bus → D5/D6 — VERIFIED]. [mod:Logger 10 consumed events → channel:logger_async_queue → D5 CIATS data source per CI-IF-001 — VERIFIED]. Summary: 4 of 7 outbound interfaces VERIFIED at destination Tier 2 diagrams (D5, D6, D7 V-040 complete); 3 of 7 outbound interfaces PENDING-CASCADE awaiting D2 + D3 + D4 V-040 independent verification per §15.16.5(b) campaign cadence.
 
-    <strong>OPTION R EXTENSION (ii) — namespace registry batching check:</strong> D1 amendment ADD-only scope introduces NO new container: / actor: / channel: / contract: / arrow: / ar: / rule: / decision: / param: / mod: / indicator: / evt: / pt_mode: / regime: / layer: / gate: / pt_mode: identifier tokens. All canonical identifiers cited in the amended q1_do/q4_triggers/q5_logs fields (ar:AR-001, AR-008, AR-014, AR-018, AR-028, AR-035, AR-036, AR-038, AR-039, AR-055, AR-056, AR-068, AR-069, AR-072, AR-074, AR-080; rule:HR-CI-003, HR-EC-016, HR-LG-004/007/009/010/011, HR-PM-009, HR-SP-010, HR-WM-023/028/029/030/032/033, Sacred_R_R_1_to_1_5; contract:WM-PACE-001/002, WM-SHARD-001/010, WM-RECONNECT-016, OHLC_5m_System_Clock, Pre_Computation_Cache_Read, Parameter_Store_Snapshot, Reconciliation_REST, WSManager_Dispatch_Seam, Synthetic_Capital_Ledger, CIATS_Trade_Outcome_Bus; decision:D-04, D-06; pt_mode:PT_MODE_001/002/004/006; CI-IF-001; param:atr_rolling_window, full_halt_drawdown, session_pause_drawdown, max_concurrent, per_trade_pct, mae_mult, emergency_sl_mult; evt:ENTRY_FILLED, ENTRY_SUBMITTED, TRADE_CLOSE, WS_RECONNECT, WS_SUBSCRIBE_RATE_LIMIT, PAPER_DISPATCH_BLOCKED, PAPER_LEDGER_UPDATED, SUBSCRIBE_PACE_WAIT, SUBSCRIBE_PACE_BATCH_COMPLETE, PAIR_DATA_PENDING, PAIR_DATA_READY_RECOVERED, LOG_QUEUE_FULL) are pre-existing in 0500000 dv1_84 and pre-registered in 0311001 v1_24 §15.12 token registries. No 0311001 v1_24 -&gt; v1_25 amendment required for token registration this session.
+    <strong>OPTION R EXTENSION (ii) — namespace registry batching check:</strong> D1 independent verification introduces NO new identifier tokens. All canonical identifiers cited in the q1_do/q4_triggers/q5_logs fields are pre-existing in 0311001 v1_24 §15.12 token registries. No 0311001 v1_24 → v1_25 amendment required this session.
 
-    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence:</strong> Captured in TB00354 NSI §2 carry-forward. TB00354 candidate target = D2 Trading Pipeline (highest density Tier 2; consumes mod:Signal_Pipeline + mod:Exit_Controller + mod:Risk_Engine D1-encoded interfaces; second per-diagram amendment under DD-014 + V-040 cadence per TB00352 dependency-ordered sequence step 3).
+    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence (TB00376 UPDATE):</strong> TB00377 target = D2 Trading_Pipeline V-040 independent verification per §15.16.5(b) campaign cadence. (T1 → D1 → D2 → D3 → D4 → D5 → D6 → D7 → D8 → D9 sequence; D2 next per dependency-ordered independent verification cadence.)
 
-    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption preserved verbatim in §14 dv1_85 revision history entry (the historical R6 "AR-080 Cloudflare reconnect rate limit governs-list extension" caption from TB00340). R-increment chain post-TB00365 at 3-prior-slot depth (AT 3-deep ceiling): R-increment R7-&gt;R8 (TB00365 V-041 P-CC1 producer-binding) + R-increment-prior R6-&gt;R7 (TB00353 V-040 design-completeness) + R-increment-prior-2 R5-&gt;R6 (TB00340 AR-080 Cloudflare) + R-increment-prior-3 R4-&gt;R5 (TB00244 AMENDMENT-8 Kraken-API order-dispatch). No rotation OUT this amendment.
+    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption (TB00365 R7→R8 V-041 P-CC1 producer-binding attestation text) preserved verbatim in §14 dv1_102 revision history entry below. R-increment chain at 3-prior-slot depth (AT 3-deep ceiling): R-increment R8→R9 (TB00367/TB00368 V-041 P-CC5 ws_subscribe producer-binding) + R-increment-prior R7→R8 (TB00365 V-041 P-CC1 indicator producer-binding) + R-increment-prior-2 R6→R7 (TB00353 V-040 design-completeness) + R-increment-prior-3 R5→R6 (TB00340 AR-080 Cloudflare). No rotation OUT this amendment (already at 3-deep ceiling).
   </figcaption>
 </figure>
 <h2>3. TothBot Trading Pipeline</h2>
@@ -8425,6 +8425,78 @@ prefix taxonomy:
   OI-008: All AA=10 coding specs. WD documents active: 1011001 dv1_4, 1011002 dv1_10,
            1011005 dv1_0, 1011007 dv1_0, 1011010 dv1_3, 1011011 dv1_1, 1011012 dv1_2,
            1011013 dv1_2, 1011014 dv1_1. Current as of dv1_16. Phase 8 completes all.
+  dv1_102 05-20-2026  TB00376 V-040 INDEPENDENT VERIFICATION — D1 Kraken API Connection Architecture (TB00374 SL §4 P12 per-diagram V-040 independent verification audit cadence; §15.16.5(b) campaign step 2 of 10).
+
+                        PRIMARY MISSION: D1 Kraken API Connection Architecture V-040
+                        design-completeness Q1-Q5 independent verification audit per
+                        0311001 v1_24 §15.16.5(b) campaign cadence. T1 independently
+                        verified at dv1_101 TB00375 (75/75 PASS). D1 is the next diagram
+                        per §15.16.5(b) dependency-ordered sequence (T1 → D1 → D2... → D9).
+                        TB00376 FP/DP-derivability-test OUTCOME 1 DERIVABLE per DD-011 v2_56
+                        CHAT-TURN-1 GATE.
+
+                        AUDIT RESULT: 13 components x 5 questions = 65 cells. ALL 65 CELLS PASS.
+                        D1 is independently V-040-verified at dv1_102.
+
+                        COMPONENT AUDIT (all PASS from SVG + governs descs + figcaption ONLY;
+                        no recourse to prose §1-§12, subordinate specs, TB00000 outside §3.2, or
+                        outside documents):
+                        [1] container:Public_WS_v2: Q1 q1_do PASS, Q2 constraints+consumes+produces+drill_targets PASS, Q3 constraints PASS, Q4 q4_triggers PASS, Q5 q5_logs PASS.
+                        [2] container:Private_WS_v2: all Q1-Q5 PASS.
+                        [3] container:Kraken_REST_API: all Q1-Q5 PASS.
+                        [4] container:Matching_Engine: all Q1-Q5 PASS.
+                        [5] mod:WS_Manager: all Q1-Q5 PASS.
+                        [6] mod:Signal_Pipeline: all Q1-Q5 PASS.
+                        [7] mod:Position_Mirror: all Q1-Q5 PASS.
+                        [8] mod:Exit_Controller: all Q1-Q5 PASS.
+                        [9] mod:Regime_Engine: all Q1-Q5 PASS.
+                        [10] mod:Risk_Engine: all Q1-Q5 PASS.
+                        [11] mod:Logger: all Q1-Q5 PASS.
+                        [12] contract:CIATS_Trade_Outcome_Bus: all Q1-Q5 PASS.
+                        [13] rule:Sacred_R_R_1_to_1_5: all Q1-Q5 PASS.
+
+                        SVG NAMING NOTE: SVG title/diagram_canonical shows R9 (TB00368
+                        housekeeping corrected R8 → R9 at SVG title level). D1 actual R-state
+                        is R9. Figcaption visible header text was stale at "(R8)" per dv1_101;
+                        corrected to "(R9)" as part of this amendment (figcaption-only text fix;
+                        SVG geometry BYTE-IDENTICAL).
+
+                        AMENDMENT SCOPE: figcaption attestation (a) updated to cite dv1_102
+                        TB00376 independent verification; Q1-Q5 source text updated to
+                        "confirmed from" (not "sourced from added this amendment"); (d)
+                        updated to record V-040 INDEPENDENT VERIFICATION COMPLETE per
+                        §15.16.5(b); OPTION R iii updated to TB00377 D2 target; OPTION R i
+                        updated with current V-040 campaign state; CI-005+CI-006 reference
+                        updated to dv1_102 §14. Figcaption visible header "(R8)" corrected
+                        to "(R9)" as catch-up housekeeping. SVG visual geometry preserved
+                        BYTE-IDENTICAL — no rect/path/polygon/line/text-position byte change;
+                        no viewBox change (1500x1600 preserved). No component &lt;desc&gt; changes
+                        (all fields present and PASS; no ADD-only scope triggered). All 9 other
+                        figures preserved BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-
+                        session cadence. V-040 design-completeness 10/10 PRESERVED — no
+                        per-component cell regression; this amendment CONFIRMS prior PASS
+                        attestations at all 65 D1 cells.
+
+                        FIGCAPTION-ROTATION-ARCHIVE (prior D1 figcaption per CI-005 + CI-006):
+                        Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R8).
+                        R-increment R7 → R8 (TB00365 V-041 PRODUCER-BINDING AMENDMENT —
+                        P-CC1 INDICATOR-TOKEN PRODUCER-SIDE CLOSURE). V-041 producer-binding
+                        amendment: mod:Signal_Pipeline.produces extended with 6 indicator: tokens
+                        (ATR_14, EMA21, EMA9, RSI, SSS, VolumeMA20); mod:Regime_Engine.produces
+                        replaced "none" with 4 indicator: tokens (ADX_14, ATR_14, EMA20_daily,
+                        EMA50_daily). V-040 design-completeness 10/10 PRESERVED — no per-component
+                        q1/q2/q3/q4/q5 cell regression; pre-TB00365 V-040 attestation block per
+                        §15.16.3 below remains in force for the 65 D1 attestation cells.
+                        (a) D1 Kraken API Connection Architecture
+                        (0500000_Image1_T2_R7_Kraken_API_Connection_Architecture) 0500000 dv1_85.
+
+                        HTML title + dc-meta DocVersion bumped dv1_101 → dv1_102 (line 6 + 135);
+                        DocPath dv1_101 → dv1_102 (line 137); DocTime 17:30:00 UTC →
+                        23:59:59 UTC (line 139); DocDate 05-20-2026 unchanged.
+
+                        SUBSEQUENT SESSION: TB00377 target = D2 Trading_Pipeline V-040
+                        independent verification per §15.16.5(b) campaign cadence.
+
   dv1_101 05-20-2026  TB00375 V-040 INDEPENDENT VERIFICATION — T1 Tier 1 Context Diagram (TB00374 SL §4 P12 per-diagram V-040 independent verification audit cadence).
 
                         PRIMARY MISSION: T1 Tier 1 Context Diagram V-040 design-completeness
