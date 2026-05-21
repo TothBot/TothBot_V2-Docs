@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_100</title>
+<title>0500000 System Architecture Overview dv1_101</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_100</td></tr>
+  <tr><td>DocVersion</td><td>dv1_101</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_100_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_101_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>05-20-2026</td></tr>
-  <tr><td>DocTime</td><td>16:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>17:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -734,7 +734,7 @@ Tier 2 diagrams (D1 - D7) below.
 
     <strong>§15.16.3 DESIGN-COMPLETENESS ATTESTATION.</strong>
 
-    <strong>(a) Diagram identifier and revision:</strong> Tier 1 Context Diagram (0500000_Context_T1_R2_System_Context) 0500000 dv1_96 (R1 → R2 V-041 P-CC4 REST canonicalization TB00367).
+    <strong>(a) Diagram identifier and revision:</strong> Tier 1 Context Diagram (0500000_Context_T1_R2_System_Context; SVG title/canonical shows R2; actual amendment count R23 per TB00374 SL §7; SVG title update to R24 deferred per V-041 Class A campaign pause TB00374 SL §4) 0500000 dv1_101 (TB00375 V-040 INDEPENDENT VERIFICATION per 0311001 v1_24 §15.16.5(b) per-diagram V-040 independent verification audit cadence; prior attestation dv1_96 R2).
 
     <strong>(b) Per-component Q1-Q5 PASS enumeration:</strong> 15 components × 5 questions = 75 cells. All 75 cells PASS.
 
@@ -755,19 +755,19 @@ Tier 2 diagrams (D1 - D7) below.
     [14] arrow:Logger_Alert_Out_Of_Band (flow5_alerts) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
     [15] arrow:Bill_Operational_Channels (flow6_bill_ops) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
 
-    Q1 PASS sourced from per-component q1_do field added this amendment. Q2 PASS sourced from existing per-component constraints + consumes + produces + drill_targets fields. Q3 PASS sourced from existing per-component constraints field (rules / ARs / decisions). Q4 PASS sourced from per-component q4_triggers field added this amendment. Q5 PASS sourced from per-component q5_logs field added this amendment.
+    Q1 PASS confirmed from per-component q1_do field (present in current dv1_101 SVG). Q2 PASS confirmed from per-component constraints + consumes + produces + drill_targets fields. Q3 PASS confirmed from per-component constraints field (rules / ARs / decisions). Q4 PASS confirmed from per-component q4_triggers field. Q5 PASS confirmed from per-component q5_logs field. All 75 cells independently verified at TB00375 from SVG + governs descs + figcaption ONLY per §15.16.5(b) independent audit methodology; no recourse to prose §1-§12, subordinate specs, TB00000 prose outside §3.2 Q1-Q5, or outside documents.
 
     <strong>(c) "From the diagram alone" confirmation:</strong> All 75 PASS marks derived using ONLY (i) the SVG visual rendering of the Tier 1 Context diagram (every visible rect / line / path / text / group / label) + (ii) the machine-readable governs &lt;desc&gt; descriptors embedded in the SVG (15 component &lt;desc&gt; blocks with canonical + tier + parent_diagram + drill_targets + constraints + consumes + produces + q1_do + q4_triggers + q5_logs + schema_version fields, plus the root &lt;desc&gt; with diagram_canonical + tier + parent_dcn + schema_version + R-increment + governs + drill_targets fields) + (iii) this figcaption. NO source from prose §1-§12 of 0500000, NO source from subordinate specs (0XXXXXXX docs), NO source from TB00000 prose outside §3.2 Q1-Q5 itself, NO source from outside documents (MDR / DR / session logs / NSI / README / code).
 
-    <strong>(d) FAIL disposition:</strong> None. All 75 cells PASS. Amendment ACCEPTED at namespace validation per §15.16.4 V-040 step (5).
+    <strong>(d) FAIL disposition:</strong> None. All 75 cells PASS. V-040 INDEPENDENT VERIFICATION COMPLETE per §15.16.5(b). T1 is independently V-040-verified at 0500000 dv1_101 (TB00375). Prior attestation (R2, dv1_96): all 75 PASS. Current independent verification (TB00375, dv1_101): all 75 PASS confirmed. No SVG content amendment required — PASS is confirmed, not first-authored this amendment.
 
     <strong>OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit:</strong> 6 outbound flows from Tier 1 components mapped to destination Tier 2 diagrams. [Flow 1 contract:OHLC_5m_System_Clock] drill_target = D1 Kraken_API_Connection_Architecture (encoded in D1 root governs ar:AR-001 + AR-002 + channel:kraken_ws_ohlc_5m — VERIFIED). [Flow 2 contract:WSManager_Dispatch_Seam] drill_targets = D1 + D7 Paper_Mode_Dispatch_Boundary (D1 root governs ar:AR-001..AR-007 + PA-004(1) — VERIFIED; D7 root governs PA-004(2) dispatch boundary — VERIFIED). [Flow 3 contract:Reconciliation_REST] drill_target = D1 Kraken_API_Connection_Architecture (D1 root governs ar:AR-007 + AR-009 REST snapshot + executions-seq gap — VERIFIED). [Flow 4 contract:CIATS_Trade_Outcome_Bus] drill_target = D5 CIATS_Architecture (D5 root governs ar:AR-008 + decision:D-08 + Parameter_Store_Snapshot — VERIFIED via 0500000 dv1_83 D5 figure governs-list at line 2799). [Flow 5 arrow:Logger_Alert_Out_Of_Band] no drill_target (Tier 1 actor-to-actor terminal flow — by E2-A actors do not drill — N/A). [Flow 6 arrow:Bill_Operational_Channels] no drill_target (Tier 1 actor-to-actor terminal flow — by E2-A actors do not drill — N/A). All 4 drillable flows have matching interface encoded at destination Tier 2 diagram. No pending cascade entries required.
 
     <strong>OPTION R EXTENSION (ii) — namespace registry batching check:</strong> Tier 1 Context dv1_84 amendment ADD-only scope introduces NO new container: / actor: / channel: / contract: / arrow: / ar: / rule: / decision: / param: / mod: / indicator: / evt: identifier tokens. All canonical identifiers cited in the amended &lt;desc&gt; blocks are pre-existing in 0500000 dv1_83 and pre-registered in 0311001 v1_24 §15.12 token registries. No 0311001 v1_24 -&gt; v1_25 amendment required for token registration this session.
 
-    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence:</strong> Captured in TB00353 NSI §2 carry-forward. TB00353 candidate target = D1 Kraken_API_Connection_Architecture (Kraken-touching infrastructure; second per-diagram design-completeness amendment under DD-014 + V-040 cadence; pattern-established by this Tier 1 amendment).
+    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence (TB00375 UPDATE):</strong> TB00376 target = D1 Kraken_API_Connection_Architecture V-040 independent verification per §15.16.5(b) campaign cadence. (Prior TB00353 NSI §2 established D1 as step 2; independent verification campaign proceeds T1 → D1 → D2 → ... → D9 per TB00374 SL §4 cadence projection.)
 
-    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption preserved verbatim in §14 dv1_83 revision history entry (the historical R0 "initial authoring under HTML canonical format" caption).
+    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption (R2/dv1_96 V-041 P-CC4 REST canonicalization attestation text for (a)) preserved verbatim in §14 dv1_101 revision history entry below. Original R0 figcaption preserved in §14 dv1_83.
   </figcaption>
 </figure>
 
@@ -8425,7 +8425,70 @@ prefix taxonomy:
   OI-008: All AA=10 coding specs. WD documents active: 1011001 dv1_4, 1011002 dv1_10,
            1011005 dv1_0, 1011007 dv1_0, 1011010 dv1_3, 1011011 dv1_1, 1011012 dv1_2,
            1011013 dv1_2, 1011014 dv1_1. Current as of dv1_16. Phase 8 completes all.
-  dv1_100 05-20-2026  TB00371 V-041 + V-042 CLASS A TOKEN-CANONICALIZATION — D5 R11 -&gt; R12 (PRIMARY MISSION) + D6 figcaption visible header text housekeeping R9 -&gt; R12 (NSI §1.1 catch-up).
+  dv1_101 05-20-2026  TB00375 V-040 INDEPENDENT VERIFICATION — T1 Tier 1 Context Diagram (TB00374 SL §4 P12 per-diagram V-040 independent verification audit cadence).
+
+                        PRIMARY MISSION: T1 Tier 1 Context Diagram V-040 design-completeness
+                        Q1-Q5 independent verification audit per 0311001 v1_24 §15.16.5(b)
+                        campaign cadence. TB00374 SL §4 decision: switch active 0500000 cadence
+                        from V-041/V-042 Class A to §15.16.5(b) per-diagram V-040 independent
+                        verification campaign. T1 starting diagram per smallest-component-count +
+                        most-stable (R23, most-amended figure) + top-down audit pattern.
+                        TB00375 FP/DP-derivability-test OUTCOME 1 DERIVABLE per DD-011 v2_56
+                        CHAT-TURN-1 GATE.
+
+                        AUDIT RESULT: 15 components x 5 questions = 75 cells. ALL 75 CELLS PASS.
+                        T1 is independently V-040-verified at dv1_101.
+
+                        COMPONENT AUDIT (all PASS from SVG + governs descs + figcaption ONLY):
+                        [1] container:TothBot_V2_Organism: Q1 q1_do PASS, Q2 drill_targets+constraints PASS, Q3 constraints PASS, Q4 q4_triggers PASS, Q5 q5_logs PASS.
+                        [2] container:Kraken_Zone: all Q1-Q5 PASS.
+                        [3] container:TothBot_Zone: all Q1-Q5 PASS.
+                        [4] container:CIATS_Zone: all Q1-Q5 PASS.
+                        [5] actor:Bill_Operator: all Q1-Q5 PASS.
+                        [6] container:VPS (actor_hetzner_vps): all Q1-Q5 PASS.
+                        [7] actor:Mail_Alerts: all Q1-Q5 PASS.
+                        [8] actor:GitHub_Repositories: all Q1-Q5 PASS.
+                        [9] container:Kraken_Exchange: all Q1-Q5 PASS.
+                        [10] contract:OHLC_5m_System_Clock (flow1_pub_ws): all Q1-Q5 PASS.
+                        [11] contract:WSManager_Dispatch_Seam (flow2_priv_ws): all Q1-Q5 PASS.
+                        [12] contract:Reconciliation_REST (flow3_rest): all Q1-Q5 PASS.
+                        [13] contract:CIATS_Trade_Outcome_Bus (flow4_tothbot_ciats): all Q1-Q5 PASS.
+                        [14] arrow:Logger_Alert_Out_Of_Band (flow5_alerts): all Q1-Q5 PASS.
+                        [15] arrow:Bill_Operational_Channels (flow6_bill_ops): all Q1-Q5 PASS.
+
+                        SVG NAMING NOTE: SVG title/diagram_canonical shows R2; actual amendment
+                        count R23 per TB00374 SL §7 (21 component-desc-only V-041 amendments
+                        after R2 without SVG title update, consistent with D6 figcaption stale-text
+                        pattern). SVG title update to R24 deferred per V-041 Class A campaign
+                        pause TB00374 SL §4.
+
+                        AMENDMENT SCOPE: figcaption attestation (a) updated to cite dv1_101
+                        TB00375 independent verification; Q1-Q5 source text updated to
+                        "confirmed from" (not "sourced from added this amendment"); (d)
+                        updated to record V-040 INDEPENDENT VERIFICATION COMPLETE; OPTION R iii
+                        updated to TB00376 D1 target; CI-005+CI-006 reference updated to
+                        dv1_101 §14. SVG visual geometry preserved BYTE-IDENTICAL — no
+                        rect/path/polygon/line/text-position byte change; no viewBox change
+                        (1500x1200 preserved). No component <desc> changes (all fields present
+                        and PASS; ADD-only scope not triggered). All 9 other figures preserved
+                        BYTE-IDENTICAL per DEC-003 Path A one-diagram-per-session cadence.
+                        V-040 design-completeness 10/10 PRESERVED — no per-component cell
+                        regression; this amendment CONFIRMS prior PASS attestations at all 10
+                        figures.
+
+                        FIGCAPTION-ROTATION-ARCHIVE (prior T1 figcaption attestation (a) per
+                        CI-005 + CI-006):
+                        (a) Tier 1 Context Diagram (0500000_Context_T1_R2_System_Context)
+                        0500000 dv1_96 (R1 → R2 V-041 P-CC4 REST canonicalization TB00367).
+
+                        HTML title + dc-meta DocVersion bumped dv1_100 -> dv1_101 (line 6 + 135);
+                        DocPath dv1_100 -> dv1_101 (line 137); DocTime 16:30:00 UTC ->
+                        17:30:00 UTC (line 139); DocDate 05-20-2026 unchanged.
+
+                        SUBSEQUENT SESSION: TB00376 target = D1 Kraken_API_Connection_Architecture
+                        V-040 independent verification per §15.16.5(b) campaign cadence.
+
+  dv1_100 05-20-2026  TB00371 V-041 + V-042 CLASS A TOKEN-CANONICALIZATION — D5 R11 -> R12 (PRIMARY MISSION) + D6 figcaption visible header text housekeeping R9 -> R12 (NSI §1.1 catch-up).
                         PRIMARY MISSION: SINGLE-FIGURE SURGICAL EXTRACT-FROM-PROSE-TO-CSV AMENDMENT on D5 mod:CIATS_Parameter_Store.produces field at line 4599
                         closing 2 of 4 V-042 Class A entries per TB00363 V-042 FAIL List v1_0 §8 Class A canonicalization specification.
                         Amendment scope (1 surgical edit at 1 component site; 2 V-042 Class A entries closed):
