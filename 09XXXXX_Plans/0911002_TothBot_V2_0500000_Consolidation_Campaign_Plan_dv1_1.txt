@@ -1,0 +1,635 @@
+DocDCN:     0911002
+DocTitle:   TothBot_V2_0500000_Consolidation_Campaign_Plan
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0911002_TothBot_V2_0500000_Consolidation_Campaign_Plan_dv1_1.txt
+DocDate:    05-23-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+TOTHBOT V2 0500000 CONSOLIDATION CAMPAIGN PLAN
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the 0500000 Consolidation Campaign:
+a multi-session program to consolidate all ARCHITECTURAL
+content of the TothBot V2 document set into the 0500000
+System Architecture Overview diagram set, retire the
+documents made redundant by that consolidation, and reduce
+the controlled-document count to the minimum consistent
+with governance.
+
+The campaign exists to make the 0500000 diagrams the single
+canonical, authoritative design source for TothBot. Prose
+follows the diagrams; the diagrams do not follow prose.
+The campaign eliminates the prose-driven error class in
+which scattered specification prose drifts from, or
+contradicts, the canonical diagrams.
+
+ARCHITECTURE vs TESTING SEPARATION (Option A, ratified at
+TB00396; recorded as DEC-039). The campaign consolidates
+ARCHITECTURE only. Parameter STARTING VALUES are transient
+testing seeds and are NOT consolidated. They remain in
+TB00000 §9.17, which is the permanent canonical parameter
+registry and is NOT retired by this campaign. The detailed
+rule is §3.1. This separation is the controlling scope
+correction in dv1_1 and supersedes the dv1_0 "migrate
+values then retire §9.17" scope wherever it appeared.
+
+This is a living plan. It is updated when a phase completes
+or a Bill-ratified amendment materially changes the
+campaign. Every update increments the version.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+This document is a Tier-3 instance under the AA=09 Plans
+domain, per 0311001 v1_25 §4/§7.
+
+  0900000  Plans                    [Parent Domain]
+  0910000  Master_Plan_Anchor       [Parent Anchor]
+  0911002  0500000_Consolidation_   [This Instance]
+           Campaign_Plan
+
+DCN derivation: AA=09 (Plans), B=1 (Master_Plan sub-domain),
+C=1 (instance), DDD=002 — the next sequential instance after
+0911001 (Master Plan). Verified free against the live
+project folder at authoring time.
+
+Relationship to 0911001 Master Plan: this campaign is
+subordinate to the Master Plan roadmap. It does not
+supersede 0911001. The Master Plan governs phase sequencing
+for the program as a whole; this plan governs the internal
+execution of the consolidation campaign only.
+
+============================================================
+3. CAMPAIGN OBJECTIVE
+============================================================
+
+3.1  ARCHITECTURE vs TESTING SEPARATION (OPTION A —
+     CONTROLLING SCOPE RULE).
+
+     This is the controlling scope rule of the campaign.
+     All migration, retirement, and de-dup decisions defer
+     to it.
+
+     (a) ARCHITECTURAL content migrates into 0500000.
+         Architectural content is system structure and
+         contracts: component existence, component
+         ownership, inter-component contracts, information
+         flows, gates, regimes, channels, events, and
+         module structure. It is permanent — it changes
+         only on a design decision. It is migrated into the
+         relevant 0500000 diagram, its governs/<desc>
+         descriptors, its figcaption attestation, and the
+         §9 mirror.
+
+     (b) Parameter STARTING VALUES do NOT migrate.
+         The numeric starting value of any parameter (paper
+         wallet balances, per_trade_size_usd, drawdown
+         thresholds, and every other value in TB00000
+         §9.17) is a transient testing seed, not
+         architecture. Per TB00000 §9.16 and §6.8, every
+         starting value except the sacred 1:1.5 R:R floor
+         is explicitly temporary: CIATS owns it, and paper
+         trading replaces it with a data-derived value.
+         Transient values are NOT consolidated into 0500000.
+
+     (c) 0500000 records the architectural FACT, never the
+         transient value. For any parameter, 0500000 records
+         that the parameter EXISTS and WHO OWNS IT (CIATS,
+         OPERATOR, or SACRED), as an architectural fact in
+         the owning diagram element, its governs/<desc>
+         descriptor, and its figcaption attestation. 0500000
+         does NOT record the numeric starting value.
+
+     (d) TB00000 §9.17 is the permanent canonical parameter
+         registry. It holds every parameter starting value
+         and its classification (SACRED / OPERATOR /
+         CIATS-OWNED / RETIRED). It is NEVER retired by this
+         campaign. It is the single home for transient
+         testing values.
+
+     RATIONALE (loss-prevention prime directive, TB00000
+     §1.2). Migrating transient starting values into the
+     canonical 0500000 diagrams would (i) pollute the
+     canonical architecture source with non-canonical,
+     frequently-changing content; (ii) make 0500000 — the
+     highest-cost, highest-risk document to edit — stale the
+     instant CIATS changes a value, reintroducing the very
+     prose-driven-error class this campaign exists to
+     eliminate, merely relocated into the diagrams; and
+     (iii) violate the established testing-vs-architecture
+     separation. The "complete and comprehensive" mandate
+     for 0500000 is about ARCHITECTURAL completeness, not
+     absorption of transient operational state.
+
+3.2  Consolidate all ARCHITECTURAL content into 0500000.
+     Per §3.1(a), the architectural content of every
+     consolidation-candidate source document is migrated
+     into the 0500000 diagram set. Where a source document
+     also carries a parameter, only the architectural fact
+     of that parameter (existence + ownership) migrates;
+     the value stays in §9.17 per §3.1(b)-(d).
+
+3.3  Retire redundant documents. Once a source document's
+     ARCHITECTURAL content is canonically present in
+     0500000 AND all its non-architectural content has a
+     retained canonical home, the source document is retired
+     through the established retirement gate (§7). See the
+     de-dup rule (§9).
+
+3.4  Minimize separate-document count. The end state is the
+     fewest controlled documents consistent with governance:
+     0500000 as the architectural canon, TB00000 §9.17 as
+     the permanent parameter registry, plus the
+     non-consolidatable governance, code, and narrative
+     documents that must remain separate (§4).
+
+============================================================
+4. RATIFIED SCOPE BOUNDARY (BILL, TB00393 — VERBATIM
+   INTENT; AS AMENDED BY OPTION A AT TB00396)
+============================================================
+
+(a) 0500000 diagrams are canonical for ARCHITECTURE.
+    Content is consolidatable into 0500000 if it is
+    architectural - component existence, ownership,
+    contracts, gates, flows, events, regimes, channels,
+    module structure. The architectural FACT of a parameter
+    (it exists; CIATS owns it) is architectural and
+    consolidatable. The parameter's numeric VALUE is not
+    (see (d), as amended).
+
+(b) STAY-OUT (not consolidatable):
+    - Governance/process (AA=03): namespace rules,
+      versioning, document workflow. 0500000 is governed
+      by these; cannot absorb its own rulebook. Token
+      registry §15.12 stays (it is the de-dup engine).
+    - Code (AA=10 pure code-authoring coding specs):
+      code is not architecture diagrams.
+    - Business/plans/ethics (AA=00/01/09): mission,
+      business plan, master plan - narrative.
+    - Parameter STARTING VALUES: transient testing seeds.
+      They stay in TB00000 §9.17 (Option A; see (d) as
+      amended).
+
+(c) Everything else (AA=04/05/06/07/08 specs) is an
+    ARCHITECTURAL consolidation candidate. The architectural
+    content migrates to 0500000; any parameter starting
+    value carried by such a spec stays in / is reconciled
+    to TB00000 §9.17 per (d).
+
+(d) AMENDED BY OPTION A (TB00396; DEC-039). The dv1_0 text
+    of this clause read: "§9.17 parameter values +
+    CIATS-ownership MOVE into 0500000 diagram notes; §9.17
+    then retires (new standard)." That scope is SUPERSEDED.
+    The corrected standard is:
+      - The CIATS-OWNERSHIP architectural fact migrates into
+        0500000 (parameter exists; owner is CIATS).
+      - The parameter VALUE stays permanently in TB00000
+        §9.17.
+      - §9.17 is NOT retired by this campaign.
+    See §3.1 for the full separation rule.
+
+(e) Campaign plan lives in AA=09 as a NEW plan instance
+    (not in 0500000, not a 0500000 amendment).
+
+(f) Audit-first sequencing: read-only master register
+    before any migration.
+
+(g) Eat the elephant one bite at a time - manageable
+    one-mission sessions per RR-SCOPE-011 (§6).
+
+(h) Consolidate as much ARCHITECTURE as possible; minimize
+    separate-document count without dissolving the
+    testing-vs-architecture separation (§3.1).
+
+NOTE ON AA=02 (OPERATIONS): The ratified statements above
+enumerate consolidation candidates (AA=04/05/06/07/08) and
+STAY-OUT classes (AA=03/10/00/01/09 + §9.17 values) but do
+not place AA=02 Operations. AA=02 is therefore NOT
+pre-classified by this plan. The master register
+(TB00394) flags each AA=02 document for Bill ratification
+before any AA=02 content is scoped into a migration session.
+See register §AMBIGUOUS-FLAG.
+
+============================================================
+5. PHASE STRUCTURE
+============================================================
+
+The campaign executes in five phases. Phases run in order.
+Within a phase, work decomposes into one-mission sessions
+per §6 (RR-SCOPE-011): each session executes EXACTLY ONE
+primary mission. No phase begins migration until the master
+register (TB00394) is ratified.
+
+A "primary mission" is exactly one of: one source-document
+ARCHITECTURAL audit; OR one architectural-content migration
+of one source document (or one diagram / one sub-domain of
+a large source document) into 0500000; OR one document
+retirement; OR one governance/anchor reconciliation. No
+phase, and no session, bundles more than one primary
+mission. See §6.
+
+PHASE 0 — D8 THREAD CLOSURE.  STATUS: CLOSED (TB00395).
+  The D8 blocker (param:concentration_cap_per_module and
+  param:exposure_cap_pct unregistered in 0311001 §15.12,
+  and falsely attested at 0500000 D8 figcaption L3004) was
+  closed at TB00395 under Option A of DEC-038: both tokens
+  were registered in 0311001 §15.12.8 and the false
+  attestation was corrected at 0500000 dv1_113. No value
+  was migrated (no corpus value exists for either cap; that
+  is an OPEN FINDING per §10, not a defect). Phase 0 closes
+  as the seed case demonstrating the corrected migration
+  pattern (§8): the architectural FACT (parameter exists;
+  CIATS owns it) was registered/attested; no value was
+  moved; §9.17 was not touched.
+
+PHASE 1 — CIATS-OWNERSHIP ARCHITECTURAL ATTESTATION.
+  Migrate the ARCHITECTURAL FACT of each TB00000 §9.17
+  parameter — that the parameter exists and who owns it
+  (CIATS / OPERATOR / SACRED) — into the owning 0500000
+  diagram element, its governs/<desc> descriptor, its
+  figcaption attestation, and the §9 mirror, one
+  parameter-group per session (§6). The parameter VALUE
+  does NOT move; it stays in TB00000 §9.17 (§3.1). The
+  §9.17 entry is NOT retired. The §15.12 token registry
+  stays as the cross-diagram de-dup engine; each parameter
+  token is registered there if not already present. This
+  phase records architecture-vs-value PROVENANCE so a
+  reader of 0500000 can see that a parameter exists and is
+  CIATS-owned, and is pointed to §9.17 for its current
+  starting value.
+
+PHASE 2 — AA=05 COMPONENT SPECIFICATIONS.
+  Migrate the ARCHITECTURAL content of the AA=05 component
+  specifications (0511001 WS_Manager, 0511002 Signal_
+  Pipeline, 0511003 Execution_Engine, 0511004 Exit_
+  Controller, 0511005 Position_Mirror, 0511006 Logger)
+  into their canonical 0500000 diagrams and §9 mirror, ONE
+  component per session (§6). Any parameter value carried
+  in a component spec stays in / is reconciled to §9.17 per
+  §3.1; only the architectural content migrates. Retire each
+  spec via §7 in a SEPARATE session once its architectural
+  content is canonical and the de-dup rule (§9) is met.
+
+PHASE 3 — AA=04/06/07/08 SPECIFICATIONS.
+  Migrate the ARCHITECTURAL content of the AA=04 exchange-
+  interface specs (0411001/0411002/0411003), AA=06 risk
+  specs (0610000), AA=07 strategy specs (0711001/0711002/
+  0711003), and AA=08 trading-system specs (0811005) into
+  their canonical 0500000 diagrams and §9 mirror, ONE spec
+  per session (§6). Parameter values stay in §9.17 per
+  §3.1. Retire each spec via §7 in a SEPARATE session once
+  the de-dup rule (§9) is met.
+
+PHASE 4 — ANCHOR / DOMAIN-DOC COLLAPSE + GOVERNANCE
+  RECONCILIATION.
+  Resolve the structural-anchor and domain-document
+  question for the consolidated domains (0400000/0410000,
+  0510000, 0600000/0610000, 0700000/0710000, 0800000/
+  0810000). Collapse anchors and domain docs whose only
+  remaining role was to point at now-retired instance
+  specs. Reconcile 0311001 namespace, parent chains, and
+  the governance registers (TB00153 Decision/Defect) to the
+  post-campaign document set. This phase is governance-heavy
+  and is sequenced last because it depends on every prior
+  migration and retirement being complete. Decompose into
+  one-mission sessions per §6.
+
+============================================================
+6. ONE-MISSION-PER-SESSION DECOMPOSITION (RR-SCOPE-011)
+============================================================
+
+Each session executes EXACTLY ONE primary mission, in
+strict compliance with TB00000 §4.3.1 RR-SCOPE-011
+(SESSION-SCOPE-DECOMPOSITION DISCIPLINE). A primary mission
+is one of:
+
+  (a) ONE source-document ARCHITECTURAL audit (read-only;
+      produces a gap finding, no migration).
+  (b) ONE architectural-content migration of ONE source
+      document — or, if the source is large, ONE diagram or
+      ONE sub-domain of it — into 0500000.
+  (c) ONE document retirement (via §7), in its own session,
+      separate from the migration that made it redundant
+      (§6.2).
+  (d) ONE governance / anchor / domain-document
+      reconciliation.
+
+6.1  PER-SESSION CEILING. Per RR-SCOPE-011, a session
+     produces no more than the one primary deliverable plus
+     the mandatory companions (Session Log + Next Session
+     Instructions + OCS + GitHub upload) and at most one
+     paired TB00153 MDR closure entry and one paired
+     TB00153 Decision Register entry that DIRECTLY close the
+     primary mission. No session bundles two migrations, two
+     retirements, or a migration plus an unrelated
+     governance amendment.
+
+6.2  MIGRATION AND RETIREMENT ARE SEPARATE SESSIONS.
+     Migrating a source document's architectural content
+     into 0500000 (mission type (b)) and retiring that
+     now-redundant source document (mission type (c)) are
+     TWO different primary missions and therefore TWO
+     different sessions. The migration session lands the
+     architecture in 0500000 and verifies de-dup (§9). The
+     retirement session, run only after the migration
+     session has closed cleanly, executes the §7 gate. This
+     prevents an over-scoped session that both migrates and
+     retires in one pass and leaves 0500000 half-migrated if
+     it runs out of budget.
+
+6.3  MIGRATION UNIT DEFINITION. The migration unit is ONE
+     source document's ARCHITECTURAL content per session. If
+     a source document is large, it is split across sessions
+     by diagram or by sub-domain — one diagram / one
+     sub-domain per session — and each split session is its
+     own primary mission. The unit never spans two source
+     documents.
+
+RATIONALE (loss-prevention prime directive, TB00000 §1.2).
+An over-scoped session that leaves 0500000 in a
+half-migrated state is the highest-loss failure mode in
+this campaign, because every downstream coding decision
+reads from 0500000. Two smaller productive sessions are
+superior to one over-scoped session that then requires
+multiple recovery sessions. This is also why migration and
+retirement are separated (§6.2): a retirement that runs
+before its migration session has fully closed could remove
+a source document while its architectural content is only
+partially in 0500000.
+
+============================================================
+7. RETIREMENT GATE (REUSE OF DD-012 SIX-STEP GATE)
+============================================================
+
+Every document retirement in this campaign uses the
+existing DD-012 six-step retirement gate. No new retirement
+mechanism is created. A retirement is its own session per
+§6.2.
+
+  S-1  AUDIT. Confirm every ARCHITECTURAL item in the source
+       document is already canonical in 0500000 (landed by a
+       prior migration session) AND that every
+       non-architectural item has a retained canonical home
+       (e.g. a parameter value in §9.17). No orphaned
+       content. See the de-dup rule (§9).
+  S-2  DIAGRAM AMEND. If S-1 finds any architectural item
+       not yet canonical, this is NOT a retirement session —
+       stop and schedule a migration session (§6.2). A
+       retirement session performs no new architectural
+       migration.
+  S-3  PARENT GAP-FILL. Fill any reference gap created in
+       the parent chain so no surviving document points at
+       a retired document without resolution.
+  S-4  RETIREMENT. Retire the source document per the
+       controlled retirement procedure.
+  S-5  ANCHOR REVISION. Revise the anchor/domain document
+       to drop the retired instance and reflect the new
+       canonical location.
+  S-6  GOVERNANCE. Update the governance registers (TB00153
+       Decision Register, Master Defect Register, namespace
+       0311001 as applicable) to record the retirement.
+
+============================================================
+8. MIGRATION PATTERN — ARCHITECTURAL FACT -> 0500000
+   (OPTION A STANDARD; VALUES STAY IN §9.17)
+============================================================
+
+This is the standard pattern for Phase 1 (CIATS-ownership
+attestation) and the model for the architectural-fact
+portion of value-bearing migrations in later phases. It is
+the pattern demonstrated by the Phase 0 seed case (TB00395).
+
+  P-1  IDENTIFY. Take one parameter-group from TB00000
+       §9.17 (e.g. the two D8 CIATS-owned caps in the Phase
+       0 seed case).
+  P-2  TOKEN REGISTER. Register each parameter token in the
+       0500000 §15.12 token registry if not already present.
+       The token registry STAYS (§4(b)); it is the
+       cross-diagram de-dup engine.
+  P-3  MIGRATE THE ARCHITECTURAL FACT (NOT THE VALUE). Write
+       the parameter's EXISTENCE and OWNERSHIP (CIATS /
+       OPERATOR / SACRED) into the canonical 0500000 diagram
+       in three coordinated places:
+         - the governs/<desc> descriptor of the owning
+           diagram element;
+         - the figcaption attestation of that diagram;
+         - the §9 mirror.
+       Record that the parameter's current starting value
+       lives in TB00000 §9.17 (pointer, not value). DO NOT
+       write the numeric starting value into 0500000.
+  P-4  ATTESTATION TRUTH. Correct any figcaption attestation
+       that previously claimed registration/presence that
+       did not exist (the D8 L3004 false-attestation case).
+       Attestation must match live grep-verified state. An
+       attestation states the architectural fact and the
+       §9.17 pointer; it never asserts a value 0500000 does
+       not hold.
+  P-5  §9.17 UNCHANGED. The parameter-group's §9.17 entry is
+       NOT retired and NOT moved. §9.17 remains the
+       permanent canonical home of the starting value
+       (Option A; §3.1). This step replaces the dv1_0
+       "retire §9.17 entry" step, which is SUPERSEDED.
+  P-6  GOVERNANCE. Record per §7 S-6.
+
+SUPERSESSION NOTE. The dv1_0 version of this pattern
+included a step "P-5 RETIRE §9.17 ENTRY — once the value is
+canonical in 0500000, retire that parameter-group's §9.17
+entry." That step is REMOVED under Option A (DEC-039).
+Values are never made canonical in 0500000; they stay in
+§9.17; the §9.17 entry is never retired by this campaign.
+
+============================================================
+9. DE-DUP RULE (RETIREMENT PRECONDITION)
+============================================================
+
+A specification is ARCHITECTURALLY redundant only when its
+ARCHITECTURAL content is fully present in 0500000.
+
+A source document is RETIRED only when BOTH hold:
+  (a) all of its ARCHITECTURAL content is canonical in
+      0500000 (architecture), AND
+  (b) all of its NON-architectural content is in another
+      retained canonical home — parameter starting values
+      in TB00000 §9.17, governance in AA=03, code in AA=10,
+      narrative in AA=00/01/09.
+
+Residual non-architectural content that has NO retained
+canonical home BLOCKS retirement. In particular, a
+parameter starting value present only in a source document
+must be reconciled into §9.17 (not into 0500000) before
+that source document can be retired. A source document is
+NEVER retired by moving its values into 0500000.
+
+============================================================
+10. SEQUENCING AND DEPENDENCIES
+============================================================
+
+  - The TB00394 master register MUST stay Bill-ratified as
+    the audit-first basis (§4(f)) for every Phase-1+
+    migration session.
+  - AA=02 documents are NOT scoped into any migration
+    session until Bill ratifies their register
+    classification (§4 NOTE).
+  - Phases run in order. A later phase does not begin until
+    the prior phase's migrations and retirements are
+    complete and governance-reconciled.
+  - Migration and retirement of the same source document are
+    separate sessions; retirement follows the migration
+    that made the document architecturally redundant
+    (§6.2).
+  - Phase 4 (anchor/domain collapse) is last; it depends on
+    all instance-spec retirements being complete.
+
+OPEN FINDING (carry-forward; not a defect; do NOT invent a
+value). Neither D8 cap — param:concentration_cap_per_module
+nor param:exposure_cap_pct — has a defined starting value
+anywhere in the corpus. Both are CIATS-OWNED PER-MODULE and
+were registered in 0311001 §15.12.8 at TB00395 without a
+value. Their starting values are flagged for CIATS /
+paper-trading derivation. They must NOT be guessed. This is
+the only genuine parameter-value gap in the corpus.
+
+============================================================
+11. OUT OF SCOPE FOR ANY MIGRATION SESSION
+============================================================
+
+No migration or retirement session:
+  - writes a parameter starting value into 0500000 (Option
+    A; §3.1);
+  - retires or alters TB00000 §9.17 (§3.1(d));
+  - invents a parameter value (§10 open finding);
+  - bundles more than one primary mission (§6,
+    RR-SCOPE-011);
+  - both migrates a source document and retires it in the
+    same session (§6.2).
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+dv1_1  (TB00397, 2026-05-23): Option A scope correction.
+       Encodes the ARCHITECTURE vs TESTING SEPARATION
+       ratified by Bill at TB00396 and recorded as DEC-039.
+
+       CHANGE 1 — §3.1 NEW controlling scope rule.
+       Added §3.1 ARCHITECTURE vs TESTING SEPARATION as the
+       controlling scope rule: only architectural content
+       (component existence, ownership, contracts, flows,
+       gates, regimes, channels, module structure) migrates
+       into 0500000; parameter starting values are transient
+       testing seeds that stay permanently in TB00000 §9.17;
+       0500000 records the architectural fact (parameter
+       exists; CIATS owns it), never the numeric value;
+       §9.17 is the permanent canonical parameter registry
+       and is NOT retired by the campaign. Prior §3.1
+       "Consolidate all architectural content" renumbered to
+       §3.2; prior §3.2/§3.3 renumbered to §3.3/§3.4 and
+       reworded to defer to §3.1.
+
+       CHANGE 2 — §4(d) amended (superseded scope removed).
+       The dv1_0 §4(d) read "§9.17 parameter values +
+       CIATS-ownership MOVE into 0500000 diagram notes;
+       §9.17 then retires (new standard)." Replaced with the
+       Option A standard: the CIATS-ownership architectural
+       fact migrates; the value stays in §9.17; §9.17 is not
+       retired. §4(b) STAY-OUT list extended to name
+       parameter starting values as a stay-out class. §4(c)
+       reworded to clarify only architecture migrates.
+
+       CHANGE 3 — §5 phases re-stated under Option A and
+       re-phased to one mission per session.
+       Phase 0 marked CLOSED (TB00395) and re-described as
+       the Option A seed case (architectural fact registered;
+       no value moved; §9.17 untouched). Phase 1 changed
+       from "§9.17 PARAMETER-VALUE MIGRATION ... as each
+       parameter-group's values land canonically in 0500000,
+       the corresponding §9.17 entry retires" to "CIATS-
+       OWNERSHIP ARCHITECTURAL ATTESTATION" — migrate the
+       architectural fact only; value stays in §9.17; §9.17
+       entry NOT retired. Phases 2/3 reworded so only
+       architectural content migrates and parameter values
+       reconcile to §9.17. Each phase explicitly states one
+       primary mission per session. A primary-mission
+       definition added at the head of §5.
+
+       CHANGE 4 — §6 expanded for RR-SCOPE-011 compliance.
+       Added explicit primary-mission enumeration (audit /
+       migration / retirement / governance), §6.1 per-session
+       ceiling (one primary deliverable + mandatory
+       companions + at most one paired MDR + one paired DR
+       entry), §6.2 migration-and-retirement-are-separate-
+       sessions rule, and §6.3 migration-unit definition
+       (one source document, or one diagram/sub-domain of a
+       large source, per session).
+
+       CHANGE 5 — §7 retirement gate aligned to Option A.
+       S-1/S-2 reworded so a retirement session performs no
+       new architectural migration; if S-1 finds
+       un-migrated architecture, the session stops and a
+       migration session is scheduled (§6.2). Non-
+       architectural content (parameter values) must have a
+       retained §9.17 home before retirement.
+
+       CHANGE 6 — §8 migration pattern corrected.
+       Retitled "ARCHITECTURAL FACT -> 0500000 (Option A
+       standard; values stay in §9.17)." P-3 changed from
+       "MIGRATE VALUE + OWNERSHIP" to "MIGRATE THE
+       ARCHITECTURAL FACT (NOT THE VALUE)." The dv1_0 step
+       "P-5 RETIRE §9.17 ENTRY" REMOVED and replaced with
+       "P-5 §9.17 UNCHANGED." Supersession note added.
+
+       CHANGE 7 — §9 NEW de-dup rule section.
+       Promoted the de-dup rule to its own section with the
+       Option A precondition: a source document is retired
+       only when its architectural content is fully in
+       0500000 AND its non-architectural content (parameter
+       values) has a retained canonical home (§9.17). A
+       value present only in a source document must be
+       reconciled into §9.17 — never into 0500000 — before
+       retirement.
+
+       CHANGE 8 — §10 sequencing updated; OPEN FINDING
+       recorded.
+       Added the migration-before-retirement dependency
+       (§6.2) and the D8-caps open finding (no starting
+       value in the corpus; CIATS/paper-trading derivation;
+       do NOT invent). Prior §9 "SEQUENCING AND
+       DEPENDENCIES" renumbered to §10.
+
+       CHANGE 9 — §11 NEW out-of-scope-for-any-migration-
+       session section. Enumerates the Option A prohibitions:
+       no value into 0500000, no §9.17 retirement, no
+       invented value, no multi-mission bundling, no
+       migrate-and-retire in one session. Prior §10 "OUT OF
+       SCOPE FOR THIS PLAN-AUTHORING SESSION" removed as
+       spent (that one-time authoring constraint applied
+       only to the dv1_0 authoring session).
+
+       PROVENANCE. Bill ratified Option A at TB00396 (SL §3).
+       Recorded as DEC-039 in TB00153 Decision Register this
+       session (TB00397). This amendment is the single
+       primary mission of TB00397 per RR-SCOPE-011; no
+       0500000 or TB00000 edit and no migration performed
+       this session.
+
+dv1_0  (TB00394, 2026-05-23): Initial issue. Codifies the
+       0500000 Consolidation Campaign ratified by Bill at
+       the TB00393 chat-turn: objective, ratified scope
+       boundary verbatim, five-phase structure, one-mission-
+       per-session decomposition, reuse of the DD-012
+       six-step retirement gate, and the §9.17-value ->
+       0500000-notes migration pattern (the latter
+       superseded by Option A at dv1_1). Authored as a new
+       AA=09 Plans instance (DCN 0911002) per the NSI
+       TB00394 v1_1 §1.1.
+
+============================================================
+END OF DOCUMENT
+============================================================
