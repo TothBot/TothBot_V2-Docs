@@ -1,9 +1,9 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_24
+DocVersion: v1_25
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_24.txt
-DocDate:    05-19-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_25.txt
+DocDate:    05-23-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -2518,6 +2518,32 @@ REGISTRY CONVENTIONS:
                                       TB00000 §9.17
                                       v2_45 CIATS-OWNED
                                       UNIVERSAL)
+  param:concentration_cap_per_module (0500000 D8
+                                      Gate_7_Risk_Guard
+                                      CHECK 2; CIATS-
+                                      OWNED PER-MODULE
+                                      INSTANTIATED;
+                                      registered v1_25
+                                      TB00395 Phase 0
+                                      D8-thread-closure
+                                      seed case; starting
+                                      value not yet
+                                      defined - pending
+                                      CIATS FP/DP
+                                      derivation)
+  param:exposure_cap_pct             (0500000 D8
+                                      Gate_7_Risk_Guard
+                                      CHECK 3; CIATS-
+                                      OWNED PER-MODULE
+                                      INSTANTIATED;
+                                      registered v1_25
+                                      TB00395 Phase 0
+                                      D8-thread-closure
+                                      seed case; starting
+                                      value not yet
+                                      defined - pending
+                                      CIATS FP/DP
+                                      derivation)
 
 ------------------------------------------------------------
 15.12.9 rule: HardRule Registry
@@ -3856,6 +3882,49 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_25  05-23-2026  TB00395 PHASE 0 D8-THREAD-CLOSURE
+                     SEED CASE — §15.12.8 param REGISTRY
+                     ADD: param:concentration_cap_per_module
+                     + param:exposure_cap_pct.
+
+                     Namespace-layer companion to the
+                     0500000 dv1_112 -> dv1_113 D8 figcaption
+                     attestation correction. Both tokens are
+                     consumed by 0500000 D8 Gate_7_Risk_Guard
+                     (CHECK 2 concentration cap; CHECK 3
+                     exposure cap) and were cited across D5 /
+                     D6 / D8 figcaption namespace-batching
+                     checks as "pre-existing in §15.12" while
+                     in fact ABSENT from the §15.12.8 param
+                     registry (TB00393 D8 diagnosis). This
+                     amendment registers both tokens, making
+                     the diagram attestations true. Both are
+                     CIATS-OWNED PER-MODULE INSTANTIATED;
+                     neither has a defined starting value in
+                     the corpus (pending CIATS FP/DP
+                     derivation - recorded as a finding, NOT
+                     guessed). Per the 0500000 Consolidation
+                     Campaign (0911002) Phase 0: §15.12 token
+                     registry stays as the cross-diagram
+                     de-dup engine; only VALUES migrate in
+                     later phases.
+
+                     Option A path approved by Bill (TB00395
+                     chat-turn): register the tokens so the
+                     diagram claims become true (vs Option B
+                     edit-the-diagrams-to-stop-claiming).
+
+                     Companion deliverables this session:
+                       0500000 dv1_112 -> dv1_113 (D8 live
+                         attestation correction).
+                       TB00153 MDR v1_47 -> v1_48 (false-
+                         attestation defect closure).
+                       TB00153 DR v1_29 -> v1_30 (DEC Phase 0
+                         registration).
+                       TB00395 SL v1_0 + TB00396 NSI v1_0.
+
+                     Approved by Bill.
 
   v1_24  05-19-2026  TB00350 AMENDMENT — §15.7 V-040 NEW
                      VALIDATION RULE + §15.16 NEW DESIGN-
