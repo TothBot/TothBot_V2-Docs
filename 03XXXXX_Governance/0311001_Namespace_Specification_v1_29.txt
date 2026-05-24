@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_28
+DocVersion: v1_29
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_28.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_29.txt
 DocDate:    05-24-2026
-DocTime:    03:53:00 UTC
+DocTime:    23:59:40 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2610,6 +2610,70 @@ REGISTRY CONVENTIONS:
                                       group migration; value in
                                       TB00000 §9.17 Option A -
                                       no numeric value carried)
+  param:rsi_long_low                 (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS long-side
+                                      RSI-in-zone lower bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_long_high                (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS long-side
+                                      RSI-in-zone upper bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_short_low                (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS short-side
+                                      RSI-in-zone lower bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_short_high               (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS short-side
+                                      RSI-in-zone upper bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:sss_ema_short                (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS EMA short
+                                      period (EMA9) for EMA-cross
+                                      factor; ar:AR-067; registered
+                                      v1_29 TB00412 DEC-050 SSS
+                                      signal-model group migration;
+                                      value in TB00000 §9.17 Option
+                                      A - no numeric value carried)
+  param:sss_ema_long                 (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS EMA long
+                                      period (EMA21) for EMA-cross
+                                      factor; ar:AR-067; registered
+                                      v1_29 TB00412 DEC-050 SSS
+                                      signal-model group migration;
+                                      value in TB00000 §9.17 Option
+                                      A - no numeric value carried)
+  param:volume_sss_threshold         (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS volume-
+                                      confirmation factor (volume
+                                      vs MA(20)); ar:AR-067;
+                                      registered v1_29 TB00412
+                                      DEC-050 SSS signal-model group
+                                      migration; value in TB00000
+                                      §9.17 Option A - no numeric
+                                      value carried)
 
 ------------------------------------------------------------
 15.12.9 rule: HardRule Registry
@@ -3948,6 +4012,45 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_29  05-24-2026  TB00412 PHASE 1 0500000-CONSOLIDATION
+                     SSS SIGNAL-MODEL GROUP —
+                     §15.12.8 param REGISTRY ADD:
+                     param:rsi_long_low,
+                     param:rsi_long_high,
+                     param:rsi_short_low,
+                     param:rsi_short_high,
+                     param:sss_ema_short,
+                     param:sss_ema_long,
+                     param:volume_sss_threshold.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_123 -> dv1_124 SSS signal-
+                     model CIATS-ownership migration (D2
+                     mod:Signal_Pipeline / sss_engine
+                     governs/<desc> ciats_ownership attestation
+                     + 7 param: tokens woven into the q1_do
+                     field; TB00412 DEC-050). These seven tokens
+                     are the TB00000 §9.17 SSS signal-model
+                     parameter-group, all bound at the single
+                     owning element mod:Signal_Pipeline / sss_engine
+                     (q1_do field: RSI-in-zone bounds long+short,
+                     EMA9/EMA21 cross periods, volume-confirmation
+                     factor — direction-symmetric SSS three-factor
+                     scoring per ar:AR-067). Per-session FP/DP
+                     RE-VERIFICATION GATE (TB00410 Action Plan
+                     §2 RV-1..RV-5) run at TB00412 chat-turn 1
+                     against the live dv1_123: RV-1 grep confirmed
+                     all 7 tokens ABSENT from the v1_28 §15.12.8
+                     param registry (zero structured param: sites);
+                     RV-4 MATCHED the TB00410 Determination v1_0
+                     §3.1 FIRM disposition (CHOICE 1 ->
+                     mod:Signal_Pipeline / sss_engine). This
+                     amendment registers the seven absent tokens,
+                     making the diagram attestation true. Values
+                     remain in TB00000 §9.17 (Option A / DEC-039);
+                     this registration carries NO numeric value.
 
   v1_28  05-24-2026  TB00408 PHASE 1 0500000-CONSOLIDATION
                      SELECTION-CONTROLLER GROUP —
