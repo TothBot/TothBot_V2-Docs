@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_25
+DocVersion: v1_27
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_25.txt
-DocDate:    05-23-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_27.txt
+DocDate:    05-24-2026
+DocTime:    01:16:33 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2499,6 +2499,8 @@ REGISTRY CONVENTIONS:
   param:session_pause_drawdown       (TB00000 §9.17)
   param:htf_ema_periods              (TB00000 §9.17)
   param:min_volume_usd_daily         (TB00000 §9.17)
+  param:atr_rolling_window           (seed;
+                                      TB00000 §9.17)
   param:paper_trading_mode           (0500000 §12.2)
   param:paper_starting_balance       (TB00000 §4.4
                                       PA-004 D-05)
@@ -2544,6 +2546,39 @@ REGISTRY CONVENTIONS:
                                       defined - pending
                                       CIATS FP/DP
                                       derivation)
+  param:cancel_timeout_window        (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; I-6
+                                      cancel-ACK timeout
+                                      fallback; registered
+                                      v1_27 TB00404 DEC-046
+                                      Exit-controller group
+                                      completion; ar:AR-077;
+                                      value in TB00000 §9.17
+                                      Option A - no numeric
+                                      value carried)
+  param:mpp_retry_count              (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; C-1 MPP
+                                      IOC retry count;
+                                      registered v1_27
+                                      TB00404 DEC-046
+                                      Exit-controller group
+                                      completion; ar:AR-078;
+                                      value in TB00000 §9.17
+                                      Option A - no numeric
+                                      value carried)
+  param:max_hold_candles             (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; Layer-1a
+                                      time-expiry backstop
+                                      EC-L1A-003; registered
+                                      v1_27 TB00404 DEC-046
+                                      Exit-controller group
+                                      completion; ar:AR-071;
+                                      value in TB00000 §9.17
+                                      Option A - no numeric
+                                      value carried)
 
 ------------------------------------------------------------
 15.12.9 rule: HardRule Registry
@@ -3882,6 +3917,67 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_27  05-24-2026  TB00404 PHASE 1 0500000-CONSOLIDATION
+                     EXIT-CONTROLLER GROUP COMPLETION —
+                     §15.12.8 param REGISTRY ADD:
+                     param:cancel_timeout_window,
+                     param:mpp_retry_count,
+                     param:max_hold_candles.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_119 -> dv1_120 Exit-controller
+                     group-completion CIATS-ownership migration
+                     (D3 mod:Exit_Controller governs/<desc>
+                     attestation + D3 figcaption OPTION R
+                     EXTENSION (vi) + §9 mirror canonical-source
+                     pointer; TB00404 DEC-046). These three
+                     tokens complete the TB00000 §9.17 Exit-
+                     controller group (the diagram-bound pair
+                     param:mae_mult + param:emergency_sl_mult
+                     was migrated at TB00403 DEC-045 and was
+                     already registered). Live grep (TB00404
+                     P-1 diagnosis) confirmed all three tokens
+                     were cited only in 0500000 §8 reasoning
+                     prose / §9 mirror / revision-history yet
+                     were in fact ABSENT from the §15.12.8 param
+                     registry. This amendment registers the
+                     three absent tokens, making the diagram
+                     attestation true. All three govern
+                     machinery of the single mod:Exit_Controller
+                     element (I-6 cancel-ACK fallback / C-1 MPP
+                     IOC retry / Layer-1a time-expiry backstop).
+                     Values remain in TB00000 §9.17 (Option A /
+                     DEC-039); this registration carries NO
+                     numeric value.
+
+  v1_26  05-23-2026  TB00401 PHASE 1 0500000-CONSOLIDATION
+                     SEED CASE — §15.12.8 param REGISTRY
+                     ADD: param:atr_rolling_window.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_116 -> dv1_117 Regime-engine
+                     + signal-model CIATS-ownership migration
+                     (mod:Regime_Engine D4 governs/<desc>
+                     attestation + D4 figcaption + §9 mirror
+                     canonical-source pointer). The Regime
+                     parameter group's other four tokens
+                     (param:adx_threshold,
+                     param:atr_percentile_thresh,
+                     param:htf_ema_periods,
+                     param:min_volume_usd_daily) were already
+                     present in this registry; param:atr_
+                     rolling_window was cited across the D4
+                     governs list and §9 Regime mirror yet was
+                     in fact ABSENT from the §15.12.8 param
+                     registry (TB00401 P-1 diagnosis; live grep
+                     confirmed). This amendment registers the
+                     one absent token, making the diagram
+                     attestation true. Value remains in
+                     TB00000 §9.17 (Option A / DEC-039); this
+                     registration carries NO numeric value.
 
   v1_25  05-23-2026  TB00395 PHASE 0 D8-THREAD-CLOSURE
                      SEED CASE — §15.12.8 param REGISTRY
