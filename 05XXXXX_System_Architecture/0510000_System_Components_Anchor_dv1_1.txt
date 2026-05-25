@@ -1,9 +1,9 @@
 DocDCN:     0510000
 DocTitle:   System_Components_Anchor
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_0.txt
-DocDate:    04-04-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_1.txt
+DocDate:    05-25-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -17,7 +17,7 @@ SYSTEM COMPONENTS ANCHOR
 This document is the Sub-Domain Anchor for the System
 Components sub-domain (AA=05, B=1). It anchors all TothBot
 V2 system component specification instance documents
-(0511001 through 0511006) to the System Architecture
+(0511002 through 0511006) to the System Architecture
 Domain Document (0500000).
 
 Its purpose is structural: it completes the three-tier
@@ -40,7 +40,6 @@ and approved.
   0510000  This document                  (Sub-Domain Anchor)
 
   Child chain (instance documents under this anchor):
-    0511001  WS_Manager_Specification
     0511002  Signal_Pipeline_Specification
     0511003  Execution_Engine_Specification
     0511004  Exit_Controller_Specification
@@ -81,27 +80,6 @@ a coding-ready specification from which AA=10 coding
 specifications and code can be directly derived.
 
 Each instance document elaborates one component:
-
-  0511001  WS_Manager_Specification
-           The WS Manager is TothBot's sole interface to
-           all Kraken WebSocket v2 connections. It owns
-           the two public WS connections (instrument,
-           status, ohlc, ticker) and the private WS
-           connection (executions, balances). Owns all
-           connection state: token management, keepalive
-           (JSON ping every 30 seconds per A-7), zombie
-           detection (90-second real-data timeout per A-8),
-           sequence gap detection on both executions (A-10)
-           and balances (A-9), per-pair instrument status
-           cache (AR-020, AR-039), candle-close detection
-           (AR-045), startup warm-up and indicator seeding
-           (AR-044, AR-068), mid-session reconnect distinct
-           from startup (AR-056), Pending Order Registry
-           (AR-053), drawdown state (AR-052), Selection
-           Controller state (AR-073), and all WS dispatch
-           routing (AR-015). The WS Manager is the event
-           processor — all Kraken push events flow through
-           it and are dispatched to appropriate components.
 
   0511002  Signal_Pipeline_Specification
            The Signal Pipeline owns the 8-gate evaluation
@@ -169,7 +147,7 @@ Each instance document elaborates one component:
 
   Instance Document → 0510000 (this anchor) → 0500000
 
-No instance document in this sub-domain (0511001 through
+No instance document in this sub-domain (0511002 through
 0511006) may be committed to GitHub without both this
 anchor and 0500000 already present and approved on GitHub.
 This rule is enforced by validation rule V-012 in 0311001
@@ -180,7 +158,6 @@ Section 13.
 ============================================================
 
   0500000  System_Architecture_Overview   (parent Domain Doc)
-  0511001  WS_Manager_Specification
   0511002  Signal_Pipeline_Specification
   0511003  Execution_Engine_Specification
   0511004  Exit_Controller_Specification
@@ -195,6 +172,55 @@ Section 13.
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_1  05-25-2026  TB00424 S-5 ANCHOR REVISION - 0511001
+                     WS_Manager_Specification RETIREMENT CASCADE
+                     (DD-012 sec 7 S-5; 0911002 PHASE 2).
+
+                     0511001 removed from the child chain
+                     (sec 2), the sec 4 sub-domain instance
+                     elaboration, and the sec 6 RELATED
+                     DOCUMENTS list. Child chain shrinks from
+                     0511001..006 (six instance specs) to
+                     0511002..006 (five instance specs).
+                     Instance-range citations in sec 1 / sec 5
+                     updated 0511001..006 -> 0511002..006.
+
+                     S-3 PARENT-CHAIN GAP-FILL. The WS_Manager
+                     protocol-fact references resolve to their
+                     retained canonical home: 0411001
+                     Kraken_WS_v2_Specification dv1_12 (WS-v2
+                     wire-contract facts) and 0411002
+                     Kraken_REST_API_Specification dv1_1 (REST
+                     facts; GetOHLCData[-1] exclusion). Both
+                     PRESERVED (DEC-018) and present. The
+                     WS_Manager component architecture itself
+                     is canonical in 0500000 D1/D2 (DEC-056 /
+                     DEC-057 landings).
+
+                     REASON FOR CHANGE. 0511001 retired this
+                     session per DD-012 sec 7 (S-1 audit passed
+                     at DEC-058; S-2 Option A ratified at
+                     TB00423). Anchor child chain must shrink to
+                     match. Zero orphaned content: every
+                     architectural item canonical in 0500000
+                     D1/D2; protocol facts retained in 0411xxx;
+                     parameter values in TB00000 sec 9.17.
+
+                     PARENT CHAIN COMPLIANCE. 0510000 parent
+                     chain unchanged (0000000 + 0100000 +
+                     0200000 + 0300000 + 0400000 + 0500000 +
+                     self). V-039 universal parent-chain-
+                     completeness preserved. Per DD-012 the
+                     0500000 diagrams remain canonical for all
+                     content downstream of this anchor.
+
+                     Header DocVersion dv1_0 -> dv1_1. DocPath
+                     updated. DocDate refreshed.
+
+                     Recorded at TB00424 DEC-059. Document
+                     Status: supersedes dv1_0. dv1_1 is the
+                     sole authoritative version.
 
   dv1_0  04-04-2026  Initial document. Sub-Domain Anchor
                      for System Components (AA=05, B=1).
