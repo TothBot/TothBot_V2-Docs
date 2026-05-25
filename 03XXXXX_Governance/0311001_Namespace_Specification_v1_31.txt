@@ -1,9 +1,9 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_30
+DocVersion: v1_31
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_30.txt
-DocDate:    05-24-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_31.txt
+DocDate:    05-25-2026
 DocTime:    23:59:50 UTC
 
 ============================================================
@@ -2398,6 +2398,11 @@ REGISTRY CONVENTIONS:
                                          R6; TB00239
                                          AMENDMENT-3;
                                          TB00000 §9.10)
+  contract:WM-PACE-005                  (0500000 D1
+                                         mod:WS_Manager;
+                                         TB00418 DEC-056;
+                                         0511001 retired
+                                         TB00425 DEC-059)
 
 ------------------------------------------------------------
 15.12.4 gate: Gate Registry
@@ -2717,6 +2722,33 @@ REGISTRY CONVENTIONS:
   rule:HR-WM-026                     (0511001)
   rule:HR-WM-032                     (0511001)
   rule:HR-WM-033                     (0511001)
+  rule:HR-WM-001                     (0500000 D1;
+                                      TB00418 DEC-056;
+                                      0511001 retired
+                                      TB00425 DEC-059)
+  rule:HR-WM-002                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-003                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-004                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-012                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-016                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-017                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-018                     (0500000 D2
+                                      sss_engine;
+                                      TB00419 DEC-057)
+  rule:HR-WM-020                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-027                     (0500000 D1)
+  rule:HR-WM-028                     (0500000 D1)
+  rule:HR-WM-029                     (0500000 D1)
+  rule:HR-WM-030                     (0500000 D1)
+  rule:HR-WM-031                     (0500000 D1)
+  rule:HR-WM-034                     (0500000 D1)
   rule:HR-EE-013                     (0500000 §12)
   rule:HR-EC-013                     (0511004)
   rule:HR-EC-014                     (0511004)
@@ -4042,6 +4074,133 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_31  05-25-2026  TB00426 0311001 §15.12.9 + §15.12.3
+                     WS_MANAGER NAMESPACE REGISTRATION
+                     (CF-TB00425-A / CF-TB00419-D). ADD-only
+                     registration of 16 WS_Manager
+                     rule/contract tokens that are canonical
+                     in 0500000 D1/D2 but were not yet
+                     namespace-registered. Closes the
+                     PRE-EXISTING tolerated namespace gap
+                     opened at DEC-056 (dv1_126 P-2) +
+                     DEC-057 (dv1_127 P-2).
+
+                     §15.12.9 rule: HardRule Registry — 15
+                     tokens added after the existing
+                     HR-WM-021..026/032/033 WS_Manager block:
+                       rule:HR-WM-001  (0500000 D1; DEC-056)
+                       rule:HR-WM-002  (0500000 D1; DEC-056)
+                       rule:HR-WM-003  (0500000 D1; DEC-056)
+                       rule:HR-WM-004  (0500000 D1; DEC-056)
+                       rule:HR-WM-012  (0500000 D1; DEC-056)
+                       rule:HR-WM-016  (0500000 D1; DEC-056)
+                       rule:HR-WM-017  (0500000 D1; DEC-056)
+                       rule:HR-WM-018  (0500000 D2
+                                        sss_engine; DEC-057)
+                       rule:HR-WM-020  (0500000 D1; DEC-056)
+                       rule:HR-WM-027  (0500000 D1)
+                       rule:HR-WM-028  (0500000 D1)
+                       rule:HR-WM-029  (0500000 D1)
+                       rule:HR-WM-030  (0500000 D1)
+                       rule:HR-WM-031  (0500000 D1)
+                       rule:HR-WM-034  (0500000 D1)
+
+                     §15.12.3 contract: Contract Registry — 1
+                     token added after Sizing_Curve_Per_Module:
+                       contract:WM-PACE-005 (0500000 D1
+                                        mod:WS_Manager;
+                                        DEC-056)
+
+                     CANONICAL-SOURCE VERIFICATION. Every
+                     registered token grep-verified against
+                     its live canonical 0500000 dv1_127
+                     source before registration (do NOT
+                     register an unsourced token):
+                       - 8 DEC-056 migrated rules + WM-PACE-005
+                         confirmed in dv1_127 D1 mod:WS_Manager
+                         constraints field (line 1681).
+                       - 6 pre-existing rules
+                         (HR-WM-027/028/029/030/031/034)
+                         confirmed in dv1_127 D1 governs-list
+                         (line 1450).
+                       - HR-WM-018 confirmed in dv1_127 D2
+                         mod:Signal_Pipeline / sss_engine
+                         constraints (line 2423).
+                     None of the 16 tokens were present in
+                     v1_30 §15.12.9 / §15.12.3 (live
+                     grep-verified this session: §15.12.9 held
+                     only HR-WM-021..026/032/033; §15.12.3 held
+                     no WM-PACE entry).
+
+                     SOURCE-CITATION FORM. 0511001 was retired
+                     at TB00425 / DEC-059 (DD-012 §7 S-2..S-6
+                     complete; git rm). The canonical home for
+                     all WS_Manager architecture rules is now
+                     0500000 D1 (connection/lifecycle/state) +
+                     D2 sss_engine (HR-WM-018 RSI computation).
+                     Tokens are therefore cited to 0500000
+                     D1/D2 with the originating DEC reference,
+                     NOT to the retired 0511001. The eight
+                     pre-existing HR-WM-021..026/032/033
+                     entries retain their original "(0511001)"
+                     citation unchanged (ADD-only; existing
+                     entries not modified).
+
+                     ADD-ONLY. Existing registry order and
+                     format preserved; no existing token
+                     removed, relaxed, or renumbered; no
+                     existing citation modified. RR-SCOPE-001
+                     absolute-scope + RR-SCOPE-009 four-
+                     question origin investigation (all 16
+                     tokens trace to Bill-ratified canonical
+                     0500000 D1/D2 encoding via DEC-056 /
+                     DEC-057) + RR-SCOPE-010 verbatim citation
+                     (each token grep-verified against live
+                     dv1_127 source).
+
+                     SCOPE. ONE mission (RR-SCOPE-011): the
+                     namespace registration only. NO 0500000
+                     edit (no dv1_128). NO TB00000 amendment.
+                     NO Phase-3 AA=04 protocol-fact routing.
+                     NO Phase-2 0511002 audit. NO re-opening of
+                     the 0511001 retirement (DEC-059) or the
+                     DEC-056 / DEC-057 landings.
+
+                     FP/DP-DERIVABILITY-TEST (TB00000 §4.5
+                     DD-011 v2_56 CHAT-TURN-1 GATE). Mission
+                     is a single Bill-directed namespace edit
+                     (CF-TB00425-A primary mission per TB00426
+                     NSI §1.2); the only derivable action is
+                     ADD-only registration of the canonical-
+                     verified token set. OUTCOME 1: single
+                     compliant path, executed under
+                     RR-SCOPE-005 derivable-decision authority.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00426 SESSION-CLOSE FOUR-OPERATION
+                     SEQUENTIAL):
+                       0311001 v1_30 -> v1_31.txt (this
+                         document; routes to
+                         TothBot_V2-Docs/03XXXXX_Governance/
+                         per §11 STORAGE rule (ii) + DD-013).
+                       TB00153 Decision_Register v1_52 ->
+                         v1_53 (DEC-060 detail-only entry
+                         recording this namespace
+                         registration; no paired MDR — closes
+                         no defect).
+                       TB00427 Session_Log v1_0.
+                       TB00428 Next_Session_Instructions v1_0.
+                       OCS chat-response copy box.
+                       GitHub upload copy box.
+
+                     Bill override: 0311001 v1_30 -> v1_31 is
+                     enacted under Bill's standing document-
+                     control override. Per Bill's TB00426 OCS
+                     directive (CF-TB00425-A). Direct increment
+                     v1_30 -> v1_31; no rv state.
+
+                     Document Status updated: supersedes v1_30.
 
   v1_30  05-24-2026  TB00413 PHASE 1 0500000-CONSOLIDATION
                      REJECTION-RATE THRESHOLD-MONITORING
