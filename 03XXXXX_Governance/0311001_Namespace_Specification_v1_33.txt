@@ -1,8 +1,8 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_32
+DocVersion: v1_33
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_32.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_33.txt
 DocDate:    05-25-2026
 DocTime:    23:59:55 UTC
 
@@ -2479,6 +2479,12 @@ REGISTRY CONVENTIONS:
                                       §10)
   evt:ENTRY_PRICE_SIDE_MISSING       (0811004 dv1_1
                                       §10 NEW dv1_1)
+  evt:INSTRUMENT_STATUS_BLOCKED      (0511002;
+                                      Pre_Gate_1 reject
+                                      code; NEW v1_33)
+  evt:SYSTEM_STATE_BLOCKED           (0511002; G1
+                                      logged-on-FAIL
+                                      code; NEW v1_33)
 
 ------------------------------------------------------------
 15.12.8 param: Parameter Registry
@@ -4115,6 +4121,43 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_33  05-25-2026  TB00432 0311001 §15.12.7 GATE-REJECT
+                     evt NAMESPACE REGISTRATION (companion to
+                     0500000 dv1_128 -> dv1_129; CF-TB00431-C
+                     / DEC-064). ADD-only registration of the
+                     two gate-reject tokens registered into
+                     the 0500000 D2 Trading_Pipeline at
+                     TB00432 / DEC-064 — the sole bucket (c)
+                     gap from the TB00431 0511002 audit
+                     (§5.1). Both ABSENT from the live v1_32
+                     §15.12.7 evt registry (grep-verified,
+                     zero hits). §15.12.7 evt: Event Registry
+                     — 2 tokens added after the existing
+                     evt:ENTRY_PRICE_SIDE_MISSING entry:
+                       evt:INSTRUMENT_STATUS_BLOCKED
+                                        (0511002 line 126;
+                                         gate:Pre_Gate_1_Per_
+                                         Pair_Status reject
+                                         code; DEC-064)
+                       evt:SYSTEM_STATE_BLOCKED
+                                        (0511002 line 140/§4;
+                                         gate:G1_State_Machine
+                                         logged-on-FAIL code,
+                                         WAIT/defer semantics;
+                                         DEC-064)
+                     RR-SCOPE-011 one-mission (companion
+                     namespace registration); RR-SCOPE-001
+                     ADD-only (no token removed, no existing
+                     registry entry edited; §15.12.7 only).
+                     RR-SCOPE-005 derivable (companion to the
+                     determined TB00432 D2-amendment). NO §9
+                     edit; NO TB00000 edit; NO other registry
+                     subsection touched. P-6 governance:
+                     TB00153 DR v1_56 -> v1_57 (DEC-064);
+                     paired with 0500000 dv1_129; NO paired
+                     MDR entry (forward gap, closes no
+                     defect; TB00431/DEC-063 no-MDR precedent).
 
   v1_32  05-25-2026  TB00430 0311001 §15.12.9 WS_MANAGER
                      PROTOCOL-FACT NAMESPACE REGISTRATION
