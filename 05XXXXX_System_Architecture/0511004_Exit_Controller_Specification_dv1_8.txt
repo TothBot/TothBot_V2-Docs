@@ -1,9 +1,9 @@
 DocDCN:     0511004
 DocTitle:   Exit_Controller_Specification
-DocVersion: dv1_7
+DocVersion: dv1_8
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511004_Exit_Controller_Specification_dv1_7.txt
-DocDate:    05-14-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511004_Exit_Controller_Specification_dv1_8.txt
+DocDate:    05-26-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -568,9 +568,10 @@ exit_price + fees_exit to EC).
 7.5 To CIATS (via Logger)
   Trade Outcome Bus fires ONCE per COMPLETE position close
   (HR-EC-009, AR-066). Schema source-of-truth: 0500000
-  dv1_50 Diagram 5 stream2_box (Image5_T2_R5) + Diagram 6
-  ciats_outcome (Image6_T2_R6) per DD-001/DD-002 diagrams-
-  canonical principle. The complete 23-field canonical
+  dv1_139 D5 stream2_box schema_fields_canonical (field-15
+  exit_reason) + D2 contract:CIATS_Trade_Outcome_Bus
+  schema_fields per DD-001/DD-002 diagrams-canonical
+  principle. The complete 23-field canonical
   schema (verbatim names, types, and order):
 
     ts:                    ISO 8601 UTC with microseconds
@@ -587,13 +588,16 @@ exit_price + fees_exit to EC).
     fees_entry_usd:        Decimal (maker fee on entry)
     fees_exit_usd:         Decimal (taker fee on exit/TP)
     fees_total_usd:        Decimal
-    exit_reason:           str — one of:
+    exit_reason:           str — one of the seven
+                           mod:Exit_Controller normal-operation
+                           reasons (DEC-065):
                              TP_FILL
                              MAE_THRESHOLD_BREACH
                              HTF_REGIME_REVERSAL
                              DAILY_REGIME_DOWNGRADE
                              TIME_EXPIRY
                              TP_PARTIAL_FILL_REMAINDER
+                             PAIR_LIMIT_ONLY_EXIT
     asset_regime:          str (pair regime at entry)
     vol_regime:            str (NORMAL_VOL | ELEVATED_VOL)
     market_regime:         str (BTC/USD regime at entry)
@@ -609,16 +613,28 @@ exit_price + fees_exit to EC).
   1011005 dv1_3 §9 EC-TOB-003: weighted average of all exit
   fills, with all arithmetic in Decimal.
 
-  EXIT_REASON ENUM DRIFT (carry-forward — NOT silently
-  reconciled at this layer): 0500000 dv1_50 Diagram 5
-  stream2_box (Image5_T2_R5) + Diagram 6 ciats_outcome
-  (Image6_T2_R6) per DD-001/DD-002 enumerate SIX
-  exit_reason values (above). 1011007 Logger Coding Spec
-  dv1_5 §7 LG-TOB-002 enumerates EIGHT values. 0511004
-  dv1_6 cites the 0500000 dv1_50 diagrams as canonical
-  source per DD-001/DD-002; drift reconciliation deferred
-  to a future schema cascade with explicit Bill decision
-  on authoritative enum source (G-4 carry-forward).
+  EXIT_REASON ENUM — G-4 CLOSED (reconciled to canonical
+  0500000 dv1_139 per DD-002 diagrams-canonical-over-spec):
+  the seven exit_reason values above are the DEC-065 ratified
+  mod:Exit_Controller normal-operation set, rendered
+  canonically at 0500000 dv1_139 D2 contract:CIATS_Trade_
+  Outcome_Bus schema_fields field-15 (R8), D3 mod:Exit_
+  Controller q5_logs (R9), and D5 stream2_box schema_fields_
+  canonical field-15 (R13). EMERGENCY_SL_FIRED is NOT an
+  Exit-Controller exit_reason — it is the layer:L3_Emergency_
+  SL crash-recovery reason emitted via channel:kraken_ws_
+  executions exec_type=trade backfill on TothBot recovery, a
+  distinct producer on the same contract:CIATS_Trade_Outcome_
+  Bus (producer-partitioned exit_reason per DEC-066).
+  SIGNAL_DECAY is NOT an exit_reason — it is a Selection-side
+  pending-entry-order cancel trigger, CIATS-owned (DEC-065
+  Q2). The prior six-vs-eight enum drift (against 1011007
+  Logger Coding Spec LG-TOB-002) is RESOLVED: 1011007 dv1_6
+  (TB00459, RA-3) dropped the stale SIGNAL_DECAY value, leaving
+  the same DEC-065 seven-value set. This §7.5 enumeration now
+  matches the canonical 0500000 dv1_139 diagrams and the
+  1011007 dv1_6 logger spec. No open drift remains (G-4
+  closed; 0911002 §5A Track A RA-4).
 
 7.6 To Selection Controller state (via WS Manager, AR-073)
   On position close: WS Manager updates exit_cooldown_log
@@ -903,7 +919,15 @@ HR-EC-016  LAYER 2 PRIORITY + TP-PARTIAL CONFLICT
                                               A 0500000-canonical-
                                               all-docs cascade
                                               pre-work for 0811003
-                                              retirement at TB00277)
+                                              retirement at TB00277;
+                                              dv1_139 D2 + D3 + D5
+                                              are the canonical
+                                              source for the §7.5
+                                              exit_reason DEC-065
+                                              seven-value set +
+                                              DEC-066 producer-
+                                              partition per
+                                              DD-001/DD-002)
   0411001  Kraken_WS_v2_Specification       (wire contract)
   0411003  Kraken_Fee_Rate_Limit_Spec       (FEE_MAKER_PCT,
                                               FEE_TAKER_PCT)
@@ -919,6 +943,14 @@ HR-EC-016  LAYER 2 PRIORITY + TP-PARTIAL CONFLICT
                                               EC-PAPER-004)
   0511006  Logger_Specification             (log recipient
                                               for TRADE_CLOSE)
+  1011007  Logger_Coding_Spec               (dv1_6 — §7
+                                              LG-TOB-002
+                                              exit_reason enum;
+                                              reconciled to the
+                                              same DEC-065
+                                              seven-value set at
+                                              TB00459 RA-3 / G-4
+                                              closure)
   0211005  Paper_Trading_Operations_Procedure (dv1_3 — paper-
                                               parity binding;
                                               cites EC-PAPER)
@@ -933,6 +965,213 @@ HR-EC-016  LAYER 2 PRIORITY + TP-PARTIAL CONFLICT
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_8  05-26-2026  TB00460 RA-4 — §7.5 G-4 CARRY-FORWARD
+                     CLOSURE (Track A 0500000 consolidation
+                     per 0911002 §5A; exit_reason enum
+                     reconciliation to canonical 0500000
+                     dv1_139 per DD-002 diagrams-canonical-
+                     over-spec).
+
+                     SECTIONS AMENDED.
+
+                       Header: DocVersion dv1_7 -> dv1_8.
+                         DocPath filename suffix dv1_7 ->
+                         dv1_8. DocDate -> 05-26-2026.
+                         DocTime 23:59:59 UTC.
+
+                       §7.5 To CIATS (via Logger), schema
+                         source-of-truth opening line: stale
+                         "0500000 dv1_50 Diagram 5 stream2_box
+                         (Image5_T2_R5) + Diagram 6
+                         ciats_outcome (Image6_T2_R6)"
+                         citation re-pointed to canonical
+                         "0500000 dv1_139 D5 stream2_box
+                         schema_fields_canonical (field-15
+                         exit_reason) + D2 contract:CIATS_
+                         Trade_Outcome_Bus schema_fields"
+                         per DD-001/DD-002.
+
+                       §7.5 exit_reason enum (the 23-field
+                         schema list, field 15): reconciled
+                         from the legacy SIX-value enumeration
+                         (TP_FILL, MAE_THRESHOLD_BREACH,
+                         HTF_REGIME_REVERSAL, DAILY_REGIME_
+                         DOWNGRADE, TIME_EXPIRY, TP_PARTIAL_
+                         FILL_REMAINDER) to the DEC-065
+                         ratified SEVEN-value mod:Exit_
+                         Controller normal-operation set by
+                         ADDING the seventh value PAIR_LIMIT_
+                         ONLY_EXIT. The enum now matches the
+                         canonical 0500000 dv1_139 D2 (R8) +
+                         D3 (R9) + D5 (R13) renderings
+                         verbatim. RR-SCOPE-001 absolute-scope:
+                         ADD-only one value; no removal of any
+                         existing field or value.
+
+                       §7.5 closing "ENUM DRIFT (carry-forward
+                         — NOT silently reconciled at this
+                         layer)" paragraph: REPLACED with a
+                         "G-4 CLOSED" reconciliation note. The
+                         prior paragraph framed an OPEN six-vs-
+                         eight enum drift (0500000 dv1_50
+                         six values vs 1011007 dv1_5 §7
+                         LG-TOB-002 eight values) deferred to
+                         a future cascade with an explicit
+                         Bill decision pending. That drift is
+                         now RESOLVED: (1) the enum source is
+                         the DEC-065/DEC-066 Bill-ratified set
+                         rendered canonically at 0500000
+                         dv1_139 D2/D3/D5; (2) 1011007 dv1_6
+                         (TB00459, RA-3) dropped the stale
+                         SIGNAL_DECAY value, leaving the same
+                         DEC-065 seven-value set; (3)
+                         EMERGENCY_SL_FIRED is recorded as the
+                         layer:L3_Emergency_SL crash-recovery
+                         reason, producer-partitioned per
+                         DEC-066, NOT an Exit-Controller
+                         exit_reason; (4) SIGNAL_DECAY is
+                         recorded as a Selection-side pending-
+                         entry-order cancel trigger per DEC-065
+                         Q2, NOT an exit_reason. No open drift
+                         remains.
+
+                       §11 RELATED DOCUMENTS: 0500000 entry
+                         extended with a dv1_139 D2+D3+D5
+                         canonical-source note for the §7.5
+                         exit_reason enum (DEC-065 seven-value
+                         set + DEC-066 producer-partition per
+                         DD-001/DD-002). New 1011007 dv1_6
+                         entry added (§7 LG-TOB-002 enum
+                         reconciled to the same set at TB00459
+                         RA-3 / G-4 closure).
+
+                       §12 REVISION HISTORY: this dv1_8 entry
+                         added at top. Prior entries (dv1_7,
+                         dv1_5, dv1_4, dv1_3, and earlier)
+                         preserved byte-identical per CI-005 +
+                         CI-006 revision-history completeness.
+
+                       All §1-§10 prose + remaining §11 entries
+                         + §6A/§8/§10 enum citations preserved
+                         byte-identical (those sites already
+                         carried the correct individual values
+                         or referenced exit_reason by name
+                         without enumerating the full set).
+
+                     REASON FOR CHANGE.
+
+                     RA-4 per 0911002 dv1_3 §5A.2 Track A
+                     (next after RA-3 / TB00459). The §7.5
+                     enum drift was the last open trailing
+                     reference to the pre-DEC-065 enum state
+                     in the Exit Controller parent spec. Per
+                     DD-002 diagrams-canonical-over-spec, the
+                     spec reconciles TO 0500000; this closes
+                     the G-4 carry-forward recorded at §7.5
+                     against the now-canonical and ratified
+                     enum. No second canonical home is created
+                     (DD-002): 0500000 remains the sole
+                     canonical source; §7.5 cites it.
+
+                     FP/DP RATIONALE.
+
+                       First-principles: an Exit Controller
+                       spec must describe COMPLETELY the
+                       exit_reason values it emits. A six-value
+                       enumeration is incomplete against the
+                       ratified seven-value set and leaves an
+                       open drift note pointing at a stale
+                       0500000 dv reference and a superseded
+                       six-vs-eight question. Closing it makes
+                       the spec coding-ready and removes a
+                       drift surface.
+
+                       Data-point: 0500000 dv1_139 D2 (R8) +
+                       D3 (R9) + D5 (R13) all render the
+                       DEC-065 seven-value set + DEC-066
+                       producer-partition (live-grep verified
+                       this session). 1011007 dv1_6 §7
+                       LG-TOB-002 renders the same set
+                       (TB00459 RA-3). Three-way match
+                       (0500000 dv1_139 canonical + 1011007
+                       dv1_6 logger + this 0511004 dv1_8
+                       parent) achieved.
+
+                       Single-source-of-truth (DD-002): the
+                       authoritative source is 0500000 dv1_139
+                       D2/D3/D5. §7.5 cites it; it does not
+                       redefine the enum.
+
+                     DERIVABILITY (RR-SCOPE-005 + DD-011).
+                     The enum is fully ratified (DEC-065 /
+                     DEC-066, TB00153 v1_60). The
+                     reconciliation target is fully specified
+                     by the canonical 0500000 dv1_139 D2/D3/D5
+                     rendering + the campaign plan RA-4 scope.
+                     Single compliant path (prose-follows-
+                     diagram); not a Bill-selectable A/B
+                     choice; executed under RR-SCOPE-005
+                     derivable-decision authority + DD-011
+                     v2_56 CHAT-TURN-1 GATE (OUTCOME 1). No
+                     new DEC required (DEC-065 / DEC-066
+                     already ratified; max DEC remains 067).
+
+                     RELATED DOCUMENTS.
+
+                       0500000 System_Architecture_Overview
+                         dv1_139 — D2 contract:CIATS_Trade_
+                         Outcome_Bus schema_fields (R8) + D3
+                         mod:Exit_Controller q5_logs (R9) + D5
+                         stream2_box schema_fields_canonical
+                         field-15 (R13); exit_reason enum
+                         canonical source.
+                       1011007 Logger_Coding_Spec dv1_6 — §7
+                         LG-TOB-002 exit_reason enum; same
+                         DEC-065 seven-value set (TB00459
+                         RA-3 / G-4 closure).
+                       TB00153 Decision_Register v1_60 —
+                         DEC-065 (seven-value enum + SIGNAL_
+                         DECAY re-home) + DEC-066 (EMERGENCY_
+                         SL_FIRED producer-partition).
+                       0911002 Consolidation_Campaign_Plan
+                         dv1_3 — §5A.2 Track A RA-4 mission.
+                       TB00459 SL v1_0 — preceding session;
+                         RA-3 / G-4 logger closure (1011007
+                         dv1_6).
+
+                     STANDING RULES OBSERVED.
+
+                       RR-SCOPE-001 absolute-scope: ADD-only
+                         one enum value + citation re-points;
+                         no removal of existing content.
+                       RR-SCOPE-007 v2_30 self-authored-NSI-
+                         source-prohibition: scope sourced
+                         from DEC-065/DEC-066 (Bill-ratified
+                         Decision Register) + 0911002 §5A
+                         (Bill-ratified plan) + live RV-gate
+                         grep of 0500000 dv1_139 — NOT from
+                         NSI text.
+                       RR-SCOPE-011 single-primary-mission:
+                         one primary deliverable (this dv1_8
+                         spec amendment).
+                       DD-002 diagram-over-prose authority:
+                         §7.5 prose follows 0500000 dv1_139
+                         diagrams.
+                       DR-007 content-completeness +
+                         CI-005/CI-006 revision-history
+                         completeness: pre-delivery validation
+                         executed; prior §12 entries preserved
+                         byte-identical.
+
+                     Bill override.
+
+                     TB00460 enacted under Bill standing
+                     document-control override per the session
+                     OCS directive (RA-4 G-4 carry-forward
+                     closure). Direct increment dv1_7 -> dv1_8.
+
+                     Document Status: supersedes dv1_7.
 
   dv1_7  05-14-2026  TB00276 0811003 RETIREMENT CASCADE S-3
                      STEP — CROSS-REFERENCE HOUSEKEEPING FOR
