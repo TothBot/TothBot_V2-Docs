@@ -1,10 +1,10 @@
 DocDCN:     1011007
 DocTitle:   Logger_Coding_Spec
-DocVersion: dv1_5
+DocVersion: dv1_6
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011007_Logger_Coding_Spec_dv1_5.txt
-DocDate:    04-23-2026
-DocTime:    04:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1011007_Logger_Coding_Spec_dv1_6.txt
+DocDate:    05-26-2026
+DocTime:    23:59:59 UTC
 
 ============================================================
 LOGGER CODING SPECIFICATION
@@ -561,15 +561,32 @@ Required TRADE_CLOSE fields:
   fees_entry_usd:        Decimal (maker fee on entry)
   fees_exit_usd:         Decimal (taker fee on exit)
   fees_total_usd:        Decimal (fees_entry + fees_exit)
-  exit_reason:           str — one of:
+  exit_reason:           str — one of the seven
+                         mod:Exit_Controller normal-operation
+                         reasons per DEC-065 (canonical source:
+                         0500000 D2 + D3 + D5 contract:CIATS_
+                         Trade_Outcome_Bus schema field-15 per
+                         DD-001/DD-002 diagrams-canonical):
                            TP_FILL
                            MAE_THRESHOLD_BREACH
                            HTF_REGIME_REVERSAL
                            DAILY_REGIME_DOWNGRADE
                            TIME_EXPIRY
-                           SIGNAL_DECAY
                            TP_PARTIAL_FILL_REMAINDER
                            PAIR_LIMIT_ONLY_EXIT
+                         EMERGENCY_SL_FIRED is NOT an
+                         Exit-Controller exit_reason — it is
+                         the layer:L3_Emergency_SL crash-
+                         recovery reason emitted via
+                         channel:kraken_ws_executions
+                         exec_type=trade backfill on TothBot
+                         recovery, a distinct producer on the
+                         same contract:CIATS_Trade_Outcome_Bus
+                         (producer-partitioned exit_reason per
+                         DEC-066). SIGNAL_DECAY is NOT an
+                         exit_reason — it is a Selection-side
+                         pending-entry-order CANCEL TRIGGER
+                         (CIATS-owned) per DEC-065 Q2.
   asset_regime:          str (regime of asset at entry)
   vol_regime:            str (NORMAL_VOL | ELEVATED_VOL)
   market_regime:         str (BTC/USD regime at entry)
@@ -1047,6 +1064,39 @@ LG-TREC-009  CLASS REFERENCE.
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_6  05-26-2026  TB00459 RA-3 / G-4 closure (Track A
+                     0500000 consolidation per 0911002 §5A).
+
+                     LG-TOB-002 exit_reason enum reconciled to
+                     the canonical 0500000 dv1_139 source
+                     (D2 + D3 + D5 contract:CIATS_Trade_Outcome_
+                     Bus schema) per DD-002 diagrams-canonical-
+                     over-spec. Stale SIGNAL_DECAY value removed,
+                     leaving the ratified DEC-065 seven-value
+                     mod:Exit_Controller normal-operation set
+                     (TP_FILL, MAE_THRESHOLD_BREACH, HTF_REGIME_
+                     REVERSAL, DAILY_REGIME_DOWNGRADE, TIME_
+                     EXPIRY, TP_PARTIAL_FILL_REMAINDER, PAIR_
+                     LIMIT_ONLY_EXIT). Added DEC-066 producer-
+                     partition note (EMERGENCY_SL_FIRED is the
+                     layer:L3_Emergency_SL crash-recovery reason,
+                     NOT an Exit-Controller exit_reason) and
+                     DEC-065 Q2 note (SIGNAL_DECAY is a Selection-
+                     side pending-entry-order cancel trigger,
+                     CIATS-owned, NOT an exit_reason).
+
+                     Scope sourced from DEC-065 / DEC-066
+                     (TB00153 v1_60) + 0911002 §5A + live RV-gate
+                     grep of 0500000 dv1_139 (RR-SCOPE-007: NSI
+                     not treated as authoritative source). RR-
+                     SCOPE-001 removal of exactly one stale token
+                     (SIGNAL_DECAY); RR-SCOPE-011 one-mission.
+                     No new DEC required (DEC-065 / DEC-066
+                     already ratified). 0511006 dv1_4 verified
+                     RV-gate-clean (no exit_reason VALUE enum
+                     present; event-name registry already DEC-066-
+                     consistent; zero SIGNAL_DECAY) — no edit.
 
   dv1_5  04-23-2026  OI-029 DEFECT-ALERT-SMTP-TIMEOUT-001 fix
                      specification.
