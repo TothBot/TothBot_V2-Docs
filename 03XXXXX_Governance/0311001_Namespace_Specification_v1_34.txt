@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_26
+DocVersion: v1_34
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_26.txt
-DocDate:    05-23-2026
-DocTime:    23:29:43 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_34.txt
+DocDate:    05-25-2026
+DocTime:    23:59:55 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2398,6 +2398,11 @@ REGISTRY CONVENTIONS:
                                          R6; TB00239
                                          AMENDMENT-3;
                                          TB00000 §9.10)
+  contract:WM-PACE-005                  (0500000 D1
+                                         mod:WS_Manager;
+                                         TB00418 DEC-056;
+                                         0511001 retired
+                                         TB00425 DEC-059)
 
 ------------------------------------------------------------
 15.12.4 gate: Gate Registry
@@ -2417,7 +2422,7 @@ REGISTRY CONVENTIONS:
 15.12.5 layer: Layer Registry
 ------------------------------------------------------------
 
-  layer:L1a_Signal_Exit              (seed; 0511004)
+  layer:L1a_Regime_Exit              (seed; 0511004)
   layer:L1b_TP_Fill                  (seed; 0511004)
   layer:L2_MAE_Threshold             (seed; 0511004)
   layer:L3_Emergency_SL              (seed; 0511004)
@@ -2474,6 +2479,12 @@ REGISTRY CONVENTIONS:
                                       §10)
   evt:ENTRY_PRICE_SIDE_MISSING       (0811004 dv1_1
                                       §10 NEW dv1_1)
+  evt:INSTRUMENT_STATUS_BLOCKED      (0511002;
+                                      Pre_Gate_1 reject
+                                      code; NEW v1_33)
+  evt:SYSTEM_STATE_BLOCKED           (0511002; G1
+                                      logged-on-FAIL
+                                      code; NEW v1_33)
 
 ------------------------------------------------------------
 15.12.8 param: Parameter Registry
@@ -2546,6 +2557,164 @@ REGISTRY CONVENTIONS:
                                       defined - pending
                                       CIATS FP/DP
                                       derivation)
+  param:cancel_timeout_window        (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; I-6
+                                      cancel-ACK timeout
+                                      fallback; registered
+                                      v1_27 TB00404 DEC-046
+                                      Exit-controller group
+                                      completion; ar:AR-077;
+                                      value in TB00000 §9.17
+                                      Option A - no numeric
+                                      value carried)
+  param:mpp_retry_count              (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; C-1 MPP
+                                      IOC retry count;
+                                      registered v1_27
+                                      TB00404 DEC-046
+                                      Exit-controller group
+                                      completion; ar:AR-078;
+                                      value in TB00000 §9.17
+                                      Option A - no numeric
+                                      value carried)
+  param:max_hold_candles             (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; Layer-1a
+                                      time-expiry backstop
+                                      EC-L1A-003; registered
+                                      v1_27 TB00404 DEC-046
+                                      Exit-controller group
+                                      completion; ar:AR-071;
+                                      value in TB00000 §9.17
+                                      Option A - no numeric
+                                      value carried)
+  param:sc_body_threshold           (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; Selection
+                                      Controller body-strength
+                                      quality gate; ar:AR-072;
+                                      registered v1_28 TB00408
+                                      DEC-049 Selection-Controller
+                                      group migration; value in
+                                      TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:sc_cooldown_seconds          (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; Selection
+                                      Controller post-exit
+                                      cooldown quality gate;
+                                      ar:AR-072; registered
+                                      v1_28 TB00408 DEC-049
+                                      Selection-Controller group
+                                      migration; value in TB00000
+                                      §9.17 Option A - no
+                                      numeric value carried)
+  param:sc_consecutive_limit         (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; Selection
+                                      Controller consecutive-loss
+                                      quality gate; ar:AR-072;
+                                      registered v1_28 TB00408
+                                      DEC-049 Selection-Controller
+                                      group migration; value in
+                                      TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_long_low                 (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS long-side
+                                      RSI-in-zone lower bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_long_high                (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS long-side
+                                      RSI-in-zone upper bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_short_low                (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS short-side
+                                      RSI-in-zone lower bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:rsi_short_high               (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS short-side
+                                      RSI-in-zone upper bound;
+                                      ar:AR-067; registered v1_29
+                                      TB00412 DEC-050 SSS signal-
+                                      model group migration; value
+                                      in TB00000 §9.17 Option A -
+                                      no numeric value carried)
+  param:sss_ema_short                (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS EMA short
+                                      period (EMA9) for EMA-cross
+                                      factor; ar:AR-067; registered
+                                      v1_29 TB00412 DEC-050 SSS
+                                      signal-model group migration;
+                                      value in TB00000 §9.17 Option
+                                      A - no numeric value carried)
+  param:sss_ema_long                 (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS EMA long
+                                      period (EMA21) for EMA-cross
+                                      factor; ar:AR-067; registered
+                                      v1_29 TB00412 DEC-050 SSS
+                                      signal-model group migration;
+                                      value in TB00000 §9.17 Option
+                                      A - no numeric value carried)
+  param:volume_sss_threshold         (TB00000 §9.17;
+                                      CIATS-OWNED PER-MODULE
+                                      INSTANTIATED; SSS volume-
+                                      confirmation factor (volume
+                                      vs MA(20)); ar:AR-067;
+                                      registered v1_29 TB00412
+                                      DEC-050 SSS signal-model group
+                                      migration; value in TB00000
+                                      §9.17 Option A - no numeric
+                                      value carried)
+  param:rejection_rate_regime_threshold_pct
+                                     (TB00000 §9.17;
+                                      CIATS-OWNED UNIVERSAL
+                                      threshold-monitoring; per-
+                                      regime gate-rejection-ratio
+                                      guard threshold for the F6
+                                      signal rejection_rate_by_
+                                      regime computed at owning
+                                      element mod:CIATS_EWMA_Monitor
+                                      (D5 Stream 1); registered
+                                      v1_30 TB00413 DEC-051
+                                      rejection-rate threshold-
+                                      monitoring group migration;
+                                      value in TB00000 §9.17 Option
+                                      A - no numeric value carried)
+  param:rejection_rate_eval_window_count
+                                     (TB00000 §9.17;
+                                      CIATS-OWNED UNIVERSAL
+                                      threshold-monitoring; EWMA
+                                      evaluation-window length (50
+                                      evaluations starting) over
+                                      which mod:CIATS_EWMA_Monitor
+                                      (D5 Stream 1) computes and
+                                      holds the rejection-rate EWMA
+                                      (lambda=0.2) valid; registered
+                                      v1_30 TB00413 DEC-051
+                                      rejection-rate threshold-
+                                      monitoring group migration;
+                                      value in TB00000 §9.17 Option
+                                      A - no numeric value carried)
 
 ------------------------------------------------------------
 15.12.9 rule: HardRule Registry
@@ -2559,6 +2728,74 @@ REGISTRY CONVENTIONS:
   rule:HR-WM-026                     (0511001)
   rule:HR-WM-032                     (0511001)
   rule:HR-WM-033                     (0511001)
+  rule:HR-WM-001                     (0500000 D1;
+                                      TB00418 DEC-056;
+                                      0511001 retired
+                                      TB00425 DEC-059)
+  rule:HR-WM-002                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-003                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-004                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-012                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-016                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-017                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-018                     (0500000 D2
+                                      sss_engine;
+                                      TB00419 DEC-057)
+  rule:HR-WM-020                     (0500000 D1;
+                                      TB00418 DEC-056)
+  rule:HR-WM-027                     (0500000 D1)
+  rule:HR-WM-028                     (0500000 D1)
+  rule:HR-WM-029                     (0500000 D1)
+  rule:HR-WM-030                     (0500000 D1)
+  rule:HR-WM-031                     (0500000 D1)
+  rule:HR-WM-034                     (0500000 D1)
+  rule:HR-WM-005                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-EXE-001/
+                                      WS-OSTA-001/002/003)
+  rule:HR-WM-006                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-EXE-009)
+  rule:HR-WM-007                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-EXE-010)
+  rule:HR-WM-008                     (0500000 D1
+                                      Public_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-INST-002/003)
+  rule:HR-WM-009                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-STP-001)
+  rule:HR-WM-010                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-DMS-001)
+  rule:HR-WM-013                     (0500000 D1
+                                      Kraken_REST_API;
+                                      TB00429 DEC-061;
+                                      0411002 REST-OHLC)
+  rule:HR-WM-014                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-DL-001)
+  rule:HR-WM-015                     (0500000 D1
+                                      Private_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-BA-003)
+  rule:HR-WM-019                     (0500000 D1
+                                      Public_WS_v2;
+                                      TB00429 DEC-061;
+                                      0411001 WS-ACK-001/002)
   rule:HR-EE-013                     (0500000 §12)
   rule:HR-EC-013                     (0511004)
   rule:HR-EC-014                     (0511004)
@@ -3884,6 +4121,478 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_34  05-26-2026  TB00455 layer: REGISTRY TOKEN
+                     RENAME layer:L1a_Signal_Exit ->
+                     layer:L1a_Regime_Exit (paired
+                     companion to 0500000 dv1_135 ->
+                     dv1_136 document-wide atomic token
+                     rename; Bill OCS Option-A
+                     ratification). The §15.12.5 layer:
+                     Layer Registry seed entry was renamed
+                     to the regime-correct ID to match the
+                     DEC-066 regime-based L1a exit design
+                     (signal-decay is a Selection-side
+                     pending-entry-order cancel trigger per
+                     DEC-065 Q2, NOT an L1a open-position
+                     exit). ONE register site (grep-verified
+                     this session — the sole live literal;
+                     0511004 references the layer only as a
+                     namespace seed source, no spec-body
+                     literal). Atomic rename across all 14
+                     live 0500000 token-identity sites in the
+                     same delivery (no namespace fork). Paired
+                     decision: TB00153 v1_60 DEC-067. Token
+                     string length unchanged (21 chars) —
+                     registry column alignment preserved.
+  v1_33  05-25-2026  TB00432 0311001 §15.12.7 GATE-REJECT
+                     evt NAMESPACE REGISTRATION (companion to
+                     0500000 dv1_128 -> dv1_129; CF-TB00431-C
+                     / DEC-064). ADD-only registration of the
+                     two gate-reject tokens registered into
+                     the 0500000 D2 Trading_Pipeline at
+                     TB00432 / DEC-064 — the sole bucket (c)
+                     gap from the TB00431 0511002 audit
+                     (§5.1). Both ABSENT from the live v1_32
+                     §15.12.7 evt registry (grep-verified,
+                     zero hits). §15.12.7 evt: Event Registry
+                     — 2 tokens added after the existing
+                     evt:ENTRY_PRICE_SIDE_MISSING entry:
+                       evt:INSTRUMENT_STATUS_BLOCKED
+                                        (0511002 line 126;
+                                         gate:Pre_Gate_1_Per_
+                                         Pair_Status reject
+                                         code; DEC-064)
+                       evt:SYSTEM_STATE_BLOCKED
+                                        (0511002 line 140/§4;
+                                         gate:G1_State_Machine
+                                         logged-on-FAIL code,
+                                         WAIT/defer semantics;
+                                         DEC-064)
+                     RR-SCOPE-011 one-mission (companion
+                     namespace registration); RR-SCOPE-001
+                     ADD-only (no token removed, no existing
+                     registry entry edited; §15.12.7 only).
+                     RR-SCOPE-005 derivable (companion to the
+                     determined TB00432 D2-amendment). NO §9
+                     edit; NO TB00000 edit; NO other registry
+                     subsection touched. P-6 governance:
+                     TB00153 DR v1_56 -> v1_57 (DEC-064);
+                     paired with 0500000 dv1_129; NO paired
+                     MDR entry (forward gap, closes no
+                     defect; TB00431/DEC-063 no-MDR precedent).
+
+  v1_32  05-25-2026  TB00430 0311001 §15.12.9 WS_MANAGER
+                     PROTOCOL-FACT NAMESPACE REGISTRATION
+                     (CF-TB00429-A). ADD-only registration
+                     of the 10 Kraken WS-v2/REST protocol-
+                     fact rules routed into 0500000 D1 at
+                     TB00429 / DEC-061 (dv1_128) but not yet
+                     namespace-registered.
+
+                     §15.12.9 rule: HardRule Registry — 10
+                     tokens added after the existing
+                     HR-WM-034 WS_Manager entry:
+                       rule:HR-WM-005  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-EXE-001/
+                                        WS-OSTA-001/002/003)
+                       rule:HR-WM-006  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-EXE-009)
+                       rule:HR-WM-007  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-EXE-010)
+                       rule:HR-WM-008  (0500000 D1
+                                        Public_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-INST-002/
+                                        003)
+                       rule:HR-WM-009  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-STP-001)
+                       rule:HR-WM-010  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-DMS-001)
+                       rule:HR-WM-013  (0500000 D1
+                                        Kraken_REST_API;
+                                        DEC-061;
+                                        0411002 REST-OHLC
+                                        - REST scope)
+                       rule:HR-WM-014  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-DL-001)
+                       rule:HR-WM-015  (0500000 D1
+                                        Private_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-BA-003)
+                       rule:HR-WM-019  (0500000 D1
+                                        Public_WS_v2;
+                                        DEC-061;
+                                        0411001 WS-ACK-001/
+                                        002)
+
+                     CANONICAL-SOURCE VERIFICATION. Every
+                     registered rule grep-verified against
+                     its live canonical 0500000 dv1_128 D1
+                     container constraints field before
+                     registration (do NOT register an
+                     unsourced rule):
+                       - HR-WM-008 + HR-WM-019 confirmed in
+                         dv1_128 D1 container:Public_WS_v2
+                         constraints field (line 1501).
+                       - HR-WM-005 / 006 / 007 / 009 / 010 /
+                         014 / 015 confirmed in dv1_128 D1
+                         container:Private_WS_v2 constraints
+                         field (line 1557).
+                       - HR-WM-013 confirmed in dv1_128 D1
+                         container:Kraken_REST_API
+                         constraints field (line 1599).
+                     None of the 10 tokens were present in
+                     v1_31 §15.12.9 (live grep-verified this
+                     session: §15.12.9 held HR-WM-021..026/
+                     032/033 + HR-WM-001..004/012/016/017/
+                     018/020/027..031/034 only).
+
+                     SOURCE-CITATION FORM. The 10 protocol-
+                     fact rules were routed into 0500000 D1
+                     at TB00429 / DEC-061 (dv1_128) as the
+                     canonical home (the 0511001 WS_Manager
+                     spec was retired at TB00425 / DEC-059).
+                     Tokens are therefore cited to 0500000
+                     D1 with the originating DEC-061
+                     reference plus the underlying 0411xxx
+                     protocol-fact identifier. Nine rules
+                     are WS-v2 scope (cited 0411001); the
+                     single REST-scope rule (HR-WM-013) is
+                     cited 0411002 REST-OHLC.
+
+                     ADD-ONLY. Existing registry order and
+                     format preserved; no existing token
+                     removed, relaxed, or renumbered; no
+                     existing citation modified.
+                     RR-SCOPE-001 absolute-scope +
+                     RR-SCOPE-009 four-question origin
+                     investigation (all 10 tokens trace to
+                     Bill-ratified canonical 0500000 D1
+                     encoding via DEC-061) + RR-SCOPE-010
+                     verbatim citation (each rule grep-
+                     verified against live dv1_128 source).
+
+                     SCOPE. ONE mission (RR-SCOPE-011): the
+                     namespace registration only. NO 0500000
+                     edit (no dv1_129) - the 10 rules are
+                     already canonical in dv1_128; this
+                     session only adds the registry rows
+                     that point at that existing canonical
+                     source. NO TB00000 amendment. NO Phase-2
+                     0511002 audit. NO re-opening of the
+                     0511001 retirement (DEC-059), the
+                     DEC-056 / DEC-057 landings, the DEC-061
+                     routing, or the DEC-060 namespace
+                     registration.
+
+                     FP/DP-DERIVABILITY-TEST (TB00000 §4.5
+                     DD-011 v2_56 CHAT-TURN-1 GATE). Mission
+                     is a single Bill-directed namespace edit
+                     (CF-TB00429-A primary mission per TB00430
+                     NSI §1.2); the only derivable action is
+                     ADD-only registration of the canonical-
+                     verified 10-rule set. OUTCOME 1: single
+                     compliant path, executed under
+                     RR-SCOPE-005 derivable-decision authority.
+                     Same dedicated-session pattern as
+                     TB00426 / DEC-060 (prior 16-token batch).
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00430 SESSION-CLOSE FOUR-OPERATION
+                     SEQUENTIAL):
+                       0311001 v1_31 -> v1_32.txt (this
+                         document; routes to
+                         TothBot_V2-Docs/03XXXXX_Governance/
+                         per §11 STORAGE rule (ii) + DD-013).
+                       TB00153 Decision_Register v1_54 ->
+                         v1_55 (DEC-062 detail-only entry
+                         recording this namespace
+                         registration; no paired MDR -
+                         closes no defect).
+                       TB00430 Session_Log v1_0.
+                       TB00431 Next_Session_Instructions v1_0.
+                       OCS chat-response copy box.
+                       GitHub upload copy box.
+
+                     Bill override: 0311001 v1_31 -> v1_32 is
+                     enacted under Bill's standing document-
+                     control override. Per Bill's TB00430 OCS
+                     directive (CF-TB00429-A). Direct increment
+                     v1_31 -> v1_32; no rv state.
+
+                     Document Status updated: supersedes v1_31.
+
+  v1_31  05-25-2026  TB00426 0311001 §15.12.9 + §15.12.3
+                     WS_MANAGER NAMESPACE REGISTRATION
+                     (CF-TB00425-A / CF-TB00419-D). ADD-only
+                     registration of 16 WS_Manager
+                     rule/contract tokens that are canonical
+                     in 0500000 D1/D2 but were not yet
+                     namespace-registered. Closes the
+                     PRE-EXISTING tolerated namespace gap
+                     opened at DEC-056 (dv1_126 P-2) +
+                     DEC-057 (dv1_127 P-2).
+
+                     §15.12.9 rule: HardRule Registry — 15
+                     tokens added after the existing
+                     HR-WM-021..026/032/033 WS_Manager block:
+                       rule:HR-WM-001  (0500000 D1; DEC-056)
+                       rule:HR-WM-002  (0500000 D1; DEC-056)
+                       rule:HR-WM-003  (0500000 D1; DEC-056)
+                       rule:HR-WM-004  (0500000 D1; DEC-056)
+                       rule:HR-WM-012  (0500000 D1; DEC-056)
+                       rule:HR-WM-016  (0500000 D1; DEC-056)
+                       rule:HR-WM-017  (0500000 D1; DEC-056)
+                       rule:HR-WM-018  (0500000 D2
+                                        sss_engine; DEC-057)
+                       rule:HR-WM-020  (0500000 D1; DEC-056)
+                       rule:HR-WM-027  (0500000 D1)
+                       rule:HR-WM-028  (0500000 D1)
+                       rule:HR-WM-029  (0500000 D1)
+                       rule:HR-WM-030  (0500000 D1)
+                       rule:HR-WM-031  (0500000 D1)
+                       rule:HR-WM-034  (0500000 D1)
+
+                     §15.12.3 contract: Contract Registry — 1
+                     token added after Sizing_Curve_Per_Module:
+                       contract:WM-PACE-005 (0500000 D1
+                                        mod:WS_Manager;
+                                        DEC-056)
+
+                     CANONICAL-SOURCE VERIFICATION. Every
+                     registered token grep-verified against
+                     its live canonical 0500000 dv1_127
+                     source before registration (do NOT
+                     register an unsourced token):
+                       - 8 DEC-056 migrated rules + WM-PACE-005
+                         confirmed in dv1_127 D1 mod:WS_Manager
+                         constraints field (line 1681).
+                       - 6 pre-existing rules
+                         (HR-WM-027/028/029/030/031/034)
+                         confirmed in dv1_127 D1 governs-list
+                         (line 1450).
+                       - HR-WM-018 confirmed in dv1_127 D2
+                         mod:Signal_Pipeline / sss_engine
+                         constraints (line 2423).
+                     None of the 16 tokens were present in
+                     v1_30 §15.12.9 / §15.12.3 (live
+                     grep-verified this session: §15.12.9 held
+                     only HR-WM-021..026/032/033; §15.12.3 held
+                     no WM-PACE entry).
+
+                     SOURCE-CITATION FORM. 0511001 was retired
+                     at TB00425 / DEC-059 (DD-012 §7 S-2..S-6
+                     complete; git rm). The canonical home for
+                     all WS_Manager architecture rules is now
+                     0500000 D1 (connection/lifecycle/state) +
+                     D2 sss_engine (HR-WM-018 RSI computation).
+                     Tokens are therefore cited to 0500000
+                     D1/D2 with the originating DEC reference,
+                     NOT to the retired 0511001. The eight
+                     pre-existing HR-WM-021..026/032/033
+                     entries retain their original "(0511001)"
+                     citation unchanged (ADD-only; existing
+                     entries not modified).
+
+                     ADD-ONLY. Existing registry order and
+                     format preserved; no existing token
+                     removed, relaxed, or renumbered; no
+                     existing citation modified. RR-SCOPE-001
+                     absolute-scope + RR-SCOPE-009 four-
+                     question origin investigation (all 16
+                     tokens trace to Bill-ratified canonical
+                     0500000 D1/D2 encoding via DEC-056 /
+                     DEC-057) + RR-SCOPE-010 verbatim citation
+                     (each token grep-verified against live
+                     dv1_127 source).
+
+                     SCOPE. ONE mission (RR-SCOPE-011): the
+                     namespace registration only. NO 0500000
+                     edit (no dv1_128). NO TB00000 amendment.
+                     NO Phase-3 AA=04 protocol-fact routing.
+                     NO Phase-2 0511002 audit. NO re-opening of
+                     the 0511001 retirement (DEC-059) or the
+                     DEC-056 / DEC-057 landings.
+
+                     FP/DP-DERIVABILITY-TEST (TB00000 §4.5
+                     DD-011 v2_56 CHAT-TURN-1 GATE). Mission
+                     is a single Bill-directed namespace edit
+                     (CF-TB00425-A primary mission per TB00426
+                     NSI §1.2); the only derivable action is
+                     ADD-only registration of the canonical-
+                     verified token set. OUTCOME 1: single
+                     compliant path, executed under
+                     RR-SCOPE-005 derivable-decision authority.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00426 SESSION-CLOSE FOUR-OPERATION
+                     SEQUENTIAL):
+                       0311001 v1_30 -> v1_31.txt (this
+                         document; routes to
+                         TothBot_V2-Docs/03XXXXX_Governance/
+                         per §11 STORAGE rule (ii) + DD-013).
+                       TB00153 Decision_Register v1_52 ->
+                         v1_53 (DEC-060 detail-only entry
+                         recording this namespace
+                         registration; no paired MDR — closes
+                         no defect).
+                       TB00427 Session_Log v1_0.
+                       TB00428 Next_Session_Instructions v1_0.
+                       OCS chat-response copy box.
+                       GitHub upload copy box.
+
+                     Bill override: 0311001 v1_30 -> v1_31 is
+                     enacted under Bill's standing document-
+                     control override. Per Bill's TB00426 OCS
+                     directive (CF-TB00425-A). Direct increment
+                     v1_30 -> v1_31; no rv state.
+
+                     Document Status updated: supersedes v1_30.
+
+  v1_30  05-24-2026  TB00413 PHASE 1 0500000-CONSOLIDATION
+                     REJECTION-RATE THRESHOLD-MONITORING
+                     GROUP — §15.12.8 param REGISTRY ADD:
+                     param:rejection_rate_regime_threshold_pct,
+                     param:rejection_rate_eval_window_count.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_124 -> dv1_125 rejection-rate
+                     threshold-monitoring CIATS-ownership
+                     migration (D5 owning element
+                     mod:CIATS_EWMA_Monitor; Option A /
+                     DEC-039; SESSION B of TB00410 Action
+                     Plan). Both tokens were ABSENT from
+                     v1_29 §15.12.8 (live grep-verified this
+                     session); registered here annotated
+                     "TB00000 §9.17"; no numeric value carried
+                     (Option A — value home remains TB00000
+                     §9.17 permanently). The 4 sibling
+                     threshold-monitoring tokens
+                     (rl_warning_threshold_pct,
+                     rl_critical_threshold_pct,
+                     fee_tier_divergence_threshold,
+                     fee_tier_divergence_sustained_trades)
+                     are NOT registered here — they stay
+                     §9.17 (CHOICE 3, no single owning
+                     element) per TB00410 Determination
+                     §3.2(b)/(c). DEC-051 (TB00153 v1_43).
+
+  v1_29  05-24-2026  TB00412 PHASE 1 0500000-CONSOLIDATION
+                     SSS SIGNAL-MODEL GROUP —
+                     §15.12.8 param REGISTRY ADD:
+                     param:rsi_long_low,
+                     param:rsi_long_high,
+                     param:rsi_short_low,
+                     param:rsi_short_high,
+                     param:sss_ema_short,
+                     param:sss_ema_long,
+                     param:volume_sss_threshold.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_123 -> dv1_124 SSS signal-
+                     model CIATS-ownership migration (D2
+                     mod:Signal_Pipeline / sss_engine
+                     governs/<desc> ciats_ownership attestation
+                     + 7 param: tokens woven into the q1_do
+                     field; TB00412 DEC-050). These seven tokens
+                     are the TB00000 §9.17 SSS signal-model
+                     parameter-group, all bound at the single
+                     owning element mod:Signal_Pipeline / sss_engine
+                     (q1_do field: RSI-in-zone bounds long+short,
+                     EMA9/EMA21 cross periods, volume-confirmation
+                     factor — direction-symmetric SSS three-factor
+                     scoring per ar:AR-067). Per-session FP/DP
+                     RE-VERIFICATION GATE (TB00410 Action Plan
+                     §2 RV-1..RV-5) run at TB00412 chat-turn 1
+                     against the live dv1_123: RV-1 grep confirmed
+                     all 7 tokens ABSENT from the v1_28 §15.12.8
+                     param registry (zero structured param: sites);
+                     RV-4 MATCHED the TB00410 Determination v1_0
+                     §3.1 FIRM disposition (CHOICE 1 ->
+                     mod:Signal_Pipeline / sss_engine). This
+                     amendment registers the seven absent tokens,
+                     making the diagram attestation true. Values
+                     remain in TB00000 §9.17 (Option A / DEC-039);
+                     this registration carries NO numeric value.
+
+  v1_28  05-24-2026  TB00408 PHASE 1 0500000-CONSOLIDATION
+                     SELECTION-CONTROLLER GROUP —
+                     §15.12.8 param REGISTRY ADD:
+                     param:sc_body_threshold,
+                     param:sc_cooldown_seconds,
+                     param:sc_consecutive_limit.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_122 -> dv1_123 Selection-
+                     Controller CIATS-ownership migration
+                     (D2 gate:G5_Selection_Controller
+                     governs/<desc> attestation + D2 figcaption
+                     OPTION R EXTENSION (viii) + §9 mirror
+                     canonical-source pointer; TB00408 DEC-049).
+                     These three tokens are the TB00000 §9.17
+                     Selection-Controller parameter-group, all
+                     bound at the single owning element
+                     gate:G5_Selection_Controller (q1_do field:
+                     body-strength / post-exit-cooldown /
+                     consecutive-loss quality gates per
+                     ar:AR-072). Live grep (TB00408 P-1/P-2
+                     diagnosis) confirmed all three tokens were
+                     ABSENT from the v1_27 §15.12.8 param
+                     registry. This amendment registers the
+                     three absent tokens, making the diagram
+                     attestation true. Values remain in TB00000
+                     §9.17 (Option A / DEC-039); this
+                     registration carries NO numeric value.
+
+  v1_27  05-24-2026  TB00404 PHASE 1 0500000-CONSOLIDATION
+                     EXIT-CONTROLLER GROUP COMPLETION —
+                     §15.12.8 param REGISTRY ADD:
+                     param:cancel_timeout_window,
+                     param:mpp_retry_count,
+                     param:max_hold_candles.
+
+                     Namespace-layer companion (migration
+                     pattern P-2, 0911002 dv1_1 §8) to the
+                     0500000 dv1_119 -> dv1_120 Exit-controller
+                     group-completion CIATS-ownership migration
+                     (D3 mod:Exit_Controller governs/<desc>
+                     attestation + D3 figcaption OPTION R
+                     EXTENSION (vi) + §9 mirror canonical-source
+                     pointer; TB00404 DEC-046). These three
+                     tokens complete the TB00000 §9.17 Exit-
+                     controller group (the diagram-bound pair
+                     param:mae_mult + param:emergency_sl_mult
+                     was migrated at TB00403 DEC-045 and was
+                     already registered). Live grep (TB00404
+                     P-1 diagnosis) confirmed all three tokens
+                     were cited only in 0500000 §8 reasoning
+                     prose / §9 mirror / revision-history yet
+                     were in fact ABSENT from the §15.12.8 param
+                     registry. This amendment registers the
+                     three absent tokens, making the diagram
+                     attestation true. All three govern
+                     machinery of the single mod:Exit_Controller
+                     element (I-6 cancel-ACK fallback / C-1 MPP
+                     IOC retry / Layer-1a time-expiry backstop).
+                     Values remain in TB00000 §9.17 (Option A /
+                     DEC-039); this registration carries NO
+                     numeric value.
 
   v1_26  05-23-2026  TB00401 PHASE 1 0500000-CONSOLIDATION
                      SEED CASE — §15.12.8 param REGISTRY

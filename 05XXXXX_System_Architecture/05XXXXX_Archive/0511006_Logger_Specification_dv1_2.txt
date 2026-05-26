@@ -1,0 +1,918 @@
+DocDCN:     0511006
+DocTitle:   Logger_Specification
+DocVersion: dv1_2
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511006_Logger_Specification_dv1_2.txt
+DocDate:    05-13-2026
+DocTime:    23:59:59 UTC
+
+============================================================
+LOGGER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+Logger component of TothBot V2. It defines what the Logger
+does, its interfaces, its hard rules, what triggers it, and
+what it logs (i.e., what data CIATS depends on). It is the
+authoritative parent document for 1011007 Logger_Coding_Spec.
+
+The Logger is the sole data interface between TothBot and
+CIATS. Everything CIATS knows about TothBot's operation,
+it knows from the Logger. The Logger must never block the
+trading hot path. Every logged event is a potential CIATS
+data point.
+
+From dv1_1: the Logger operates a TWO-STREAM RECORD
+ARCHITECTURE on disk (contract:Two_Stream_Record_Architecture
+— diagram-canonical per 0500000 dv1_57 D5 R5 + D6 R6 root
+governs). The diagnostic stream (finite-
+retention rotating file) and the permanent stream
+(append-only, no-rotation, annual-segmented trade record
+file) are distinct components with distinct retention
+contracts and distinct governing concerns (diagnostics /
+CIATS live read vs. compliance, tax, audit). See
+Section 3.3.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Receives log entries from all TothBot components via an
+  in-memory bounded queue. Writes entries asynchronously
+  to disk via a background thread. Dispatches to two
+  persistent disk sinks (Section 3.3). Provides real-time
+  data stream to CIATS (two streams: EWMA Monitor and
+  Trade Outcome Bus). Never blocks the trading hot path.
+  Provides operator alert routing for CRITICAL and HIGH
+  level events, with positive-delivery confirmation events.
+
+Primary inputs:
+  Log call from any TothBot component (WS Manager, Signal
+  Pipeline, Execution Engine, Exit Controller, Position
+  Mirror, Regime Engine)
+
+Primary outputs:
+  (1) Diagnostic disk log file (structured — CIATS-readable,
+      finite retention via rotation). Receives ALL events.
+  (2) Permanent trade record file (structured — append-only,
+      annual-segmented, no rotation). Receives TRADE_CLOSE
+      events only. Authoritative long-term source for
+      CIATS's 200-trade statistical floor, IRS Form 8949 /
+      26 CFR 1.6001-1 tax records, and audit trail.
+  (3) Operator alerts for CRITICAL and HIGH events (email)
+      plus positive-delivery confirmation events
+      (ALERT_SENT) and failure events (ALERT_SMTP_FAILED)
+      emitted back through the Logger itself.
+
+============================================================
+3. IMPLEMENTATION ARCHITECTURE (AR-014, AR-063)
+============================================================
+
+3.1 Queue Implementation
+
+  CORRECT implementation (AR-063):
+    import queue
+    import logging.handlers
+
+    log_queue = queue.Queue(maxsize=10000)
+    queue_handler = logging.handlers.QueueHandler(log_queue)
+    log_listener = logging.handlers.QueueListener(
+        log_queue, file_handler, alert_handler,
+        trade_record_handler)
+    log_listener.start()
+
+  NOT asyncio.Queue (ar:AR-063 — diagram-canonical per 0500000
+    dv1_57 D1 R2 + D5 R5 root governs):
+    QueueListener runs in a separate non-asyncio thread
+    and is not compatible with asyncio.Queue. An asyncio
+    coroutine writer would compete with the event loop
+    for scheduling. stdlib queue.Queue is correct.
+
+  queue.Queue(maxsize=10000):
+    10,000 entries bounded queue (AR-014, FP/DP validated).
+    Derivation: 20 positions x 10 events/candle x 50-candle
+    buffer = 10,000 entries = 50-candle burst absorption.
+    (Source: 0500000 dv1_18 Section 6, I-5.)
+
+  QueueHandler: Non-blocking. Called on the asyncio event
+    loop — puts entry into queue and returns immediately.
+  QueueListener: Runs in its own background thread. Reads
+    from queue and dispatches to ALL attached handlers
+    (diagnostic file handler, alert handler, permanent
+    trade record handler). Never blocks the asyncio event
+    loop. Per-handler exception isolation via
+    logging.Handler.handleError ensures that a failure
+    in one handler does not prevent the others from
+    processing the same record.
+
+3.2 On Queue Full (rule:HR-LG-011 — diagram-canonical per
+    0500000 dv1_57 D1 R2 + D5 R5 + D6 R6 root governs)
+
+  If log_queue.Full exception raised on put():
+    Write directly to sys.stderr: "LOG QUEUE FULL — entry
+    dropped: {timestamp} {event_type} {symbol}"
+    Alert operator HIGH immediately.
+    Skip the queued entry — NEVER block the caller.
+    NEVER raise an exception back to the trading hot path.
+
+3.3 Two-Stream Record Architecture (dv1_1)
+    (contract:Two_Stream_Record_Architecture — diagram-
+    canonical per 0500000 dv1_57 D5 R5 + D6 R6 root governs)
+
+  The Logger produces TWO persistent disk streams with
+  distinct and independent retention contracts. Both
+  streams are written from the single QueueListener
+  background thread. Neither blocks the hot path.
+
+  STREAM 1 — DIAGNOSTIC (tothbot.log)
+    Handler:     RotatingFileHandler
+    Location:    /home/tothbot/logs/tothbot.log
+    Contents:    ALL log events from all components
+    Format:      NDJSON (one JSON object per line)
+    Retention:   Rotating — 90 files x 50 MB (AA=10 spec
+                 1011007 LG-FILE-002). Finite.
+    Consumers:   CIATS real-time tail (live read),
+                 operator forensics, on-VPS grep/jq.
+    Rationale:   High-volume diagnostic stream. Must not
+                 grow unbounded. CIATS monitors live.
+
+  STREAM 2 — PERMANENT TRADE RECORD (trades_<YYYY>.jsonl)
+    Handler:     TothBotTradeRecordHandler
+    Location:    /home/tothbot/records/trades_<YYYY>.jsonl
+                 where <YYYY> is the current UTC calendar
+                 year at time of write.
+    Contents:    TRADE_CLOSE events ONLY. All other event
+                 types are a no-op for this handler.
+    Format:      JSONL — identical per-record payload to
+                 Stream 1 (same pre-serialized JSON line,
+                 plus "\\n"). No divergent serialization.
+    Retention:   PERMANENT. Append-only. No rotation.
+                 No size cap. No truncation. 0o644
+                 permissions hard-pinned on create.
+                 fsync after each write.
+    Consumers:   Tax preparation (IRS Form 8949,
+                 Schedule D, 26 CFR 1.6001-1 — 3-year
+                 minimum; longer in audit-extension),
+                 CIATS 200-trade statistical corpus
+                 (future — currently served by Stream 1
+                 tail; OI-024 parking lot in 1010000
+                 dv1_11 Section 4.10), forensic audit of
+                 any historical trade, operator
+                 dashboards.
+    Rationale:   The CIATS 200-trade statistical floor,
+                 tax compliance, and audit trail require
+                 a trade record horizon longer than the
+                 diagnostic stream's bounded retention
+                 can guarantee (TB00107 observed ~6 days
+                 of tothbot.log retention on the live
+                 VPS — orders of magnitude short of the
+                 3-year tax minimum and structurally
+                 insufficient for the 200-trade CIATS
+                 corpus at realistic paper-trading
+                 throughput).
+
+  Contract between the two streams:
+    (a) TRADE_CLOSE payload is BYTE-FOR-BYTE IDENTICAL on
+        both streams (enforced by 1011007 dv1_4
+        LG-TOB-003). The permanent stream is not a
+        derived transform — it is the same record,
+        written twice.
+    (b) Diagnostic-stream TRADE_CLOSE within current
+        retention window is an operational fallback if
+        the permanent-stream write fails
+        (TRADE_RECORD_WRITE_FAILED HIGH alert fires;
+        operator can recover from tothbot.log until
+        root cause is resolved).
+    (c) The streams are INDEPENDENT from a failure-domain
+        perspective: QueueListener dispatches each record
+        to each handler with per-handler handleError
+        isolation. A failing permanent-stream write does
+        not prevent the diagnostic write, and vice versa.
+
+3.4 Shutdown (rule:HR-LG-004 — diagram-canonical per
+    0500000 dv1_57 D1 R2 + D5 R5 root governs)
+
+  log_listener.stop() on TothBot shutdown.
+  stop() drains remaining queue entries and joins the
+  background thread. No log entries lost on clean shutdown.
+  Queued TRADE_CLOSE records are dispatched to BOTH
+  Stream 1 and Stream 2 handlers during drain.
+
+============================================================
+4. LOG ENTRY FORMAT
+============================================================
+
+4.1 Minimum required fields on every entry:
+
+  timestamp_utc:  ISO 8601 string (UTC, nanosecond if available,
+                  millisecond minimum)
+  event_type:     str (see Section 5 — event type registry)
+  level:          str (DEBUG | INFO | WARN | ERROR | CRITICAL)
+  component:      str (WS_MGR | SIGNAL_PIPELINE |
+                       EXEC_ENG | EXIT_CTRL | POS_MIRROR |
+                       REGIME_ENG | LOGGER | CIATS)
+
+4.2 Additional fields per event type:
+
+  symbol:         str (where applicable)
+  connection_id:  uint64 (all WS connection events, AR-064)
+  req_id:         int (all outbound WS message events)
+  cl_ord_id:      str (all order events)
+  order_id:       str (all fill/cancel events)
+  All numeric values: Decimal (stored as string in log)
+    (rule:HR-LG-009 — diagram-canonical per 0500000 dv1_57
+    D1 R2 + D5 R5 root governs)
+
+4.3 Log file format: (rule:HR-LG-010 — diagram-canonical
+    per 0500000 dv1_57 D1 R2 + D5 R5 root governs)
+
+  Structured (newline-delimited JSON recommended).
+  Each line: one JSON object with all fields.
+  CIATS reads log file for all statistical computation.
+  File format governs CIATS data access.
+  Rotation policy for STREAM 1 (diagnostic): defined in
+  1011007 AA=10 coding spec.
+  Rotation policy for STREAM 2 (permanent trade record):
+  NONE. Explicit architectural contract — see 3.3.
+
+============================================================
+5. EVENT TYPE REGISTRY (minimum required event types)
+============================================================
+
+5.1 WS Manager Events
+
+  WS_TOKEN_ACQUIRED
+  WS_CONNECTED                — connection_id, url
+  WS_DISCONNECTED             — connection_id, reason
+  INSTRUMENT_SNAPSHOT_COMPLETE — pair_count
+  SUBSCRIPTION_ACK            — channel, warnings (if any)
+  MAXRATECOUNT_SET            — value from ACK
+  PAIR_WARM_UP_STARTED        — symbol
+  PAIR_READY                  — symbol
+  ALL_PAIRS_WARM_UP_COMPLETE  — pair_count
+  PING_SENT                   — connection_id
+  PONG_RECEIVED               — connection_id, latency_ms
+  PING_TIMEOUT                — connection_id (CRITICAL)
+  ZOMBIE_CONNECTION_DETECTED  — connection_id, elapsed_seconds
+  RECONNECT_INITIATED         — connection_id, attempt_number
+  RECONNECT_COMPLETE          — connection_id
+  FATAL_RECONNECT_FAILURE     — attempt_count (CRITICAL)
+  KRAKEN_MAINTENANCE_SCHEDULED — within_hours
+  CONNECTION_ID_LOGGED        — connection_id (AR-064)
+  EXECUTIONS_SEQUENCE_GAP     — expected, received (CRITICAL)
+  BALANCES_SEQUENCE_GAP       — expected, received (HIGH)
+  CANDLE_CLOSE                — symbol, interval_begin, OHLC,
+                                 atr_14, rsi_14, ema_9, ema_21
+  EXEC_TRADE                  — order_id, cum_qty, avg_price,
+                                 last_qty, last_price (ar:AR-061
+                                 — diagram-canonical per 0500000
+                                 dv1_57 D1 R2 + D5 R5 root governs)
+  EXEC_FILLED                 — order_id, cum_qty, avg_price,
+                                 fees
+  EXEC_CANCELED               — order_id, reason
+  EXEC_EXPIRED                — order_id, cum_qty
+  EXEC_RESTATED               — order_id (warn if resting)
+  UNEXPECTED_ORDER_AMENDED    — order_id (CRITICAL, ar:AR-057
+                                 — diagram-canonical per 0500000
+                                 dv1_57 D1 R2 + D6 R6 root governs)
+  UNKNOWN_EXEC_TYPE           — raw_exec_type (WARN)
+  UNKNOWN_MESSAGE_TYPE        — raw_channel (WARN)
+  ENTRY_PARTIAL_FILL_PROTECTED — symbol, cum_qty, avg_price
+  GAP_CLOSED_POSITION         — symbol, estimated_PL
+  DRAWDOWN_UPDATE             — drawdown_pct, portfolio_USD
+  SESSION_PAUSE_TRIGGERED     — drawdown_pct
+  FULL_HALT_TRIGGERED         — drawdown_pct, open_count
+  BATCH_CANCEL_SENT           — count
+  BATCH_CANCEL_RESULT         — count_confirmed
+  RATE_COUNTER_UPDATE         — symbol, value, maxratecount
+
+5.2 Signal Pipeline Events
+
+  PIPELINE_START              — symbol, candle_ts
+  INSTRUMENT_STATUS_BLOCKED   — symbol, status
+  GATE_1_PASS/FAIL            — engine_state
+  GATE_2_PASS/FAIL            — volume_usd, threshold
+  GATE_3_PASS/FAIL            — regime, vol_regime
+  GATE_4_PASS/FAIL            — htf_ema_20, htf_ema_50
+  SSS_RESULT                  — rsi_14, ema_9, ema_21,
+                                 volume_ratio, sss_pass
+  GATE_5_RESULT               — sc_gate_failed (if any),
+                                 all 6 gate outcomes
+  GATE_6_RESULT               — sizing_modifier
+  GATE_7_RESULT               — drawdown_pct, semaphore,
+                                 available_USD
+  GATE_8_RESULT               — entry_qty, entry_price,
+                                 tp_price, sl_trigger,
+                                 mae_mult, sl_mult
+  PIPELINE_PASS               — symbol, all sizing params
+  PIPELINE_FAIL               — symbol, gate, rejection_code
+
+  Rejection codes:
+    INSTRUMENT_STATUS_BLOCKED, SYSTEM_STATE_BLOCKED,
+    LIQUIDITY_REJECTED, REGIME_BLOCKED, HTF_GATE_REJECTED,
+    SSS_SIGNAL_FAIL, WEAK_CANDLE_BODY, POSITION_ALREADY_OPEN,
+    PAIR_IN_COOLDOWN, POSITION_TOO_SMALL,
+    CONSECUTIVE_LOSSES_EXCEEDED, MAX_CONCURRENT_REACHED,
+    SESSION_PAUSE_DRAWDOWN, FULL_HALT_DRAWDOWN,
+    SKIP_INSUFFICIENT_USD
+
+5.3 Execution Engine Events
+
+  ENTRY_DISPATCHED            — symbol, limit_price, qty,
+                                 cl_ord_id, req_id, timeout_sec
+  ENTRY_ACCEPTED_ON_BOOK      — symbol, req_id
+  ENTRY_FILLED                — symbol, avg_price, cum_qty, fees
+  ENTRY_PARTIAL_TRADE         — symbol, cum_qty, avg_price
+  ENTRY_EXPIRED_NO_FILL       — symbol, cl_ord_id
+  ENTRY_EXPIRED_PARTIAL_FILL  — symbol, cl_ord_id, cum_qty
+  ENTRY_CANCELED_NO_FILL      — symbol
+  ENTRY_CANCELED_PARTIAL_FILL — symbol, cum_qty
+  ENTRY_POST_ONLY_REJECTED    — symbol, regime (for CIATS)
+  TP_EMGSL_DISPATCHED         — symbol, tp_price, sl_trigger,
+                                 tp_cl_ord_id, emgsl_cl_ord_id,
+                                 batch_add req_id
+  TP_EMGSL_CONFIRMED          — symbol, tp_order_id, emgsl_id
+  RATE_COUNTER_WARNING        — symbol, current_value
+
+5.4 Exit Controller Events
+
+  L1A_TRIGGERED               — symbol, trigger (L1A-001/002/003)
+  L1B_TP_FILL_DETECTED        — symbol, tp_order_id
+  L2_MAE_BREACH_DETECTED      — symbol, bid, entry, ATR, threshold
+  CANCEL_TP_SENT              — symbol, tp_order_id, req_id
+  CANCEL_EMGSL_SENT           — symbol, emgsl_order_id, req_id
+  CANCEL_CONFIRMED            — symbol, req_id, order_id
+  CANCEL_TIMEOUT_HOLD         — symbol, req_id (CRITICAL)
+  MARKET_SELL_SENT            — symbol, qty, req_id
+  MARKET_SELL_FILLED          — symbol, exit_price, fees
+  MPP_REJECTION               — symbol, retry_count
+  MAE_HOLD_AMBIGUOUS          — symbol (CRITICAL)
+  POSITION_CLOSED             — symbol, exit_reason, net_PL_USD
+  PAIR_LIMIT_ONLY_EXIT        — symbol
+  PAIR_CANCEL_ONLY_HOLD       — symbol (CRITICAL)
+  PAIR_MAINTENANCE_HOLD       — symbol (CRITICAL)
+  EMERGENCY_SL_FIRED          — symbol (CRITICAL — restart detect)
+
+5.5 Position Mirror Events
+
+  POSITION_RECORD_CREATED     — symbol, cl_ord_id, qty
+  POSITION_FILL_CONFIRMED     — symbol, avg_price, cum_qty
+  POSITION_ORDERS_SET         — symbol, tp_order_id, emgsl_id
+  POSITION_QTY_UPDATED        — symbol, new_qty
+  POSITION_CLOSED             — symbol, close_source
+  GAP_CLOSED_POSITION         — symbol
+  UNEXPECTED_OPEN_ORDER       — order_id (WARN)
+  RECONCILIATION_COMPLETE     — confirmed_count, gap_closed_count
+
+5.6 Regime Engine Events
+
+  REGIME_COMPUTATION_STARTED  — pair_count
+  REGIME_COMPUTED             — symbol, asset_regime, vol_regime
+  REGIME_COMPUTATION_COMPLETE — pair_count, elapsed_ms
+  REGIME_STALE_WARNING        — symbol (if data gap detected)
+
+5.7 Logger Self-Observability Events (dv1_1)
+    (evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_
+    WRITE_FAILED, evt:LOG_QUEUE_FULL — all diagram-canonical
+    per 0500000 dv1_57 D5 R5 + D6 R6 root governs)
+
+  ALERT_SENT                  — to, subject,
+                                triggering_event (INFO;
+                                emitted after SMTP
+                                sendmail returns without
+                                exception)
+  ALERT_SMTP_FAILED           — to, subject,
+                                triggering_event, error
+                                (HIGH; ALERT-EXEMPT — does
+                                not trigger SMTP alert so
+                                a persistent SMTP outage
+                                does not self-trigger
+                                recursively)
+  TRADE_RECORD_WRITE_FAILED   — path, error (HIGH;
+                                emitted when Stream 2
+                                write fails for any
+                                reason — disk full,
+                                permission error, etc.)
+  LOG_QUEUE_FULL              — (HIGH; stderr-only fallback
+                                per queue-full contract;
+                                no queue-enqueued record
+                                because queue is full)
+
+  Full field definitions and level rationale in 1011007
+  dv1_4 Section 6.9.
+
+============================================================
+6. CIATS DATA STREAMS
+============================================================
+
+6.1 Stream 1 — EWMA Monitor
+
+  CIATS reads these fields for the EWMA Monitor:
+  (288 candle evals/day, valid at 50 evals, lambda=0.2)
+
+  Signal 1: rejection_rate_by_regime (F6)
+    Source: GATE_5_RESULT events + regime from GATE_3_RESULT
+    Fields needed: symbol, rejection_code, regime,
+                   vol_regime, timestamp_utc
+
+  Signal 2: rate_counter_by_pair (A-1)
+    Source: RATE_COUNTER_UPDATE events
+    Fields needed: symbol, value, maxratecount, timestamp_utc
+
+  Signal 3: ws_roundtrip_latency_ms (A-3)
+    (rule:HR-LG-007 — diagram-canonical per 0500000 dv1_57
+    D1 R2 + D5 R5 root governs)
+    Source: PONG_RECEIVED event — latency_ms field
+    Fields needed: connection_id, latency_ms, timestamp_utc
+    WS v2 responses include time_in and time_out to
+    nanosecond precision. Logger MUST capture both fields
+    where present (A-3).
+
+  All three are MONITORING SIGNALS ONLY. The EWMA Monitor
+  never drives parameter changes. It is a fast warning
+  stream. Valid at 50 candle evals (~4 hours).
+
+6.2 Stream 2 — Trade Outcome Bus
+
+  CIATS reads these fields for statistical analysis.
+  Fires ONCE on each complete position close.
+  Source: POSITION_CLOSED or MARKET_SELL_FILLED events
+  combined with entry data.
+
+  Record type: TRADE_CLOSE (see 1011007 dv1_4 Section 7
+  for the complete mandatory-field contract).
+
+  From dv1_1: TRADE_CLOSE records are written to BOTH
+  the diagnostic log (Stream 1 in Section 3.3) AND the
+  permanent trade record file (Stream 2 in Section 3.3).
+  The Trade Outcome Bus is therefore backed by a
+  permanent on-disk source regardless of diagnostic-log
+  rotation.
+
+  Feed: Statistical Engine → Proposal Engine (at 200 trades)
+        Regime Library (at 600 trades, 100+ per bucket)
+        Half-Kelly computation (at 200+ trades)
+
+============================================================
+7. ALERT ROUTING
+============================================================
+
+  Level CRITICAL:
+    Events: PING_TIMEOUT, ZOMBIE_CONNECTION_DETECTED,
+    FATAL_RECONNECT_FAILURE, EXECUTIONS_SEQUENCE_GAP,
+    UNEXPECTED_ORDER_AMENDED, CANCEL_TIMEOUT_HOLD,
+    MAE_HOLD_AMBIGUOUS, FULL_HALT_TRIGGERED,
+    PAIR_CANCEL_ONLY_HOLD, PAIR_MAINTENANCE_HOLD,
+    EMERGENCY_SL_FIRED, any unhandled exception
+    Routing: alerts@tothbot.com (immediate email alert).
+             (OI-019 dv1_3 code / dv1_3 spec — plural:
+             real Proton mailbox. Singular does not
+             exist — catch-all reservation.)
+
+  Level HIGH:
+    Events: BALANCES_SEQUENCE_GAP, SESSION_PAUSE_TRIGGERED,
+            BATCH_CANCEL_SENT, LOG_QUEUE_FULL,
+            UNEXPECTED_OPEN_ORDER,
+            TRADE_RECORD_WRITE_FAILED (dv1_1),
+            ALERT_SMTP_FAILED (dv1_1 — ALERT-EXEMPT;
+            written to Stream 1 but does NOT trigger
+            SMTP alert; anti-recursion per rule:LG-ALERT-005
+            — diagram-canonical per 0500000 dv1_57 D5 R5
+            root governs; coding-spec ref 1011007 dv1_4
+            LG-ALERT-005)
+    Routing: alerts@tothbot.com.
+
+  Level WARN:
+    Events: UNKNOWN_EXEC_TYPE, UNKNOWN_MESSAGE_TYPE,
+            RATE_COUNTER_WARNING, REGIME_STALE_WARNING
+    Routing: log file only (no email)
+
+  All CRITICAL and HIGH: also written to stderr as fallback
+  in case Logger queue is unavailable.
+
+  Positive-delivery confirmation (dv1_1): after SMTP
+  sendmail returns without exception, an ALERT_SENT (INFO)
+  event is emitted via the standard Logger path. This
+  provides operator observability of successful alert
+  delivery — closing the gap observed during TB00107
+  investigation where bounces were visible externally
+  but no structured positive or negative signal existed
+  in tothbot.log.
+
+============================================================
+8. INTERFACES
+============================================================
+
+8.1 From all TothBot components
+  All components call Logger. Logger is the universal
+  output sink. Non-blocking from caller perspective.
+
+8.2 To disk (two streams — see 3.3)
+  QueueListener background thread writes to BOTH:
+    STREAM 1: RotatingFileHandler → tothbot.log
+              (diagnostic, finite retention, all events)
+    STREAM 2: TothBotTradeRecordHandler →
+              trades_<YYYY>.jsonl (permanent, append-only,
+              TRADE_CLOSE only, annual-segmented)
+  Neither involves the asyncio event loop.
+
+8.3 To CIATS
+  CIATS reads from log files directly. Logger does not
+  push to CIATS. CIATS is fully asynchronous and reads
+  only from Logger output. CIATS never blocks TothBot.
+
+  Current CIATS implementation tails STREAM 1
+  (tothbot.log). Migration to STREAM 2 (trades_<YYYY>.jsonl)
+  for the 200-trade statistical corpus is in the parking
+  lot as OI-024 (see 1010000 dv1_11 Section 4.10) —
+  once trade throughput surfaces the corpus-truncation
+  risk that STREAM 1's finite retention creates.
+
+8.4 To operator
+  CRITICAL and HIGH events: email to alerts@tothbot.com.
+  Routing implementation in AA=10 coding spec. Positive-
+  delivery confirmation via ALERT_SENT (INFO) events
+  (dv1_1). Failure observability via ALERT_SMTP_FAILED
+  (HIGH, ALERT-EXEMPT) events (dv1_1).
+
+============================================================
+9. HARD RULES
+============================================================
+
+HR-LG-001  Logger NEVER blocks the trading hot path under
+           any condition (AR-014). Queue full → drop entry
+           → alert → continue. NEVER block caller. This
+           applies to BOTH disk streams (Section 3.3).
+           Stream 2 writes occur in the QueueListener
+           background thread, not on the hot path;
+           per-write fsync on Stream 2 does not violate
+           HR-LG-001.
+
+HR-LG-002  MUST use queue.Queue (stdlib), NOT asyncio.Queue.
+           QueueListener runs in its own non-asyncio thread
+           (AR-063). asyncio.Queue is incompatible with
+           QueueListener thread model.
+
+HR-LG-003  maxsize=10,000 (AR-014). Derived from FP/DP:
+           20 positions x 10 events/candle x 50-candle buffer.
+           Queue size is CIATS-owned starting value.
+
+HR-LG-004  log_listener.stop() called on clean shutdown.
+           Drains and joins background thread. No log loss,
+           on EITHER stream.
+
+HR-LG-005  Trade Outcome Bus: ALL fields in Section 6.2 are
+           mandatory on every position close event. No
+           optional fields. Missing fields break CIATS
+           statistical computation. TRADE_CLOSE payload is
+           byte-for-byte identical on STREAM 1 and
+           STREAM 2 — enforced by 1011007 dv1_4 LG-TOB-003.
+
+HR-LG-006  Trade Outcome Bus fires ONCE per complete position
+           close. Not on each partial fill (AR-066).
+
+HR-LG-007  EWMA Monitor Signal 3 (ws_roundtrip_latency_ms):
+           time_in and time_out fields from WS v2 responses
+           captured on Logger where present (A-3).
+
+HR-LG-008  connection_id (AR-064) logged on every WS
+           connection event and included in all reconnect,
+           disconnect, and gap log entries.
+
+HR-LG-009  All numeric values stored as string representation
+           of Decimal in log. No float storage.
+
+HR-LG-010  Log file format must be structured (JSON preferred)
+           and machine-readable. CIATS reads it directly.
+           Human-readable format secondary to CIATS readability.
+
+HR-LG-011  Queue full event: write to stderr AND alert HIGH.
+           The trade that was dropped must be recoverable
+           from other sources if possible. Alert is the signal
+           that queue sizing needs to be reviewed.
+
+HR-LG-012  STREAM 2 (dv1_1) permanent trade record file:
+           (rule:HR-LG-012 — diagram-canonical per 0500000
+           dv1_57 D5 R5 + D6 R6 root governs)
+             (a) Append-only. Never truncate. Never rotate.
+             (b) Annual segmentation at /home/tothbot/records/
+                 trades_<YYYY>.jsonl — UTC calendar year
+                 at time of write.
+             (c) File permissions 0o644 hard-pinned via the
+                 mode argument to os.open with O_CREAT,
+                 independent of runtime umask. Deming 6.1
+                 — build quality in.
+             (d) fsync after every write. Compliance-grade
+                 records must survive VPS power loss /
+                 kernel panic. Cost is negligible because
+                 TRADE_CLOSE frequency is low and fsync
+                 runs in the QueueListener thread.
+             (e) Write failure emits TRADE_RECORD_WRITE_FAILED
+                 (HIGH) via the standard Logger path. Does
+                 not raise. Does not block STREAM 1 write.
+
+============================================================
+10. WHAT TRIGGERS IT
+============================================================
+
+  Any TothBot component log() call:
+    WS Manager (highest volume — every event)
+    Signal Pipeline (every gate evaluation)
+    Execution Engine (order dispatch and fills)
+    Exit Controller (exit sequences)
+    Position Mirror (state changes)
+    Regime Engine (daily computation)
+
+============================================================
+11. WHAT IT LOGS
+============================================================
+
+  The Logger logs everything. It is the audit trail of the
+  entire system. Every event from every component passes
+  through it. The full event type registry is in Section 5.
+
+  Volume estimate:
+    288 candle evals/day x 20 pairs = 5,760 pipeline evals
+    Each eval: ~8-15 log entries = ~60,000 entries/day
+    Plus: WS events, fills, pings, heartbeats
+    Total: ~80,000-120,000 entries/day (estimate)
+    Queue absorption: 10,000 entries = ~10-minute burst buffer
+
+  STREAM 2 (dv1_1) volume is negligible by comparison:
+  one TRADE_CLOSE event per closed position. At target
+  paper-trade throughput of ~20-50 trades/day, STREAM 2
+  grows at ~500-800 bytes per event = ~10-40 KB/day.
+  Annual file size at that throughput: ~4-15 MB.
+  Well under any practical filesystem concern.
+
+============================================================
+12. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding)
+  0511001  WS_Manager_Specification         (primary caller)
+  0511002  Signal_Pipeline_Specification    (caller)
+  0511003  Execution_Engine_Specification   (caller)
+  0511004  Exit_Controller_Specification    (CIATS TOB source)
+  0511005  Position_Mirror_Specification    (caller)
+  0200000  Operations                       (CIATS domain)
+  0211001  CIATS_Specification              (reads Logger)
+  1011007  Logger_Coding_Spec  dv1_4        (AA=10 child)
+
+============================================================
+13. REVISION HISTORY
+============================================================
+
+  dv1_2  05-13-2026  TB00230 TURN 2 — PROSE-UPDATE-AH..AT
+                     ENACTMENT: 13 PROSE CITATIONS UPGRADED TO
+                     DIAGRAM-CANONICAL PER DD-002 PROSE-FOLLOWS-
+                     DIAGRAM, CLOSING AMENDMENT-11 CROSS-
+                     REFERENCE LAYER PER TB00199 v1_0 §5.2.
+
+                     Companion deliverable to 0500000 dv1_56 ->
+                     dv1_57 AMENDMENT-11 (TB00230 Turn 1 — root
+                     <desc> governs list additions across D1 R2
+                     + D5 R5 + D6 R6 promoting the C5 cluster
+                     Logger architectural identifiers to
+                     diagram-canonical status). dv1_2 closes
+                     the cross-reference layer: each affected
+                     prose site in 0511006 now cites the
+                     architectural identifier in canonical
+                     namespace-token form with explicit
+                     diagram-canonical pointer to the 0500000
+                     dv1_57 governing block per DD-002.
+
+                     PROSE UPDATES APPLIED (13 sites):
+                     AH §3.1 NOT asyncio.Queue paragraph —
+                        ar:AR-063 citation upgraded to diagram-
+                        canonical (0500000 dv1_57 D1 R2 + D5 R5
+                        root governs).
+                     AI §3.2 On Queue Full heading —
+                        rule:HR-LG-011 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 + D6 R6
+                        root governs).
+                     AJ §3.3 Two-Stream Record Architecture
+                        heading — contract:Two_Stream_Record_
+                        Architecture citation added (0500000
+                        dv1_57 D5 R5 + D6 R6 root governs).
+                     AK §3.4 Shutdown heading — rule:HR-LG-004
+                        citation added (0500000 dv1_57 D1 R2
+                        + D5 R5 root governs).
+                     AL §4.2 Decimal numeric fields —
+                        rule:HR-LG-009 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 root
+                        governs).
+                     AM §4.3 Log file format heading —
+                        rule:HR-LG-010 citation added
+                        (0500000 dv1_57 D1 R2 + D5 R5 root
+                        governs).
+                     AN §5.1 EXEC_TRADE row — bare AR-061
+                        promoted to ar:AR-061 diagram-
+                        canonical (0500000 dv1_57 D1 R2 + D5
+                        R5 root governs).
+                     AO §5.1 UNEXPECTED_ORDER_AMENDED row —
+                        bare AR-057 promoted to ar:AR-057
+                        diagram-canonical (0500000 dv1_57 D1
+                        R2 + D6 R6 root governs).
+                     AP §5.7 Logger Self-Observability Events
+                        heading — 4 evt: citations added
+                        (evt:ALERT_SENT + evt:ALERT_SMTP_FAILED
+                        + evt:TRADE_RECORD_WRITE_FAILED +
+                        evt:LOG_QUEUE_FULL; all diagram-
+                        canonical per 0500000 dv1_57 D5 R5 +
+                        D6 R6 root governs).
+                     AQ §6.1 Stream 1 Signal 3 ws_roundtrip_
+                        latency_ms paragraph — rule:HR-LG-007
+                        citation added (0500000 dv1_57 D1 R2
+                        + D5 R5 root governs).
+                     AR §7 Level HIGH ALERT_SMTP_FAILED row —
+                        rule:LG-ALERT-005 anti-recursion
+                        citation upgraded to diagram-canonical
+                        (0500000 dv1_57 D5 R5 root governs;
+                        coding-spec ref 1011007 dv1_4 LG-ALERT
+                        -005 retained as historical seed
+                        pointer until 1011007 retired at
+                        Phase 3).
+                     AS §9 HR-LG-012 paragraph — rule:HR-LG-012
+                        citation upgraded to diagram-canonical
+                        (0500000 dv1_57 D5 R5 + D6 R6 root
+                        governs).
+                     AT §1 two-stream mission statement —
+                        contract:Two_Stream_Record_Architecture
+                        citation added (0500000 dv1_57 D5 R5 +
+                        D6 R6 root governs).
+
+                     METHODOLOGY CITATION.
+                     TB00199 v1_0 §5.2 PROSE-UPDATE-AH..AT.
+                     TB00229 SL §6.1 ratified PROSE-UPDATE
+                     scope. TB00230 NSI v1_0 §4.3 Turn 2
+                     execution directive. DD-001 / DD-002
+                     diagrams-canonical principle: every
+                     architectural identifier added in these
+                     13 prose sites is canonical in the
+                     0500000 dv1_57 root <desc> governs lists
+                     for D1 R2 + D5 R5 + D6 R6. Prose layer
+                     of 0511006 dv1_2 follows the diagram
+                     layer per DD-002 prose-follows-diagram
+                     rule.
+
+                     REGISTRY-GAP NOTE.
+                     Six rule: tokens (HR-LG-004 / HR-LG-007 /
+                     HR-LG-009 / HR-LG-010 / HR-LG-011 /
+                     HR-LG-012), one contract: token (Two_
+                     Stream_Record_Architecture), four evt:
+                     tokens (ALERT_SENT / ALERT_SMTP_FAILED /
+                     TRADE_RECORD_WRITE_FAILED / LOG_QUEUE_
+                     FULL), and one anti-recursion rule:
+                     token (LG-ALERT-005) cited in the
+                     prose updates are not currently
+                     registered in 0311001 v1_13 §15.12.3 /
+                     §15.12.7 / §15.12.9 registries.
+                     Disposition: registry-gap-note convention
+                     applies per TB00229 SL §6.3 tertiary
+                     carry-forward. AMENDMENT-11 enactment
+                     surfaces a §15.12 housekeeping
+                     requirement deferred to a future 0311001
+                     increment. Cited tokens use the same
+                     namespace-token form they will take when
+                     registered.
+
+                     PARENT CHAIN COMPLIANCE.
+                     0511006 is AA=05 Instance Document under
+                     0510000 System_Components_Anchor (per
+                     0311001 v1_13 three-tier hierarchy). No
+                     amendment required to parent anchor or
+                     domain document. Header refresh: DocVersion
+                     dv1_1 -> dv1_2, DocPath updated, DocDate
+                     04-21-2026 -> 05-13-2026, DocTime updated.
+
+                     COMPANION DELIVERABLES THIS SESSION
+                     (TB00230 RANK 8 PHASE 2):
+                       0500000 dv1_56 -> dv1_57.html (Turn 1
+                         AMENDMENT-11 enactment).
+                       0511006 dv1_1 -> dv1_2.txt (this
+                         document — Turn 2 PROSE-UPDATE-AH..AT
+                         enactment).
+                       Phase 3 bundling decision per TB00230
+                         §4.4 (0500000 dv1_57 -> dv1_58 + 1011007
+                         git rm + TB00153 MDR amendment, OR
+                         deferred to TB00231 if scope exceeded).
+                       TB00230 SL v1_0.txt (session-close).
+                       TB00231 NSI v1_0.txt (session-close).
+                       OCS chat-response copy box (session-close
+                         trio member 3; byte-identical to
+                         TB00231 §0).
+
+  dv1_1  04-21-2026  TB00108 AI-1 — OI-023 DEFECT-TRADE-
+                     RECORD-001 (CRITICAL) architectural
+                     uplift.
+
+                     The dv1_0 component summary and
+                     interface model described a single
+                     disk output stream. OI-023 introduces
+                     a second, semantically and
+                     contractually distinct disk output
+                     (permanent, append-only, annual-
+                     segmented, no rotation, driven by
+                     tax / CIATS / audit retention
+                     requirements that the existing
+                     rotating diagnostic stream cannot
+                     satisfy). This is an architectural
+                     change in the Logger's output
+                     interface — not a coding-spec-level
+                     implementation detail — and therefore
+                     requires a bump at this level.
+
+                     Specific changes:
+                       Section 1: purpose text adds
+                         explicit two-stream statement.
+                       Section 2: Primary outputs list
+                         expanded to enumerate both
+                         streams plus positive-delivery
+                         alert confirmation.
+                       Section 3.3 NEW: Two-Stream Record
+                         Architecture subsection.
+                         Documents STREAM 1 (diagnostic,
+                         tothbot.log, rotating) and
+                         STREAM 2 (permanent,
+                         trades_<YYYY>.jsonl, append-
+                         only) as distinct components
+                         with distinct retention
+                         contracts. States the
+                         contractual invariants between
+                         them (byte-for-byte identical
+                         TRADE_CLOSE payload,
+                         operational fallback
+                         relationship, per-handler
+                         failure isolation).
+                       Section 3.4: Shutdown note
+                         updated for both streams.
+                       Section 4.3: rotation policy
+                         statement split by stream.
+                       Section 5.7 NEW: Logger Self-
+                         Observability Events —
+                         ALERT_SENT, ALERT_SMTP_FAILED,
+                         TRADE_RECORD_WRITE_FAILED,
+                         LOG_QUEUE_FULL. Introduced by
+                         TB00108 AI-2 (OI-022) and
+                         AI-1 (OI-023).
+                       Section 6.2: Trade Outcome Bus
+                         note expanded to record that
+                         the TOB is now backed by a
+                         permanent on-disk source.
+                       Section 7: CRITICAL / HIGH alert
+                         routing updated for OI-019
+                         plural address; HIGH list
+                         extended with
+                         TRADE_RECORD_WRITE_FAILED and
+                         ALERT_SMTP_FAILED (ALERT-
+                         EXEMPT). Positive-delivery
+                         confirmation paragraph added.
+                       Section 8.1-8.4: interface
+                         descriptions updated for both
+                         streams and for positive /
+                         negative alert observability.
+                         Section 8.3 also records the
+                         CIATS migration parking-lot
+                         item (OI-024 in 1010000 dv1_11
+                         Section 4.10).
+                       Section 9 HARD RULES: HR-LG-012
+                         NEW — STREAM 2 contract
+                         (append-only, annual
+                         segmentation, 0o644 hard-pin
+                         via os.open, fsync per write,
+                         failure path emits HIGH event).
+                         HR-LG-005 clarified to state
+                         payload identity between the
+                         two streams.
+                       Section 11: volume estimate
+                         reconfirmed for STREAM 1;
+                         STREAM 2 volume estimate
+                         added.
+                       Section 12: 1011007 version
+                         reference updated to dv1_4.
+
+                     Governs 1011007 dv1_4.
+
+  dv1_0  04-04-2026  Initial document. Derived from 0500000
+                     dv1_18 Sections 2, 6, 8, 9, 11. Logger
+                     architecture specified: queue.Queue
+                     (not asyncio.Queue, AR-063), maxsize=
+                     10,000 (AR-014), QueueHandler +
+                     QueueListener pattern. Complete event
+                     type registry Section 5 defined. CIATS
+                     two-stream data model specified (EWMA
+                     Monitor + Trade Outcome Bus). All
+                     mandatory Trade Outcome Bus fields listed.
+                     Alert routing defined. Hard rules
+                     HR-LG-001 through HR-LG-011 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================

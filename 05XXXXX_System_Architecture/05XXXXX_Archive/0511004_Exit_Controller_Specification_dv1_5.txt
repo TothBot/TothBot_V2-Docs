@@ -1,0 +1,1448 @@
+DocDCN:     0511004
+DocTitle:   Exit_Controller_Specification
+DocVersion: dv1_5
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0511004_Exit_Controller_Specification_dv1_5.txt
+DocDate:    05-12-2026
+DocTime:    18:00:00 UTC
+
+============================================================
+EXIT CONTROLLER SPECIFICATION
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the system-level specification for the
+Exit Controller component of TothBot V2. It defines what
+the Exit Controller does, its interfaces, its hard rules,
+what triggers it, and what it logs. It is the authoritative
+parent document for 1011005 Exit_Controller_Coding_Spec.
+
+The Exit Controller owns all normal position exits.
+It is a three-layer architecture. Layer 3 (emergency SL)
+is crash protection only — it NEVER fires in normal
+operation. All normal exits are Layer 1 or Layer 2.
+
+============================================================
+2. COMPONENT SUMMARY
+============================================================
+
+What it does:
+  Monitors all open positions continuously. Detects exit
+  conditions and executes the appropriate cancel and sell
+  sequence. Manages Full Halt via batch_cancel. Handles
+  pair status changes for open positions. Enforces cancel
+  timeout fallback. Handles MPP IOC limit retries. Reports
+  closed position data to CIATS via Logger.
+
+Primary inputs:
+  Ticker bbo events (continuous price monitoring, I-7)
+  ohlc(60) close events (HTF regime check L1a-001)
+  ohlc(5m) close events (max hold counter L1a-003)
+  00:00 UTC trigger (daily regime check L1a-002)
+  executions fills (TP fills, cancel confirmations)
+  Position Mirror reads (current position state)
+  Instrument status events (AR-040)
+
+Primary outputs:
+  WS v2 cancel_order (per-order cancel, Layer 1/2)
+  WS v2 batch_cancel (Full Halt)
+  WS v2 add_order market sell (Layer 1a, 1b aftermath, 2)
+  Position Mirror update (position close)
+  CIATS Trade Outcome Bus data (Logger)
+  Operator alerts
+
+============================================================
+3. THREE-LAYER EXIT ARCHITECTURE
+============================================================
+
+============================================================
+3.1 LAYER 1a — SIGNAL-BASED EXITS
+============================================================
+
+Three trigger conditions. Any one fires the Layer 1a exit
+sequence for the affected symbol.
+
+EC-L1A-001: HTF Regime Reversal
+  Trigger: ohlc(60) close detected by WS Manager.
+           1H EMA(20) crosses BELOW 1H EMA(50) while
+           long position is open in that symbol.
+  Gate 4 symmetry — same condition that blocked entry
+  now triggers exit.
+  Exit sequence:
+    0. Pair-status precondition (HR-EC-016 NEW dv1_4): if
+       pair status == cancel_only OR maintenance, HOLD,
+       raise CRITICAL alert, do NOT proceed to Step 1.
+       Resting TP and emergSL protect (ar:AR-040 + §5).
+    1. cancel_order: cancel TP resting order (req_id tracked).
+    2. cancel_order: cancel emergSL stop order (req_id tracked).
+       SEQUENCE CRITICAL: both cancels BEFORE market sell.
+    3. Cancel timeout fallback (I-6) applied to both cancels.
+    4. add_order: market sell of position qty.
+    5. Layer 2 priority override (HR-EC-016): if MAE breach
+       fires while this sequence is in progress, complete
+       cancel steps then dispatch market sell with
+       exit_reason=MAE_THRESHOLD_BREACH (not HTF_REGIME_REVERSAL).
+  exit_reason: HTF_REGIME_REVERSAL
+
+EC-L1A-002: Daily Regime Downgrade
+  Trigger: 00:00 UTC regime refresh. After Regime Engine
+           computes new daily regime classifications, if
+           any open-position pair reclassifies from
+           TRENDING_POSITIVE → TRENDING_NEGATIVE or
+           NON_DIR + ELEVATED_VOL.
+  Gate 3 symmetry — same condition that blocks entries
+  now exits open positions.
+  Exit sequence: same as EC-L1A-001 (Steps 0 through 5
+    including pair-status precondition Step 0 and Layer 2
+    priority override Step 5 per HR-EC-016 NEW dv1_4).
+  Cancel timeout fallback (I-6) applied.
+  exit_reason: DAILY_REGIME_DOWNGRADE
+
+EC-L1A-003: Max Hold Time
+  Trigger: ohlc(5m) candle close. WS Manager maintains
+           hold_candle_count per open position symbol.
+           Increments on each ohlc(5m) close for that symbol.
+  Condition: hold_candle_count[symbol] >= max_hold_candles
+  max_hold_candles: 24 (2 hours at 5-min cadence). CIATS-owned.
+  FP/DP derivation: 5-minute momentum trades resolve within
+  6-24 candles in TRENDING_POS (validated dv1_15 AR-071,
+  TB00020 Search 3, 10 sources).
+  EC-L1A-001 and EC-L1A-002 catch higher-timeframe failure.
+  max_hold_candles is the backstop for stalled positions.
+  Exit sequence: same as EC-L1A-001 (Steps 0 through 5
+    including pair-status precondition Step 0 and Layer 2
+    priority override Step 5 per HR-EC-016 NEW dv1_4).
+  Cancel timeout fallback (I-6) applied.
+  exit_reason: TIME_EXPIRY
+
+============================================================
+3.2 LAYER 1b — TP FILL
+============================================================
+
+EC-L1B-001: TP Fill Confirmation
+  Trigger: exec_type=filled on TP order (identified by
+           order_id matching tp_order_id in Position Mirror).
+  Action:
+    1. cancel_order: cancel emergSL stop order.
+       (TP has filled — crash protection no longer needed)
+    2. Track cancel with req_id for confirmation.
+    3. On cancel confirm: clear Position Mirror for symbol.
+    4. Fire CIATS Trade Outcome Bus.
+  exit_reason: TP_FILL
+
+EC-L1B-002: TP Partial Fill (AR-066)
+  See 0511001 Section 8.1. WS Manager handles routing.
+  Exit Controller receives instruction when remaining_qty
+  < qty_min or remaining_qty * bid < cost_min:
+    cancel emergSL → market sell remainder → clear Mirror.
+  exit_reason: TP_PARTIAL_FILL_REMAINDER
+
+  TP-PARTIAL + LAYER 2 CONFLICT RESOLUTION (HR-EC-016 NEW
+  dv1_4 — cascaded from 0500000 dv1_48 Image3 R4
+  conflict_resolution_callout): when TP partial fill
+  (cum_qty > 0) and Layer 2 MAE breach occur
+  simultaneously, Layer 2 WINS. Cancel remaining TP qty.
+  Execute Layer 2 market sell. Use cum_qty already
+  filled as partial P/L credited at TP price. Emit ONE
+  unified CIATS Trade Outcome Bus record (single record
+  for the full position closure — NEVER two records).
+  exit_reason of the unified record: MAE_THRESHOLD_BREACH
+  (not TP_PARTIAL_FILL_REMAINDER).
+
+============================================================
+3.3 LAYER 2 — MAE THRESHOLD EXIT
+============================================================
+
+EC-L2-001: MAE Threshold Detection
+  Trigger: ticker bbo event for pair with open position.
+           bbo event provides bid price for realizable exit.
+  Condition: (entry_fill_price - bid_price) >=
+             ATR(14) * mae_mult (1.5x starting)
+  ATR(14) value from pre-computation cache (incremental).
+  Uses bid price (conservative — realizable sell value).
+  On condition true:
+
+  SEQUENCE CRITICAL (AR-001 architecture preserved):
+    Step 1: cancel_order: cancel TP resting limit.
+            req_id tracked in req_id_registry.
+    Step 2: cancel_order: cancel emergSL stop-market.
+            req_id tracked in req_id_registry.
+    BOTH cancels MUST complete (or be confirmed cancelled)
+    BEFORE market sell is dispatched.
+    NEVER issue market sell with ambiguous order state.
+
+  CANCEL TIMEOUT FALLBACK (I-6):
+    Each cancel tracked by req_id with timestamp.
+    On timeout (no ACK within configurable window):
+      Check executions channel for order state.
+      Confirmed cancelled: proceed.
+      State unknown: retry cancel once.
+      Second timeout: ALERT operator (CRITICAL) +
+        HOLD POSITION. Do NOT market sell.
+        Operator must resolve.
+
+  Step 3 (after confirmed dual cancel):
+    add_order: market sell at market (taker 0.26%).
+
+  MPP HANDLING (C-1, 0411001 WS-MPP-001 through -004):
+    Market sell may reject on wide spread (Market Price
+    Protection). no_mpp is deprecated Sep 2025 — always
+    active. On MPP rejection:
+    Retry with IOC limit at best_bid - 0.2% (NOT a
+    repeated market sell). IOC fills immediately if
+    best_bid - 0.2% matches the book, or cancels — no
+    resting order left open.
+    Retry count: deferred to 0811003
+    Exit_Controller_Specification (Phase 6).
+    If all retries fail: ALERT operator CRITICAL +
+      HOLD POSITION. emergSL on Kraken engine is only
+      protection if sell fails.
+    Log MPP_REJECTION on each retry (include bid price,
+    limit price attempted, retry number).
+
+  On successful sell: clear Position Mirror. Fire CIATS.
+  exit_reason: MAE_THRESHOLD_BREACH
+
+  LAYER 2 PRIORITY OVER LAYER 1a (HR-EC-016 NEW dv1_4 —
+  cascaded from 0500000 dv1_48 Image3 R4
+  conflict_resolution_callout): Layer 2 MAE threshold
+  breach takes priority over any in-progress Layer 1a
+  sequence. If MAE breach fires while an L1a sequence is
+  underway (e.g., HTF reversal cancel sequence in
+  progress), complete the L1a cancel steps then execute
+  the market sell with exit_reason=MAE_THRESHOLD_BREACH
+  (not the original L1a reason). Issuing two market
+  sells or two TRADE_CLOSE records for the same position
+  is PROHIBITED.
+
+============================================================
+3.4 LAYER 3 — EMERGENCY SL (CRASH PROTECTION ONLY)
+============================================================
+
+  THIS LAYER IS NOT EC. THIS IS KRAKEN MATCHING ENGINE.
+
+  The emergSL stop-market order rests on the Kraken
+  matching engine. It fires autonomously when TothBot
+  is unreachable (VPS crash, process kill, internet
+  severance, unrecoverable WS disconnect).
+
+  FIRING CONDITION: ONLY when TothBot cannot intervene.
+  SHOULD NEVER FIRE IN NORMAL OPERATION.
+  If emergSL fires: this is a SYSTEM FAILURE EVENT.
+
+  Detection on restart (not during normal EC operation):
+    Restart reconciliation compares Position Mirror state
+    vs snap_orders. If position shows as closed but TothBot
+    did not execute the close: EMERGENCY_SL_FIRED event.
+    Log CRITICAL. Alert operator.
+
+  emergSL distance: ATR(14) * emergency_sl_mult (3.0x).
+  This is 2x the MAE threshold — large buffer. Normal
+  Layer 2 exit fires first in normal operation.
+
+  MPP NOTE (C-1): Triggered stop-market subject to MPP on
+  wide spread. No retry possible — matching engine fires.
+  Layer 2 buffer (3x vs 1.5x) provides spread absorption.
+
+============================================================
+4. CONTINUOUS DRAWDOWN MONITORING (I-7)
+============================================================
+
+  Drawdown check fires on EVERY bbo ticker event for any
+  pair with an open position (not only at Gate 7).
+
+  Formula (AR-052):
+    current_portfolio_USD = spot_usd_balance
+        + sum(bid_price[sym] * qty[sym]
+              for sym in position_mirror)
+    drawdown_pct = max(0,
+        (portfolio_baseline_USD - current_portfolio_USD)
+        / portfolio_baseline_USD)
+
+  Uses bid price — conservative (realizable exit value).
+  portfolio_baseline_USD: set once at startup, never reset.
+
+  Thresholds (CIATS-owned starting values):
+    session_pause_drawdown (5%):
+      No new entries. system_state = SESSION_PAUSE.
+      Alert operator. Existing positions monitored normally.
+      Resumes when drawdown < 5%.
+    full_halt_drawdown (10%):
+      No new entries. system_state = FULL_HALT.
+      Alert operator (CRITICAL).
+      Does NOT auto-close positions. Bill decides.
+
+  Full Halt + batch_cancel (AR-019, AR-041):
+    On FULL_HALT: Exit Controller cancels ALL open
+    entry orders (not yet filled) via batch_cancel.
+    batch_cancel chosen because:
+      - Returns single count response (sufficient)
+      - Bypasses rate counter maximum (critical when halting)
+      - All open entries must be cancelled in minimum messages
+    batch_cancel does NOT cancel resting TP or emergSL.
+    Open positions continue to be monitored.
+
+============================================================
+5. PAIR STATUS ADAPTATION FOR OPEN POSITIONS (AR-040)
+============================================================
+
+  When instrument channel fires a status change for a pair
+  that has an open position:
+
+  status = limit_only:
+    Cancel TP (if resting). Place IOC limit sell at best_bid.
+    Do NOT use market sell in limit_only state.
+    exit_reason: PAIR_LIMIT_ONLY_EXIT
+
+  status = cancel_only:
+    HOLD position. CRITICAL alert to operator.
+    No new orders possible in cancel_only.
+    Resting TP and emergSL are the only protection.
+    Log PAIR_CANCEL_ONLY_HOLD.
+
+  status = maintenance (pair level):
+    HOLD position. CRITICAL alert to operator.
+    Same as cancel_only. Resting orders remain active.
+    Log PAIR_MAINTENANCE_HOLD.
+
+  Validates AR-001: resting emergSL is the correct crash
+  protection for exactly these pair-level disruption
+  scenarios.
+
+============================================================
+6. CANCEL TIMEOUT FALLBACK (I-6) — SPECIFICATION
+============================================================
+
+  Applies to all cancel_order calls in Layer 1a, 1b, and 2.
+
+  Mechanism:
+    On cancel_order dispatch: record {req_id, timestamp,
+    symbol, order_id} in req_id_registry.
+    Start timeout timer.
+
+  On ACK received:
+    Match by req_id. Mark confirmed. Proceed.
+
+  On timeout (window value deferred to 0811003
+    Exit_Controller_Specification — Phase 6):
+    1. Check executions channel for order state.
+       If exec_type=canceled for this order_id: proceed.
+       If order not in executions (state unknown):
+         Retry cancel_order once.
+         If second timeout: ALERT CRITICAL + HOLD POSITION.
+         Log CANCEL_TIMEOUT_HOLD. Do NOT proceed to sell.
+
+  NEVER issue market sell with ambiguous order state.
+  An uncancelled TP or emergSL during market sell creates
+  duplicate position risk and R:R violation.
+
+============================================================
+6A. PAPER MODE EXIT BEHAVIOR (EC-PAPER) — NEW dv1_3
+============================================================
+
+This section specifies how Exit Controller behaves in
+paper mode. Per TB00000 v2_18 §4.4 PA-001..010 PAPER-AS-
+MASTER and 0511001 dv1_5 HR-WM-033 PAPER EXITS ROUTE
+THROUGH EXIT CONTROLLER, ALL paper-mode exit paths route
+through Exit Controller's normal close sequence. The
+Exit Controller layer is byte-identical between paper
+and live modes wherever physically possible per PA-005.
+
+------------------------------------------------------------
+6A.1 Architectural Principle
+------------------------------------------------------------
+
+EC-PAPER-001  PAPER-LIVE BYTE-IDENTICAL CLOSE PATH.
+
+           Exit Controller's _close_position() close
+           sequence is byte-identical between paper and
+           live modes. The only physical difference is
+           the SOURCE of (exit_price, fees_exit):
+
+             LIVE: exit_price + fees_exit derived from
+                   actual Kraken executions channel
+                   exec_type=trade events; market_sell
+                   helper synthesizes the values from
+                   real fills.
+
+             PAPER: exit_price + fees_exit synthesized
+                    locally per 1011002 dv1_26 §16A.2
+                    WM-PAPER-EXIT-001..004 (TP fill at
+                    pos.tp_price with FEE_MAKER_PCT;
+                    emergSL trigger / Layer 2 / Layer 1
+                    / time expiry at current bid with
+                    FEE_TAKER_PCT) and passed into Exit
+                    Controller via the same call signature
+                    Exit Controller already uses
+                    internally.
+
+           Per HR-EC-013 (NEW dv1_3), the close sequence
+           downstream of (exit_price, fees_exit)
+           determination is byte-identical: same
+           TRADE_CLOSE log payload, same Position Mirror
+           clearing, same Selection Controller state
+           updates, same semaphore release.
+
+EC-PAPER-002  ENTRY POINTS FROM WS MANAGER.
+
+           Exit Controller exposes a single entry point
+           callable by WS Manager for paper-mode exits:
+
+             async def on_paper_close(
+                 self,
+                 symbol: str,
+                 exit_price: Decimal,
+                 exit_reason: str,
+                 fees_exit: Decimal,
+                 wm: "WSManager",
+             ) -> None:
+
+           This entry point is invoked by WS Manager's
+           _maybe_paper_fill() per 1011002 dv1_26
+           WM-PAPER-EXIT-001 (TP detection) and
+           WM-PAPER-EXIT-002 (emergSL trigger). The
+           method internally calls _close_position(...)
+           with the supplied parameters.
+
+           For Layer 2 MAE breach (EC-driven exit, the
+           Exit Controller initiates), the paper-mode
+           path uses dispatch_market_sell which now
+           returns (exit_price, fees_exit) per 1011002
+           dv1_26 WM-PAPER-EXIT-004; Exit Controller
+           then calls _close_position with those values.
+           No new entry point is required for Layer 2
+           paper.
+
+           For Layer 1a paths (HTF reversal, daily regime
+           downgrade, time expiry, signal decay), Exit
+           Controller's existing logic flow into market
+           sell via dispatch_market_sell — the
+           (exit_price, fees_exit) tuple return per
+           WM-PAPER-EXIT-004 supplies the synthesized
+           values for paper mode without any code change
+           in Layer 1a logic.
+
+           For Layer 1b (TP fill detection), the entry
+           point is on_paper_close per the bullet above.
+
+EC-PAPER-003  TRADE_CLOSE LOG RECORD PARITY.
+
+           Paper-mode TRADE_CLOSE log records emitted by
+           _close_position() contain the SAME fields as
+           live-mode TRADE_CLOSE records:
+
+             ts, event=TRADE_CLOSE, symbol,
+             entry_fill_price, exit_price,
+             entry_timestamp_utc, exit_timestamp_utc,
+             hold_candle_count, MAE_pct_reached,
+             fees_entry_usd, fees_exit_usd,
+             fees_total_usd,
+             exit_reason, asset_regime, vol_regime,
+             market_regime, signal_params, actual_RR,
+             net_PL_USD, net_gain_usd, net_loss_usd.
+
+           CIATS log-file polling reads paper TRADE_CLOSE
+           records identically to live TRADE_CLOSE
+           records. CIATS Half-Kelly, Mann-Whitney U,
+           EWMA, CUSUM, and Spearman operate on a
+           unified corpus regardless of mode.
+
+           No paper-specific TRADE_CLOSE schema. No
+           paper-specific CIATS data flow. PA-005
+           byte-identical CIATS data flow holds.
+
+EC-PAPER-004  fees_entry_usd CONSUMPTION.
+
+           _close_position() reads fees_entry_usd from
+           the PositionRecord (set by WS Manager on
+           entry fill per 1011002 dv1_26
+           WM-PAPER-LEDGER-002 for paper, WS Manager
+           live-fill handler for live). Exit Controller
+           does NOT recompute entry fees — they are
+           already captured at entry time.
+
+           fees_total_usd = fees_entry_usd + fees_exit
+           net_pl = (exit_price - entry_price) * qty
+                    - fees_total_usd
+
+EC-PAPER-005  RETIREMENT OF ws_manager._fire_ciats_outcome.
+
+           Per 1011002 dv1_26 WM-PAPER-EXIT-005, the
+           ws_manager._fire_ciats_outcome method is
+           RETIRED. Exit Controller is now the SOLE
+           emitter of TRADE_CLOSE log records and the
+           SOLE updater of Selection Controller state
+           (exit_cooldown_log, consecutive_loss_count)
+           in BOTH paper and live modes.
+
+           Selection Controller state updates (formerly
+           in ws_manager._fire_ciats_outcome for paper)
+           MOVE to exit_controller._close_position per
+           HR-EC-014 (NEW dv1_3). Live-mode behavior
+           was already correct (ws_manager did not
+           update SC state in live mode); only paper-
+           mode behavior changes to match.
+
+------------------------------------------------------------
+6A.2 What This Section Does NOT Change
+------------------------------------------------------------
+
+  - Three-layer architecture (§3) is unchanged.
+  - Drawdown monitoring (§4) is unchanged. Note that
+    drawdown computation now reads a CORRECT
+    spot_usd_balance in paper mode per 1011002 dv1_26
+    HR-WM-032 (synthetic ledger evolution).
+  - Pair status adaptation (§5) is unchanged.
+  - Cancel timeout fallback (§6) is unchanged.
+  - Hard rules HR-EC-001 through HR-EC-012 are
+    unchanged.
+  - Live-mode behavior is unchanged.
+
+------------------------------------------------------------
+6A.3 Closes
+------------------------------------------------------------
+
+EC-PAPER section closes the parent-spec layer of
+FINDING-TB00147-08 (paper exits bypass Exit Controller).
+Implementation contract is in 1011005 dv1_3 (EC-PAPER
+coding contract). WS Manager-side cascade is in 1011002
+dv1_26 §16A.2 WM-PAPER-EXIT-001..005 (delivery of
+exit_price + fees_exit to EC).
+
+============================================================
+7. INTERFACES
+============================================================
+
+7.1 From WS Manager (0511001)
+  Receives: ticker bbo events for open-position pairs.
+  Receives: ohlc(60) and ohlc(5m) close events.
+  Receives: executions fills routed by WS Manager dispatch.
+  Receives: instrument status change events.
+  Receives: 00:00 UTC regime refresh trigger.
+
+7.2 To WS Manager (0511001)
+  Returns: cancel_order and batch_cancel instructions.
+  Returns: market sell add_order instructions.
+  WS Manager dispatches on Private WS v2.
+
+7.3 To Position Mirror (0511005)
+  Instructs Position Mirror clear on position close.
+  Reads Position Mirror for tp_order_id, emergSL_order_id,
+  qty, entry_fill_price during exit sequence.
+
+7.4 To Logger (0511006)
+  All exit events, layer triggers, cancel outcomes, and
+  CIATS Trade Outcome Bus data logged (non-blocking).
+
+7.5 To CIATS (via Logger)
+  Trade Outcome Bus fires ONCE per COMPLETE position close
+  (HR-EC-009, AR-066). Schema source-of-truth: 1011005
+  dv1_3 §9 EC-TOB-002 lines 353-384. The complete 23-field
+  canonical schema (verbatim names, types, and order):
+
+    ts:                    ISO 8601 UTC with microseconds
+    event:                 "TRADE_CLOSE"
+    level:                 "INFO"
+    component:             "EXIT_CTRL"
+    symbol:                str
+    entry_fill_price:      Decimal (avg_price at entry fill)
+    exit_price:            Decimal (weighted avg if partials)
+    entry_timestamp_utc:   ISO 8601 UTC
+    exit_timestamp_utc:    ISO 8601 UTC
+    hold_candle_count:     int (5m candles held)
+    MAE_pct_reached:       Decimal (max adverse move as pct)
+    fees_entry_usd:        Decimal (maker fee on entry)
+    fees_exit_usd:         Decimal (taker fee on exit/TP)
+    fees_total_usd:        Decimal
+    exit_reason:           str — one of:
+                             TP_FILL
+                             MAE_THRESHOLD_BREACH
+                             HTF_REGIME_REVERSAL
+                             DAILY_REGIME_DOWNGRADE
+                             TIME_EXPIRY
+                             TP_PARTIAL_FILL_REMAINDER
+    asset_regime:          str (pair regime at entry)
+    vol_regime:            str (NORMAL_VOL | ELEVATED_VOL)
+    market_regime:         str (BTC/USD regime at entry)
+    signal_params:         dict {rsi_14, ema_9, ema_21,
+                                 volume_ratio, sss_pass}
+    actual_RR:             Decimal (net_PL / risk_exposed)
+    net_PL_USD:            Decimal
+    net_gain_usd:          Decimal (0.0 if loss)
+    net_loss_usd:          Decimal (0.0 if gain, positive value)
+
+  ALL 23 fields MUST be populated on every TRADE_CLOSE event
+  (HR-EC-009). Partial-fill exit_price computation per
+  1011005 dv1_3 §9 EC-TOB-003: weighted average of all exit
+  fills, with all arithmetic in Decimal.
+
+  EXIT_REASON ENUM DRIFT (carry-forward — NOT silently
+  reconciled at this layer): 1011005 dv1_3 §9 EC-TOB-002
+  enumerates SIX exit_reason values (above). 1011007 Logger
+  Coding Spec dv1_5 §7 LG-TOB-002 enumerates EIGHT values.
+  0511004 dv1_5 cites the 1011005 six-value source as
+  authoritative; drift reconciliation deferred to a future
+  schema cascade with explicit Bill decision on authoritative
+  enum source (TB00218 NSI §2.1 G-4).
+
+7.6 To Selection Controller state (via WS Manager, AR-073)
+  On position close: WS Manager updates exit_cooldown_log
+  and consecutive_loss_count based on exit_reason.
+
+============================================================
+8. HARD RULES
+============================================================
+
+HR-EC-001  Layer 3 (emergSL stop-market) MUST NEVER fire in
+           normal operation. Layer 3 is crash protection
+           only. If it fires: this is a system failure event
+           requiring CRITICAL alert and operator review.
+
+HR-EC-002  Layer 2 exit cancel sequence is SEQUENCE CRITICAL:
+           cancel TP THEN cancel emergSL THEN market sell.
+           NEVER market sell with ambiguous cancel state.
+
+HR-EC-003  Cancel timeout fallback (I-6) MUST be implemented
+           on ALL cancel_order calls in all exit layers.
+           No cancel is assumed successful without ACK or
+           executions confirmation.
+
+HR-EC-004  MPP rejections on market sell MUST be retried
+           using IOC limit at best_bid - 0.2% per 0411001
+           WS-MPP-001 through -004 (C-1). NOT a repeated
+           market sell. Retry count specified in 0811003.
+           If all retries fail: ALERT CRITICAL + HOLD.
+
+HR-EC-005  batch_cancel for Full Halt: cancel ALL open
+           entry orders. Does not cancel resting TP or
+           emergSL. Uses batch_cancel (not cancel_order)
+           for rate bypass (AR-041).
+
+HR-EC-006  Drawdown computed on EVERY bbo ticker event for
+           open-position pairs. Gate 7 alone is insufficient.
+
+HR-EC-007  FULL_HALT does NOT auto-close positions. System
+           halts new entries. Bill decides on open positions.
+
+HR-EC-008  pair status=cancel_only or maintenance while long
+           open: HOLD + CRITICAL alert. No automated close
+           in cancel_only state (AR-040).
+
+HR-EC-009  CIATS Trade Outcome Bus fires ONCE per complete
+           position close with ALL required fields. Not on
+           each partial fill (AR-066).
+
+HR-EC-010  hold_candle_count per open position maintained in
+           WS Manager state. Increments on each ohlc(5m)
+           close for that symbol. Reset to 0 on position close.
+
+HR-EC-011  IOC limit at best_bid for limit_only state exit.
+           Market sell is PROHIBITED in limit_only (AR-040).
+
+HR-EC-012  R:R violation: sacred net_gain = net_loss * 1.5
+           applies to TP placement only. emergSL distance
+           (3.0x ATR) is NOT in the R:R formula. emergSL is
+           crash protection — its distance is separate.
+
+HR-EC-013  PAPER-LIVE CLOSE-PATH PARITY (NEW dv1_3).
+           _close_position() close sequence is byte-
+           identical between paper and live modes
+           downstream of (exit_price, fees_exit)
+           determination. Same TRADE_CLOSE log payload,
+           same Position Mirror clearing, same Selection
+           Controller state updates, same semaphore
+           release. Per §6A EC-PAPER and TB00000 v2_18
+           §4.4 PA-005 byte-identical paper-live outside
+           PA-004. Closes parent-spec layer of
+           FINDING-TB00147-08.
+
+HR-EC-014  SELECTION CONTROLLER STATE UPDATE AUTHORITY
+           (NEW dv1_3). Exit Controller is the SOLE
+           updater of Selection Controller state
+           (wm.exit_cooldown_log, wm.consecutive_loss_
+           count) in BOTH paper and live modes. The
+           dv1_25 ws_manager._fire_ciats_outcome path
+           (which formerly updated these in paper mode)
+           is RETIRED per 1011002 dv1_26
+           WM-PAPER-EXIT-005. Exit Controller's
+           _close_position() performs the SC state
+           update on every close in BOTH modes, using
+           the AR-073 win/loss classification in
+           selection_ctrl.py.
+
+HR-EC-015  CIATS-OWNED PARAMETERS — NO HARDCODED USAGE
+           (NEW dv1_3). All CIATS-owned starting values
+           used by Exit Controller (mae_mult,
+           cancel_timeout_window, mpp_retry_count,
+           max_hold_candles, and any future addition)
+           MUST be read at use-time from the CIATS
+           Parameter Store / WS Manager config snapshot
+           via params.get(key, DEFAULT_CONSTANT). Module-
+           level constants serve ONLY as defaults for
+           the params.get() fallback; they MUST NOT be
+           used directly in business logic. Direct
+           constant usage is a defect that defeats CIATS
+           PDCA for the affected parameter and creates
+           cross-module parameter inconsistency. Per TB00000
+           §6.8 (Deming) and §9.16 (Parameter Philosophy).
+           Closes parent-spec layer of
+           FINDING-TB00147-07. Cascaded to 1011005 dv1_3
+           §10 HR-EC consolidation.
+
+HR-EC-016  LAYER 2 PRIORITY + TP-PARTIAL CONFLICT
+           RESOLUTION + L1a STEP 1 PAIR-STATUS
+           PRECONDITION (NEW dv1_4 — cascaded from
+           0500000 dv1_48 Image3 R4
+           conflict_resolution_callout).
+
+           Three sub-rules unified under a single
+           hard-rule identifier:
+
+           (a) L1a SEQUENCE STEP 1 PAIR-STATUS
+               PRECONDITION. Layer 1a sequence MUST check
+               pair status as Step 1 (precondition)
+               before any cancel or sell action. If pair
+               status == cancel_only OR maintenance:
+               HOLD position, raise CRITICAL alert, do
+               NOT proceed with the L1a sequence.
+               Resting TP and emergSL on Kraken matching
+               engine are the only protection in these
+               pair-disruption states. Aligns the L1a
+               sequence with the pair-status adaptation
+               rules in §5 (which previously treated
+               pair status as a separate concern).
+               Closes 1011005 dv1_3 §5.1 EC-L1A-SEQ
+               Step 1 architectural-content gap.
+
+           (b) LAYER 2 PRIORITY OVER LAYER 1a. Layer 2
+               MAE threshold breach takes priority over
+               any in-progress Layer 1a sequence. If MAE
+               breach fires while an L1a sequence is
+               underway (e.g., HTF reversal cancel
+               sequence in progress at the time of MAE
+               breach detection on bbo ticker event),
+               complete the L1a cancel steps then
+               execute the market sell with
+               exit_reason=MAE_THRESHOLD_BREACH (not the
+               original L1a reason). Issuing two market
+               sells or two TRADE_CLOSE records for the
+               same position is PROHIBITED. Closes
+               1011005 dv1_3 §5 EC-L2-003
+               architectural-content gap.
+
+           (c) TP-PARTIAL + LAYER 2 SIMULTANEOUS CONFLICT
+               RESOLUTION. When TP order partial fill
+               (cum_qty > 0) and Layer 2 MAE breach
+               occur simultaneously, Layer 2 WINS.
+               Cancel the remaining TP qty. Execute
+               Layer 2 market sell at bid. Use cum_qty
+               already filled as partial P/L credited
+               at TP fill price. Emit ONE unified
+               contract:CIATS_Trade_Outcome_Bus record
+               with exit_reason=MAE_THRESHOLD_BREACH
+               (single record covering the full
+               position closure — NEVER two records
+               for the same position). Closes 1011005
+               dv1_3 §6.2 EC-TP-006 architectural-
+               content gap.
+
+           CANONICAL SOURCE.
+
+           0500000 dv1_48 Image3 R4
+           conflict_resolution_callout group desc body
+           is the canonical source for rule:HR-EC-016
+           (per TB00000 v2_30 §4.5 DD-001/DD-002
+           diagrams-govern-prose). This 0511004 dv1_4
+           §8 HR-EC-016 entry is the prose-layer
+           ratification cascaded per the §4.5 DD-003
+           4-step workflow ordering (diagrams → prose →
+           coding spec → code).
+
+           V-038 PROSE-DIAGRAM PARITY.
+
+           Image3 R4 governs list includes
+           rule:HR-EC-016 + ar:AR-040 + ar:AR-066.
+           This §8 HR-EC-016 entry cites the same
+           identifiers (AR-040 pair status events
+           per §5; AR-066 TP partial fill per §3.2).
+           Diagram-prose parity verified.
+
+============================================================
+9. WHAT TRIGGERS IT
+============================================================
+
+  ticker bbo event (open-position pair)    → drawdown check,
+                                             MAE check (L2)
+  ohlc(60) candle close                   → HTF check (L1a-001)
+  ohlc(5m) candle close                   → hold count (L1a-003)
+  00:00 UTC regime refresh                → regime check (L1a-002)
+  exec_type=filled (TP order_id match)    → L1b
+  instrument status change (open position) → pair adaptation
+  drawdown >= full_halt threshold         → batch_cancel
+
+============================================================
+10. WHAT IT LOGS
+============================================================
+
+  LAYER 1a:
+    L1A_TRIGGERED        — layer, trigger (L1a-001/002/003),
+                           symbol, exit sequence start
+    CANCEL_TP_SENT       — symbol, tp_order_id, req_id
+    CANCEL_EMGSL_SENT    — symbol, emgSL_order_id, req_id
+    CANCEL_CONFIRMED     — req_id, order_id
+    CANCEL_TIMEOUT_HOLD  — req_id, symbol (CRITICAL)
+    MARKET_SELL_SENT     — symbol, qty, req_id
+    MARKET_SELL_FILLED   — symbol, exit_price, fees
+    POSITION_CLOSED      — symbol, exit_reason, net_PL_USD
+
+  LAYER 1b:
+    TP_FILL_DETECTED     — symbol, tp_order_id
+    EMGSL_CANCEL_SENT    — symbol, emgSL_order_id
+    POSITION_CLOSED      — symbol, exit_reason=TP_FILL
+
+  LAYER 2:
+    MAE_BREACH_DETECTED  — symbol, bid, entry, ATR, mae_threshold
+    (same cancel/sell sequence as L1a)
+    MPP_REJECTION        — symbol, bid_price, attempt_number
+    IOC_LIMIT_RETRY_SENT — symbol, limit_price (best_bid-0.2%),
+                           qty, req_id, attempt_number
+    IOC_LIMIT_FILLED     — symbol, fill_price, qty, fees
+    IOC_LIMIT_EXPIRED    — symbol, attempt_number (no fill)
+    MAE_HOLD_AMBIGUOUS   — symbol (CRITICAL — all retries failed)
+
+  DRAWDOWN:
+    DRAWDOWN_UPDATE      — drawdown_pct, current_portfolio_USD
+    SESSION_PAUSE        — drawdown_pct threshold crossed
+    FULL_HALT            — drawdown_pct, open_positions count
+    BATCH_CANCEL_SENT    — count of entry orders cancelled
+    BATCH_CANCEL_RESULT  — count confirmed
+
+  PAIR STATUS:
+    PAIR_LIMIT_ONLY_EXIT — symbol, IOC limit dispatched
+    PAIR_CANCEL_ONLY_HOLD — symbol (CRITICAL)
+    PAIR_MAINTENANCE_HOLD — symbol (CRITICAL)
+
+  EMERGENCY SL (detected on restart):
+    EMERGENCY_SL_FIRED   — symbol, position data (CRITICAL)
+
+  CIATS TRADE OUTCOME BUS (on every complete close):
+    symbol, entry_fill_price, exit_price, hold_candles,
+    MAE_pct_reached, fees_entry, fees_exit, exit_reason,
+    asset_regime, market_regime, signal_params_at_entry,
+    actual_RR, net_PL_USD, entry_timestamp_utc,
+    exit_timestamp_utc
+
+============================================================
+11. RELATED DOCUMENTS
+============================================================
+
+  0510000  System_Components_Anchor         (parent anchor)
+  0500000  System_Architecture_Overview     (ARs binding;
+                                              dv1_48 Image3 R4
+                                              conflict_resolution_
+                                              callout is canonical
+                                              source for
+                                              rule:HR-EC-016 per
+                                              §4.5 DD-001/DD-002)
+  0411001  Kraken_WS_v2_Specification       (wire contract)
+  0411003  Kraken_Fee_Rate_Limit_Spec       (FEE_MAKER_PCT,
+                                              FEE_TAKER_PCT)
+  0511001  WS_Manager_Specification         (dv1_5 — triggers
+                                              EC; HR-WM-032 +
+                                              HR-WM-033 paper
+                                              cascade source)
+  0511002  Signal_Pipeline_Specification    (Gate 7 drawdown)
+  0511005  Position_Mirror_Specification    (position data;
+                                              fees_entry_usd
+                                              field consumed
+                                              by EC per
+                                              EC-PAPER-004)
+  0511006  Logger_Specification             (log recipient
+                                              for TRADE_CLOSE)
+  0211005  Paper_Trading_Operations_Procedure (dv1_3 — paper-
+                                              parity binding;
+                                              cites EC-PAPER)
+  1011002  WS_Manager_Coding_Spec           (dv1_26 — §16A
+                                              WM-PAPER-LEDGER
+                                              + WM-PAPER-EXIT
+                                              feeds EC inputs)
+  1011005  Exit_Controller_Coding_Spec      (dv1_3 — AA=10
+                                              child; §9
+                                              EC-TOB-002
+                                              lines 353-384
+                                              is 23-field
+                                              schema source-
+                                              of-truth for
+                                              §7.5; EC-PAPER
+                                              implementation
+                                              contract;
+                                              CIATS-owned
+                                              parameter
+                                              integration)
+  TB00000  Project Instructions for Claude  (v2_18 §4.4
+                                              PA-001..010
+                                              PAPER-AS-MASTER)
+
+============================================================
+12. REVISION HISTORY
+============================================================
+
+  dv1_5  05-12-2026  TB00218 SCHEMA RECONCILIATION CASCADE
+                     STEP 3 — §7.5 PROSE CASCADE FROM
+                     12-FIELD LEGACY ENUMERATION TO 23-FIELD
+                     CANONICAL SCHEMA PER 1011005 dv1_3 §9
+                     EC-TOB-002.
+
+                     SECTIONS AMENDED.
+
+                       Header: DocVersion dv1_4 -> dv1_5.
+                         DocPath filename suffix dv1_4 ->
+                         dv1_5. DocDate retained 05-12-2026;
+                         DocTime refreshed.
+                       §7.5 To CIATS (via Logger): legacy
+                         12-field compact enumeration
+                         (symbol, entry_fill_price,
+                         exit_price, hold_candle_count,
+                         MAE_reached, fees_total,
+                         exit_reason, asset_regime,
+                         market_regime, signal_params_at_
+                         entry, actual_RR, net_PL_USD)
+                         expanded to the full 23-field
+                         canonical schema per 1011005 dv1_3
+                         §9 EC-TOB-002 lines 353-384.
+                         Verbatim field names, types, and
+                         order preserved. Six-value
+                         exit_reason enum enumerated
+                         verbatim (TP_FILL,
+                         MAE_THRESHOLD_BREACH,
+                         HTF_REGIME_REVERSAL,
+                         DAILY_REGIME_DOWNGRADE,
+                         TIME_EXPIRY,
+                         TP_PARTIAL_FILL_REMAINDER).
+                         Partial-fill exit_price
+                         computation reference added per
+                         EC-TOB-003. Enum-drift carry-
+                         forward note added pointing at
+                         1011007 dv1_5 §7 LG-TOB-002
+                         eight-value enumeration with
+                         explicit "NOT silently reconciled
+                         at this layer" framing.
+                       §11 RELATED DOCUMENTS: 1011005 dv1_3
+                         entry extended to cite §9
+                         EC-TOB-002 lines 353-384 as
+                         23-field schema source-of-truth
+                         for §7.5 (DD-002 single-source-
+                         of-truth citation discipline).
+
+                     SECTION-NUMBERING NOTE.
+
+                       TB00218 NSI v1_0 §4.3.5 referenced
+                       "§14 revision history append dv1_5
+                       entry." The actual 0511004 revision
+                       history is at §12 (not §14). The
+                       append was performed at §12 per actual
+                       file structure; the NSI section-number
+                       reference is treated as informational
+                       only with no structural change to the
+                       file outline.
+
+                     REASON FOR CHANGE.
+
+                     Schema reconciliation cascade Step 3
+                     per TB00217 SL §5.1 carry-forward and
+                     TB00218 NSI §1.1 mission. TB00217 Turn 1
+                     produced 0500000 dv1_48 -> dv1_49 which
+                     expanded Diagram 5 (stream2_box) and
+                     Diagram 6 (ciats_outcome) visible-text +
+                     <desc> schema enumeration to the full
+                     23-field canonical schema per 1011005
+                     dv1_3 §9 EC-TOB-002. Prior to this dv1_5
+                     amendment, 0511004 §7.5 was the last
+                     parent-spec layer still carrying the
+                     legacy 12-field enumeration. Step 3
+                     cascade brings 0511004 §7.5 into
+                     three-way exact match with 0500000
+                     dv1_49 visible-text + desc enumeration
+                     and 1011005 dv1_3 §9 source-of-truth.
+
+                     FP/DP RATIONALE.
+
+                       First-principles: a specification
+                       document for the Exit Controller must
+                       describe COMPLETELY what the component
+                       emits on the CIATS Trade Outcome Bus.
+                       A partial enumeration (12 of 23 fields)
+                       is incomplete and silently shifts the
+                       full-schema source to a downstream
+                       coding spec — a DD-002 single-source-
+                       of-truth violation pattern.
+
+                       Data-point: 1011005 dv1_3 §9 EC-TOB-002
+                       lines 353-384 is the authoritative
+                       schema. 0500000 dv1_49 figcaptions and
+                       <desc> blocks now mirror the same 23
+                       fields. Three-way match (parent spec
+                       0511004 §7.5 + namespace anchor 0500000
+                       dv1_49 Diagram 5/6 + child coding spec
+                       1011005 dv1_3 §9) is required for the
+                       reconciliation cascade closure.
+
+                       Single-source-of-truth (DD-002): the
+                       authoritative source remains 1011005
+                       dv1_3 §9 EC-TOB-002. 0511004 dv1_5 §7.5
+                       CITES 1011005 dv1_3 §9 as authoritative;
+                       it does not redefine schema semantics.
+                       §11 1011005 entry amended to make the
+                       source-of-truth citation explicit.
+
+                     EXIT_REASON ENUM DRIFT — NOT SILENTLY
+                     RECONCILED.
+
+                       1011005 dv1_3 §9 EC-TOB-002 enumerates
+                       SIX exit_reason values: TP_FILL,
+                       MAE_THRESHOLD_BREACH,
+                       HTF_REGIME_REVERSAL,
+                       DAILY_REGIME_DOWNGRADE, TIME_EXPIRY,
+                       TP_PARTIAL_FILL_REMAINDER.
+
+                       1011007 Logger Coding Spec dv1_5 §7
+                       LG-TOB-002 enumerates EIGHT
+                       exit_reason values (identity of the
+                       additional two values pending §7 read
+                       + Bill confirmation per TB00218 NSI
+                       §2.1 G-4).
+
+                       This drift IS NOT silently reconciled
+                       at the 0511004 dv1_5 layer. 0511004
+                       dv1_5 §7.5 cites the 1011005 six-value
+                       source verbatim and flags the drift
+                       explicitly in §7.5 closing prose.
+                       Drift reconciliation deferred to a
+                       future cascade with explicit Bill
+                       decision on authoritative enum source.
+
+                     CARRY-FORWARDS TO TB00219 / FUTURE
+                     SESSIONS.
+
+                       Step 4 (TB00218 NSI §1.2): 1011005
+                       dv1_3 retirement pending Bill direction
+                       on retirement mechanism (Options A/B/
+                       C/D per NSI §1.2).
+                       Optional (TB00218 NSI §1.3): TB00000
+                       v2_30 -> v2_31 §9.17 parameter
+                       registry update (cancel_timeout_
+                       window, mpp_retry_count,
+                       max_hold_candles per 1011005 dv1_3
+                       §11).
+                       G-4 (TB00218 NSI §2.1): exit_reason
+                       enum authoritative source decision
+                       (1011005 six values vs 1011007 eight
+                       values).
+                       G-5 (TB00218 NSI §2.1): TB00153
+                       Decision_Register DEC-003 RETIRED
+                       mark (12-field CIATS schema decision
+                       superseded by 23-field cascade per
+                       TB00217 Turn 1 + TB00218 Turn 1
+                       closures).
+
+                     RELATED DOCUMENTS.
+
+                       1011005 Exit_Controller_Coding_Spec
+                         dv1_3 §9 EC-TOB-002 lines 353-384 —
+                         authoritative 23-field schema
+                         source-of-truth.
+                       1011007 Logger_Coding_Spec dv1_5 §7
+                         LG-TOB-002 — eight-value exit_reason
+                         enum (drift carry-forward).
+                       0500000 System_Architecture_Overview
+                         dv1_49 — Diagram 5 stream2_box +
+                         Diagram 6 ciats_outcome 23-field
+                         schema enumeration; three-way match
+                         counterparty.
+                       TB00217 SL v1_0 — preceding session;
+                         schema cascade Turn 1 closure
+                         (Diagrams 5 + 6).
+                       TB00218 NSI v1_0 — current session
+                         mission directive (§1.1 + §4.3).
+
+                     STANDING RULES OBSERVED.
+
+                       DR-006 single-turn delivery: this
+                         deliverable announced + delivered
+                         via present_files in the same chat
+                         turn.
+                       DR-007 content-completeness: pre-
+                         delivery validation executed.
+                       DD-001 decision-first authoring:
+                         schema source-of-truth decision
+                         (1011005 dv1_3 §9) committed before
+                         §7.5 prose authored.
+                       DD-002 single-source-of-truth: §7.5
+                         cites 1011005 dv1_3 §9 EC-TOB-002
+                         as authoritative.
+                       DD-004 FP/DP rationale in revision
+                         history: present above.
+
+  dv1_4  05-12-2026  TB00214 PHASE 1 1011005 EXIT CONTROLLER
+                     REDUNDANCY AUDIT — PROSE CASCADE FROM
+                     0500000 dv1_48 IMAGE3 R4 AMENDMENT.
+
+                     New hard rule HR-EC-016 added to §8.
+                     §3.1 EC-L1A-001/002/003 exit sequences
+                     extended with Step 0 pair-status
+                     precondition + Step 5 Layer 2 priority
+                     override. §3.2 EC-L1B-002 extended with
+                     TP-partial + L2 simultaneous conflict
+                     resolution paragraph. §3.3 EC-L2-001
+                     extended with explicit Layer 2 priority
+                     over Layer 1a statement. §11 RELATED
+                     DOCUMENTS updated to cite 0500000 dv1_48
+                     Image3 R4 conflict_resolution_callout as
+                     the canonical source.
+
+                     SECTIONS AMENDED.
+
+                       Header: dv1_3 -> dv1_4.
+                       §3.1 EC-L1A-001: Exit sequence extended
+                         from 4 steps (1-4) to 6 steps (0-5)
+                         adding Step 0 pair-status precondition
+                         and Step 5 Layer 2 priority override.
+                       §3.1 EC-L1A-002: Cross-reference to
+                         EC-L1A-001 amended to include "Steps
+                         0 through 5 including pair-status
+                         precondition Step 0 and Layer 2
+                         priority override Step 5 per HR-EC-016
+                         NEW dv1_4."
+                       §3.1 EC-L1A-003: Same cross-reference
+                         amendment as EC-L1A-002.
+                       §3.2 EC-L1B-002: NEW paragraph
+                         "TP-PARTIAL + LAYER 2 CONFLICT
+                         RESOLUTION (HR-EC-016 NEW dv1_4)"
+                         added after the BELOW-MIN remainder
+                         instruction. Encodes the EC-TP-006
+                         simultaneous-conflict rule from
+                         1011005 dv1_3 §6.2: L2 wins, cancel
+                         remaining TP qty, ONE unified
+                         TRADE_CLOSE record.
+                       §3.3 EC-L2-001: NEW paragraph "LAYER 2
+                         PRIORITY OVER LAYER 1a (HR-EC-016 NEW
+                         dv1_4)" added after the exit_reason
+                         line. Strengthens the prior §3.3
+                         paragraph mention to a numbered
+                         hard-rule cross-reference.
+                       §8 HARD RULES: HR-EC-016 entry NEW
+                         after HR-EC-015. Three sub-rules
+                         (a) L1a Step 1 pair-status
+                         precondition, (b) Layer 2 priority
+                         over L1a, (c) TP-partial + L2
+                         simultaneous conflict resolution.
+                         Canonical source cited as 0500000
+                         dv1_48 Image3 R4
+                         conflict_resolution_callout per
+                         DD-001/DD-002 diagrams-govern-prose.
+                       §11 RELATED DOCUMENTS: 0500000
+                         reference extended with "dv1_48
+                         Image3 R4 conflict_resolution_callout
+                         is canonical source for rule:HR-EC-016
+                         per §4.5 DD-001/DD-002."
+
+                     REASON FOR CHANGE.
+
+                     TB00214 Phase 1 1011005 Exit_Controller
+                     redundancy audit identified UNIQUE
+                     architectural content in 1011005 dv1_3
+                     NOT canonically encoded in 0500000 dv1_47
+                     or 0511004 dv1_3:
+
+                       FINDING 3a: 1011005 dv1_3 §5.1
+                         EC-L1A-SEQ Step 1 binds the AR-040
+                         pair-status check as Step 1 of the
+                         L1a sequence. 0511004 dv1_3 §5 treats
+                         pair status as a separate concern.
+                         Sequencing was an architectural
+                         decision not encoded in either spec.
+
+                       FINDING 3b: 1011005 dv1_3 §6.2
+                         EC-TP-006 specifies TP-partial + L2
+                         simultaneous priority resolution
+                         (L2 wins, ONE unified TRADE_CLOSE
+                         record). Not in 0500000 dv1_47 or
+                         0511004 dv1_3.
+
+                       FINDING 3c: 1011005 dv1_3 §10
+                         HR-EC-005 (Layer 2 priority over
+                         L1a) is a numbered hard rule in
+                         the coding spec but only mentioned
+                         in 0511004 §3.3 paragraph as
+                         implementation prose, not as a
+                         numbered HR-EC- in 0511004 §8.
+
+                     All three findings encode the same
+                     underlying architectural pattern. Per
+                     §4.5 DD-001/DD-002 diagrams-govern-prose:
+                     diagram amendment (0500000 dv1_48 Image3
+                     R4 conflict_resolution_callout, Turn 1
+                     of TB00214 execution plan) is the
+                     canonical encoding; this prose cascade
+                     (0511004 dv1_4, Turn 2) ratifies the
+                     diagram in the parent spec; 1011005 dv1_3
+                     -> rt1_3 retirement (Turn 4) closes the
+                     coding-spec redundancy.
+
+                     PARENT CHAIN COMPLIANCE.
+
+                     0511004 (Tier 3 Instance, AA=05) ->
+                     0510000 System_Components_Anchor (Tier
+                     2) -> 0500000 System_Architecture_Overview
+                     (Tier 1 Domain). Chain unbroken. Per
+                     §4.5 DD-002 diagram-over-prose authority,
+                     0500000 dv1_48 Image3 R4 governs this
+                     0511004 dv1_4 prose content.
+
+                     V-038 DIAGRAM-PROSE PARITY VERIFICATION.
+
+                     Image3 R4 root governs list includes
+                     rule:HR-EC-016 + ar:AR-040 + ar:AR-066.
+                     This 0511004 dv1_4 §8 HR-EC-016 entry
+                     cites the same three identifiers. The
+                     rule text in §8 HR-EC-016 is a structured
+                     prose version of the Image3 R4
+                     conflict_resolution_callout desc
+                     rule_text field; both convey the same
+                     three sub-rules (a)+(b)+(c) under the
+                     same canonical rule identifier. Diagram-
+                     prose parity verified per V-038.
+
+                     PA-MASTER PRE-EMIT SCAN.
+
+                     Authored under TB00000 v2_30 §4.4 PA-008
+                     pre-emit-scan discipline. The three
+                     HR-EC-016 sub-rules apply identically to
+                     paper and live modes — no PA-004
+                     divergence point introduced. PA-005
+                     byte-identical paper-live close path
+                     preserved.
+
+                     RR-SCOPE-007 SELF-AUTHORED-NSI-SOURCE
+                     VERIFICATION.
+
+                     Scope of this dv1_4 amendment derived
+                     from Bill chat-turn directive "Do a FP/DP
+                     analysis to obtain the correct answers"
+                     followed by "Proceed" + "Proceed with
+                     turn 2" (TB00214 chat-turns 2-5). No
+                     scope restriction sourced from Claude-
+                     authored NSI sentences applied.
+
+                     Bill override.
+
+                     TB00214 dv1_3 -> dv1_4 enacted under
+                     Bill explicit authorization TB00214
+                     chat-turn 5 directive "Proceed with
+                     turn 2" following Turn 1 dv1_48
+                     delivery. Direct increment dv1_3 ->
+                     dv1_4 under standing document-control
+                     override scope established TB00115 et al.
+
+                     Document Status: supersedes dv1_3.
+
+  dv1_3  05-03-2026  PAPER-AS-MASTER CORRECTIVE — TB00147
+                     TIER 2 AUDIT FINDINGS 7 + 8.
+
+                     New section §6A and three new hard
+                     rules added:
+
+                       §6A PAPER MODE EXIT BEHAVIOR
+                         (EC-PAPER) NEW. Five sub-rules
+                         EC-PAPER-001 through EC-PAPER-005
+                         specifying paper-live byte-
+                         identical close path, entry
+                         points from WS Manager,
+                         TRADE_CLOSE log record parity,
+                         fees_entry_usd consumption from
+                         PositionRecord, and retirement
+                         of ws_manager._fire_ciats_outcome
+                         parallel path. All paper-mode
+                         exits route through Exit
+                         Controller's existing
+                         _close_position() sequence.
+
+                       HR-EC-013 (NEW) — paper-live
+                         close-path parity. Byte-
+                         identical downstream of
+                         (exit_price, fees_exit)
+                         determination. PA-005 mandate.
+
+                       HR-EC-014 (NEW) — Selection
+                         Controller state update
+                         authority. Exit Controller is
+                         the SOLE updater of
+                         exit_cooldown_log and
+                         consecutive_loss_count in BOTH
+                         modes. Closes paper-live
+                         divergence.
+
+                       HR-EC-015 (NEW) — CIATS-owned
+                         parameters MUST be read at use-
+                         time via params.get(key,
+                         DEFAULT_CONSTANT). Module
+                         constants serve only as
+                         params.get() fallbacks.
+                         Direct constant usage is a
+                         defect. Closes parent-spec
+                         layer of FINDING-TB00147-07.
+
+                       §11 RELATED DOCUMENTS expanded
+                         with cascade citations
+                         (0511001 dv1_5, 1011002 dv1_26,
+                         0211005 dv1_3, 1011005 dv1_3,
+                         TB00000 v2_18). 0411003 added
+                         (fee schedule citation needed
+                         by EC-PAPER fee arithmetic).
+
+                     REASON FOR CHANGE.
+
+                     TB00147 Tier 2 audit (paper P&L
+                     verification + remaining .py file
+                     defect-class scan) surfaced two
+                     defects in Exit Controller scope:
+
+                       FINDING-TB00147-07 (HIGH)
+                         exit_controller.py uses four
+                         module-level constants
+                         (CANCEL_TIMEOUT_WINDOW,
+                         MPP_RETRY_COUNT,
+                         MAX_HOLD_CANDLES, MAE_MULT)
+                         directly in business logic
+                         despite spec mandate that all
+                         four are CIATS-owned. CIATS
+                         proposals to change these
+                         parameters take effect in
+                         risk_engine, execution_engine,
+                         and ciats — but NOT in
+                         exit_controller. Cross-module
+                         CIATS parameter inconsistency.
+                         Concrete failure mode: CIATS
+                         proposes mae_mult 1.5 -> 1.7;
+                         risk_engine sizes for wider
+                         stops; exit_controller still
+                         triggers Layer 2 MAE breach at
+                         old 1.5x — closes positions
+                         BEFORE they reach the new
+                         threshold the rest of the
+                         system was sized for. Closed by
+                         HR-EC-015 + 1011005 dv1_3
+                         coding contract.
+
+                       FINDING-TB00147-08 (CRITICAL)
+                         Paper-mode exit paths in
+                         ws_manager.py dv1_25 BYPASS
+                         Exit Controller, directly
+                         mutating position_mirror via
+                         pop() and firing a parallel
+                         _fire_ciats_outcome that does
+                         NOT emit a TRADE_CLOSE log
+                         record. CIATS Half-Kelly
+                         cannot operate on paper data
+                         because it polls TRADE_CLOSE
+                         log records. Direct violation
+                         of HR-WM-025 (paper does NOT
+                         affect CIATS data flows) and
+                         TB00000 v2_18 §4.4 PA-005
+                         (byte-identical paper-live
+                         outside PA-004). Closed at the
+                         parent-spec layer by §6A
+                         EC-PAPER + HR-EC-013/014.
+                         Cascade implementation contract
+                         is in 1011005 dv1_3.
+
+                     FP/DP ANALYSIS.
+
+                     Same Option A / B / C analysis as
+                     0511001 dv1_5. Option C accepted.
+                     This document is the Exit
+                     Controller parent-spec layer of
+                     Option C.
+
+                     PA-MASTER PRE-EMIT SCAN.
+
+                     Authored under TB00000 v2_18 §4.4
+                     PA-008 pre-emit-scan discipline.
+                     Direction-of-mimicry: paper mimics
+                     live wherever physically possible
+                     (PA-001 / PA-005). Live-mode Exit
+                     Controller behavior is unchanged
+                     by dv1_3 — only paper-mode behavior
+                     is corrected to match what live
+                     already does (route through
+                     _close_position; emit TRADE_CLOSE;
+                     update SC state).
+
+                     PARENT CHAIN COMPLIANCE.
+
+                     0511004 (Tier 3 Instance) ->
+                     0510000 System_Components_Anchor
+                     (Tier 2) -> 0500000
+                     System_Architecture_Overview
+                     (Tier 1, Domain). Chain unbroken.
+
+                     Bill override.
+
+                     TB00147 cascade enacted under
+                     Bill explicit authorization
+                     (TB00147 chat, 05-03-2026)
+                     "Yes, I authorize expanded
+                     ALT-A." Direct increment dv1_2
+                     -> dv1_3 under standing
+                     document-control override scope
+                     established TB00115 et al.
+
+                     Document Status: supersedes dv1_2.
+
+  dv1_2  04-04-2026  Two additional defects from dv1_0
+                     corrected. (1) Section 2 Component
+                     Summary: "MPP sell retries" corrected
+                     to "MPP IOC limit retries." (2) Section
+                     10 WHAT IT LOGS Layer 2: added
+                     IOC_LIMIT_RETRY_SENT, IOC_LIMIT_FILLED,
+                     IOC_LIMIT_EXPIRED events to match the
+                     MPP IOC retry strategy specified in
+                     Section 3.3. Replaced MPP_REJECTION
+                     field from retry_count to bid_price +
+                     attempt_number. MAE_HOLD_AMBIGUOUS
+                     description corrected to "all retries
+                     failed."
+
+  dv1_1  04-04-2026  Two defects corrected from dv1_0.
+                     (1) MPP retry strategy: replaced
+                     "retry market sell N times" with
+                     correct mechanism: IOC limit at
+                     best_bid - 0.2% per 0411001
+                     WS-MPP-001 through -004 (C-1).
+                     Retry count deferred to 0811003.
+                     (2) Cancel timeout window: removed
+                     fabricated "10 seconds" default.
+                     Timeout window value deferred to
+                     0811003 Exit_Controller_Specification
+                     (Phase 6). HR-EC-004 updated to
+                     reflect correct MPP retry strategy.
+
+  dv1_0  04-04-2026  Initial document. Derived from
+                     0500000 dv1_18 Sections 2, 4, 8, 9,
+                     11. Three-layer exit architecture fully
+                     specified. EC-L1A-001/002/003 defined.
+                     Cancel timeout fallback (I-6) specified.
+                     MPP handling (C-1) specified. batch_cancel
+                     for Full Halt (AR-019, AR-041) specified.
+                     Continuous drawdown monitoring (I-7)
+                     specified. Pair status adaptation (AR-040)
+                     specified. TP partial fill (AR-066)
+                     referenced. Hard rules HR-EC-001 through
+                     HR-EC-012 defined.
+
+============================================================
+END OF DOCUMENT
+============================================================
