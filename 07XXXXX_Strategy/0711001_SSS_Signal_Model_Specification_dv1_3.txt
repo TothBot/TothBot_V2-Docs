@@ -1,9 +1,9 @@
 DocDCN:     0711001
 DocTitle:   SSS_Signal_Model_Specification
-DocVersion: dv1_2
+DocVersion: dv1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711001_SSS_Signal_Model_Specification_dv1_2.txt
-DocDate:    05-17-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711001_SSS_Signal_Model_Specification_dv1_3.txt
+DocDate:    05-26-2026
 DocTime:    23:59:59 UTC
 
 ============================================================
@@ -381,6 +381,140 @@ sss_pass=False) for CIATS analysis of what failed and why.
 No SSS evaluation is silent. Every evaluation is logged.
 
 ============================================================
+7A. SIGNAL DECAY DETECTION (PENDING-ENTRY CANCEL TRIGGER)
+============================================================
+
+This section specifies the SIGNAL_DECAY detection condition
+for a still-working long-side entry order. Per DEC-065 Q2
+(RATIFIED; TB00153 v1_59 lines 7377-7386) SIGNAL_DECAY is
+NOT an exit_reason value; it is re-homed as a PENDING-ENTRY-
+ORDER CANCEL TRIGGER: if the entry signal (SSS) deteriorates
+below threshold while the entry order is still working
+(unfilled or partially filled), the unfilled / remaining qty
+is canceled. This section authors the DETECTION half only
+(SSS_Signal_Model). The cancel-DISPATCH mechanics (0511003
+Execution_Engine) and the cancel-CONTROL decision ownership
+(Selection Controller specification) are SEPARATE targets and
+are NOT specified in this document (DEC-065 register framing
++ TB00447 SL v1_1 sec 3.0 Bill-ratified refinement).
+
+OWNERSHIP BOUNDARY (Bill-ratified, TB00449 NSI sec 1.2 /
+TB00447 SL v1_1 sec 3.0). A single working entry order is
+owned by the Selection module (entry-side control) while
+unfilled. On a PARTIAL fill the one order bisects into two
+concurrently-owned objects: the filled qty becomes a real
+position owned by the Exit Controller (AR-054 handles the
+unprotected-stub case; 0500000 dv1_132 sec 4 line 5942), and
+the unfilled remainder stays owned by the Selection module.
+If SIGNAL_DECAY fires before the remainder fills, the cancel
+of the unfilled remainder is a SELECTION-module action
+(mod:Selection_Controller), NOT an Exit-module / AR-054
+action. The boundary is the fill: filled -> Exit; unfilled ->
+Selection. The still-working order's capital commitment is
+tracked in the per-module Pending Order Registry (AR-053;
+0500000 dv1_132 sec 4 line 5895).
+
+------------------------------------------------------------
+SSS-014  SC-SSS-DECAY-1 — Long-Side Signal Decay Detection
+------------------------------------------------------------
+
+  Applies ONLY while a long-side entry order for the pair is
+  still working (unfilled, or partially filled with an open
+  remainder). Re-evaluated on every committed 5-min candle
+  close for that pair until the order is fully filled,
+  canceled, or expired.
+
+  Condition (SIGNAL_DECAY fires when either is true at
+  committed candle close):
+    RSI(14) on 5-min <= rsi_long_low   (RSI floor breach)
+    OR EMA(9) on 5-min <= EMA(21) on 5-min  (EMA reversion)
+
+  Interpretation:
+    The two momentum-persistence conditions that authorized
+    the entry are SC-SSS-1 (RSI lifted off the oversold floor)
+    and SC-SSS-2 (EMA(9) > EMA(21) crossover state). These are
+    persistence conditions: they must continue to hold for the
+    entry thesis to remain valid while the order is working.
+      - RSI(14) <= rsi_long_low: RSI has fallen back to or
+        below the entry floor. The oversold-recovery thesis
+        that authorized the entry is invalidated.
+      - EMA(9) <= EMA(21): the 5-min momentum crossover state
+        has reverted. The directional-momentum thesis is
+        invalidated.
+    Volume confirmation (SC-SSS-3) is an entry-instant
+    participation gate, NOT a persistence condition, and is
+    therefore NOT evaluated for decay (see HR-SSS-011). A
+    single-candle volume dip does not invalidate an intact
+    RSI + EMA momentum thesis; including it would cause
+    premature cancels (opportunity loss).
+
+  Loss-prevention rationale (TB00000 v2_60 sec 1.2 / sec 9.10
+  prime directive — minimize loss):
+    Cancelling the still-working qty on thesis invalidation
+    removes the capital commitment (AR-053 registry) before an
+    adverse fill on a signal that has already decayed,
+    minimizing realized loss. The threshold deliberately uses
+    the two directional-persistence conditions (not full
+    three-factor SSS PASS) so that decay tracks the thesis,
+    not transient volume.
+
+  Parameters (reused from sec 9 — NO new parameters; CIATS-
+  owned per-module per sec 9):
+    rsi_long_low    (RSI floor; starting value 30)
+    sss_ema_short   (short EMA period; 9)
+    sss_ema_long    (long EMA period; 21)
+
+  RESULT: signal_decay = (RSI(14) <= rsi_long_low)
+                         OR (EMA(9) <= EMA(21)).
+          signal_decay = True  -> hand verdict to Selection
+            module to cancel the unfilled / remaining qty.
+          signal_decay = False -> order continues working;
+            re-evaluate at the next committed candle close.
+
+------------------------------------------------------------
+SSS-015  decay_params Dict + Cancel-Trigger Handoff
+------------------------------------------------------------
+
+On every decay evaluation (i.e., every committed 5-min candle
+close while the order is still working), SSS produces a
+decay_params dict, logged to the CIATS Trade Outcome Bus
+consistent with the never-silent discipline (HR-SSS-007).
+
+  decay_params = {
+      "rsi_14":           Decimal,  # RSI at decay evaluation
+      "ema_9":            Decimal,  # EMA(9) value
+      "ema_21":           Decimal,  # EMA(21) value
+      "rsi_floor_breach": bool,     # RSI(14) <= rsi_long_low
+      "ema_revert":       bool,     # EMA(9) <= EMA(21)
+      "signal_decay":     bool,     # floor_breach OR ema_revert
+  }
+
+HANDOFF (detection -> control boundary):
+  signal_decay = True is emitted to the Selection module
+  (mod:Selection_Controller), which owns the cancel of the
+  unfilled / remaining qty (entry-side control). Any already-
+  filled portion remains owned by the Exit Controller per
+  AR-054. The control-decision logic (Selection Controller
+  spec) and the cancel-dispatch mechanics (0511003
+  Execution_Engine) are out of scope for this document and
+  are sequenced separately (each gated by its own DD-011
+  decision per TB00449 NSI sec 2.3).
+
+  Event code (working-entry cancel trigger):
+    SELECTION_CANCEL__SSS_SIGNAL_DECAY
+  Parallel to the entry-time reject code
+  SELECTION_REJECTED__SSS_SIGNAL_FAIL (SSS-004).
+
+This section specifies the DETECTION condition and its output
+only. No cancel is dispatched from within SSS.
+
+SHORT-SIDE NOTE: this specification is the long-side
+implementation. The direction-symmetric short-side
+SIGNAL_DECAY variant (RSI >= rsi_short_low / EMA(9) >= EMA(21)
+reversion) is defined in 0811005 Short_Module_Specification
+per the parallel-module framework.
+
+============================================================
 8. HARD RULES — SSS SIGNAL MODEL
 ============================================================
 
@@ -432,6 +566,20 @@ HR-SSS-010  No additional REST calls are made for SSS
             seeding. The GetOHLCData(interval=5) call
             already made per AR-044 provides the seeding
             data. Zero additional calls required.
+
+HR-SSS-011  SIGNAL_DECAY is a PENDING-ENTRY CANCEL TRIGGER,
+            NOT an exit_reason value (DEC-065 Q2). It applies
+            ONLY to a still-working entry order (unfilled or
+            open remainder) and is evaluated only on committed
+            candle closes (HR-SSS-006). The cancel of the
+            unfilled / remaining qty is a Selection-module
+            action (mod:Selection_Controller); any already-
+            filled portion is owned by the Exit Controller per
+            AR-054. SIGNAL_DECAY MUST NOT be written to the
+            exit_reason enum. Volume (SC-SSS-3) MUST NOT be
+            used as a decay condition; decay uses only the RSI
+            floor (SC-SSS-1) and EMA crossover (SC-SSS-2)
+            persistence conditions per SSS-014.
 
 ============================================================
 9. CIATS PARAMETER REGISTRY — SSS PARAMETERS
@@ -543,6 +691,84 @@ long-side reconciliation ratified at TB00180 SL §5):
 ============================================================
 12. REVISION HISTORY
 ============================================================
+
+  dv1_3  05-26-2026  TB00450 TRACK B / CF-TB00442-A — DEC-065
+                     Q2 SIGNAL_DECAY PENDING-ENTRY CANCEL
+                     TRIGGER DETECTION-CONDITION AUTHORING
+                     (single primary mission, RR-SCOPE-011).
+
+                     Authority: DEC-065 Q2 RATIFIED (TB00153
+                     v1_59 lines 7377-7386) — SIGNAL_DECAY is
+                     re-homed from the exit_reason enum to a
+                     pending-entry-order cancel trigger; the
+                     unfilled / remaining qty is canceled when
+                     the SSS signal deteriorates below
+                     threshold while the entry order is still
+                     working. Ownership refinement (unfilled
+                     remainder cancel = mod:Selection_
+                     Controller, NOT Exit / AR-054) per
+                     TB00449 NSI sec 1.2 + TB00447 SL v1_1
+                     sec 3.0 (Bill-ratified).
+
+                     ADD-only scope (RR-SCOPE-001; no removal
+                     of existing identifiers):
+                       ADD new section 7A SIGNAL DECAY
+                         DETECTION (PENDING-ENTRY CANCEL
+                         TRIGGER), alpha-suffixed insert after
+                         sec 7 to avoid renumbering sec 8-12.
+                       ADD SSS-014 (SC-SSS-DECAY-1 long-side
+                         decay detection condition: RSI(14) <=
+                         rsi_long_low OR EMA(9) <= EMA(21),
+                         evaluated only while the order is
+                         still working).
+                       ADD SSS-015 (decay_params dict +
+                         detection->control handoff boundary;
+                         event code SELECTION_CANCEL__SSS_
+                         SIGNAL_DECAY).
+                       ADD HR-SSS-011 (SIGNAL_DECAY is a
+                         cancel trigger not an exit_reason;
+                         Selection-module cancel ownership;
+                         volume excluded from decay).
+                       NO new sec 9 parameters — decay reuses
+                         existing long-side SSS parameters
+                         (rsi_long_low, sss_ema_short,
+                         sss_ema_long).
+
+                     DETECTION HALF ONLY. The cancel-dispatch
+                     mechanics (0511003 Execution_Engine) and
+                     the cancel-control decision logic
+                     (Selection Controller spec) are NOT
+                     authored here; each is a separate target
+                     gated by its own DD-011 decision per
+                     TB00449 NSI sec 2.3. DEC-065 Q1/Q2/Q3 not
+                     re-opened; 7-value exit_reason enum
+                     unchanged; D2 exit_reason question is
+                     empty by decision (NSI sec 2.2).
+
+                     DD-011 v2_56 CHAT-TURN-1 GATE: option set
+                     {A. author 0711001 detection condition;
+                     B. author 0511003 dispatch; C. author
+                     Selection Controller control}. Bill OCS +
+                     TB00449 NSI sec 1 direct Option A
+                     (detection only); B/C forbidden this
+                     session. Single compliant path executed
+                     under Bill chat-turn direction (DD-011
+                     exception (b)).
+
+                     Sources read live (TB00000 v2_60 DR-009):
+                     TB00153 v1_59 L7256-7420; 0500000 dv1_132
+                     sec 4 AR-053 L5895 + AR-054 L5942 + D2
+                     governs L2175; 0711001 dv1_2 (target);
+                     0911002 dv1_3 (campaign). NOTE: TB00449
+                     NSI sec 3 cited AR-053 L5122 / AR-054
+                     L5169-5195 — those are stale historical
+                     line refs inside old R-increment
+                     narratives; live canonical sec 4 prose is
+                     L5895 / L5942 (semantics identical).
+
+                     PARENT CHAIN COMPLIANCE. 0711001 chain:
+                     0700000 -> 0710000 -> 0711001 unchanged.
+                     No new parent dependency introduced.
 
   dv1_2  05-17-2026  TB00325 AA=07 STRATEGY SUB-CAMPAIGN
                      0711001 SSS_SIGNAL_MODEL_SPECIFICATION
