@@ -1,10 +1,10 @@
 DocDCN:     0911002
 DocTitle:   TothBot_V2_0500000_Consolidation_Campaign_Plan
-DocVersion: dv1_3
+DocVersion: dv1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0911002_TothBot_V2_0500000_Consolidation_Campaign_Plan_dv1_3.txt
-DocDate:    05-25-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/09XXXXX_Plans/0911002_TothBot_V2_0500000_Consolidation_Campaign_Plan_dv1_4.txt
+DocDate:    05-27-2026
+DocTime:    05:30:00 UTC
 
 ============================================================
 TOTHBOT V2 0500000 CONSOLIDATION CAMPAIGN PLAN
@@ -208,30 +208,39 @@ execution of the consolidation campaign only.
     separate-document count without dissolving the
     testing-vs-architecture separation (§3.1).
 
-NOTE ON AA=02 (OPERATIONS): The ratified statements above
-enumerate consolidation candidates (AA=04/05/06/07/08) and
-STAY-OUT classes (AA=03/10/00/01/09 + §9.17 values) but do
-not place AA=02 Operations. AA=02 is therefore NOT
-pre-classified by this plan. The master register
-(TB00394) flags each AA=02 document for Bill ratification
-before any AA=02 content is scoped into a migration session.
-See register §AMBIGUOUS-FLAG.
+NOTE ON AA=02 (OPERATIONS): The ratified scope statements
+above enumerate consolidation candidates (AA=04/05/06/07/08)
+and STAY-OUT classes (AA=03/10/00/01/09 + §9.17 values) but
+did not originally place AA=02 Operations. The master
+register (TB00394) flagged each AA=02 document for Bill
+ratification. That ratification is now FINAL (TB00468
+Decision 1; recorded in TB00394 v1_1): 0211001
+CIATS_Specification SPLIT (architectural content ->
+§6/D5, Phase 3/E2), 0210000 Operations_CIATS_Anchor SPLIT
+(anchor collapse, Phase 3/E3), and 0200000 / 0211002 /
+0211003 / 0211004 / 0211005 STAY. AA=02 is therefore fully
+scoped at the document level; element-level scoping occurs
+in Phase 1. See register §AMBIGUOUS-FLAG (now a ratified
+record).
 
 ============================================================
 5. PHASE STRUCTURE
 ============================================================
 
-The campaign executes in five phases. Phases run in order.
-Within a phase, work decomposes into one-mission sessions
-per §6 (RR-SCOPE-011): each session executes EXACTLY ONE
-primary mission. No phase begins migration until the master
-register (TB00394) is ratified.
+The campaign executes in FOUR phases — the UNIFIED OCS
+4-PHASE MODEL (adopted at dv1_4; consistent with the
+TB00394 v1_1 §PHASE-MODEL ratified roadmap). Phases run in
+order. Within a phase, work decomposes into one-mission
+sessions per §6 (RR-SCOPE-011): each session executes
+EXACTLY ONE primary mission. No phase begins element-level
+work until the master register (TB00394) is ratified
+(Phase 0 complete).
 
-Alongside the migration phases, §5A defines two
+Alongside the Phase 3 execution work, §5A defines two
 reconciliation/new-architecture tracks (exit_reason
 de-conflict and the SIGNAL_DECAY cancel trigger) that run
 interleaved under the same §6 one-mission ceiling but are
-NOT migration phases. See §5A.
+NOT migration sub-stages. See §5A.
 
 A "primary mission" is exactly one of: one source-document
 ARCHITECTURAL audit; OR one architectural-content migration
@@ -241,7 +250,123 @@ retirement; OR one governance/anchor reconciliation. No
 phase, and no session, bundles more than one primary
 mission. See §6.
 
-PHASE 0 — D8 THREAD CLOSURE.  STATUS: CLOSED (TB00395).
+PHASE 0 — SCOPE DEFINITION.  STATUS: RATIFIED (document
+  level) at TB00394 v1_1 (TB00469).
+  The document-level MOVE / STAY / SPLIT classification of
+  all 54 controlled documents plus the TB00000 §9.17
+  parameter source against the ratified scope boundary
+  (§4). The deliverable is the TB00394 Master Consolidation
+  Register, which names the target 0500000 location for
+  each MOVE/SPLIT source. Phase 0 is document-level scoping
+  only; element-level scoping is Phase 1. The AA=02
+  verdicts are FINAL per Bill ratification (TB00468
+  Decision 1; TB00394 v1_1). The register MUST stay
+  Bill-ratified as the audit-first basis (§4(f)) for every
+  Phase-1+ session (§10).
+
+PHASE 1 — ELEMENT AUDIT.  STATUS: NOT STARTED.
+  Per-document, element-level architectural audit. For each
+  MOVE / SPLIT source document (per the TB00394 register),
+  identify every DD-012 architectural element it carries
+  (rule / contract / decision / gate / layer / regime /
+  parameter / container / module / indicator / event /
+  channel / ar / pt_mode). Read-only: produces an
+  element-level gap finding, no migration. ONE source
+  document per session per RR-SCOPE-011 (§6). This is the
+  per-document successor to the document-level Phase 0
+  scoping.
+
+PHASE 2 — DD-012 THREE-BUCKET CLASSIFICATION + SEQUENCING.
+  STATUS: NOT STARTED.
+  Per element identified in Phase 1, apply the DD-012
+  three-bucket classification:
+    (a) ARCHITECTURAL RESTATEMENT — the element is already
+        canonically encoded in a 0500000 diagram; it is a
+        derived restatement and is dropped with the source
+        document's retirement.
+    (b) CODING-UNIQUE — no architectural meaning; pure
+        code-authoring contract; migrate to the parent AA
+        spec prose or to a preserved AA=10 spec.
+    (c) ARCHITECTURAL CONTENT NOT YET IN DIAGRAMS — amend
+        the owning 0500000 diagram FIRST (per DD-002
+        prose-follows-diagram and DD-003 4-step workflow),
+        then proceed.
+  The per-element execution ORDER is determined here.
+  Parameter VALUES never migrate (§3.1 Option A); only the
+  architectural FACT (existence + ownership) migrates, and
+  the value stays in TB00000 §9.17.
+
+PHASE 3 — EXECUTION.  STATUS: NOT STARTED.
+  Carry out the sequenced work from Phase 2: 0500000 diagram
+  amendment, prose-follows-diagram reconciliation, instance-
+  spec architectural-content migration, the CIATS-ownership
+  architectural attestation of §9.17 parameters (architectural
+  FACT only; value stays in §9.17 per §3.1; §9.17 NOT
+  retired), document retirement via the §7 gate, AND
+  anchor / domain-document collapse + governance
+  reconciliation. The OLD 0911002 Phase 4 (anchor/domain
+  collapse) is FOLDED INTO Phase 3 as execution sub-stage
+  E3. Phase 3 preserves the dependency order via three
+  execution sub-stages:
+
+    E1  AA=05 component-specification migration (0511001
+        WS_Manager, 0511002 Signal_Pipeline, 0511003
+        Execution_Engine, 0511004 Exit_Controller, 0511005
+        Position_Mirror, 0511006 Logger) into their
+        canonical 0500000 diagrams and §9 mirror, ONE
+        component per session (§6).
+
+    E2  AA=04/06/07/08 instance-specification migration
+        (AA=04 0411001/0411002/0411003; AA=06 0610000;
+        AA=07 0711001/0711002/0711003; AA=08 0811005; plus
+        the 0211001 CIATS architectural content -> §6/D5
+        per the TB00394 v1_1 AA=02 SPLIT verdict) into
+        their canonical 0500000 diagrams and §9 mirror, ONE
+        spec per session (§6).
+
+    E3  ANCHOR / DOMAIN-DOC COLLAPSE + GOVERNANCE
+        RECONCILIATION. Resolve the structural-anchor and
+        domain-document question for the consolidated
+        domains (0400000/0410000, 0510000, 0600000/0610000,
+        0700000/0710000, 0800000/0810000, plus the AA=02
+        0210000 anchor per the TB00394 v1_1 SPLIT verdict).
+        Collapse anchors and domain docs whose only
+        remaining role was to point at now-retired instance
+        specs. Reconcile 0311001 namespace, parent chains,
+        and the governance registers (TB00153 Decision /
+        Defect) to the post-campaign document set. E3 is
+        governance-heavy and is sequenced LAST because it
+        depends on every E1/E2 migration and retirement
+        being complete.
+
+  E1/E2/E3 preserve the dependency order: component specs
+  migrate before instance specs; instance specs migrate
+  before anchor/domain collapse. Migration and retirement
+  of the same source document remain SEPARATE sessions
+  (§6.2). Each session executes EXACTLY ONE primary mission
+  per §6 (RR-SCOPE-011).
+
+OLD-NUMBERING -> UNIFIED-MODEL MAP (for cross-reference
+with the inline per-document tags in the TB00394 register
+and with the dv1_0..dv1_3 revision history below):
+
+  old 0911002 Phase 0 (D8-closure) ........ CLOSED HISTORY
+  old Phase 1 (CIATS-ownership attestation) Phase 3 EXECUTION
+  old Phase 2 (AA=05 component specs) ...... Phase 3 / E1
+  old Phase 3 (AA=04/06/07/08 instance) .... Phase 3 / E2
+  old Phase 4 (anchor/domain collapse) ..... Phase 3 / E3
+
+  This map mirrors the TB00394 v1_1 §PHASE-MODEL old->
+  unified map. The old D8-closure Phase 0 (TB00395) is
+  retained below as CLOSED HISTORY, not as the new Phase 0
+  (which is document-level scope definition). The old Phase
+  1 (CIATS-ownership architectural attestation) is an
+  execution / diagram-amendment activity and therefore
+  belongs to Phase 3 EXECUTION; this is consistent with the
+  TB00394 v1_1 §9.17 parameter-source classification, which
+  states "§9.17 completion occurs in Phase 3 execution."
+
+CLOSED HISTORY — OLD PHASE 0 D8 THREAD CLOSURE (TB00395).
   The D8 blocker (param:concentration_cap_per_module and
   param:exposure_cap_pct unregistered in 0311001 §15.12,
   and falsely attested at 0500000 D8 figcaption L3004) was
@@ -249,63 +374,13 @@ PHASE 0 — D8 THREAD CLOSURE.  STATUS: CLOSED (TB00395).
   were registered in 0311001 §15.12.8 and the false
   attestation was corrected at 0500000 dv1_113. No value
   was migrated (no corpus value exists for either cap; that
-  is an OPEN FINDING per §10, not a defect). Phase 0 closes
-  as the seed case demonstrating the corrected migration
+  is an OPEN FINDING per §10, not a defect). This closure
+  is the SEED CASE demonstrating the corrected migration
   pattern (§8): the architectural FACT (parameter exists;
   CIATS owns it) was registered/attested; no value was
-  moved; §9.17 was not touched.
-
-PHASE 1 — CIATS-OWNERSHIP ARCHITECTURAL ATTESTATION.
-  Migrate the ARCHITECTURAL FACT of each TB00000 §9.17
-  parameter — that the parameter exists and who owns it
-  (CIATS / OPERATOR / SACRED) — into the owning 0500000
-  diagram element, its governs/<desc> descriptor, its
-  figcaption attestation, and the §9 mirror, one
-  parameter-group per session (§6). The parameter VALUE
-  does NOT move; it stays in TB00000 §9.17 (§3.1). The
-  §9.17 entry is NOT retired. The §15.12 token registry
-  stays as the cross-diagram de-dup engine; each parameter
-  token is registered there if not already present. This
-  phase records architecture-vs-value PROVENANCE so a
-  reader of 0500000 can see that a parameter exists and is
-  CIATS-owned, and is pointed to §9.17 for its current
-  starting value.
-
-PHASE 2 — AA=05 COMPONENT SPECIFICATIONS.
-  Migrate the ARCHITECTURAL content of the AA=05 component
-  specifications (0511001 WS_Manager, 0511002 Signal_
-  Pipeline, 0511003 Execution_Engine, 0511004 Exit_
-  Controller, 0511005 Position_Mirror, 0511006 Logger)
-  into their canonical 0500000 diagrams and §9 mirror, ONE
-  component per session (§6). Any parameter value carried
-  in a component spec stays in / is reconciled to §9.17 per
-  §3.1; only the architectural content migrates. Retire each
-  spec via §7 in a SEPARATE session once its architectural
-  content is canonical and the de-dup rule (§9) is met.
-
-PHASE 3 — AA=04/06/07/08 SPECIFICATIONS.
-  Migrate the ARCHITECTURAL content of the AA=04 exchange-
-  interface specs (0411001/0411002/0411003), AA=06 risk
-  specs (0610000), AA=07 strategy specs (0711001/0711002/
-  0711003), and AA=08 trading-system specs (0811005) into
-  their canonical 0500000 diagrams and §9 mirror, ONE spec
-  per session (§6). Parameter values stay in §9.17 per
-  §3.1. Retire each spec via §7 in a SEPARATE session once
-  the de-dup rule (§9) is met.
-
-PHASE 4 — ANCHOR / DOMAIN-DOC COLLAPSE + GOVERNANCE
-  RECONCILIATION.
-  Resolve the structural-anchor and domain-document
-  question for the consolidated domains (0400000/0410000,
-  0510000, 0600000/0610000, 0700000/0710000, 0800000/
-  0810000). Collapse anchors and domain docs whose only
-  remaining role was to point at now-retired instance
-  specs. Reconcile 0311001 namespace, parent chains, and
-  the governance registers (TB00153 Decision/Defect) to the
-  post-campaign document set. This phase is governance-heavy
-  and is sequenced last because it depends on every prior
-  migration and retirement being complete. Decompose into
-  one-mission sessions per §6.
+  moved; §9.17 was not touched. It is retained here as
+  closed history; the §9.17 CIATS-ownership attestation it
+  seeded is completed within Phase 3 EXECUTION.
 
 ============================================================
 5A. EXIT_REASON RECONCILIATION + SIGNAL_DECAY TRACKS
@@ -315,7 +390,8 @@ PHASE 4 — ANCHOR / DOMAIN-DOC COLLAPSE + GOVERNANCE
 5A.0  WHY THIS SECTION EXISTS — WORK CLASS, NOT A PHASE.
 
       The de-conflict work below is NOT document migration
-      (Phases 1-3) and NOT anchor/domain collapse (Phase 4).
+      (Phase 3 execution sub-stages E1/E2) and NOT
+      anchor/domain collapse (Phase 3 sub-stage E3).
       It is RECONCILIATION of stale-vs-canonical drift inside
       0500000 and across the dependent specs to a single
       Bill-ratified enum. It arose because the exit design
@@ -414,7 +490,8 @@ PHASE 4 — ANCHOR / DOMAIN-DOC COLLAPSE + GOVERNANCE
             exit enum; confirm PAIR_LIMIT_ONLY_EXIT is the
             7th value present. This is the G-4 closure. NOTE:
             1011007 and 0511006 are reconciled IN PLACE here;
-            this is enum-drift correction, NOT a Phase-2/3
+            this is enum-drift correction, NOT a Phase-3
+            execution (E1/E2)
             migration of those documents (which proceed
             separately under their own register classification).
 
@@ -465,11 +542,11 @@ PHASE 4 — ANCHOR / DOMAIN-DOC COLLAPSE + GOVERNANCE
         sequenced before, between, or after Track A sessions
         at the operator's discretion, but is NEVER bundled
         into a Track A session (5A.0 separation rule).
-      - These tracks do not displace the Phase 1-4 migration
-        sequencing (§5). A given session executes EITHER one
-        Track A item, OR Track B RB-1, OR one migration phase
-        mission — never two. The §6 per-session ceiling and
-        §6.2 separation rule govern all of them identically.
+      - These tracks do not displace the Phase 1 / Phase 2 /
+        Phase 3 sequencing (§5). A given session executes
+        EITHER one Track A item, OR Track B RB-1, OR one
+        phase mission — never two. The §6 per-session ceiling
+        and §6.2 separation rule govern all of them identically.
       - RA-1 unblocks the 0511004 -> 0500000 D3 consolidation
         placement map (§6.2 migration; CF carry-forward in the
         NSI) by making D3 canonical for the exit enum. The
@@ -585,10 +662,13 @@ mechanism is created. A retirement is its own session per
    (OPTION A STANDARD; VALUES STAY IN §9.17)
 ============================================================
 
-This is the standard pattern for Phase 1 (CIATS-ownership
-attestation) and the model for the architectural-fact
-portion of value-bearing migrations in later phases. It is
-the pattern demonstrated by the Phase 0 seed case (TB00395).
+This is the standard pattern for the CIATS-ownership
+architectural attestation of §9.17 parameters (a Phase 3
+EXECUTION work-stream; formerly the old Phase 1) and the
+model for the architectural-fact portion of value-bearing
+migrations in Phase 3 execution. It is the pattern
+demonstrated by the old Phase 0 D8 seed case (TB00395),
+retained as closed history in §5.
 
   P-1  IDENTIFY. Take one parameter-group from TB00000
        §9.17 (e.g. the two D8 CIATS-owned caps in the Phase
@@ -656,20 +736,26 @@ NEVER retired by moving its values into 0500000.
 ============================================================
 
   - The TB00394 master register MUST stay Bill-ratified as
-    the audit-first basis (§4(f)) for every Phase-1+
-    migration session.
-  - AA=02 documents are NOT scoped into any migration
-    session until Bill ratifies their register
-    classification (§4 NOTE).
+    the audit-first basis (§4(f)) for every Phase-1 element
+    audit and every Phase 3 execution session.
+  - AA=02 documents were NOT scoped into any migration
+    session until Bill ratified their register
+    classification (§4 NOTE). That ratification is now FINAL
+    (TB00468 Decision 1; TB00394 v1_1): 0211001 SPLIT
+    (arch -> §6/D5, Phase 3/E2), 0210000 SPLIT (anchor
+    collapse, Phase 3/E3), and 0200000/0211002/0211003/
+    0211004/0211005 STAY.
   - Phases run in order. A later phase does not begin until
-    the prior phase's migrations and retirements are
-    complete and governance-reconciled.
+    the prior phase's work is complete and (for Phase 3)
+    governance-reconciled. Within Phase 3, execution
+    sub-stages run E1 -> E2 -> E3.
   - Migration and retirement of the same source document are
     separate sessions; retirement follows the migration
     that made the document architecturally redundant
     (§6.2).
-  - Phase 4 (anchor/domain collapse) is last; it depends on
-    all instance-spec retirements being complete.
+  - Phase 3 sub-stage E3 (anchor/domain collapse +
+    governance reconciliation) is last; it depends on all
+    E1/E2 instance-spec retirements being complete.
 
 OPEN FINDING (carry-forward; not a defect; do NOT invent a
 value). Neither D8 cap — param:concentration_cap_per_module
@@ -698,7 +784,107 @@ No migration or retirement session:
 12. REVISION HISTORY
 ============================================================
 
-dv1_3  (TB00446, 2026-05-25): RA-6 formalized into §5A
+dv1_4  (TB00470, 2026-05-27): UNIFIED OCS 4-PHASE MODEL
+       ADOPTED. Aligns this plan's phase structure to the
+       TB00394 v1_1 §PHASE-MODEL ratified roadmap. Single
+       primary mission per RR-SCOPE-011 (one document
+       amendment). Companion: TB00153 DR DEC-068 (phase-model
+       unification decision record). No 0500000 edit, no
+       TB00000 edit, no migration performed this session.
+
+       CHANGE 1 — §5 PHASE STRUCTURE rewritten from the old
+       five phases to the unified four phases:
+         Phase 0 SCOPE DEFINITION (= TB00394 register;
+           document-level MOVE/STAY/SPLIT; RATIFIED at
+           TB00394 v1_1).
+         Phase 1 ELEMENT AUDIT (per-document, element-level,
+           DD-012 element identification; one source doc per
+           session; NOT started).
+         Phase 2 DD-012 THREE-BUCKET CLASSIFICATION +
+           SEQUENCING (per element: (a) architectural
+           restatement -> drop with retirement; (b)
+           coding-unique -> migrate to parent AA spec or
+           preserved AA=10 spec; (c) architectural content
+           not yet in diagrams -> amend 0500000 first;
+           execution order determined).
+         Phase 3 EXECUTION (diagram amendment, prose-follows-
+           diagram, instance-spec migration, §9.17
+           CIATS-ownership architectural attestation, document
+           retirement via §7, AND anchor/domain collapse +
+           governance reconciliation), with execution
+           sub-stages E1 (AA=05 component migration), E2
+           (AA=04/06/07/08 + AA=02 0211001 instance
+           migration), E3 (anchor/domain collapse + governance
+           reconciliation).
+       The old Phase 4 (anchor/domain collapse) is FOLDED
+       INTO Phase 3 as sub-stage E3. The old Phase 1
+       (CIATS-ownership attestation) is re-mapped to Phase 3
+       EXECUTION (it is a diagram-amendment activity;
+       consistent with TB00394 v1_1 §9.17-source
+       classification "§9.17 completion occurs in Phase 3
+       execution"). The old Phase 0 (D8 thread closure,
+       TB00395) is RETAINED as CLOSED HISTORY (the migration-
+       pattern seed case), NOT as the new Phase 0. Added an
+       OLD-NUMBERING -> UNIFIED-MODEL MAP mirroring the
+       TB00394 v1_1 §PHASE-MODEL map.
+
+       CHANGE 2 — §5 lead-in updated "five phases" -> "FOUR
+       phases (the unified OCS 4-phase model)" and the
+       primary-mission / register-ratification precondition
+       wording aligned.
+
+       CHANGE 3 — §5A phase cross-references re-tagged:
+         5A.0 "NOT document migration (Phases 1-3) and NOT
+           anchor/domain collapse (Phase 4)" -> "(Phase 3
+           execution sub-stages E1/E2) ... (Phase 3 sub-stage
+           E3)."
+         5A.2 RA-3 "NOT a Phase-2/3 migration" -> "NOT a
+           Phase-3 execution (E1/E2) migration."
+         5A.4 "do not displace the Phase 1-4 migration
+           sequencing" -> "do not displace the Phase 1 /
+           Phase 2 / Phase 3 sequencing."
+
+       CHANGE 4 — §8 migration-pattern lead-in re-tagged: the
+       pattern is the CIATS-ownership architectural attestation
+       (a Phase 3 EXECUTION work-stream; formerly old Phase 1),
+       demonstrated by the old Phase 0 D8 seed case retained as
+       closed history.
+
+       CHANGE 5 — §10 sequencing re-tagged: "every Phase-1+
+       migration session" -> "every Phase-1 element audit and
+       every Phase 3 execution session"; phases-run-in-order
+       restated with the E1 -> E2 -> E3 sub-stage order;
+       "Phase 4 (anchor/domain collapse) is last" -> "Phase 3
+       sub-stage E3 ... is last."
+
+       CHANGE 6 (consequential) — §4 NOTE ON AA=02 reconciled
+       to the now-FINAL ratification (TB00468 Decision 1;
+       TB00394 v1_1): 0211001 SPLIT, 0210000 SPLIT, the other
+       five STAY. Required because the new Phase 0 / §10 /
+       Phase 3 text references the ratified AA=02 verdicts;
+       leaving the old "flagged pending ratification" NOTE
+       would make the document internally contradictory (PR-3
+       / CI-005).
+
+       NOT CHANGED: §3.1 Option A controlling scope rule;
+       §3.1(b)-(d) parameter-value separation; §6 one-mission
+       decomposition; §7 DD-012 six-step retirement gate; §9
+       de-dup rule; §11 out-of-scope list. The dv1_0..dv1_3
+       revision-history entries are forensic and are NOT
+       edited in place (CI-006); they reference the old phase
+       numbers as authored.
+
+       PROVENANCE. Bill OCS chat-turn directive (TB00470) +
+       TB00469 NSI §1.1 + TB00394 v1_1 §PHASE-MODEL.
+       Chat-turn-1 FP/DP-derivability test OUTCOME 1 (single
+       compliant path: align the plan to the ratified unified
+       model); DD-011 v2_56 CHAT-TURN-1 GATE exception (b)
+       (explicit Bill directive) also applies. Executed under
+       RR-SCOPE-005 derivable-decision authority. Single
+       primary mission per RR-SCOPE-011; companion TB00153 DR
+       DEC-068.
+
+
        Track A. Added RA-6 (0500000 D5 + D2 CIATS schema
        exit_reason field-15 reconciliation) sequenced AFTER
        RA-2 and BEFORE RA-3/RA-4 so the RA-3/RA-4 logger +
