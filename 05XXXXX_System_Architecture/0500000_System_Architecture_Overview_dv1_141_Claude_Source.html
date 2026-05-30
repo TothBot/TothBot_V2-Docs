@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_140</title>
+<title>0500000 System Architecture Overview dv1_141</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_140</td></tr>
+  <tr><td>DocVersion</td><td>dv1_141</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_140_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>05-29-2026</td></tr>
-  <tr><td>DocTime</td><td>09:58:50 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_141_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>05-30-2026</td></tr>
+  <tr><td>DocTime</td><td>08:45:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -963,7 +963,7 @@ A-2  req_id and cl_ord_id on all outbound WS messages:
 <br>
      cl_ord_id at dispatch time before Kraken response. Position Mirror records cl_ord_id
 <br>
-     immediately at dispatch — no async gap. WS Manager maintains pending-request registry.
+     immediately at dispatch — no async gap. WS Manager maintains pending-request registry. cl_ord_id and req_id MUST each be unique per outstanding order - they are the correlation keys used to bind acknowledgements and fills to the originating order, so a collision misattributes a fill. The uniqueness-achieving construction scheme (e.g. symbol prefix + millisecond timestamp) is an implementation choice, not architecture (dv1_141; TB00511).
 <br>
      Assign to 0511001, 0511003, 0511005.
 </p>
@@ -1554,7 +1554,7 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: channel:kraken_ws_executions, channel:kraken_ws_balances
-        constraints: ar:AR-006, ar:AR-007, ar:AR-008, ar:AR-010, ar:AR-011, ar:AR-022, ar:AR-023, ar:AR-024, ar:AR-026, ar:AR-030, ar:AR-031, ar:AR-032, ar:AR-033, ar:AR-046, ar:AR-047, ar:AR-066, pt_mode:PT_MODE_004, rule:HR-WM-005 (executions subscription order_status:true MANDATORY on every subscribe incl reconnects; without it amended+restated exec_types silently dropped, Layer 3 crash-protection monitoring non-functional [0411001 WS-EXE-001/WS-OSTA-001/002/003; AR-026]), rule:HR-WM-006 (complete exec_type dispatch table handles all 10 values; unknown exec_types logged WARN never silently dropped [0411001 WS-EXE-009; AR-023]), rule:HR-WM-007 (use reason field for cancellation context; cancel_reason is DEPRECATED [0411001 WS-EXE-010; AR-022]), rule:HR-WM-009 (stp_type cancel_newest underscore form MUST be set on all add_order/batch_add [0411001 WS-STP-001; AR-031]), rule:HR-WM-010 (cancel_all_orders_after Dead Man's Switch PROHIBITED; would cancel resting TP+emergSL on disconnect destroying Layer 3 crash protection; CRITICAL bug if called [0411001 WS-DMS-001; AR-001/AR-055]), rule:HR-WM-014 (deadline MUST be set on all add_order/amend_order = UTC_now + 5s ISO 8601 [0411001 WS-DL-001; AR-046]), rule:HR-WM-015 (emergSL resting order explicit trigger reference=\"last\" [0411001 WS-BA-003; AR-047])
+        constraints: ar:AR-006, ar:AR-007, ar:AR-008, ar:AR-010, ar:AR-011, ar:AR-022, ar:AR-023, ar:AR-024, ar:AR-026, ar:AR-030, ar:AR-031, ar:AR-032, ar:AR-033, ar:AR-046, ar:AR-047, ar:AR-066, pt_mode:PT_MODE_004, rule:HR-WM-005 (executions subscription order_status:true MANDATORY on every subscribe incl reconnects; without it amended+restated exec_types silently dropped, Layer 3 crash-protection monitoring non-functional [0411001 WS-EXE-001/WS-OSTA-001/002/003; AR-026]), rule:HR-WM-006 (complete exec_type dispatch table handles all 10 values; unknown exec_types logged WARN never silently dropped [0411001 WS-EXE-009; AR-023]), rule:HR-WM-007 (use reason field for cancellation context; cancel_reason is DEPRECATED [0411001 WS-EXE-010; AR-022]), rule:HR-WM-009 (stp_type cancel_newest underscore form MUST be set on all add_order/batch_add [0411001 WS-STP-001; AR-031]), rule:HR-WM-010 (cancel_all_orders_after Dead Man's Switch PROHIBITED; would cancel resting TP+emergSL on disconnect destroying Layer 3 crash protection; CRITICAL bug if called [0411001 WS-DMS-001; AR-001/AR-055]), rule:HR-WM-014 (deadline MUST be set on all add_order/amend_order = UTC_now + 5s ISO 8601 [0411001 WS-DL-001; AR-046]), rule:HR-WM-015 (emergSL resting order explicit trigger reference=\"last\" [0411001 WS-BA-003; AR-047]) ; CL_ORD_ID + REQ_ID UNIQUENESS (dv1_141): cl_ord_id and req_id MUST each be unique per outstanding order - correlation keys the pending-request registry + Position Mirror use to bind ACK/fill to the originating order; a collision misattributes a fill; the uniqueness-achieving construction scheme is an implementation choice, not architecture; extends ar:AR-006 + ar:AR-053, no new namespace token minted
         consumes: none
         produces: evt:ENTRY_FILLED, evt:WS_RECONNECT, ws_subscribe:private_v2
         q1_do: Kraken-edge authenticated WebSocket v2 private endpoint for executions + balances streams + order-dispatch RPCs (add_order, amend_order per ar:AR-018, cancel_order, cancel_all); Dead Man's Switch PROHIBITED per ar:AR-055; OTO conditional orders REJECTED per ar:AR-008; subject to PA-004 divergence point #1 (skipped in paper per pt_mode:PT_MODE_004).
@@ -2033,6 +2033,8 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
 </svg>
   </div>
   <figcaption>
+    <strong>OPTION R EXTENSION (xiv) - 0911002 STREAM 2 / PHASE 3 (AA=05) EXECUTION ENGINE CODE-COMPLETENESS CLOSURE (TB00511 - binary-architecture-test, DEC-096):</strong> Per the Bill binary architecture test (every TothBot-organism architectural element goes into a 0500000 design diagram; the only non-architecture is a transient seed value in TB00000 sec 9.17), the 0511003 Execution_Engine_Specification dv1_1 element audit (TB00471 / DEC-069) found bucket (c) = NONE - all EE architecture already canonical in D2 - EXCEPT one hard rule a coder needs and could not derive from the diagram: cl_ord_id + req_id MUST be unique per outstanding order. That rule is now authored ADD-only into (1) the D1 mod:WS_Manager add_order component constraints desc and (2) the sec 2 A-2 canonical narration (DD-002 prose-follows-diagram). The cl_ord_id length (&lt;=18), dispatch-time assignment, registry correlation, and req_id pending-request registry were already canonical; only the uniqueness invariant was implicit. No new namespace token minted (extends ar:AR-006 add_order construction + ar:AR-053 Pending Order Registry); the uniqueness-achieving construction scheme + example ID string are implementation choices, not architecture, and are NOT preserved. R HELD AT R9 per the TB00453 bright line (a desc-level constraints addition touches no visible &lt;text&gt; or geometry; no SVG title / diagram_canonical / title-bar / viewBox change; no R-increment chain rotation; no figure-count change; all 10 figures geometry byte-identical). DD-014 / V-040 65-cell design-completeness PRESERVED and IMPROVED at the add_order interface (Q3 hard rules now answerable from the diagram). dv1_140 -&gt; dv1_141. RR-SCOPE-011 one diagram (D1). RR-SCOPE-001 ADD-only. DR-007.9 HTML well-formedness pass confirmed pre-delivery. This closes the last EE code-completeness gap and clears 0511003 dv1_1 for retirement (separate downstream session per 0911002 sec 6.2). Prior figcaption content preserved verbatim per CI-005 + CI-006 - NOT edited.
+
     Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R9). V-040 INDEPENDENT VERIFICATION (TB00376) — 13 components × 5 questions = 65 cells, all PASS confirmed from dv1_102 SVG + governs descs + figcaption per §15.16.5(b) independent audit methodology. Figcaption visible header text catch-up R8 → R9 applied this amendment (TB00368 housekeeping applied SVG title + diagram_canonical R8 → R9 but figcaption visible text was not updated at that time; corrected here). Prior R-increment R7 → R8 (TB00365 V-041 P-CC1 INDICATOR-TOKEN PRODUCER-SIDE CLOSURE — mod:Signal_Pipeline.produces extended with 6 indicator: tokens; mod:Regime_Engine.produces replaced "none" with 4 indicator: tokens). Prior R-increment R8 → R9 (TB00367/TB00368 V-041 P-CC5 PRODUCER-BINDING — ws_subscribe:public_v2 added to Public_WS_v2.produces; ws_subscribe:private_v2 added to Private_WS_v2.produces). V-040 design-completeness 10/10 PRESERVED — no per-component q1/q2/q3/q4/q5 cell regression.
 
     <strong>§15.16.3 DESIGN-COMPLETENESS ATTESTATION.</strong>
