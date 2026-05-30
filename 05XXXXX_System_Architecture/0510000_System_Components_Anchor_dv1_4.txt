@@ -1,10 +1,10 @@
 DocDCN:     0510000
 DocTitle:   System_Components_Anchor
-DocVersion: dv1_3
+DocVersion: dv1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_3.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_4.txt
 DocDate:    05-30-2026
-DocTime:    09:15:00 UTC
+DocTime:    09:30:00 UTC
 
 ============================================================
 SYSTEM COMPONENTS ANCHOR
@@ -17,7 +17,7 @@ SYSTEM COMPONENTS ANCHOR
 This document is the Sub-Domain Anchor for the System
 Components sub-domain (AA=05, B=1). It anchors all TothBot
 V2 system component specification instance documents
-(0511004 through 0511006) to the System Architecture
+(0511005 through 0511006) to the System Architecture
 Domain Document (0500000).
 
 Its purpose is structural: it completes the three-tier
@@ -40,7 +40,6 @@ and approved.
   0510000  This document                  (Sub-Domain Anchor)
 
   Child chain (instance documents under this anchor):
-    0511004  Exit_Controller_Specification
     0511005  Position_Mirror_Specification
     0511006  Logger_Specification
 
@@ -79,21 +78,6 @@ specifications and code can be directly derived.
 
 Each instance document elaborates one component:
 
-  0511004  Exit_Controller_Specification
-           The Exit Controller owns all normal position
-           exits. Three-layer architecture: Layer 1a
-           (signal-based: HTF reversal, daily downgrade,
-           max hold), Layer 1b (TP fill confirmation and
-           emergSL cancellation), Layer 2 (MAE threshold
-           breach with cancel timeout fallback per I-6
-           and MPP handling per C-1). Layer 3 (emergency
-           SL) is crash protection only — NEVER in normal
-           operation. Owns ticker-driven continuous
-           drawdown monitoring (I-7), batch_cancel for
-           Full Halt (AR-019, AR-041), pair status
-           adaptation for open positions (AR-040), and
-           TP partial fill handling (AR-066).
-
   0511005  Position_Mirror_Specification
            The Position Mirror is TothBot's in-memory
            authoritative record of all open positions.
@@ -122,7 +106,7 @@ Each instance document elaborates one component:
 
   Instance Document → 0510000 (this anchor) → 0500000
 
-No instance document in this sub-domain (0511004 through
+No instance document in this sub-domain (0511005 through
 0511006) may be committed to GitHub without both this
 anchor and 0500000 already present and approved on GitHub.
 This rule is enforced by validation rule V-012 in 0311001
@@ -133,7 +117,6 @@ Section 13.
 ============================================================
 
   0500000  System_Architecture_Overview   (parent Domain Doc)
-  0511004  Exit_Controller_Specification
   0511005  Position_Mirror_Specification
   0511006  Logger_Specification
   0400000  Exchange_Interface             (dependency)
@@ -145,6 +128,71 @@ Section 13.
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_4  05-30-2026  TB00513 S-5 ANCHOR REVISION - 0511004
+                     Exit_Controller_Specification RETIREMENT
+                     CASCADE (DD-012 sec 7 S-5; 0911002 PHASE 3
+                     AA=05 sub-campaign; E1 completion queue).
+
+                     0511004 removed from the child chain (sec 2),
+                     the sec 4 sub-domain instance elaboration, and
+                     the sec 6 RELATED DOCUMENTS list. Child chain
+                     shrinks from 0511004..006 (three instance specs)
+                     to 0511005..006 (two instance specs).
+                     Instance-range citations in sec 1 / sec 5
+                     updated 0511004..006 -> 0511005..006.
+
+                     S-3 PARENT-CHAIN GAP-FILL. None required. Every
+                     architectural element 0511004 held is canonical
+                     in the 0500000 diagrams: the Exit Controller is
+                     code-complete in D3 (DEC-070 bucket (c) = NONE;
+                     D3 Exit Architecture passed V-040 independent
+                     verification at TB00378 -- 7 components x 5
+                     questions = 35 cells all PASS from SVG + governs
+                     descs + figcaption alone). The four exit layers
+                     (L1a regime-based, L1b TP-fill, L2 MAE-threshold,
+                     L3 emergency-SL crash protection per ar:AR-001),
+                     the cited ar: set (AR-019/040/041/066 +
+                     AR-077/078/079 timing decisions canonical in
+                     0500000 sec 8 + AR-052/071/073/001), the I-6/I-7/
+                     I-005/I-006 interface set, the C-1 MPP contract,
+                     and rule:HR-EC-016 conflict-resolution are all
+                     canonical in the 0500000 diagrams. The DD-012 S-1
+                     migration-completeness gate is GO; the RV gate is
+                     register-verified against MDR v1_50 (0 open
+                     V-038 / 0 open V-040). Transient seed VALUES live
+                     in TB00000 sec 9.17 (mae_mult, emergency_sl_mult,
+                     cancel_timeout_window, mpp_retry_count,
+                     max_hold_candles); the cancel-timeout / MPP-retry
+                     construction recipes are implementation choices
+                     and die with retirement (not migrated).
+
+                     REASON FOR CHANGE. 0511004 retired this session
+                     per DD-012 sec 7 (S-1 GO; STEP 0 precondition
+                     re-verified -- HEAD = dv1_141 with the Exit
+                     Controller code-complete in D3; S-4 Claude-
+                     authored `git rm --cached` per sec 4.9 CD-003 --
+                     GitHub HEAD is Claude's; --cached removes the
+                     GitHub index entry only; the C: drive working-
+                     tree copy is PRESERVED and remains Bill's; plain
+                     `git rm` PROHIBITED per CD-002; git history
+                     preserves all prior versions; S-6 DEC-103).
+                     Anchor child chain must shrink to match. Zero
+                     orphaned content.
+
+                     PARENT CHAIN COMPLIANCE. 0510000 parent chain
+                     unchanged (0000000 + 0100000 + 0200000 +
+                     0300000 + 0400000 + 0500000 + self). V-039
+                     universal parent-chain-completeness preserved.
+                     The 0500000 diagrams remain canonical for all
+                     content downstream of this anchor (DD-001).
+
+                     Header DocVersion dv1_3 -> dv1_4. DocPath
+                     updated. DocDate / DocTime refreshed.
+
+                     Recorded at TB00513 DEC-103. Document Status:
+                     supersedes dv1_3. dv1_4 is the sole
+                     authoritative version.
 
   dv1_3  05-30-2026  TB00512 S-5 ANCHOR REVISION - 0511003
                      Execution_Engine_Specification RETIREMENT
