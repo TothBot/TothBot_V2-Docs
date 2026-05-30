@@ -1,10 +1,10 @@
 DocDCN:     0510000
 DocTitle:   System_Components_Anchor
-DocVersion: dv1_2
+DocVersion: dv1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_2.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_3.txt
 DocDate:    05-30-2026
-DocTime:    05:30:00 UTC
+DocTime:    09:15:00 UTC
 
 ============================================================
 SYSTEM COMPONENTS ANCHOR
@@ -17,7 +17,7 @@ SYSTEM COMPONENTS ANCHOR
 This document is the Sub-Domain Anchor for the System
 Components sub-domain (AA=05, B=1). It anchors all TothBot
 V2 system component specification instance documents
-(0511003 through 0511006) to the System Architecture
+(0511004 through 0511006) to the System Architecture
 Domain Document (0500000).
 
 Its purpose is structural: it completes the three-tier
@@ -40,7 +40,6 @@ and approved.
   0510000  This document                  (Sub-Domain Anchor)
 
   Child chain (instance documents under this anchor):
-    0511003  Execution_Engine_Specification
     0511004  Exit_Controller_Specification
     0511005  Position_Mirror_Specification
     0511006  Logger_Specification
@@ -79,15 +78,6 @@ a coding-ready specification from which AA=10 coding
 specifications and code can be directly derived.
 
 Each instance document elaborates one component:
-
-  0511003  Execution_Engine_Specification
-           The Execution Engine owns order dispatch to
-           Kraken. Receives sizing output from Gate 8.
-           Constructs and sends: add_order (entry), and
-           batch_add (TP + emergSL atomic on fill). All
-           field requirements, parameter values, and error
-           handling. Owns cl_ord_id assignment, req_id
-           tracking, and Pending Order Registry population.
 
   0511004  Exit_Controller_Specification
            The Exit Controller owns all normal position
@@ -132,7 +122,7 @@ Each instance document elaborates one component:
 
   Instance Document → 0510000 (this anchor) → 0500000
 
-No instance document in this sub-domain (0511003 through
+No instance document in this sub-domain (0511004 through
 0511006) may be committed to GitHub without both this
 anchor and 0500000 already present and approved on GitHub.
 This rule is enforced by validation rule V-012 in 0311001
@@ -143,7 +133,6 @@ Section 13.
 ============================================================
 
   0500000  System_Architecture_Overview   (parent Domain Doc)
-  0511003  Execution_Engine_Specification
   0511004  Exit_Controller_Specification
   0511005  Position_Mirror_Specification
   0511006  Logger_Specification
@@ -156,6 +145,59 @@ Section 13.
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_3  05-30-2026  TB00512 S-5 ANCHOR REVISION - 0511003
+                     Execution_Engine_Specification RETIREMENT
+                     CASCADE (DD-012 sec 7 S-5; 0911002 PHASE 3
+                     AA=05 sub-campaign; E1 completion queue).
+
+                     0511003 removed from the child chain (sec 2),
+                     the sec 4 sub-domain instance elaboration, and
+                     the sec 6 RELATED DOCUMENTS list. Child chain
+                     shrinks from 0511003..006 (four instance specs)
+                     to 0511004..006 (three instance specs).
+                     Instance-range citations in sec 1 / sec 5
+                     updated 0511003..006 -> 0511004..006.
+
+                     S-3 PARENT-CHAIN GAP-FILL. None required. Every
+                     architectural element 0511003 held is canonical
+                     in the 0500000 diagrams: the Execution Engine is
+                     code-complete in D1/D2 (DEC-069 bucket (c) =
+                     NONE, re-verified vs dv1_140; the last gap --
+                     cl_ord_id + req_id uniqueness -- closed at
+                     TB00511 by the D1 amendment dv1_140 -> dv1_141).
+                     The DD-012 S-1 migration-completeness gate is GO;
+                     the RV gate is register-verified against MDR
+                     v1_50 (0 open V-038 / 0 open V-040). Transient
+                     seed VALUES live in TB00000 sec 9.17; B-4 rate-
+                     cost in 0411003; B-6 log field-lists in 0511006;
+                     the cl_ord_id construction recipe + example ID
+                     string are implementation choices (DEC-096) and
+                     die with retirement (not migrated).
+
+                     REASON FOR CHANGE. 0511003 retired this session
+                     per DD-012 sec 7 (S-1 GO; STEP 0 precondition
+                     re-verified -- HEAD = dv1_141 with uniqueness
+                     rule; S-4 Claude-authored `git rm --cached` per
+                     sec 4.9 CD-003 -- GitHub HEAD is Claude's; C:
+                     working-tree copy preserved; plain `git rm`
+                     PROHIBITED per CD-002; S-6 DEC-102). Anchor
+                     child chain must shrink to match. Zero orphaned
+                     content.
+
+                     PARENT CHAIN COMPLIANCE. 0510000 parent chain
+                     unchanged (0000000 + 0100000 + 0200000 +
+                     0300000 + 0400000 + 0500000 + self). V-039
+                     universal parent-chain-completeness preserved.
+                     The 0500000 diagrams remain canonical for all
+                     content downstream of this anchor (DD-001).
+
+                     Header DocVersion dv1_2 -> dv1_3. DocPath
+                     updated. DocDate / DocTime refreshed.
+
+                     Recorded at TB00512 DEC-102. Document Status:
+                     supersedes dv1_2. dv1_3 is the sole
+                     authoritative version.
 
   dv1_2  05-30-2026  TB00507 S-5 ANCHOR REVISION - 0511002
                      Signal_Pipeline_Specification RETIREMENT
