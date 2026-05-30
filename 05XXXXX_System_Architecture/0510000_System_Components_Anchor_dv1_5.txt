@@ -1,10 +1,10 @@
 DocDCN:     0510000
 DocTitle:   System_Components_Anchor
-DocVersion: dv1_4
+DocVersion: dv1_5
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_4.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0510000_System_Components_Anchor_dv1_5.txt
 DocDate:    05-30-2026
-DocTime:    09:30:00 UTC
+DocTime:    09:34:04 UTC
 
 ============================================================
 SYSTEM COMPONENTS ANCHOR
@@ -17,8 +17,8 @@ SYSTEM COMPONENTS ANCHOR
 This document is the Sub-Domain Anchor for the System
 Components sub-domain (AA=05, B=1). It anchors all TothBot
 V2 system component specification instance documents
-(0511005 through 0511006) to the System Architecture
-Domain Document (0500000).
+(0511006) to the System Architecture Domain Document
+(0500000).
 
 Its purpose is structural: it completes the three-tier
 hierarchy chain for the System Components sub-domain,
@@ -40,7 +40,6 @@ and approved.
   0510000  This document                  (Sub-Domain Anchor)
 
   Child chain (instance documents under this anchor):
-    0511005  Position_Mirror_Specification
     0511006  Logger_Specification
 
 ============================================================
@@ -78,17 +77,6 @@ specifications and code can be directly derived.
 
 Each instance document elaborates one component:
 
-  0511005  Position_Mirror_Specification
-           The Position Mirror is TothBot's in-memory
-           authoritative record of all open positions.
-           O(1) symbol-keyed dict (AR-002). Records:
-           symbol, entry_fill_price, qty, TP order_id,
-           cl_ord_id, emergSL order_id. Recorded at
-           dispatch (no async gap per A-2). Reconciled
-           at startup and reconnect. Defines all update
-           rules: on fill, on TP partial fill (AR-066),
-           on position close, on reconciliation.
-
   0511006  Logger_Specification
            The Logger is the sole data interface between
            TothBot and CIATS. Async bounded queue using
@@ -106,18 +94,16 @@ Each instance document elaborates one component:
 
   Instance Document → 0510000 (this anchor) → 0500000
 
-No instance document in this sub-domain (0511005 through
-0511006) may be committed to GitHub without both this
-anchor and 0500000 already present and approved on GitHub.
-This rule is enforced by validation rule V-012 in 0311001
-Section 13.
+No instance document in this sub-domain (0511006) may be
+committed to GitHub without both this anchor and 0500000
+already present and approved on GitHub. This rule is
+enforced by validation rule V-012 in 0311001 Section 13.
 
 ============================================================
 6. RELATED DOCUMENTS
 ============================================================
 
   0500000  System_Architecture_Overview   (parent Domain Doc)
-  0511005  Position_Mirror_Specification
   0511006  Logger_Specification
   0400000  Exchange_Interface             (dependency)
   0410000  Exchange_Interface_Kraken_Anchor
@@ -128,6 +114,66 @@ Section 13.
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_5  05-30-2026  TB00514 S-5 ANCHOR REVISION - 0511005
+                     Position_Mirror_Specification RETIREMENT
+                     CASCADE (DD-012 sec 7 S-5; 0911002 PHASE 3
+                     AA=05 sub-campaign; E1 completion queue).
+
+                     0511005 removed from the child chain (sec 2),
+                     the sec 4 sub-domain instance elaboration, and
+                     the sec 6 RELATED DOCUMENTS list. Child chain
+                     shrinks from 0511005..006 (two instance specs)
+                     to 0511006 (one instance spec).
+                     Instance-range citations in sec 1 / sec 5
+                     updated 0511005..006 -> 0511006.
+
+                     S-3 PARENT-CHAIN GAP-FILL. None required. Every
+                     architectural element 0511005 held is canonical
+                     in the 0500000 diagrams: the Position Mirror is
+                     code-complete -- mod:Position_Mirror D6 R7
+                     design-complete (TB00359; DEC-071 bucket (c) =
+                     NONE). The in-memory O(1) symbol-keyed position
+                     record (ar:AR-002), recorded at dispatch with no
+                     async gap (A-2), reconciled at startup/reconnect,
+                     with update rules on fill / TP partial fill
+                     (ar:AR-066) / position close / reconciliation are
+                     all canonical in the 0500000 diagrams (AR-002,
+                     A-2, AR-066 grep-confirmed present in dv1_141 at
+                     STEP 0). PA-004 #4 Position Mirror Sourcing; the
+                     contract:Synthetic_Capital_Ledger sec 12.4
+                     single-owner relationship; the D5 stream2_box;
+                     and HR-PM-009/011 (HR-PM remainder via ar: set)
+                     are canonical. The DD-012 S-1 migration-
+                     completeness gate is GO; the RV gate is
+                     register-verified against MDR v1_50 (0 open
+                     V-038 / 0 open V-040).
+
+                     REASON FOR CHANGE. 0511005 retired this session
+                     per DD-012 sec 7 (S-1 GO; STEP 0 precondition
+                     re-verified -- HEAD = dv1_141 with the Position
+                     Mirror code-complete; S-4 Claude-authored
+                     `git rm --cached` per sec 4.9 CD-003 -- GitHub
+                     HEAD is Claude's; --cached removes the GitHub
+                     index entry only; the C: drive working-tree copy
+                     is PRESERVED and remains Bill's; plain `git rm`
+                     PROHIBITED per CD-002; git history preserves all
+                     prior versions; S-6 DEC-104). Anchor child chain
+                     must shrink to match. Zero orphaned content.
+
+                     PARENT CHAIN COMPLIANCE. 0510000 parent chain
+                     unchanged (0000000 + 0100000 + 0200000 +
+                     0300000 + 0400000 + 0500000 + self). V-039
+                     universal parent-chain-completeness preserved.
+                     The 0500000 diagrams remain canonical for all
+                     content downstream of this anchor (DD-001).
+
+                     Header DocVersion dv1_4 -> dv1_5. DocPath
+                     updated. DocDate / DocTime refreshed.
+
+                     Recorded at TB00514 DEC-104. Document Status:
+                     supersedes dv1_4. dv1_5 is the sole
+                     authoritative version.
 
   dv1_4  05-30-2026  TB00513 S-5 ANCHOR REVISION - 0511004
                      Exit_Controller_Specification RETIREMENT
