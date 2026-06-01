@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_34
+DocVersion: v1_35
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_34.txt
-DocDate:    05-25-2026
-DocTime:    23:59:55 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_35.txt
+DocDate:    05-31-2026
+DocTime:    00:30:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -1255,9 +1255,9 @@ MUST use the formal reference syntax.
                    = defect.
 
          Enforcement: Pre-delivery validation
-         per TB00000 v2_20 §4.1 DR-007 HTML
-         scope amendment plus session-open
-         pre-flight per 0311002 v1_10 §8.2.5
+         per the HTML well-formedness check
+         (TB00000 v2_82 §4.6) plus session-open
+         pre-flight per 0311002 §8.2.5
          DC-PREFLIGHT-007 sub-check (f) HTML
          SCOPE.
 
@@ -1316,9 +1316,9 @@ MUST use the formal reference syntax.
          Enforcement: Pre-amendment cross-check
          per §15.14.5; session-open pre-flight
          per 0311002 DC-PREFLIGHT (future
-         amendment); pre-delivery DR-007 HTML
-         scope sweep extended to include V-038
-         scan.
+         amendment); pre-delivery HTML well-
+         formedness check (TB00000 v2_82 §4.6)
+         extended to include the V-038 scan.
 
          Closure of TB00163 §7.4 DIAGRAMS-AS-
          CANONICAL governance gap is at the
@@ -3208,50 +3208,21 @@ Within HTML controlled documents:
 
 15.13.7 DELIVERY VALIDATION
 
-Per TB00000 v2_20 §4.1 DR-007 HTML scope amendment, an
-HTML controlled document is delivered after passing the
-six-step pre-delivery validation procedure with the HTML
-scope substitutions:
-
-  STEP 1 — DR-004 STRUCTURAL INTEGRITY.
-    Skipped for HTML (text container, not binary).
-
-  STEP 2 — DR-007 CONTENT COMPLETENESS — HTML SCOPE.
-    DR-007.1 asset-reference parity: identity check
-             (source <svg> count = rendered <svg>
-             count = N, always 1:1).
-    DR-007.2 section-heading parity: <h2> / <h3> tag
-             count matches the document's section
-             outline.
-    DR-007.3 structural-marker parity: tags appearing
-             inside the document text body are
-             preserved (HTMLParser feed produces
-             zero orphan closes).
-    DR-007.4 word-count parity: extracted plain-text
-             word count matches the source document
-             body word count after subtracting
-             enumerated transformations.
-    DR-007.5 placeholder/stub scan: figures with class
-             "diagram diagram-placeholder" are
-             EXPECTED for not-yet-authored diagrams
-             and are NOT a stub-substitution defect;
-             other "stub" / "TODO" / "MISSING" tokens
-             outside placeholder figures ARE flagged.
-    DR-007.6 revision-history parity: <h2>REVISION
-             HISTORY</h2> section contains every
-             version entry from initial dv1_0 forward.
-
-  STEP 3 — OP-003 PROHIBITED-STRING SCAN. Applies
-           unchanged.
-
-  STEP 4 — DR-005 CANONICAL NAMING — HTML SCOPE.
-           Filename matches the §15.13.3 pattern with
-           "_Claude_Source.html" suffix.
-
-  STEP 5 — DR-003 BATCH ASSEMBLY. Applies unchanged.
-
-  STEP 6 — DR-006 SINGLE-TURN DELIVERY. Applies
-           unchanged.
+RETIREMENT POINTER (TB00550, v1_35). The six-step
+DR-004 / DR-007 pre-delivery binary-validation procedure
+formerly specified here was removed with the TB00000
+v2_82 binary-rendering-engine gut (DR-004, DR-007 and the
+binary artifact types .docx / .pdf / .xlsx / .pptx no
+longer exist). HTML controlled documents ship as a single
+well-formed .html file; their pre-delivery validation is
+now the HTML well-formedness check (TB00000 v2_82 §4.6:
+Python html.parser feed with zero orphan close tags and
+zero unclosed elements at EOF). Inline-<svg> figure-
+identity parity is carried by the §15.7 V-037 check and
+the §15.13.8 DC-PREFLIGHT-007 sub-check (f); revision-
+history presence is part of the §15.13 format spec. The
+§15.13 HTML-canonical-format spec (§15.13.1 through
+§15.13.6, §15.13.8, §15.13.9) is unchanged.
 
 15.13.8 SESSION-OPEN PRE-FLIGHT
 
@@ -3504,9 +3475,8 @@ cross-checked:
       (diagram governs).
 
 V-038 is enforced at session-open pre-flight
-(future 0311002 amendment) and at pre-delivery
-DR-007 HTML scope sweep (TB00000 v2_20 §4.1
-DR-007.8 amendment-pending).
+(future 0311002 amendment) and at the pre-delivery
+HTML well-formedness check (TB00000 v2_82 §4.6).
 
 CROSS-DOCUMENT V-038 ENFORCEMENT
 (NEW v1_15 — TB00237 AMENDMENT C).
@@ -3721,8 +3691,9 @@ cycle, the document is cross-checked:
       to add missing parent citations).
 
 V-039 is enforced at session-open pre-flight
-(future 0311002 amendment) and at pre-delivery
-DR-007 sweep extension.
+(future 0311002 amendment) and at the pre-delivery
+HTML well-formedness check (TB00000 v2_82 §4.6)
+extension.
 
 15.15.5 RETROACTIVE APPLICATION
 
@@ -4121,6 +4092,34 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_35  05-31-2026  TB00550 binary-engine-removal
+                     reference reconciliation, file 3 of 3
+                     (after TB00000 v2_82 removed DR-004,
+                     DR-007, CI-007 and barred the binary
+                     artifact types .docx / .pdf / .xlsx /
+                     .pptx). Live DR-007 HTML-document
+                     validation pointers re-pointed to the
+                     HTML well-formedness check (TB00000
+                     v2_82 §4.6): §15.7 V-037 enforcement,
+                     §15.7 V-038 enforcement, §15.14.5 V-038
+                     cross-doc sweep, §15.15.4 V-039 sweep.
+                     The §15.13.7 six-step DR-004 / DR-007
+                     binary-validation procedure collapsed
+                     to a retirement pointer; the §15.13
+                     HTML-canonical-format spec (§15.13.1
+                     through §15.13.6, §15.13.8, §15.13.9)
+                     kept intact. Forensic §17 DR-007
+                     references preserved (CI-005 / CI-006).
+                     NOT changed this version, flagged for a
+                     follow-on dead-engine reconciliation:
+                     the §15.1 / §15.8 / §15.9 .docx / .pdf
+                     rendering-engine sections, which still
+                     reference removed DR-007 / CI-007 (and
+                     un-numbered CI-002 / CI-003 / CI-004 /
+                     CI-009 plus the barred binary formats)
+                     and require section retirement, not a
+                     token re-point.
 
   v1_34  05-26-2026  TB00455 layer: REGISTRY TOKEN
                      RENAME layer:L1a_Signal_Exit ->
