@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_36
+DocVersion: v1_37
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_36.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_37.txt
 DocDate:    05-31-2026
-DocTime:    18:30:00 UTC
+DocTime:    23:59:30 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -701,23 +701,27 @@ Section 15 defines:
       cite assets.
   (c) The validation rules that detect missing or
       misnamed assets.
-  (d) The rendering contract that derived formats
-      (.docx, .pdf, .xlsx, .pptx) MUST honor when
-      transforming the .txt source plus assets into a
-      deliverable binary.
-  (e) The migration rule for any existing document that
-      contains inline embedded assets in violation of
-      the external-file architecture.
+
+  [RETIRED at v1_37 / TB00552 — former subsections (d)
+   The rendering contract for derived binary formats
+   and (e) The migration rule for inline embeds. Both
+   described the .docx / .pdf / .xlsx / .pptx rendering
+   pipeline removed by TB00000 v2_82 (only .txt and
+   diagram-bearing .html ship). See the retired §15.8
+   and §15.9 pointers below. Prior text in git history
+   (CI-005 / CI-006 forensic preservation).]
 
 Section 15 is the AUTHORING-LAYER governance for
-embedded assets. The DELIVERY-LAYER governance lives in
-TB00000 §4.1 (DR-007 Binary Artifact Content-
-Completeness Validation, CI-002 External Asset
-Architecture, CI-003 No Inline Binary Embeds, CI-004
-Reference Syntax Binding, CI-009 Asset Presence
-Verification). Sections 15 and TB00000 §4.1 work
-together: Section 15 defines the asset model, TB00000
-§4.1 enforces it at delivery.
+embedded external asset files referenced by non-HTML
+(.txt) controlled documents.
+
+  [RETIRED at v1_37 / TB00552 — the former DELIVERY-LAYER
+   reference here cited TB00000 §4.1 DR-007 / CI-002 /
+   CI-003 / CI-004 / CI-009, all removed by TB00000 v2_82.
+   HTML delivery is now governed by the TB00000 v2_82 §4.6
+   HTML well-formedness check; the live HTML canonical
+   format spec is §15.13. Prior text in git history
+   (CI-005 / CI-006 forensic preservation).]
 
 Section 15 closes ERROR-TB00149-02 SVG-DROP-IN-BINARY-
 GENERATION at the authoring-architecture layer.
@@ -1465,179 +1469,44 @@ MUST use the formal reference syntax.
 15.8 Rendering Contract for Derived Formats
 ------------------------------------------------------------
 
-Every derived format (.docx, .pdf, .xlsx, .pptx) is
-produced by a deterministic rendering pipeline that
-reads the .txt Claude Source and the asset files it
-references, then produces the derived format. The
-pipeline MUST honor the following contract:
+[SECTION RETIRED at v1_37 / TB00552.]
 
-  RC-1 EVERY ASSET REFERENCE PRODUCES A RENDERED
-       ASSET.
-       For every "[Asset file: filename]" reference
-       in the .txt source, the rendering pipeline
-       produces a rendered asset embedded in the
-       derived format at the corresponding position.
-       The rendering pipeline MUST NOT silently
-       drop, skip, or stub-substitute any asset
-       reference.
+This section defined the rendering contract (RC-1
+through RC-6) for the deterministic pipeline that
+produced the derived binary formats .docx / .pdf /
+.xlsx / .pptx from a .txt Claude Source plus external
+asset files. TB00000 v2_82 removed that binary-artifact
+rendering engine and barred all four formats; only .txt
+and diagram-bearing .html (inline-SVG, §15.13) now ship.
+The contract has no live referent and is retired.
 
-  RC-2 RENDERING PER ASSET TYPE.
-       The rendering pipeline applies the following
-       per-Type transformations:
-
-         .svg → .docx: rasterize to PNG at 2x
-                       display resolution (minimum
-                       150 DPI), embed PNG in body
-                       at reference position.
-         .svg → .pdf:  embed vector SVG directly
-                       where possible; fall back to
-                       PNG raster (300 DPI) where
-                       vector embed unsupported.
-         .png/.jpg/.jpeg → .docx, .pdf: embed
-                       directly.
-         .csv → .docx: render as typographic table
-                       OR embed as attachment.
-         .csv → .pdf:  render as typographic table
-                       OR embed as attachment.
-         .wav/.mp3/.mp4 → .docx, .pdf: embed as
-                       file attachment.
-
-  RC-3 PIPELINE FAILURE IS A DEFECT.
-       If the rendering pipeline cannot render any
-       asset reference, the pipeline MUST FAIL and
-       the derived format MUST NOT be produced. A
-       failed render is reported to Claude (and
-       through Claude to Bill) as a defect requiring
-       remediation. Stub-note substitution is
-       PROHIBITED per CI-008.
-
-  RC-4 NO PIPELINE-INTRODUCED CONTENT.
-       The rendering pipeline produces ONLY content
-       derived from the source-of-truth set. It MUST
-       NOT add prose, captions, watermarks,
-       footers, or any other content not present in
-       the source-of-truth. Header / footer / page
-       numbers may be added per a documented
-       rendering profile, but no body content.
-
-  RC-5 NO PIPELINE-INTRODUCED LOSS.
-       The rendering pipeline preserves ALL prose,
-       structure, references, and asset embeds from
-       the source-of-truth set, with only the
-       transformations enumerated in TB00000 §4.1
-       CI-007 (T-1 through T-5) permitted. Any
-       deviation is a defect.
-
-  RC-6 DETERMINISTIC OUTPUT.
-       Two invocations of the rendering pipeline on
-       the same source-of-truth set produce
-       semantically equivalent output. Byte-level
-       differences are permitted only in non-content
-       metadata (e.g., creation timestamps in PDF
-       metadata).
+The full prior RC-1..RC-6 text is preserved in git
+history (CI-005 / CI-006 forensic preservation). Live
+inbound references to "§15.8" (e.g., from §15.5/§15.6/
+§15.7 and the §15.13.6 HTML override) resolve to this
+retirement pointer.
 
 ------------------------------------------------------------
 15.9 Migration Rule for Existing Inline Embeds and Legacy Filenames
 ------------------------------------------------------------
 
-Two migration scopes apply under §15:
+[SECTION RETIRED at v1_37 / TB00552.]
 
-  SCOPE A — Inline embeds.
-    Any existing controlled document that contains
-    inline embedded assets (in violation of V-028 /
-    CI-003) MUST be migrated to the external-file
-    architecture on the next normal version
-    increment of that document.
+This section defined the migration procedures (SCOPE A
+inline-embed extraction; SCOPE B legacy-filename rename)
+whose STEP 3 regenerated the .docx / .pdf binaries via
+the §15.8 rendering pipeline. TB00000 v2_82 removed that
+binary-rendering engine; diagram-bearing documents are
+now authored directly as inline-SVG .html (§15.13), so
+the inline-embed-to-external-file migration direction and
+the binary regeneration step have no live referent. The
+section is retired.
 
-  SCOPE B — Legacy filenames (NEW v1_5).
-    Any asset filename authored under the v1_4
-    §15.5 pattern (without T[Tier]_R[R]) MUST be
-    migrated to the v1_5 pattern at the next
-    normal version increment of the parent
-    controlled document. The migration step is a
-    pure rename operation; asset content is
-    preserved byte-for-byte unless an R increment
-    is independently warranted per §15.5
-    R-COMPONENT SEMANTICS.
-
-The migration procedure for SCOPE A is:
-
-  STEP 1 EXTRACTION.
-         Each inline `<svg>` XML embed is extracted
-         from the .txt source and saved as a
-         separate file in the parent folder, named
-         per §15.5 canonical convention with
-         T[Tier] and R[R] assigned per
-         §15.11/§15.12. The extraction preserves
-         the SVG XML byte-for-byte; no editing is
-         performed.
-
-  STEP 2 REFERENCE SUBSTITUTION.
-         Each inline embed in the .txt source is
-         replaced by the canonical "[Asset file:
-         filename]" reference at the same position.
-
-  STEP 3 RENDERING REGENERATION.
-         The .docx and .pdf are regenerated from the
-         migrated .txt source plus the extracted
-         asset files via the §15.8 rendering
-         pipeline. The regenerated binaries pass
-         TB00000 §4.1 DR-007 content-completeness
-         validation.
-
-  STEP 4 REVISION HISTORY ENTRY.
-         The version increment's revision history
-         entry explicitly enumerates the migration:
-           - Asset extraction count and filenames.
-           - Reference substitution count.
-           - Binary regeneration confirmation.
-           - Tier and R assignments per
-             §15.11/§15.12.
-
-  STEP 5 VALIDATION.
-         Run V-020 through V-036 against the
-         migrated document and asset files. All
-         MUST pass.
-
-The migration procedure for SCOPE B is:
-
-  STEP 1 RENAME.
-         Each legacy asset file is renamed to the
-         v1_5 pattern. T[Tier] is assigned per
-         §15.11 tier discipline (Tier 2 for
-         existing Container-class diagrams in the
-         current corpus). R[R] is set to R0 if the
-         asset content is unchanged from its
-         legacy form, OR R1+ if a content refresh
-         is bundled with the rename.
-
-  STEP 2 REFERENCE UPDATE.
-         Every "[Asset file: ...]" reference in
-         the parent .txt source is updated to the
-         new filename. V-023 binding requires
-         exact filename match; stale references
-         FAIL validation.
-
-  STEP 3 RENDERING REGENERATION.
-         Per SCOPE A STEP 3.
-
-  STEP 4 REVISION HISTORY ENTRY.
-         The version increment's revision history
-         entry enumerates the rename mapping
-         (legacy -> v1_5) for each asset file.
-
-  STEP 5 VALIDATION.
-         Run V-020 through V-036 against the
-         renamed document and asset files. All
-         MUST pass.
-
-Migration is NOT a content change in the
-information-content sense (the same diagrams are
-present after migration, just stored or named
-differently). However, the structural change
-(.txt source layout, asset file presence,
-reference syntax, filename pattern) is significant
-and MUST be documented in the revision history.
+The full prior SCOPE A / SCOPE B procedure text is
+preserved in git history (CI-005 / CI-006 forensic
+preservation). Live inbound references to "§15.9" (e.g.,
+from §15.5/§15.6/§15.7 and the §15.13.6 HTML override)
+resolve to this retirement pointer.
 
 ------------------------------------------------------------
 15.10 Prohibited Patterns
@@ -4094,6 +3963,52 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_37  05-31-2026  TB00552 DEAD-ENGINE SECTION
+                     RETIREMENT (CF-E3-DEADENGINE). Closed
+                     the follow-on flagged in the v1_35
+                     entry: the .docx / .pdf rendering-
+                     engine sections that survived
+                     TB00550/v1_35 and still cited the
+                     removed DR-007 / CI-007 (and CI-002 /
+                     CI-003 / CI-004 / CI-008 / CI-009)
+                     plus the barred binary formats after
+                     TB00000 v2_82 removed the binary-
+                     artifact engine. Actions: (1) §15.8
+                     Rendering Contract for Derived Formats
+                     (RC-1..RC-6) collapsed to a retirement
+                     pointer; (2) §15.9 Migration Rule for
+                     Inline Embeds and Legacy Filenames
+                     (SCOPE A / SCOPE B) collapsed to a
+                     retirement pointer; (3) §15.1 dead
+                     rendering-pipeline reference removed -
+                     former subsections (d) rendering
+                     contract and (e) inline-embed migration
+                     collapsed to a forensic pointer, and
+                     the dead DELIVERY-LAYER paragraph (which
+                     cited removed TB00000 §4.1 DR-007 /
+                     CI-002 / CI-003 / CI-004 / CI-009)
+                     replaced by a forensic pointer to the
+                     TB00000 v2_82 §4.6 HTML well-formedness
+                     check and §15.13. KEPT INTACT: §15.1
+                     live external-asset purpose/scope and
+                     the §15.1.1 non-HTML scope gateway;
+                     §15.2 through §15.7 and §15.10 through
+                     §15.12 (external-asset framework for
+                     non-HTML .txt documents); the §15.13
+                     HTML canonical-format spec. Section
+                     headings §15.8 / §15.9 preserved so live
+                     inbound references resolve to retirement
+                     pointers (CI-005 / CI-006 forensic
+                     preservation); full prior text in git
+                     history. RESIDUAL (rolls into the
+                     existing CF-E3-REFREF carry-forward, NOT
+                     this atomic mission): the §15.1.1
+                     CI-002 / CI-003 / v2_20 mentions and the
+                     §15.2 reason-(2) .docx/.pdf rationale
+                     mention remain as historical phrasing.
+                     DocVersion v1_36 -> v1_37. DocPath /
+                     DocTime refreshed. Recorded at TB00552.
 
   v1_36  05-31-2026  TB00551 REGISTRY ADD - System
                      Architecture History sub-domain
