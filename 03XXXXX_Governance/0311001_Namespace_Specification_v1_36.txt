@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_35
+DocVersion: v1_36
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_35.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_36.txt
 DocDate:    05-31-2026
-DocTime:    00:30:00 UTC
+DocTime:    18:30:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -547,6 +547,8 @@ SYSTEM ARCHITECTURE (AA=05)
   0511004  Exit_Controller_Specification          dv1_2
   0511005  Position_Mirror_Specification          dv1_0
   0511006  Logger_Specification                   dv1_1
+  0520000  System_Architecture_History_Anchor     dv1_0
+  0521001  System_Architecture_Overview_Revision_History  dv1_0
 
 ------------------------------------------------------------
 RISK (AA=06)
@@ -4092,6 +4094,29 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_36  05-31-2026  TB00551 REGISTRY ADD - System
+                     Architecture History sub-domain
+                     (AA=05, B=2). Registered two new
+                     DCNs in the SYSTEM ARCHITECTURE
+                     (AA=05) registry block: 0520000
+                     System_Architecture_History_Anchor
+                     (dv1_0, Tier-2 sub-domain anchor)
+                     and 0521001 System_Architecture_
+                     Overview_Revision_History (dv1_0,
+                     instance). Companion to the 0500000
+                     dv1_150 -> dv1_151 Section 14
+                     revision-history relocation: the
+                     pre-consolidation-campaign entries
+                     (dv1_112 -> dv1_0) were relocated
+                     verbatim and complete into 0521001
+                     under anchor 0520000; parent chain
+                     0500000 -> 0520000 -> 0521001.
+                     Registry additions only; no token,
+                     rule, or validation semantics
+                     changed. DocVersion v1_35 -> v1_36.
+                     DocPath / DocTime refreshed.
+                     Recorded at TB00551.
 
   v1_35  05-31-2026  TB00550 binary-engine-removal
                      reference reconciliation, file 3 of 3

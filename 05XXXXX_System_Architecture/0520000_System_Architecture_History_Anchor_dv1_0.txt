@@ -1,0 +1,139 @@
+DocDCN:     0520000
+DocTitle:   System_Architecture_History_Anchor
+DocVersion: dv1_0
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0520000_System_Architecture_History_Anchor_dv1_0.txt
+DocDate:    05-31-2026
+DocTime:    02:30:00 UTC
+
+============================================================
+SYSTEM ARCHITECTURE HISTORY ANCHOR
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document is the Sub-Domain Anchor for the System
+Architecture History sub-domain (AA=05, B=2). It anchors
+the System Architecture History sub-domain to the System
+Architecture Domain Document (0500000).
+
+It exists to give the relocated 0500000 revision history a
+valid three-tier parent chain. The 0500000 Section 14
+revision history grew large enough that its pre-consolidation-
+campaign entries were relocated out of the live design
+document into a dedicated archive instance document under
+this anchor, keeping 0500000 itself focused on the canonical
+design diagrams plus a campaign-forward revision tail.
+
+Its purpose is structural: it completes the three-tier
+hierarchy chain for the System Architecture History
+sub-domain, allowing the revision-history archive instance
+document to have a valid parent chain. No instance document
+in this sub-domain may be committed to GitHub without this
+anchor and 0500000 already present and approved.
+
+This anchor holds NO architecture. Per the binary
+architecture test (DEC-096) revision-history narrative is
+not trading-organism architecture and does not belong in a
+0500000 design diagram; it is preserved, in its correct
+home, as the archive instance document under this anchor.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain)
+  0300000  Governance                     (Domain)
+  0400000  Exchange_Interface             (Domain)
+  0500000  System_Architecture_Overview   (Domain Document)
+  0520000  This document                  (Sub-Domain Anchor)
+
+  Child chain (instance documents under this anchor):
+    0521001  System_Architecture_Overview_Revision_History
+
+============================================================
+3. TRACEABILITY TO PARENT DOMAIN DOCUMENT
+============================================================
+
+This anchor anchors the relocated revision history of
+0500000. The single instance document under it
+(0521001) holds the verbatim Section 14 revision-history
+record of 0500000, dv1_0 through the current version.
+
+The instance document is a historical/forensic record, not
+a design source. It traces to 0500000 as the document whose
+revision history it preserves. No architectural decision,
+hard rule, namespace token, parameter, or diagram content
+is defined in this sub-domain; all such content remains
+canonical in the 0500000 diagrams (DD-001 / DD-002) and in
+its named non-architectural homes.
+
+============================================================
+4. SUB-DOMAIN SCOPE
+============================================================
+
+The System Architecture History sub-domain governs the
+relocated revision-history archive of the 0500000 System
+Architecture Overview. It contains exactly one instance
+document, 0521001 System_Architecture_Overview_Revision_History,
+which holds the complete Section 14 revision history of
+0500000 (dv1_0 through the current version) preserved
+verbatim.
+
+The live 0500000 Section 14 retains only the consolidation-
+campaign-forward revision entries (the campaign-seed entry
+dv1_113 / TB00395 Phase 0 and all later entries). Every
+earlier entry, and the complete record, lives in 0521001 as
+the authoritative archive. This relocation moves a
+non-architectural forensic record to its correct home per
+the binary architecture test (DEC-096); it migrates no
+architecture and loses no content.
+
+============================================================
+5. DOCUMENT CHAIN REQUIREMENT
+============================================================
+
+  Instance Document -> 0520000 (this anchor) -> 0500000
+
+No instance document in this sub-domain may be committed to
+GitHub without both this anchor and 0500000 already present
+and approved on GitHub. This rule is enforced by validation
+rule V-012 in 0311001 Section 13.
+
+============================================================
+6. RELATED DOCUMENTS
+============================================================
+
+  0500000  System_Architecture_Overview   (parent Domain Doc)
+  0521001  System_Architecture_Overview_Revision_History
+                                           (the one instance)
+  0510000  System_Components_Anchor        (sibling sub-domain anchor)
+  0311001  Namespace_Specification         (governs DCN)
+  0311002  Document_Creation_Workflow      (governs sequence)
+
+============================================================
+7. REVISION HISTORY
+============================================================
+
+  dv1_0  05-31-2026  TB00551 INITIAL DOCUMENT. Sub-Domain
+                     Anchor for System Architecture History
+                     (AA=05, B=2). Created to give the
+                     relocated 0500000 Section 14 revision
+                     history a valid three-tier parent chain.
+                     Establishes the parent chain from 0500000
+                     through this anchor to one instance
+                     document (0521001
+                     System_Architecture_Overview_Revision_History).
+                     Scope defined: relocated revision-history
+                     archive only; no architecture, no
+                     namespace tokens, no parameters. Committed
+                     before 0521001 per the parent-chain gate
+                     (parent before child).
+
+============================================================
+END OF DOCUMENT
+============================================================
