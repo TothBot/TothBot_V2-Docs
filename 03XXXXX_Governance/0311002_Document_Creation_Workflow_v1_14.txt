@@ -1,10 +1,10 @@
 DocDCN:     0311002
 DocTitle:   Document_Creation_Workflow
-DocVersion: v1_13
+DocVersion: v1_14
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_13.txt
-DocDate:    05-15-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311002_Document_Creation_Workflow_v1_14.txt
+DocDate:    05-31-2026
+DocTime:    00:01:39 UTC
 
 ============================================================
 DOCUMENT CREATION WORKFLOW
@@ -1682,126 +1682,36 @@ Governing documents:
            PP-1 through PP-10).
 
 ------------------------------------------------------------
-DC-PREFLIGHT-008  CHECK 5 — BINARY-IN-FOLDER CONTENT-
-                  COMPLETENESS VALIDATION
+DC-PREFLIGHT-008  CHECK 5 — HTML WELL-FORMEDNESS
+                  (binary-artifact gates RETIRED)
 ------------------------------------------------------------
 
-Claude executes a content-completeness validation
-sweep at session open against every BINARY artifact
-(.docx, .pdf, .xlsx, .pptx) present in /mnt/project/.
-The check applies the TB00000 v2_20 §4.1 DR-007 gates
-to every binary present in the project folder, not
-only to binaries Claude is producing in the current
-session. The purpose is to detect prior-session
-binaries that were delivered with content gaps and
-are therefore unsafe to use as a base for any
-subsequent rendering or reference operation.
+The binary-artifact validation gates this check formerly
+applied — TB00000 DR-004 structural integrity, DR-007
+content-completeness and all its subsections, and the CI-007
+cross-format parity transformations — were REMOVED from
+TB00000 at v2_82. Diagram-bearing controlled documents are
+now a single well-formed .html file with inline SVG; no
+.docx / .pdf / .xlsx / .pptx artifacts are produced (TB00000
+v2_82 §4.6). There is therefore no binary artifact in the
+source corpus to validate, and the prior DR-004 / DR-007 /
+CI-007 references were dangling against v2_82.
 
-Required validation:
+The only surviving session-open validation for a controlled
+document is the HTML well-formedness check (TB00000 v2_82
+§4.6): a Python html.parser feed of the .html source produces
+zero orphan close tags and zero unclosed elements at EOF. The
+inline-<svg> identity-parity gate is carried by
+DC-PREFLIGHT-007 (f) HTML SCOPE (V-037). Pure-prose .txt
+controlled documents require no binary or HTML check.
 
-  (a) DR-004 REFERENCE.
-      Every binary in /mnt/project/ is first probed
-      via DR-004.1 file-type probe and DR-004.2
-      structural probe. Binaries that fail DR-004 are
-      flagged as KPL-002 plain-text-mislabeled
-      defects and are NOT used as a base for any
-      session work. The corresponding canonical
-      .txt source-of-truth (per CI-001) is the only
-      reference Claude uses.
+The DC-PREFLIGHT-008 identifier and its STEP A CHECK 5 slot
+are preserved so STEP A numbering and any cross-references
+remain stable.
 
-  (b) DR-007 REFERENCE FOR DR-004-PASSING BINARIES.
-      For every binary in /mnt/project/ that PASSED
-      DR-004, Claude executes DR-007.1 asset-
-      reference parity check against the
-      corresponding .txt source-of-truth. If the
-      .txt source contains N "[Asset file: ...]"
-      references and the binary contains M embedded
-      assets, M MUST equal N. M < N indicates the
-      binary is content-incomplete (silent-loss
-      defect, ERROR-TB00149-02 class).
-
-      Additional DR-007 checks (DR-007.2 section-
-      heading parity, DR-007.3 structural-marker
-      parity, DR-007.4 word-count parity, DR-007.5
-      placeholder/stub scan, DR-007.6 revision-
-      history parity) are run as time permits;
-      DR-007.1 is the minimum required check.
-
-  (c) FAILURE FLAG.
-      Any binary that fails DR-007 in /mnt/project/
-      is FLAGGED as content-incomplete in the
-      session's §3 STEP A report. Such a binary
-      MUST NOT be used as a reference, MUST NOT be
-      treated as the source-of-truth, and MUST NOT
-      be edited or used as a base for the new
-      version's binary generation. The
-      corresponding .txt source-of-truth governs
-      per CI-001.
-
-      If the binary's content-incompleteness affects
-      a document in scope for the current session,
-      remediation per 0311001 v1_6 §15.9 migration
-      procedure is added to the session work plan.
-
-  (d) HTML SCOPE — DR-004 / DR-007 NOT APPLIED TO
-      HTML CONTROLLED DOCUMENTS.
-      DR-004 binary structural integrity validation
-      and DR-007 binary content-completeness
-      validation do NOT apply to .html controlled
-      documents. .html files are text containers, not
-      binary containers. They are validated by the
-      DC-PREFLIGHT-007 (f) HTML SCOPE check
-      (inline-<svg> identity parity) plus the
-      well-formedness check defined in TB00000 v2_20
-      §4.1 DR-007 HTML scope amendment (Python
-      HTMLParser feeds the file with no orphan close
-      tags and zero unclosed elements at EOF).
-
-      The check sequence for an HTML controlled
-      document at session open is:
-        (1) DC-PREFLIGHT-007 (a)-(c) skip (no
-            external asset references in HTML
-            scope).
-        (2) DC-PREFLIGHT-007 (d) inline-embed
-            scan finds the expected inline <svg>
-            elements; not flagged as V-028.
-        (3) DC-PREFLIGHT-007 (e) filename
-            validation confirms the
-            "_Claude_Source.html" suffix.
-        (4) DC-PREFLIGHT-007 (f) HTML SCOPE
-            confirms <figure class="diagram"> /
-            inline <svg> identity parity per
-            V-037.
-        (5) DC-PREFLIGHT-008 (a)-(c) skip.
-        (6) HTML well-formedness check: Python
-            html.parser feed with zero orphan
-            closes and zero unclosed elements at
-            EOF.
-
-ROOT CAUSE ADDRESSED:
-dv1_20, dv1_21 .docx and .pdf binaries in the project
-folder were defective per KPL-002 plain-text
-mislabeling, and the dv1_21 binaries specifically
-contained no rendered diagrams (preceding the dv1_22
-defect for the same root cause). Had DC-PREFLIGHT-008
-been in place, the recurring content-loss defect
-would have been surfaced at every session open from
-dv1_19 onward, ~23 days earlier than its actual
-TB00149 detection.
-
-Governing documents:
-  TB00000  Project Instructions for Claude (§4.1
-           DR-004 Binary Artifact Structural
-           Integrity Validation, DR-007 Binary
-           Artifact Content-Completeness
-           Validation, CI-001 Canonical Source-of-
-           Truth, CI-011 Round-Trip Regeneration
-           Policy).
-  0311001  Namespace_Specification (§15 Embedded
-           Asset Architecture, §15.9 Migration
-           Rule).
-  0311006  Known_Platform_Limitations (KPL-002
-           plain-text-mislabel defect).
+Governing document:
+  TB00000  Project Instructions for Claude (§4.6 Delivery
+           and Crash Prevention — HTML well-formedness).
 
 ------------------------------------------------------------
 DC-PREFLIGHT-006  PRE-DEPLOY RATE-LIMIT AND RESOURCE-
@@ -2422,6 +2332,49 @@ Last updated: 2026-04-04
 ============================================================
 18. REVISION HISTORY
 ============================================================
+
+  v1_14  05-31-2026  TB00549 BINARY-ENGINE-REMOVAL
+                     REFERENCE RECONCILIATION (file 2 of 3).
+
+                     TB00000 v2_82 ("the gut") removed the
+                     binary-rendering engine — DR-004
+                     structural integrity, DR-007 content-
+                     completeness and all subsections, and
+                     CI-007 cross-format parity — and barred
+                     .docx/.pdf/.xlsx/.pptx artifacts (v2_82
+                     §4.6). DC-PREFLIGHT-008 CHECK 5 was built
+                     entirely on those gates and validated
+                     binary artifacts that no longer exist;
+                     its DR-004 / DR-007 / CI-007 references
+                     were dangling against v2_82.
+
+                     CHANGE: DC-PREFLIGHT-008 body collapsed
+                     to a retirement pointer. Dead binary-
+                     validation gates noted as removed; the
+                     surviving session-open validation re-
+                     pointed to the HTML well-formedness check
+                     (TB00000 v2_82 §4.6), inline-SVG identity
+                     parity carried by DC-PREFLIGHT-007 (f).
+                     DC-PREFLIGHT-008 identifier and STEP A
+                     CHECK 5 slot preserved. No other live
+                     text changed.
+
+                     PRESERVED (forensic, CI-005/CI-006): the
+                     §18 historical entries mentioning DR-004/
+                     DR-007/CI-007 (TB00151e batch and others)
+                     describe past state correctly, are NOT
+                     dangling, and are left intact.
+
+                     COMPANION CARRY-FORWARD: 0311001 v1_34
+                     DR-007 references (§15.13 / V-038 HTML
+                     handling) carried to a subsequent session
+                     per TB00548 NSI fallback (two-file edit
+                     too large for one session). 0311001 ->
+                     v1_35 pending.
+
+                     Header: DocVersion v1_13 -> v1_14;
+                     DocDate/DocTime updated; DocPath filename
+                     to v1_14.
 
   v1_13  05-15-2026  TB00289 PART A AMENDMENT (c) —
                      DC-PREFLIGHT-002 THIRD-REPO
