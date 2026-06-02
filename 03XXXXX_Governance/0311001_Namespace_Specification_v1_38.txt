@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_37
+DocVersion: v1_38
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_37.txt
-DocDate:    05-31-2026
-DocTime:    23:59:30 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_38.txt
+DocDate:    06-01-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2397,6 +2397,13 @@ REGISTRY CONVENTIONS:
   param:expected_rr_acceptance_rule  (TB00000 §9.10
                                       + §9.17 v2_29;
                                       CIATS-OWNED)
+  param:peak_portfolio_USD           (0500000 D5;
+                                     CIATS-tracked
+                                     running-maximum
+                                     drawdown statistic;
+                                     NOT a seed/tunable
+                                     parameter - no
+                                     TB00000 sec 8 value)
   param:liquidity_refresh_hours      (0500000 §9;
                                       0711003 dv1_3 §8;
                                       TB00000 §9.17
@@ -3963,6 +3970,37 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_38  06-01-2026  TB00573 0911002 STREAM 2 / PHASE 3
+                     / E2 §15.12.8 param REGISTRY ADD:
+                     param:peak_portfolio_USD.
+
+                     Namespace-layer companion (migration
+                     pattern P-2) to the 0500000 dv1_160
+                     -> dv1_161 peak-tracking CIATS
+                     migration (D5 owning element
+                     mod:CIATS_Statistical_Engine; F-2
+                     OPTION A under DEC-096; TB00573 NSI
+                     M-1). The token was ABSENT from
+                     v1_37 §15.12.8 (live grep-verified
+                     this session). peak_portfolio_USD is
+                     NOT a seed/tunable parameter and has
+                     NO TB00000 sec 8 value -- it is a
+                     CIATS-tracked running-maximum draw-
+                     down statistic (highest current_
+                     portfolio_USD since startup; init to
+                     param:portfolio_baseline_USD; mono-
+                     tonic; read via contract:CIATS_
+                     Trade_Outcome_Bus for max-drawdown +
+                     future HWM analysis; DD-LOG-007); it
+                     does NOT feed the Gate 7 breakers
+                     (DD-PEAK-003). Annotated "0500000 D5"
+                     accordingly (not "TB00000 §9.17").
+                     No new DEC (runs under DEC-096; DR
+                     stays v1_73); no paired MDR.
+                     DocVersion v1_37 -> v1_38. DocPath /
+                     DocDate / DocTime refreshed. Recorded
+                     at TB00573.
 
   v1_37  05-31-2026  TB00552 DEAD-ENGINE SECTION
                      RETIREMENT (CF-E3-DEADENGINE). Closed
