@@ -1,10 +1,10 @@
 DocDCN:     0610000
 DocTitle:   Risk_Rules_Anchor
-DocVersion: dv1_5
+DocVersion: dv1_6
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0610000_Risk_Rules_Anchor_dv1_5.txt
-DocDate:    05-18-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/06XXXXX_Risk/0610000_Risk_Rules_Anchor_dv1_6.txt
+DocDate:    06-01-2026
+DocTime:    23:59:00 UTC
 
 ============================================================
 RISK RULES ANCHOR
@@ -56,7 +56,17 @@ added to this sub-domain.
        0611001 Position_Sizing_Rules dv1_0 retired
          TB00257.
        0611002 Drawdown_and_Halt_Rules dv1_0 retired
-         TB00258.
+         TB00258 (record); the HEAD file was
+         physically removed via git rm --cached at
+         TB00573 -- the TB00258 git rm never landed
+         on the HEAD file, which persisted live until
+         TB00573 (CF-0610-CHILDCHAIN; the persistence
+         forensic + any DD-012/MDR reconciliation is a
+         Bill out-of-chat action). 0611001 likewise
+         still persists in HEAD behind the open F-1
+         sizing-model thread and is NOT removed this
+         session (one retirement/session, 0911002
+         6.1).
        0611003 Concentration_and_Exposure_Rules dv1_0
          retired TB00259.
        0611004 Safety_Parameter_Framework dv1_1
@@ -124,10 +134,24 @@ restatement of 0500000 AR-052 + D7 R4 + D3 G7 CHECK 1
 DEC-012) or coding-unique content already canonical
 elsewhere (Bucket B): §13 logging schemas in 0511006
 Logger_Specification, §10 batch_cancel scope in 0411001
-Kraken_WS_v2_Specification AR-041, §11 peak_portfolio_
-USD CIATS-tracking field within 0500000 D5 Trade
-Outcome Bus scope. No Bucket C content was identified
-requiring S-2 diagram amendment. The 0611002 dv1_0
+Kraken_WS_v2_Specification AR-041, and the TB00258 audit further classified the §11
+peak_portfolio_USD CIATS-tracking field as Bucket B
+"within 0500000 D5 Trade Outcome Bus scope." THAT
+CLASSIFICATION WAS INACCURATE (CORRECTED AT TB00573):
+peak_portfolio_USD was in fact ABSENT from 0500000 D5
+(F-2 / TB00572 0-hit grep), i.e. Bucket C requiring an
+S-2 diagram amendment, NOT Bucket B. The S-2 amendment
+was performed at TB00573: peak_portfolio_USD is now
+genuinely canonical at 0500000 D5 dv1_161
+mod:CIATS_Statistical_Engine (ciats_tracking field --
+highest current_portfolio_USD since startup; init to
+param:portfolio_baseline_USD; monotonic; read via
+contract:CIATS_Trade_Outcome_Bus for max-drawdown +
+future HWM analysis; DD-LOG-007; NOT a Gate 7 breaker
+input per DD-PEAK-003) under the DEC-096 binary
+architecture test. With that S-2 amendment landed and
+DR-010 HEAD-verified, the 0611002 dv1_0 HEAD file was
+physically removed via git rm --cached at TB00573. The 0611002 dv1_0
 DD-BASE-001 portfolio-level baseline (single
 spot_usd_balance captured at startup) was a v2_28-era
 formulation contradicted by v2_29+ per-wallet
@@ -319,6 +343,108 @@ in 0311001 Section 13.
 ============================================================
 7. REVISION HISTORY
 ============================================================
+
+  dv1_6  06-01-2026  S-5 ANCHOR REVISION -- 0611002 ACTUAL
+                     HEAD-FILE REMOVAL + TB00258 BUCKET-B
+                     MISCLASSIFICATION CORRECTION (0911002
+                     Stream 2 / Phase 3 / E2; TB00573 NSI
+                     M-1).
+
+                     COMPANION DELIVERABLE to the TB00573
+                     0611002 dv1_0 git rm --cached (S-4,
+                     Bill action at the OP4 copy box) and to
+                     the 0500000 dv1_160 -> dv1_161 peak
+                     migration (S-2 diagram amendment) +
+                     0311001 v1_37 -> v1_38 token
+                     registration, both landed and DR-010
+                     HEAD-verified (md5 byte-for-byte)
+                     before this removal.
+
+                     WHY THIS REVISION (CF-0610-CHILDCHAIN):
+                     the AA=06 child chain was already
+                     recorded EMPTY at dv1_2/dv1_5 with
+                     0611002 marked retired TB00258, but the
+                     0611002 dv1_0 file PERSISTED LIVE in
+                     GitHub HEAD -- the TB00258 git rm was
+                     recorded yet never landed on the HEAD
+                     file. TB00573 performs the actual file
+                     removal the TB00258 record always
+                     intended. 0611001 likewise persists in
+                     HEAD behind the open F-1 sizing-model
+                     thread and is NOT removed this session
+                     (one retirement/session per 0911002
+                     6.1). The persistence forensic (how
+                     0611001/0611002 survived their
+                     TB00257/258 git rm records) + any
+                     paired MDR/DD-012 reconciliation are a
+                     Bill out-of-chat action and do NOT
+                     block this ratified removal.
+
+                     BUCKET-B MISCLASSIFICATION CORRECTED
+                     (S-1 audit defect): the TB00258 S-1
+                     three-bucket audit classed the 0611002
+                     sec 11 peak_portfolio_USD CIATS-
+                     tracking field as Bucket B (already
+                     canonical within 0500000 D5 Trade
+                     Outcome Bus scope) and declared NO
+                     Bucket C. The TB00572 F-2 finding
+                     (0-hit grep of the live dv1_160 D5
+                     diagram-alone corpus) proves peak was
+                     ABSENT -- it was Bucket C requiring an
+                     S-2 diagram amendment. TB00573
+                     performed that S-2 amendment:
+                     peak_portfolio_USD is now genuinely
+                     canonical at 0500000 D5 dv1_161
+                     mod:CIATS_Statistical_Engine
+                     (ciats_tracking field; read via
+                     contract:CIATS_Trade_Outcome_Bus for
+                     max-drawdown + future HWM analysis; DD-
+                     LOG-007; circuit-breaker isolated per
+                     DD-PEAK-003 -- does NOT feed the Gate 7
+                     breakers, which compute against the
+                     immutable param:portfolio_baseline).
+                     The 3 prior pushes did not touch this
+                     file; this revision corrects the 3
+                     stale sentence as recorded above and in
+                     4 above.
+
+                     SCOPE OF CHANGES: 2 PARENT CHAIN child-
+                     chain 0611002 line annotated with the
+                     actual TB00573 HEAD-file removal +
+                     CF-0610-CHILDCHAIN note; 3 TRACEABILITY
+                     drawdown paragraph peak sentence
+                     corrected from the Bucket-B
+                     misclassification to the genuine
+                     TB00573 D5 dv1_161 migration; 7
+                     REVISION HISTORY this dv1_6 entry.
+                     0610000 ANCHOR ITSELF NOT RETIRED -- it
+                     remains in force per V-039 as the AA=06
+                     structural chain point (0611001 still
+                     lives behind F-1; future instance docs
+                     attach here).
+
+                     S-6 GOVERNANCE: DD-012 retirement
+                     ledger records 0611002 dv1_0 as a fresh
+                     TB00573 HEAD-file retirement (the
+                     ledger entry is carried in the TB00573
+                     Session Log). NO new TB00153 DECISION
+                     (the E2 migration + retirement run
+                     under the existing DEC-096 binary-test
+                     ratification; DR stays v1_73). NO
+                     Claude-authored paired MDR -- the
+                     TB00258 audit-defect +
+                     CF-0610-CHILDCHAIN persistence
+                     reconciliation is the Bill out-of-chat
+                     forensic noted above. One-version rule:
+                     superseded 0610000 dv1_5 removed from
+                     HEAD via git rm --cached at the same
+                     OP4 push.
+
+                     Header DocVersion dv1_5 -> dv1_6.
+                     DocPath / DocDate / DocTime refreshed.
+                     Document Status: supersedes dv1_5;
+                     dv1_6 is the sole authoritative
+                     version.
 
   dv1_5  05-18-2026  TB00347 S-6 GOVERNANCE CLOSURE
                      HOUSEKEEPING AMENDMENT — AA=06 RISK
