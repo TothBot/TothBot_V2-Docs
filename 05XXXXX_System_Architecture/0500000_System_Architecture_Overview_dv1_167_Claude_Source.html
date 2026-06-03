@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_166</title>
+<title>0500000 System Architecture Overview dv1_167</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_166</td></tr>
+  <tr><td>DocVersion</td><td>dv1_167</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_166_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_167_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-03-2026</td></tr>
-  <tr><td>DocTime</td><td>06:05:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>08:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -6380,7 +6380,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     BTC/USD always included as market_regime proxy (see AR-074).
                     CIATS may add/remove pairs via PDCA after 200 trades.
                     OI-002: CLOSED.
-                    Assign: 0711003 AS-001 through -008. 1011009 SC-UNI-001 through -006 retired TB00226 — canonical authority is 0711003 AS-001..008 + Diagram 1 universe-scope visual (see 0500000 dv1_54 §12.5 Bind block).
+                    Assign: 0711003 AS-001 through -008 retired TB00589 — consolidated into this AR-070 entry + AR-074 + Diagram 1 universe-scope visual, which are canonical. 1011009 SC-UNI-001 through -006 retired TB00226 — canonical authority is this AR-070 entry + Diagram 1 universe-scope visual (see 0500000 dv1_54 §12.5 Bind block).
                     Scope authority: TB00130 Ratified Decision D-03 (amended, 04-24-2026).
                     FP/DP basis: 3 sequential searches, 18 sources (TB00130).
                     Supersedes: TB00128 D-03 (USDC+USDT only); TB00001 OI-002
@@ -6531,10 +6531,19 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     BTC/USD is the market_regime proxy. Every trade record carries market_regime
                     (BTC/USD regime tag). BTC/USD MUST always be subscribed to and included in
                     the Regime Engine computation regardless of universe size N or ranking.
-                    If BTC/USD is excluded by any filter, it is added back explicitly.
-                    BTC/USD is NOT traded if it fails entry gates — it is subscribed for regime
-                    computation only. Its pipeline evaluation is optional (CIATS-owned).
-                    1011012 RE-MKT-001 through -003 retired TB00227 — canonical authority is 0711002 dv1_1 RE-014/RE-015 (two-level trade tagging) + Diagram 4 BTC/USD market_regime anchor cell + 0711003 dv1_3 HR-AS-001/HR-AS-009 (BTC/USD always-subscribed + CIATS-owned pipeline evaluation).
+                    If BTC/USD is excluded by any filter, it is added back explicitly
+                    FOR THE REGIME-ANCHOR ROLE (always-subscribed + Regime Engine input); this
+                    add-back guarantees regime data, it does not bypass the trade entry gates.
+                    BTC/USD TRADES NORMALLY by default as a qualifying Token-USD pair, subject to
+                    the SAME entry gates as every other pair (Pre-Gate-1/G1 status, G2 liquidity,
+                    G3 regime, the SSS signal gates, and the A1 net 1:1.5 R:R floor). Its tradeable
+                    status is independent of and additional to its always-on regime-anchor role.
+                    This SUPERSEDES the legacy don't-trade rider (regime-only / optional CIATS-owned
+                    pipeline), a residue of the pre-D-03 USDC+USDT-only universe in which BTC/USD
+                    could not be a tradeable USD pair; D-03 (AR-070 dv1_20, TB00130) made BTC/USD a
+                    normally-qualifying pair. Bill-ratified TB00589: BTC/USD trades normally by
+                    default, retaining its regime-anchor role.
+                    1011012 RE-MKT-001 through -003 retired TB00227 — canonical authority is 0711002 dv1_1 RE-014/RE-015 (two-level trade tagging) + Diagram 4 BTC/USD market_regime anchor cell + this AR-074 entry (BTC/USD always-subscribed regime anchor; trades normally subject to entry gates). 0711003 retired TB00589 — its asset-selection facts are consolidated into AR-070 + AR-074 + the D1/D4 visuals, which are canonical. [CF-0711002-VER: the 0711002 dv1_1 pointer above is a pre-existing version staleness (HEAD is 0711002 dv1_2), preserved verbatim, not corrected in this mission.]
   AR-075 (dv1_15) ★: SSS indicators in per-symbol state dict — pre-computation cache addition.
                     WS Manager per-symbol state dict is extended to include all SSS indicators.
                     These are updated incrementally on each ohlc(5m) candle close (same pattern
@@ -7223,7 +7232,7 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
   No top-N cap. Universe = every Kraken spot pair satisfying AR-070
   conditions (1) quote currency USD/USDC/USDT, (2) instrument status
   online, (3) 24h volume &gt;= min_volume_usd_daily.
-  See §8 AR-070, 0711003 dv1_3 §8.
+  See §8 AR-070 + AR-074 (0711003 retired TB00589; the diagram is canonical).
 </pre>
 <pre>
   SSS Signal Engine parameters (★ dv1_15 — AR-067; amended dv1_43 — Path 2 long-side reconciliation + short-side addition per TB00180 SL §5 + TB00000 v2_29 §9.17):
@@ -8840,7 +8849,7 @@ prefix taxonomy:
   OI-002: Asset selection universe — CLOSED (dv1_15, AR-070; amended dv1_20).
            All Kraken USD/USDC/USDT pairs passing liquidity + status filters. No cap.
            BTC/USD always included as market_regime proxy (AR-074).
-           Specify in 0711003 Asset_Selection_Specification (Phase 5).
+           Consolidated into 0500000 §8 AR-070 + AR-074 + the D1 universe visual (the diagram is canonical); 0711003 Asset_Selection_Specification retired TB00589.
   OI-003: Exit Controller full specification — CLOSED (dv1_15, AR-071).
            EC-L1A-001/002 specified dv1_14. EC-L1A-003 max_hold_candles=24 specified dv1_15.
            All Layer 1a triggers complete. Specify in 0811003 Exit_Controller_Specification (Phase 6).
@@ -10168,6 +10177,7 @@ prefix taxonomy:
 </pre>
 <h2>14. Revision History</h2>
 <pre>
+dv1_166 -> dv1_167 (TB00589 0711003 ASSET-SELECTION RECONCILE-AND-RETIRE [E2] + BTC/USD LEGACY DON'T-TRADE RIDER REMOVAL -- all 11 figures R HELD per the TB00453 bright line [every edit is HTML &lt;pre&gt; prose (sec-8 AR-070/AR-074, sec-3, sec-13 OI-002) + DC header + HTML title + this sec-14 entry; NO SVG &lt;text&gt; / geometry / viewBox / figure-count change; the BTC/USD SVG anchor text at the D4 market_regime cell (always in monitored universe; cannot be removed) is unchanged and stays true]. RECONCILE VERDICT (DR-078 / DD-014, 0711003 dv1_3 read in full, 994 lines): the canonical diagram is fact-level comprehensive for 0711003 -- universe = Token-USD/USDC/USDT + online + >=$500k, no top-N (sec-8 AR-070 + D-03/D-04/D-08 + D2 G2 + sec-3); 8-state status enum + 6-state NO-ENTRY set (D1 WS-INST-008/009); 24h volume = REST Ticker only, v[1]*p[1], classic-name map, fail-safe LIQUIDITY_PAIR_NOT_FOUND exclusion + refresh-preserve (D1 REST-TKR-001..010, DEFECT-SS-006 hard rule); liquidity_24h cache + 4h refresh + Gate-2 read; startup population [instrument + REST both required] + 3x GetOHLCData warm-up + WARM_UP-to-READY gating (D1 REST-OHLC-008 + AR-068 + HR-WM-017); open-position protection / no auto-removal (HR-WM-031); CIATS adjusts at inter-trade boundaries, only min_volume tunable. ONE STALE CONFLICT dies on retirement (NOT carried into the diagram): 0711003 AS-004 Step 8b asserted ohlc(60) is NOT a WS subscription, contradicting the canonical D1 WS-OHLC-001 (SD-9-verified vs 0411001 dv1_13) which holds ohlc(60) IS a WS subscription -- diagram governs, the stale claim retires with the doc. BTC/USD ARCHITECTURE CHANGE (Bill-ratified TB00589, BTC/USD trades normally by default): the legacy AR-074 don't-trade rider [regime-only / optional CIATS-owned pipeline] was identified as residue of the pre-D-03 USDC+USDT-only universe in which BTC/USD could not be a tradeable USD pair; D-03 (AR-070 dv1_20, TB00130) made BTC/USD a normally-qualifying Token-USD pair, so the rider is obsolete and was REMOVED. AR-074 now states BTC/USD TRADES NORMALLY by default subject to the SAME entry gates as every other pair (Pre-Gate-1/G1 status, G2 liquidity, G3 regime, SSS signal gates, A1 net 1:1.5 R:R floor); its always-on regime-anchor role (always-subscribed + always in Regime Engine computation, added back if any filter would drop it) is PRESERVED and is independent of/additional to tradeable status. LOSS-PREVENTION: no loss control is weakened -- the regime-anchor subscription guarantee (loss of which would corrupt market_regime for ALL pairs) is preserved verbatim; BTC/USD remains gated by the full entry pipeline + the A1 sacred floor; BTC/USD is the most liquid Kraken pair (lowest slippage), the lowest-risk pair to admit. CITATION FLIPS (forced by 0711003 retirement, DIAGRAMS-GOVERN): AR-070 [Assign + 1011009 canonical-authority] + AR-074 [1011012 canonical-authority] + the sec-3 + sec-13 OI-002 pointers all flipped from naming 0711003 dv1_3 to naming this diagram (AR-070 + AR-074 + the D1/D4 visuals) as canonical; facts unchanged. 0711003 Asset_Selection_Specification dv1_3 RETIRED this session via git rm --cached (CD-003; C: copy preserved; git history retains all versions). BINARY TEST (DEC-096): asset-selection + BTC tradeable/anchor semantics are TothBot-organism (CIATS/pipeline) architecture -> the diagram (YES); no seed VALUE moved (BTC default-tradeable is an architectural default, not a tunable numeric; nothing added to TB00000 sec 8). RR-SCOPE-001: prose-only; the only removal is the obsolete legacy rider (its purpose -- the USD-excluded universe -- was established and is gone) per the TB00000 sec 4.1 fence rule. RR-SCOPE-011 one primary mission. NO new TB00153 DECISION (runs under DEC-096 + the Bill TB00589 ruling). NO paired MDR (forward reconcile + Bill-ratified architecture correction; V-038 remains 0 open through dv1_167). RR-SCOPE-012 CROSS-CHECK + BILL RULING (TB00589): the pre-consolidation parent/child dependency scheme and cross-document citations are obsolete legacy strategy and do NOT gate retirement (Bill-ratified TB00589); the asset-selection FACTS are fully comprehensive in 0500000 (reconcile-verified), so 0711003 retirement loses no architectural truth. DOWNSTREAM RE-POINT CARRY-FORWARD (CF-0711003-REPOINT, cleanup not blocker): three live docs carry now-stale pointers to retired 0711003 that should be re-pointed to 0500000 -- 0211005 Paper_Trading_Operations_Procedure dv1_5 [RETAINED AA=02 ops procedure: compute tradeable_universe / universe_source / paper-universe-mismatch checks now sourced from 0500000 sec-8 AR-070/AR-074], 0711002 Regime_Taxonomy_Specification dv1_2 [AS-001 volume-ranking pair-list cite; itself a later consolidation source], and 0311001 Namespace_Specification v1_40 [HR-AS-001..010 source annotation + AS-token + the L570 0711003 registry line, the standard deferred-housekeeping de-dup pattern]. SPLIT (per TB00589 NOTE, ceiling-driven): the 0311001 de-register of per_trade_pct / tradeable_pct / per_trade_ceiling_pct is a SEPARATE session [TB00590], not this one. CARRY-FORWARD: CF-0711003-REPOINT (above); CF-0711002-VER (AR-074 cites 0711002 dv1_1 while HEAD is 0711002 dv1_2 -- pre-existing version staleness, preserved verbatim); CF-V040-METHOD (D2-D9 fact-level verification); the long-standing sec-14 positioning + absent dv1_100..110/120 entries housekeeping. DR-007.9 HTML well-formedness parser pass confirmed pre-delivery; exactly ONE &lt;h2&gt;14. Revision History&lt;/h2&gt;. Supersedes dv1_166.)
 dv1_165 -> dv1_166 (TB00586 SIZING MANDATE SCRUB -- Bill ruling (A): the module wallet balance is the SOLE sizing boundary on everything; everything but the net 1:1.5 R:R MINIMUM is CIATS-owned [$5,000 per wallet start; each trade $0.50 seed; CIATS assumes all parameters at the 200-trade floor]. The dead Half-Kelly normalization model [rule:HR-CI-009 applied_pct = K_half / max_concurrent; param:half_kelly_applied_pct; param:max_concurrent] was a stale residue contradicting the already-canonical param:per_trade_size_usd wallet-sole-boundary model and the ar:AR-043 gloss [max_concurrent retired at TB00000 v2_29]; it is REMOVED from every LIVE governing descriptor and visible-text site: D5 CIATS_Architecture root governs + mod:CIATS_Proposal_Engine constraints/q1_do/q5_logs + mod:CIATS_Parameter_Store constraints/q1_do/q4_triggers/consumes/produces + the visible Parameter Store param strip + the A2 callout; D6 Complete_System mod:CIATS_Proposal_Engine q1_do/q5_logs + mod:CIATS_Parameter_Store q1_do/q4_triggers + mod:Signal_Pipeline constraints/q1_do + mod:Position_Mirror q1_do + mod:Risk_Engine constraints/q1_do; D2 Trading_Pipeline snapshot consumes + q1_do; D1 Risk_Engine consumes + q1_do + the visible param decoration text. CANONICAL SIZING MODEL NOW: mod:CIATS_Proposal_Engine proposes param:per_trade_size_usd = K_half x module_wallet_balance [K_half = K_full x 0.5], floored at the Kraken per-pair minimum [~$0.50 seed], bounded ONLY by available module wallet balance -- no applied_pct, no normalization divisor, no max_concurrent, no ceiling; the module wallet balance is the sole sizing boundary; the only hardcoded value is the net 1:1.5 R:R MINIMUM [a floor, never a cap]. The ar:AR-043 BoundedSemaphore dispatch-race primitive is RETAINED [it is a race-condition primitive, NOT a position-count ceiling]. The live D8 Gate 7 carries only 4 checks [drawdown / concentration / exposure / semaphore] -- there is NO max_concurrent concurrency gate to remove. PRESERVED AS HISTORY [not scrubbed, per CI-005/CI-006 visible-stack policy]: the dated figcaption V-040 attestation blocks, the ar:AR-043 retirement gloss [already mandate-correct], and prior sec-14 entries. R-STATE: the visible-text MODIFYs bump D5 R14 -> R15 and D1 R11 -> R12 per the TB00453 bright line [actual count]; SVG title + diagram_canonical R-display labels and the root-desc R-increment-chain rotation are DEFERRED to a documentation-housekeeping session per the established CI-005/CI-006 display-deferral precedent -- THIS sec-14 entry is the authoritative change record. D2 + D6 held [desc-only edits; no visible-text MODIFY]. viewBox preserved on all figures; figure count unchanged at 10. DOWNSTREAM [not this entry; gated work]: de-register param:max_concurrent + param:half_kelly_applied_pct from 0311001 after a clean re-grep; retire the CIATS-sizing source specs [0611001, 1011010, 0600000, 0610000, 0211001] under DD-014 now that the diagram holds the mandate-correct sizing model.)
 </pre>
 
