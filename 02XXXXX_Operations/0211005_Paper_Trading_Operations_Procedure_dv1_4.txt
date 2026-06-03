@@ -1,10 +1,10 @@
 DocDCN:     0211005
 DocTitle:   Paper_Trading_Operations_Procedure
-DocVersion: dv1_3
+DocVersion: dv1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_3.txt
-DocDate:    05-03-2026
-DocTime:    23:59:55 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_4.txt
+DocDate:    06-03-2026
+DocTime:    07:15:00 UTC
 
 ============================================================
 PAPER TRADING OPERATIONS PROCEDURE
@@ -545,8 +545,9 @@ Statistical thresholds per TB00000 §7 apply equally:
   50 candle evals:   EWMA Monitor valid (signals only).
   200 trades:        Half-Kelly hard floor; CIATS
                      Proposal Engine activates;
-                     per_trade_pct transitions from
-                     fixed 5% to Half-Kelly.
+                     per_trade_size_usd transitions from
+                     the Kraken per-pair minimum seed to
+                     K_half x module_wallet_balance.
   600 trades:        Per-regime analysis valid (100+
                      trades per regime bucket).
 
@@ -601,8 +602,9 @@ At 200 closed paper trades (HARD FLOOR):
   Proposal Engine activates. CIATS may now generate
   parameter change proposals through the PDCA cycle.
 
-  Half-Kelly position sizing activates. Fixed per_trade_pct
-  (5%) is replaced by computed Half-Kelly applied_pct.
+  Half-Kelly position sizing activates. The seed per_trade_
+  size_usd [Kraken per-pair minimum] is replaced by the
+  computed K_half x module_wallet_balance allocation.
 
   The 200-trade floor is the most important milestone in
   the paper trading phase. All starting parameters should
@@ -683,7 +685,8 @@ PT-MON-003  AT 200-TRADE MILESTONE
   [ ] Review actual win rate vs break-even win rate
       (break-even at net 1:1.5 R:R ≈ 40%)
   [ ] Review actual realized R:R vs target net 1:1.5
-  [ ] Review Half-Kelly applied_pct computed value
+  [ ] Review Half-Kelly per_trade_size_usd computed value
+      [K_half x module_wallet_balance]
   [ ] Review any CIATS proposals and decide on each
   [ ] Evaluate whether all acceptance criteria (Section 6)
       are achievable or if parameter changes are needed
@@ -830,10 +833,7 @@ controlled document or session log entry) must record:
   Sharpe ratio at baseline
 
   Complete Parameter Store values at baseline:
-    tradeable_pct:            [value]
-    per_trade_pct:            [value or HALF_KELLY_ACTIVE]
-    Half-Kelly applied_pct:   [value if active]
-    max_concurrent:           [value]
+    per_trade_size_usd:       [value or HALF_KELLY_ACTIVE]
     mae_mult:                 [value]
     emergency_sl_mult:        [value]
     entry_timeout_sec:        [value]
@@ -1042,6 +1042,22 @@ approved the transition:
 ============================================================
 11. REVISION HISTORY
 ============================================================
+
+  dv1_4  06-03-2026  TB00587 CF-CONSUMER-CLASSIFY strip-keep
+                     [non-organism AA=02 procedure RETAINED;
+                     delete stale organism values per
+                     TB00585 sec 5]. Removed the dead fixed-
+                     percent sizing model [removed from
+                     0500000 at TB00586/dv1_166]: the 200-
+                     trade transition prose now reads
+                     per_trade_size_usd [Kraken per-pair
+                     minimum seed -> K_half x module_wallet_
+                     balance]; the baseline Parameter Store
+                     capture template dropped the dead
+                     tokens tradeable_pct / per_trade_pct /
+                     applied_pct / max_concurrent in favor
+                     of per_trade_size_usd. NOT a
+                     consolidation source.
 
   dv1_3  05-03-2026  PAPER-AS-MASTER OPERATIONS-PROCEDURE
                      CASCADE — TB00147 TIER 1.5 + TIER 2

@@ -1,10 +1,10 @@
 DocDCN:     1021002
 DocTitle:   Integration_Test_Specification
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021002_Integration_Test_Specification_dv1_0.txt
-DocDate:    04-05-2026
-DocTime:    15:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021002_Integration_Test_Specification_dv1_1.txt
+DocDate:    06-03-2026
+DocTime:    07:15:00 UTC
 
 ============================================================
 INTEGRATION TEST SPECIFICATION
@@ -190,14 +190,33 @@ Steps:
   1. Inject 200 TRADE_CLOSE events to Logger (via Trade Outcome Bus)
   2. Verify: CIATS activates Proposal Engine
   3. Verify: Kelly computation runs (win_rate, avg_R from net P/L)
-  4. Verify: applied_pct <= tradeable_pct / max_concurrent
-  5. Inject negative-Kelly scenario (all losses)
+  4. Verify: per_trade_size_usd is computed per the canonical
+     CIATS sizing model in 0500000 D5/D6 [per_trade_size_usd
+     = K_half x module_wallet_balance; floored at the Kraken
+     per-pair minimum; bounded ONLY by available module wallet
+     balance; net 1:1.5 R:R is the only hardcoded value]
+  5. Inject negative-Kelly scenario [all losses]
   6. Verify: KELLY_NEGATIVE logged CRITICAL
-  7. Verify: per_trade_pct NOT updated
+  7. Verify: per_trade_size_usd NOT updated
 
 ============================================================
 5. REVISION HISTORY
 ============================================================
+
+  dv1_1  06-03-2026  TB00587 CF-CONSUMER-CLASSIFY strip-keep
+                     [non-organism testing spec RETAINED;
+                     delete stale organism values per
+                     TB00585 sec 5]. CIATS-activation
+                     scenario: removed the dead HR-CI-009
+                     normalization assertion
+                     [applied_pct <= tradeable_pct /
+                     max_concurrent -- model removed from
+                     0500000 at TB00586/dv1_166]; step 4
+                     now verifies the canonical per_trade_
+                     size_usd = K_half x module_wallet_
+                     balance sizing per 0500000 D5/D6;
+                     step 7 per_trade_pct -> per_trade_
+                     size_usd. NOT a consolidation source.
 
   dv1_0  04-05-2026  Initial document. Phase 8 new spec.
                      8 integration test scenarios covering

@@ -1,10 +1,10 @@
 DocDCN:     1021003
 DocTitle:   Paper_Trading_Test_Specification
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021003_Paper_Trading_Test_Specification_dv1_0.txt
-DocDate:    04-05-2026
-DocTime:    15:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/10XXXXX_Coding_Specification/1021003_Paper_Trading_Test_Specification_dv1_1.txt
+DocDate:    06-03-2026
+DocTime:    07:15:00 UTC
 
 ============================================================
 PAPER TRADING TEST SPECIFICATION
@@ -87,7 +87,9 @@ PT-DUR-001   Minimum 200 closed trades before go-live decision.
              No go-live decision before 200 closed trades.
 
 PT-DUR-002   At 200 closed trades: CIATS Proposal Engine activates.
-             Half-Kelly replaces fixed per_trade_pct.
+             Half-Kelly replaces the seed per_trade_size_usd
+             [Kraken per-pair minimum]; per_trade_size_usd
+             becomes K_half x module_wallet_balance.
              First CIATS parameter proposals reviewed by Bill.
 
 PT-DUR-003   At 600 closed trades (preferred — not required):
@@ -129,7 +131,8 @@ PT-VAL-005   Drawdown circuit breakers observed:
 PT-VAL-006   CIATS activation confirmed:
                □ Proposal Engine active at 200+ trades
                □ At least one parameter proposal generated
-               □ Half-Kelly replacing fixed per_trade_pct
+               □ Half-Kelly active: per_trade_size_usd =
+                 K_half x module_wallet_balance
 
 PT-VAL-007   Alert email confirmed for at least one CRITICAL
              and one HIGH level event during paper trading.
@@ -161,6 +164,19 @@ PT-GOLIVE-003  Go-live date and conditions recorded in TB session log.
 ============================================================
 8. REVISION HISTORY
 ============================================================
+
+  dv1_1  06-03-2026  TB00587 CF-CONSUMER-CLASSIFY strip-keep
+                     [non-organism testing spec RETAINED;
+                     delete stale organism values per
+                     TB00585 sec 5]. PT-DUR-002 + PT-VAL-006
+                     200-trade transition restated to the
+                     canonical model: the seed per_trade_
+                     size_usd [Kraken per-pair minimum]
+                     becomes K_half x module_wallet_balance
+                     at the floor; removed the stale fixed-
+                     percent per_trade_pct framing [removed
+                     from 0500000 at TB00586/dv1_166]. NOT
+                     a consolidation source.
 
   dv1_0  04-05-2026  Initial document. Phase 8 new spec.
                      Paper trading entry criteria. Minimum
