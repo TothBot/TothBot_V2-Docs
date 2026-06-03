@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_38
+DocVersion: v1_39
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_38.txt
-DocDate:    06-01-2026
-DocTime:    23:59:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_39.txt
+DocDate:    06-03-2026
+DocTime:    03:00:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2409,26 +2409,32 @@ REGISTRY CONVENTIONS:
                                       TB00000 §9.17
                                       v2_45 CIATS-OWNED
                                       UNIVERSAL)
-  param:concentration_cap_per_module (0500000 D8
-                                      Gate_7_Risk_Guard
-                                      CHECK 2; CIATS-
-                                      OWNED PER-MODULE
-                                      INSTANTIATED;
-                                      registered v1_25
-                                      TB00395 Phase 0
-                                      D8-thread-closure
-                                      seed case; starting
-                                      value not yet
-                                      defined - pending
-                                      CIATS FP/DP
-                                      derivation)
-  param:exposure_cap_pct             (0500000 D8
+  param:concentration_limit_per_module (0500000 D8
+                                        Gate_7_Risk_Guard
+                                        CHECK 2; CIATS-
+                                        OWNED PER-MODULE
+                                        INSTANTIATED;
+                                        registered v1_25
+                                        TB00395 Phase 0
+                                        [renamed cap->limit
+                                        v1_39 TB00584 per
+                                        TB00579 D-B];
+                                        D8-thread-closure
+                                        seed case; starting
+                                        value not yet
+                                        defined - pending
+                                        CIATS FP/DP
+                                        derivation)
+  param:exposure_limit_pct           (0500000 D8
                                       Gate_7_Risk_Guard
                                       CHECK 3; CIATS-
                                       OWNED PER-MODULE
                                       INSTANTIATED;
                                       registered v1_25
                                       TB00395 Phase 0
+                                      [renamed cap->limit
+                                      v1_39 TB00584 per
+                                      TB00579 D-B];
                                       D8-thread-closure
                                       seed case; starting
                                       value not yet
@@ -3970,6 +3976,66 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_39  06-03-2026  TB00584 0911002 STREAM 2 / PHASE 3
+                     / E2 0500000 dv1_165 COMPANION.
+                     SAFE namespace coherence edit only.
+                     (1) M-2 RENAME RULE: param:concentration
+                     _cap_per_module -> param:concentration_
+                     limit_per_module and param:exposure_cap_
+                     pct -> param:exposure_limit_pct (D8
+                     Gate_7_Risk_Guard CHECK 2 / CHECK 3) per
+                     TB00579 D-B. Diagram cascade already
+                     satisfied: 0500000 dv1_165 uses the
+                     *_limit_* forms as live tags (32 live
+                     occurrences; *_cap_* forms remain only in
+                     dv1_165 sec-14 history). V-036 PASS. No
+                     value, semantics, or descriptor changed
+                     (CHECK 2/3 remain CIATS-owned, value-less,
+                     pending CIATS FP/DP). Stale *_cap_* name
+                     mentions remain only in 0911002 dv1_4
+                     (CLOSED-HISTORY L370 + OPEN-FINDING L761);
+                     name refresh folds into CF-0911002-STALE.
+                     (2) evt:G7_PER_TRADE_CEILING_BREACH:
+                     confirmed ABSENT from §15.12.7 (live grep-
+                     verified this session) -- nothing to de-
+                     register.
+                     HELD -- NOT executed this version (live-
+                     prescriptive downstream consumers; de-
+                     registering would strand live specs per
+                     RR-SCOPE-012 AND collides with a settled-
+                     mandate-vs-live-spec contradiction surfaced
+                     to Bill at TB00584):
+                       - param:per_trade_ceiling_pct: live-
+                         prescriptive in 1011010 dv1_8
+                         (CIATS-KE-003: max_per_trade_usd =
+                         per_trade_ceiling_pct[module] x
+                         module_wallet_balance), 0600000 dv1_1
+                         and 0610000 dv1_6 (25%-of-module-wallet
+                         HARD per-trade concentration ceiling,
+                         stated single-trade wallet-wipe loss
+                         protection). The TB00584 mandate [NO
+                         per-trade ceiling of any kind; wallet
+                         is the loss boundary] directly
+                         contradicts these live controls.
+                         CONFLICT-1 -- Bill ruling required
+                         before de-registration.
+                       - param:tradeable_pct + param:per_trade_
+                         pct: KEPT REGISTERED. Live-prescriptive
+                         in 0211001 dv1_0 (CI-KE-001/004/005
+                         Half-Kelly normalization + active
+                         Parameter Store values tradeable_pct=
+                         0.50, per_trade_pct=0.05). De-register
+                         strands 0211001. CONFLICT-2 -- Bill
+                         ruling required. NOTE: the 0500000
+                         dv1_164 §14 / TB00576 entry claim that
+                         these tokens were 'never in 0311001' is
+                         FALSE (both registered here at §15.12.8
+                         since pre-v1_24); correction carried
+                         forward.
+                     DocVersion v1_38 -> v1_39. DocPath /
+                     DocDate / DocTime refreshed. Recorded at
+                     TB00584.
 
   v1_38  06-01-2026  TB00573 0911002 STREAM 2 / PHASE 3
                      / E2 §15.12.8 param REGISTRY ADD:
