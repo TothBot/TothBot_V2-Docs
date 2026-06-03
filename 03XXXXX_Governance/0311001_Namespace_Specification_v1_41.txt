@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_40
+DocVersion: v1_41
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_40.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_41.txt
 DocDate:    06-03-2026
-DocTime:    06:30:00 UTC
+DocTime:    15:00:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2361,8 +2361,6 @@ REGISTRY CONVENTIONS:
 15.12.8 param: Parameter Registry
 ------------------------------------------------------------
 
-  param:per_trade_pct                (seed;
-                                      TB00000 §9.17)
   param:mae_mult                     (seed;
                                       TB00000 §9.17)
   param:emergency_sl_mult            (seed;
@@ -2375,7 +2373,6 @@ REGISTRY CONVENTIONS:
                                       TB00000 §9.17)
   param:atr_percentile_thresh        (seed;
                                       TB00000 §9.17)
-  param:tradeable_pct                (TB00000 §9.17)
   param:session_pause_drawdown       (TB00000 §9.17)
   param:htf_ema_periods              (TB00000 §9.17)
   param:min_volume_usd_daily         (TB00000 §9.17)
@@ -2385,10 +2382,6 @@ REGISTRY CONVENTIONS:
   param:paper_starting_balance       (TB00000 §4.4
                                       PA-004 D-05)
   param:per_trade_size_usd           (TB00000 §9.17
-                                      v2_29; CIATS-
-                                      OWNED PER-MODULE
-                                      INSTANTIATED)
-  param:per_trade_ceiling_pct        (TB00000 §9.17
                                       v2_29; CIATS-
                                       OWNED PER-MODULE
                                       INSTANTIATED)
@@ -2403,7 +2396,6 @@ REGISTRY CONVENTIONS:
                                      parameter - no
                                      TB00000 sec 8 value)
   param:liquidity_refresh_hours      (0500000 §9;
-                                      0711003 dv1_3 §8;
                                       TB00000 §9.17
                                       v2_45 CIATS-OWNED
                                       UNIVERSAL)
@@ -2721,16 +2713,16 @@ REGISTRY CONVENTIONS:
   rule:HR-LG-011                     (0511006)
   rule:HR-LG-012                     (0511006)
   rule:LG-ALERT-005                  (0511006)
-  rule:HR-AS-001                     (0711003 §7)
-  rule:HR-AS-002                     (0711003 §7)
-  rule:HR-AS-003                     (0711003 §7)
-  rule:HR-AS-004                     (0711003 §7)
-  rule:HR-AS-005                     (0711003 §7)
-  rule:HR-AS-006                     (0711003 §7)
-  rule:HR-AS-007                     (0711003 §7)
-  rule:HR-AS-008                     (0711003 §7)
-  rule:HR-AS-009                     (0711003 §7)
-  rule:HR-AS-010                     (0711003 §7)
+  rule:HR-AS-001                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-002                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-003                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-004                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-005                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-006                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-007                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-008                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-009                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-AS-010                     (0500000 sec-8 AR-070/AR-074)
 
 NOTE — TB00163 Part 1 verification confirmed
 rule:HR-PA-001 is non-canonical (D6 R2 root <desc>
@@ -2770,9 +2762,7 @@ candidate identifier evaluated and rejected at
   channel:kraken_rest_GetOpenOrders  (0411002)
   channel:kraken_rest_GetAccountBalance (0411002)
   channel:kraken_rest_CancelAllOrders (0411002)
-  channel:kraken_rest_Ticker         (0411002;
-                                      0711003 dv1_3
-                                      §4 + §5)
+  channel:kraken_rest_Ticker         (0411002)
   channel:logger_async_queue         (0511006)
 
 ------------------------------------------------------------
@@ -3974,6 +3964,62 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_41  06-03-2026  TB00590 0911002 STREAM 2 / PHASE 3
+                     / E2 SIZING-TOKEN DE-REGISTRATION
+                     [unblocked by the TB00589 0711003
+                     retirement]. De-registered THREE params
+                     from section 15.12.8: param:per_trade_pct,
+                     param:tradeable_pct, param:per_trade_
+                     ceiling_pct -- the obsolete fixed-percent
+                     sizing tokens + the per-trade concentration
+                     ceiling. The module wallet balance is the
+                     SOLE sizing boundary; param:per_trade_size_
+                     usd is the canonical CIATS-owned per-module
+                     dollar allocation [RETAINED]; the net 1:1.5
+                     R:R minimum is the only hardcoded value
+                     [TB00000 v2_84 sec 7].
+                     VERIFY-BEFORE-REMOVE [no-guess / loss-
+                     prevention, TB00590 NSI sec-2]: corpus-wide
+                     re-grep confirmed NO genuine ACTIVE consumer
+                     of any of the three tokens remains in live
+                     HEAD. The live 0500000 dv1_167 carries none
+                     [removed corpus-wide dv1_164/dv1_165; the 6
+                     sec-14 hits are removal-describing history].
+                     The CONFLICT-1 consumers [1011010, 0600000,
+                     0610000] and the CONFLICT-2 consumer
+                     [0211001] cited at v1_39 are all RETIRED
+                     [absent from HEAD]. The residual references
+                     in 0211004 dv1_1, 0211005 dv1_5, 0921001
+                     dv1_2, 1021002 dv1_1, 1021003 dv1_1, and
+                     0521001 dv1_0 are ALL revision-history /
+                     removal-describing [NOT active token
+                     assertions]. The last organism consumer
+                     [0711003 dv1_3 L538] was retired at TB00589.
+                     CF-0711003-REPOINT [0311001 portion, folded
+                     in]: live-body pointers to the retired
+                     0711003 re-pointed to the canonical 0500000
+                     -- rule:HR-AS-001..010 source annotation
+                     (0711003 sec-7) -> (0500000 sec-8 AR-070/
+                     AR-074); param:liquidity_refresh_hours
+                     dropped its stale 0711003 dv1_3 sec-8
+                     secondary [0500000 sec-9 is the live
+                     primary]; channel:kraken_rest_Ticker
+                     dropped its stale 0711003 dv1_3 sec-4/sec-5
+                     secondary [0411002 is the live channel
+                     source]. The section 12 DCN-register entry
+                     for 0711003 is LEFT AS-IS per the no-
+                     tombstone retired-doc convention [TB00000
+                     sec 6; same handling as the retired
+                     0600000 / 0211001 / 0610000 / 0611001 /
+                     1011010 register entries].
+                     BINARY TEST [DEC-096]: the three tokens are
+                     obsolete organism-sizing residue, not seed
+                     VALUES [absent from TB00000 v2_84 sec 8];
+                     de-registration loses no architecture --
+                     CIATS-owned sizing is canonical in 0500000
+                     D5/D6 + per_trade_size_usd. No value
+                     invented. TB00000 NOT amended.
 
   v1_40  06-03-2026  TB00586 0911002 STREAM 2 / PHASE 3
                      / E2 SIZING MANDATE DE-REGISTRATION.
