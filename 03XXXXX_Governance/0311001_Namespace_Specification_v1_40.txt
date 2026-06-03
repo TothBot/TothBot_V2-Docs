@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_39
+DocVersion: v1_40
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_39.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_40.txt
 DocDate:    06-03-2026
-DocTime:    03:00:00 UTC
+DocTime:    06:30:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2363,8 +2363,6 @@ REGISTRY CONVENTIONS:
 
   param:per_trade_pct                (seed;
                                       TB00000 §9.17)
-  param:max_concurrent               (seed;
-                                      TB00000 §9.17)
   param:mae_mult                     (seed;
                                       TB00000 §9.17)
   param:emergency_sl_mult            (seed;
@@ -3976,6 +3974,29 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_40  06-03-2026  TB00586 0911002 STREAM 2 / PHASE 3
+                     / E2 SIZING MANDATE DE-REGISTRATION.
+                     De-registered param:max_concurrent from
+                     section 15.12.8 -- the dead Half-Kelly
+                     normalization divisor (rule:HR-CI-009 +
+                     param:half_kelly_applied_pct) was scrubbed
+                     from every live 0500000 dv1_166 governing
+                     descriptor + visible-text site (D1/D2/D5/
+                     D6, TB00586) per Bill ruling (A): the
+                     module wallet balance is the sole sizing
+                     boundary; max_concurrent retired at
+                     TB00000 v2_29. param:half_kelly_applied_
+                     pct was never registered in 15.12.8
+                     (registry-gap-note only) -- nothing to de-
+                     register. param:per_trade_pct /
+                     tradeable_pct / per_trade_ceiling_pct NOT
+                     de-registered this version (CONFLICT-2
+                     consumers 0211004 / 0211005 / 0921001 /
+                     1021002 / 1021003 unclassified -- de-
+                     registering would strand live references;
+                     folds into the consumer-classification
+                     carry-forward).
 
   v1_39  06-03-2026  TB00584 0911002 STREAM 2 / PHASE 3
                      / E2 0500000 dv1_165 COMPANION.
