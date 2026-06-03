@@ -1,10 +1,10 @@
 DocDCN:     0711002
 DocTitle:   Regime_Taxonomy_Specification
-DocVersion: dv1_2
+DocVersion: dv1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711002_Regime_Taxonomy_Specification_dv1_2.txt
-DocDate:    05-17-2026
-DocTime:    23:59:59 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/07XXXXX_Strategy/0711002_Regime_Taxonomy_Specification_dv1_3.txt
+DocDate:    06-03-2026
+DocTime:    16:30:00 UTC
 
 ============================================================
 REGIME_TAXONOMY_SPECIFICATION
@@ -441,7 +441,7 @@ RE-015  BTC/USD as Market Regime Proxy (AR-074)
 ------------------------------------------------------------
 
 BTC/USD is always in the monitored universe regardless of
-volume ranking (0711003 AS-001). Its regime is computed
+volume ranking (0500000 §8 AR-070). Its regime is computed
 the same way as all other pairs — daily at 00:00 UTC.
 
 BTC/USD regime is written to the pre-computation cache
@@ -599,7 +599,7 @@ module-isolated statistical inference.
 
   (2) What are its interfaces to other components?
       Reads from: REST GetOHLCData (0411002), monitored
-      pair list (0711003), Parameter Store snapshot.
+      pair list (0500000 §8 AR-070), Parameter Store snapshot.
       Writes to: pre-computation cache (I-2) read by
       Gates 3 and 6 in pipeline. Trade Outcome Bus via
       Logger (asset_regime + market_regime on close).
@@ -626,7 +626,6 @@ module-isolated statistical inference.
   0700000  Strategy               (Domain Document)
   0710000  Strategy_Signals_Anchor (Sub-Domain Anchor)
   0711001  SSS_Signal_Model_Specification
-  0711003  Asset_Selection_Specification
   0500000  System_Architecture_Overview (AR-017, GAP-03,
            Section 5 — primary source; AR-009 amended
            dv1_41; AR-072 + AR-073 amended dv1_43 M-2 —
@@ -644,6 +643,27 @@ module-isolated statistical inference.
 ============================================================
 13. REVISION HISTORY
 ============================================================
+
+  dv1_3  06-03-2026  CF-0711003-REPOINT closure [TB00591
+                     primary mission]. Re-pointed the live-
+                     body citations of the RETIRED 0711003
+                     Asset_Selection_Specification to the
+                     canonical 0500000 sec-8 AR-070 [universe
+                     scope / volume-ranked monitored pair
+                     list; 0711003 AS-001 consolidated into
+                     AR-070 + AR-074 + Diagram 1 per TB00589
+                     0500000 dv1_167 reconcile]. Sites: sec-4
+                     RE-015 BTC/USD volume-ranking cite; sec-
+                     11 component monitored-pair-list
+                     interface cite; sec-12 RELATED DOCUMENTS
+                     0711003 line [removed -- 0500000 already
+                     listed]. Citation/source-annotation re-
+                     point ONLY -- NO fact change [asset-
+                     selection facts canonical in 0500000,
+                     TB00589 reconcile-verified]. Section 13
+                     dv1_1 forensic 0711003 mention PRESERVED
+                     verbatim. Header dv1_2 -> dv1_3; DocPath
+                     + DocDate + DocTime refreshed.
 
   dv1_2  05-17-2026  TB00327 AA=07 STRATEGY SUB-CAMPAIGN
                      0711002 S-6 GOVERNANCE CLOSURE +

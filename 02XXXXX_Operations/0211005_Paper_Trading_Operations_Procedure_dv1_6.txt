@@ -1,10 +1,10 @@
 DocDCN:     0211005
 DocTitle:   Paper_Trading_Operations_Procedure
-DocVersion: dv1_5
+DocVersion: dv1_6
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_5.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_6.txt
 DocDate:    06-03-2026
-DocTime:    08:00:00 UTC
+DocTime:    16:30:00 UTC
 
 ============================================================
 PAPER TRADING OPERATIONS PROCEDURE
@@ -54,7 +54,7 @@ EXCEPT at the four PA-004 permitted divergence points:
 
 The tradeable universe in paper mode is IDENTICAL to live
 mode (USD, USDC, or USDT quoted Kraken spot pairs
-satisfying 0711003 dv1_3 AS-001 criteria, no top-N cap).
+satisfying 0500000 §8 AR-070 criteria, no top-N cap).
 The startup sequence in paper mode executes 0511001 dv1_4
 §4.2 Steps 2-8 IDENTICALLY to live mode, governed by
 PT-MODE-005 below. Steps 9, 9b, 10, 10b, 11 carry the
@@ -306,9 +306,9 @@ Enforcement references (paper-mode parity):
                              are skipped in paper. Skipping
                              any of Steps 2-8 is a defect
                              (OI-044 root cause).
-  0711003 dv1_3 HR-AS-010   Paper mode executes AS-004
-                             Steps 1 through 8 IDENTICALLY
-                             to live mode.
+  0500000 §8 AR-070         Paper mode executes asset-
+                             selection Steps 1 through 8
+                             IDENTICALLY to live mode.
   TB00000 v2_18 §4.4 PA-004 Permitted divergence points.
   TB00128 D-06              Paper-to-live parity ratified.
 
@@ -321,8 +321,8 @@ Step 8 exactly; PA-004 divergences at Steps 9-11):
   Step 2   Connect public WS. Subscribe instrument channel.
            Populate pair_cache. IDENTICAL in paper and live.
 
-  Step 3   Compute tradeable_universe per 0711003 dv1_3
-           AS-001 (USD/USDC/USDT quote + online status +
+  Step 3   Compute tradeable_universe per 0500000 §8
+           AR-070 (USD/USDC/USDT quote + online status +
            $500k/day USD volume via REST Ticker). Result
            is IDENTICAL in paper and live.
 
@@ -417,7 +417,7 @@ paper-canonical reference. The log entry schema:
   paper_trade:            True
   parity_binding:         0511001_dv1_4_HR-WM-022_026
   master_principle:       TB00000_v2_18_§4.4_PA-001
-  universe_source:        0711003_dv1_3_AS-001
+  universe_source:        0500000_§8_AR-070
   universe_scope:         ["USD", "USDC", "USDT"]
   top_n_cap:              null  (retired per D-08)
   regime_anchor:          "BTC/USD"
@@ -748,8 +748,8 @@ or configuration. A Critical defect is defined as:
   - Any paper-mode startup step skipped relative to
     PT-MODE-005 parity binding (OI-044 pattern
     recurrence)
-  - Any paper-mode universe mismatch vs 0711003 dv1_3
-    AS-001 (wrong quote currency set, top-N cap applied,
+  - Any paper-mode universe mismatch vs 0500000 §8
+    AR-070 (wrong quote currency set, top-N cap applied,
     volume filter bypassed)
 
 All Critical defects must be identified, root-caused,
@@ -981,7 +981,7 @@ approved the transition:
                  simulate locally in paper.)
                0511001 dv1_4 HR-WM-026  (Paper executes
                  Steps 2-8 identically to live.)
-               0711003 dv1_3 HR-AS-010  (Asset Selection
+               0500000 §8 AR-070        (Asset Selection
                  paper-parity binding.)
                TB00000 v2_18 §4.4       (PA-001..010
                  absolute standing rule.)
@@ -1029,7 +1029,6 @@ approved the transition:
            HR-EC-015 CIATS-owned parameters)
   0511006  Logger_Specification                dv1_1
   0500000  System_Architecture_Overview        dv1_21
-  0711003  Asset_Selection_Specification       dv1_3
   1011002  WS_Manager_Coding_Spec              dv1_26
            (§16A.1 WM-PAPER-LEDGER-001..004;
            §16A.2 WM-PAPER-EXIT-001..005;
@@ -1046,6 +1045,38 @@ approved the transition:
 ============================================================
 11. REVISION HISTORY
 ============================================================
+
+  dv1_6  06-03-2026  CF-0711003-REPOINT closure [TB00591
+                     primary mission]. Re-pointed all live-
+                     body citations of the RETIRED 0711003
+                     Asset_Selection_Specification to the
+                     canonical 0500000 System Architecture
+                     Overview sec-8 AR-070 [universe scope:
+                     USD/USDC/USDT + online + >=$500k/day,
+                     no top-N cap; 0711003 AS-001..008
+                     consolidated into AR-070 + AR-074 + D1
+                     per TB00589 0500000 dv1_167 reconcile].
+                     Sites re-pointed: sec-3 tradeable-
+                     universe definition; sec-3 startup
+                     Step 3 compute; the PT-MODE-005 parity
+                     source table HR-AS-010 row; the
+                     universe_source config field; the sec-5
+                     paper-universe-mismatch Critical-defect
+                     check; the sec-9 HR-AS-010 parity-
+                     binding citation; and the sec-10
+                     RELATED DOCUMENTS 0711003 line [removed
+                     -- 0500000 already listed as canonical].
+                     Orphaned 0711003-internal tokens AS-001
+                     / AS-004 glossed to plain language
+                     [asset selection / tradeable universe]
+                     per TB00000 sec 4.7. Citation/source-
+                     annotation re-point ONLY -- NO fact
+                     change [asset-selection facts canonical
+                     in 0500000, TB00589 reconcile-verified].
+                     Revision-history 0711003 mentions
+                     PRESERVED verbatim. Non-organism AA=02
+                     procedure RETAINED [not a consolidation
+                     source].
 
   dv1_5  06-03-2026  Capital-basis correction [TB00588 Bill
                      in-session directive; resolves CF-
