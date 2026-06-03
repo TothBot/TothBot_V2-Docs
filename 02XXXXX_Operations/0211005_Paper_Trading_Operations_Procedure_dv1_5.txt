@@ -1,0 +1,1590 @@
+DocDCN:     0211005
+DocTitle:   Paper_Trading_Operations_Procedure
+DocVersion: dv1_5
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211005_Paper_Trading_Operations_Procedure_dv1_5.txt
+DocDate:    06-03-2026
+DocTime:    08:00:00 UTC
+
+============================================================
+PAPER TRADING OPERATIONS PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the complete paper trading phase
+operational procedure for TothBot V2. Paper trading is
+the mandatory validation gate before any live capital is
+deployed. No live trading begins until the paper trading
+acceptance criteria in Section 6 are satisfied.
+
+Paper trading uses live Kraken market data and runs the
+complete TothBot V2 system — all 8 pipeline gates, all
+CIATS functions, all exit logic — but intercepts order
+dispatch and simulates fills rather than placing real
+orders on Kraken. The Logger records all events as if
+trading were live. CIATS accumulates real statistical
+data during paper trading.
+
+PAPER IS THE MASTER. LIVE MIMICS PAPER. Per TB00000 v2_18
+§4.4 PAPER-AS-MASTER PRINCIPLE (PA-001), paper trading
+is the empirically-validated master configuration for
+TothBot V2. All Kraken WebSocket message-limit testing
+(TB00141 / TB00142 / TB00143 / TB00144 STREAM 4) was
+performed in paper-trading mode against the live Kraken
+WebSocket infrastructure. The paper environment is what
+TothBot has been proven to operate against. Live trading
+is built to MIMIC paper wherever physically possible.
+
+Paper and live share ONE set of documents (PA-002), ONE
+set of code (PA-003), and run the same logic everywhere
+EXCEPT at the four PA-004 permitted divergence points:
+  (1) Private WS connection — LIVE connects; PAPER does
+      NOT connect.
+  (2) Order dispatch — LIVE transmits to Kraken; PAPER
+      simulates locally.
+  (3) Capital ledger — LIVE reads real Kraken
+      spot_usd_balance; PAPER uses synthetic
+      paper_starting_balance ($5,000 per module wallet).
+  (4) Position Mirror sourcing — LIVE populated by Kraken
+      executions events; PAPER populated by local
+      simulated-fill path.
+
+The tradeable universe in paper mode is IDENTICAL to live
+mode (USD, USDC, or USDT quoted Kraken spot pairs
+satisfying 0711003 dv1_3 AS-001 criteria, no top-N cap).
+The startup sequence in paper mode executes 0511001 dv1_4
+§4.2 Steps 2-8 IDENTICALLY to live mode, governed by
+PT-MODE-005 below. Steps 9, 9b, 10, 10b, 11 carry the
+PA-004 divergence points. Any deviation from this
+specification is a defect.
+
+The purpose of the paper trading phase is threefold:
+  (1) Validate that TothBot V2 executes correctly against
+      live market data.
+  (2) Accumulate the 200-trade minimum statistical floor
+      required for CIATS to activate fully.
+  (3) Confirm starting parameters produce expected outcomes
+      before real capital is at risk.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  Operations_CIATS_Anchor        (Sub-Domain Anchor)
+  0211005  This document                  (Instance)
+
+============================================================
+3. PAPER TRADING MODE
+============================================================
+
+------------------------------------------------------------
+PT-MODE-001  EXECUTION MODE DEFINITION
+------------------------------------------------------------
+
+Paper trading mode: TothBot V2 runs with a configuration
+flag that activates simulated order execution. In this mode:
+
+  LIVE DATA: Public Kraken WS connection only. Real-time
+            live market data (ohlc, ticker, instrument,
+            status). All pipeline gate evaluations execute
+            in full. All CIATS monitoring and analysis runs
+            in full. All Logger records are written in full.
+            Private Kraken WS is NOT connected in paper
+            mode (PA-004 divergence point #1; HR-WM-022).
+            Live mode connects both public AND private WS.
+
+  SIMULATED: Order dispatch is intercepted before reaching
+            Kraken (PA-004 divergence point #2). No
+            add_order, batch_add, cancel_order, batch_cancel,
+            amend_order, or dispatch_market_sell is sent to
+            Kraken. The dispatch boundary is the SOLE point
+            at which paper protects operator capital from
+            being placed at risk in paper mode.
+
+  SIMULATED FILLS: When TothBot would have dispatched an
+            entry order, a simulated fill is generated at
+            the entry limit price. The Position Mirror is
+            updated as if a real fill occurred (PA-004
+            divergence point #4 — paper Mirror populated
+            EXCLUSIVELY by local simulated-fill path; HR-WM-
+            033). TP and emergSL prices are computed from
+            the simulated fill price using the actual R:R
+            formula. No resting orders are placed on Kraken.
+
+  SIMULATED EXITS: When an exit condition triggers (Layer
+            1a signal, Layer 1b TP, Layer 2 MAE threshold,
+            Layer 3 emergSL price breach), the exit is
+            simulated at the bid price (for Layer 1a, 1b)
+            or at the emergSL price (Layer 3). Net P/L is
+            computed with full fee application (FEE_MAKER_
+            PCT, FEE_TAKER_PCT — IDENTICAL to live mode)
+            and applied to synthetic spot_usd_balance
+            (PA-004 divergence point #3).
+
+------------------------------------------------------------
+PT-MODE-002  PAPER TRADING CONFIGURATION FLAG
+------------------------------------------------------------
+
+A single configuration parameter controls paper trading
+mode: paper_trading_mode = True/False.
+
+This flag is set in the EnvironmentFile (/root/.tothbot.env)
+before TothBot starts. It is never changed during a running
+session. Starting with paper_trading_mode = True and
+switching to False requires a full TothBot restart.
+
+The flag must be logged at startup (PAPER_TRADING_MODE_ON
+or PAPER_TRADING_MODE_OFF) so that all Logger records are
+unambiguously tagged as paper or live. CIATS Trade Outcome
+Bus records must carry a paper_trade: bool field.
+
+------------------------------------------------------------
+PT-MODE-003  PRIVATE WS CONNECTION (PA-004 DIVERGENCE
+             POINT #1)
+------------------------------------------------------------
+
+PRIVATE WS NOT CONNECTED IN PAPER MODE.
+
+TothBot V2 does NOT connect to the Kraken private WS in
+paper trading mode. self._ws_private remains None for
+the entire paper-mode session lifetime. This is the
+paper-canonical configuration validated empirically across
+TB00141 / TB00142 / TB00143 / TB00144 STREAM 4. Order
+dispatch is intercepted at the WSManager dispatch boundary
+(0511001 dv1_4 §13.2; HR-WM-023); no private-WS
+authentication or outbound order traffic occurs in paper
+mode.
+
+LIVE MODE connects private WS for order dispatch,
+executions reception, balances reception, snap_orders
+reconciliation, ratecounter monitoring, and ping/zombie
+monitoring. Live mode must otherwise execute identically
+to paper (TB00000 v2_18 §4.4 PAPER-AS-MASTER PRINCIPLE;
+PA-004 enumerates exactly four divergence points).
+
+API KEYS:
+  DATA key   Used for public WS authentication-not-required
+             channels and REST market data queries (ohlc,
+             ticker, asset_pairs, depth). USED IN BOTH
+             MODES.
+  TRADE key  Used for private WS authentication and REST
+             signing (add_order, cancel_order, etc.).
+             USED IN LIVE MODE ONLY. Paper mode does not
+             authenticate to private WS so the TRADE key
+             is not exercised in paper.
+
+Cross-references:
+  0511001 dv1_4 HR-WM-022  Private WS MUST NEVER be
+                            connected in paper mode.
+  0511001 dv1_4 HR-WM-023  All six order methods gate
+                            at entry and return after
+                            simulation in paper mode.
+  TB00000 v2_18 §4.4 PA-004 Divergence point #1.
+
+------------------------------------------------------------
+PT-MODE-004  PORTFOLIO BASELINE IN PAPER MODE
+------------------------------------------------------------
+
+PT-MODE-004  CAPITAL LEDGER AND PORTFOLIO BASELINE
+             (PA-004 DIVERGENCE POINTS #3 AND #4)
+------------------------------------------------------------
+
+In paper trading mode, portfolio_baseline_USD is set from
+the paper_starting_balance configuration key (default
+$5,000 USD per module wallet per TB00000 v2_84 §8
+[paper_starting_balance_long_usd / _short_usd]; supersedes
+the prior $1,000 single-portfolio figure of TB00128 D-05). The baseline is captured at startup
+Step 9b per 0511001 dv1_4 §4.2 — paper mode does NOT read
+the actual Kraken USD balance because paper does NOT
+connect private WS (PT-MODE-003).
+
+Capital ledger update mechanic in paper mode (PA-001..010
+PAPER-AS-MASTER + 0511001 dv1_5 HR-WM-032 + 1011002 dv1_26
+§16A.1 WM-PAPER-LEDGER-001..004):
+
+  spot_usd_balance starts at paper_starting_balance
+  ($5,000 per-module-wallet default per TB00000 v2_84 §8). Updated locally on every paper
+  simulated fill using IDENTICAL fee arithmetic to live
+  (FEE_MAKER_PCT = 0.0016, FEE_TAKER_PCT = 0.0026 per
+  0411003 Kraken_Fee_Rate_Limit_Specification).
+
+  ENTRY simulated fill (limit-order entry, maker fee):
+    entry_cost   = entry_qty * entry_price
+    entry_fee    = entry_cost * FEE_MAKER_PCT
+    spot_usd_balance -= (entry_cost + entry_fee)
+
+  EXIT simulated fill — TP fill (limit-order exit, maker fee):
+    exit_proceeds = exit_qty * exit_price
+    fees_exit     = exit_proceeds * FEE_MAKER_PCT
+    spot_usd_balance += (exit_proceeds - fees_exit)
+
+  EXIT simulated fill — emergSL trigger / Layer 2 MAE breach
+  / Layer 1 signal exit / time expiry / regime exit (market
+  sell, taker fee):
+    exit_proceeds = exit_qty * exit_price
+    fees_exit     = exit_proceeds * FEE_TAKER_PCT
+    spot_usd_balance += (exit_proceeds - fees_exit)
+
+  Ledger update is applied BY ws_manager.py BEFORE control
+  is yielded to Exit Controller's _close_position() per
+  PT-MODE-006 (NEW dv1_3) + 0511001 dv1_5 HR-WM-033 +
+  1011002 dv1_26 §16A.2 WM-PAPER-EXIT-001..004.
+
+  Every ledger mutation emits a PAPER_LEDGER_UPDATED log
+  record per 1011002 dv1_26 WM-PAPER-LEDGER-004 with
+  payload {event_type, symbol, delta_usd, fee_usd,
+  new_balance, exit_reason}.
+
+Live mode reads spot_usd_balance from real Kraken
+balances events at startup Step 11 (snap_orders
+reconciliation) and updates on subsequent balances
+events. Paper mode does NEITHER (no balances
+subscription; no Kraken balance read).
+
+Drawdown computation formula is IDENTICAL between modes
+(0511001 dv1_4 §5.4):
+
+  drawdown_pct = (spot_usd_balance - portfolio_baseline_USD)
+                  / portfolio_baseline_USD
+
+Only the SOURCE of spot_usd_balance differs. The formula,
+the threshold values (5% session_pause, 10% full_halt),
+and the response to threshold breach are byte-identical.
+
+Cross-references:
+  0511001 dv1_5 §4.2 Step 9b   Paper baseline source.
+  0511001 dv1_5 §13.7          Paper Synthetic Ledger Update
+                                Rule (full concept and
+                                arithmetic).
+  0511001 dv1_5 HR-WM-011      portfolio_baseline_USD set
+                                once at startup.
+  0511001 dv1_5 HR-WM-032      Paper ledger update mandate.
+  1011002 dv1_26 §16A.1        WM-PAPER-LEDGER-001..004
+                                implementation contract.
+  TB00000 v2_18 §4.4 PA-004    Divergence points #3
+                                (capital ledger source)
+                                and #4 (Position Mirror
+                                sourcing).
+  TB00000 v2_18 §4.4 PA-005    Byte-identical paper-live
+                                outside PA-004.
+  TB00000 v2_84 §8              $5,000 paper starting
+                                balance per module wallet
+                                [supersedes TB00128 D-05].
+  0411003 dv1_0                Kraken Fee Rate Limit
+                                Specification (FEE_MAKER_PCT
+                                = 0.0016, FEE_TAKER_PCT =
+                                0.0026).
+
+------------------------------------------------------------
+PT-MODE-005  PAPER-MODE STARTUP PARITY BINDING
+------------------------------------------------------------
+
+Paper-mode startup executes IDENTICALLY to live-mode
+startup through 0511001 dv1_4 §4.2 Steps 1 through 8.
+Steps 9, 9b, 10, 10b, and 11 carry the paper-vs-live
+divergence per PA-004 divergence points #1 (private WS
+connection) and #3 (capital ledger source). All other
+startup steps are bit-for-bit identical.
+
+Enforcement references (paper-mode parity):
+
+  0511001 dv1_4 HR-WM-022   Private WS MUST NEVER be
+                             connected in paper mode.
+  0511001 dv1_4 HR-WM-026   Paper mode EXECUTES Section
+                             4.2 Steps 2 through 8
+                             IDENTICALLY to live mode.
+                             Only Steps 9 (private WS
+                             connect), 10 (executions and
+                             balances subscribe), and 11
+                             (snap_orders reconciliation)
+                             are skipped in paper. Skipping
+                             any of Steps 2-8 is a defect
+                             (OI-044 root cause).
+  0711003 dv1_3 HR-AS-010   Paper mode executes AS-004
+                             Steps 1 through 8 IDENTICALLY
+                             to live mode.
+  TB00000 v2_18 §4.4 PA-004 Permitted divergence points.
+  TB00128 D-06              Paper-to-live parity ratified.
+
+Paper-mode startup ordering (must match live-mode through
+Step 8 exactly; PA-004 divergences at Steps 9-11):
+
+  Step 1   Engine transitions STARTING -> LOADING.
+           IDENTICAL in paper and live.
+
+  Step 2   Connect public WS. Subscribe instrument channel.
+           Populate pair_cache. IDENTICAL in paper and live.
+
+  Step 3   Compute tradeable_universe per 0711003 dv1_3
+           AS-001 (USD/USDC/USDT quote + online status +
+           $500k/day USD volume via REST Ticker). Result
+           is IDENTICAL in paper and live.
+
+  Step 4   Add regime_anchor handle (BTC/USD). BTC/USD is
+           a member of tradeable_universe under D-03
+           amended; default Gate 1 excludes BTC/USD from
+           entry-evaluation per AR-074 / HR-AS-009.
+           IDENTICAL in paper and live.
+
+  Step 5   Subscribe ohlc(5m), ohlc(60m), and ticker for
+           all tradeable_universe members (sharded across
+           N public WS connections per 0511001 dv1_4
+           §4.6 PATH 2 sharding; rate-paced via token
+           bucket per HR-WM-032). IDENTICAL in paper and
+           live.
+
+  Step 6   Seed per-pair indicators via REST GetOHLCData
+           (AR-044 + AR-068). IDENTICAL in paper and live.
+
+  Step 7   Status channel subscription on public WS.
+           IDENTICAL in paper and live.
+
+  Step 8   WARM_UP completion check. Engine transitions
+           LOADING -> WARMED_UP when all five per-pair
+           indicators are seeded AND initial regime
+           computation completes. IDENTICAL in paper
+           and live.
+
+  Step 9   PRIVATE WS CONNECTION (PA-004 #1).
+             LIVE: Connect private WS with token from
+                   Step 1. Log connection_id from status
+                   channel on private connection (AR-064).
+             PAPER: SKIPPED. self._ws_private remains
+                    None. No private WS connection
+                    attempt is made.
+
+  Step 9b  PAPER ONLY — capital ledger initialization
+           (PA-004 #3).
+             Set spot_usd_balance = Decimal(str(config.get(
+                 "paper_starting_balance", 5000))).
+             Default $5,000 per module wallet per
+             TB00000 v2_84 §8.
+             Set portfolio_baseline_USD = spot_usd_balance.
+             Log PAPER_BALANCE_SET (level=INFO,
+             component=WS_MGR, balance=spot_usd_balance).
+
+  Step 10  PRIVATE WS SUBSCRIPTIONS.
+             LIVE: Subscribe executions channel with
+                   ratecounter:true, snap_orders:true,
+                   snap_trades:true, order_status:true.
+                   Subscribe balances channel. Begin
+                   tracking sequence integers for gap
+                   detection (A-9).
+             PAPER: SKIPPED. No executions or balances
+                    subscription. Paper fill detection
+                    is driven by ticker events in
+                    _handle_ticker() per 0511001 dv1_4
+                    §13.3 (HR-WM-024).
+
+  Step 10b PAPER ONLY — paper fill driver active. Paper
+           Position Mirror is populated EXCLUSIVELY by
+           the local simulated-fill path (PA-004 #4;
+           HR-WM-033).
+
+  Step 11  CAPITAL LEDGER FROM KRAKEN (PA-004 #3).
+             LIVE: Process snap_orders and snap_trades
+                   response from executions subscription.
+                   Reconcile Position Mirror. Populate
+                   Pending Order Registry for new and
+                   pending_new orders (AR-053). Capture
+                   spot_usd_balance from balances
+                   snapshot. Set portfolio_baseline_USD
+                   = spot_usd_balance. NEVER reset on
+                   reconnect (AR-052).
+             PAPER: SKIPPED. portfolio_baseline_USD was
+                    set at Step 9b from synthetic
+                    paper_starting_balance.
+
+Paper-mode bypass of ANY Step 2-8 requirement is a defect
+matching OI-044 root cause and a session-halting condition.
+Paper-mode execution of any Step 9, 10, or 11 LIVE-only
+action (private WS connect, executions subscribe, balances
+subscribe, snap_orders processing) is also a defect — paper
+canonical state is NO private WS, NO subscriptions, NO
+Kraken balance read.
+
+Paper-mode startup MUST log PAPER_TRADING_MODE_ON with a
+payload confirming each step completed against the
+paper-canonical reference. The log entry schema:
+
+  event:                  PAPER_TRADING_MODE_ON
+  paper_trade:            True
+  parity_binding:         0511001_dv1_4_HR-WM-022_026
+  master_principle:       TB00000_v2_18_§4.4_PA-001
+  universe_source:        0711003_dv1_3_AS-001
+  universe_scope:         ["USD", "USDC", "USDT"]
+  top_n_cap:              null  (retired per D-08)
+  regime_anchor:          "BTC/USD"
+  regime_anchor_eval:     "CIATS-owned, default-disabled"
+  steps_executed:         [1, 2, 3, 4, 5, 6, 7, 8, 9b, 10b]
+  step_9_status:          "SKIPPED_PAPER_NO_PRIVATE_WS"
+  step_10_status:         "SKIPPED_PAPER_NO_SUBSCRIPTION"
+  step_11_status:         "SKIPPED_PAPER_NO_KRAKEN_BALANCE"
+  paper_baseline_source:  "paper_starting_balance"
+  paper_baseline_value:   1000   (or configured override)
+  private_ws_connected:   False
+
+Any Step 2-8 missing from steps_executed is a defect.
+Any indication that paper executed Step 9 (private WS
+connect), Step 10 (subscriptions), or Step 11 (Kraken
+balance read) is also a defect — paper-canonical state
+is private_ws_connected=False.
+
+------------------------------------------------------------
+PT-MODE-006  PAPER EXIT ROUTING THROUGH EXIT CONTROLLER
+             (NEW dv1_3 — closes FINDING-TB00147-08)
+------------------------------------------------------------
+
+In paper trading mode, ALL position exits route through
+Exit Controller's _close_position() close sequence.
+ws_manager.py applies the synthetic-ledger update per
+PT-MODE-004 + HR-WM-032, then yields control to Exit
+Controller. Exit Controller emits the TRADE_CLOSE log
+record with full P/L payload. CIATS log-file polling
+reads paper TRADE_CLOSE records identically to live
+TRADE_CLOSE records.
+
+This is the operations-procedure counterpart to:
+  0511001 dv1_5 HR-WM-033       Paper exits route through
+                                 Exit Controller.
+  0511004 dv1_3 §6A EC-PAPER    Paper-mode exit behavior
+                                 specification.
+  0511004 dv1_3 HR-EC-013       Paper-live close-path
+                                 parity.
+  0511004 dv1_3 HR-EC-014       Exit Controller is sole
+                                 SC state updater (both
+                                 modes).
+  1011002 dv1_26 §16A.2         WM-PAPER-EXIT-001..005
+                                 implementation contract
+                                 (WS Manager side).
+  1011005 dv1_3 §10A            EC-PAPER coding contract
+                                 EC-PAPER-CODE-001..006
+                                 (Exit Controller side).
+
+OPERATIONAL CONSEQUENCE.
+
+Paper-mode CIATS data flow is byte-identical to live-mode
+CIATS data flow per TB00000 v2_18 §4.4 PA-005. CIATS
+Half-Kelly (CIATS-KE-002), Mann-Whitney U, EWMA, CUSUM,
+and Spearman compute on a unified corpus regardless of
+mode. The 200-trade hard floor for statistical inference
+(TB00000 §7) accumulates equally in paper and live modes.
+
+PAPER EXIT EVENT FLOW (informational reference for
+operators):
+
+  TP fill detected (paper):
+    1. ws_manager._maybe_paper_fill detects ask >=
+       pos.tp_price.
+    2. ws_manager applies HR-WM-032 ledger credit
+       (FEE_MAKER_PCT).
+    3. ws_manager logs PAPER_LEDGER_UPDATED.
+    4. ws_manager logs PAPER_TP_FILL_DETECTED.
+    5. ws_manager calls
+       exit_controller.on_paper_close(symbol,
+       exit_price=tp_price, exit_reason="TP_FILL",
+       fees_exit=fees_exit, wm).
+    6. Exit Controller calls _close_position(...).
+    7. Exit Controller logs TRADE_CLOSE with full P/L
+       payload.
+    8. Exit Controller clears Position Mirror.
+    9. Exit Controller updates Selection Controller state
+       (consecutive_loss_count[symbol] = 0;
+       exit_cooldown_log[symbol] cleared per AR-073 win
+       reset).
+   10. Exit Controller releases BoundedSemaphore.
+   11. ws_manager._update_ticker_event_trigger switches
+       symbol to "trades" mode.
+
+  emergSL trigger / Layer 2 MAE breach / Layer 1 / time
+  expiry (paper):
+    Same 11-step flow with these substitutions:
+      - Step 2 fee schedule: FEE_TAKER_PCT (market sell).
+      - Step 4 log: PAPER_EMERG_SL_TRIGGERED (or
+        appropriate event).
+      - Step 5 exit_reason: "EMERGENCY_SL" /
+        "MAE_THRESHOLD_BREACH" / "HTF_REGIME_REVERSAL" /
+        "DAILY_REGIME_DOWNGRADE" / "TIME_EXPIRY" /
+        "SIGNAL_DECAY".
+      - Step 9 SC state: consecutive_loss_count
+        incremented; exit_cooldown_log[symbol] set to
+        time.monotonic() per AR-073 loss path.
+
+OPERATIONAL VERIFICATION.
+
+Operator verifies paper exit routing is correct by
+inspecting the paper-mode log stream after a paper
+trade close. The expected log sequence per close:
+
+  PAPER_LEDGER_UPDATED (event_type=EXIT_FILL)
+  PAPER_TP_FILL_DETECTED (or PAPER_EMERG_SL_TRIGGERED)
+  TRADE_CLOSE (component=EXIT_CTRL, full P/L payload)
+  POSITION_CLOSED (component=EXIT_CTRL)
+
+If TRADE_CLOSE is absent or POSITION_CLOSED is emitted
+by component=WS_MGR (instead of EXIT_CTRL), this is a
+defect — the dv1_25 parallel _fire_ciats_outcome path
+has not been retired. Halt operations and confirm
+ws_manager.py code matches 1011002 dv1_26 §16A.2.
+
+------------------------------------------------------------
+PT-MODE-007  CIATS DATA FLOW PARITY (NEW dv1_3)
+------------------------------------------------------------
+
+CIATS receives identical TRADE_CLOSE log records from
+paper and live modes. The TRADE_CLOSE schema is mode-
+agnostic (no paper/live flag in the record). All
+downstream CIATS computation (Half-Kelly, Mann-Whitney U,
+EWMA, CUSUM, Spearman, Sharpe ratio) operates on a unified
+trade corpus.
+
+Statistical thresholds per TB00000 §7 apply equally:
+  50 candle evals:   EWMA Monitor valid (signals only).
+  200 trades:        Half-Kelly hard floor; CIATS
+                     Proposal Engine activates;
+                     per_trade_size_usd transitions from
+                     the Kraken per-pair minimum seed to
+                     K_half x module_wallet_balance.
+  600 trades:        Per-regime analysis valid (100+
+                     trades per regime bucket).
+
+Paper trades count toward these floors. Live transition
+per Section 6 ACCEPTANCE CRITERIA cannot occur until
+the 200-trade floor is met AND all PT-AC-001..006
+acceptance criteria are satisfied AND Bill formal
+written approval is granted.
+
+============================================================
+4. CIATS ACTIVATION SEQUENCE DURING PAPER TRADING
+============================================================
+
+CIATS activates in stages during paper trading. These
+stages are not optional — they are statistical floors
+that cannot be bypassed.
+
+------------------------------------------------------------
+PT-CIATS-001  STAGE 1 — EWMA MONITOR ACTIVATION
+              (50 cumulative candle evaluations)
+------------------------------------------------------------
+
+At 50 cumulative candle evaluations (~4 hours from first
+pipeline evaluation):
+
+  EWMA Monitor activates. Three monitoring signals begin
+  updating every candle close:
+    (1) rejection_rate_by_regime
+    (2) rate_counter_by_pair
+    (3) ws_roundtrip_latency_ms
+
+  This is MONITORING ONLY. No inference. No proposals.
+  No parameter changes. The EWMA Monitor provides early
+  warning signals that Bill monitors during paper trading.
+
+  Bill action at Stage 1:
+    Review EWMA Monitor signals periodically. Look for
+    unusual rejection rate patterns or latency spikes.
+    These are signals to investigate, not to act on.
+
+------------------------------------------------------------
+PT-CIATS-002  STAGE 2 — PROPOSAL ENGINE ACTIVATION
+              (200 closed paper trades)
+------------------------------------------------------------
+
+At 200 closed paper trades (HARD FLOOR):
+
+  Statistical Engine activates. All statistical methods
+  (Mann-Whitney U α=0.01, Spearman, CUSUM, Sharpe) are
+  now valid for inference.
+
+  Proposal Engine activates. CIATS may now generate
+  parameter change proposals through the PDCA cycle.
+
+  Half-Kelly position sizing activates. The seed per_trade_
+  size_usd [Kraken per-pair minimum] is replaced by the
+  computed K_half x module_wallet_balance allocation.
+
+  The 200-trade floor is the most important milestone in
+  the paper trading phase. All starting parameters should
+  be evaluated against actual paper trading performance
+  data at this point.
+
+  Bill action at Stage 2:
+    Review the first CIATS performance report when the
+    200-trade floor is reached. Review any proposals
+    generated. If a proposal passes Mann-Whitney U at
+    α=0.01 and Bill approves, apply to Parameter Store.
+    Note that 200 paper trades are required — simulated
+    trades count. At ~1-5 trades/day, this milestone
+    takes approximately 40-200 trading days to reach.
+
+------------------------------------------------------------
+PT-CIATS-003  STAGE 3 — REGIME LIBRARY ACTIVATION
+              (600 closed paper trades, 100+ per bucket)
+------------------------------------------------------------
+
+At 600 closed paper trades with 100+ in each regime bucket:
+
+  Regime Library activates. Per-regime parameter
+  optimization is now valid. CIATS can generate regime-
+  segmented proposals.
+
+  Stage 3 is not a required gate for transitioning to
+  live trading (see Section 6). However, reaching Stage 3
+  before going live is preferred because it provides the
+  most complete picture of strategy performance across
+  all market conditions.
+
+  Bill action at Stage 3:
+    Review per-regime performance statistics. Identify
+    any regime buckets with significantly worse outcomes.
+    These may indicate parameter adjustments specific to
+    those regimes. Engage CIATS PDCA cycle for regime-
+    specific proposals before going live if significant
+    issues are identified.
+
+============================================================
+5. PAPER TRADING MONITORING CHECKLIST
+============================================================
+
+Bill reviews the following at regular intervals during
+paper trading (recommended: daily or after every 25 trades):
+
+------------------------------------------------------------
+PT-MON-001  DAILY CHECKS
+------------------------------------------------------------
+
+  [ ] TothBot process running (systemctl status tothbot)
+  [ ] No unacknowledged CRITICAL alerts in alerts@tothbot.com
+  [ ] Logger queue not approaching capacity
+  [ ] Paper trade count progressing
+  [ ] No unexpected incident categories from 0211004
+
+------------------------------------------------------------
+PT-MON-002  PER-25-TRADE CHECKS
+------------------------------------------------------------
+
+  [ ] Running win rate vs expected (target: ≥40% at 1:1.5 R:R)
+  [ ] Running Sharpe ratio trend (target: positive)
+  [ ] Exit reason distribution (L1a vs L1b vs L2 vs L3)
+    - L3 fires: investigate immediately (should be zero)
+    - High L2 rate: review MAE threshold parameter
+  [ ] Regime distribution of trades
+  [ ] Drawdown from portfolio_baseline_USD (must not
+      approach 10% even in paper mode — full halt still fires)
+  [ ] EWMA Monitor signals (rejection_rate_by_regime
+      trending up in any regime = early warning)
+
+------------------------------------------------------------
+PT-MON-003  AT 200-TRADE MILESTONE
+------------------------------------------------------------
+
+  [ ] Review CIATS first full statistical report
+  [ ] Review actual win rate vs break-even win rate
+      (break-even at net 1:1.5 R:R ≈ 40%)
+  [ ] Review actual realized R:R vs target net 1:1.5
+  [ ] Review Half-Kelly per_trade_size_usd computed value
+      [K_half x module_wallet_balance]
+  [ ] Review any CIATS proposals and decide on each
+  [ ] Evaluate whether all acceptance criteria (Section 6)
+      are achievable or if parameter changes are needed
+
+------------------------------------------------------------
+PT-MON-004  BEFORE LIVE TRANSITION
+------------------------------------------------------------
+
+  [ ] All acceptance criteria (Section 6) satisfied
+  [ ] No open CRITICAL incidents
+  [ ] All CIATS proposals reviewed and dispositioned
+  [ ] Parameter baseline documented (Section 7)
+  [ ] Bill formal approval recorded
+  [ ] Paper-mode startup log (PT-MODE-005) confirms
+      steps_executed = [2, 3, 4, 5, 6, 7, 8] across the
+      paper trading period (no skipped steps, no OI-044
+      pattern recurrence)
+
+============================================================
+6. ACCEPTANCE CRITERIA FOR LIVE TRANSITION
+============================================================
+
+All criteria in this section must be satisfied before
+TothBot V2 transitions from paper trading to live trading.
+Bill evaluates each criterion. No criterion may be waived.
+
+------------------------------------------------------------
+PT-AC-001  MINIMUM TRADE COUNT: 200 CLOSED PAPER TRADES
+------------------------------------------------------------
+
+Required: 200 closed paper trades minimum.
+Rationale: The 200-trade floor is the statistical minimum
+for valid inference (SE(win_rate)≈3.5%, SE(Sharpe)≈7.2%).
+No live trading before this floor is reached regardless
+of how the paper trading period appears.
+
+This is the only hard quantitative gate. All other
+criteria are evaluated by Bill using judgment informed
+by the data.
+
+------------------------------------------------------------
+PT-AC-002  NO CRITICAL DEFECTS
+------------------------------------------------------------
+
+Required: No open Critical defects in TothBot V2 code
+or configuration. A Critical defect is defined as:
+  - Any Layer 3 emergSL fire during paper trading
+    (emergSL should never fire in normal operation)
+  - Any Position Mirror inconsistency vs expected state
+  - Any CIATS Trade Outcome Bus data loss (Logger queue
+    full events that dropped Trade Outcome Bus records)
+  - Any panic, assertion error, or unhandled exception
+    that crashed TothBot more than 3 times in 24 hours
+  - Any incorrect R:R computation (net_gain not matching
+    expected formula output)
+  - Any paper-mode startup step skipped relative to
+    PT-MODE-005 parity binding (OI-044 pattern
+    recurrence)
+  - Any paper-mode universe mismatch vs 0711003 dv1_3
+    AS-001 (wrong quote currency set, top-N cap applied,
+    volume filter bypassed)
+
+All Critical defects must be identified, root-caused,
+fixed, and verified before transitioning to live.
+
+------------------------------------------------------------
+PT-AC-003  POSITIVE EXPECTATION CONFIRMED
+------------------------------------------------------------
+
+Required: Paper trading data shows positive expectation.
+Evaluation: CIATS Statistical Engine output at 200+ trades.
+
+  Minimum acceptable performance (all required):
+    Win rate:      ≥ 40% (break-even at net 1:1.5 R:R)
+    Realized R:R:  ≥ 1.3 net (allows for market impact)
+    Sharpe ratio:  ≥ 0 (non-negative risk-adjusted return)
+
+  These are minimum floors, not targets. A win rate of
+  40% and Sharpe of 0 indicates the system is barely
+  viable. The decision to go live at minimums vs waiting
+  for better performance is Bill's judgment call.
+
+  If any metric is below its floor: do not go live.
+  Engage CIATS PDCA cycle to identify and test parameter
+  changes. Return to live evaluation after another 50+
+  trades under revised parameters.
+
+------------------------------------------------------------
+PT-AC-004  CIATS OPERATING CORRECTLY
+------------------------------------------------------------
+
+Required: CIATS has completed at least one full PDCA
+cycle (Plan → Do → Check → Act or Plan → Reject) after
+the 200-trade floor. This confirms CIATS is functioning,
+the statistical engine is producing valid output, and
+the Logger → CIATS → Parameter Store pipeline is intact.
+
+If CIATS has not triggered a PDCA cycle by 200 trades:
+verify CUSUM k and h parameters, verify Trade Outcome
+Bus is being populated correctly, verify CIATS asyncio
+task is running without exceptions.
+
+------------------------------------------------------------
+PT-AC-005  NO OPEN CRITICAL ALERTS
+------------------------------------------------------------
+
+Required: No unacknowledged CRITICAL alerts outstanding
+at the time of live transition. All incidents from 0211004
+are either resolved or have documented disposition.
+
+------------------------------------------------------------
+PT-AC-006  BILL FORMAL APPROVAL
+------------------------------------------------------------
+
+Required: Bill explicitly approves transition to live
+trading after reviewing all acceptance criteria above.
+Approval is recorded in the session log with:
+  - Date and time of approval
+  - Trade count at approval
+  - Win rate, realized R:R, and Sharpe at approval
+  - Parameter Store values at time of transition
+  - Any open items and their dispositions
+
+============================================================
+7. PARAMETER BASELINE DOCUMENTATION
+============================================================
+
+Before transitioning to live trading, the complete
+Parameter Store state must be documented and approved
+by Bill. This baseline record is the reference point
+for all future CIATS parameter change tracking.
+
+------------------------------------------------------------
+PT-BASE-001  BASELINE RECORD CONTENTS
+------------------------------------------------------------
+
+The parameter baseline document (to be created as a
+controlled document or session log entry) must record:
+
+  Date and time of baseline capture (UTC)
+  Paper trade count at baseline
+  Win rate at baseline
+  Realized net R:R at baseline
+  Sharpe ratio at baseline
+
+  Complete Parameter Store values at baseline:
+    per_trade_size_usd:       [value or HALF_KELLY_ACTIVE]
+    mae_mult:                 [value]
+    emergency_sl_mult:        [value]
+    entry_timeout_sec:        [value]
+    full_halt_drawdown:       [value]
+    session_pause_drawdown:   [value]
+    adx_threshold:            [value]
+    atr_percentile_threshold: [value]
+    htf_ema_fast:             [value]
+    htf_ema_slow:             [value]
+    min_volume_usd_daily:     [value]
+    signal_thresholds:        [all SSS gate values]
+    sc_body_threshold:        [value]
+    sc_cooldown_seconds:      [value]
+    sc_consecutive_limit:     [value]
+    max_hold_candles:         [value]
+
+  Bill approval signature and date.
+
+------------------------------------------------------------
+PT-BASE-002  BASELINE IS THE CIATS REFERENCE POINT
+------------------------------------------------------------
+
+The parameter baseline at live transition is the starting
+point from which all CIATS parameter changes are measured.
+CIATS logs every parameter change with the delta from the
+baseline. The baseline itself is immutable — it is a
+historical record, not a live value.
+
+============================================================
+8. LIVE TRANSITION PROCEDURE
+============================================================
+
+When all acceptance criteria are satisfied and Bill has
+approved the transition:
+
+  Step 1: Stop TothBot (per 0211003 SS-STOP-001 — wait
+          for all paper positions to close, or manually
+          close all simulated positions).
+
+  Step 2: Document the parameter baseline (PT-BASE-001).
+
+  Step 3: Update EnvironmentFile on VPS:
+          paper_trading_mode = False
+
+  Step 4: Verify all infrastructure per 0211002:
+          - logrotate configured and active
+          - Both API keys IP-whitelisted
+          - systemd service enabled
+          - TRADE key credentials confirmed in EnvironmentFile
+          - VPS disk space adequate for 90-day log retention
+
+  Step 5: Start TothBot in live mode:
+          systemctl start tothbot
+
+  Step 6: Verify startup log shows PAPER_TRADING_MODE_OFF.
+          Verify steps_executed = [1, 2, 3, 4, 5, 6, 7, 8,
+          9, 10, 11] payload (live-mode executes all 11
+          steps with NO paper variants 9b/10b). Verify
+          private_ws_connected = True. Verify
+          paper_baseline_source = null and live baseline
+          captured from Kraken balances at Step 11.
+          Steps 1-8 must be IDENTICAL between paper-mode
+          and live-mode startup payloads (paper and live
+          execute Steps 1-8 byte-identically per PA-005).
+          Any difference in Step 1-8 execution between
+          modes is a defect. PA-004 divergence is
+          confined to Steps 9, 9b, 10, 10b, 11.
+
+  Step 7: Verify first pipeline evaluation log shows
+          live order dispatch (not simulated).
+
+  Step 8: Monitor alerts@tothbot.com closely for the
+          first 24-48 hours of live operation.
+
+  Step 9: Record transition date and time in session log.
+
+============================================================
+9. HARD RULES
+============================================================
+
+  HR-PT-001  Paper trading is mandatory before live trading.
+             No live capital is deployed without completing
+             the paper trading phase and satisfying all
+             acceptance criteria.
+
+  HR-PT-002  The 200-trade minimum (PT-AC-001) is absolute.
+             No waiver. No exception. Fewer than 200 trades
+             is insufficient for valid inference regardless
+             of apparent performance.
+
+  HR-PT-003  Any Layer 3 emergSL fire during paper trading
+             is a Critical defect (PT-AC-002). Must be
+             root-caused and resolved before live transition.
+
+  HR-PT-004  paper_trading_mode flag is never changed during
+             a running session. Mode changes require a
+             full TothBot restart.
+
+  HR-PT-005  All paper trading Trade Outcome Bus records
+             carry paper_trade: True. Live records carry
+             paper_trade: False. These are never mixed
+             in CIATS statistical computations after
+             live trading begins.
+
+  HR-PT-006  Bill formal approval (PT-AC-006) is required
+             before live transition. No automated process
+             or CIATS output can substitute for this.
+
+  HR-PT-007  The parameter baseline (PT-BASE-001) must be
+             documented and approved before live mode is
+             activated. It is the immutable reference point
+             for all future parameter change tracking.
+
+  HR-PT-008  PAPER-AS-MASTER PARITY BINDING (D-06 +
+             TB00000 v2_18 §4.4 PA-001..010).
+             Paper IS the master configuration. Live
+             mimics paper. Paper-mode startup MUST execute
+             0511001 dv1_4 §4.2 Steps 1-8 IDENTICALLY to
+             live mode per PT-MODE-005. The ONLY permitted
+             differences are at the four PA-004 divergence
+             points enumerated in TB00000 v2_18 §4.4:
+               (1) Private WS connection
+                   LIVE: connects.
+                   PAPER: does NOT connect (HR-WM-022).
+               (2) Order dispatch
+                   LIVE: transmits to Kraken.
+                   PAPER: simulates locally at WSManager
+                          dispatch boundary (HR-WM-023).
+               (3) Capital ledger
+                   LIVE: real Kraken spot_usd_balance.
+                   PAPER: synthetic paper_starting_balance
+                          ($5,000 per module wallet per
+                          TB00000 v2_84 §8; HR-WM-011).
+               (4) Position Mirror sourcing
+                   LIVE: Kraken executions events.
+                   PAPER: local simulated-fill path
+                          (HR-WM-033).
+             Cross-references:
+               0511001 dv1_4 HR-WM-022  (Private WS NEVER
+                 connected in paper.)
+               0511001 dv1_4 HR-WM-023  (Order methods
+                 simulate locally in paper.)
+               0511001 dv1_4 HR-WM-026  (Paper executes
+                 Steps 2-8 identically to live.)
+               0711003 dv1_3 HR-AS-010  (Asset Selection
+                 paper-parity binding.)
+               TB00000 v2_18 §4.4       (PA-001..010
+                 absolute standing rule.)
+               TB00128 D-06             (Paper-to-live
+                 parity ratified.)
+             Any paper-mode startup that skips a Step 2-8
+             requirement is a session-halting defect and
+             triggers PT-AC-002 Critical classification.
+             Any paper-mode action that violates a
+             PA-004 divergence point (paper connecting
+             private WS, paper transmitting orders to
+             Kraken, paper reading real Kraken balance,
+             paper Mirror populated from Kraken events)
+             is also a session-halting defect. OI-044
+             root cause: paper-mode was previously
+             bypassing Steps 2-8; HR-PT-008 makes the
+             parity binding an explicit business-procedure
+             invariant independent of code-level
+             enforcement.
+
+============================================================
+10. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                          (parent Domain Doc)
+  0210000  Operations_CIATS_Anchor             (parent anchor)
+  0211001  CIATS_Specification                 dv1_0
+  0211002  Operations_Infrastructure_Specification
+                                               dv1_0
+  0211003  Startup_Shutdown_Procedure          dv1_0
+  0211004  Incident_Response_Procedure         dv1_0
+  0411003  Kraken_Fee_Rate_Limit_Specification dv1_0
+           (FEE_MAKER_PCT, FEE_TAKER_PCT cited
+           in PT-MODE-004 ledger arithmetic)
+  0511001  WS_Manager_Specification            dv1_5
+           (HR-WM-022 paper no-private-WS;
+           HR-WM-032 paper ledger update;
+           HR-WM-033 paper exits route through EC;
+           §13.7 Paper Synthetic Ledger Update Rule;
+           §13.8 Paper Exit Routing Through EC)
+  0511004  Exit_Controller_Specification       dv1_3
+           (§6A EC-PAPER paper-mode exit behavior;
+           HR-EC-013 paper-live close-path parity;
+           HR-EC-014 EC sole SC state updater;
+           HR-EC-015 CIATS-owned parameters)
+  0511006  Logger_Specification                dv1_1
+  0500000  System_Architecture_Overview        dv1_21
+  0711003  Asset_Selection_Specification       dv1_3
+  1011002  WS_Manager_Coding_Spec              dv1_26
+           (§16A.1 WM-PAPER-LEDGER-001..004;
+           §16A.2 WM-PAPER-EXIT-001..005;
+           HR-WM-032/033 cascade)
+  1011005  Exit_Controller_Coding_Spec         dv1_3
+           (§10A EC-PAPER coding contract
+           EC-PAPER-CODE-001..006;
+           HR-EC-013/014/015 cascade)
+  TB00000  Project_Instructions_for_Claude     v2_18
+           (§4.4 PAPER-AS-MASTER PRINCIPLE PA-001..010)
+  0311001  Namespace_Specification             (governs DCN)
+  0311002  Document_Creation_Workflow          (governs sequence)
+
+============================================================
+11. REVISION HISTORY
+============================================================
+
+  dv1_5  06-03-2026  Capital-basis correction [TB00588 Bill
+                     in-session directive; resolves CF-
+                     CAPITAL-RECONCILE]. Paper starting
+                     balance corrected from the stale $1,000
+                     single-portfolio figure [TB00128 D-05]
+                     to the canonical $5,000 per module
+                     wallet [Long $5,000 / Short $5,000,
+                     OPERATOR class per TB00000 v2_84 §8
+                     paper_starting_balance_long_usd /
+                     _short_usd]. Updated every prescriptive
+                     occurrence: PA-004 #3 capital-ledger
+                     summary, the portfolio_baseline_USD
+                     paper-mode source paragraph, the spot_
+                     usd_balance start note, the reference
+                     table [now cites TB00000 v2_84 §8,
+                     supersedes D-05], the Step 9b config
+                     default [1000 -> 5000], and the HR-WM-
+                     011 capital-ledger note. per_trade_size_
+                     usd retains its $0.50 Kraken-minimum
+                     seed [unchanged]. Non-organism procedure
+                     doc retained [not a consolidation
+                     source]. Prior changelog left intact as
+                     historical record [D-05 / $1,000 quoted
+                     there as the superseded value].
+
+  dv1_4  06-03-2026  TB00587 CF-CONSUMER-CLASSIFY strip-keep
+                     [non-organism AA=02 procedure RETAINED;
+                     delete stale organism values per
+                     TB00585 sec 5]. Removed the dead fixed-
+                     percent sizing model [removed from
+                     0500000 at TB00586/dv1_166]: the 200-
+                     trade transition prose now reads
+                     per_trade_size_usd [Kraken per-pair
+                     minimum seed -> K_half x module_wallet_
+                     balance]; the baseline Parameter Store
+                     capture template dropped the dead
+                     tokens tradeable_pct / per_trade_pct /
+                     applied_pct / max_concurrent in favor
+                     of per_trade_size_usd. NOT a
+                     consolidation source.
+
+  dv1_3  05-03-2026  PAPER-AS-MASTER OPERATIONS-PROCEDURE
+                     CASCADE — TB00147 TIER 1.5 + TIER 2
+                     AUDIT FINDINGS 6 + 8.
+
+                     Operations-procedure layer of the
+                     TB00147 cascade. Parent specs
+                     (0511001 dv1_5, 0511004 dv1_3) and
+                     coding specs (1011002 dv1_26,
+                     1011005 dv1_3) committed earlier in
+                     the cascade.
+
+                     Sections amended:
+                       Header: dv1_2 -> dv1_3.
+                       PT-MODE-004 capital ledger
+                         arithmetic tightened: maker fee
+                         applies to entry + TP fills,
+                         taker fee applies to market-sell
+                         exits. Cross-references
+                         updated to point at new
+                         HR-WM-032 + 1011002 dv1_26
+                         §16A.1 + 0411003 dv1_0 fee
+                         schedule.
+                       PT-MODE-006 (NEW) — Paper Exit
+                         Routing Through Exit Controller.
+                         Eleven-step expected event flow
+                         per paper close, operational
+                         verification log sequence,
+                         halt-and-confirm criterion if
+                         the dv1_25 parallel
+                         _fire_ciats_outcome path is
+                         observed in operation.
+                       PT-MODE-007 (NEW) — CIATS Data
+                         Flow Parity. Statistical
+                         thresholds (50 candles, 200
+                         trades, 600 trades) apply
+                         equally to paper and live
+                         modes.
+                       §10 RELATED DOCUMENTS expanded
+                         with cascade citations to all
+                         four new TB00147 documents.
+
+                     REASON FOR CHANGE.
+
+                     TB00147 audit findings 6 and 8
+                     close at the operations-procedure
+                     layer. Prior cascade documents:
+
+                       0511001 dv1_5 (b98954b) — parent
+                         spec layer of FINDING 6 + 8.
+
+                       1011002 dv1_26 (fc03cdb) —
+                         WS Manager coding-spec layer
+                         of FINDING 6 + 8.
+
+                       0511004 dv1_3 + 1011005 dv1_3
+                         (57a6aed) — Exit Controller
+                         spec + coding-spec layers of
+                         FINDING 7 + 8 cascade.
+
+                     This document (0211005 dv1_3)
+                     ensures operators have the
+                     verification reference for
+                     observing paper-mode exit routing
+                     correctness in the live log
+                     stream. The 11-step expected event
+                     flow is a directly testable
+                     operational checklist.
+
+                     PA-MASTER PRE-EMIT SCAN.
+
+                     Authored under TB00000 v2_18 §4.4
+                     PA-008 pre-emit-scan discipline.
+                     Paper-mode behavior described in
+                     this document is byte-identical to
+                     live-mode behavior outside the
+                     four PA-004 divergence points.
+                     Operations-procedure language
+                     consistently presents paper as the
+                     master configuration with live
+                     mimicking; no wrong-direction
+                     framing.
+
+                     CODE IMPACT.
+
+                     None at the operations-procedure
+                     layer. All code changes are
+                     enumerated in 1011002 dv1_26 and
+                     1011005 dv1_3 Revision History
+                     CODE IMPACT sections for the
+                     TB00148 implementation session.
+
+                     Operator runbook impact.
+
+                     The PT-MODE-006 OPERATIONAL
+                     VERIFICATION subsection becomes
+                     a runbook check-item for
+                     operators inspecting paper-mode
+                     log streams during the post-
+                     deploy observation window. If
+                     TRADE_CLOSE records are absent
+                     from paper close events or are
+                     emitted by component=WS_MGR,
+                     operators halt and confirm
+                     ws_manager.py code matches
+                     1011002 dv1_26 §16A.2.
+
+                     PARENT CHAIN COMPLIANCE.
+
+                     0211005 (Tier 3 Instance, AA=02
+                     Operations Sub-Domain 1) ->
+                     0210000 Operations_CIATS_Anchor
+                     (Tier 2) -> 0200000 Operations
+                     (Tier 1 Domain). Chain unbroken.
+
+                     Bill override.
+
+                     TB00147 cascade enacted under
+                     Bill explicit authorization
+                     (TB00147 chat, 05-03-2026)
+                     "Yes, I authorize expanded
+                     ALT-A." Direct increment dv1_2
+                     -> dv1_3 under standing
+                     document-control override scope
+                     established TB00115 et al.
+
+                     Document Status: supersedes dv1_2.
+
+  dv1_2  05-03-2026  PAPER-AS-MASTER PRINCIPLE ALIGNMENT.
+                     CP-002 corrective per TB00145 Session
+                     Log v1_1 §3 + TB00146 STREAM B.
+
+                     PRIMARY CORRECTIVE — PT-MODE-003 internal
+                     contradiction resolved. dv1_1 PT-MODE-003
+                     said "TothBot V2 connects to the private
+                     Kraken WS in paper trading mode" (line
+                     117) while also asserting "DATA key is
+                     used in paper mode. The TRADE key is not
+                     used" (line 127). These two statements
+                     are mutually exclusive — Kraken private
+                     WS authentication REQUIRES the TRADE key.
+                     The contradiction was wrong-direction
+                     authoring (paper-mimics-live) authored
+                     in TB00145 v1_0 era and missed by
+                     prior reviews.
+
+                     Rewritten PT-MODE-003: paper does NOT
+                     connect to private Kraken WS at all.
+                     self._ws_private remains None. TRADE key
+                     not exercised in paper. DATA key used
+                     in both modes for public WS / REST.
+                     Aligns with 0511001 dv1_4 HR-WM-022
+                     paper-canonical reality.
+
+                     CASCADE CORRECTIVES (Bill explicit
+                     authorization for scope expansion via
+                     TB00146 chat):
+
+                     PT-MODE-001 LIVE list rewritten. dv1_1
+                     said paper connects "All Kraken WS
+                     connections (public and private)" —
+                     contradicts HR-WM-022. dv1_2 clarifies
+                     paper connects public WS only; private
+                     WS NOT connected in paper.
+
+                     PT-MODE-004 rewritten. dv1_1 said paper
+                     baseline = real Kraken USD balance — but
+                     paper does not connect private WS so
+                     cannot read Kraken balance. dv1_2 sets
+                     paper baseline = paper_starting_balance
+                     (default $1,000 per D-05) per 0511001
+                     dv1_4 §4.2 Step 9b. Synthetic ledger
+                     uses identical fee arithmetic to live
+                     so paper P&L is shape-equivalent to
+                     live P&L.
+
+                     PT-MODE-005 rewritten. dv1_1 Step 7
+                     said paper "Connect private WS, subscribe
+                     balances + executions (DATA key; READ
+                     ONLY)" — contradicts HR-WM-022 and
+                     impossible (DATA key cannot auth to
+                     private WS). dv1_2 reorganizes paper-mode
+                     startup to align with 0511001 dv1_4 §4.2
+                     paper-canonical Steps 1-11 with paper
+                     variants 9b/10b. Paper Steps 1-8
+                     IDENTICAL to live. Steps 9, 10, 11
+                     SKIPPED in paper (PA-004 divergence
+                     points). Step 9b sets synthetic
+                     baseline. Step 10b activates paper
+                     fill driver.
+
+                     §3.1 startup confirmation log payload
+                     schema rewritten to log paper-canonical
+                     state explicitly: steps_executed includes
+                     paper variants 9b/10b; step_9_status,
+                     step_10_status, step_11_status fields
+                     show SKIPPED for paper; paper_baseline_
+                     source and paper_baseline_value logged;
+                     private_ws_connected: False mandatory
+                     for paper.
+
+                     §7.4 Step 6 live transition checklist
+                     rewritten to verify Steps 1-11 all
+                     execute in live (no paper variants 9b/
+                     10b in live), private_ws_connected =
+                     True, paper_baseline_source = null,
+                     and Steps 1-8 byte-identical between
+                     paper and live PA-005.
+
+                     HR-PT-008 rewritten. dv1_1 said "ONLY
+                     permitted difference is Step 7
+                     subscription set (DATA-key READ ONLY
+                     in paper vs TRADE-key FULL in live)"
+                     — wrong-direction. dv1_2 enumerates
+                     the four PA-004 divergence points
+                     explicitly: private WS connection,
+                     order dispatch, capital ledger,
+                     Position Mirror sourcing. Cites
+                     TB00000 v2_18 §4.4 PA-001..010 as
+                     absolute standing rule.
+
+                     §1 PURPOSE updated. Removed dv1_1
+                     "TB00128 D-06" sole-citation framing.
+                     Added TB00000 v2_18 §4.4 PA-001
+                     (paper is master) and PA-004 (four
+                     divergence points enumerated).
+                     Updated 0511001 reference dv1_3 ->
+                     dv1_4.
+
+                     §10 Related Documents version
+                     references updated. 0511001 dv1_3 ->
+                     dv1_4. 0500000 dv1_20 -> dv1_21.
+                     Added TB00000 v2_18 reference.
+
+                     RATIONALE:
+                     ERROR-TB00145-CHAT-02 root cause was
+                     wrong-direction authoring of TRUE
+                     PAPER-LIVE PARITY framed as live-
+                     canonical with paper diverging. The
+                     correct direction (paper-canonical
+                     with live mimicking) was codified in
+                     TB00000 v2_18 §4.4 PA-001..010 as
+                     absolute standing rule. dv1_1
+                     contained pre-existing wrong-direction
+                     residue (PT-MODE-003 contradiction
+                     authored in dv1_0 era; PT-MODE-005
+                     and HR-PT-008 inheriting the same
+                     defect). dv1_2 brings 0211005 into
+                     compliance with PA-001..010.
+
+                     SCOPE EXPANSION RECORD:
+                     TB00145 NSI v1_1 STEP 5 narrowly
+                     scoped CP-002 to PT-MODE-003 only.
+                     TB00146 chat surface analysis of
+                     dv1_1 against paper-canonical
+                     0511001 dv1_4 revealed cascade
+                     defects in PT-MODE-001, PT-MODE-004,
+                     PT-MODE-005, HR-PT-008, §3.1, §7.4
+                     Step 6, and §10. Per RR-SCOPE-007
+                     (no silent narrowing of user-
+                     specified scope), Claude surfaced
+                     the cascade as RABBIT 2 in TB00146
+                     chat. Bill explicit authorization
+                     to expand scope: "B" (TB00146 chat,
+                     STREAM B). Cascade fix authored
+                     this cycle.
+
+                     PARENT CHAIN COMPLIANCE:
+                     0200000 Operations (Domain) v1_0
+                     -> 0210000 Operations_CIATS_Anchor
+                     (Sub-Domain Anchor) dv1_0
+                     -> 0211005 (Instance) dv1_2.
+
+                     CROSS-REFERENCE COMPLIANCE:
+                     0511001 dv1_4 (paper-canonical WS
+                     Manager spec) and TB00000 v2_18
+                     (PAPER-AS-MASTER) are cited
+                     throughout dv1_2. No remaining
+                     references to retired dv1_5/dv1_6
+                     or wrong-direction text.
+
+  dv1_1  04-24-2026  Paper-to-live parity binding formalized.
+                     Phase 3 Step 5 of TB00131 5-phase spec
+                     cascade plan executed.
+
+                     PRIMARY CHANGE — PT-MODE-005 ADDED:
+                     New paper-mode startup parity-binding
+                     rule. Paper-mode startup MUST execute
+                     0511001 dv1_3 §4.2 Steps 2-8
+                     identically to live mode, with the
+                     ONLY permitted difference being the
+                     Step 7 private WS subscription set
+                     (DATA-key READ ONLY in paper vs
+                     TRADE-key FULL in live). Full
+                     step-by-step ordering documented
+                     (Step 2 instrument channel; Step 3
+                     tradeable_universe per AS-001; Step 4
+                     regime_anchor handle; Step 5 OHLC +
+                     ticker subscriptions; Step 6
+                     indicator seeding; Step 7 private WS;
+                     Step 8 Regime Engine initial
+                     computation). Startup log schema
+                     PAPER_TRADING_MODE_ON payload defined
+                     with parity_binding field, universe
+                     scope enumeration, step execution
+                     array, and Step 7 subscription set
+                     identifier.
+
+                     CHANGE 2 — HR-PT-008 ADDED:
+                     New hard rule elevates paper-to-live
+                     parity binding to a business-procedure
+                     invariant independent of code-level
+                     enforcement in 0511001 / 0711003.
+                     Cross-references HR-WM-026 (WS
+                     Manager), HR-AS-010 (Asset Selection),
+                     and TB00128 D-06. Defines OI-044
+                     pattern recurrence as session-halting
+                     defect triggering PT-AC-002 Critical
+                     classification.
+
+                     CHANGE 3 — §1 PURPOSE EXTENDED:
+                     New paragraph added documenting the
+                     paper-mimics-live-EXACTLY principle
+                     per D-06. Universe scope cited
+                     (USD/USDC/USDT per 0711003 dv1_3
+                     AS-001 under D-03 amended; no top-N
+                     cap per D-08). Startup parity binding
+                     cited as enforced invariant.
+
+                     CHANGE 4 — §6 PT-AC-002 EXTENDED:
+                     Two new Critical-defect items added
+                     to the definition:
+                       (a) Paper-mode startup step skipped
+                           relative to PT-MODE-005 parity
+                           binding (OI-044 recurrence).
+                       (b) Paper-mode universe mismatch vs
+                           0711003 dv1_3 AS-001 (wrong
+                           quote-currency set, top-N cap
+                           applied, volume filter
+                           bypassed).
+
+                     CHANGE 5 — §5 PT-MON-004 EXTENDED:
+                     New checklist item added requiring
+                     Bill to verify paper-mode startup log
+                     shows steps_executed = [2, 3, 4, 5, 6,
+                     7, 8] across the paper trading period
+                     before live transition. Confirms no
+                     OI-044 pattern recurrence occurred
+                     during paper operations.
+
+                     CHANGE 6 — §8 Step 6 CLARIFIED:
+                     Live transition Step 6 extended with
+                     explicit parity-verification
+                     requirement: steps_executed payload
+                     must match paper-mode payload except
+                     Step 7 subscription set changes from
+                     DATA_KEY_READ_ONLY to TRADE_KEY_FULL.
+                     Any other step-level difference is a
+                     defect.
+
+                     CHANGE 7 — ALERT MAILBOX UPDATED:
+                     PT-MON-001 and §8 Step 8 updated from
+                     singular alert@tothbot.com to plural
+                     alerts@tothbot.com per TB00000 v2_10
+                     Section 9.7 (OI-019 resolution).
+
+                     CHANGE 8 — §10 RELATED DOCUMENTS
+                     UPDATED:
+                     Version-pinned citations added for
+                     all related specs per TB00128 §3.7
+                     citation-hygiene scope:
+                       0211001 dv1_0
+                       0211002 dv1_0
+                       0211003 dv1_0
+                       0211004 dv1_0
+                       0511001 dv1_3  (NEW citation)
+                       0511006 dv1_1  (was dv1_0 — stale)
+                       0500000 dv1_20 (was dv1_18 — stale)
+                       0711003 dv1_3  (NEW citation)
+
+                     NO SCOPE EXPANSION BEYOND NSI §4.3:
+                     Per TB00131 NSI §4.3, 0211005 dv1_1
+                     scope is R-05/R-06 (universe scope
+                     + paper-mode parity binding). All
+                     edits trace to one of those two
+                     scope items. No CIATS-activation-
+                     sequence changes. No acceptance-
+                     criteria quantitative-threshold
+                     changes. No live-transition-procedure
+                     restructuring beyond the parity-
+                     verification clarification in Step 6.
+
+                     SECTIONS UNCHANGED:
+                     §2 Parent Chain. §4 CIATS Activation
+                     Sequence (PT-CIATS-001..003 — text
+                     preserved verbatim). §6 PT-AC-001,
+                     PT-AC-003, PT-AC-004, PT-AC-005,
+                     PT-AC-006 body text (PT-AC-002 had
+                     two items added to Critical-defect
+                     list; no existing-item modifications).
+                     §7 Parameter Baseline (PT-BASE-001,
+                     PT-BASE-002 — text preserved
+                     verbatim). §9 HR-PT-001 through
+                     HR-PT-007 body text preserved
+                     verbatim.
+
+                     FP/DP ANALYSIS (PT-MODE-005 +
+                     HR-PT-008 design):
+                     Options considered:
+                       Option A — Cite 0511001 HR-WM-026
+                         and 0711003 HR-AS-010 only
+                         (minimum-scope). REJECTED — the
+                         two cited rules are code-spec
+                         parity bindings. OI-044 root
+                         cause was the absence of a
+                         business-procedure-level
+                         invariant. Code-spec rules are
+                         necessary but insufficient;
+                         without a procedure-level rule,
+                         the parity binding can be
+                         silently violated by any future
+                         code change that does not trigger
+                         0511001 / 0711003 review.
+                       Option B — Add PT-MODE-005 as
+                         procedural narrative only (no
+                         hard rule). REJECTED — narrative
+                         without hard-rule enforcement is
+                         the OI-043 / OI-036 / OI-037
+                         governance-failure pattern (per
+                         TB00000 v2_13 §4.3 RR-RAT-001).
+                         OI-044 carries the same risk
+                         profile as those three; requires
+                         the same escalation pattern.
+                       Option C — Add PT-MODE-005
+                         procedural content PLUS HR-PT-008
+                         hard rule PLUS §6 PT-AC-002
+                         Critical-classification extension
+                         PLUS §5 PT-MON-004 verification
+                         checklist PLUS §8 Step 6 parity-
+                         verification requirement.
+                         ACCEPTED — five enforcement
+                         points (procedure, hard rule,
+                         Critical-defect classification,
+                         paper-monitoring verification,
+                         live-transition verification)
+                         create a belt-and-suspenders
+                         architecture that matches the
+                         TB00000 v2_13 §4.2 / §4.3
+                         multi-point-enforcement pattern
+                         (pre-emit scan plus self-catch
+                         signal plus absolute override of
+                         prior text plus violation
+                         handling plus recurrence
+                         tracking) proven effective in
+                         TB00000 v2_11 / v2_13.
+                     Decision: Option C.
+
+                     BILL OVERRIDE:
+                     Document-control constraints for
+                     0211005 (dv1_0 → dv1_1 minor
+                     increment via repair cascade, no rv
+                     state) are governed by Bill's
+                     standing directive continuing the
+                     override scope established TB00115
+                     (04-22-2026) and extended through
+                     TB00116, TB00128, TB00129, TB00130,
+                     TB00131. Phase 3 of the TB00131 §4.3
+                     5-phase plan executes under this
+                     override in TB00132.
+
+                     No patches. No real money. Paper
+                     trading must mimic all aspects of
+                     live trading exactly. Document is
+                     coding-ready.
+
+  dv1_0  04-05-2026  Initial document. Paper trading mode
+                     defined (PT-MODE-001 through PT-MODE-004):
+                     live data + simulated fills, config flag,
+                     private WS read-only, real portfolio
+                     baseline. CIATS activation sequence
+                     (PT-CIATS-001 through PT-CIATS-003):
+                     Stage 1 EWMA at 50 evals, Stage 2
+                     Proposal Engine at 200 trades, Stage 3
+                     Regime Library at 600 trades. Monitoring
+                     checklist (PT-MON-001 through PT-MON-004):
+                     daily, per-25-trade, 200-trade milestone,
+                     and pre-transition checks. Six acceptance
+                     criteria (PT-AC-001 through PT-AC-006):
+                     200-trade minimum, no critical defects,
+                     positive expectation (win≥40%, R:R≥1.3,
+                     Sharpe≥0), CIATS operating, no open
+                     CRITICAL alerts, Bill formal approval.
+                     Parameter baseline documentation
+                     (PT-BASE-001 through PT-BASE-002).
+                     Live transition procedure (8 steps).
+                     Hard rules HR-PT-001 through HR-PT-007.
+
+
+============================================================
+END OF DOCUMENT
+============================================================

@@ -1,0 +1,726 @@
+DocDCN:     0211004
+DocTitle:   Incident_Response_Procedure
+DocVersion: dv1_1
+DocOwner:   Bill
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/02XXXXX_Operations/0211004_Incident_Response_Procedure_dv1_1.txt
+DocDate:    06-03-2026
+DocTime:    08:00:00 UTC
+
+============================================================
+INCIDENT RESPONSE PROCEDURE
+============================================================
+
+============================================================
+1. PURPOSE
+============================================================
+
+This document defines the response procedures for every
+identified incident category in TothBot V2. For each
+incident, four elements are specified:
+
+  (1) Detection mechanism — how TothBot detects it
+  (2) Severity — INFO, WARNING, or CRITICAL
+  (3) Automated response — what TothBot does automatically
+  (4) Operator action — what Bill must do
+
+Incidents are events that deviate from normal operation.
+They range from routine (transient WS disconnect) to
+serious (Full Halt, emergSL fire, VPS failure). All
+incidents are logged. CRITICAL incidents alert
+alert@tothbot.com immediately.
+
+This document is specification-level. Implementation
+details are in 0511001 WS_Manager_Specification,
+0511004 Exit_Controller_Specification, and 1011013
+VPS_Deployment_Coding_Spec.
+
+============================================================
+2. PARENT CHAIN
+============================================================
+
+  0000000  Ethics_and_Safety              (Domain)
+  0100000  Management                     (Domain)
+  0200000  Operations                     (Domain Document)
+  0210000  Operations_CIATS_Anchor        (Sub-Domain Anchor)
+  0211004  This document                  (Instance)
+
+============================================================
+3. INCIDENT CATEGORIES
+============================================================
+
+  IC-001  Transient WS Disconnect
+  IC-002  Zombie WS Connection
+  IC-003  Fatal WS Reconnect Failure
+  IC-004  VPS Failure / TothBot Process Crash
+  IC-005  Kraken Engine State Change
+  IC-006  Pair Status Change (open position affected)
+  IC-007  Session Pause Circuit Breaker (5% drawdown)
+  IC-008  Full Halt Circuit Breaker (10% drawdown)
+  IC-009  Layer 3 Emergency SL Fire
+  IC-010  Negative Kelly
+  IC-011  CUSUM Signal
+  IC-012  Logger Queue Full
+  IC-013  Frequent Restarts (>3 per 24h)
+  IC-014  Balances / Executions Sequence Gap
+  IC-015  Incomplete Position Protection at Startup
+  IC-016  Manual Kill Switch Execution
+
+============================================================
+4. INCIDENT RESPONSE PROCEDURES
+============================================================
+
+------------------------------------------------------------
+IC-001  TRANSIENT WS DISCONNECT
+------------------------------------------------------------
+
+Detection:
+  WS Manager detects via asyncio exception (ConnectionClosed,
+  ConnectionError) or JSON ping timeout (no pong within
+  10 seconds of ping dispatch).
+
+Severity: WARNING
+
+Automated response:
+  WS Manager initiates the reconnect sequence per 0211003
+  Section 5 and 0511001. Reconnect backoff: immediate for
+  first 3 attempts, then 5-second intervals. Maximum
+  Cloudflare reconnect constraint applies (minimum 5-second
+  delay after initial attempts).
+  Emergency SL orders remain active on the Kraken matching
+  engine throughout the disconnection period.
+  All reconnection invariants (portfolio_baseline_USD,
+  drawdown_pct, system_state) are preserved.
+  Log WS_DISCONNECT and WS_RECONNECT_INITIATED.
+
+Operator action:
+  None required for transient disconnects that self-resolve.
+  Monitor alert@tothbot.com. If disconnects are frequent
+  (see IC-013), investigate root cause.
+
+------------------------------------------------------------
+IC-002  ZOMBIE WS CONNECTION
+------------------------------------------------------------
+
+Detection:
+  WS Manager zombie detection task monitors
+  last_real_data_time per connection using time.monotonic().
+  Only real channel events reset the timer — heartbeat
+  messages and pong responses do NOT reset it (AR-042).
+  Threshold: 90 seconds without real market data.
+
+Severity: WARNING (escalates to CRITICAL if on private
+  connection with open positions)
+
+Automated response:
+  Log ZOMBIE_CONNECTION_DETECTED with connection_id and
+  last_real_data_time. Alert alert@tothbot.com.
+  Force-close the zombie connection.
+  Initiate reconnect sequence per IC-001 procedure.
+
+Operator action:
+  None required if reconnect succeeds.
+  If zombie connections are recurring, investigate network
+  path between VPS and Kraken endpoints.
+
+------------------------------------------------------------
+IC-003  FATAL WS RECONNECT FAILURE
+------------------------------------------------------------
+
+Detection:
+  All reconnect retries exhausted (5 attempts for WS
+  connection, 3 attempts for token acquisition) without
+  success.
+
+Severity: CRITICAL
+
+Automated response:
+  Log FATAL_RECONNECT_FAILURE at CRITICAL level.
+  Alert alert@tothbot.com immediately.
+  Stop sending systemd watchdog pings.
+  systemd detects missing pings within 120 seconds and
+  restarts TothBot automatically.
+  Emergency SL orders remain active on the Kraken matching
+  engine during the restart window.
+
+Operator action:
+  Monitor alert@tothbot.com. If TothBot does not recover
+  after restart (repeated fatal failures), investigate:
+    - VPS network connectivity to Kraken endpoints
+    - Kraken service status at status.kraken.com
+    - API key validity and IP whitelist
+
+------------------------------------------------------------
+IC-004  VPS FAILURE / TOTHBOT PROCESS CRASH
+------------------------------------------------------------
+
+Detection:
+  systemd detects process exit (Restart=on-failure) or
+  watchdog timeout (WatchdogSec=120 without ping).
+
+Severity: CRITICAL
+
+Automated response:
+  systemd restarts TothBot after RestartSec=5 delay.
+  Full 10-step startup sequence executes on restart.
+  Position Mirror is reconciled from snap_orders.
+  Positions closed during the downtime gap are detected
+  and CIATS Trade Outcome Bus is fired for each.
+  Emergency SL orders on Kraken matching engine remained
+  active throughout — crash protection was maintained.
+
+Operator action:
+  Review system journal (journalctl -u tothbot) after
+  recovery to identify crash cause.
+  If crash is repeating (see IC-013), investigate root
+  cause before allowing live trading to continue.
+  Confirm Position Mirror matches actual Kraken open
+  orders after restart via Kraken web interface.
+
+------------------------------------------------------------
+IC-005  KRAKEN ENGINE STATE CHANGE
+------------------------------------------------------------
+
+Detection:
+  WS Manager receives status channel update event.
+  Four global engine states: online, post_only,
+  cancel_only, maintenance.
+
+Severity:
+  online: INFO (normal recovery)
+  post_only: WARNING (limited but operational)
+  cancel_only: CRITICAL (no new orders possible)
+  maintenance: CRITICAL (matching engine offline)
+
+Automated response by state:
+
+  online:
+    Resume full pipeline operation. Log ENGINE_ONLINE.
+
+  post_only:
+    New entries are still valid (limit/post_only orders
+    accepted). Existing TP and emergSL resting orders
+    remain active. Pipeline continues. Log ENGINE_POST_ONLY.
+
+  cancel_only:
+    Gate 1 blocks all new pipeline entries immediately.
+    Existing resting TP and emergSL remain active on the
+    matching engine — they provide the only protection.
+    No new orders of any kind can be placed.
+    Log ENGINE_CANCEL_ONLY. Alert CRITICAL.
+
+  maintenance:
+    Same as cancel_only response. Additionally: matching
+    engine is offline. Resting orders (TP, emergSL) are
+    preserved and will remain active when engine returns.
+    Log ENGINE_MAINTENANCE. Alert CRITICAL.
+    Post-maintenance transition: maintenance → post_only
+    → online. WS status channel notifies each transition.
+
+Operator action:
+  cancel_only or maintenance: monitor status.kraken.com
+  for resolution timeline. Do not attempt manual orders
+  during maintenance. Existing crash protection (emergSL)
+  is active. No immediate action required unless maintenance
+  extends beyond expected window — then monitor positions
+  manually.
+
+------------------------------------------------------------
+IC-006  PAIR STATUS CHANGE (OPEN POSITION AFFECTED)
+------------------------------------------------------------
+
+Detection:
+  WS Manager receives instrument channel status update
+  for a pair that has an open position in the Position
+  Mirror.
+
+Severity:
+  limit_only: WARNING
+  cancel_only: CRITICAL
+  maintenance: CRITICAL
+  reduce_only: WARNING
+  delisted: CRITICAL
+  work_in_progress: WARNING
+
+Automated response by status:
+
+  limit_only:
+    Exit Controller cancels TP resting order.
+    Places IOC limit sell at best_bid.
+    IOC limit preserves maker pricing where possible.
+    Must NOT use market sell in limit_only state.
+    Log PAIR_LIMIT_ONLY_EXIT.
+
+  cancel_only:
+    HOLD position. No new orders possible.
+    Resting TP and emergSL are the only active protection.
+    Log PAIR_CANCEL_ONLY_HOLD. Alert CRITICAL.
+    Monitor instrument channel for status recovery.
+
+  maintenance (pair level):
+    Same as cancel_only. Log PAIR_MAINTENANCE_HOLD.
+    Alert CRITICAL. Monitor for recovery.
+
+  reduce_only:
+    Existing sell orders (TP, emergSL) remain valid.
+    No new entries. Monitor for exit via existing orders.
+    Log PAIR_REDUCE_ONLY.
+
+  delisted:
+    Log PAIR_DELISTED. Alert CRITICAL.
+    Attempt market sell if any order placement is possible.
+    Manual intervention required.
+
+  work_in_progress:
+    HOLD. Treat as unstable transitional state.
+    Monitor for resolution. Log PAIR_WORK_IN_PROGRESS.
+
+Operator action:
+  CRITICAL status changes require Bill to monitor the
+  affected position until resolution. For cancel_only
+  and maintenance: existing emergSL provides crash
+  protection — no immediate manual action required unless
+  the situation persists beyond expected duration.
+  For delisted pairs: manual intervention required.
+
+------------------------------------------------------------
+IC-007  SESSION PAUSE CIRCUIT BREAKER (5% DRAWDOWN)
+------------------------------------------------------------
+
+Detection:
+  Continuous ticker-driven drawdown monitoring:
+    current_portfolio_USD = spot_usd_balance
+        + sum(bid_price[sym] × qty[sym]
+              for sym in position_mirror)
+    drawdown_pct = (portfolio_baseline_USD
+                    - current_portfolio_USD)
+                   / portfolio_baseline_USD
+  Evaluated on every bbo ticker event for open-position
+  pairs AND at every Gate 7 evaluation (AR-052).
+  Threshold: drawdown_pct >= session_pause_drawdown (5%).
+
+Severity: WARNING
+
+Automated response:
+  system_state = SESSION_PAUSE.
+  Gate 7 blocks all new entry pipeline evaluations.
+  Existing open positions continue to be monitored and
+  exited normally by the Exit Controller.
+  Alert alert@tothbot.com: SESSION_PAUSE_TRIGGERED with
+  current drawdown_pct, portfolio values.
+  Log SESSION_PAUSE_TRIGGERED.
+
+  Recovery: SESSION_PAUSE resolves automatically when
+  drawdown_pct recovers below 5% (portfolio recovers).
+  system_state returns to NORMAL. No operator action
+  required for recovery. Log SESSION_PAUSE_RECOVERED.
+
+Operator action:
+  Monitor alert@tothbot.com. No immediate action required
+  unless Bill decides to halt manually. The session pause
+  is self-resolving if positions recover. CIATS will
+  analyze whether parameters contributed to the drawdown.
+
+------------------------------------------------------------
+IC-008  FULL HALT CIRCUIT BREAKER (10% DRAWDOWN)
+------------------------------------------------------------
+
+Detection:
+  Same continuous monitoring as IC-007.
+  Threshold: drawdown_pct >= full_halt_drawdown (10%).
+
+Severity: CRITICAL
+
+Automated response:
+  system_state = FULL_HALT.
+  Gate 7 blocks all new entry pipeline evaluations.
+  Exit Controller cancels ALL open entry orders (orders
+  not yet filled) via batch_cancel. batch_cancel is used
+  because it bypasses the rate counter maximum — ensuring
+  cancellation executes even when rate limited (AR-041).
+  batch_cancel does NOT cancel resting TP or emergSL
+  orders — those remain active.
+  Existing open positions (already filled) continue to
+  be monitored and exited normally by the Exit Controller.
+  Alert alert@tothbot.com: FULL_HALT_TRIGGERED with
+  drawdown_pct, portfolio values, open position count.
+  Log FULL_HALT_TRIGGERED at CRITICAL level.
+
+  FULL_HALT does NOT auto-close positions and does NOT
+  auto-recover. Bill decides when and whether to resume.
+
+Operator action:
+  Immediate review required. Bill decides:
+    (a) Allow existing positions to exit via Exit Controller
+        and emergSL, then resume after analysis.
+    (b) Manually close positions via Kraken interface.
+    (c) Stop TothBot per 0211003 SS-STOP-002 procedure.
+  Before resuming: CIATS analysis of what caused the
+  drawdown. Parameter review. Possible parameter changes
+  through PDCA cycle.
+  To resume: Bill manually resets system_state to NORMAL
+  (via operator command — implementation TBD in Phase 3+).
+
+------------------------------------------------------------
+IC-009  LAYER 3 EMERGENCY SL FIRE
+------------------------------------------------------------
+
+Detection:
+  WS Manager executions channel receives exec_type=filled
+  for an emergSL order_id recorded in Position Mirror.
+  This is the event that confirms Layer 3 fired.
+
+Severity: CRITICAL
+
+Automated response:
+  Exit Controller processes the emergSL fill as a position
+  close. CIATS Trade Outcome Bus is fired with exit_reason
+  = EMERGENCY_SL_FIRED. Position removed from Position
+  Mirror. Log EMERGENCY_SL_FIRED at CRITICAL level.
+  Alert alert@tothbot.com immediately.
+
+Operator action:
+  Immediate investigation required. Layer 3 should NEVER
+  fire in normal operation. An emergSL fire means:
+    (a) TothBot failed to execute the Layer 1 or Layer 2
+        exit before the emergSL price was reached, OR
+    (b) An extreme market event produced a gap move that
+        bypassed Layer 1 and Layer 2 exit mechanisms.
+  Investigate logs for the period before the fire. Review
+  exit controller state at the time of the fire. Determine
+  whether a code defect, a market event, or a configuration
+  issue caused it. Do not resume live trading until cause
+  is understood.
+
+------------------------------------------------------------
+IC-010  NEGATIVE KELLY
+------------------------------------------------------------
+
+Detection:
+  CIATS compute_kelly() produces K_full <= 0.
+
+Severity: CRITICAL
+
+Automated response:
+  CIATS does NOT update the Parameter Store.
+  Existing per_trade_size_usd value remains unchanged.
+  Log KELLY_NEGATIVE at CRITICAL level with K_full, W, R,
+  trade count, rolling window bounds.
+  Alert alert@tothbot.com immediately.
+
+Operator action:
+  Review immediately. Negative Kelly (K_full <= 0) means
+  the strategy has computed a negative expected value
+  over the rolling window. This may indicate:
+    (a) A genuine degradation in strategy performance
+        requiring parameter review.
+    (b) Insufficient data (early in live trading — below
+        the 200-trade floor, Kelly should not be active).
+    (c) A data anomaly in the Trade Outcome Bus records.
+  Review the rolling window trade corpus. Compare recent
+  performance against earlier performance. Engage CIATS
+  PDCA cycle if performance degradation is confirmed.
+
+------------------------------------------------------------
+IC-011  CUSUM SIGNAL
+------------------------------------------------------------
+
+Detection:
+  CIATS CUSUM cumulative sum exceeds decision threshold
+  h=4sigma for the monitored metric.
+
+Severity: WARNING
+
+Automated response:
+  CUSUM signal triggers CIATS PDCA PLAN phase initiation.
+  Log CUSUM_SIGNAL with signal direction, current cumulative
+  sum, threshold, and trade count. Alert alert@tothbot.com
+  at WARNING level.
+  CUSUM signal does NOT trigger an automatic parameter
+  change. It initiates a PLAN phase that must pass
+  Spearman and Mann-Whitney gates before any proposal
+  is generated.
+
+Operator action:
+  Monitor CIATS PDCA cycle outcome. If the PLAN phase
+  produces a proposal, Bill approval is required before
+  any parameter change is applied. No immediate action
+  required on CUSUM signal alone.
+
+------------------------------------------------------------
+IC-012  LOGGER QUEUE FULL
+------------------------------------------------------------
+
+Detection:
+  Logger async bounded queue (maxsize=10,000) reaches
+  capacity. New events cannot be enqueued via put_nowait().
+
+Severity: CRITICAL
+
+Automated response:
+  Log LOGGER_QUEUE_FULL at CRITICAL level (the last
+  entry that fits). Alert alert@tothbot.com.
+  Events that arrive after queue is full are DROPPED
+  and counted. The count of dropped events is logged
+  when the queue drains.
+  CIATS data integrity may be compromised if Trade Outcome
+  Bus events are lost.
+
+Operator action:
+  Immediate investigation required. A full queue indicates:
+    (a) Disk I/O bottleneck preventing the async writer
+        from flushing to disk fast enough, OR
+    (b) An unexpected event burst (abnormal market
+        conditions producing many concurrent events).
+  Check VPS disk I/O metrics. Check log file disk usage
+  (see IN-OC-003 thresholds). If Trade Outcome Bus events
+  were dropped, manual reconstruction from Kraken order
+  history may be required before CIATS analysis is valid.
+
+------------------------------------------------------------
+IC-013  FREQUENT RESTARTS (>3 PER 24H)
+------------------------------------------------------------
+
+Detection:
+  TothBot monitors its own restart count via systemd
+  journal query or internal counter across restarts
+  (implementation TBD in coding spec). More than 3
+  restarts within any 24-hour period is the threshold.
+
+Severity: CRITICAL
+
+Automated response:
+  Log FREQUENT_RESTARTS_DETECTED at CRITICAL level.
+  Alert alert@tothbot.com with restart count and
+  timestamps.
+
+Operator action:
+  Immediate investigation required. Frequent restarts
+  indicate an unresolved defect or infrastructure problem.
+  Do not allow live trading to continue with open positions
+  while restarts are recurring. Review:
+    (a) System journal for crash cause on each restart.
+    (b) VPS resource metrics (RAM, CPU, disk).
+    (c) Network connectivity to Kraken endpoints.
+    (d) TothBot logs for exceptions or CRITICAL events
+        immediately before each restart.
+
+------------------------------------------------------------
+IC-014  BALANCES / EXECUTIONS SEQUENCE GAP
+------------------------------------------------------------
+
+Detection:
+  WS Manager detects a gap in the sequence number stream
+  for the balances channel or executions channel. A gap
+  means events were missed during the connection.
+
+Severity: WARNING
+
+Automated response:
+  Balances gap: trigger REST GetAccountBalance to
+  reconcile the current balance. Log BALANCES_SEQUENCE_GAP.
+
+  Executions gap: this is more serious. A gap in the
+  executions stream may mean fills, cancellations, or
+  emergSL fires were missed.
+  Trigger REST GetOpenOrders reconciliation immediately.
+  Compare REST result against Position Mirror.
+  Process any discrepancies per the gap reconciliation
+  procedure in 0211003 Section 5 (reconnection invariants).
+  Log EXECUTIONS_SEQUENCE_GAP at WARNING level.
+  Alert alert@tothbot.com.
+
+Operator action:
+  Verify that Position Mirror matches Kraken open orders
+  after reconciliation. If a position closed during the
+  gap was not detected via snap_trades, check Kraken
+  order history manually and fire any missing Trade
+  Outcome Bus events via operator command.
+
+------------------------------------------------------------
+IC-015  INCOMPLETE POSITION PROTECTION AT STARTUP
+------------------------------------------------------------
+
+Detection:
+  During startup Step 6 (snap_orders reconciliation),
+  a position is found with a TP but no emergSL, or an
+  emergSL but no TP.
+
+Severity: CRITICAL
+
+Automated response:
+  Log INCOMPLETE_PROTECTION at CRITICAL level with symbol,
+  position details, and which order is missing.
+  Alert alert@tothbot.com immediately.
+  Do NOT auto-repair the missing order. Position state
+  is ambiguous — automatic order placement without
+  operator confirmation could create duplicate orders
+  or incorrect order parameters.
+  TothBot continues startup for other pairs. The affected
+  pair is flagged and excluded from new entries until
+  protection is confirmed complete.
+
+Operator action:
+  Immediate action required. Log into Kraken interface
+  and verify the position state. If the missing order
+  needs to be placed, place it manually via Kraken web
+  interface with correct parameters (TP at gross_target,
+  emergSL at entry_fill_price - ATR(14) x 3.0x). Confirm
+  to TothBot via operator command that protection is
+  restored (implementation TBD in coding spec).
+
+------------------------------------------------------------
+IC-016  MANUAL KILL SWITCH EXECUTION
+------------------------------------------------------------
+
+Detection:
+  Bill manually calls REST CancelAllOrders via Kraken
+  interface or via operator command (implementation TBD).
+
+Severity: CRITICAL (operator-initiated)
+
+Automated response:
+  CancelAllOrders cancels ALL open orders on the Kraken
+  account, including all TP resting limit orders and all
+  emergSL stop-market orders.
+  After CancelAllOrders: all positions are unprotected.
+  TothBot detects the cancellations via executions channel
+  (exec_type=canceled) and updates Position Mirror.
+  CIATS Trade Outcome Bus is fired for any positions that
+  actually close as a result.
+  Log KILL_SWITCH_EXECUTED at CRITICAL level.
+
+  NOTE: CancelAllOrders is a Kraken REST endpoint
+  (emergency only). It is NOT cancel_all_orders_after
+  (the Dead Man Switch, which is PROHIBITED per AR-001).
+  CancelAllOrders is a one-time synchronous cancellation
+  of all current open orders. It does not set up an
+  ongoing timer. Its use is appropriate in a genuine
+  emergency where Bill needs to liquidate all orders
+  immediately.
+
+Operator action:
+  After executing the kill switch, all open positions
+  must be managed manually via Kraken interface. TothBot
+  should be stopped per 0211003 SS-STOP-002 procedure
+  after the kill switch is executed. Do not allow TothBot
+  to place new orders until the situation is understood
+  and resolved.
+
+============================================================
+5. ALERT SUMMARY TABLE
+============================================================
+
+  Incident  Severity   Alert to alert@tothbot.com
+  ──────────────────────────────────────────────────────
+  IC-001    WARNING    No (transient — auto-resolves)
+  IC-002    WARNING    Yes
+  IC-003    CRITICAL   Yes — immediate
+  IC-004    CRITICAL   Yes — immediate (systemd restarts)
+  IC-005    CRITICAL   Yes (cancel_only/maintenance only)
+  IC-006    CRITICAL   Yes (cancel_only/maintenance/delisted)
+  IC-007    WARNING    Yes
+  IC-008    CRITICAL   Yes — immediate
+  IC-009    CRITICAL   Yes — immediate
+  IC-010    CRITICAL   Yes — immediate
+  IC-011    WARNING    Yes
+  IC-012    CRITICAL   Yes — immediate
+  IC-013    CRITICAL   Yes — immediate
+  IC-014    WARNING    Yes
+  IC-015    CRITICAL   Yes — immediate
+  IC-016    CRITICAL   Yes (operator-initiated)
+
+============================================================
+6. HARD RULES
+============================================================
+
+  HR-IR-001  Every incident is logged. No incident is
+             silently suppressed regardless of severity.
+
+  HR-IR-002  All CRITICAL incidents alert alert@tothbot.com
+             immediately. Alert is sent before any other
+             automated response action.
+
+  HR-IR-003  Full Halt does NOT auto-close positions and
+             does NOT auto-recover. Bill decides.
+
+  HR-IR-004  Layer 3 emergSL fire always requires post-
+             incident investigation. It must never be
+             treated as a normal exit event.
+
+  HR-IR-005  Negative Kelly must never update the Parameter
+             Store. It is always a CRITICAL event.
+
+  HR-IR-006  cancel_all_orders_after (DMS) is PROHIBITED
+             in all automated responses. It destroys crash
+             protection (AR-001, AR-055).
+
+  HR-IR-007  Incomplete position protection at startup
+             must never be auto-repaired. Operator
+             confirmation required.
+
+  HR-IR-008  Logger queue full means CIATS data may be
+             compromised. Any dropped Trade Outcome Bus
+             events must be manually reconciled before
+             CIATS proposals are treated as valid.
+
+============================================================
+7. RELATED DOCUMENTS
+============================================================
+
+  0200000  Operations                    (parent Domain Doc)
+  0210000  Operations_CIATS_Anchor       (parent anchor)
+  0211001  CIATS_Specification           dv1_0
+  0211002  Operations_Infrastructure_Specification dv1_0
+  0211003  Startup_Shutdown_Procedure    dv1_0
+  0511001  WS_Manager_Specification      dv1_0
+  0511004  Exit_Controller_Specification dv1_2
+  0511006  Logger_Specification          dv1_0
+  0500000  System_Architecture_Overview  dv1_18
+             AR-001, AR-039, AR-040, AR-041, AR-042,
+             AR-049, AR-052, AR-055
+  0311001  Namespace_Specification       (governs DCN)
+  0311002  Document_Creation_Workflow    (governs sequence)
+
+============================================================
+8. REVISION HISTORY
+============================================================
+
+  dv1_1  06-03-2026  Strip-keep [CF-CONSUMER-CLASSIFY,
+                     TB00588]. KELLY_NEGATIVE [IC] automated-
+                     response line restated from the dead
+                     fixed-percent sizing token per_trade_pct
+                     to the canonical sizing parameter
+                     per_trade_size_usd [= K_half x module_
+                     wallet_balance per 0500000 D5/D6; Kraken
+                     per-pair minimum seed; module wallet the
+                     sole sizing boundary; net 1:1.5 R:R the
+                     only hardcoded value]. Meaning unchanged:
+                     on negative Kelly, CIATS does not update
+                     the Parameter Store and the live sizing
+                     value is held. Non-organism procedure
+                     doc retained [not a consolidation
+                     source]. No other change.
+
+  dv1_0  04-05-2026  Initial document. Sixteen incident
+                     categories defined (IC-001 through
+                     IC-016). Each specifies detection
+                     mechanism, severity, automated
+                     response, and operator action.
+                     Categories: transient WS disconnect,
+                     zombie connection, fatal reconnect,
+                     VPS crash, Kraken engine state change,
+                     pair status change (open position),
+                     session pause (5%), full halt (10%),
+                     Layer 3 emergSL fire, negative Kelly,
+                     CUSUM signal, Logger queue full,
+                     frequent restarts, sequence gap,
+                     incomplete protection, kill switch.
+                     Alert summary table included. Hard
+                     rules HR-IR-001 through HR-IR-008.
+                     DMS prohibition restated. Full Halt
+                     no-auto-close rule stated. Layer 3
+                     fire investigation requirement stated.
+
+============================================================
+END OF DOCUMENT
+============================================================
