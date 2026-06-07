@@ -1,9 +1,9 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_41
+DocVersion: v1_42
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_41.txt
-DocDate:    06-03-2026
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_42.txt
+DocDate:    06-07-2026
 DocTime:    15:00:00 UTC
 
 ============================================================
@@ -2274,6 +2274,12 @@ REGISTRY CONVENTIONS:
                                          TB00418 DEC-056;
                                          0511001 retired
                                          TB00425 DEC-059)
+  contract:Operator_Reporting_Hierarchy  (0500000 D5
+                                          logger_box +
+                                          D6 tb_logger;
+                                          TB00605;
+                                          ratified Bill
+                                          TB00604 Q1-Q5)
 
 ------------------------------------------------------------
 15.12.4 gate: Gate Registry
@@ -2723,6 +2729,9 @@ REGISTRY CONVENTIONS:
   rule:HR-AS-008                     (0500000 sec-8 AR-070/AR-074)
   rule:HR-AS-009                     (0500000 sec-8 AR-070/AR-074)
   rule:HR-AS-010                     (0500000 sec-8 AR-070/AR-074)
+  rule:HR-RPT-001                    (0500000 D5/D6; TB00605)
+  rule:HR-RPT-002                    (0500000 D5/D6; TB00605)
+  rule:HR-RPT-003                    (0500000 D5/D6; TB00605)
 
 NOTE — TB00163 Part 1 verification confirmed
 rule:HR-PA-001 is non-canonical (D6 R2 root <desc>
@@ -3964,6 +3973,59 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_42  06-07-2026  TB00605 0311001 §15.12.3 + §15.12.9
+                     OPERATOR REPORTING HIERARCHY TOKEN
+                     REGISTRATION [companion to 0500000
+                     dv1_174 -> dv1_175 diagram-first
+                     authoring; ratified Bill TB00604
+                     Q1-Q5; binary test DEC-096]. ADD-only
+                     registration of 1 contract + 3 rule
+                     tokens canonical in 0500000 D5
+                     logger_box + D6 tb_logger.
+                     §15.12.3 contract: Contract Registry
+                     -- 1 token added after
+                     contract:WM-PACE-005:
+                       contract:Operator_Reporting_Hierarchy
+                         (0500000 D5/D6; TB00605) -- 1 PUSH
+                         C1 IMMEDIATE email + 5 PULL C2
+                         DAILY / C3 WEEKLY / C4 MONTHLY /
+                         C5 ANNUAL cal-yr / C6 ROLLING-12mo,
+                         all VIEWS over
+                         contract:Two_Stream_Record_
+                         Architecture + CIATS computed
+                         values [FP8; no new capture].
+                     §15.12.9 rule: HardRule Registry -- 3
+                     tokens added after rule:HR-AS-010:
+                       rule:HR-RPT-001 (0500000 D5/D6;
+                         TB00605) -- operator reporting
+                         email bar: push IFF waiting until
+                         the next daily pull would cause
+                         loss / system failure /
+                         irreversible-or-unprotected
+                         exposure.
+                       rule:HR-RPT-002 (0500000 D5/D6;
+                         TB00605) -- log level (record-
+                         filter property) is DECOUPLED from
+                         delivery routing (email bar +
+                         horizon bucketing); supersedes the
+                         prior rule:HR-LG-007 CRITICAL/HIGH/
+                         MEDIUM email policy FOR-ROUTING.
+                       rule:HR-RPT-003 (0500000 D5/D6;
+                         TB00605) -- single V2 log ladder
+                         INFO/WARNING/CRITICAL, superseding
+                         the prior 5-level CRITICAL/HIGH/
+                         MEDIUM/LOW/INFO vocabulary.
+                     Append placement matches observed
+                     canonical practice (TB00418 WM-PACE-005,
+                     TB00426 HR-WM block, TB00590) -- ADD-
+                     only; no existing token reordered or
+                     altered. Paired TB00153 DECISION
+                     authored atomically. No-strand: zero
+                     pre-existing HR-RPT / Operator_Reporting
+                     tokens in live HEAD [grep-confirmed 0].
+                     Document Status updated: supersedes
+                     v1_41.
 
   v1_41  06-03-2026  TB00590 0911002 STREAM 2 / PHASE 3
                      / E2 SIZING-TOKEN DE-REGISTRATION
