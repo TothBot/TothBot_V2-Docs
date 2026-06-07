@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_43
+DocVersion: v1_44
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_43.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_44.txt
 DocDate:    06-07-2026
-DocTime:    06:29:56 UTC
+DocTime:    19:30:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2350,6 +2350,12 @@ REGISTRY CONVENTIONS:
   evt:ALERT_SMTP_FAILED              (0511006)
   evt:TRADE_RECORD_WRITE_FAILED      (0511006)
   evt:LOG_QUEUE_FULL                 (0511006)
+  evt:LOG_QUEUE_WARN                 (0500000 D5/D6;
+                                      TB00608; Logger
+                                      gap G7 proactive
+                                      queue-health 80pct
+                                      warning; sibling
+                                      of LOG_QUEUE_FULL)
   evt:ENTRY_PRICE_COMPUTED           (0811004 dv1_1
                                       §10)
   evt:ENTRY_PRICE_INVALID            (0811004 dv1_1
@@ -3975,6 +3981,38 @@ close.
 17. REVISION HISTORY
 ============================================================
 
+  v1_44  06-07-2026  TB00608 0311001 §15.12.7 evt:
+                     Event Registry -- 1 token ADDED
+                     (ADD-only) for the Logger gap G7
+                     proactive queue-health monitor
+                     authored diagram-first into 0500000
+                     mod:Logger (D5 logger_box
+                     queue_health_monitor + D6 tb_logger)
+                     at dv1_177 -> dv1_178:
+                       evt:LOG_QUEUE_WARN (0500000 D5/D6;
+                       TB00608) -- emitted by
+                       monitor_log_queue at queue
+                       fill_pct >= 0.80 (60s poll),
+                       WARNING level, key fields
+                       {qsize, fill_pct}; the proactive
+                       pre-saturation early warning,
+                       DISTINCT from evt:LOG_QUEUE_FULL
+                       CRITICAL (100pct saturation hard
+                       back-pressure). Source 1011007
+                       sec 4.4 LG-QUEUE-006. Registered
+                       as a self-observability sibling
+                       of the registered evt:LOG_QUEUE_
+                       FULL token. Placement directly
+                       after evt:LOG_QUEUE_FULL; no
+                       existing token reordered or
+                       altered. Bulk operational event
+                       codes in the G6 registry remain
+                       descriptive coding facts and mint
+                       NO token (TB00607 G1/G2/G4
+                       precedent). Paired 0500000
+                       dv1_178 + TB00153 DEC-110
+                       authored atomically. No new
+                       standalone spec (DEC-096).
   v1_43  06-07-2026  TB00606 0311001 §15.12.9 rule:
                      HardRule Registry -- 1 token ADDED
                      (ADD-only) for the Logger gap G3
