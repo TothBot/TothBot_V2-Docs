@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_42
+DocVersion: v1_43
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_42.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_43.txt
 DocDate:    06-07-2026
-DocTime:    15:00:00 UTC
+DocTime:    06:29:56 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2732,6 +2732,7 @@ REGISTRY CONVENTIONS:
   rule:HR-RPT-001                    (0500000 D5/D6; TB00605)
   rule:HR-RPT-002                    (0500000 D5/D6; TB00605)
   rule:HR-RPT-003                    (0500000 D5/D6; TB00605)
+  rule:HR-LG-013                     (0500000 D5/D6; TB00606)
 
 NOTE — TB00163 Part 1 verification confirmed
 rule:HR-PA-001 is non-canonical (D6 R2 root <desc>
@@ -3974,6 +3975,35 @@ close.
 17. REVISION HISTORY
 ============================================================
 
+  v1_43  06-07-2026  TB00606 0311001 §15.12.9 rule:
+                     HardRule Registry -- 1 token ADDED
+                     (ADD-only) for the Logger gap G3
+                     permanent trade-record file authored
+                     diagram-first into 0500000
+                     contract:Two_Stream_Record_Architecture
+                     (D5 logger_box + D6 tb_logger) at
+                     dv1_175 -> dv1_176:
+                       rule:HR-LG-013 (0500000 D5/D6;
+                       TB00606) -- permanent trade-record
+                       file architecture: durable
+                       append-only Stream 2 sink
+                       /home/tothbot/records/trades_<YYYY>
+                       .jsonl, os.open O_WRONLY+O_APPEND+
+                       O_CREAT, 0o644 hard-pinned,
+                       os.fsync per write, annual UTC
+                       segmentation, no rotation / no size
+                       cap, independent of the rotating
+                       tothbot.log; failure raises
+                       evt:TRADE_RECORD_WRITE_FAILED
+                       CRITICAL per rule:HR-LG-010 (C1
+                       email per rule:HR-RPT-001). Source
+                       1011007 sec 11 LG-TREC-001..009.
+                     Append placement after rule:HR-RPT-003
+                     per the TB00605 HR-RPT precedent; no
+                     existing token reordered or altered.
+                     Paired 0500000 dv1_176 + TB00153
+                     DEC-108 authored atomically. No new
+                     standalone spec (DEC-096).
   v1_42  06-07-2026  TB00605 0311001 §15.12.3 + §15.12.9
                      OPERATOR REPORTING HIERARCHY TOKEN
                      REGISTRATION [companion to 0500000
