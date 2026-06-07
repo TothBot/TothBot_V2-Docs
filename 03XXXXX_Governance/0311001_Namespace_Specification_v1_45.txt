@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_44
+DocVersion: v1_45
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_44.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_45.txt
 DocDate:    06-07-2026
-DocTime:    19:30:00 UTC
+DocTime:    21:40:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2368,6 +2368,16 @@ REGISTRY CONVENTIONS:
   evt:SYSTEM_STATE_BLOCKED           (0511002; G1
                                       logged-on-FAIL
                                       code; NEW v1_33)
+  evt:G8_A1_REJECT                   (0500000 D9 Gate_8
+                                      Position_Sizer
+                                      rule:Expected_RR_A1
+                                      _Acceptance below-
+                                      floor reject path;
+                                      expected_RR < 1:1.5
+                                      net point estimate;
+                                      q5_logs emitter; A1
+                                      reject-branch event;
+                                      NEW v1_45)
 
 ------------------------------------------------------------
 15.12.8 param: Parameter Registry
@@ -3980,6 +3990,43 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_45  06-07-2026  TB00617 §15.12.7 evt: Event
+                     Registry -- 1 token ADDED (ADD-only)
+                     to close the V-041/V-042 STEP-C
+                     namespace gap (evt:G8_A1_REJECT
+                     present in 0500000 D9 Gate-8
+                     rule:Expected_RR_A1_Acceptance SVG
+                     text + q5_logs emitter but ABSENT
+                     from the registry through v1_44):
+                       evt:G8_A1_REJECT (0500000 D9) --
+                       the A1 below-floor reject-branch
+                       event emitted when a candidate's
+                       point-estimate expected_RR is
+                       below the sacred 1:1.5 net floor
+                       (acceptance rule A1). Registered
+                       per DD-001 diagram-governs (the
+                       token exists in the canonical
+                       diagram and must be registered);
+                       no-strand verified -- the only
+                       active-field uses are the D9
+                       rule:Expected_RR_A1_Acceptance
+                       produces/q5_logs sites; all other
+                       hits are figcaption/revision-
+                       history narrative. Placement at
+                       the tail of the evt: registry; no
+                       existing token reordered or
+                       altered. NOTE: the sibling
+                       evt:G8_A1_ACCEPT is NOT registered
+                       this amendment -- it is not yet a
+                       canonical diagram token (the D9
+                       produces field carries it as the
+                       prose 'PASS signal to downstream
+                       sizing math', a deferred V-042
+                       Class A canonicalization that is
+                       Bill-gated per the diagram's own
+                       'blocked until Bill ratifies new
+                       evt:G8_A1_ACCEPT token' note).
 
   v1_44  06-07-2026  TB00608 0311001 §15.12.7 evt:
                      Event Registry -- 1 token ADDED
