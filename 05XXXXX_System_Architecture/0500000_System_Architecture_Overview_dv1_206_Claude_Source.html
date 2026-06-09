@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_204</title>
+<title>0500000 System Architecture Overview dv1_206</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_204</td></tr>
+  <tr><td>DocVersion</td><td>dv1_206</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_204_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_206_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-09-2026</td></tr>
-  <tr><td>DocTime</td><td>19:03:23 UTC</td></tr>
+  <tr><td>DocTime</td><td>19:34:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -4292,7 +4292,6 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
         consumes: evt:TRADE_CLOSE (one record per closed position), regime:TRENDING_POS_NORMAL / regime:TRENDING_POS_ELEVATED / regime:TRENDING_NEG_NORMAL / regime:TRENDING_NEG_ELEVATED / regime:NON_DIR_NORMAL / regime:NON_DIR_ELEVATED (asset_regime + market_regime tags from mod:RegimeEngine, attached to each trade close record per D4 / §5; six-regime taxonomy per 0311001 v1_10 §15.12.6)
         produces: (per-trade record with 23-field canonical schema — this diagram is the canonical source per DD-001/DD-002 — fed to mod:CIATS_Statistical_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library)
         schema_fields_canonical: 23-field set (this diagram is the canonical source per DD-001/DD-002 diagrams-canonical principle; historical seed: 1011005 dv1_3 §9 EC-TOB-002 lines 353-384 — that coding spec was the bottom-up authoring substrate from which TB00217 Turn 1 pulled this schema into the diagram; 1011005 dv1_3 actual retirement deferred to a future cascade that handles assignment-list cleanup at downstream sites in 0500000 §5300-7000 + §11 RELATED DOCUMENTS): (1) ts ISO 8601 UTC with microseconds; (2) event str literal "TRADE_CLOSE"; (3) level str literal "INFO"; (4) component str literal "EXIT_CTRL"; (5) symbol str; (6) entry_fill_price Decimal (avg_price at entry fill); (7) exit_price Decimal (weighted avg if partials per EC-TOB-003); (8) entry_timestamp_utc ISO 8601 UTC; (9) exit_timestamp_utc ISO 8601 UTC; (10) hold_candle_count int (5m candles held); (11) MAE_pct_reached Decimal (max adverse move as pct); (12) fees_entry_usd Decimal (maker fee on entry); (13) fees_exit_usd Decimal (taker fee on exit/TP); (14) fees_total_usd Decimal; (15) exit_reason str enum: TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | SUB_MIN_RESIDUAL_ABANDONED | PAIR_LIMIT_ONLY_EXIT (the seven mod:Exit_Controller normal-operation reasons per DEC-065; EMERGENCY_SL_FIRED is NOT an Exit-Controller exit_reason — it is the layer:L3_Emergency_SL crash-recovery reason emitted via channel:kraken_ws_executions exec_type=trade backfill on TothBot recovery, a distinct producer on the same contract:CIATS_Trade_Outcome_Bus, producer-partitioned exit_reason per DEC-066); (16) asset_regime str (pair regime at entry — one of six regime: tokens per 0311001 v1_10 §15.12.6 + D4 / §5); (17) vol_regime str enum NORMAL_VOL | ELEVATED_VOL; (18) market_regime str (BTC/USD anchor regime at entry per D4 / §5); (19) signal_params dict {rsi_14, ema_9, ema_21, volume_ratio, sss_pass}; (20) actual_RR Decimal (net_PL / risk_exposed); (21) net_PL_USD Decimal; (22) net_gain_usd Decimal (0.0 if loss); (23) net_loss_usd Decimal (0.0 if gain, positive value if loss).
-        captured_fields_for_DR-012_L1_RETIRED: prior R3 abbreviated descriptor (symbol, entry_price, exit_price, entry_fill_price, exit_fill_price, hold_duration_sec, MAE_pct, MAE_abs, total_fees_usd, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_R_R_net, net_gain_usd) retained as a forensic anchor noting the DR-012 closure framing. The R4 schema_fields_canonical enumeration above subsumes and supersedes this abbreviated descriptor as the authoritative source-of-truth for the Half-Kelly W (win rate) and R (net reward:risk) computation inputs per 0211001 dv1_0 CI-KE-002 / CI-KE-003 + 0611001 dv1_0 PS-HK-003 / PS-HK-004.
         schema_version: 1.0
       </desc>
     <rect x="495" y="360" width="560" height="180" fill="#fef3c7" stroke="#713f12" stroke-width="2" rx="4"/>
@@ -4905,7 +4904,6 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       consumes: evt:TRADE_CLOSE (from mod:Exit_Controller via channel:logger_async_queue)
       produces: trade outcome records (23-field canonical schema per schema_fields below; consumers see consumer-side consumes fields)
       schema_fields: 23-field canonical set (this diagram is the canonical source per DD-001/DD-002 diagrams-canonical principle; historical seed: 1011005 dv1_3 §9 EC-TOB-002 lines 353-384 — that coding spec was the bottom-up authoring substrate from which TB00217 Turn 1 pulled this schema into the diagram; 1011005 dv1_3 actual retirement deferred to a future cascade): (1) ts ISO 8601 UTC with microseconds; (2) event str literal "TRADE_CLOSE"; (3) level str literal "INFO"; (4) component str literal "EXIT_CTRL"; (5) symbol str; (6) entry_fill_price Decimal; (7) exit_price Decimal (weighted avg if partials per EC-TOB-003); (8) entry_timestamp_utc ISO 8601 UTC; (9) exit_timestamp_utc ISO 8601 UTC; (10) hold_candle_count int (5m candles); (11) MAE_pct_reached Decimal; (12) fees_entry_usd Decimal; (13) fees_exit_usd Decimal; (14) fees_total_usd Decimal; (15) exit_reason str enum: TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | SUB_MIN_RESIDUAL_ABANDONED | PAIR_LIMIT_ONLY_EXIT (the seven mod:Exit_Controller normal-operation reasons per DEC-065; EMERGENCY_SL_FIRED is NOT an Exit-Controller exit_reason — it is the layer:L3_Emergency_SL crash-recovery reason emitted via channel:kraken_ws_executions exec_type=trade backfill on TothBot recovery, a distinct producer on the same contract:CIATS_Trade_Outcome_Bus, producer-partitioned exit_reason per DEC-066); (16) asset_regime str (one of six regime: tokens); (17) vol_regime str enum NORMAL_VOL | ELEVATED_VOL; (18) market_regime str (BTC/USD anchor regime); (19) signal_params dict {rsi_14, ema_9, ema_21, volume_ratio, sss_pass}; (20) actual_RR Decimal (net_PL / risk_exposed); (21) net_PL_USD Decimal; (22) net_gain_usd Decimal (0.0 if loss); (23) net_loss_usd Decimal (0.0 if gain, positive value if loss). Matches Diagram 5 Image5_T2_R5 stream2_box schema_fields_canonical enumeration verbatim per V-038 diagram-prose parity within the same dv1_50 increment.
-      schema_fields_R4_RETIRED: prior R4 abbreviated descriptor (12 fields per 0511004 dv1_3 §7.5: symbol, entry_fill_price, exit_price, hold_candle_count, MAE_reached, fees_total, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_RR, net_PL_USD) retained as a forensic anchor noting the prior DR-013 schema-enumeration closure framing; superseded by the R5 23-field canonical enumeration above.
       schema_version: 1.0
     </desc>
     <rect x="1010" y="280" width="430" height="100" fill="#fde68a" stroke="#713f12" stroke-width="1.5" rx="4"/>

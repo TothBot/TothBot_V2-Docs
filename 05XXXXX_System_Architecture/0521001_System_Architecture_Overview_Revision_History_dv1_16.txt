@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_14
+DocVersion: dv1_16
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_14.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_16.txt
 DocDate:    06-09-2026
-DocTime:    19:06:12 UTC
+DocTime:    19:34:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -19102,6 +19102,82 @@ dv1_165 -> dv1_166 (TB00586 SIZING MANDATE SCRUB -- Bill ruling (A): the module 
                         The live D8 "OPTION R EXTENSION (ii) namespace registry batching check" (L3004) previously attested param:concentration_cap_per_module + param:exposure_cap_pct as "pre-existing in 0311001 v1_24 §15.12" — FALSE; both were ABSENT from the §15.12.8 param registry (TB00393 D8 diagnosis). Companion 0311001 v1_24 -> v1_25 amendment EXECUTED this pass registers both tokens, making the attestation true. Both CIATS-OWNED PER-MODULE INSTANTIATED; starting value not yet defined in corpus (pending CIATS FP/DP derivation — recorded as finding, NOT guessed). CIATS-ownership already in D8 governs CHECK 2 + CHECK 3 consumes; no value migration (no value exists). Option A approved by Bill (TB00395 chat-turn). Campaign seed case per 0911002 Phase 0; §15.12 stays de-dup engine, only VALUES migrate in later phases. Preserved-historical D5/D6/D8 figcaption blocks retain superseded "pre-existing in §15.12" wording verbatim per CI-005 + CI-006 — NOT edited. Companion governance: TB00153 MDR v1_47 -> v1_48 (false-attestation defect closure) + TB00153 DR v1_29 -> v1_30 (DEC Phase 0 registration). KNOWN CARRY-FORWARD (NOT this scope): §14 positioning defect (entries sit above the &lt;h2&gt;14. Revision History&lt;/h2&gt; header) + absent dv1_100..dv1_110 entries — flagged for dedicated housekeeping session.
 </pre>
 ----- END RELOCATED 0500000 SECTION-14 CONTENT (VERBATIM) -----
+
+============================================================
+7. RELOCATED DEAD GOVERNING CONTENT -- DEC-123 PHASE S
+============================================================
+
+Dead (superseded) governing field-descriptors swept OFF the live
+0500000 surface under DEC-123 PHASE S (dead-governing-content sweep),
+relocated here VERBATIM because they carry forensic value (prior
+schema-enumeration state). Each passed the three-leg deadness proof.
+Append-only; the live diagram retains only live governing content +
+the figure CURRENT R + the 0521001 pointer (anchor 0520000).
+
+7.1 D5 -- Image5 CIATS Architecture (contract:CIATS_Trade_Outcome_Bus)
+    (relocated at TB00648; 0500000 dv1_204 -> dv1_205; D5 R HELD)
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE -- D5 R HELD (TB00648; 0500000 dv1_204 -> dv1_205):
+  DEC-123 PHASE S first execution. The root <desc> field
+  captured_fields_for_DR-012_L1_RETIRED on the D5 contract:CIATS_Trade_
+  Outcome_Bus surface (stream2_box) was removed from the live diagram and
+  relocated here verbatim. THREE-LEG DEADNESS PROOF (all three held):
+    (1) RETIRED/SUPERSEDED state: the field name carries the _RETIRED
+        token and the descriptor self-declares the R4 schema_fields_
+        canonical enumeration above 'subsumes and supersedes' it.
+    (2) No live governing clause references it as active: the token
+        occurs exactly once in dv1_204 (grep-verified count 1); the
+        authoritative source-of-truth is schema_fields_canonical (the
+        23-field set), which fully supersets the 15-field abbreviated
+        descriptor. Nothing names captured_fields_for_DR-012_L1_RETIRED
+        as a live input.
+    (3) Nothing derivable downstream depends on it: the Half-Kelly W/R
+        computation inputs (0211001 CI-KE-002/003 + 0611001 PS-HK-003/
+        004) draw from the canonical 23-field set, not the abbreviated
+        descriptor; it is a strict subset.
+  FORENSIC-WORTHY -> relocated VERBATIM (not deleted as cruft). TB00453:
+  <desc>-only REMOVE, no visible <text>/geometry touched -> D5 figure R
+  HELD; net diagram line delta -1. All 10 figures otherwise byte-identical
+  (DEC-003 Path A). No fee recompute (CR-13/CR-14 downstream).
+
+----- BEGIN RELOCATED D5 DEAD GOVERNING CONTENT (VERBATIM) -----
+<pre>
+captured_fields_for_DR-012_L1_RETIRED: prior R3 abbreviated descriptor (symbol, entry_price, exit_price, entry_fill_price, exit_fill_price, hold_duration_sec, MAE_pct, MAE_abs, total_fees_usd, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_R_R_net, net_gain_usd) retained as a forensic anchor noting the DR-012 closure framing. The R4 schema_fields_canonical enumeration above subsumes and supersedes this abbreviated descriptor as the authoritative source-of-truth for the Half-Kelly W (win rate) and R (net reward:risk) computation inputs per 0211001 dv1_0 CI-KE-002 / CI-KE-003 + 0611001 dv1_0 PS-HK-003 / PS-HK-004.
+</pre>
+----- END RELOCATED D5 DEAD GOVERNING CONTENT (VERBATIM) -----
+
+7.2 D6 -- Image6 Complete System (contract:CIATS_Trade_Outcome_Bus)
+    (relocated at TB00648; 0500000 dv1_205 -> dv1_206; D6 R HELD)
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE -- D6 R HELD (TB00648; 0500000 dv1_205 -> dv1_206):
+  DEC-123 PHASE S second execution. The root <desc> field
+  schema_fields_R4_RETIRED on the D6 contract:CIATS_Trade_Outcome_Bus
+  surface was removed from the live diagram and relocated here verbatim.
+  THREE-LEG DEADNESS PROOF (all three held):
+    (1) RETIRED/SUPERSEDED state: the field name carries the _RETIRED
+        token and the descriptor self-declares it 'superseded by the R5
+        23-field canonical enumeration above'.
+    (2) No live governing clause references it as active: the token
+        occurs exactly once in dv1_205 (grep-verified count 1); the live
+        authoritative source-of-truth is schema_fields (the 23-field
+        canonical set per DD-001/DD-002), which fully supersets the
+        12-field abbreviated R4 descriptor.
+    (3) Nothing derivable downstream depends on it: the per-trade-close
+        record contract and all inference inputs draw from the canonical
+        23-field set; the 12-field descriptor is a strict subset citing
+        the retired 0511004 dv1_3 §7.5 framing.
+  FORENSIC-WORTHY -> relocated VERBATIM (not deleted as cruft). TB00453:
+  <desc>-only REMOVE, no visible <text>/geometry touched -> D6 figure R
+  HELD; net diagram line delta -1. All 10 figures otherwise byte-identical
+  (DEC-003 Path A; D5's dv1_205 removal preserved). No fee recompute.
+
+----- BEGIN RELOCATED D6 DEAD GOVERNING CONTENT (VERBATIM) -----
+<pre>
+schema_fields_R4_RETIRED: prior R4 abbreviated descriptor (12 fields per 0511004 dv1_3 §7.5: symbol, entry_fill_price, exit_price, hold_candle_count, MAE_reached, fees_total, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_RR, net_PL_USD) retained as a forensic anchor noting the prior DR-013 schema-enumeration closure framing; superseded by the R5 23-field canonical enumeration above.
+</pre>
+----- END RELOCATED D6 DEAD GOVERNING CONTENT (VERBATIM) -----
 
 ============================================================
 END OF DOCUMENT
