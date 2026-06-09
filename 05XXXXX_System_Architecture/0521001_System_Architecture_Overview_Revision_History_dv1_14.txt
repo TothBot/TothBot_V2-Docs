@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_12
+DocVersion: dv1_14
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_12.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_14.txt
 DocDate:    06-09-2026
-DocTime:    18:18:30 UTC
+DocTime:    19:06:12 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18458,6 +18458,35 @@ RELOCATED BLOCK C -- figcaption interior / V-040 attestation + OPTION-R extensio
     PRIOR FIGCAPTION CONTENT (TB00360 R1→R2 V-040 ORIGINAL ATTESTATION) PRESERVED FOR REFERENCE: Image8 Gate 7 Risk Guard Detail (R2). Four sequential checks (drawdown halt, concentration limit, exposure limit, semaphore probe) evaluated in strict cheapest-first order; first FAIL short-circuits remaining checks; every FAIL emits its labeled evt token to mod:Logger (sole CIATS data source). Per-module evaluation — Long_Module and Short_Module evaluate independently. R-increment R1 → R2 (TB00360 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_58 §4.5 DD-014 + 0311001 v1_24 §15.16): NINTH per-diagram V-040 design-completeness amendment under the DD-014 + V-040 governance frame. V-040 DESIGN-COMPLETENESS ATTESTATION per 0311001 v1_24 §15.16.3: (a) DIAGRAM IDENTIFIER AND REVISION: D8 Gate_7_Risk_Guard_Detail 0500000 dv1_92 Image8_T3_R2_Gate_7_Risk_Guard_Detail. (b) PER-COMPONENT Q1-Q5 PASS ENUMERATION — 4 components × 5 cells = 20 attestation cells all PASS: [1] g7d_check1_drawdown (check:G7_CHECK_1_Drawdown_Halt): Q1 PASS (q1_do field — per-wallet drawdown_pct = (portfolio_baseline - spot_usd_balance) / portfolio_baseline; two-threshold cascade full_halt 10% / session_pause 5%; rule:HR-WM-024 strict evaluation order), Q2 PASS (consumes field — param:spot_usd_balance + param:portfolio_baseline + param:full_halt_drawdown_pct + param:session_pause_drawdown_pct; produces field — evt:G7_DRAWDOWN_HALT), Q3 PASS (constraints field with rule:HR-WM-024 — drawdown halt = wallet manager rule per ROOT governs; ADD-only token propagation in this amendment closes the latent Q3 FAIL identified at TB00360 pre-flight Q3 audit), Q4 PASS (q4_triggers field — every G7 evaluation cycle; FAIL triggers evt emission + short-circuit + HALT/PAUSE + HIGH SMTP alert), Q5 PASS (q5_logs field — evt:G7_DRAWDOWN_HALT to tothbot.log with timestamp/module/wallet/baseline/drawdown_pct/threshold_crossed/disposition/candidate_id). [2] g7d_check2_concentration (check:G7_CHECK_2_Concentration): Q1 PASS (q1_do field — positions_held_count_per_module &lt; concentration_limit_per_module; per-module evaluation Long/Short independent), Q2 PASS (consumes field — positions_held_count_per_module + param:concentration_limit_per_module; produces field — evt:G7_CONCENTRATION_BREACH), Q3 PASS (consumes/produces fully document binding; concentration_limit is CIATS-owned parameter; positions_held_count is mod:Position_Mirror-owned state; no ROOT-governs rule token bound at this component), Q4 PASS (q4_triggers field — every G7 evaluation that passed CHECK 1; FAIL triggers evt emission + short-circuit + BLOCK; no SMTP alert routine flow control), Q5 PASS (q5_logs field — evt:G7_CONCENTRATION_BREACH to tothbot.log with timestamp/module/positions_held/cap/candidate_id). [3] g7d_check3_exposure (check:G7_CHECK_3_Exposure): Q1 PASS (q1_do field — exposure_ratio = total_committed_usd / wallet_balance &lt; exposure_limit_pct; per-module evaluation enforcing wallet-independence per TB00000 v2_29 §9.3 + §9.7), Q2 PASS (consumes field — total_committed_usd_per_module + wallet_balance_per_module + param:exposure_limit_pct; produces field — evt:G7_EXPOSURE_BREACH), Q3 PASS (consumes/produces fully document binding; exposure_limit is CIATS-owned parameter; wallet/committed values from mod:Position_Mirror; no ROOT-governs rule token bound at this component), Q4 PASS (q4_triggers field — every G7 evaluation that passed CHECK 1+2; FAIL triggers evt emission + short-circuit + BLOCK), Q5 PASS (q5_logs field — evt:G7_EXPOSURE_BREACH to tothbot.log with timestamp/module/total_committed/wallet/ratio/cap/candidate_id). [4] g7d_check4_semaphore (check:G7_CHECK_4_Semaphore): Q1 PASS (q1_do field — non-blocking probe via semaphore.locked() PASS=FREE FAIL=LOCKED; per-module BoundedSemaphore per ar:AR-043; held by mod:Execution_Engine during dispatch), Q2 PASS (consumes field — BoundedSemaphore per-module state via locked() probe; produces field — evt:G7_SEMAPHORE_BUSY), Q3 PASS (consumes/produces fully document binding; ar:AR-043 BoundedSemaphore pattern is the implicit binding contract from ROOT mod:Risk_Engine; no explicit ROOT rule token), Q4 PASS (q4_triggers field — every G7 evaluation that passed CHECK 1+2+3; LOCKED triggers evt emission + short-circuit + SKIP cycle retry on next candle; NOT BLOCK), Q5 PASS (q5_logs field — evt:G7_SEMAPHORE_BUSY to tothbot.log with timestamp/module/semaphore_id/candidate_id/lock_holder). (c) FROM-THE-DIAGRAM-ALONE CONFIRMATION: every PASS mark above was derived from D8 R2 SVG visual rendering (4 polygon check shapes in strict vertical-cascade evaluation order + FAIL-branch arrows to red disposition boxes + PASS-down arrows to next check + ALL 4 CHECKS PASS exit + dark footer with implementation notes) + machine-readable governs: descs (root governs + per-component constraints/consumes/produces/evaluation_order/q1_do/q4_triggers/q5_logs fields) + this figcaption alone. NO citation of (i) 0500000 prose §1-§12, (ii) subordinate specs (1011011 retired, 0610000, 0511004), (iii) TB00000 prose outside §3.2 Q1-Q5 itself, or (iv) outside documents (MDR / DR / session logs / NSI / README / code comments) was required for any of the 20 PASS marks. A coder reading D8 R2 in isolation can write: the strict 4-check sequential evaluation order with first-FAIL short-circuit semantics; the per-module evaluation discipline (Long/Short wallet-independence per TB00000 v2_29 §9.3 + §9.7); CHECK 1 two-threshold drawdown cascade with HALT vs PAUSE disposition; CHECK 2 per-module concentration limit; CHECK 3 per-module exposure ratio limit; CHECK 4 non-blocking BoundedSemaphore probe with SKIP-cycle disposition; and the labeled-event emission discipline to mod:Logger (sole CIATS data source) — all without consulting any other document. (d) FAIL DISPOSITION: NONE. All 20 attestation cells PASS post-amendment. ONE V-040.3 Q3 latent FAIL (g7d_check1_drawdown constraints field missing rule:HR-WM-024 — ROOT-governs token absent from check1 per-component constraints in dv1_91) closed via ADD-only token propagation in this amendment per V-040.3 Q3 audit pre-flight scan (NSI §3.2 + §4 latent-FAIL prediction confirmed). OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit: D8 INPUT INTERFACES: [ENTRY: candidate from gate:G6_Regime_Sizer inbound from D2 mod:Signal_Pipeline (D2 R6 design-complete — TB00354 verified; G6 outputs candidate trades with regime-sized per_trade_size_usd; D2 R6 q1_do for gate_G6_box documents G6 → G7 candidate handoff). PASS.] [param:spot_usd_balance + param:portfolio_baseline + param:full_halt_drawdown_pct + param:session_pause_drawdown_pct inbound from mod:CIATS_Parameter_Store via contract:Parameter_Store_Snapshot read (D5 R9 design-complete — TB00358 verified; param_store_box q1_do documents sole CIATS write destination with snapshot read per CI-IF-003). PASS.] [positions_held_count_per_module + total_committed_usd_per_module + wallet_balance_per_module inbound from mod:Position_Mirror state (D6 R7 design-complete — TB00359 verified; tb_position_mirror q1_do documents Position Mirror as sole truth of position state per HR-PM-009). PASS.] [param:concentration_limit_per_module + param:exposure_limit_pct + param:per_trade_size_usd inbound from CIATS Parameter Store (D5 R9). PASS.] [BoundedSemaphore per-module state inbound from mod:Execution_Engine dispatch lock (ar:AR-043; D6 R7 verified). PASS.] D8 OUTPUT INTERFACES: [4 evt: tokens (evt:G7_DRAWDOWN_HALT + evt:G7_CONCENTRATION_BREACH + evt:G7_EXPOSURE_BREACH + evt:G7_SEMAPHORE_BUSY) outbound to mod:Logger (D6 R7 + D5 R9 design-complete — Logger is sole CIATS data source per CI-IF-001; D6 R7 tb_logger q1_do documents 5-level alert SMTP dispatch including HIGH for evt:G7_DRAWDOWN_HALT per LG-ALERT-005). PASS.] [ALL 4 CHECKS PASS exit outbound to gate:G8_Position_Sizer (D2 R6 + D9 T3 R1 PENDING-CASCADE — D9 R1→R2 V-040 amendment scheduled for TB00361 closes this last interface verification; D8 R2 documents the outbound contract correctly via the ALL 4 CHECKS PASS green-exit decoration; D9 R2 amendment will provide reciprocal q1_do/q2/q3/q4/q5 documentation of G8 candidate ingest). PENDING-CASCADE for D9 receiving-side; D8 emitting-side complete this amendment.] Cross-diagram Q2 PASS for D8 inputs and outputs at TB00360 except D9 receiving-side pending TB00361 cascade closure. OPTION R EXTENSION (ii) — namespace registry batching check: All D8 R2 tokens (gate:G7_Risk_Guard + rule:HR-WM-024 + 3 param: tokens + mod:Risk_Engine + 4 evt: tokens + 4 check: tokens) pre-existing in 0311001 v1_24 §15.12 token registries (no new tokens introduced; NO 0311001 v1_24 → v1_25 amendment required this session — confirms NSI §1.2 prediction; consistent with TB00352/353/354/355/356/357/358/359 precedent of zero-new-tokens per V-040 amendment cycle). OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence: TB00361 candidate target = D9 Gate_8_Position_Sizer Tier-3 R1 → R2 V-040 design-completeness extension (last remaining un-amended diagram; closes V-040 design-completeness for all 10 figures at TB00361 close; D9 dependency-ordered after D8 because D9 ingest depends on D8 ALL-5-PASS outbound — D8 must be design-complete first to provide reciprocal Q2 audit anchor). After TB00361 closes D9: all 10 diagrams V-040 design-complete; downstream TB00362+ scope shifts to V-041 / V-042 cross-diagram integration validation per 0311001 v1_24 §15.16 V-series sequence. Final TB00361 selection deferred to TB00361 chat-turn 1 FP/DP-derivability-test per DD-011 v2_56 CHAT-TURN-1 GATE — predicted OUTCOME 1 single compliant option D9 given D8 closure at TB00360 leaves only D9 outstanding. All 9 other figures (Tier 1 Context + D1 + D2 + D3 + D4 + D5 + D6 + D7 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. R-INCREMENT CHAIN ROLL per CI-005 + CI-006 visible-stack 3-deep policy: R1 → R2 narrative new; R0 → R1 narrative (TB00212 Phase 1 1011011 retirement migration) rotated to R-increment-prior. D8 was at 1-prior-slot depth pre-amendment (single R0→R1 entry); post-amendment at 2-prior-slot depth (R1→R2 new + R0→R1 prior). Below 3-deep ceiling — no rotation OUT this amendment.
 </pre>
 
+AMENDMENT NARRATIVE -- D8 R3 -> R4 (TB00646; 0500000 dv1_202 -> dv1_203; visible main-title residual CF-D8-MAINTITLE-VISIBLE):
+  CF-D8-MAINTITLE-VISIBLE CLOSED. The D8 title-bar MAIN title (y=51, the bold VISIBLE headline)
+  carried a STALE "R2" label (the figure has been R3 since the TB00582 Chunk-2 structural
+  R-increment) PLUS a TB00360 V-040 design-completeness narrative tail embedded in the visible
+  <text> node -- the one forensic residual the TB00642 R-held provenance relocation could not
+  touch (stripping a visible main-title <text> node BUMPS R per the TB00453 bright line, OUTSIDE
+  the R-holding relocation envelope; it was therefore LEFT BYTE-IDENTICAL at TB00642 and flagged
+  CF-D8-MAINTITLE-VISIBLE in this subsection's TB00642 narrative). This session strips the V-040
+  tail and catches the stale R label up to the clean "DIAGRAM 8 -- Gate 7 Risk Guard Detail
+  (4 Sequential Checks)" label form (the D2 clean-main-title precedent). The stripped forensic
+  main-title text is relocated VERBATIM below (out-of-diagram == into-0521001).
+
+  R-STATE -- R3 -> R4 BUMPED: the visible main-title <text> MODIFY bumps the figure R one step per
+  the TB00453 bright line; R4 was propagated to the SVG <title> + diagram_canonical + the title-bar
+  subtitle identity token + the figcaption (a) identifier + the root <desc> provenance CURRENT-R
+  line + the visible main title itself (now "... (4 Sequential Checks) -- R4"). NO geometry /
+  rect / path / polygon / line / text-position change; viewBox preserved; figure count 10; all 9
+  other figures byte-identical per DEC-003 Path A (D8 figure block + DC-header the only changes).
+
+  No fee recompute (CR-13/CR-14 are downstream). No new token (0311001 unchanged). No source spec
+  retired (DR-078 N/A). Mirrors the CF-0711002-VER-RESIDUAL visible-residual precedent. 0500000
+  dv1_202 -> dv1_203; this archive dv1_12 -> dv1_13 (append-only; all prior content -- Section 4 +
+  Sections 5.1..5.7-prior + 5.8 + 5.9 + 5.10 + Section 6 -- byte-identical).
+
+RELOCATED MAIN-TITLE VISIBLE TEXT -- D8 stale R2 label + TB00360 V-040 narrative tail (VERBATIM):
+<pre>
+DIAGRAM 8 — Gate 7 Risk Guard Detail (4 Sequential Checks) — R2 + TB00360 V-040 design-completeness (q1_do + q4_triggers + q5_logs across 5 components + Q3 fail-closure)
+</pre>
+
 5.8 D9 -- Image9 Gate 8 Position Sizer Detail
     (relocated at TB00643; 0500000 dv1_198 -> dv1_199; D9 R2 HELD)
 ------------------------------------------------------------
@@ -18640,6 +18669,36 @@ RELOCATED BLOCK C -- figcaption interior / V-040 attestation + OPTION-R extensio
     &nbsp;&nbsp;(i) Cross-diagram Q2 audit — D8→D9 PENDING-CASCADE from TB00360 CLOSED: g8d_a1_acceptance consumes the expected_RR point estimate (computed within G8 from TP projection + MAE projection + fee schedule per 0411003); binding verified diagram-to-diagram.<br>
     &nbsp;&nbsp;(ii) Namespace registry batching check — zero new tokens introduced this amendment (all referenced tokens already present in dv1_92 ROOT governs: gate:G8_Position_Sizer, rule:Sacred_R_R_1_to_1_5, rule:Expected_RR_A1_Acceptance, ar:AR-016, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:G8_A1_REJECT, evt:G8_SIZED). No batching action required.<br>
     &nbsp;&nbsp;(iii) Subsequent-session scope — V-040 PER-DIAGRAM SWEEP COMPLETE: all 10 diagrams (Tier 1 R1, D1 R7, D2 R6, D3 R5, D4 R5, D5 R9, D6 R7, D7 R6, D8 R2, D9 R2) now V-040 design-complete. TB00362 scope advances to V-041 / V-042 cross-diagram integration validation.
+</pre>
+
+AMENDMENT NARRATIVE -- D9 R2 -> R3 (TB00646; 0500000 dv1_203 -> dv1_204; visible main-title residual CF-D9-MAINTITLE-VISIBLE):
+  CF-D9-MAINTITLE-VISIBLE CLOSED. The D9 title-bar MAIN title (y=51, the bold VISIBLE headline)
+  carried a CORRECT "R2" label (the figure was genuinely R2 -- NOT stale, unlike D8) PLUS a
+  TB00361 V-040 design-completeness narrative tail embedded in the visible <text> node -- the one
+  forensic residual the TB00643 R-held provenance relocation could not touch (stripping a visible
+  main-title <text> node BUMPS R per the TB00453 bright line, OUTSIDE the R-holding relocation
+  envelope; it was therefore LEFT BYTE-IDENTICAL at TB00643 and flagged CF-D9-MAINTITLE-VISIBLE in
+  this subsection's TB00643 narrative). This session strips the V-040 tail down to the clean
+  "DIAGRAM 9 -- Gate 8 Position Sizer Detail" label form (the D2 clean-main-title precedent). The
+  stripped forensic main-title text is relocated VERBATIM below (out-of-diagram == into-0521001).
+
+  R-STATE -- R2 -> R3 BUMPED: the R2 label was NOT stale; the bump is caused by the edit itself --
+  modifying the visible main-title <text> node bumps the figure R one step per the TB00453 bright
+  line. R3 was propagated to the SVG <title> + diagram_canonical + the title-bar subtitle identity
+  token + the figcaption (a) identifier + the root <desc> provenance CURRENT-R line + the visible
+  main title itself (now "... Position Sizer Detail -- R3"). NO geometry / rect / path / polygon /
+  line / text-position change; viewBox preserved; figure count 10; all 9 other figures byte-identical
+  per DEC-003 Path A (D9 figure block + DC-header the only changes). The parent Image2_T2_R2 token
+  and the forensic TB00361 "R1 -> R2" provenance strings were NOT touched.
+
+  No fee recompute (CR-13/CR-14 are downstream). No new token (0311001 unchanged). No source spec
+  retired (DR-078 N/A). Mirrors the D8 CF-D8-MAINTITLE-VISIBLE precedent closed earlier this session.
+  0500000 dv1_203 -> dv1_204; this archive dv1_13 -> dv1_14 (append-only; all prior content --
+  Section 4 + Sections 5.1..5.7 + 5.8-prior + 5.9 + 5.10 + Section 6 -- byte-identical).
+
+RELOCATED MAIN-TITLE VISIBLE TEXT -- D9 R2 label + TB00361 V-040 narrative tail (VERBATIM):
+<pre>
+DIAGRAM 9 — Gate 8 Position Sizer Detail — R2 + TB00361 V-040 design-completeness (q1_do + q4_triggers + q5_logs across 6 components + Q3 fail-closure)
 </pre>
 
 5.9 Context -- Context Tier 1 System Context
