@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_9
+DocVersion: dv1_10
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_9.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_10.txt
 DocDate:    06-09-2026
-DocTime:    16:25:40 UTC
+DocTime:    17:20:50 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18640,6 +18640,141 @@ RELOCATED BLOCK C -- figcaption interior / V-040 attestation + OPTION-R extensio
     &nbsp;&nbsp;(i) Cross-diagram Q2 audit — D8→D9 PENDING-CASCADE from TB00360 CLOSED: g8d_a1_acceptance consumes the expected_RR point estimate (computed within G8 from TP projection + MAE projection + fee schedule per 0411003); binding verified diagram-to-diagram.<br>
     &nbsp;&nbsp;(ii) Namespace registry batching check — zero new tokens introduced this amendment (all referenced tokens already present in dv1_92 ROOT governs: gate:G8_Position_Sizer, rule:Sacred_R_R_1_to_1_5, rule:Expected_RR_A1_Acceptance, ar:AR-016, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:G8_A1_REJECT, evt:G8_SIZED). No batching action required.<br>
     &nbsp;&nbsp;(iii) Subsequent-session scope — V-040 PER-DIAGRAM SWEEP COMPLETE: all 10 diagrams (Tier 1 R1, D1 R7, D2 R6, D3 R5, D4 R5, D5 R9, D6 R7, D7 R6, D8 R2, D9 R2) now V-040 design-complete. TB00362 scope advances to V-041 / V-042 cross-diagram integration validation.
+</pre>
+
+5.9 Context -- Context Tier 1 System Context
+    (relocated at TB00644; 0500000 dv1_199 -> dv1_200; Context R2 HELD)
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE -- Context R2 HELD (TB00644; 0500000 dv1_199 -> dv1_200):
+  DEC-123 PHASE M TIER-1 CONTEXT (Context = the Tier 1 System Context root, parent of Diagrams
+  D1-D9; 10 diagrams total counting this Tier 1 root) -- ninth execution of the PROVENANCE
+  EXTERNALIZATION standing discipline (TB00000 v2_88 sec 4.6 / 0311003 v1_3 VP-008 / 0311001
+  v1_46 sec 15.16.3), mirroring the D5 demonstration at TB00636 and the D6 (TB00637) / D3
+  (TB00638) / D1 (TB00639) / D4 (TB00640) / D7 (TB00641) / D8 (TB00642) / D9 (TB00643)
+  executions. Context is the FIRST figure block in the file (file ordering: Context, Image1,
+  Image2, Image8, Image9, Image3, Image4, Image5, Image6, Image7); the D9 relocation at TB00643
+  (net -82 lines) sits BELOW Context, so Context's line numbers were unchanged by TB00643 -- the
+  block was re-greped fresh against live dv1_199 regardless (RR-SCOPE-008 no-guess). The Context
+  forensic provenance was relocated OFF the live 0500000 diagram surface and into this archive
+  VERBATIM: (A) the root <desc> R-increment chain, carried 3-deep (R-increment R24->R25 TB00392
+  V-041 §4 Class B FAIL-P P-CP8 EXTERNAL-BOUNDARY CLOSURE-EXCEPTION for the 5 produce-only
+  external-boundary leaf tokens; R-increment-prior R23->R24 TB00391 V-041 §3 Class B FAIL-C
+  P-CC6 git:push PRODUCER-BINDING CLOSURE; R-increment-prior-2 R0->R1 TB00352 V-040
+  DESIGN-COMPLETENESS EXTENSION, the FIRST per-diagram amendment under the DD-014 + V-040 frame);
+  (C) the figcaption interior -- the §15.16.3 / V-040 75-cell design-completeness attestation
+  (15 components x 5 = 75 cells; (a)/(b)/(c)/(d) blocks), the OPTION-R extension stack (i)-(iii)
+  (the cross-diagram Q2 interface audit mapping the 6 Tier-1 outbound flows to destination Tier-2
+  diagrams, the namespace-registry batching check, the V-040 IV-campaign subsequent-session
+  dependency-ordered sequence), and the CI-005/CI-006 visible-stack 3-deep rolling-policy note.
+  In their place the live diagram now carries only governing content + Context's CURRENT
+  display R-number + a one-line pointer to this document (anchor 0520000) in the root <desc>
+  (provenance field) and the figcaption. The V-040 design-completeness VALIDATION is unchanged --
+  Context (15 components x 5 = 75 cells) remains design-complete and derivable from the SVG
+  visual rendering + the governing <desc> fields alone.
+
+  BLOCK B -- NONE (no relocation). Context's title-bar SUBTITLE (y=72) carries ONLY the metadata
+  prefix (CURRENT-R identity 0500000_Context_T1_R2_System_Context | schema_version: 1.0 | tier: 1
+  (root, no parent) | HTML inline) -- there is NO R-history narrative tail in the subtitle, so
+  there is no Block B to relocate and the subtitle was LEFT BYTE-IDENTICAL (the D7/TB00641 5.6 +
+  D9/TB00643 5.8 no-Block-B precedent).
+
+  MAIN-TITLE CLEAN (no carry-forward minted). Context's title-bar MAIN title (y=51, the bold
+  VISIBLE headline) reads "DIAGRAM 0 -- Tier 1 System Context" -- it carries NO R-label and NO
+  V-040 narrative tail. UNLIKE D8 (CF-D8-MAINTITLE-VISIBLE) and D9 (CF-D9-MAINTITLE-VISIBLE),
+  Context's main title is already in the clean label form, so there is no visible-<text> residual
+  to flag and NO carry-forward is minted for Context. The main title was LEFT BYTE-IDENTICAL
+  (verified unchanged; it is live governing content, not relocated).
+
+  CR-12 Context: NO FOLD-IN. The DEC-122 CR-12 exit_reason enum rename was COMPLETED across the
+  diagram set at D1 (TB00639). The Context re-census found ZERO TP_PARTIAL_FILL_REMAINDER
+  occurrences on the Context surface (none live, none forensic) -- the NSI STOP guard for an
+  unexpected live Context remainder did NOT fire. Context is the Tier-1 System Context root; the
+  partial-fill-remainder token is an Exit-Controller / D1-D3 concept, correctly absent here.
+
+  CR-09 Context SIGNAL_DECAY SWEEP: Context carried ZERO SIGNAL_DECAY occurrences -- none live on
+  the governing surface and none forensic in the relocated blocks. Full no-op for Context
+  (consistent with the D5 + D6 + D1 + D4 + D7 + D8 + D9 no-op outcome; D3 forensic-only).
+
+  CR-13 / CR-14 NOTE (NOT performed; N/A this figure): the DEC-122 CR-13/CR-14 D9/D7 fee taker-in
+  / net-R:R recompute is a SEPARATE downstream item behind the campaign (gated with CR-15..CR-20;
+  DR-079 closes on CR-13). Context's figcaption / <desc> carried ZERO fee-related forensic
+  narrative (no FEE_/maker/taker/0.16%/0.26%/0411003 strings on the Context surface) -- Context is
+  the system-context root, not an exit/sizing detail -- so there was no fee forensic to relocate
+  and no CR-13/CR-14 recompute was performed or applicable.
+
+  R-STATE -- R2 HELD: the live Context changes this session are <desc> (root R-increment chain ->
+  provenance pointer) and the figcaption (forensic stack -> lean caption + pointer). Neither
+  touches a visible SVG content <text> node or geometry, so Context's figure R-number HOLDS at
+  its FROZEN DISPLAY label R2 (SVG <title> + diagram_canonical + title-bar subtitle identifier all
+  read R2, unchanged; no Context_T1_R3 minted). Context's ACTUAL amendment count is R24 -> R25
+  (through TB00392); the SVG title display-label has been frozen at R2 since the V-041 Class A
+  campaign-pause deferral (TB00374 SL §4) and that frozen display-label state is preserved by this
+  relocation -- the display-label catch-up to the actual count remains a separate deferred
+  housekeeping item (it bumps R / changes visible <text>, outside this R-HELD relocation
+  envelope). The DC document version still bumps dv1_199 -> dv1_200 (a file-level increment, not a
+  figure R bump).
+
+  INTEGRITY: SVG geometry byte-identical (no rect/path/polygon/line/text-position change;
+  viewBox 1500x1200 preserved); all 9 other figures byte-identical per DEC-003 Path A
+  (change-localization verified -- only the Context figure (the 1st figure block) differs, plus
+  the 4 DC-header lines 6/135/137/139); figure count 10; figcaption 10/10; exactly one
+  <h2>14. Revision History</h2>. VERBATIM relocation proof (out-of-diagram == into-this-archive),
+  md5: Block A 9e2659a6bba437113a19afeeb18bcbe2; Block C b5c186b20b51450d22b7e6054f9bf7e6 (no
+  Block B for Context). DR-007.9 HTML well-formedness parser pass confirmed on 0500000 dv1_200
+  (html.parser, 0 exceptions). 0500000 dv1_199 -> dv1_200 (net -39 lines: Block A 3->1, Block C
+  38->1); this archive dv1_9 -> dv1_10 (append-only; all prior content -- Section 4 + Sections
+  5.1 + 5.2 + 5.3 + 5.4 + 5.5 + 5.6 + 5.7 + 5.8 -- byte-identical).
+
+RELOCATED BLOCK A -- root <desc> R-increment chain (VERBATIM):
+<pre>
+        R-increment: R24 -&gt; R25 (TB00392 V-041 §4 CLASS B FAIL-P P-CP8 EXTERNAL-BOUNDARY CLOSURE-EXCEPTION — Tier 1 Context canonical site for the 5 residual-open §4 produce-only tokens. NO geometry change, NO synthetic consumer added. The 5 P-CP8 tokens [file:tothbot.log, github:commit_event, github_actions:trigger, mail:alert_inbox_delivery, vps:command_response] are declared at producer / q4_triggers sites ONLY (file:tothbot.log produced by the VPS Logger at L457; github:commit_event produced by actor:Bill_Operator + arrow:Bill_Operational_Channels at L428/L673; github_actions:trigger produced by actor:GitHub_Repositories at L511; mail:alert_inbox_delivery produced by arrow:Mail_Alerts at L486; vps:command_response produced by arrow:Bill_Operational_Channels at L673) and are verified by grep at TB00392 chat-turn 1 to have ZERO internal consumes-side binding anywhere in dv1_111. These are LEGITIMATE EXTERNAL-BOUNDARY LEAF SINKS: each terminates at a human/external actor or external platform that sits OUTSIDE the 0500000 diagram-set boundary (Bill's local inbox, the GitHub platform commit/Actions event bus, Bill's interactive terminal, the on-disk VPS log file) — no internal TothBot component consumes them, so adding a synthetic consumer would inject a fictitious information flow and violate DD-001/DD-002 diagram-canonical truth + no-guess discipline. P-CP8 is therefore CLOSED-BY-EXCEPTION as an external-boundary terminal set per the TB00362 §4 P-CP8 recommendation, NOT by binding fabrication. All other §4 Class B FAIL-P groups (P-CP1 + P-CP2 + P-CP3 + P-CP4 + P-CP5 + P-CP6 + P-CP7 + P-CP9 + P-CP10-D6 + P-CP11) verified ALREADY-CLOSED with live consumes-side bindings against the live dv1_111 by grep at TB00392 chat-turn 1 (consumer sites at L537 + L615 + L2443 + L3473 + L5020 + L5064 + L5085 + L5107 + L5128) — §4 Class B FAIL-P CLOSED 34/34 at TB00392 close. Zero new tokens — all 5 P-CP8 tokens pre-existing in their producer declarations. SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption scope only; no rect/path/polygon/line/text-position byte change; no viewBox change (1500x1200 preserved). SVG &lt;title&gt; + diagram_canonical + title-bar visible-text R-state display label R2 LEFT FROZEN per V-041 Class A campaign-pause deferral (TB00374 SL §4 — actual amendment count R24 -&gt; R25 tracked in figcaption (a) + this narrative; display-label catch-up deferred). All 9 other figures (D1 + D2 + D3 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-section-per-session cadence. FP/DP-derivability-test logged TB00392 chat-turn 1 per DD-011 v2_56 CHAT-TURN-1 GATE — OUTCOME 1 single-compliant-path: executable derivable scope = residual-open P-CP8 only (the other 10 §4 groups already closed per in-document closure ledger TB00366-TB00370); NSI-vs-live scope divergence: NONE (live matches NSI prediction "sole residual P-CP8, TB00371 LOW"); reported in TB00392 SL, not surfaced as a ratification question per OUTCOME 1 EXECUTION MANDATORY clause. Executed under RR-SCOPE-005 derivable-decision execution authority. RR-SCOPE-001 absolute-scope compliance: ADD-only narrative; no removal of existing identifiers; no SVG geometry change; no viewBox change. RR-SCOPE-007 v2_30 self-authored-NSI-source-prohibition compliance: scope sourced from TB00362 V-041 FAIL List v1_1 §4 P-CP8 (Bill-ratified audit register) + 0911001 dv1_2 §4.5 + TB00000 v2_59 §4.5 (Bill-ratified governance) + Bill mission preamble TB00392 OCS verbatim. RR-SCOPE-011 single-primary-mission preserved. STRUCTURAL FINDINGS PRESERVED UNDER RR-SCOPE-001 (deferred to dedicated housekeeping session, NOT this scope): (1) Context root &lt;desc&gt; R-increment chain stale at R0 -&gt; R1 (TB00352) with R2..R23 intervening narratives never rotated into the visible chain — this amendment adds the R24 -&gt; R25 head and rotates R23 -&gt; R24 (TB00391) to R-increment-prior + R0 -&gt; R1 (TB00352) to R-increment-prior-2 (CI-005 + CI-006 visible-stack 3-deep) WITHOUT reconstructing the absent R2..R23 narratives from memory (no-guess discipline); (2) §14 Revision History positioning defect carried forward — entries dv1_96/97/98/99/111 + this dv1_112 sit ABOVE the &lt;h2&gt;14. Revision History&lt;/h2&gt; header; (3) Revision History entries dv1_100 through dv1_110 ABSENT entirely. Items (1)(2)(3) flagged for a dedicated documentation-housekeeping session. Rotated narratives preserved verbatim under R-increment-prior + R-increment-prior-2 per CI-005 + CI-006 visible-stack policy.)
+        R-increment-prior: R23 -&gt; R24 (TB00391 V-041 §3 CLASS B FAIL-C P-CC6 PRODUCER-BINDING CLOSURE — Tier 1 Context canonical site for the git:push producer-binding gap. ADD-only produces-field extension on 1 Context component: actor:Bill_Operator.produces extended with git:push (closes P-CC6 1/1 — git:push is consumed at actor:GitHub_Repositories.consumes + arrow:Bill_Operational_Channels.consumes but had no declared producer; actor:Bill_Operator is the canonical Context T1 origin of git push to the TothBot_V2-Docs + TothBot_V2-Code + TothBot_V2-SessionLogs repositories per the operational-channel bundle). Closes the SOLE remaining open §3 Class B FAIL-C binding; all other §3 groups (P-CC1 9/9 indicator TB00365 + P-CC2 19/19 param TB00365 + P-CC3 4/4 evt TB00366 + P-CC4 4/4 rest-to-channel TB00367 + P-CC5 2/2 ws_subscribe TB00367 + P-CC7 1/1 ar TB00369) verified ALREADY-CLOSED against the live dv1_110 by grep at TB00391 chat-turn 1 prior to amendment — §3 Class B FAIL-C CLOSED 40/40 at TB00391 close. Zero new tokens — git:push pre-existing in 0311001 v1_24 §15.12 registry and already present at 2 consume sites. SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption scope only; no rect/path/polygon/line/text-position byte change; no viewBox change (1500x1200 preserved). SVG &lt;title&gt; + diagram_canonical + title-bar visible-text R-state display label R2 LEFT FROZEN per V-041 Class A campaign-pause deferral (TB00374 SL §4 — actual amendment count R23 -&gt; R24 tracked in figcaption (a) + this narrative; display-label catch-up deferred). All 9 other figures (D1 + D2 + D3 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-section-per-session cadence. FP/DP-derivability-test logged TB00391 chat-turn 1 per DD-011 v2_56 CHAT-TURN-1 GATE — OUTCOME 1 single-compliant-path: executable derivable scope = residual-open P-CC6 only (39 of 40 nominal §3 FAILs already closed per in-document closure ledger); NSI-vs-live scope divergence reported in TB00391 SL, not surfaced as a ratification question per OUTCOME 1 EXECUTION MANDATORY clause + TB00367/68/69 established pattern. Executed under RR-SCOPE-005 derivable-decision execution authority. RR-SCOPE-001 absolute-scope compliance: ADD-only on 1 existing Context component; no removal of existing identifiers; no SVG geometry change; no viewBox change. RR-SCOPE-007 v2_30 self-authored-NSI-source-prohibition compliance: scope sourced from TB00362 V-041 FAIL List v1_1 §3 P-CC6 (Bill-ratified audit register) + 0911001 dv1_2 §4.5 + TB00000 v2_59 §4.5 (Bill-ratified governance) + Bill mission preamble TB00391 OCS verbatim. RR-SCOPE-011 single-primary-mission preserved. STRUCTURAL FINDINGS PRESERVED UNDER RR-SCOPE-001 (deferred to dedicated housekeeping session): (1) Context root &lt;desc&gt; R-increment chain was stale at R0 -&gt; R1 (TB00352); the R2..R23 intervening narratives were never rotated into the visible chain; this amendment adds the R23 -&gt; R24 head and rotates the stale R0 -&gt; R1 (TB00352) narrative to R-increment-prior WITHOUT reconstructing the absent R2..R23 narratives from memory (no-guess discipline); (2) §14 Revision History positioning defect carried forward — entries dv1_96/97/98/99 + this dv1_111 sit ABOVE the &lt;h2&gt;14. Revision History&lt;/h2&gt; header inside the §13 &lt;pre&gt; (known 4-session-old defect per TB00371 carry-forward); (3) Revision History entries dv1_100 through dv1_110 (TB00371-TB00384 IV campaign + catch-ups) are ABSENT from the revision history entirely — newly confirmed at TB00391. Items (1)(2)(3) flagged for a dedicated documentation-housekeeping session. R0 -&gt; R1 (TB00352) narrative preserved verbatim under R-increment-prior per CI-005 + CI-006 visible-stack policy.)
+        R-increment-prior-2: R0 -&gt; R1 (TB00352 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16. Per-component q1_do / q4_triggers / q5_logs fields added to all 15 component &lt;desc&gt; blocks (4 organism containers + 5 actors/external containers + 6 flow contracts/arrows). Figcaption replaced with V-040 attestation block per §15.16.3. SVG visual geometry preserved BYTE-IDENTICAL — &lt;desc&gt; / figcaption scope only; no rect/path/polygon/line/text-position byte change; no viewBox change (1500x1200 preserved). All 9 other figures (D1+D2+D3+D4+D5+D6+D7+D8+D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence. FP/DP-derivability-test logged TB00352 chat-turn 1 per DD-011 v2_57 CHAT-TURN-1 GATE — OUTCOME 1 Option R (Tier 1 first + cross-diagram interface audit + per-diagram registry batching + dependency-ordered subsequent sequence). RR-SCOPE-001 absolute-scope compliance: ADD-only scope. RR-SCOPE-007 self-authored-NSI-source-prohibition compliance: scope sourced from Bill mission preamble + TB00351 chat-turn 2 OUTCOME 1 Option R ratification. RR-SCOPE-009 four-question origin investigation N/A (no constraint removed). RR-SCOPE-010 verbatim-MDR-citation N/A (no MDR field cited). R0 narrative preserved in §14 dv1_83 historical revision history entry per CI-005 + CI-006 visible-stack policy.)
+</pre>
+
+RELOCATED BLOCK B -- NONE (Context title-bar subtitle carries no R-history narrative tail; left byte-identical on the live diagram; nothing relocated).
+
+RELOCATED BLOCK C -- figcaption interior (VERBATIM):
+<pre>
+    Tier 1 System Context — parent of Diagrams D1-D9 (10 diagrams total counting this Tier 1 root). R-increment R0 -&gt; R1 (TB00352 AMENDMENT — V-040 DESIGN-COMPLETENESS EXTENSION per TB00000 v2_57 §4.5 DD-014 + 0311001 v1_24 §15.16). First per-diagram design-completeness amendment under the DD-014 + V-040 governance frame enacted at TB00349 close.
+
+    <strong>§15.16.3 DESIGN-COMPLETENESS ATTESTATION.</strong>
+
+    <strong>(a) Diagram identifier and revision:</strong> Tier 1 Context Diagram (0500000_Context_T1_R2_System_Context; SVG title/canonical shows R2; actual amendment count R24 -&gt; R25 at TB00392 V-041 §4 Class B FAIL-P P-CP8 ADD-only content amendment; SVG title display-label update to R25 remains deferred per V-041 Class A campaign pause TB00374 SL §4 — display label frozen at R2) 0500000 dv1_112 (TB00392 V-041 §4 Class B FAIL-P P-CP8 external-boundary closure-exception ADD-only root-&lt;desc&gt; narrative — 5 produce-only tokens [file:tothbot.log, github:commit_event, github_actions:trigger, mail:alert_inbox_delivery, vps:command_response] confirmed external-boundary leaf sinks with zero internal consumer, closed-by-exception NOT by binding fabrication; §4 Class B FAIL-P CLOSED 34/34; no SVG geometry change, no viewBox change; prior TB00375 V-040 INDEPENDENT VERIFICATION 75/75 PASS preserved and not regressed by the ADD-only extension; prior attestation dv1_101 R23).
+
+    <strong>(b) Per-component Q1-Q5 PASS enumeration:</strong> 15 components × 5 questions = 75 cells. All 75 cells PASS.
+
+    Component-by-component PASS table:
+    [1] container:TothBot_V2_Organism — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [2] container:Kraken_Zone — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [3] container:TothBot_Zone — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [4] container:CIATS_Zone — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [5] actor:Bill_Operator — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [6] container:VPS (actor_hetzner_vps) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [7] actor:Mail_Alerts — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [8] actor:GitHub_Repositories — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [9] container:Kraken_Exchange — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [10] contract:OHLC_5m_System_Clock (flow1_pub_ws) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [11] contract:WSManager_Dispatch_Seam (flow2_priv_ws) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [12] contract:Reconciliation_REST (flow3_rest) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [13] contract:CIATS_Trade_Outcome_Bus (flow4_tothbot_ciats) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [14] arrow:Logger_Alert_Out_Of_Band (flow5_alerts) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+    [15] arrow:Bill_Operational_Channels (flow6_bill_ops) — Q1 PASS · Q2 PASS · Q3 PASS · Q4 PASS · Q5 PASS.
+
+    Q1 PASS confirmed from per-component q1_do field (present in current dv1_101 SVG). Q2 PASS confirmed from per-component constraints + consumes + produces + drill_targets fields. Q3 PASS confirmed from per-component constraints field (rules / ARs / decisions). Q4 PASS confirmed from per-component q4_triggers field. Q5 PASS confirmed from per-component q5_logs field. All 75 cells independently verified at TB00375 from SVG + governs descs + figcaption ONLY per §15.16.5(b) independent audit methodology; no recourse to prose §1-§12, subordinate specs, TB00000 prose outside §3.2 Q1-Q5, or outside documents.
+
+    <strong>(c) "From the diagram alone" confirmation:</strong> All 75 PASS marks derived using ONLY (i) the SVG visual rendering of the Tier 1 Context diagram (every visible rect / line / path / text / group / label) + (ii) the machine-readable governs &lt;desc&gt; descriptors embedded in the SVG (15 component &lt;desc&gt; blocks with canonical + tier + parent_diagram + drill_targets + constraints + consumes + produces + q1_do + q4_triggers + q5_logs + schema_version fields, plus the root &lt;desc&gt; with diagram_canonical + tier + parent_dcn + schema_version + R-increment + governs + drill_targets fields) + (iii) this figcaption. NO source from prose §1-§12 of 0500000, NO source from subordinate specs (0XXXXXXX docs), NO source from TB00000 prose outside §3.2 Q1-Q5 itself, NO source from outside documents (MDR / DR / session logs / NSI / README / code).
+
+    <strong>(d) FAIL disposition:</strong> None. All 75 cells PASS. V-040 INDEPENDENT VERIFICATION COMPLETE per §15.16.5(b). T1 is independently V-040-verified at 0500000 dv1_101 (TB00375). Prior attestation (R2, dv1_96): all 75 PASS. Current independent verification (TB00375, dv1_101): all 75 PASS confirmed. No SVG content amendment required — PASS is confirmed, not first-authored this amendment.
+
+    <strong>OPTION R EXTENSION (i) — cross-diagram interface (Q2) audit:</strong> 6 outbound flows from Tier 1 components mapped to destination Tier 2 diagrams. [Flow 1 contract:OHLC_5m_System_Clock] drill_target = D1 Kraken_API_Connection_Architecture (encoded in D1 root governs ar:AR-001 + AR-002 + channel:kraken_ws_ohlc_5m — VERIFIED). [Flow 2 contract:WSManager_Dispatch_Seam] drill_targets = D1 + D7 Paper_Mode_Dispatch_Boundary (D1 root governs ar:AR-001..AR-007 + PA-004(1) — VERIFIED; D7 root governs PA-004(2) dispatch boundary — VERIFIED). [Flow 3 contract:Reconciliation_REST] drill_target = D1 Kraken_API_Connection_Architecture (D1 root governs ar:AR-007 + AR-009 REST snapshot + executions-seq gap — VERIFIED). [Flow 4 contract:CIATS_Trade_Outcome_Bus] drill_target = D5 CIATS_Architecture (D5 root governs ar:AR-008 + decision:D-08 + Parameter_Store_Snapshot — VERIFIED via 0500000 dv1_83 D5 figure governs-list at line 2799). [Flow 5 arrow:Logger_Alert_Out_Of_Band] no drill_target (Tier 1 actor-to-actor terminal flow — by E2-A actors do not drill — N/A). [Flow 6 arrow:Bill_Operational_Channels] no drill_target (Tier 1 actor-to-actor terminal flow — by E2-A actors do not drill — N/A). All 4 drillable flows have matching interface encoded at destination Tier 2 diagram. No pending cascade entries required.
+
+    <strong>OPTION R EXTENSION (ii) — namespace registry batching check:</strong> Tier 1 Context dv1_84 amendment ADD-only scope introduces NO new container: / actor: / channel: / contract: / arrow: / ar: / rule: / decision: / param: / mod: / indicator: / evt: identifier tokens. All canonical identifiers cited in the amended &lt;desc&gt; blocks are pre-existing in 0500000 dv1_83 and pre-registered in 0311001 v1_24 §15.12 token registries. No 0311001 v1_24 -&gt; v1_25 amendment required for token registration this session.
+
+    <strong>OPTION R EXTENSION (iii) — subsequent-session dependency-ordered sequence (TB00375 UPDATE):</strong> TB00376 target = D1 Kraken_API_Connection_Architecture V-040 independent verification per §15.16.5(b) campaign cadence. (Prior TB00353 NSI §2 established D1 as step 2; independent verification campaign proceeds T1 → D1 → D2 → ... → D9 per TB00374 SL §4 cadence projection.)
+
+    <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption (R2/dv1_96 V-041 P-CC4 REST canonicalization attestation text for (a)) preserved verbatim in §14 dv1_101 revision history entry below. Original R0 figcaption preserved in §14 dv1_83.
 </pre>
 
 ============================================================
