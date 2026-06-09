@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_45
+DocVersion: v1_46
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_45.txt
-DocDate:    06-07-2026
-DocTime:    21:40:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_46.txt
+DocDate:    06-09-2026
+DocTime:    06:48:37 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -3720,7 +3720,15 @@ at TB00349 chat-turn 4 FP/DP analysis.
       + CI-006 (historical-record citations of
       diagrams that were NOT design-complete
       at the time the historical record was
-      authored).
+      authored). This exclusion ALSO
+      covers Phase-M figure-provenance
+      relocation amendments (DEC-123) that move
+      figcaption provenance / extension stacks,
+      root <desc> R-increment chains, and prior
+      V-040 attestation blocks VERBATIM into the
+      0521001 archive: such amendments are
+      forensic preservation, not design-
+      incompleteness.
 
 15.16.3 DESIGN-COMPLETENESS ATTESTATION
         CONTRACT
@@ -3790,6 +3798,30 @@ satisfying the following contract:
       diagram-amendment plan to close the
       failing cell(s) before the diagram is
       accepted as design-complete.
+
+  (e) ATTESTATION RECORD HOME (added v1_46;
+      DEC-123). For a document whose figure
+      provenance is externalized per VP-008
+      (0311003) -- specifically 0500000, whose
+      provenance archive is 0521001 -- the
+      written DESIGN-COMPLETENESS ATTESTATION
+      record MAY be appended to the 0521001
+      archive (append-only) instead of being
+      embedded in the live figcaption. This
+      relocates only the WRITTEN RECORD; the
+      V-040 design-completeness VALIDATION is
+      UNCHANGED -- the diagram MUST still be
+      design-complete and every PASS mark MUST
+      still be derivable "from the diagram
+      alone" per (c) at authoring time. The
+      relocated attestation satisfies forensic
+      preservation (CI-005 / CI-006) by verbatim
+      append-only presence in 0521001 in
+      addition to git history. For a relocated
+      attestation, clause (c)'s source list is
+      read as "the 0521001 archive entry" in
+      place of "human-readable figcaption";
+      (a) (b) (d) are unchanged.
 
 15.16.4 V-040 NEW VALIDATION RULE
 
@@ -3990,6 +4022,41 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_46  06-09-2026  TB00635 DEC-123 PHASE G --
+                     §15.16.3 ATTESTATION-RECORD-HOME
+                     PROVISION + §15.16.2(e) RELOCATION
+                     CLARIFICATION. Added §15.16.3 clause
+                     (e): for a document whose figure
+                     provenance is externalized per VP-008
+                     (0311003) -- 0500000, archive 0521001
+                     -- the written design-completeness
+                     attestation RECORD MAY be appended to
+                     0521001 (append-only) instead of the
+                     live figcaption; the V-040 VALIDATION
+                     is UNCHANGED (the diagram must still be
+                     design-complete + derivable from the
+                     diagram alone per (c)); forensic
+                     preservation (CI-005 / CI-006) is
+                     satisfied by verbatim append-only
+                     presence in 0521001 plus git. Extended
+                     §15.16.2(e) to cover Phase-M figure-
+                     provenance relocation amendments
+                     (DEC-123) as forensic preservation, not
+                     design-incompleteness. Relocates only
+                     the written RECORD; NO validation fence
+                     weakened (TB00000 §4.1). NOTE: CI-005 /
+                     CI-006 have no formal definition in the
+                     live corpus (the TB00000 §4.1 CI-rule
+                     set was largely removed at v2_82); they
+                     persist as the "forensic preservation"
+                     shorthand cited here -- a fuller CI-
+                     citation reconciliation is deferred (not
+                     required by DEC-123). Companion to
+                     DEC-123 Phase G (0311003 v1_3 + TB00000
+                     + 0521001 dv1_1). ADD-only provision; no
+                     token minted, reordered, or removed.
+                     v1_45 -> v1_46.
 
   v1_45  06-07-2026  TB00617 §15.12.7 evt: Event
                      Registry -- 1 token ADDED (ADD-only)

@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_0
+DocVersion: dv1_1
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_0.txt
-DocDate:    05-31-2026
-DocTime:    02:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_1.txt
+DocDate:    06-09-2026
+DocTime:    06:51:59 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -36,6 +36,26 @@ correct home here. No architectural decision, hard rule,
 namespace token, parameter, or diagram content is defined in
 this document; all such content remains canonical in the
 0500000 diagrams (DD-001 / DD-002).
+
+SCOPE EXTENSION (dv1_1; TB00635 / DEC-123). Beyond the Section
+14 revision history, this archive is now ALSO the append-only
+home for the REMAINING live-0500000 provenance relocated under
+DEC-123 Phase M: (1) the campaign-era Section 14 entries
+(dv1_113 / TB00395 forward) that the TB00551 relocation left in
+the live diagram; (2) the figcaption OPTION-R provenance /
+extension stacks; (3) the root <desc> R-increment chains
+(R-increment / -prior / -prior-2 / -prior-3); (4) the V-040
+design-completeness attestation blocks. Each is relocated
+VERBATIM and is thereafter APPEND-ONLY here; the live 0500000
+retains only live governing content + each figure's CURRENT
+R-number + a pointer to this archive. Going forward, every
+0500000 amendment appends its provenance entry here rather than
+stacking it into the diagram (TB00000 4.6; 0311003 VP-008;
+0311001 15.16.3). Binary test DEC-096: provenance is
+document-control, not design content. The relocation proceeds
+one figure per session (DEC-003 Path A); until a given figure's
+Phase-M session lands, that figure's provenance remains in the
+live diagram.
 
 ============================================================
 2. PARENT CHAIN

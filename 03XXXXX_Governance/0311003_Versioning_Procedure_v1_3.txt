@@ -1,10 +1,10 @@
 DocDCN:     0311003
 DocTitle:   Versioning_Procedure
-DocVersion: v1_2
+DocVersion: v1_3
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_2.txt
-DocDate:    05-12-2026
-DocTime:    23:59:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_3.txt
+DocDate:    06-09-2026
+DocTime:    06:45:00 UTC
 
 ============================================================
 VERSIONING PROCEDURE
@@ -215,6 +215,30 @@ Format:
   rv1_0  MM-DD-YYYY  [submitted for review]
   v1_0   MM-DD-YYYY  [approved by Bill; brief summary]
 
+VP-008 EXTERNALIZED REVISION HISTORY (added v1_3; DEC-123).
+A controlled document MAY hold its Revision History -- and, for
+a diagram-bearing design document, its per-figure provenance
+(figcaption provenance / extension stacks, root <desc>
+R-increment chains, and design-completeness attestation blocks)
+-- in a dedicated companion ARCHIVE instance document under its
+domain's history sub-domain, instead of inline, provided ALL of:
+  (a) the externalized content is relocated VERBATIM and is
+      thereafter APPEND-ONLY in the archive. Relocation is NOT
+      removal -- the entry persists verbatim, so the VP-008
+      "no entry is ever removed" guarantee is satisfied by the
+      archive.
+  (b) the live document retains a pointer to the archive; a
+      diagram-bearing document additionally retains each
+      figure's CURRENT R-state on the live surface.
+  (c) the complete change history remains retained across the
+      archive PLUS git history.
+Rationale (binary test DEC-096): revision-history /
+R-increment-provenance / attestation narrative is document-
+control, not design content; for a diagram-bearing design
+document it does not belong on the design surface. Precedent:
+0500000 -> 0521001 (anchor 0520000), begun at TB00550 / TB00551
+and completed under DEC-123.
+
 ------------------------------------------------------------
 VP-009  VERSION IN FILENAME
 ------------------------------------------------------------
@@ -297,6 +321,29 @@ automation and automatically by Pathway 1 post-deployment.
 ============================================================
 8. REVISION HISTORY
 ============================================================
+
+  v1_3   06-09-2026  TB00635 VP-008 EXTERNALIZED REVISION
+                     HISTORY PROVISION (DEC-123). Added the
+                     VP-008 externalization provision: a
+                     controlled document MAY hold its revision
+                     history -- and a diagram document's
+                     per-figure provenance -- in a dedicated
+                     append-only archive instance under the
+                     domain history sub-domain, with a live
+                     pointer + retained current R-state, content
+                     relocated VERBATIM (relocation is not
+                     removal), complete history retained across
+                     archive + git. Codifies and closes the
+                     latent gap that TB00551 relocated the
+                     0500000 Section 14 into 0521001 without a
+                     VP-008 amendment. Binary test DEC-096:
+                     provenance is document-control, not design
+                     content. Companion to DEC-123 Phase G
+                     (0311001 v1_46 + TB00000 + 0521001 dv1_1).
+                     Direct v1_2 -> v1_3 minor increment
+                     (clarifying provision; no technical-content
+                     reversal) per VP-004 v -> v with Bill
+                     approval. DocDate / DocTime refreshed.
 
   v1_2   05-12-2026  TB00224 TURN 2 GOVERNANCE
                      RECONCILIATION — VP-004 v → rt
