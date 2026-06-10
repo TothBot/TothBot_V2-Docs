@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_16
+DocVersion: dv1_17
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_16.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_17.txt
 DocDate:    06-09-2026
-DocTime:    19:34:00 UTC
+DocTime:    20:45:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -17929,6 +17929,63 @@ RELOCATED BLOCK C -- figcaption interior / OPTION-R extension stack + V-040 atte
     SVG visual geometry preserved BYTE-IDENTICAL at TB00378 — figcaption-only attestation extension scope; no &lt;desc&gt; field-body byte change; no SVG &lt;title&gt; / diagram_canonical / title-bar-text byte change; no rect/path/polygon/line/text-position byte change; no viewBox change (1500x1420 preserved). All 9 other figures (Tier 1 Context + D1 + D2 + D4 + D5 + D6 + D7 + D8 + D9) preserved byte-identical per DEC-003 Path A one-diagram-per-session cadence at TB00378.
 </pre>
 
+
+
+
+AMENDMENT NARRATIVE -- D3 R9 -> R10 (TB00652; 0500000 dv1_206 -> dv1_207; DEC-124 RUN-TO-REVERSAL RESTORATION):
+  DEC-124 (ratified TB00650) restores the original-design exit architecture (0741001
+  Exit_Controller_Module_Spec sec 3.3 "Why No Separate Take Profit Rule" + sec 3.4 "Why
+  No Maximum Hold Time"): regime reversal is the take-profit (run to reversal), and the
+  sacred 1:1.5 R:R becomes an ENTRY-ACCEPTANCE FLOOR (a minimum-expected-value admission
+  test at entry where expected reward = a CIATS-owned run-to-reversal estimate), never an
+  exit construction. D3 is the first figure surface corrected (DEC-003 Path A, one figure
+  per version bump; all 9 other figures byte-identical). TB00453: visible <text> + SVG
+  geometry changed -> D3 figure R BUMP R9 -> R10.
+
+  CHANGES ON D3 (Image3 Exit Architecture):
+  (1) layer:L1b_TP_Fill RETIRED as a canonical layer. The middle column (former "LAYER 1b
+      -- TP Fill") is repurposed to a decoration explainer panel "RUN-TO-REVERSAL -- No
+      Fixed TP" documenting: take-profit = regime reversal; NO fixed gross_target TP limit;
+      NO max-hold time cap; the 1:1.5 R:R is an entry-acceptance floor (Gate-8), never an
+      exit cap; original-design rationale + 2026-03-17 10,000-trial sim (run-to-reversal >
+      fixed-TP on avg win + profit factor AND lower max drawdown 1.64% vs 1.97%).
+  (2) layer:L1a relabelled "LAYER 1 -- Regime-Reversal Exit (Take-Profit)". Max-Hold
+      (EC-L1A-003 / exit_reason TIME_EXPIRY) trigger REMOVED. ACTION cancel target changed
+      cancel_order(TP) -> cancel_order(emergSL) (the only resting order is now the emergSL).
+      L1a exit_reason set reduced to {HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE}.
+  (3) rule:Sacred_R_R_1_to_1_5 node redefined from gross_target-derivation (resting-TP
+      target) to the entry-acceptance test: ACCEPT iff expected_reward / net_loss >= 1.5
+      (SACRED, hardcoded, the only hardcoded value); expected_reward = CIATS run-to-reversal
+      estimate; NO gross_target persisted. drill_targets layer:L1b_TP_Fill -> none.
+  (4) layer:L2_MAE_Threshold sequence reduced from a two-cancel sequence (cancel TP + cancel
+      emergSL) to a single cancel (emergSL only) -> market sell; "BOTH CANCELS" -> "emergSL
+      CANCEL"; there is no resting TP to cancel.
+  (5) rule:HR-EC-016 -- the TP-partial-fill-vs-MAE conflict branch (former rule (c)) RETIRED:
+      with no resting TP there is no TP partial fill to conflict with an MAE breach. Rule (a)
+      "resting TP + emergSL protect" -> "resting emergSL protects"; rule (b) unchanged.
+  (6) Exit_Controller ownership narrative: param:max_hold_candles (AR-071) annotated RETIRED
+      per DEC-124 (the live exit-controller param group is now four tokens). The sec 9 value
+      and 0311001 token entry for max_hold_candles are retired in the DEC-124 prose /
+      governance slices (downstream).
+  (7) DEC-124 (Bill ruling TB00652) DUST / PARTIAL-FILL RETIREMENT: with no resting TP and no
+      order-split mechanic, no sub-minimum remainder can arise, so the TP-partial-fill split
+      mechanic and the DR-079 abandon-and-surface dust write-off are OBSOLETE and RETIRED on D3.
+      Removed from D3: the registered token ar:AR-066 ("TP partial fill") from root governs +
+      rule:HR-EC-016 constraints/consumes/produces; the WS-TP-003 partial-TP-fill below-minimum
+      remainder branch from Exit_Controller q4; exit_reason SUB_MIN_RESIDUAL_ABANDONED from the
+      Exit_Controller exit_reason set (now FOUR live reasons: MAE_THRESHOLD_BREACH,
+      HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE, PAIR_LIMIT_ONLY_EXIT). Bill ruling: "no split
+      and no dust." The ar:AR-066 token (0311001), DR-079 (TB00153 Master Defect Register), and
+      the other-figure live usages (D1 WS-TP-003, D2 ON FILL split, D5 enum) are retired in their
+      own slices. (registry_gap_note historical R4 mentions of ar:AR-066 left verbatim as
+      provenance.)
+
+  FEE BASIS UNCHANGED on D3 (no fee recompute this slice). Net diagram size reduced
+  (dead TP-fill + dust + split desc removed).
+  dv1_206 md5 a6a1b647362aee0db330b3d05cdc2e81 -> dv1_207 md5 f9a0be52c484f24ae20e800368b310d2.
+
+  STATUS: all DEC-124 D3 corrections complete; dust/partial-fill split resolved per Bill ruling
+  (TB00652) -- "no split and no dust." No D3 open items.
 
 
 
