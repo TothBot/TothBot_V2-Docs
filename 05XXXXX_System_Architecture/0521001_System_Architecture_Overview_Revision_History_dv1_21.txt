@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_20
+DocVersion: dv1_21
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_20.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_21.txt
 DocDate:    06-10-2026
-DocTime:    04:20:55 UTC
+DocTime:    04:57:33 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -17672,6 +17672,102 @@ RELOCATED BLOCK C -- figcaption OPTION-R extension + V-040 design-completeness a
 </pre>
 
 ------------------------------------------------------------
+
+AMENDMENT NARRATIVE -- D5 R15 -> R16 (TB00659; 0500000 dv1_210 -> dv1_211; DEC-124 RUN-TO-REVERSAL RESTORATION, slice 5):
+  DEC-124 (Bill ruling, ratified TB00650; executed on D3 at TB00652 + D9 at TB00654 + D6 surface at
+  TB00655 + D2 at TB00657) RESTORATION reaches D5 (Image5 CIATS Architecture) this slice. DEC-124 makes
+  the sacred net 1:1.5 R:R an ENTRY-ACCEPTANCE FLOOR only (admit iff expected_reward / net_loss >= 1.5);
+  it never constructs an exit price and never closes a position, and it remains the only hardcoded
+  value. The whole-position take-profit is RUN-TO-REVERSAL (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE);
+  there is NO fixed gross_target TP and NO max-hold time backstop; the live exit set is the three layers
+  L1a (regime-reversal), L2 (MAE), L3 (emergency-SL). Applied to the D5 surface ONLY per DEC-003 Path A
+  (all 9 other figures byte-identical).
+
+  (a) EXIT_REASON ENUM 7-VALUE -> 4-VALUE at the three live D5 sites: trade_close_box q4_triggers
+      <desc> (file line 4175), stream2_box schema_fields_canonical FIELD-15 <desc> (line 4266), and the
+      VISIBLE enum <text> x=775 y=532 (line 4281). The retired-from-live 7-value set
+      {TP_FILL | MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY |
+      SUB_MIN_RESIDUAL_ABANDONED | PAIR_LIMIT_ONLY_EXIT} becomes the 4-value live set
+      {MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | PAIR_LIMIT_ONLY_EXIT}. The
+      VISIBLE-<text> MODIFY at line 4281 is what BUMPS D5 R15 -> R16 per the TB00453 bright line; the two
+      <desc> enum MODIFYs (4175, 4266) ride that same single R-bump.
+  (b) DESCRIPTOR REFRAME at the three desc/text sites: "the seven ... per DEC-065" -> "the four
+      mod:Exit_Controller normal-operation reasons per DEC-066 as amended by DEC-124: TP_FILL,
+      TIME_EXPIRY, and SUB_MIN_RESIDUAL_ABANDONED retired - reversal carries the take-profit, no
+      max-hold, and no resting TP so no partial-fill dust". The descriptor explicitly NAMES the three
+      retired tokens so the live diagram remains self-documenting about what was removed and why.
+  (c) FEE BASIS at FIELD-15 schema (line 4266; DEC-122 CR-04 taker-in / DEC-124-consistent): field (12)
+      fees_entry_usd reframed "maker fee on entry" -> "taker fee on entry" (the entry add_order is a
+      marketable IOC limit -> ALWAYS taker); field (13) fees_exit_usd "taker fee on exit/TP" -> "taker
+      fee on exit" (the "/TP" qualifier dropped -- there is no resting post_only TP fill; the
+      run-to-reversal close is a mod:Exit_Controller taker market sell).
+  (d) LOGGER EVENT_REGISTRY (line 4133): dropped the TP-lifecycle events LAYER1B_TP_FILL, TP_PLACED,
+      and TP_PARTIAL_FILL, and dropped the tp_price field from the GATE_8_RESULT record (now
+      {entry_qty, entry_price, sl_trigger, net_RR_computed}) -- no resting TP exists under DEC-124, so
+      no TP placement / fill / partial-fill events and no TP price in the position-sizer result.
+
+  DD-011 RECONCILIATION FINDING (SUB_MIN_RESIDUAL_ABANDONED -- executed as derivable, FLAGGED to Bill):
+  the TB00658 NSI (sec 2(d) / sec 4) PREDICTED a 5-value result -- drop only TP_FILL + TIME_EXPIRY and
+  KEEP SUB_MIN_RESIDUAL_ABANDONED. The session-open audit against D3 (the canonical mod:Exit_Controller,
+  Bill-ratified DEC-124 at TB00652, ratified TB00650; verified live HEAD dv1_210 D3 q4_triggers + q5_logs
+  + FIELD-15 at file lines 3281-3282 etc.) shows the AUTHORITATIVE live exit_reason set the Exit
+  Controller PRODUCES is the FOUR-value set with SUB_MIN_RESIDUAL_ABANDONED ALSO retired: with no resting
+  TP there is no partial fill and therefore no sub-minimum dust producing a TRADE_CLOSE record; the
+  DR-079 abandon-and-surface bounded-dust write-off is a position-clear mechanic, NOT a TRADE_CLOSE
+  exit_reason. The D5 contract:CIATS_Trade_Outcome_Bus enum must equal what the producer (D3) emits;
+  D3 Bill-ratified canon is the authoritative producer; the single compliant path is the 4-value set
+  (DD-011 OUTCOME 1, single compliant option -> executed under derivable-decision authority, NOT
+  surfaced as a blocking ratification question). The NSI prediction is Claude-authored / informational
+  (TB00000 sec 4.1) and is SUPERSEDED by Bill-ratified D3 canon. This divergence is recorded here and
+  surfaced to Bill in the session log per RR-SCOPE-008 no-guess + brutally-honest reporting.
+
+  R-STATE -- R15 -> R16: the visible enum <text> MODIFY (4281) bumps the figure R per TB00453; R16
+  propagated to SVG <title> (4077), diagram_canonical (4079), the root <desc> current-R reference
+  ("R15." -> "R16.", 4084), the title-bar metadata subtitle (4109), and the figcaption identifier
+  ("(R15)" -> "(R16)", 4482). The relocated R-increment chain itself stays externalized in this 5.1
+  (TB00636) -- no chain rotation.
+
+  COMPLETENESS: every node touched remains code-derivable from-the-diagram-alone -- the 4-value enum +
+  the retired-token descriptor fully specify the live close-reason set; the fee fields specify taker-in /
+  taker-out on the reversal close; the Logger registry specifies the live event set. DD-014 / V-040
+  55-cell design-completeness PRESERVED.
+
+  DC-HEADER: 0500000 dv1_210 -> dv1_211 (HTML <title> line 6, DocVersion line 135, DocPath line 137,
+  DocTime line 139 refreshed; DocDate line 138 unchanged -- same UTC day); filename advances
+  dv1_210 -> dv1_211.
+
+  INTEGRITY: change-localization VERIFIED -- exactly 14 lines differ between dv1_210 and dv1_211:
+  DC-header 6 / 135 / 137 / 139; D5 block 4077 / 4079 / 4084 / 4109 / 4133 / 4175 / 4266 / 4281 / 4482;
+  and the D6 FIELD-15 mirror at 4878 (see 5.2). All 9 other figures byte-identical per DEC-003 Path A;
+  figure count 10; exactly one <h2>14. Revision History</h2>; DR-007.9 HTML well-formedness parser pass
+  confirmed pre-delivery (0 exceptions; svg/figure/figcaption/desc/text tag counts balanced). 0500000
+  dv1_210 -> dv1_211; this archive dv1_20 -> dv1_21 (append-only; all prior content byte-identical).
+
+  D6 RESIDUAL-STALE FINDING (NEW; carry-forward, NOT fixed this slice -- out of sanctioned scope):
+  three pre-existing DEC-124-stale clusters survive on the D6 surface BEYOND the FIELD-15 mirror, all
+  byte-identical to the dv1_210 baseline (NOT touched this slice) and confirmed in scope for a dedicated
+  future D6 DEC-124 re-pass: (i) file ~line 5930 -- an EC-L1A-003 max_hold_candles "backstop" mirror
+  ending "exit_reason = TIME_EXPIRY." (max-hold + TIME_EXPIRY both retired under DEC-124); (ii) file
+  ~lines 6024-6030 -- the consecutive-loss / win attribution flow naming TIME_EXPIRY in the loss set and
+  "If TP_FILL (win ...)" (both retired); (iii) file ~line 7473 -- PAPER_TP_FILL_DETECTED synthetic-fill
+  paper-sim event ("ask >= tp_price"; no resting TP under DEC-124). This slice was sanctioned for D5 +
+  the D6 FIELD-15 mirror ONLY (the V-038 lockstep exception to DEC-003 Path A); the three sites above
+  are a separate correction class requiring their own R-bump analysis and are surfaced for sequencing.
+
+  CARRY-FORWARD (NOT done here, per DEC-003 Path A one-surface-per-session):
+    - D6 DEC-124 RESIDUAL re-pass: the three stale clusters above (the visible loss/win-attribution
+      <text> change will bump D6 R; the EC-L1A-003 mirror + PAPER_TP_FILL_DETECTED are desc/registry).
+    - Remaining DEC-124 figure slices: D7 (R8), D1 (R13) -- both still carry 4-layer / L1b / TP content.
+    - PROSE slice (deferred): 0500000 sec 8 / 11 / 12 + sec 9 seeds -- REMOVE max_hold_candles=24; ADD
+      the run-to-reversal estimator seed value; reconcile per_trade_size + fee seeds (entry-taker /
+      exit-taker); plus the D9-surface stale prose (sec 3.2 / 4.1 / 4.2) flagged at TB00654.
+    - GOVERNANCE slice (deferred): TB00153 enter DEC-124 (v1_90 -> v1_91) + retire DR-079 + retire
+      ar:AR-066 framing; 0311001 retire token ar:AR-066; TB00000 v2_88 -> v2_89 (sec 7 EXITS + sec 8).
+    - DISPATCH-SEAM DEC-122 DRIFT (D2, awaiting Bill): contract:WSManager_Dispatch_Seam still renders the
+      pre-CR-03 limit/post_only/GTD entry model -- DEC-122 drift, NOT DEC-124; hold for Bill sequencing.
+    - Then DEC-124 final re-audit -> ungate PHASE 2 OPTION B clean-slate organism code-gen.
+
+------------------------------------------------------------
 5.2 D6 -- Image6 Complete System
     (relocated at TB00637; 0500000 dv1_192 -> dv1_193; D6 R13 HELD)
 ------------------------------------------------------------
@@ -17918,6 +18014,43 @@ AMENDMENT NARRATIVE -- D6 R13 -> R14 (TB00655; 0500000 dv1_208 -> dv1_209; DEC-1
     - Remaining DEC-124 figure slices: D2, D5, D7, D1 (one per session), then final re-audit ->
       ungate PHASE 2 OPTION B code-gen.
 
+
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE -- D6 R14 HELD (TB00659; 0500000 dv1_210 -> dv1_211; DEC-124 RUN-TO-REVERSAL RESTORATION, slice 5 -- FIELD-15 MIRROR LOCKSTEP):
+  DEC-124 slice 5 FIELD-15 mirror lockstep -- the sanctioned V-038 verbatim-parity exception to DEC-003
+  Path A that rides the same session as the D5 slice (5.1 above). This DISCHARGES the D5-SLICE-LOCKSTEP
+  carry-forward recorded in the TB00655 D6 entry of this 5.2.
+
+  THE SINGLE EDIT: the ciats_outcome (contract:CIATS_Trade_Outcome_Bus, "Trade Outcome Bus")
+  schema_fields FIELD-15 <desc> exit_reason enum (file line 4878) is reconciled 7-value -> 4-value
+  {MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | PAIR_LIMIT_ONLY_EXIT}, exactly
+  matching the D5 stream2_box FIELD-15 enumeration (V-038 diagram-prose parity). The descriptor is
+  reframed identically to D5 ("the four mod:Exit_Controller normal-operation reasons per DEC-066 as
+  amended by DEC-124: TP_FILL, TIME_EXPIRY, and SUB_MIN_RESIDUAL_ABANDONED retired ...").
+
+  DD-011 RECONCILIATION: the 4-value result (NOT the TB00658 NSI's predicted 5-value that kept
+  SUB_MIN_RESIDUAL_ABANDONED) follows the Bill-ratified D3 canon -- see the DD-011 finding in the 5.1
+  D5 narrative above; the D6 bus mirror must equal the D5 canonical enumeration, which equals what the
+  D3 producer emits.
+
+  R-STATE -- R14 HELD: D6 carries NO visible enum <text> (the Trade Outcome Bus visible annotations
+  carry no enum value), so the FIELD-15 edit is a <desc>-only MODIFY that HOLDS R per the TB00453
+  bright line. D6 SVG <title> + diagram_canonical + title-bar identifier all read R14 (unchanged from
+  the TB00655 D6 surface slice). The DC document version bumps dv1_210 -> dv1_211 (a file-level
+  increment, not a figure R bump). There is NO forensic occurrence of the old 7-value enum in D6 -- the
+  single D6 FIELD-15 site was the only one and is now reconciled. No 0311001 amendment (enum values are
+  not registered namespace tokens).
+
+  INTEGRITY: this edit is the 14th of the 14-line change set described in the 5.1 narrative (line 4878);
+  all 9 other figures byte-identical per DEC-003 Path A; parser pass confirmed. 0500000 dv1_210 ->
+  dv1_211; this archive dv1_20 -> dv1_21 (append-only; all prior content byte-identical).
+
+  D6 RESIDUAL-STALE FINDING (NEW; carry-forward -- see the full statement in the 5.1 D5 narrative): D6
+  still carries three pre-existing DEC-124-stale clusters BEYOND this FIELD-15 mirror (EC-L1A-003
+  max_hold/TIME_EXPIRY ~line 5930; loss/win attribution naming TIME_EXPIRY + TP_FILL ~lines 6024-6030;
+  PAPER_TP_FILL_DETECTED ~line 7473), all out of this slice's sanctioned scope and flagged for a
+  dedicated D6 DEC-124 re-pass.
 
 ------------------------------------------------------------
 5.3 D3 -- Image3 Exit Architecture
