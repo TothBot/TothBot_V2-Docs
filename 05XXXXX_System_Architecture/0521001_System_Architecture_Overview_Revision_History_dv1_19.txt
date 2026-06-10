@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_18
+DocVersion: dv1_19
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_18.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_19.txt
 DocDate:    06-09-2026
-DocTime:    22:15:00 UTC
+DocTime:    03:47:30 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -17791,6 +17791,133 @@ RELOCATED BLOCK C -- figcaption OPTION-R extension + V-040 design-completeness a
         <strong>TB00608 LOGGER GAPS G6/G7 -- D6 MIRROR (canonical full spec in D5 logger_box):</strong> tb_logger q5_logs + produces reference the complete ~89-code event registry (per-event V2-ladder level + key fields, G6) and the proactive queue-health monitor (60s poll / 80% fill -&gt; evt:LOG_QUEUE_WARN WARNING, distinct from evt:LOG_QUEUE_FULL CRITICAL, G7) -- canonical full spec in D5 logger_box event_registry + queue_health_monitor. evt:LOG_QUEUE_WARN added to tb_logger.produces. R HELD at R13 per the TB00453 bright line (desc + figcaption ADD/MODIFY only; no visible &lt;text&gt; / geometry / viewBox change). Paired TB00153 DEC-110 atomic; companion 0311001 v1_43 -&gt; v1_44 registers evt:LOG_QUEUE_WARN; 1011007 stays LIVE (DR-078 re-audit + retirement = TB00609).<br>
         <strong>TB00609 LOGGER LG-ALERT-004 SMTP DELIVERY CONTRACT -- D6 MIRROR (canonical full spec in D5 logger_box):</strong> tb_logger q1_do references the SMTP alert delivery contract migrated diagram-first at PASS-3 of the Logger DD-014 re-audit: direct-SMTP-send bypass of the Logger queue on the QueueListener background thread; bounded retry (20s per-attempt timeout / 2 attempts / 1s backoff / 41s worst-case); evt:ALERT_SENT on success, single evt:ALERT_SMTP_FAILED CRITICAL on all-attempts-fail per rule:LG-ALERT-005; credentials from environment, never hardcoded; hot path unaffected per ar:AR-014 / rule:HR-LG-001 -- canonical full spec in D5 logger_box q1_do. R HELD at R13 per the TB00453 bright line (desc + figcaption ADD only; no visible &lt;text&gt; / geometry / viewBox change). Paired TB00153 DEC-111 atomic; 1011007 dv1_6 STAYS LIVE (residual gap found -- DR-078 do-not-retire-on-a-gap; clean re-audit + retirement = TB00610).<br>  </figcaption>
 </pre>
+
+AMENDMENT NARRATIVE -- D6 R13 -> R14 (TB00655; 0500000 dv1_208 -> dv1_209; DEC-124 RUN-TO-REVERSAL RESTORATION, slice 3):
+  DEC-124 (Bill ruling, ratified TB00650; executed on D3 at TB00652 + D9 at TB00654) RESTORATION
+  campaign, slice 3 -- the D6 Image6 Complete System figure, the system-aggregator that mirrors
+  every organism component on one surface. DEC-124 makes the sacred net 1:1.5 R:R an
+  ENTRY-ACCEPTANCE FLOOR only (admit iff expected_reward / net_loss >= 1.5); it never constructs an
+  exit price and never closes a position, and it remains the only hardcoded value. Run-to-reversal
+  is the whole-position take-profit (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE); there is no
+  fixed gross_target TP and no max-hold cap. Three exit layers only: L1a regime-reversal + L2 MAE +
+  L3 emergency-SL. This slice corrects the D6 surface to that model (DEC-003 Path A, one figure per
+  version bump; all 9 other figures byte-identical). The numeric run-to-reversal estimator SEED
+  VALUE is NOT in 0500000 (binary test DEC-096) -- its home is TB00000 sec 9, to be added in the
+  prose/seed slice; D6 carries only the architecture (the estimator is named + completeness-described
+  inside the live exit/sizing descs, no value).
+
+  LIVE D6 CHANGES (R13 -> R14):
+    (a) FOUR-LAYER -> THREE-LAYER (NSI step a). mod:Exit_Controller q1_do reworded from "4-layer
+        exit architecture (L1a + L1b + L2 + L3)" to "3-layer exit architecture (L1a + L2 + L3) per
+        DEC-124"; L1a redefined as the regime-reversal take-profit (run to reversal) firing on
+        EC-L1A-001 HTF regime reversal / EC-L1A-002 daily regime downgrade, with the EC-L1A-003
+        max-hold time-expiry backstop REMOVED (no max-hold under DEC-124). q4_triggers dropped the
+        "L1b TP fill arrival" trigger; q5_logs layer enumeration L1a/L1b/L2/L3 -> L1a/L2/L3 and the
+        "L1a + L1b normal closures" line -> "L1a regime-reversal normal closures"; consumes dropped
+        layer:L1b_TP_Fill (now position state + ohlc_5m + ATR_14 + CancelAllOrders + L3 only); the
+        drill_targets list dropped layer:L1b_TP_Fill. The visible Exit_Controller text node
+        "L1a Signal-based * L1b TP fill * L2 MAE (ATR x 1.5x)" -> "L1a Regime-reversal
+        (run-to-reversal TP) * L2 MAE (ATR x 1.5x)". mod:Risk_Engine consumes dropped
+        layer:L1b_TP_Fill. mod:Position_Mirror q4_triggers fill-event list dropped "TP fill"; its
+        visible field-list text dropped "TP id". mod:Signal_Pipeline q4_triggers AddOrder leg
+        "entry limit + emergSL + TP placement" -> "entry limit + emergSL placement; no resting TP
+        under DEC-124". The wireup_callout visible text "(Layer 1a signal-based exits)" ->
+        "(Layer 1a regime-reversal exits)".
+    (b) MATCHING ENGINE -- RESTING TP REMOVED (NSI step b). container:Matching_Engine q1_do dropped
+        "hosts resting TP limit orders for layer:L1b_TP_Fill" and now states that under DEC-124
+        run-to-reversal there is NO resting take-profit order -- the take-profit is regime reversal,
+        a TothBot-issued market sell (not a matching-engine resting order), so the only
+        TothBot-placed resting order is the L3 emergSL stop-market (placed at entry-order-submit
+        time so it survives a TothBot crash). q4_triggers AddOrder leg "entry limit + emergSL + TP"
+        -> "entry limit + emergSL ... no resting TP under DEC-124"; q5_logs match-event list dropped
+        "TP fill"; produces dropped layer:L1b_TP_Fill (now L3_Emergency_SL only); drill_targets
+        dropped layer:L1b_TP_Fill. container:Kraken_REST_API q1_do AddOrder enumeration
+        "entry limit + emergSL + TP" -> "entry limit + emergSL". The visible Matching_Engine text
+        node "Resting TP limit + off-book emergSL (Layer 3)" -> "Off-book emergSL only (Layer 3) --
+        no resting TP (run-to-reversal)".
+    (c) SACRED R:R NODE -> ENTRY-ACCEPTANCE FLOOR (NSI step c). The rule:Sacred_R_R_1_to_1_5 node
+        q1_do was rewritten from the gross_target construction ("net_gain = net_loss x 1.5;
+        gross_target = net_gain + 0.16% maker fee") to the entry-acceptance floor: a
+        minimum-expected-value admission test at Gate-8 on ACTUAL entry_fill_price, with risk leg
+        net_loss = mae_pct + entry taker fee + MAE taker fee (both legs FEE_TAKER_PCT) and reward leg
+        expected_reward = a CIATS-owned run-to-reversal estimate (seeded pre-200-trades, tuned from
+        paper after the 200-trade floor; seed VALUE in TB00000 sec 9); admit iff expected_reward /
+        net_loss >= 1.5; the floor NEVER constructs an exit price and NEVER closes a position (no
+        gross_target TP; take-profit = regime reversal). q4_triggers dropped the exit-time R:R
+        validation and the "net_gain = 1.5 x net_loss" enforcement, now an entry-only accept/reject
+        test (evt:G8_A1_REJECT below floor); q5_logs dropped the "net_gain != 1.5 x net_loss"
+        violation and now logs an A1 rejection at INFO + an admission-math fault at CRITICAL;
+        produces "net_gain = net_loss x 1.5 contract ... gross_target = net_gain + 0.16%" ->
+        "entry-acceptance flag -- admit iff expected_reward / net_loss >= 1.5 ... no gross_target and
+        no exit price". The visible Sacred-node formula text "mae_pct = ... | net_gain = net_loss x
+        1.5 | gross_target = net_gain + 0.16% (maker fee)" -> "ENTRY-ACCEPTANCE FLOOR -- admit iff
+        expected_reward / net_loss >= 1.5 | net_loss = mae_pct + entry taker fee + MAE taker fee |
+        no exit price (take-profit = regime reversal)". mod:Risk_Engine G8 q1_do likewise reworded
+        from "rule:Sacred_R_R_1_to_1_5 enforcement (net_gain = 1.5 x net_loss including fees)" to
+        "applying rule:Sacred_R_R_1_to_1_5 as the entry-acceptance floor at G8 (admit iff
+        expected_reward / net_loss >= 1.5, net_loss = mae_pct + entry taker fee + MAE taker fee; the
+        floor never constructs an exit price per DEC-124)".
+    (d) EXIT_REASON ENUM -- FLAGGED, NOT FIXED HERE (NSI step d). The D6 contract:CIATS_Trade_Outcome_Bus
+        node FIELD-15 exit_reason enum still carries the seven values TP_FILL | MAE_THRESHOLD_BREACH |
+        HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | TIME_EXPIRY | SUB_MIN_RESIDUAL_ABANDONED |
+        PAIR_LIMIT_ONLY_EXIT. Under DEC-124 the TP_FILL value (no resting-TP fill) and the TIME_EXPIRY
+        value (no max-hold) are obsolete, and SUB_MIN_RESIDUAL_ABANDONED is the dust value tied to the
+        DR-079 mechanic. This enum is the contract:CIATS_Trade_Outcome_Bus schema, canonically owned by
+        D5 (Image5 stream2_box schema_fields_canonical) and held in verbatim parity with D6 per V-038;
+        editing the enum in D6 alone would break D5<->D6 parity. The enum is therefore PRESERVED INTACT
+        on D6 this slice and flagged for the D5 slice, which must update the D5 canonical enum and the
+        D6 FIELD-15 mirror IN LOCKSTEP (same session) to preserve V-038 parity. (Block A/B/C relocated
+        forensic strings naming the old 4-layer / L1b / gross_target / max-hold model are NOT edited --
+        they are the verbatim historical record.)
+
+  R-STATE -- R13 -> R14 BUMPED: five visible <text> content nodes changed (Matching_Engine resting-TP
+  label, Position_Mirror field-list, Exit_Controller layer label, Sacred-node formula line,
+  wireup_callout exit label) -> figure R bumps one step per the TB00453 bright line (visible <text>
+  content change). NO geometry change: rect 27 / line 4 / path 1 / text 104 node counts identical
+  ORIG vs edited, every <text> x/y position byte-identical, viewBox 1500x1500 preserved, figure node
+  count unchanged. R14 propagated to SVG <title> + diagram_canonical + title-bar identifier + root
+  <desc> provenance CURRENT-R line + figcaption (a) identifier. The parent
+  0500000_Context_T1_R2_System_Context token and all forensic provenance strings already in this 5.2
+  were NOT touched.
+
+  DC-HEADER: dv1_208 shipped with its internal DC-header correct at dv1_208 (the TB00654 lag fix
+  held). This session advances all three internal references (HTML <title> line 6, DocVersion line
+  135, DocPath line 137) dv1_208 -> dv1_209 and refreshes DocTime (line 139). The filename advances
+  dv1_208 -> dv1_209.
+
+  INTEGRITY: change-localization VERIFIED -- only the D6 figure block (file figure index 6, lines
+  4491..5107) plus the 4 DC-header lines (6/135/137/139) differ between dv1_208 and dv1_209; all 9
+  other figures byte-identical per DEC-003 Path A (line counts equal at 9738; no line shift). Figure
+  count 10; <svg> 10/10; </svg> 10/10; figcaption 10/10. DR-007.9 HTML well-formedness parser pass
+  confirmed on dv1_209 (html.parser, 0 exceptions). [Pre-existing note carried from prior versions:
+  a strict expat/minidom XML parse trips on a raw '<' inside a statistical-text CIATS desc field --
+  byte-identical in dv1_208, untouched this slice, NOT a regression; html.parser is the DR-007.9
+  governing standard and passes.] 0500000 dv1_208 (1007743 bytes) -> dv1_209 (1008720 bytes; net +977).
+  This archive dv1_18 -> dv1_19 (append-only; all prior content -- Section 4 + Sections 5.1..5.1-D5 +
+  5.2-D6-prior + 5.3..5.10 + Section 6 + 7.1 + 7.2 -- byte-identical).
+
+  NO PROVENANCE RELOCATION this session: D6's R-increment chain + title-bar R-history + figcaption
+  OPTION-R / V-040 95-cell attestation stack were already externalized to this 5.2 at TB00637 (Block
+  A/B/C above). This entry is the DEC-123 standing-discipline provenance APPEND for the new R13 -> R14
+  content amendment (the live diagram carries only live governing content + R14 + the 0521001
+  pointer). No new namespace token minted (0311001 v1_46 unchanged this slice). No source spec retired
+  (DR-078 N/A; consolidation CLOSED).
+
+  CARRY-FORWARD (NOT done here, per DEC-003 Path A one-surface-per-session):
+    - D5 SLICE LOCKSTEP: the D5 slice must remove the obsolete exit_reason enum values (TP_FILL +
+      TIME_EXPIRY) and reconcile SUB_MIN_RESIDUAL_ABANDONED from the D5 canonical
+      contract:CIATS_Trade_Outcome_Bus schema AND update the D6 FIELD-15 mirror (this 5.2 / D6 node,
+      live diagram line ~4878) in the SAME session to preserve V-038 verbatim parity; plus the D5
+      Logger registry drop of LAYER1B_TP_FILL.
+    - PROSE slice (deferred): 0500000 sec 8 / 11 / 12 + sec 9 seeds -- REMOVE max_hold_candles=24; ADD
+      the run-to-reversal estimator seed value; reconcile per_trade_size + fee seeds (entry-taker /
+      exit-taker); plus the D9-surface stale prose (sec 3.2 intro, sec 4.1 Layer 1b, sec 4.2 R:R
+      Formula) flagged at TB00654.
+    - GOVERNANCE slice (deferred): TB00153 enter DEC-124 (v1_90 -> v1_91) + retire DR-079 + retire
+      ar:AR-066 framing; 0311001 retire token ar:AR-066; TB00000 v2_88 -> v2_89 (sec 7 EXITS + sec 8).
+    - Remaining DEC-124 figure slices: D2, D5, D7, D1 (one per session), then final re-audit ->
+      ungate PHASE 2 OPTION B code-gen.
+
 
 ------------------------------------------------------------
 5.3 D3 -- Image3 Exit Architecture
