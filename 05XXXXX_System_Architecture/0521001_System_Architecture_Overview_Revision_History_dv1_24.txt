@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_23
+DocVersion: dv1_24
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_23.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_24.txt
 DocDate:    06-10-2026
-DocTime:    21:58:00 UTC
+DocTime:    23:40:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18375,6 +18375,48 @@ RELOCATED BLOCK C -- figcaption interior / OPTION-R extension stack + V-040 atte
     <strong>OPTION R EXTENSION (xvi) - 0911002 STREAM 2 / PHASE 3 (AA=05) E2 0411003 CLEAN DD-014 RE-AUDIT + CLUSTER RL-PROTECT MIGRATION (TB00569 / DEC-096 binary-architecture-test):</strong> Per the TB00569 NSI section-2 migrate-then-re-audit-then-retire sequence (the 0411001/0411002 precedent), a CLEAN DD-014 re-audit re-derived every 0411003 dv1_0 architectural fact from the live dv1_159 D1 diagram-alone corpus (SVG visual + mod:WS_Manager / container:Kraken_REST_API constraints &lt;desc&gt; + figcaption). RESULT: NOT clean -- one residual bucket-(c) gap found. All sec-3 fee facts (CLUSTER F, dv1_159), all sec-4 rate-limit cost-schedule / decay / max-open / edit_order-prohibited / Cloudflare facts (D1 visible decoration + ar:AR-018 / ar:AR-030 / ar:AR-080), all sec-5 key facts (rule:HR-WM-001/020 + the dv1_152 REST-KEY-003/004 + REST-AUTH-003/004/005 cluster), and the sec-6 CIATS fee-monitoring + rejection_rate_by_regime F6 signal + rate_counter_by_pair signal (D5 mod:CIATS_EWMA_Monitor) were confirmed diagram-derivable; the sec-3/4/6 seed VALUES (FEE_MAKER_PCT/FEE_TAKER_PCT, fee_tier_divergence_*, rl_warning/rl_critical, rejection_rate_*) were confirmed correctly section-9-resident. The SOLE residual gap = the rate_counter_by_pair two-tier protective MECHANISM (0411003 RL-MON-002 warning tier + RL-MON-003 critical-tier entry-order suppression) -- the monitoring SIGNAL and the threshold VALUES were canonical, but the RL_WARNING/RL_CRITICAL two-tier semantics, the sustained-3-consecutive warning alert, and the loss-prevention-critical critical-threshold entry-order-suppression-until-warning behaviour (preserve rate budget for the exit path) were derivable ONLY from the section-9 registry prose, never from any diagram -- a bucket-(c) architectural gap under the binary test (DEC-096) and DD-014 from-the-diagram-alone standard. Per the NSI section-2 gap branch, the one coherent cluster (CLUSTER RL-PROTECT) was migrated ADD-only into mod:WS_Manager constraints diagram-first (DD-002/DD-003), SD-9-verified vs 0411003 dv1_0, and 0411003 retirement was DEFERRED again (NOT retired this session). SEED VALUES stay in sec 9 per the binary test (rl_warning_threshold_pct 0.80 / rl_critical_threshold_pct 0.95); no value migrated. RR-SCOPE-011 one coherent cluster, one figure (D1). RR-SCOPE-001 ADD-only -- no identifier removed; no new namespace token (cites pre-existing ar:AR-030 / ar:AR-080 + the RL-MON-* / CIATS-RL-003 spec IDs + the sec-9 param:rl_warning_threshold_pct / param:rl_critical_threshold_pct tokens); no rect/path/polygon/line/text-position byte change; no visible text change; no SVG title / diagram_canonical / title-bar byte change; no viewBox change (1500x1600 preserved); no figure-count change; all 9 other figures byte-identical per DEC-003 Path A. D1 R held at R10 per the TB00453 bright line (a desc-only constraints ADD touches no visible text or geometry). DD-014 / V-040 65-cell design-completeness PRESERVED and IMPROVED at mod:WS_Manager (the Q3 rate-counter-protection hard rule + Q4/Q5 RL_WARNING/RL_CRITICAL triggers/logs now answerable from the diagram). dv1_159 -> dv1_160. P-6 GOVERNANCE: no new DEC (this E2 migration runs under the existing DEC-096 binary-test ratification; DR stays v1_73); no paired MDR (forward architectural-gap fill, not a latent-defect closure -- TB00531/TB00559/TB00568 cluster precedent); no 0311001 amendment (no token minted). 0411003 retirement is DR-078-gated and is NOT performed this session: it unblocks only on a clean DD-014 re-audit confirming zero remaining gaps (migrate-then-re-audit-then-retire), preceded by the TB00511 cold-load precondition check (new carry-forward CF-0411003-RLPROTECT-REAUDIT). DR-007.9 HTML well-formedness parser pass confirmed pre-delivery. Prior figcaption content (extensions (i)-(xv) + the TB00376 V-040 IV attestation) preserved verbatim per CI-005 + CI-006 visible-stack policy -- NOT edited.<br>
 </pre>
 
+AMENDMENT NARRATIVE -- D1 R13 -> R14 (TB00666; 0500000 dv1_213 -> dv1_214; DEC-122
+DISPATCH-SEAM DISPOSITION + DEC-124 CARRY):
+  GATE RULING (Bill, TB00666 chat-turn): "The 1:1.5 R:R or better estimation
+  determines entry point. The Run-to-reverse is the exit point. The system was
+  changed so there is no partial fills, splits, or dust. Those references are
+  obsolete. The rule states if it is not live coding design it is removed."
+  D1 was DEFERRED to this session per Bill Option A (TB00663); it carried the last
+  pre-DEC-124 / pre-CR-03 live content in the document.
+  LIVE D1 CHANGES (R13 -> R14):
+  - VISIBLE <text> (R-bump driver per TB00453): Matching-Engine decoration
+    "resting TP limits (L1b) + off-book emergSL (L3)" -> "off-book emergSL only
+    (L3) -- no resting TP (DEC-124)".
+  - mod:WS_Manager + mod:Exit_Controller drill_targets: layer:L1b_TP_Fill DROPPED
+    (both sites); Matching_Engine q1_do/q4_triggers L1b TP-fill references removed.
+  - WS-BA-002 (constraints <desc> + the sec-2 A-29 prose mirror): the ON FILL
+    batch_add carries ONE leg (emergSL stop, static, reference=last) -- the TP leg
+    + post_only-maker-fee rationale RETIRED per DEC-124.
+  - WS-TP-003 + the D1 EXIT-CONTROLLER PARTIAL-TP-FILL emergSL AMENDMENT block ->
+    RETIREMENT RECORD (partial-TP remaining_qty amendment + DR-079
+    abandon-and-surface dust write-off retired; exit_reason
+    SUB_MIN_RESIDUAL_ABANDONED retired; no partial-fill, split, or dust handling
+    in the live design per the Bill ruling).
+  - FEE ARCHITECTURE (dv1_159 cluster amended): FEE-BASE-003/004 + 002/005
+    maker-out basis -> TAKER-IN / TAKER-OUT on every exit path (0.52% round-trip
+    per D9 canon); FEE-CALC fee_tp/tp_price formulas -> fee_exit (actual exit
+    fill price, all paths); CIATS fee-tier divergence baseline FEE_MAKER_PCT ->
+    FEE_TAKER_PCT (taker entry).
+  - WS-INST-009: post_only JOINS the NO-ENTRY pair-status set (7 states); only
+    online pairs are entry-eligible (a marketable IOC taker order is
+    Kraken-rejected on a post_only pair). Sec-2 A-27 prose mirror aligned.
+  - WS-EXE-011 neutralized ("fires on EVERY fill event of an order"); WS-ADD-002
+    CR-17 clause -> EXECUTED record (param:entry_timeout_sec RETIRED; token
+    retired 0311001 v1_47); CR-08 pointer -> entry_fill_disposition (D2).
+  - mod:Position_Mirror constraints drop ar:AR-066; D1 root governs drops
+    ar:AR-066 (token retired this session); q4_triggers TP-fill references removed.
+  R-STATE: R14 propagated to SVG <title> + diagram_canonical + title-bar +
+  figcaption (R13)->(R14); root <desc> CURRENT-R R13 -> R14 + DEC-123
+  standing-discipline relocation clause appended (this narrative).
+  All edits assertion-verified exact-match, count==1, abort-on-fail. The
+  historical TB00378 forensic D3-audit layer:L1b_TP_Fill reference left
+  UNTOUCHED (TB00662 precedent).
+
 
 5.5 D4 -- Image4 Regime Taxonomy
     (relocated at TB00640; 0500000 dv1_195 -> dv1_196; D4 R7 HELD)
@@ -18728,6 +18770,27 @@ AMENDMENT NARRATIVE -- D7 R8 -> R9 (TB00662; 0500000 dv1_211 -> dv1_212; DEC-124
   ar:AR-066 token retirements are the deferred GOVERNANCE slice; the token still has live D1 +
   forensic occurrences this slice). 0500000 dv1_211 -> dv1_212; this archive dv1_21 -> dv1_22
   (append-only; all prior content -- Section 4 + Sections 5 / 6 / 7 -- byte-identical).
+
+AMENDMENT NARRATIVE -- D7 R9 -> R10 (TB00666; 0500000 dv1_213 -> dv1_214; DEC-122
+DISPATCH-SEAM DISPOSITION):
+  The held D7 PA-004(2) live-cell pre-CR-03 entry model is cleaned together with
+  the sec-12 GROUP-2 entry/order-placement prose (one coupled disposition per the
+  TB00662 deferral and the TB00663/TB00665 sequencing).
+  LIVE D7 CHANGE (R9 -> R10): VISIBLE <text> PA-004(2) live cell
+  "limit . post_only . GTD 30-60s . cl_ord_id . pt_mode:PT_MODE_002 .
+  evt:ENTRY_SUBMITTED" -> "marketable IOC . MPP slippage cap . cl_ord_id .
+  pt_mode:PT_MODE_002 . evt:ENTRY_SUBMITTED" (DEC-122 CR-03 taker entry).
+  SEC-12 GROUP-2 PROSE (same dv1_214; <pre>, no additional figure-R impact):
+  batch_add gated method -> "Phase 2 emergSL single-leg placement on entry fill
+  (no TP per DEC-124)"; amend_order gated method -> sole order-modification
+  method (ar:AR-018), no normal-operation amend path (former TP qty amend
+  retired); LIVE MODE "AR-007 batch_add TP" -> "AR-007 batch_add (emergSL single
+  leg)"; CALLER CONTRACT batch_add post-condition -> emergSL price + order ID
+  only, paper prefix PAPER_SL_ only (PAPER_TP_ removed; pm.update_resting_orders
+  pathway retained -- the emergSL is the sole resting order).
+  R-STATE: R10 propagated to SVG <title> + diagram_canonical + title-bar +
+  figcaption (R9)->(R10) + the f12_construction_order subfigure parent_diagram
+  pointer; root <desc> R9->R10 relocation clause appended (this narrative).
 
 
 5.7 D8 -- Image8 Gate 7 Risk Guard Detail
@@ -19571,6 +19634,42 @@ AMENDMENT NARRATIVE -- D2 R9 -> R10 (TB00657; 0500000 dv1_209 -> dv1_210; DEC-12
       DR-079 + retire ar:AR-066 framing; 0311001 retire ar:AR-066; TB00000 v2_88 -> v2_89 sec 7/8).
       Then DEC-124 final re-audit -> ungate PHASE 2 OPTION B clean-slate organism code-gen.
 
+AMENDMENT NARRATIVE -- D2 R10 -> R11 (TB00666; 0500000 dv1_213 -> dv1_214; DEC-122
+DISPATCH-SEAM DISPOSITION):
+  Closes the DEC-122 drift flagged at TB00657: the contract:WSManager_Dispatch_Seam
+  node rendered the pre-CR-03 entry model.
+  LIVE D2 CHANGES (R10 -> R11):
+  - VISIBLE <text> (R-bump drivers per TB00453): live-side dispatch cell
+    "limit / post_only / GTD 30-60s / cl_ord_id" -> "marketable IOC / MPP
+    slippage cap / cl_ord_id"; Pre-Gate-1 skip list gains post_only (7-state
+    NO-ENTRY set under the CR-03 taker entry).
+  - WSManager_Dispatch_Seam <desc>: consumes drops param:entry_timeout_sec;
+    ciats_ownership field -> the CIATS-owned MPP slippage cap (architecture fact
+    is the marketable-IOC-with-MPP-cap contract, not a seed value -- no registry
+    seed by ratified canon, zero new tokens) + param:entry_timeout_sec RETIRED
+    per DEC-122 CR-17 executed TB00666 (token retired 0311001 v1_47); q1_do GTD
+    sentence -> AR-006 marketable IOC limit + MPP cap, no GTD timeout.
+  - gate:G5_Selection_Controller field partial_fill_ownership RENAMED
+    entry_fill_disposition and rewritten per the Bill ruling: the IOC
+    fills-or-kills atomically; any filled qty is an Exit_Controller-owned
+    position protected at the ON FILL single-leg emergSL batch_add; any unfilled
+    qty expires at the exchange; zero fill -> logged + dropped. The partial-fill
+    split mechanic, the DR-079 abandon-and-surface dust write-off, and all
+    sub-minimum dust special-casing RETIRED (DEC-124 TB00650; Bill ruling
+    TB00666 -- references removed as not-live-coding-design). CR-09
+    SIGNAL_DECAY retirement record preserved.
+  - AR-054 constraints clause + the D2 Exit_Controller q1_do fill-disposition
+    clause: dust/partial framing removed; cross-references updated to
+    entry_fill_disposition; CR-07 live-minimum dispatch guard + CR-06 5x-floor
+    sizing noted as the above-minimum guarantees.
+  - Gate-8 q1_do: partial-fill sizing rationale rephrased (above-minimums);
+    estimator seed home corrected TB00000 sec 9 -> sec 8.
+  - Pre-Gate-1 q1_do + G1 q5_logs: post_only added to the entry-blocking /
+    engine-not-ready sets (taker entry).
+  R-STATE: R11 propagated to SVG <title> + diagram_canonical + title-bar +
+  figcaption (R10)->(R11); root <desc> CURRENT-R R10 -> R11 + relocation clause
+  appended (this narrative).
+
 
 ============================================================
 6. RELOCATED SECTION-14 REVISION-HISTORY TABLE
@@ -19941,6 +20040,74 @@ VERIFICATION: dv1_212 md5 1f0f7483cea2e739122ac8adfb6ae596
 both; diff 134 removed / 133 added, all within prose
 sections; 10/10 figure blocks exact-substring-verified
 byte-identical.
+
+------------------------------------------------------------
+8.2 dv1_213 -> dv1_214 -- DEC-122 Dispatch-Seam Disposition
+    PROSE + DESC-ONLY COMPANION INVENTORY (TB00666)
+------------------------------------------------------------
+
+The dv1_214 amendment bumped D1 R13->R14, D2 R10->R11, and D7
+R9->R10 (narratives in 5.4 / 5.10 / 5.6). This entry inventories
+the companion edits that touched NO figure R-state:
+  SEC-2: outbound add_order line -> marketable IOC + MPP;
+  batch_add line -> emergSL single leg; engine-state post_only ->
+  no new entries (taker entry rejected; exits adapt per
+  WS-EXIT-003); exec_type=expired note -> IOC remainder expiry;
+  A-27 (WS-INST-009 7-state NO-ENTRY set) + A-28 (WS-EXE-011
+  neutralized) + A-29 (heading + single-leg batch_add + WS-TP-003
+  / DR-079 retirement record + CR-17 executed) + A-36 (resting-TP
+  language -> emergSL sole resting protective order).
+  D5 / D6 DESC-ONLY (R HELD per TB00453): produces lists drop
+  param:entry_timeout_sec (counts 16->15 / 19->18 with retirement
+  notes); D5 sizing note -> CR-06 pair-relative formula; D6
+  governs/constraints drop ar:AR-066; three D6 mis-bindings
+  "ar:AR-066 mandates ... routing" corrected to rule:PA-001
+  (token retired).
+  SEC-8: AR-006 -> marketable IOC + MPP (former shape in git
+  history); AR-047 item (2) -> marketable-IOC limit quantization
+  (long ROUND_DOWN / short ROUND_UP tightens the cap); AR-054
+  ENTIRE CASE A-D GTD partial-fill protocol -> marketable-IOC
+  fill disposition (CR-10 as amended TB00666; retirement record);
+  AR-055 GTD self-expiry line -> IOC expiry-at-submission; AR-066
+  narrative NOTE -> token retirement EXECUTED; AR-069 -> 
+  marketable-IOC limit construction (base reference = last
+  committed close; MPP-capped bound above/below; quantized per
+  AR-047; rejection_rate_by_regime retained for Kraken rejects +
+  IOC zero-fills).
+  SEC-9: per_trade_size_usd mirror -> CR-06 formula max(50, 5 *
+  max(costmin, ordermin * entry_limit_price)) live-read; Gate-7
+  seed note -> CR-06 reference; entry_timeout_sec block ->
+  RETIRED record (DEC-122 CR-17, mirror of the max_hold_candles
+  pattern).
+  SEC-10: Finding 4 effect -> marketable-IOC fills; Finding 6 ->
+  Entry Rejection / Zero-Fill Monitoring.
+  SEC-11: Gate 1 -> online only (post_only blocks taker entries);
+  Execution line -> marketable IOC + MPP.
+  SEC-13: OI-004 re-based to the CR-03 marketable-IOC limit + MPP
+  cap (AR-069 canon); stale 0811004 pointer dropped.
+  MPP NOTE (flag for the final re-audit): the MPP slippage cap
+  remains "CIATS-owned bound, not a seed value" per prior
+  ratified CR-03 canon -- NO numeric seed was invented this
+  session (RR-SCOPE-008 no-guess).
+  SUB-MINIMUM RESIDUAL NOTE (audit trail): the sub-minimum entry
+  residual case is ruled OUT-OF-DESIGN per the Bill ruling
+  TB00666 ("no partial fills, splits, or dust"); the CR-07
+  live-minimum dispatch guard + CR-06 5x-floor sizing are the
+  above-minimum guarantees; no dust handler exists by design.
+
+VERIFICATION: dv1_213 md5 8478bd536edc4279ccc933b71f6e1565
+-> dv1_214 md5 5514b842408c0617857de1ee42d2c96b; 9745 -> 9735
+lines; 92 assertion-verified exact-match edits (count==1 each,
+abort-on-fail); diff localization verified -- only the 4
+DC-header lines, the D1/D2/D7 figure blocks, the D5/D6
+desc-only lines, and the named prose lines changed; Context +
+D3 + D4 + D8 + D9 byte-identical (DEC-003 Path A multi-figure
+exception per the ratified TB00663/TB00665 sequencing); tag
+balance 10/10 figure, 10/10 svg, 125/125 desc, 970/970 text;
+residual greps clean (GTD / 30-60 / TP-leg / DR-079 / PAPER_TP_
+/ entry_timeout_sec / ar:AR-066 / SUB_MIN survive only as
+retirement records, Kraken wire facts, or historical/forensic
+records).
 
 ============================================================
 END OF DOCUMENT

@@ -1,10 +1,10 @@
 DocDCN:     0311001
 DocTitle:   Namespace_Specification
-DocVersion: v1_46
+DocVersion: v1_47
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_46.txt
-DocDate:    06-09-2026
-DocTime:    06:48:37 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311001_Namespace_Specification_v1_47.txt
+DocDate:    06-10-2026
+DocTime:    23:45:00 UTC
 
 ============================================================
 NAMESPACE SPECIFICATION
@@ -2300,7 +2300,14 @@ REGISTRY CONVENTIONS:
 ------------------------------------------------------------
 
   layer:L1a_Regime_Exit              (seed; 0511004)
-  layer:L1b_TP_Fill                  (seed; 0511004)
+  layer:L1b_TP_Fill                  (RETIRED v1_47 TB00666 per
+                                      DEC-124 -- the Layer 1b
+                                      TP-fill exit layer is
+                                      eliminated; no resting TP
+                                      under run-to-reversal; no
+                                      live 0500000 references
+                                      remain -- forensic/
+                                      historical records only)
   layer:L2_MAE_Threshold             (seed; 0511004)
   layer:L3_Emergency_SL              (seed; 0511004)
   layer:Configuration_Layer          (0500000 §12.2)
@@ -2387,8 +2394,13 @@ REGISTRY CONVENTIONS:
                                       TB00000 §9.17)
   param:emergency_sl_mult            (seed;
                                       TB00000 §9.17)
-  param:entry_timeout_sec            (seed;
-                                      TB00000 §9.17)
+  param:entry_timeout_sec            (RETIRED v1_47 TB00666 per
+                                      DEC-122 CR-17 -- the GTD
+                                      entry-order timeout is
+                                      obviated under the CR-03
+                                      marketable-IOC entry; no
+                                      live 0500000 references
+                                      remain)
   param:full_halt_drawdown           (seed;
                                       TB00000 §9.17)
   param:adx_threshold                (seed;
@@ -2475,17 +2487,16 @@ REGISTRY CONVENTIONS:
                                       value in TB00000 §9.17
                                       Option A - no numeric
                                       value carried)
-  param:max_hold_candles             (TB00000 §9.17;
-                                      CIATS-OWNED PER-MODULE
-                                      INSTANTIATED; Layer-1a
-                                      time-expiry backstop
-                                      EC-L1A-003; registered
-                                      v1_27 TB00404 DEC-046
-                                      Exit-controller group
-                                      completion; ar:AR-071;
-                                      value in TB00000 §9.17
-                                      Option A - no numeric
-                                      value carried)
+  param:max_hold_candles             (RETIRED v1_47 TB00666 per
+                                      DEC-124 -- no max-hold
+                                      time cap under
+                                      run-to-reversal;
+                                      EC-L1A-003 retired;
+                                      registration history:
+                                      registered v1_27 TB00404
+                                      DEC-046 Exit-controller
+                                      group completion;
+                                      ar:AR-071)
   param:sc_body_threshold           (TB00000 §9.17;
                                       CIATS-OWNED PER-MODULE
                                       INSTANTIATED; Selection
@@ -2826,7 +2837,16 @@ candidate identifier evaluated and rejected at
   ar:AR-033                          (0500000 §12.8)
   ar:AR-046                          (0500000 §12.8)
   ar:AR-047                          (0500000 §12.8)
-  ar:AR-066                          (0511005)
+  ar:AR-066                          (RETIRED v1_47 TB00666 per
+                                      DEC-124 -- TP partial-fill
+                                      split mechanic retired; no
+                                      live 0500000 references
+                                      remain -- forensic/
+                                      historical records only;
+                                      three former D6
+                                      routing-mandate
+                                      mis-bindings corrected to
+                                      rule:PA-001 at dv1_214)
   ar:AR-069                          (0511002)
   ar:AR-070_Universe_Scope_Retired   (0500000)
   ar:AR-072                          (1011009)
@@ -4022,6 +4042,34 @@ close.
 ============================================================
 17. REVISION HISTORY
 ============================================================
+
+  v1_47  06-10-2026  TB00666 DEC-122 DISPATCH-SEAM
+                     DISPOSITION -- TOKEN RETIREMENTS.
+                     Four tokens RETIRED: layer:L1b_TP_Fill
+                     (DEC-124 -- L1b TP-fill exit layer
+                     eliminated), ar:AR-066 (DEC-124 -- TP
+                     partial-fill split mechanic retired),
+                     param:entry_timeout_sec (DEC-122 CR-17
+                     -- GTD timeout obviated under the CR-03
+                     marketable-IOC entry), and
+                     param:max_hold_candles (DEC-124 -- no
+                     max-hold under run-to-reversal;
+                     EC-L1A-003 retired). Closes DEC-124
+                     open item (1) (TB00153 v1_91). Live
+                     0500000 references removed at dv1_214
+                     this same session; surviving
+                     occurrences are retirement records,
+                     forensic/historical records (TB00378
+                     D3-audit; figcaption EXTENSIONS), or
+                     registration-history narratives.
+                     NSI-divergence note: the TB00666 NSI
+                     enumerated only layer:L1b_TP_Fill +
+                     ar:AR-066; param:entry_timeout_sec +
+                     param:max_hold_candles folded in under
+                     DD-011 OUTCOME 1 (both retirements
+                     already Bill-ratified -- DEC-122
+                     TB00630 / DEC-124 TB00650 -- and the
+                     registry was open this session).
 
   v1_46  06-09-2026  TB00635 DEC-123 PHASE G --
                      §15.16.3 ATTESTATION-RECORD-HOME
