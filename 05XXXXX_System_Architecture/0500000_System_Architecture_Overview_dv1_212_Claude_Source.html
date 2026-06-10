@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_211</title>
+<title>0500000 System Architecture Overview dv1_212</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_211</td></tr>
+  <tr><td>DocVersion</td><td>dv1_212</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_211_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_212_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-10-2026</td></tr>
-  <tr><td>DocTime</td><td>04:49:36 UTC</td></tr>
+  <tr><td>DocTime</td><td>06:25:48 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7259,8 +7259,8 @@ prefix taxonomy:
     WSManager.cancel_order()        Individual cancel for MAE exit.
     WSManager.amend_order()         TP qty amend on partial fill.
     WSManager.batch_cancel()        Full Halt multi-order cancel.
-    WSManager.dispatch_market_sell() Market sell for Layer 1a / 1b /
-                                    Layer 2 MAE-threshold exit.
+    WSManager.dispatch_market_sell() Market sell for Layer 1a
+                                    regime-reversal / Layer 2 MAE exit.
 </pre>
 <pre>
   GATE BEHAVIOR.
@@ -7362,10 +7362,12 @@ prefix taxonomy:
 </pre>
 <pre>
   EXIT-FILL CREDIT (paper mode).
-    On simulated TP fill (FEE_MAKER_PCT) or simulated market sell
-    (FEE_TAKER_PCT):
+    On simulated market-sell exit (FEE_TAKER_PCT) -- DEC-124: all
+    exits close at taker (L1a regime-reversal run-to-reversal, L2
+    MAE, L3 emergSL; PAIR_LIMIT_ONLY IOC at best_bid); no resting
+    TP, so no maker TP-fill exit path exists:
       exit_proceeds = qty * exit_price
-      fees_exit = exit_proceeds * FEE_&lt;MAKER|TAKER&gt;_PCT
+      fees_exit = exit_proceeds * FEE_TAKER_PCT
       spot_usd_balance += (exit_proceeds - fees_exit)
       Logger emits PAPER_LEDGER_UPDATED (event_type=EXIT_FILL).
       Control then yields to Exit Controller per 12.5.
@@ -7399,8 +7401,9 @@ prefix taxonomy:
 </pre>
 <pre>
   EXIT FLOW (paper, all exit reasons identical pattern):
-    1. WSManager detects exit condition (TP, MAE breach, Layer 1a
-       signal, Layer 1b TP, emergSL price breach, time expiry).
+    1. WSManager detects exit condition (L1a regime-reversal --
+       HTF_REGIME_REVERSAL or DAILY_REGIME_DOWNGRADE, L2 MAE breach,
+       L3 emergSL price breach, or PAIR_LIMIT_ONLY).
     2. WSManager applies HR-WM-032 ledger credit.
     3. WSManager logs PAPER_&lt;EXIT_TYPE&gt;_DETECTED.
     4. WSManager calls
@@ -7470,7 +7473,11 @@ prefix taxonomy:
     PAPER_FILL_SIMULATED        Generic event for any synthetic
                                 fill produced by the local
                                 simulation path.
-    PAPER_TP_FILL_DETECTED      Synthetic TP fill (ask &gt;= tp_price).
+    PAPER_REGIME_EXIT_DETECTED  Synthetic regime-reversal close
+                                trigger (L1a HTF_REGIME_REVERSAL /
+                                DAILY_REGIME_DOWNGRADE run-to-
+                                reversal take-profit); no resting TP
+                                under DEC-124.
     PAPER_EMERG_SL_TRIGGERED    Synthetic emergSL trigger
                                 (bid &lt;= emergsl_price).
     PAPER_DISPATCH_BLOCKED      DEFENSIVE TELEMETRY. Emitted if
@@ -7508,14 +7515,14 @@ prefix taxonomy:
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 2380"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image7_T2_R8_Paper_Mode_Dispatch_Boundary</title>
+  <title>0500000_Image7_T2_R9_Paper_Mode_Dispatch_Boundary</title>
   <desc>
-    diagram_canonical: 0500000_Image7_T2_R8_Paper_Mode_Dispatch_Boundary
+    diagram_canonical: 0500000_Image7_T2_R9_Paper_Mode_Dispatch_Boundary
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641). CURRENT R: R8.
+    R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641); R8-&gt;R9 DEC-124 run-to-reversal restoration relocated per DEC-123 standing discipline (TB00662). CURRENT R: R9.
     governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-032, rule:HR-WM-033, rule:HR-EE-013, rule:HR-EE-014, rule:HR-EE-015, rule:HR-PM-009, rule:HR-REGIME-007, ar:PA-001, ar:PA-002, ar:PA-003, ar:PA-004, ar:PA-005, ar:PA-006, ar:PA-007, ar:AR-009, ar:AR-052, ar:AR-072, ar:AR-073, decision:D-05_Paper_Starting_Balance, decision:D-06_Paper_Live_Parity, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003, contract:WSManager_Dispatch_Seam, contract:Synthetic_Capital_Ledger, contract:CIATS_Trade_Outcome_Bus, contract:Drawdown_Formula, container:Private_WS_v2, mod:WS_Manager, mod:Execution_Engine, mod:Exit_Controller, mod:Long_Module, mod:Short_Module, mod:Signal_Pipeline, mod:Position_Mirror, mod:Startup_Sequence, mod:Risk_Engine, layer:Configuration_Layer, state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet, param:paper_trading_mode, param:paper_starting_balance, param:paper_starting_balance_long_usd, param:paper_starting_balance_short_usd, param:session_pause_drawdown_pct, param:full_halt_drawdown_pct, evt:G7_DRAWDOWN_HALT, evt:SESSION_PAUSE_TRIGGERED, evt:SESSION_PAUSE_RECOVERED, evt:FULL_HALT_TRIGGERED, evt:FULL_HALT_BATCH_CANCEL_RESULT
     drill_targets: 0811005_dv1_0_Short_Module_Specification, 0811001_dv1_0_Long_Module_Specification
     sacred_constraints: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
@@ -7551,7 +7558,7 @@ prefix taxonomy:
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 7 — Paper-Mode Dispatch Boundary Architecture</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image7_T2_R8_Paper_Mode_Dispatch_Boundary  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
+      0500000_Image7_T2_R9_Paper_Mode_Dispatch_Boundary  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -7732,18 +7739,18 @@ prefix taxonomy:
         canonical: mod:Exit_Controller
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
-        drill_targets: contract:WSManager_Dispatch_Seam, layer:L1a_Regime_Exit, layer:L1b_TP_Fill, layer:L2_MAE_Threshold, layer:L3_Emergency_SL
+        drill_targets: contract:WSManager_Dispatch_Seam, layer:L1a_Regime_Exit, layer:L2_MAE_Threshold, layer:L3_Emergency_SL
         constraints: rule:HR-EC-013, rule:HR-EC-014, ar:PA-005
         consumes: none
         produces: evt:TRADE_CLOSE
-        q1_do: 4-layer exit controller (L1a Signal Exit, L1b TP Fill, L2 MAE Threshold, L3 Emergency SL) operating ABOVE the WSManager dispatch seam per ar:PA-005 byte-identical paper/live; enforces rule:HR-EC-013 (paper-live close-path parity) + rule:HR-EC-014 (Exit Controller is sole SC state updater in both modes); routes paper exits through Exit Controller for behavioral parity with live exits per rule:HR-WM-033 referenced upstream in root governs.
-        q4_triggers: Triggered by L1a Signal Exit per-tick evaluations from upstream signal events; L1b TP Fill from container:Matching_Engine resting limit fills; L2 MAE Threshold per-tick MAE breach evaluations; L3 Emergency SL crash-protection layer; emits evt:TRADE_CLOSE on ANY exit-layer completion as ONE unified record per rule:HR-EC-014 sole-SC-state-updater contract.
-        q5_logs: evt:TRADE_CLOSE routed to mod:Logger via channel:logger_async_queue (consumed downstream by contract:CIATS_Trade_Outcome_Bus); per-layer trigger telemetry logged (L1a/L1b/L2/L3 source attribution per exit); byte-identical exit telemetry paper ↔ live per ar:PA-005 + rule:HR-EC-013 close-path parity.
+        q1_do: 3-layer exit controller (L1a Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE Threshold, L3 Emergency SL; the former L1b TP Fill layer is RETIRED per DEC-124 - no resting TP) operating ABOVE the WSManager dispatch seam per ar:PA-005 byte-identical paper/live; enforces rule:HR-EC-013 (paper-live close-path parity) + rule:HR-EC-014 (Exit Controller is sole SC state updater in both modes); routes paper exits through Exit Controller for behavioral parity with live exits per rule:HR-WM-033 referenced upstream in root governs.
+        q4_triggers: Triggered by L1a Regime-Reversal Exit (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE - the run-to-reversal take-profit; no fixed TP and no max-hold per DEC-124); L2 MAE Threshold per-tick MAE breach evaluations; L3 Emergency SL crash-protection layer; emits evt:TRADE_CLOSE on ANY exit-layer completion as ONE unified record per rule:HR-EC-014 sole-SC-state-updater contract.
+        q5_logs: evt:TRADE_CLOSE routed to mod:Logger via channel:logger_async_queue (consumed downstream by contract:CIATS_Trade_Outcome_Bus); per-layer trigger telemetry logged (L1a/L2/L3 source attribution per exit); byte-identical exit telemetry paper ↔ live per ar:PA-005 + rule:HR-EC-013 close-path parity.
         schema_version: 1.0
       </desc>
     <rect x="1065" y="465" width="375" height="120" fill="#ffffff" stroke="#1e40af" stroke-width="1" rx="3"/>
     <text x="1252" y="488" font-size="13" font-weight="700" text-anchor="middle">mod:Exit_Controller (above-seam role)</text>
-    <text x="1252" y="510" font-size="10" text-anchor="middle">dispatch_market_sell  ·  L1a/L1b/L2/L3</text>
+    <text x="1252" y="510" font-size="10" text-anchor="middle">dispatch_market_sell  ·  L1a/L2/L3</text>
     <text x="1252" y="528" font-size="10" text-anchor="middle">close-side traverses same seam</text>
     <text x="1252" y="548" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">close emits evt:TRADE_CLOSE (mode-agnostic)</text>
     <text x="1252" y="568" font-size="9" font-weight="700" text-anchor="middle" fill="#1e40af">no paper_trading_mode branch above seam</text>
@@ -7929,11 +7936,11 @@ prefix taxonomy:
         canonical: mod:Position_Mirror
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
-        drill_targets: layer:L1a_Regime_Exit, layer:L1b_TP_Fill, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, mod:Exit_Controller
+        drill_targets: layer:L1a_Regime_Exit, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, mod:Exit_Controller
         constraints: rule:HR-PM-009 (single-owner invariant), ar:PA-004 (#4 — sourcing differs; schema identical), ar:PA-005 (schema byte-identical paper ↔ live)
         consumes: evt:PAPER_FILL_SIMULATED (paper) , evt:ENTRY_FILLED (live)
         produces: evt:TRADE_CLOSE
-        q1_do: Symbol-keyed dict mirror of all open positions and the paper/live rejoin point — where the simulation path (paper) and the Kraken transmission path (live) rejoin with schema-identical records per ar:PA-005 + ar:PA-004 (#4 — FOURTH PA-004 divergence point: paper sim / live executions sourcing differs but schema identical); sole-writer authority per rule:HR-PM-009 single-owner invariant; downstream mod:Exit_Controller queries position state for L1a/L1b/L2/L3 exit-layer evaluation.
+        q1_do: Symbol-keyed dict mirror of all open positions and the paper/live rejoin point — where the simulation path (paper) and the Kraken transmission path (live) rejoin with schema-identical records per ar:PA-005 + ar:PA-004 (#4 — FOURTH PA-004 divergence point: paper sim / live executions sourcing differs but schema identical); sole-writer authority per rule:HR-PM-009 single-owner invariant; downstream mod:Exit_Controller queries position state for L1a/L2/L3 exit-layer evaluation.
         q4_triggers: Triggered by evt:PAPER_FILL_SIMULATED (paper mode — from contract:WSManager_Dispatch_Seam simulated-fill callback per HR-WM-024 ticker detection) OR evt:ENTRY_FILLED (live mode — from container:Private_WS_v2 executions stream); applies position-state update with schema-identical record per PA-005; emits evt:TRADE_CLOSE on position close via mod:Exit_Controller exit-layer completion.
         q5_logs: evt:TRADE_CLOSE routed to mod:Logger via channel:logger_async_queue; position state-change snapshots logged at every entry/exit transition; paper-mode fill records carry synthetic-ledger provenance + live-mode fill records carry execution-id provenance for reconciliation audit — schema byte-identical per PA-005.
         schema_version: 1.0
@@ -7983,7 +7990,7 @@ prefix taxonomy:
         canonical: rule:SS-BUILD-001 (parallel-module construction order; visual realization)
         governed_by: mod:Startup_Sequence
         tier: 3
-        parent_diagram: 0500000_Image7_T2_R8_Paper_Mode_Dispatch_Boundary
+        parent_diagram: 0500000_Image7_T2_R9_Paper_Mode_Dispatch_Boundary
         constraints: rule:SS-BUILD-001, ar:AR-050, ar:AR-052, ar:AR-073, ar:AR-009, rule:HR-WM-024, rule:HR-PM-009, contract:Sizing_Curve_Per_Module
         q1_do: visible ordered-build topology for the OPTION B clean-slate parallel organism build -- single-instance shared infra constructed once then injected by reference into both siblings; per-module CIATS instance + statistical pool + wallet ($5,000 each) + per-wallet halt state machine instantiated inside each sibling; halt isolation wired so one module halt does not halt the sibling. Authoritative contract text in mod:Startup_Sequence q1_do rule:SS-BUILD-001.
         q4_triggers: systemd tothbot.service start (boot) construction phase, after WSManager.__init__ + SS-phase cascade.
@@ -8032,7 +8039,7 @@ prefix taxonomy:
 </svg>
   </div>
   <figcaption>
-    Image7 Paper-Mode Dispatch Boundary (R8). Forensic provenance - the sec 15.16.3 / V-040 65-cell design-completeness attestation (the TB00382 IV + the (a)/(b)/(c)/(d) blocks), the OPTION-R extension stack (i)-(iii) + the SLICE-4/F-12 (TB00620) + SLICE-3/D2 (TB00619) + R6 to R7 paper-balance (TB00614) amendment narratives, the CI-005/CI-006 visible-stack rolling narratives, the prior R6 (TB00355) attestation preserved-for-reference block, and all prior amendment narratives - relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641). The diagram remains design-complete and derivable from the SVG + governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+    Image7 Paper-Mode Dispatch Boundary (R9). Forensic provenance - the sec 15.16.3 / V-040 65-cell design-completeness attestation (the TB00382 IV + the (a)/(b)/(c)/(d) blocks), the OPTION-R extension stack (i)-(iii) + the SLICE-4/F-12 (TB00620) + SLICE-3/D2 (TB00619) + R6 to R7 paper-balance (TB00614) amendment narratives, the CI-005/CI-006 visible-stack rolling narratives, the prior R6 (TB00355) attestation preserved-for-reference block, and all prior amendment narratives - relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641). The diagram remains design-complete and derivable from the SVG + governing &lt;desc&gt; fields alone (V-040 validation unchanged).
   </figcaption>
 
 </figure>

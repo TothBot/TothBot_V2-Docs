@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_21
+DocVersion: dv1_22
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_21.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_22.txt
 DocDate:    06-10-2026
-DocTime:    04:57:33 UTC
+DocTime:    06:30:29 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18630,6 +18630,105 @@ RELOCATED BLOCK C -- figcaption interior / V-040 attestation + OPTION-R extensio
 
     PRIOR FIGCAPTION CONTENT (TB00355 R5→R6 V-040 ORIGINAL ATTESTATION) PRESERVED FOR REFERENCE: Diagram 7 — Paper-Mode Dispatch Boundary (R6). The mode gate exists at EXACTLY one place — the WSManager seam (contract:WSManager_Dispatch_Seam). Modules above the seam are mode-blind. Inside the seam, paper and live diverge ONLY at the four PA-004 points enumerated row-by-row: private WS connection (#1 live-only), order dispatch (#2 the central seam), capital ledger (#3 paper synthetic / live real), Position Mirror sourcing (#4 paper sim / live executions; schema identical per PA-005). Paper occupies the LEFT column at full saturation (canonical); live occupies the RIGHT column at dimmed saturation (mimics paper). All paths rejoin at mod:Position_Mirror with schema-identical records, then flow to contract:CIATS_Trade_Outcome_Bus where paper and live are INDISTINGUISHABLE. Drill-up parent: D2 R6 G8 → Execution_Engine dispatch seam. V-040 DESIGN-COMPLETENESS ATTESTATION per 0311001 v1_24 §15.16.3 (TB00355 EIGHTH per-diagram amendment). (a) IDENTIFIER + REVISION: D7 Paper-Mode Dispatch Boundary (0500000_Image7_T2_R6_Paper_Mode_Dispatch_Boundary) 0500000 dv1_87. (b) PER-COMPONENT PASS ENUMERATION: 13 components × 5 questions = 65 cells, ALL PASS [layer:Configuration_Layer Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:Startup_Sequence Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:Signal_Pipeline Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:Long_Module Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:Short_Module Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:Execution_Engine Q1 PASS Q2 PASS Q3 PASS (HR-EE-014 + HR-EE-015 added to constraints this amendment closing V-040.3 Q3 cell FAIL latent since TB00247 R5 added them to root governs but not to per-component constraints) Q4 PASS Q5 PASS; mod:Exit_Controller Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; contract:WSManager_Dispatch_Seam Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; container:Private_WS_v2 Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; contract:Synthetic_Capital_Ledger Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:WS_Manager Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; mod:Position_Mirror Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS; contract:CIATS_Trade_Outcome_Bus Q1 PASS Q2 PASS Q3 PASS Q4 PASS Q5 PASS]. Q1 PASS sourced from per-component q1_do field added at TB00355 amendment. Q2 PASS sourced from per-component constraints + consumes + produces + drill_targets fields. Q3 PASS sourced from per-component constraints field (rules / ARs / decisions) — ee_above_seam Q3 PASS post-amendment after HR-EE-014 + HR-EE-015 added to constraints. Q4 PASS sourced from per-component q4_triggers field added at TB00355 amendment. Q5 PASS sourced from per-component q5_logs field added at TB00355 amendment. (c) FROM-THE-DIAGRAM-ALONE CONFIRMATION: All 65 PASS marks derived using ONLY the SVG visual rendering + machine-readable governs &lt;desc&gt; descriptors + TB00355 figcaption. NO source from prose §1-§12 of 0500000, NO source from subordinate specs (0XXXXXXX docs), NO source from TB00000 prose outside §3.2 Q1-Q5 itself, NO source from outside documents. (d) FAIL DISPOSITION: None post-amendment. All 65 cells PASS. V-040.3 Q3 cell FAIL latent at pre-amendment state for ee_above_seam (HR-EE-014 + HR-EE-015 in root governs since TB00247 R5 but absent from per-component constraints) closed by ADD-only token propagation into ee_above_seam constraints field at TB00355 amendment. Amendment ACCEPTED at namespace validation per §15.16.4 V-040 step (5). Option R (i) CROSS-DIAGRAM Q2 INTERFACE AUDIT: 7 outbound/inbound interfaces traced from D7 components to destination Tier 2 diagrams; 5 of 7 VERIFIED at TB00355 (D1 R7 + D2 R6 + D5 R9 destinations VERIFIED); 2 of 7 interfaces (Flow 6 + Flow 7 partial — D3 Exit_Architecture target) PENDING-CASCADE at TB00355 awaiting D3 V-040 design-completeness amendment per dependency-ordered sequence step 5 — subsequently CLOSED at TB00382 IV (D3 IV COMPLETE at TB00378). Option R (ii) NAMESPACE REGISTRY BATCHING CHECK: D7 amendment ADD-only scope introduces NO new container: / actor: / channel: / contract: / arrow: / ar: / rule: / decision: / param: / mod: / indicator: / evt: / pt_mode: / regime: / layer: / state: identifier tokens; NO 0311001 v1_24 → v1_25 amendment required at TB00355. Option R (iii) SUBSEQUENT-SESSION DEPENDENCY-ORDERED SEQUENCE: TB00356 candidate target = D3 Exit_Architecture V-040 design-completeness extension per dependency-ordered sequence step 5 — subsequently executed across TB00356-TB00371 with D3-D9 V-040 design-completeness amendments completed by TB00371.
 </pre>
+
+AMENDMENT NARRATIVE -- D7 R8 -> R9 (TB00662; 0500000 dv1_211 -> dv1_212; DEC-124 RUN-TO-REVERSAL RESTORATION, slice 7):
+  DEC-124 (Bill ruling, ratified TB00650; executed on D3 at TB00652 + D9 at TB00654 + D6 surface
+  at TB00655 + D2 at TB00657 + D5/D6-FIELD-15 at TB00659) RESTORATION reaches D7 (Image7
+  Paper-Mode Dispatch Boundary) this slice. DEC-124 makes the sacred net 1:1.5 R:R an
+  ENTRY-ACCEPTANCE FLOOR only; run-to-reversal (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE)
+  is the whole-position take-profit; there is NO fixed gross_target TP and NO max-hold; three
+  exit layers only (L1a regime-reversal, L2 MAE, L3 emergency-SL); the live exit_reason set is
+  the four-value {MAE_THRESHOLD_BREACH, HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE,
+  PAIR_LIMIT_ONLY_EXIT} (D3 canon, TB00652). The pre-DEC-124 D7 figure rendered a 4-layer
+  model with an L1b TP-Fill resting-limit layer; this slice corrects it to mirror the D3 canon.
+
+  FIGURE CHANGES (mod:Exit_Controller ec_above_seam): (i) drill_targets -- layer:L1b_TP_Fill
+  REMOVED (now layer:L1a_Regime_Exit + L2_MAE_Threshold + L3_Emergency_SL); (ii) q1_do --
+  '4-layer exit controller (L1a Signal Exit, L1b TP Fill, L2 MAE Threshold, L3 Emergency SL)'
+  -> '3-layer exit controller (L1a Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE
+  Threshold, L3 Emergency SL; the former L1b TP Fill layer is RETIRED per DEC-124 - no resting
+  TP)'; (iii) q4_triggers -- the 'L1b TP Fill from container:Matching_Engine resting limit
+  fills' clause REMOVED + 'L1a Signal Exit' renamed to 'L1a Regime-Reversal Exit
+  (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE - the run-to-reversal take-profit; no fixed TP
+  and no max-hold per DEC-124)'; (iv) q5_logs -- per-layer attribution 'L1a/L1b/L2/L3' ->
+  'L1a/L2/L3'; (v) VISIBLE SVG <text> at x=1252 y=510 'dispatch_market_sell  .  L1a/L1b/L2/L3'
+  -> 'dispatch_market_sell  .  L1a/L2/L3'. FIGURE CHANGES (mod:Position_Mirror
+  position_mirror_rejoin): drill_targets layer:L1b_TP_Fill REMOVED; q1_do 'for L1a/L1b/L2/L3
+  exit-layer evaluation' -> 'for L1a/L2/L3 exit-layer evaluation'.
+
+  R-STATE -- R8 -> R9: change (v) is a visible SVG <text> content MODIFY, so per the TB00453
+  bright line D7's figure R-number bumps R8 -> R9. R9 propagated to the SVG <title> +
+  diagram_canonical + title-bar visible subtitle + the f12_construction_order subfigure
+  parent_diagram pointer + the figcaption header (R8) -> (R9). The root <desc> CURRENT-R
+  identity advanced R8 -> R9 and a DEC-123 standing-discipline relocation clause appended
+  ('R8->R9 DEC-124 run-to-reversal restoration relocated per DEC-123 standing discipline
+  (TB00662)') -- per the D3 dv1_207 R9->R10 precedent. NO R-increment-chain block was relocated
+  this slice: the D7 chain was already externalized at TB00641 (D7 R8 HELD, this 5.6); the
+  standing discipline updates the live diagram with new content + the new CURRENT R + the
+  0521001 pointer and appends this verbatim narrative -- no Block A/B/C re-relocation.
+
+  SEC-12 GROUP-1 PROSE (the D7 figure's own section, swept in the same pass per FP/DP Option A,
+  TB00661 sec 4 -- <pre> prose, does NOT bump the figure R): (a) 12.3 GATED METHODS
+  dispatch_market_sell 'Layer 1a / 1b / Layer 2 MAE-threshold exit' -> 'Layer 1a
+  regime-reversal / Layer 2 MAE exit'; (b) 12.4 EXIT-FILL CREDIT 'On simulated TP fill
+  (FEE_MAKER_PCT) or simulated market sell (FEE_TAKER_PCT)' + 'FEE_<MAKER|TAKER>_PCT' -> a
+  taker-only market-sell exit credit (FEE_TAKER_PCT; L1a regime-reversal run-to-reversal + L2
+  MAE + L3 emergSL + PAIR_LIMIT_ONLY IOC at best_bid; no resting-TP maker-fill exit path
+  exists); (c) 12.5 EXIT FLOW step 1 exit-condition list '(TP, MAE breach, Layer 1a signal,
+  Layer 1b TP, emergSL price breach, time expiry)' -> '(L1a regime-reversal --
+  HTF_REGIME_REVERSAL or DAILY_REGIME_DOWNGRADE, L2 MAE breach, L3 emergSL price breach, or
+  PAIR_LIMIT_ONLY)'; (d) 12.6 paper telemetry taxonomy PAPER_TP_FILL_DETECTED ('Synthetic TP
+  fill (ask >= tp_price)') -> PAPER_REGIME_EXIT_DETECTED ('Synthetic regime-reversal close
+  trigger (L1a HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE run-to-reversal take-profit); no
+  resting TP under DEC-124') -- the PAPER_EMERG_SL_TRIGGERED event is unchanged. PAPER IS THE
+  MASTER (TB00000 sec 4.3): the paper-sim exit-detection now mirrors the corrected live D7 model.
+
+  GROUP-2 DEFERRAL (NOT performed this slice -- Bill-confirmed Path A, chat-turn): the sec-12
+  12.3 ENTRY / post-fill order-PLACEMENT prose -- add_order 'Phase 1 entry order dispatch' +
+  batch_add 'Phase 2 TP + emergSL atomic placement on entry fill', amend_order 'TP qty amend on
+  partial fill', the LIVE-MODE 'AR-007 batch_add TP' citation, and the CALLER-CONTRACT Phase-2
+  batch_add resting-order IDs (PAPER_TP_ / PAPER_SL_ / pm.update_resting_orders) -- carries a
+  DEC-124-retired resting-TP leg BUT sits on the same dispatch-seam order-placement model that
+  the held DEC-122 drift covers (the D7 PA-004(2) cell still renders the pre-CR-03
+  limit/post_only/GTD entry model, AWAITING BILL). Cleaning it now would make prose lead a held
+  figure cell (inverting TB00000 sec 4.2). Deferred WHOLE to the DEC-122 dispatch-seam
+  disposition, which cleans the held figure cell + this prose together. LEFT BYTE-IDENTICAL:
+  the PA-004(2) 'limit . post_only . GTD 30-60s' visible cell; the 12.3 batch_add/amend/AR-007
+  entry-model prose.
+
+  NSI UNDER-ENUMERATION (Claude/NSI divergence, surfaced to Bill chat-turn 1 + Bill-confirmed
+  Path A): TB00662 NSI named ONLY sec-12 cluster (c) at line ~7473. The RR-SCOPE-008 content
+  audit found SIX DEC-124-stale sec-12 prose clusters; (a)-(d) above are the GROUP-1 exit-side
+  set (mirrors the corrected figure; swept here because the residual PROSE slice EXCLUDES sec
+  12 -- no other owner); the GROUP-2 entry-model set is the deferral above. The sec-8
+  (TIME_EXPIRY AR-071 / loss-win attribution) + sec-9 (max_hold_candles=24 mirror) clusters are
+  NOT sec 12 and remain the deferred residual PROSE slice.
+
+  BINARY TEST (DEC-096): the three-layer exit model + run-to-reversal take-profit are
+  TothBot-organism architecture, canonical in D7 (YES); no seed VALUE moved (TB00000 sec 8
+  UNCHANGED; the net 1:1.5 R:R minimum remains the only hardcoded value, a floor never a cap).
+  INTEGRITY: change-localization VERIFIED -- the only changed regions are the 4 DC-header lines
+  (6/135/137/139), the D7 <figure> block (7507..8038), and the sec-12 GROUP-1 <pre> prose
+  (dispatch_market_sell + EXIT-FILL CREDIT + EXIT FLOW step 1 + the taxonomy line); all 9 other
+  figures BYTE-IDENTICAL per DEC-003 Path A; the D1 figure layer:L1b_TP_Fill references (D1 is
+  the next slice) and the historical TB00378 D3-audit provenance layer:L1b_TP_Fill reference are
+  UNTOUCHED. SVG geometry byte-identical (no rect/path/polygon/line/text-position change; viewBox
+  1500x2380 preserved); figure count 10; figcaption 10/10; exactly one <h2>14. Revision
+  History</h2>. DR-007.9 HTML well-formedness parser pass confirmed pre-delivery (tag balance
+  unchanged from dv1_211). md5: dv1_211 eb559ff71ec5b9740f3a20d591b7a524 -> dv1_212
+  1f0f7483cea2e739122ac8adfb6ae596. RR-SCOPE-001 ADD/MODIFY scope (one identifier removed:
+  layer:L1b_TP_Fill at the two D7 drill_targets; the retirement is the DEC-124 architecture, not
+  a namespace-token mint). RR-SCOPE-011 one primary mission, one figure (D7) + its own sec-12
+  prose. RR-SCOPE-005 derivable: D7 figure + GROUP-1 prose fully specified by D3 canon + the
+  settled DEC-124 frame; single compliant path; FP/DP OUTCOME 1; the GROUP-2 deferral is the
+  single compliant disposition under sec 4.2 (Bill-confirmed Path A). RR-SCOPE-008 no-guess
+  (every anchor located by content vs live HEAD dv1_211; the NSI line numbers re-verified). NO
+  new TB00153 DECISION (DEC-124 already ratified TB00650; the formal TB00153 DEC-124 register
+  entry remains the deferred GOVERNANCE slice). NO 0311001 change (the layer:L1b_TP_Fill /
+  ar:AR-066 token retirements are the deferred GOVERNANCE slice; the token still has live D1 +
+  forensic occurrences this slice). 0500000 dv1_211 -> dv1_212; this archive dv1_21 -> dv1_22
+  (append-only; all prior content -- Section 4 + Sections 5 / 6 / 7 -- byte-identical).
+
 
 5.7 D8 -- Image8 Gate 7 Risk Guard Detail
     (relocated at TB00642; 0500000 dv1_197 -> dv1_198; D8 R3 HELD)
