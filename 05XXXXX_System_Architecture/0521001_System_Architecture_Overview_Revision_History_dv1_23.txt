@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_22
+DocVersion: dv1_23
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_22.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_23.txt
 DocDate:    06-10-2026
-DocTime:    06:30:29 UTC
+DocTime:    21:58:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -19790,6 +19790,157 @@ AMENDMENT NARRATIVE -- D6 R HELD (TB00648; 0500000 dv1_205 -> dv1_206):
 schema_fields_R4_RETIRED: prior R4 abbreviated descriptor (12 fields per 0511004 dv1_3 §7.5: symbol, entry_fill_price, exit_price, hold_candle_count, MAE_reached, fees_total, exit_reason, asset_regime, market_regime, signal_params_at_entry, actual_RR, net_PL_USD) retained as a forensic anchor noting the prior DR-013 schema-enumeration closure framing; superseded by the R5 23-field canonical enumeration above.
 </pre>
 ----- END RELOCATED D6 DEAD GOVERNING CONTENT (VERBATIM) -----
+
+============================================================
+8. DOCUMENT-LEVEL AMENDMENT NARRATIVES -- NO FIGURE R CHANGE
+============================================================
+
+This section holds append-only amendment narratives for
+0500000 revisions that touched NO figure surface (prose-only
+slices). Per TB00453, no figure R-number changes; per
+DEC-123, the narrative lives here, not in the live design
+document.
+
+------------------------------------------------------------
+8.1 dv1_212 -> dv1_213 -- DEC-124 Residual PROSE Slice
+    (TB00664)
+------------------------------------------------------------
+
+CAMPAIGN: DEC-124 Run-to-Reversal Restoration -- residual
+PROSE slice. All seven DEC-124 figure slices closed prior
+(D3 TB00652, D9 TB00654, D6 TB00655, D2 TB00657, D5 TB00658,
+D7 TB00662, D1 deferred-to-DEC-122 per Bill ruling Option A
+TB00663). This slice brings every LIVE prose surface of
+0500000 into agreement with the DEC-124 figure canon. All 10
+figure blocks BYTE-IDENTICAL (verified by block extraction +
+exact substring match against dv1_213); no figure R bump
+(TB00453 prose-only). Tag-balance parser pass: one <pre>
+element pair net-removed (the deleted Layer 1b block); all
+other element counts unchanged and balanced.
+
+DEC-124 CANON RESTATED (source: D3 Image3_T2_R10, D9
+Image9 R4, D2 R10, D6, D5): the 1:1.5 net R:R minimum is an
+ENTRY-ACCEPTANCE FLOOR ONLY (admit iff expected_reward /
+net_loss >= 1.5) -- never a cap, never an exit price. No
+resting TP order exists; the take-profit is the Layer 1a
+regime-reversal exit (run-to-reversal). Exactly three exit
+layers: L1a regime reversal, L2 MAE, L3 emergency-SL.
+EC-L1A-003 max-hold RETIRED. Layer 1b TP-fill RETIRED.
+exit_reason TP_FILL + TIME_EXPIRY RETIRED; live four-value
+set MAE_THRESHOLD_BREACH / HTF_REGIME_REVERSAL /
+DAILY_REGIME_DOWNGRADE / PAIR_LIMIT_ONLY_EXIT
+(EMERGENCY_SL_FIRED producer-partitioned L3). AR-066
+partial-fill split mechanic RETIRED (TB00650); DR-079
+abandon-and-surface + exit_reason SUB_MIN_RESIDUAL_ABANDONED
+RETIRED. Fee basis both legs TAKER (marketable-IOC entry per
+DEC-122 CR-03 Bill-ratified TB00633; taker exits): round-trip
+0.52% per D9 canon.
+
+GROUP-1 EDITS EXECUTED (44 operations, all anchors
+count-asserted exact-match; abort-on-fail; no silent
+partials):
+  DC header: title / DocVersion / DocPath / DocTime ->
+    dv1_213.
+  Sec 1: Kraken zone description -- emergSL-only resting
+    orders.
+  Sec 2: Matching Engine crash-protection statement
+    (emergSL-only + L1a take-profit note); maintenance
+    engine-state line; A-13 restated-order escalation
+    (emergSL-only).
+  Sec 3.1 Gate 8 line: TP=R:R formula -> A1 floor + CIATS
+    run-to-reversal estimate.
+  Sec 3.2 D9 intro prose: MAE/emergSL from ATR; expected
+    reward from estimator; no TP price.
+  Sec 4.1: L1a = two regime triggers, IS the take-profit,
+    EC-L1A-003 RETIRED, cancel emergSL -> market sell;
+    Layer 1b <pre> block DELETED; L2 sequence -> (1) cancel
+    emergSL (2) market sell.
+  Sec 4.2 R:R formula block: net_loss = mae_pct + 0.26% +
+    0.26% (taker+taker); net_gain/gross_target lines REMOVED;
+    expected_reward = CIATS run-to-reversal estimate; ACCEPT
+    iff expected_reward/net_loss >= 1.5 (SACRED floor only).
+  Sec 8 AR entries: AR-001 (emergSL-only crash protection);
+    AR-007 (TP placement RETIRED; batch_add emergSL leg ONLY
+    per D2 ON FILL canon; actual-fill-price-for-R:R
+    RETAINED); AR-008 (single-leg batch_add, two sub-edits);
+    AR-040 (emergSL sole HOLD protection); AR-047 (rounding
+    op (3) RETIRED, lead line + batch-fail line; item (2)
+    entry limit_price UNTOUCHED -- DEC-122); AR-057 (emergSL
+    amend check); AR-062 (two regime triggers, exit sequence
+    x2 count-asserted ==2, EC-L1A-003 RETIRED stub); AR-065
+    (entry taker + exit taker; 0.42% -> 0.52% round-trip);
+    AR-066 (full retirement stub via marker-bounded splice;
+    0311001 ar:AR-066 TOKEN retirement deferred to DEC-122
+    disposition session -- live D1 references remain);
+    AR-071 (full retirement stub; four-value exit_reason set;
+    24-candle value to git history); AR-073 (LOSS/WIN
+    attribution by realized net P/L sign; TP_FILL/TIME_EXPIRY
+    retired); Full-Halt batch_cancel scope (emergSL the only
+    resting protective orders); Full-Halt rationale (b);
+    WS-lockout protection statement.
+  Sec 9 parameter registry: max_hold_candles value line ->
+    RETIRED (live Exit Controller group = mae_mult,
+    emergency_sl_mult, cancel_timeout_window,
+    mpp_retry_count; bracketed TB00403/DEC-045 historical
+    migration notes BYTE-IDENTICAL -- forensic, CI-005/006);
+    NEW expected_reward_estimator_seed entry (historical-OHLC
+    backtest recipe per Bill ruling TB00654; CIATS-OWNED
+    PER-MODULE INSTANTIATED; feeds A1 floor only, never an
+    exit price; mechanism canonical at D9
+    compute:expected_reward_run_to_reversal + D3);
+    FEE_MAKER_PCT basis note (no maker leg in normal
+    lifecycle; retained as Kraken fee-schedule rate for
+    fee-tier divergence monitoring per 0411003);
+    FEE_TAKER_PCT scope (marketable-IOC entry + all exit
+    fills; round-trip 0.52%). per_trade_size_usd verified
+    DEC-124-clean, untouched.
+  Sec 11: 11.1 title (Entry to Exit Controller); Gate 8
+    line; batch_add single leg; Position Mirror record set
+    (TP id dropped); exit line (EC fires L1a/L2/L3); 11.2
+    cancel-TP line deleted, sequence rewritten.
+  Sec 13: OI-003 -- "since RETIRED per DEC-124" rider
+    appended (historical CLOSED statement retained).
+
+GROUP-2 DEFERRALS (DEC-122-coupled; flagged NOT fixed, per
+one-campaign-per-slice discipline; resolve in the DEC-122
+dispatch-seam disposition session, D2+D7+D1+sec-12 coupled,
+AWAITING BILL):
+  AR-006 entry order shape (limit/post_only/GTD); AR-047
+  item (2) entry limit_price; AR-054 entire entry (GTD
+  partial-fill TP/emergSL recalc); AR-069 entry limit
+  placement; sec-11 Execution line (limit/post_only/GTD);
+  sec-10 post_only findings; sec-2 post_only engine state;
+  sec-13 OI-004; sec-9 entry_timeout_sec (+ 30-60s vs
+  TB00000 v2_87 pinned 30s drift); sec-12 GATED METHODS
+  list (batch_add "TP + emergSL atomic", amend_order "TP qty
+  amend") -- sec-12 untouched this slice; D1 A-36 (dv1_155)
+  CLUSTER R4 narrative resting-TP language (echoes the
+  deferred D1 desc surface).
+
+FORENSIC SURFACES UNTOUCHED (CI-005/CI-006): sec-9 bracketed
+TB00403/TB00404 migration notes; sec-13 audit/attestation
+blocks (incl. g8d_gross_target and layer:L1b_TP_Fill
+historical inventory lines); A-3x dated amendment narratives.
+
+KNOWN FIGURE DRIFT CARRIED (not a prose item): D3 visible
+<text> "net_loss = mae_pct + 0.16% (entry maker) + 0.26%
+(MAE taker)" contradicts D3 desc q1_do (entry taker) + D9
+canon -- carried forward; visible-text fix bumps D3 R
+(TB00453) and belongs to a figure slice.
+
+NSI-DIVERGENCE RECORD: inbound NSI TB00664 enumerated five
+prose clusters (a-e); full audit under the NSI scope
+sentence swept additional anchors (sec-1/sec-2 zone +
+engine-state lines; AR-001/007/008/040/047(3)/057/065/066;
+Full-Halt + WS-lockout statements; sec-13 OI-003). All
+executed under DD-011 OUTCOME 1 (single compliant path:
+make live prose agree with ratified figure canon).
+
+VERIFICATION: dv1_212 md5 1f0f7483cea2e739122ac8adfb6ae596
+-> dv1_213 md5 8478bd536edc4279ccc933b71f6e1565; 9745 lines
+both; diff 134 removed / 133 added, all within prose
+sections; 10/10 figure blocks exact-substring-verified
+byte-identical.
 
 ============================================================
 END OF DOCUMENT

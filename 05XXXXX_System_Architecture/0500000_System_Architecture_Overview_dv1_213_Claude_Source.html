@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_212</title>
+<title>0500000 System Architecture Overview dv1_213</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_212</td></tr>
+  <tr><td>DocVersion</td><td>dv1_213</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_212_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_213_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-10-2026</td></tr>
-  <tr><td>DocTime</td><td>06:25:48 UTC</td></tr>
+  <tr><td>DocTime</td><td>21:55:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -758,9 +758,9 @@ until Kraken speaks.
 <p>
 Three functional zones, one organism:
 <br>
-  Kraken:  generates events, executes orders, holds resting TP limit orders and
+  Kraken:  generates events, executes orders, holds resting off-book emergency SL
 <br>
-           off-book emergency SL stop orders on matching engine
+           stop orders on matching engine (no resting TP per DEC-124 run-to-reversal)
 <br>
   TothBot: processes Kraken events, executes trading strategy, manages positions
 <br>
@@ -862,8 +862,10 @@ All connection points verified across 3 independent analysis passes (15 sources)
 </pre>
 <pre>
   Matching Engine:
-    Resting TP limit orders and off-book emergency SL stop orders survive any TothBot
-    failure independently — crash protection always active
+    Resting off-book emergency SL stop orders survive any TothBot failure
+    independently — crash protection always active. No resting TP orders exist under
+    DEC-124 (run-to-reversal): the take-profit is the Layer 1a regime-reversal exit
+    executed by the Exit Controller.
 </pre>
 <pre>
   EVALUATED AND REJECTED:
@@ -878,7 +880,7 @@ All connection points verified across 3 independent analysis passes (15 sources)
   online       — All orders. Signal pipeline runs normally.
   post_only    — TothBot limit+post_only entries ARE valid. Trading continues.
   cancel_only  — No new entries. Exit Controller can cancel. Resting orders active.
-  maintenance  — No orders, no cancels. Resting TP and emergSL active on engine.
+  maintenance  — No orders, no cancels. Resting emergSL active on engine.
 </pre>
 <p>
 2.3 API Rate Limits — Intermediate Tier (C-2)
@@ -1065,7 +1067,7 @@ A-13 (dv1_8) ★  Executions Channel: restated exec_type Must Not Trigger Positi
 <br>
      field, (2) alert operator (informational), (3) do NOT update Position Mirror, (4) if
 <br>
-     the restated order is a resting TP or emergSL, escalate to HIGH severity alert and
+     the restated order is the resting emergSL, escalate to HIGH severity alert and
 <br>
      queue a reconciliation check on the next pipeline cycle. The restated event on a
 <br>
@@ -2146,7 +2148,9 @@ Addressed in 0511002 Signal Pipeline Specification.
 </pre>
 <pre>
   Gate 8: Position Sizer ★ (was Gate 7)
-    MAE = ATR(14) x 1.5x (incremental), emergSL = ATR(14) x 3.0x, TP = R:R formula.
+    MAE = ATR(14) x 1.5x (incremental), emergSL = ATR(14) x 3.0x. A1 floor: admit iff
+    expected_reward / net_loss &gt;= 1.5, where expected_reward = CIATS run-to-reversal
+    estimate (DEC-124; no TP price computed).
     Never blocks — only sizes.
 </pre>
 <p>
@@ -2914,8 +2918,9 @@ This figure replaces the architectural detail previously carried in
 <p>
 Sub-figure elaborating gate:G8_Position_Sizer. A1 acceptance floor evaluated
 at gate entry (reject if expected R:R below the sacred 1:1.5 floor); then the
-sizing math computes MAE / emergSL / TP from ATR(14); the sacred 1:1.5 R:R
-floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned. This
+sizing math computes MAE / emergSL from ATR(14), with expected reward taken
+from the CIATS run-to-reversal estimator (no TP price per DEC-124); the sacred
+1:1.5 R:R floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned. This
 figure replaces the architectural detail previously carried in 1011011
 Risk_Engine_Coding_Spec (retired this audit cycle).
 </p>
@@ -3189,16 +3194,15 @@ taxonomy:
 </p>
 <pre>
   Layer 1a — Regime-Based Exit:
-    HTF regime reversal (EC-L1A-001) / daily regime downgrade (EC-L1A-002) / max-hold time expiry (EC-L1A-003). Step-1 pair-status precondition (AR-040); else WS cancel TP + market sell.
-</pre>
-<pre>
-  Layer 1b — TP Fill:
-    Resting TP limit on Kraken matching engine fills. EC cancels emergSL after fill confirm.
+    HTF regime reversal (EC-L1A-001) / daily regime downgrade (EC-L1A-002). This IS
+    the take-profit under DEC-124 run-to-reversal (EC-L1A-003 max-hold RETIRED).
+    Step-1 pair-status precondition (AR-040); else WS cancel emergSL -&gt; market sell.
 </pre>
 <pre>
   Layer 2 ★ — MAE Threshold:
     (entry_fill_price - bid_price) &gt;= ATR(14) x 1.5x.
-    SEQUENCE CRITICAL: (1) cancel TP  (2) cancel emergSL  THEN  (3) market sell.
+    SEQUENCE CRITICAL: (1) cancel emergSL  THEN  (2) market sell. No resting TP
+    to cancel under DEC-124 (run-to-reversal).
     CANCEL TIMEOUT FALLBACK (NEW dv1_5 — I-6):
       req_id registry tracks each cancel ACK. On timeout: check executions channel state.
       Confirmed cancelled: proceed. State unknown: retry once. Second timeout: ALERT +
@@ -3218,11 +3222,15 @@ taxonomy:
 4.2 R:R Formula
 </p>
 <pre>
-  mae_pct      = ATR(14) x 1.5x / entry_fill_price  (CIATS-owned, uses ACTUAL fill price)
-  net_loss     = mae_pct + 0.16% + 0.26%            (entry maker + MAE taker exit)
-  net_gain     = net_loss x 1.5                      *** SACRED — hardcoded ***
-  gross_target = net_gain + 0.16%                    (TP maker exit)
-  emergSL_dist = ATR(14) x 3.0x / entry_fill_price  (NEVER in R:R formula)
+  mae_pct         = ATR(14) x 1.5x / entry_fill_price  (CIATS-owned, uses ACTUAL fill price)
+  net_loss        = mae_pct + 0.26% + 0.26%             (entry taker + MAE taker exit, both
+                                                         taker per DEC-122 marketable-IOC;
+                                                         canonical D9)
+  expected_reward = CIATS run-to-reversal estimate      (NO gross_target TP per DEC-124)
+  ACCEPT entry iff expected_reward / net_loss &gt;= 1.5    *** SACRED — hardcoded — entry-
+                                                         acceptance floor only; NEVER a
+                                                         cap; NEVER an exit price ***
+  emergSL_dist    = ATR(14) x 3.0x / entry_fill_price   (NEVER in R:R formula)
 </pre>
 <pre>
   NOTE: All calculations use actual fill price, not limit price. OTO uses limit price —
@@ -5107,7 +5115,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
 </figure>
 <h2>8. Locked Architectural Decisions</h2>
 <pre>
-  AR-001: No Dead Man Switch — crash protection is resting TP + emergSL on matching engine.
+  AR-001: No Dead Man Switch — crash protection is the resting emergSL on the
+          matching engine (no resting TP per DEC-124).
           DMS and FIX cancel-on-disconnect both REJECTED (destroy crash protection).
   AR-002: Position Mirror — symbol-keyed dict, O(1) lookup. (NEW dv1_5 — I-3)
   AR-003: Restart reconciliation — PREFERRED: snap_orders:true. FALLBACK: REST.
@@ -5120,20 +5129,22 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
           via mod:Long_Module or mod:Short_Module per dispatch seam (D7; mod:Short_Module
           labeled-group addition sequenced to M-4 per DEC-003 Path A).
           Per TB00000 v2_29 §9.3 parallel-module framework + AR-009.
-  AR-007 (amended dv1_42 — M-2 short-direction): TP placement — resting limit via batch_add on fill. Actual fill price for R:R.
-          batch_add includes deadline:now+5s and stp_type:cancel_newest on both legs.
-          Long TP: resting limit ABOVE entry_fill_price (sell-side close above buy-side open).
-          Short TP: resting limit BELOW entry_fill_price (buy-side close below sell-side open).
-          R:R ratio direction-symmetric per rule:Sacred_R_R_1_to_1_5 minimum floor
-          (TB00000 v2_29 §9.10). Per-module routing per mod:Long_Module / mod:Short_Module
-          dispatch seam.
-  AR-008 (amended dv1_42 — M-2 short-direction): Emergency SL — stop-market via batch_add atomic with TP.
+  AR-007 (amended dv1_42 — M-2 short-direction; amended dv1_213 — DEC-124): TP placement RETIRED — no resting TP order is placed
+          under run-to-reversal. The take-profit is the Layer 1a regime-reversal exit
+          executed by the Exit Controller (canonical D3). batch_add on fill carries the
+          emergSL leg ONLY (deadline:now+5s + stp_type:cancel_newest retained — see
+          AR-008 + D2 ON FILL canon). Actual fill price for R:R RETAINED. Historical
+          resting-TP mechanic (long/short TP placement geometry) in git history (dv1_212
+          and prior). R:R floor direction-symmetric per rule:Sacred_R_R_1_to_1_5 minimum
+          floor (TB00000 v2_29 §9.10). Per-module routing per mod:Long_Module /
+          mod:Short_Module dispatch seam.
+  AR-008 (amended dv1_42 — M-2 short-direction; amended dv1_213 — DEC-124): Emergency SL — single-leg batch_add on fill (TP leg retired).
           ATR(14) x emergency_sl_mult (CIATS-owned starting at 3.0x per TB00000 v2_29 §9.17).
           Long emergency SL: stop-market BELOW entry_fill_price (sell-side crash-protection
           exit below buy-side open).
           Short emergency SL: stop-market ABOVE entry_fill_price (buy-side crash-protection
           exit above sell-side open).
-          Both directions atomic with TP via batch_add. Direction-symmetric per
+          Both directions single-leg via batch_add (no TP leg per DEC-124). Direction-symmetric per
           mod:Long_Module / mod:Short_Module dispatch seam.
           OTO evaluated and REJECTED: uses limit price, violates R:R, Position Mirror race.
   AR-009 (amended dv1_41 + dv1_42 framework framing) ★: Short via Kraken margin trading. Supersedes prior "Short deferred"
@@ -5239,7 +5250,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     limit_only → IOC limit at best_bid (NOT market sell).
                     cancel_only → HOLD + CRITICAL alert. No new orders possible.
                     maintenance (pair level) → HOLD + CRITICAL alert.
-                    Existing resting TP + emergSL are the only protection during HOLD.
+                    The existing resting emergSL is the only protection during HOLD
+                    (no resting TP per DEC-124).
                     Validates AR-001: resting emergSL crash protection is the correct
                     architecture for pair-level disruption scenarios.
                     Assign: 0411001 WS-EXIT-001 through -006, 1011002 WM-PS-003/004.
@@ -5327,13 +5339,13 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     MUST use Decimal.quantize() — NEVER math.floor/ceil. Float binary
                     representation causes precision errors (e.g. math.floor(0.3/0.1)*0.1
                     = 0.2 not 0.3). For exchange orders: any rounding error = rejected
-                    order = failed trade = loss. Four mandatory rounding operations:
+                    order = failed trade = loss. Mandatory rounding operations ((3)
+                    retired per DEC-124):
                     (1) order_qty: Decimal.quantize(qty_increment, ROUND_DOWN).
                         If result &lt; qty_min OR result*price &lt; cost_min: SKIP, log.
                     (2) entry limit_price: Decimal.quantize(price_increment, ROUND_DOWN).
                         Conservative: lower limit = more likely post_only fill.
-                    (3) TP limit_price: Decimal.quantize(price_increment, ROUND_UP).
-                        Conservative: higher TP = preserves net R:R at minimum.
+                    (3) RETIRED per DEC-124 — no resting TP order exists.
                     (4) emergSL trigger: Decimal.quantize(price_increment, ROUND_DOWN).
                         Conservative: wider stop = more protective.
                     ALL Kraken API values (prices, qtys) received via WS or REST MUST be
@@ -5341,7 +5353,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     NEVER Decimal(float_value) — inherits float precision error.
                     NEVER dispatch batch_add without pre-validated, pre-rounded prices.
                     A batch_add validation failure at Kraken kills the entire batch,
-                    leaving an open position with NO TP and NO emergSL protection.
+                    leaving an open position with NO emergSL protection.
                     Assign: 1011001 BP-DEC-001 through -008,
                             1011002 WM-ROUND-001 through -012.
   AR-048 (dv1_13; amended dv1_42 — M-2 short-direction) ★: Exit Controller MAE detection and drawdown calculation MUST use
@@ -5632,7 +5644,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     exec_type event is unexpected and must be treated as a system
                     integrity alert: log UNEXPECTED_ORDER_AMENDED (CRITICAL level),
                     alert operator HIGH, cross-reference Position Mirror to determine if
-                    TP or emergSL was amended (sacred R:R violation risk).
+                    the emergSL was amended (no resting TP per DEC-124; crash-protection
+                    integrity risk).
                     Do NOT auto-correct — operator must review and decide.
                     Assign: 0411001 WS-AMEND-001 through -003,
                             1011002 WM-DISP-024 through -026.
@@ -5676,17 +5689,17 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     All values: Decimal(str()) immediately on receipt per AR-047.
                     Assign: 0411001 WS-EXE-020 through -022,
                             1011002 WM-EXE-014 through -016.
-  AR-062 (dv1_14) ★: Exit Controller Layer 1a — three triggers now specified.
-                    Three Layer 1a exit triggers are derivable before SSS (OI-001):
+  AR-062 (dv1_14; amended dv1_213 — DEC-124) ★: Exit Controller Layer 1a — two regime triggers (EC-L1A-003 RETIRED).
+                    Two Layer 1a exit triggers are derivable before SSS (OI-001):
                     EC-L1A-001 (HTF Regime Reversal): 1H EMA(20) crosses below EMA(50)
                       while long open. Gate 4 symmetry. Check on every ohlc(60) close.
-                      Exit sequence: cancel TP → cancel emergSL → market sell.
+                      Exit sequence: cancel emergSL → market sell (no resting TP per DEC-124).
                     EC-L1A-002 (Daily Regime Downgrade): At 00:00 UTC regime refresh,
                       pair reclassified TRENDING_POS → TRENDING_NEG or NON_DIR+ELEVATED.
                       Gate 3 symmetry. Check immediately after regime computation.
-                      Exit sequence: cancel TP → cancel emergSL → market sell.
-                    EC-L1A-003 (Max Hold Time): max_hold_candles parameter. TBD value
-                      pending OI-001 SSS specification. CIATS-owned starting value.
+                      Exit sequence: cancel emergSL → market sell (no resting TP per DEC-124).
+                    EC-L1A-003: RETIRED per DEC-124 — no max-hold time exit under
+                      run-to-reversal.
                     Both EC-L1A-001 and EC-L1A-002 use cancel timeout fallback (I-6).
                     Assign: 0500000 Diagram 3 Image3_T2_R4 Exit Architecture (canonical per DD-001/DD-002; rule:HR-EC-016 + L1a sequence visual content; 1011005 dv1_3 historical seed retired).
   AR-063 (dv1_14) ★: Logger MUST use queue.Queue (stdlib), not asyncio.Queue.
@@ -5718,65 +5731,22 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     W = count(trades where net_gain_usd &gt; 0) / total_trades.
                     R = mean(net_gain_usd for wins) / mean(|net_loss_usd| for losses).
                     Both W and R computed from Trade Outcome Bus realized net P/L data
-                    (all fees included — entry maker + exit taker). NOT gross price change.
-                    NOT theoretical R:R targets. For TothBot with 0.42% round-trip fees,
+                    (all fees included — entry taker + exit taker per D9 canon). NOT
+                    gross price change. NOT theoretical R:R targets. For TothBot with
+                    0.52% round-trip fees,
                     gross vs net R:R diverges meaningfully. Inflated Kelly from gross
                     inputs = oversized positions = excess loss on losers.
                     Negative K_full: log CRITICAL, alert operator, do not update params.
                     Assign: 1011010 CIATS-KE-006 through -009.
-  AR-066 (dv1_14; amended dv1_43 — M-2 short-direction) ★: TP order partial fill — direction-symmetric Position Mirror update + emergSL amend.
-                    When exec_type=trade arrives for a TP order (identified by
-                    order_id matching the TP order_id in the originating module's
-                    Position Mirror entry — long or short module per AR-053):
-                      remaining_qty = tp_order_qty - cum_qty
-                      Update the originating module's Position Mirror qty to
-                      remaining_qty (long_position_mirror OR short_position_mirror
-                      per parallel-module framework).
-                      Amend the corresponding emergSL to remaining_qty via
-                      amend_order (NOT cancel+resubmit).
-                      Direction-symmetric semantics:
-                        LONG MODULE:  TP is a SELL limit ABOVE entry (per AR-007
-                                      long); partial TP fill leaves a smaller
-                                      long position; emergSL (SELL stop BELOW
-                                      entry, per AR-008 long) amend_order
-                                      reduces emergSL qty to match remaining
-                                      long_qty.
-                        SHORT MODULE: TP is a BUY reduce_only=true limit BELOW
-                                      entry (per AR-007 short); partial TP fill
-                                      leaves a smaller short position;
-                                      emergSL (BUY reduce_only=true stop ABOVE
-                                      entry, per AR-008 short) amend_order
-                                      reduces emergSL qty to match remaining
-                                      short_qty.
-                      Rate counter same both directions: amend_order (+2) saves
-                      7 units vs cancel+resubmit (+9); amend_order preserves
-                      queue position in Kraken book.
-                    If remaining_qty &lt; qty_min OR remaining_qty × bid (long)
-                    OR remaining_qty × ask (short) &lt; cost_min:
-                      LONG MODULE:  cancel emergSL, immediate market SELL of
-                                    remainder, clear long Position Mirror entry.
-                      SHORT MODULE: cancel emergSL, immediate market BUY
-                                    reduce_only=true of remainder, clear
-                                    short Position Mirror entry.
-                    Per-module CIATS Trade Outcome Bus: fire ONCE on full
-                    position close per module (aggregate all partial fill data
-                    on that module's instance). Long fills feed long CIATS;
-                    short fills feed short CIATS. No cross-module data
-                    contamination per TB00000 v2_29 §9.6.
-                    On exec_type=filled (full TP fill): existing L1b logic
-                    unchanged but module-routed per the originating module
-                    (long or short).
-                    Assign: 0411001 WS-TP-001 through -005 (long),
-                            0411001 WS-TP-006 through -010 (short — pending
-                              0411001 amendment for reduce_only=true amend
-                              semantics),
-                            1011002 WM-EC-004 through -008 (long),
-                            1011002 WM-EC-009 through -013 (short — pending
-                              1011002 amendment),
-                            0500000 Diagram 3 Image3_T2_R4 TP-partial conflict
-                              resolution callout (canonical per DD-001/DD-002;
-                              rule:HR-EC-016 long + short; 1011005 dv1_3
-                              historical seed retired).
+  AR-066 (dv1_14; amended dv1_43 — M-2 short-direction; RETIRED dv1_213 — DEC-124) ★: TP partial-fill split mechanic RETIRED.
+                    Ratified TB00650: with no resting TP order under run-to-reversal
+                    there is no TP partial fill, no split mechanic, no emergSL
+                    amend-to-match, and no sub-min dust residual. DR-079
+                    abandon-and-surface dust write-off retired; exit_reason
+                    SUB_MIN_RESIDUAL_ABANDONED retired. Historical direction-symmetric
+                    split mechanic in git history (dv1_212 and prior).
+                    NOTE: the 0311001 ar:AR-066 TOKEN retirement follows the DEC-122
+                    disposition session (live D1 references remain until that session).
   AR-067 (dv1_15; amended dv1_43 — M-2 short-direction + Path 2 long reconciliation) ★: SSS Signal Engine — direction-symmetric three-factor momentum scoring on 5-minute candles.
                     SSS is the signal engine that runs after Gate 4. It runs ONLY when
                     the pair is in a tradeable regime (Gate 3 passed) with 1H EMA
@@ -5919,17 +5889,15 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     FP/DP basis: 3 sequential searches, 18 sources (TB00130).
                     Supersedes: TB00128 D-03 (USDC+USDT only); TB00001 OI-002
                     original (USDT/USDC only); dv1_15 AR-070 (USD+USDC + top 50 cap).
-  AR-071 (dv1_15) ★: EC-L1A-003 max_hold_candles starting value — OI-003 CLOSED.
-                    max_hold_candles = 24 (2 hours at 5-minute cadence). CIATS-owned starting value.
-                    FP/DP derivation: 5-minute momentum trades in confirmed TRENDING_POS regimes
-                    resolve within 6-24 candles per research validation (TB00020 Search 3, 10 sources).
-                    EC-L1A-001 (1H EMA reversal) and EC-L1A-002 (daily regime) catch higher-timeframe
-                    failure. max_hold_candles is the backstop for stalled positions where neither fires.
-                    Counter: maintained per open position in WS Manager state. Increments on each
-                    ohlc(5m) close for that symbol. Exit sequence: same as EC-L1A-001.
-                    exit_reason = TIME_EXPIRY.
-                    OI-003: CLOSED (EC-L1A-003 now fully specified).
-                    Assign: 0500000 Diagram 3 Image3_T2_R4 EC-L1A sequence (canonical per DD-001/DD-002); max_hold_candles starting value tracked in TB00000 §9.17 CIATS Parameter Registry (Phase 1 absorption pending TB00000 v2_31); 1011005 dv1_3 historical seed retired.
+  AR-071 (dv1_15; RETIRED dv1_213 — DEC-124) ★: EC-L1A-003 max-hold RETIRED.
+                    The max-hold time-expiry exit and the max_hold_candles parameter are
+                    retired under run-to-reversal: positions run until a Layer 1a regime-
+                    reversal exit (the take-profit), Layer 2 MAE, or Layer 3 emergency-SL.
+                    exit_reason TIME_EXPIRY retired; live four-value set per D3 canon
+                    (MAE_THRESHOLD_BREACH, HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE,
+                    PAIR_LIMIT_ONLY_EXIT; EMERGENCY_SL_FIRED producer-partitioned L3).
+                    Historical FP/DP derivation + 24-candle value in git history (dv1_212
+                    and prior). Canonical: D3 Image3_T2_R10.
   AR-072 (dv1_15; amended dv1_43 — M-2 short-direction) ★: Selection Controller — direction-symmetric 6 quality gates (long + short variants) — OI-005 CLOSED.
                     Gate 5 receives SSS PASS (per AR-067 direction-symmetric) and
                     applies all 6 gates in sequence. Each module evaluates the
@@ -6024,10 +5992,13 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     update long state; short fills update short state):
                       Always (originating module only):
                         {long|short}_exit_cooldown_log[symbol] = time.monotonic()
-                      If loss exit (MAE_THRESHOLD_BREACH, TIME_EXPIRY,
-                        HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE):
+                      If LOSS close (realized net P/L &lt;= 0 on evt:TRADE_CLOSE, any
+                        exit_reason in the live four-value set; TIME_EXPIRY retired
+                        per DEC-124):
                         {long|short}_consecutive_loss_count[symbol] += 1
-                      If TP_FILL (win on originating module):
+                      If WIN close (realized net P/L &gt; 0 — under run-to-reversal a
+                        profitable L1a regime-reversal close is the normal win;
+                        TP_FILL retired per DEC-124):
                         {long|short}_consecutive_loss_count[symbol] = 0
                     All four dicts PRESERVED across reconnect (in-memory,
                     never discarded on reconnect). Per-module CIATS may reset
@@ -6300,8 +6271,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     SEMANTICS: On FULL_HALT declared by mod:Risk_Engine (rule:HR-DD-008),
                     mod:Exit_Controller issues a single Kraken WS v2 batch_cancel covering
                     ALL open entry orders (unfilled add_order outputs) and excluding all
-                    resting Take-Profit (TP) limit orders and resting Emergency Stop-Loss
-                    (emergSL) stop-market orders. Open positions remain monitored for
+                    resting Emergency Stop-Loss (emergSL) stop-market orders — the only
+                    resting protective orders under DEC-124 (no resting TP). Open positions remain monitored for
                     Layer 1 and Layer 2 exit conditions; Full Halt does NOT auto-close
                     positions — Bill decides on open positions.
 
@@ -6326,8 +6297,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                           rate-counter capacity may be exhausted at trigger time.
                           batch_cancel's rate-bypass property is the architectural
                           requirement that makes Full Halt operationally correct.
-                      (b) TP + emergSL protect open positions. Canceling them during Full
-                          Halt strips position protection — the opposite of Full Halt's
+                      (b) The resting emergSL protects open positions (no resting TP per
+                          DEC-124). Canceling it during Full Halt strips position protection — the opposite of Full Halt's
                           purpose (loss containment). Scope MUST be limited to ENTRY
                           orders only.
                       (c) Per-order ACK tracking is not required for Full Halt because
@@ -6400,8 +6371,9 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                           stage with connection refused or HTTP 429 upgrade error.
                       (b) EXISTING WS connections continue to operate normally (the
                           limit governs connection establishment, not in-session
-                          frames). Open positions remain protected by resting TP +
-                          emergSL orders on Kraken's matching engine.
+                          frames). Open positions remain protected by the resting
+                          emergSL orders on Kraken's matching engine (no resting TP
+                          per DEC-124).
                       (c) If ALL WS connections are simultaneously severed (network
                           partition, VPS reboot, transient network event during a
                           burst-reconnect storm), the WS_Manager is locked out from
@@ -6641,6 +6613,20 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
                                 empirical false-acceptance-rate data
                                 justifies.
 
+  Run-to-reversal expected-reward estimator (NEW dv1_213 — DEC-124):
+  expected_reward_estimator_seed = historical-OHLC backtest seed
+                             CIATS-OWNED PER-MODULE INSTANTIATED. PRE-200-trade
+                             seed recipe (Bill ruling TB00654): replay the
+                             EC-L1A-001/EC-L1A-002 regime-reversal exit condition
+                             over historical OHLC per pair/regime; seed = central-
+                             tendency realized favorable excursion as a FRACTION
+                             of entry_fill_price. Tuned from paper-trading data
+                             after the 200-trade data floor. Mechanism canonical
+                             at D9 compute:expected_reward_run_to_reversal + D3.
+                             Feeds the A1 acceptance floor ONLY; never constructs
+                             an exit price (the take-profit is the L1a regime-
+                             reversal exit).
+
   Entry timing:
   entry_timeout_sec        = 30-60s GTD starting
                              CIATS-OWNED PER-MODULE INSTANTIATED (per
@@ -6727,12 +6713,19 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
                              AR-012 + AR-065; under-stated value
                              produces optimistic Kelly sizing and
                              capital over-commitment, so
-                             loss-prevention-adjacent)
+                             loss-prevention-adjacent. DEC-124/DEC-122
+                             basis: no maker leg remains in the normal
+                             trade lifecycle (marketable-IOC taker
+                             entry; taker exits); retained as the
+                             Kraken fee-schedule maker rate for
+                             fee-tier divergence monitoring per 0411003)
   FEE_TAKER_PCT            = 0.0026 (0.26%) starting (CIATS-owned
                              per 0411003 FEE-BASE-001 + FEE-CALC-002;
                              same Kelly net-P/L binding as
-                             FEE_MAKER_PCT; applies to all market
-                             orders and emergency-exit fills)
+                             FEE_MAKER_PCT; applies to the marketable-
+                             IOC entry fill and ALL exit fills (L1a/
+                             L2/L3/PAIR_LIMIT_ONLY IOC); round-trip =
+                             taker-in + taker-out = 0.52% per D9 canon)
 
   Threshold-monitoring (UNIVERSAL — same values apply to the single
   account-level monitoring cycles, not per-module; closes TB00213
@@ -6839,7 +6832,11 @@ independently from each module's own statistical pool per TB00000 v2_38 §9.6 + 
   emergency_sl_mult        = 3.0x ATR(14) starting (Layer 3 emergency-SL distance)
   cancel_timeout_window    = 5.0 seconds starting
   mpp_retry_count          = 3 attempts starting
-  max_hold_candles         = 24 candles (2 hours at 5-min cadence) starting; EC-L1A-003
+  max_hold_candles         = RETIRED per DEC-124 (dv1_213) — EC-L1A-003 max-hold
+                             exit retired; no time-based exit under run-to-reversal.
+                             Live Exit Controller group = mae_mult, emergency_sl_mult,
+                             cancel_timeout_window, mpp_retry_count. Historical
+                             24-candle value in git history (dv1_212 and prior).
                              [TB00403 / DEC-045 — 0911002 Campaign Phase 1
                              CIATS-ownership migration: the CIATS-ownership
                              architectural fact (not the value) for
@@ -6983,7 +6980,7 @@ prefix taxonomy:
                               status check) below.
 </pre>
 <p>
-11.1 Normal Trade (Entry to TP or Exit Controller)
+11.1 Normal Trade (Entry to Exit Controller)
 </p>
 <pre>
   OHLC 5-min candle close fires on public WS v2
@@ -6999,14 +6996,15 @@ prefix taxonomy:
   Gate 5: Selection Controller — 4-gate quality evaluation: pass or reject
   Gate 6: Regime Gate / Sizer — TRENDING_POS: proceed; NON_DIR+NORM: 50% size
   Gate 7: Risk Guard — drawdown/concentration/exposure checks: pass or halt
-  Gate 8: Position Sizer — MAE=ATR x 1.5x, emergSL=ATR x 3.0x, TP=R:R formula
+  Gate 8: Position Sizer — MAE=ATR x 1.5x, emergSL=ATR x 3.0x; A1 floor: admit iff
+    expected_reward / net_loss &gt;= 1.5 (CIATS run-to-reversal estimate; no TP price)
   Execution: WS add_order (limit/post_only/GTD 30-60s/cl_ord_id/stp_type:cancel_newest/deadline:now+5s)
   If expired/rejected: log reason code → CIATS EWMA monitors rejection rate. Done.
-  If filled: WS batch_add → TP (resting limit) + emergSL (stop-market) atomic. cl_ord_id/stp_type:cancel_newest/deadline:now+5s
-  Position Mirror records: symbol (key), entry_fill_price, qty, TP id, cl_ord_id, emergSL id
+  If filled: WS batch_add → emergSL (stop-market) single leg (no TP per DEC-124). cl_ord_id/stp_type:cancel_newest/deadline:now+5s
+  Position Mirror records: symbol (key), entry_fill_price, qty, cl_ord_id, emergSL id
   Exit Controller monitors via ticker (continuous drawdown check — I-7)
   Logger records full entry via async queue. CIATS Trade Outcome Bus ready.
-  TP fills: EC cancels emergSL. Or EC fires Layer 1/2 exit.
+  Exit Controller fires L1a regime-reversal take-profit (run-to-reversal), L2 MAE, or L3 emergSL.
   Logger records full exit. CIATS Trade Outcome Bus fires with complete trade record.
 </pre>
 <p>
@@ -7014,8 +7012,8 @@ prefix taxonomy:
 </p>
 <pre>
   Exit Controller detects: (entry_fill_price - bid_price) &gt;= ATR(14) x 1.5x
-  WS cancel_order: cancel TP resting order
-  WS cancel_order: cancel emergSL stop order (SEQUENCE CRITICAL: both cancels before sell)
+  WS cancel_order: cancel emergSL stop order (SEQUENCE CRITICAL: cancel confirmed
+    before sell; no resting TP to cancel under DEC-124)
 </pre>
 <pre>
   CANCEL TIMEOUT FALLBACK (NEW dv1_5 — I-6):
@@ -8413,7 +8411,8 @@ prefix taxonomy:
            BTC/USD always included as market_regime proxy (AR-074).
            Consolidated into 0500000 §8 AR-070 + AR-074 + the D1 universe visual (the diagram is canonical); 0711003 Asset_Selection_Specification retired TB00589.
   OI-003: Exit Controller full specification — CLOSED (dv1_15, AR-071).
-           EC-L1A-001/002 specified dv1_14. EC-L1A-003 max_hold_candles=24 specified dv1_15.
+           EC-L1A-001/002 specified dv1_14. EC-L1A-003 max_hold_candles=24 specified dv1_15
+           — since RETIRED per DEC-124 (no max-hold under run-to-reversal).
            All Layer 1a triggers complete. Specify in 0811003 Exit_Controller_Specification (Phase 6).
   OI-004: Entry limit placement — CLOSED (dv1_15, AR-069).
            entry_limit_price = last candle close quantized DOWN to price_increment.
