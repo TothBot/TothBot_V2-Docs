@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_19
+DocVersion: dv1_20
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_19.txt
-DocDate:    06-09-2026
-DocTime:    03:47:30 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_20.txt
+DocDate:    06-10-2026
+DocTime:    04:20:55 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -19234,6 +19234,111 @@ RELOCATED BLOCK C -- figcaption interior (VERBATIM):
       <strong>OPTION R EXTENSION (xvii) -- D2 GAP-FIX G3(b) SIGNAL_DECAY REMAINDER-CANCEL WIRING (TB00626; PHASE 1 code-completeness; DR-078 loss-min):</strong> closed the last open D2 PHASE-1 code-completeness gap. The dual-ownership partial-fill paradigm (gate:G5_Selection_Controller partial_fill_ownership) already stated WHO cancels the unfilled remainder on SIGNAL_DECAY (mod:Selection_Controller, entry-side) but DEFERRED the cancel-DISPATCH mechanics + cancel-CONTROL decision logic to 0511003 + the mod:Selection_Controller spec -- not derivable from-the-diagram-alone. That deferral was over-conservative: the dispatch SUBSTRATE already exists in D2 (contract:WSManager_Dispatch_Seam sole gatekeeper + the Kraken single-order CancelOrder endpoint at container:Kraken_REST_API), so the wiring is AUTHORED INTO D2 (DIAGRAMS-GOVERN, no code workaround, no 0511003 dependency). ADD-only at gate:G5_Selection_Controller partial_fill_ownership (G3(b) WIRING clause: trigger SELECTION_CANCEL__SSS_SIGNAL_DECAY on a still-working unfilled/partially-filled order -> single-order cancel_order of the UNFILLED remainder ONLY through contract:WSManager_Dispatch_Seam, paper-branch simulated / live-branch ws_private.send to the Kraken CancelOrder endpoint; the already-filled portion stays Exit-owned with its TP + emergSL intact per ar:AR-054) + q4_triggers (the cancel-dispatch downstream). HARD RULE (loss-prevention): the remainder-cancel uses the SINGLE-order CancelOrder, NEVER channel:kraken_rest_CancelAllOrders (the account-wide emergency kill switch that would cancel the TP + emergSL legs of OTHER live positions, per D1 REST-CAO-004/005). LOGGED: SELECTION_CANCEL__SSS_SIGNAL_DECAY at the seam (pair, side, cl_ord_id, order_id, remaining_qty_cancelled, decay_params, paper_mode_flag, pt_mode, dispatch_outcome) -- never silent (HR-SSS-007); Pending Order Registry clearance (ar:AR-053) on ack. NSI-vs-HEAD DIVERGENCE RESOLVED (RR-SCOPE-008 no-guess): the TB00626 NSI named the wiring channel as channel:kraken_rest_CancelOrder and asserted it was &quot;already canonical&quot;; live HEAD grep shows NO such structured channel token -- only the bare CancelOrder endpoint (container:Kraken_REST_API q1_do, &quot;order cancellation (CancelOrder + CancelAll)&quot;) + the cancel_order mechanism are canonical. The wiring is therefore authored against the existing canonical CancelOrder endpoint + cancel_order mechanism + contract:WSManager_Dispatch_Seam WITHOUT minting a token (the NSI no-new-token directive honoured); routing through the existing channel:kraken_rest_CancelAllOrders structured token was REJECTED as a loss vector per the D1 REST-CAO use-restriction. BINARY TEST (DEC-096): the remainder-cancel wiring is TothBot-organism pipeline architecture -> D2 (YES); no seed VALUE moved (TB00000 sec 8 unchanged; the net 1:1.5 R:R minimum remains the only hardcoded value). R-STATE HELD at R9 per the TB00453 bright line -- the wiring is a &lt;desc&gt; partial_fill_ownership + q4_triggers field ADD + this figcaption; NO visible SVG &lt;text&gt; or geometry change; no SVG &lt;title&gt; / diagram_canonical / title-bar / subtitle / viewBox (1500x1700) / figure-count change; no R-increment chain rotation; all 9 other figures byte-identical per DEC-003 Path A. DD-014 / V-040 80-cell design-completeness PRESERVED and IMPROVED at gate:G5_Selection_Controller (the remainder-cancel dispatch path + control logic + the never-CancelAllOrders hard rule are now answerable from the diagram alone). 0311001 v1_45 UNCHANGED -- no token minted (CancelOrder endpoint + cancel_order + contract:WSManager_Dispatch_Seam + SELECTION_CANCEL__SSS_SIGNAL_DECAY + ar:AR-053/ar:AR-054 + pt_mode:PT_MODE_001/002 all pre-existing canonical; no-strand confirmed). DR-078: NO source spec retired this amendment (G3(b) is forward authoring, not a retirement). NO new TB00153 DECISION (runs under DEC-096 + the standing DR-078/DD-014 reconcile mandate; the TB00599/TB00600 forward-gap-fill precedent; DR stays v1_88). NO paired MDR (forward PHASE-1 code-completeness gap-fix, not a latent-defect closure; V-038 remains 0 open through dv1_186). RR-SCOPE-001 ADD-only (no identifier removed). RR-SCOPE-008 no-guess (HEAD md5 9526c01b882725159bc6655764492fbc verified; every anchor count-verified; the NSI channel-token claim re-checked against live HEAD and corrected). RR-SCOPE-011 one primary mission, one figure (D2). DR-007.9 HTML well-formedness parser pass confirmed pre-delivery; exactly ONE &lt;h2&gt;14. Revision History&lt;/h2&gt;. Prior figcaption content (TB00457 lead block + TB00377 V-040 IV attestation + EXTENSIONS (i)-(xvi)) preserved verbatim per CI-005 + CI-006 visible-stack policy -- NOT edited.<br>
       <strong>OPTION R EXTENSION (xviii) -- DEC-122 SLICE S3 (D2) MARKETABLE-IOC ENTRY-MODEL D2-SIDE COMPLETION + PAIR-RELATIVE SIZING + SIGNAL_DECAY RETIREMENT (TB00633 / DEC-122; Bill-ratified):</strong> Five change-register items authored into D2 this amendment, completing the D2 side of the CR-03 marketable-IOC entry-model correction begun on D1 at S2 (dv1_189). CR-06 (gate:G8_Position_Sizer q1_do): the base trade size is reframed from a flat seed to the PAIR-RELATIVE live-read formula per_trade_size_usd = max(50, 5 * max(costmin, ordermin * entry_limit_price)) ($50 floor, 5x margin above each pair's real floor), scaled by the gate:G6_Regime_Sizer regime_multiplier; the per-module wallet balance remains the sole sizing boundary and param:per_trade_size_usd is a CIATS-owned starting formula (the seed VALUE stays in TB00000 sec 8 per the binary test, CR-15..19 / S7). CR-07 (gate:G8_Position_Sizer q1_do): the minimum-size validation is reframed as an explicit pre-dispatch SUB-MINIMUM GUARD against the pair's LIVE minimums (entry_qty_quantized &gt;= qty_min AND entry_qty_quantized * entry_limit_price &gt;= cost_min) so no sub-minimum entry order reaches contract:WSManager_Dispatch_Seam. CR-08 (gate:G5_Selection_Controller partial_fill_ownership + mod:Execution_Engine ON FILL q1_do): the former GTD dual-ownership partial-fill bisection is reframed to the marketable-IOC fill disposition -- an IOC fills-or-kills atomically, so a partial fill protects the FILLED qty at the ON FILL batch_add (mod:Exit_Controller-owned) and the unfilled remainder is killed immediately (no working Selection-owned remainder); a sub-minimum filled portion is handled by the CR-05 / DR-079 abandon-and-surface write-off. CR-09 (Bill-ratified RETIRE, TB00633 -- the sole non-derivable register item, surfaced to Bill and ruled): the SIGNAL_DECAY pending-entry-order cancel trigger (sss_engine detection), the mod:Selection_Controller remainder-cancel control logic, and the G3(b) contract:WSManager_Dispatch_Seam remainder-cancel dispatch wiring (authored at TB00451 / TB00626) are RETIRED -- the marketable-IOC model produces no still-working unfilled entry remainder (event population N=0), the fence's loss-prevention purpose is structurally absorbed by IOC fill-or-kill at the SSS-PASS candle instant, and post-fill signal decay is owned by the mod:Exit_Controller exit layers (FP/DP analysis ratified TB00633: Option 1 RETIRE strictly dominates a repurposed pre-submission decay gate, which is provably unfireable because SSS-PASS logically excludes the decay condition at the same candle close). CR-10 (root governs ar:AR-054 gloss): AR-054's exec_type=expired/canceled-with-cum_qty&gt;0 unprotected-stub scenario is structurally obviated under IOC (no resting GTD entry to partial-fill-then-expire); a partial IOC fill's filled portion is protected at ON FILL or, if sub-minimum, abandoned per CR-05 / DR-079. BINARY TEST (DEC-096): all five are TothBot-organism pipeline architecture -&gt; D2 (YES); no seed VALUE moved (TB00000 sec 8 unchanged; the per_trade_size_usd seed-value update is sequenced to CR-15..19 / S7; the net 1:1.5 R:R minimum remains the only hardcoded value). R-STATE HELD at R9 per the TB00453 bright line -- every edit is a &lt;desc&gt; q1_do / partial_fill_ownership / q4_triggers / constraints / governs-gloss field MODIFY + this figcaption ADD; NO visible SVG &lt;text&gt; or geometry change; no SVG &lt;title&gt; / diagram_canonical / title-bar / subtitle / viewBox (1500x1700) / figure-count change; no R-increment chain rotation; all 9 other figures byte-identical per DEC-003 Path A. DD-014 / V-040 80-cell design-completeness PRESERVED and IMPROVED at gate:G8_Position_Sizer (pair-relative base sizing + sub-min guard now answerable from the diagram) and at gate:G5_Selection_Controller + mod:Execution_Engine + mod:Signal_Pipeline (the IOC fill disposition is deterministic and the orphaned SIGNAL_DECAY clause that contradicted IOC fill-or-kill is removed -- a COMPLETENESS-test contradiction resolved). 0311001 v1_45 UNCHANGED -- no token minted; the retired SELECTION_CANCEL__SSS_SIGNAL_DECAY + decay_params were descriptive spec-literal content cross-referencing existing identifiers, not namespaced tokens (no de-registration needed). DR-078: NO source spec retired this amendment (forward correction). NO new TB00153 DECISION beyond the ratified DEC-122 register (executes CR-06..CR-10; CR-09 RETIRE is the Bill-ratified disposition of the register's sole surfaced item). NO paired MDR (forward entry-model correction; V-038 remains 0 open through dv1_190). CARRY-FORWARD (not done here, per DEC-003 Path A one-figure-per-session): S4 CR-11 (D3 q4/q5 market-sell -&gt; abandon-and-surface rebinding, closing DR-079 with CR-13), S5 CR-12 (exit_reason enum rename TP_PARTIAL_FILL_REMAINDER -&gt; SUB_MIN_RESIDUAL_ABANDONED across D5/D6/D2-bus), S6 CR-13/14 (D9/D7 fee taker-in + net-R:R recompute), S7 CR-15..19 (TB00000 sec 7/8 seed updates incl. the per_trade_size_usd formula seed + fee seeds), S8 CR-20 (Claude Code re-audit -&gt; PHASE 2); the D3 layer_l1a signal-decay-exit-path residual + any D5/D6 SIGNAL_DECAY mirror are swept in the S4/S5 cross-diagram slices. RR-SCOPE-008 no-guess (HEAD md5 96b87ba15f59f42b752d2ce22c596d35 verified this session; every anchor count-asserted unique; DEC-A..E + the SIGNAL_DECAY/AR-054 NOTE read live from TB00630). RR-SCOPE-011 one primary mission, one figure (D2). DR-007.9 HTML well-formedness parser pass confirmed pre-delivery; exactly ONE &lt;h2&gt;14. Revision History&lt;/h2&gt;. Prior figcaption content (TB00457 lead block + TB00377 V-040 IV attestation + EXTENSIONS (i)-(xvii)) preserved verbatim per CI-005 + CI-006 visible-stack policy -- NOT edited.<br>
 </pre>
+
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE -- D2 R9 -> R10 (TB00657; 0500000 dv1_209 -> dv1_210; DEC-124 RUN-TO-REVERSAL RESTORATION, slice 4):
+  DEC-124 (Bill ruling, ratified TB00650; executed on D3 at TB00652 + D9 at TB00654 + D6 at TB00655)
+  RESTORATION reaches D2 (Image2 Trading Pipeline, 8 Gates) this slice -- the canonical DEC-124
+  exit/acceptance model applied to the D2 surface ONLY (DEC-003 Path A; all 9 other figures
+  byte-identical). DEC-124 makes the sacred net 1:1.5 R:R an ENTRY-ACCEPTANCE FLOOR only (admit a
+  candidate iff expected_reward / net_loss >= 1.5); it is NEVER an exit price and NEVER closes a
+  position, and it remains the only hardcoded value. Run-to-reversal (HTF_REGIME_REVERSAL /
+  DAILY_REGIME_DOWNGRADE) is the whole-position take-profit; there is NO fixed gross_target TP and
+  NO max-hold. Three exit layers only: L1a regime-reversal + L2 MAE + L3 emergency-SL. The
+  expected_reward estimator is CIATS-owned (seeded from a historical OHLC backtest of the
+  regime-reversal exit, tuned from paper after the 200-trade floor; the seed VALUE lives in
+  TB00000 sec 9 per DEC-096, not the diagram).
+
+  LIVE D2 CHANGES (R9 -> R10), per NSI steps (a)-(d):
+    (a) FOUR-LAYER / L1b TP-fill -> THREE-LAYER. layer:L1b_TP_Fill REMOVED from gate:G8_Position_Sizer
+        drill_targets and from mod:Execution_Engine drill_targets + its ON FILL handler list (the
+        "layer:L1b_TP_Fill TP exit handler" dropped, leaving layer:L3_Emergency_SL + mod:Position_
+        Mirror). Two L1a exit-layer lists that named a max-hold backstop were corrected to remove it:
+        the mod:Signal_Pipeline (sss_engine) decay-after-fill note and the gate:G5_Selection_
+        Controller partial_fill_ownership note now read "L1a regime/downgrade run-to-reversal" with
+        no max-hold (EC-L1A-003 obsolete under DEC-124).
+    (b) RESTING-TP LEG REMOVED. mod:Execution_Engine ON FILL q1_do + its visible <text> reframed from
+        batch_add (TP resting limit + emergSL stop-market) to batch_add (emergSL stop-market only);
+        the take-profit is now stated as the run-to-reversal whole-position exit, a later mod:Exit_
+        Controller market sell, NOT batched on fill. Direction-symmetric leg reworded (Long fill ->
+        SELL emergSL stop; Short fill -> BUY emergSL stop reduce_only=true). The root <desc> AR-054
+        gloss + the G5 partial_fill_ownership FILL-DISPOSITION (a) clause reconciled from
+        (TP + emergSL) to (emergSL stop-market; TP is run-to-reversal). tp_cl_ord_id dropped from the
+        ON FILL q5_logs field. gate:G8_Position_Sizer q1_do gross_target TP formula
+        (TP = entry_price + (entry_price - MAE_stop) * 1.5) REMOVED; the visible G8 line "TP = R:R
+        formula" -> "TP = run-to-reversal regime exit (no fixed target)".
+    (c) SACRED R:R -> ENTRY-ACCEPTANCE FLOOR at G8. gate:G8_Position_Sizer q1_do now states the floor
+        explicitly: admit iff expected_reward / net_loss >= 1.5, where net_loss = mae_pct + entry
+        taker fee + MAE taker fee (both legs FEE_TAKER_PCT) and expected_reward = the CIATS run-to-
+        reversal estimate (seed VALUE -> TB00000 sec 9); never an exit price, never closes a position.
+        The visible G8 SACRED line reworded from "net 1:1.5 R:R hardcoded -- NEVER CIATS-owned" to
+        "net 1:1.5 R:R = entry-acceptance floor -- admit iff expected_reward/net_loss >= 1.5
+        (hardcoded; never an exit price)". rule:Expected_RR_A1_Acceptance + the existing
+        SIZER_REJECTED_BELOW_FLOOR reject event are unchanged (D2-internal). The fee basis (step b)
+        is reconciled here: net_loss uses entry-taker + MAE-taker (both FEE_TAKER_PCT) -- D2 renders
+        no maker-TP fee leg, so there was no maker fee to reframe.
+    (d) EXIT_REASON ENUM -- NONE ON D2. The contract:CIATS_Trade_Outcome_Bus FIELD-15 exit_reason
+        enum is D5-canonical and mirrored on D6 (live diagram); D2 carries NO FIELD-15 enum node and
+        renders no exit_reason enum values, so there is NOTHING to flag for the D5/D6 lockstep on D2.
+        The only D2 take-profit token references were the layer:L1b_TP_Fill drill targets removed in
+        (a); after this slice D2 carries no resting-TP / L1b / max-hold / gross_target residual.
+
+  OUT-OF-SCOPE FLAG (NOT fixed this slice -- belongs to a DEC-122 reconciliation, surfaced to Bill):
+  the D2 dispatch-seam node contract:WSManager_Dispatch_Seam still renders the pre-CR-03 entry model
+  -- visible LIVE-side body "limit / post_only / GTD 30-60s" + q1_do/ciats_ownership stating
+  param:entry_timeout_sec "governs GTD timeout" -- which contradicts the CR-03 marketable-IOC model
+  every other D2 desc field (root AR-054, gate:G5_Selection_Controller partial_fill_ownership,
+  mod:Signal_Pipeline, mod:Execution_Engine) already states. That is DEC-122 entry-order-type drift,
+  NOT DEC-124, and folding a second decision-campaign correction into this slice would violate the
+  one-campaign-per-slice discipline; left intact and flagged for Bill's sequencing decision.
+
+  R-STATE: D2 R9 -> R10 per the TB00453 bright line -- three visible <text> nodes changed (the G8
+  "TP = R:R formula" line, the G8 SACRED line, and the ON FILL batch_add line); NO geometry / node-
+  count / viewBox change (rect 31/31, line 25/25, path 4/4, text 75/75; every text x/y byte-identical;
+  viewBox 1500x1700 preserved; geometry/coord attr list byte-identical 419/419). R10 propagated to
+  SVG <title> + diagram_canonical (0500000_Image2_T2_R10_Trading_Pipeline) + the title-bar visible
+  header + the title-bar subtitle identity token + the root <desc> provenance CURRENT R (R9 -> R10) +
+  the figcaption header (R9) -> (R10). The MAIN title carries the R-label inline and was advanced in
+  lockstep. The <desc>-field MODIFYs (root AR-054, sss_engine, G5 partial_fill_ownership, G8 q1_do/
+  q5_logs/drill_targets, Execution_Engine q1_do/q5_logs/drill_targets) ride the same R bump.
+
+  COMPLETENESS: every node touched remains code-derivable from-the-diagram-alone -- G8 q1_do still
+  fully specifies sizing (CR-06 pair-relative formula), MAE/emergSL math, the entry-acceptance floor
+  with explicit net_loss + expected_reward definitions, min-size validation (CR-07), and dispatch
+  guard; Execution_Engine ON FILL fully specifies the emergSL-only batch_add + IOC fill disposition.
+
+  DC-HEADER: 0500000 dv1_209 -> dv1_210 (HTML <title> line 6, DocVersion line 135, DocPath line 137,
+  DocDate line 138, DocTime line 139 refreshed); filename advances dv1_209 -> dv1_210.
+
+  INTEGRITY: change-localization VERIFIED -- only the D2 figure block (file lines 2159..2696) plus the
+  5 DC-header lines (6/135/137/138/139) differ between dv1_209 and dv1_210; all 9 other figures
+  byte-identical per DEC-003 Path A (line counts equal at 9738; no line shift). Figure count 10;
+  <svg> 10/10; </svg> 10/10; figcaption 10/10. DR-007.9 HTML well-formedness parser pass confirmed on
+  dv1_210 (html.parser, 0 exceptions). 0500000 dv1_209 (1008720 bytes) -> dv1_210 (1010079 bytes; net
+  +1359). Authored md5: 6aafd6e26fb9f9ceeee21f662947d9a0.
+
+  NO PROVENANCE RELOCATION this session: D2's R-increment chain + title-bar R-history + figcaption
+  OPTION-R / V-040 80-cell attestation stack (extensions (i)-(xviii)) were already externalized to
+  this 5.10 at TB00645 (Blocks A/B/C above). This entry is the DEC-123 standing-discipline provenance
+  APPEND for the new R9 -> R10 content amendment (the live diagram now carries only live governing
+  content + R10 + the 0521001 pointer). No new namespace token minted (0311001 v1_46 unchanged this
+  slice). No source spec retired (DR-078 N/A; consolidation CLOSED).
+
+  CARRY-FORWARD (NOT done here, per DEC-003 Path A one-surface-per-session):
+    - DEC-122 dispatch-seam drift (OUT-OF-SCOPE flag above): the contract:WSManager_Dispatch_Seam
+      post_only/GTD entry-model depiction awaits Bill's decision on whether to fold it into a DEC-122
+      reconciliation slice.
+    - D5 SLICE LOCKSTEP: the D5 slice must remove the obsolete exit_reason enum values (TP_FILL +
+      TIME_EXPIRY), reconcile SUB_MIN_RESIDUAL_ABANDONED, drop the D5 Logger LAYER1B_TP_FILL, AND
+      update the D6 FIELD-15 mirror (live diagram line ~4878) in the SAME session for V-038 parity.
+    - Remaining DEC-124 figure slices (one per session): D5 (R15), D7 (R8), D1 (R13). Then the PROSE
+      slice (0500000 sec 8/11/12 + sec 9 seeds: remove max_hold_candles=24; add run-to-reversal
+      estimator seed; reconcile per_trade_size + fee seeds entry-taker/exit-taker; D9-surface stale
+      prose sec 3.2/4.1/4.2). Then the GOVERNANCE slice (TB00153 DEC-124 v1_90 -> v1_91 + retire
+      DR-079 + retire ar:AR-066 framing; 0311001 retire ar:AR-066; TB00000 v2_88 -> v2_89 sec 7/8).
+      Then DEC-124 final re-audit -> ungate PHASE 2 OPTION B clean-slate organism code-gen.
+
 
 ============================================================
 6. RELOCATED SECTION-14 REVISION-HISTORY TABLE
