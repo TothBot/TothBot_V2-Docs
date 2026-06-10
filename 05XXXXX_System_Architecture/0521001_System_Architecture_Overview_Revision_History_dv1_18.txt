@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_17
+DocVersion: dv1_18
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_17.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_18.txt
 DocDate:    06-09-2026
-DocTime:    20:45:00 UTC
+DocTime:    22:15:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18757,6 +18757,97 @@ RELOCATED MAIN-TITLE VISIBLE TEXT -- D9 R2 label + TB00361 V-040 narrative tail 
 <pre>
 DIAGRAM 9 — Gate 8 Position Sizer Detail — R2 + TB00361 V-040 design-completeness (q1_do + q4_triggers + q5_logs across 6 components + Q3 fail-closure)
 </pre>
+
+AMENDMENT NARRATIVE -- D9 R3 -> R4 (TB00654; 0500000 dv1_207 -> dv1_208; DEC-124 RUN-TO-REVERSAL RESTORATION, slice 2):
+  DEC-124 (Bill ruling, ratified TB00650; reaffirmed + executed on D3 at TB00652) RESTORATION
+  campaign, slice 2 -- the D9 Image9 Gate 8 Position Sizer figure. DEC-124 makes the sacred net
+  1:1.5 R:R an ENTRY-ACCEPTANCE FLOOR only (admit iff expected_reward / net_loss >= 1.5); it never
+  constructs an exit price and never closes a position. Run-to-reversal is the whole-position
+  take-profit (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE); there is no fixed gross_target TP and
+  no max-hold cap. This slice corrects D9 to that model and AUTHORS the new CIATS run-to-reversal
+  expected-reward estimator into the diagram.
+
+  BILL RULING THIS SESSION (TB00654, chat-turn, AUTHORITATIVE per TB00000 sec 4.1): the
+  expected-reward estimator's pre-200-trade seed is DERIVED FROM HISTORICAL DATA -- "use historic
+  data, which is readily available, and move forward from there in paper trading; actual historic
+  data is absolutely fine to use to kick start paper trading." This resolves the TB00653 NSI
+  surface-NOTE (the estimator's seeded form was the one non-derivable modelling choice; surfaced to
+  Bill rather than guessed, per DEC-124 point 3 "data-driven, never guessed"). The estimator form is
+  therefore: expected_reward = the CIATS expected favorable run-to-reversal excursion for the
+  candidate pair/regime, SEEDED pre-floor from a historical OHLC backtest of the regime-reversal exit
+  and TUNED from realized paper outcomes after the 200-trade floor; read per candidate from the
+  tick-start snapshot (no hot-path backtest). The numeric seed VALUE is NOT in 0500000 (binary test
+  DEC-096) -- its home is TB00000 sec 9, to be added in the prose/seed slice.
+
+  LIVE D9 CHANGES (R3 -> R4):
+    (a) DELETED g8d_gross_target (visible node + <desc>) -- under run-to-reversal there is no
+        exit-price target (NSI step a).
+    (b) DELETED g8d_net_gain_sacred (visible node + <desc>) -- a DERIVABLE consequence (not a
+        guess): net_gain = net_loss x 1.5 was purely the constructive bridge to gross_target; with
+        gross_target gone it has zero consumers and would fail the completeness test. The sacred
+        x1.5 semantics are carried entirely by the redefined A1 admission test. Single compliant
+        path under DEC-124 (the floor is a comparison, not a construction).
+    (c) REDEFINED g8d_a1_acceptance (rule:Expected_RR_A1_Acceptance) to the DEC-124 entry-acceptance
+        test: ACCEPT iff expected_reward / net_loss >= 1.5, REJECT below the floor (evt:G8_A1_REJECT)
+        (NSI step b). expected_reward from the new estimator; net_loss the risk leg. The G4/TB00627
+        Option-B accept-side observable (no dedicated accept event; recorded by evt:G8_SIZED) is
+        PRESERVED. The A1 element now consumes BOTH inputs and gates all downstream sizing (it moved
+        from "evaluated first from a TP projection" to "evaluated after its two real inputs").
+    (d) REDEFINED g8d_net_loss to the DEC-124 fee basis: net_loss = mae_pct + entry taker fee + MAE
+        taker fee (BOTH legs FEE_TAKER_PCT) -- entry is a marketable-IOC taker fill (DEC-122) and the
+        MAE protective exit is a taker market sell; no maker fee in the risk leg (no resting maker TP
+        exists under DEC-124). Supersedes the prior maker-in/taker-out "0.16% + 0.26%" rendering
+        (NSI step b). Fee SEED VALUE reconciliation stays a sec-9/sec-8 item.
+    (e) AUTHORED the new node g8d_expected_reward (compute:expected_reward_run_to_reversal) to
+        completeness-test standard -- q1_do/constraints/consumes/produces/q4_triggers/q5_logs all
+        explicit and code-derivable (NSI step c). Produces expected_reward (fraction of
+        entry_fill_price) consumed by the A1 gate.
+    (f) SIZED bundle (g8d_sized_output visible + the evt:G8_SIZED payload in g8d_emergsl q5_logs)
+        changed from { entry_fill_price, net_loss, net_gain, gross_target, emergSL_dist } to
+        { entry_fill_price, net_loss, expected_reward, emergSL_dist }.
+    (g) Geometry reflowed to a parallel-inputs-then-gate layout (estimator + mae/net_loss computed in
+        parallel, both feeding the A1 diamond; PASS -> emergSL -> SIZED; BELOW FLOOR -> REJECT). New
+        input-band + pass-band headers; footer notes rewritten to the DEC-124 model; inputs legend
+        updated. viewBox 1500x980 preserved.
+
+  R-STATE -- R3 -> R4 BUMPED: visible <text> content changed AND SVG geometry changed (new/removed
+  rect/polygon/line/text nodes, repositioned nodes) -> figure R bumps one step per the TB00453
+  bright line. R4 propagated to SVG <title> + diagram_canonical + title-bar main title + title-bar
+  subtitle identifier + root <desc> provenance CURRENT-R line + figcaption (a) identifier. The parent
+  Image2_T2_R2 token and all forensic provenance strings already in 0521001 5.8 were NOT touched.
+
+  DC-HEADER LAG CORRECTED: dv1_207 shipped with its internal DC-header lagging at dv1_206 (HTML
+  <title> line 6, DocVersion line 135, DocPath line 137). This session sets all three to dv1_208
+  (the lag is corrected, not propagated) + DocTime refreshed. The filename advances dv1_207 ->
+  dv1_208.
+
+  INTEGRITY: change-localization VERIFIED -- only the D9 figure block (file figure index 4) plus the
+  4 DC-header lines (6/135/137/139) differ between dv1_207 and dv1_208; all 9 other figures
+  byte-identical per DEC-003 Path A. Figure count 10; <svg> 10/10; figcaption 10/10; the D9 <svg>
+  parses as well-formed XML; <title> count 126 -> 125 (net node delta -2 deleted +1 added). DR-007.9
+  HTML well-formedness parser pass confirmed on dv1_208 (html.parser, 0 exceptions). 0500000 dv1_207
+  -> dv1_208 (net +2167 bytes). This archive dv1_17 -> dv1_18 (append-only; all prior content --
+  Section 4 + Sections 5.1..5.7 + 5.8-prior + 5.9 + 5.10 + Section 6 + 7.1 + 7.2 -- byte-identical).
+
+  NO PROVENANCE RELOCATION this session: D9's R-increment chain + V-040 attestation + main-title tail
+  were already externalized to this 5.8 at TB00643/TB00646. This entry is the DEC-123 standing-
+  discipline provenance APPEND for the new R3 -> R4 content amendment (the live diagram carries only
+  live governing content + R4 + the 0521001 pointer). No new namespace token minted (0311001
+  unchanged this slice). No source spec retired (DR-078 N/A; consolidation CLOSED).
+
+  CARRY-FORWARD (NOT done here, per DEC-003 Path A one-surface-per-session):
+    - PROSE on the D9 surface still describes the old fixed-TP model and is OUT of this figure slice:
+      the sec 3.2 intro <p> above the figure ("computes MAE / emergSL / TP from ATR(14)") and the
+      sec 4.2 "R:R Formula" <pre> (net_gain = net_loss x 1.5; gross_target = net_gain + 0.16%) +
+      the sec 4.1 Layer 1b "TP Fill" summary -- all reconcile in the DEC-124 prose slice
+      (0500000 sec 8 / 11 / 12 + sec 9 seeds) per the TB00653 campaign remainder.
+    - SEC-9 SEED slice (deferred): ADD the run-to-reversal estimator seed value; REMOVE
+      max_hold_candles=24; reconcile per_trade_size + fee seeds (entry-taker / exit-taker).
+    - GOVERNANCE (deferred): TB00153 enter DEC-124 (v1_90 -> v1_91) + retire DR-079 + retire
+      ar:AR-066 framing; 0311001 retire token ar:AR-066; TB00000 v2_88 -> v2_89 (sec 7 EXITS + sec 8).
+    - Remaining DEC-124 figure slices: D6, D2, D5, D7, D1 (one per session), then final re-audit ->
+      ungate PHASE 2 OPTION B code-gen.
+
 
 5.9 Context -- Context Tier 1 System Context
     (relocated at TB00644; 0500000 dv1_199 -> dv1_200; Context R2 HELD)
