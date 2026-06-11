@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_27
+DocVersion: dv1_28
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_27.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_28.txt
 DocDate:    06-11-2026
-DocTime:    17:20:00 UTC
+DocTime:    07:55:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -21047,6 +21047,335 @@ REMOVED FRAGMENT (verbatim):
 LIVE REPLACEMENT: ''
 
 ----- END RELOCATED D1 DESC NARRATIVE -----
+
+8.5 dv1_217 -> dv1_218 -- DEC-125 SLICE 3: D5 CIATS
+    ARCHITECTURE (D5-1..D5-9) + D6 FIELD-15 / HR-LG-007
+    LOCKSTEP (TB00671)
+
+AMENDMENT NARRATIVE: Register instances executed this slice
+(NSI TB00671 sec 2): D5-1, D5-2, D5-3, D5-4, D5-5, D5-6,
+D5-7, D5-8, D5-9, plus the mandated D6 lockstep edits (the
+D6 FIELD-15 schema_fields mirror per D5-5 V-038 parity and
+the D6 Logger-mirror HR-LG-007 SUPERSEDED-FOR-ROUTING echoes
+per D5-4 / register D6-6 cross-ref). All edits are <desc>-
+or figcaption-only; zero visible SVG text or geometry
+changed; D5 R HOLDS at R16 and D6 R HOLDS at R14 per
+TB00453 (SVG-text extraction parity verified identical on
+all 10 figures). All 8 other figures byte-identical
+(DEC-003 Path A; the D6 lockstep is the NSI-mandated
+same-session exception).
+
+REGISTRY VERIFICATION (D5-2 / D5-6 / D5-8 dispositions,
+against 0311001 v1_47 sec 15.12, grep-verified this
+session): REGISTERED (gap notes resolved to nothing or
+removed): the six CIATS sub-component mod: tokens +
+contract:CIATS_Trade_Outcome_Bus (15.12.1 / 15.12.3),
+contract:Sizing_Curve_Per_Module (15.12.3),
+param:per_trade_size_usd + param:expected_rr_acceptance_rule
+(15.12.8), evt:ENTRY_PRICE_COMPUTED / _INVALID /
+_SIDE_MISSING (15.12.7). STILL UNREGISTERED (one-line
+current gap notes left at the D5 root <desc> and the
+regime_engine_box): mod:RegimeEngine (15.12.1 holds
+mod:Regime_Engine -- token-form gap), rule:HR-CI-002 /
+HR-CI-004 / HR-CI-008 / HR-CI-009 / PS-HK-001 (not in
+15.12.9), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not in
+15.12.7), param:half_kelly_applied_pct (not in 15.12.8).
+
+VERIFICATION: dv1_217 md5 07ec75de8829e06597869a3abd898c64
+-> dv1_218 md5 b561d46217d4791ad7b3b86a5deaa692; 9,722 ->
+9,720 lines (two fully-resolved registry_gap_note lines
+removed); 38 assertion-verified exact-match ops (count
+asserted per anchor, abort-on-fail; 4 file-header ops + 31
+D5 ops + 3 D6 lockstep ops, with the FIELD-15 op applied at
+3 asserted surfaces); diff localization verified -- only
+header lines {6, 135, 137, 139}, the D5 figure block, and
+the four D6 mirror lines changed; tag balance 10/10 figure,
+10/10 svg, 125/125 desc, 961/961 text, 10/10 figcaption;
+html.parser pass 0 exceptions; exactly one sec-14 heading;
+SVG visible-text extraction identical on all 10 figures (R
+holds both figures). REVERSE-RECONSTRUCTION: the op record
+below applied in reverse to dv1_218 reproduces dv1_217
+byte-identical (md5 07ec75de8829e06597869a3abd898c64,
+verified this session). NOTE: the identical FIELD-15
+retirement narrative also exists at one out-of-scope D3
+surface (Exit-Controller q5_logs, paren-variant); it is
+Slice 5 scope and was deliberately excluded by anchor form
+and flagged in the TB00671 SL.
+
+----- BEGIN DEC-125 SLICE 3 OP RECORD -- REMOVED / RESTATED
+D5 + D6 CONTENT (VERBATIM, ORDERED; supports reverse-
+reconstruction; file-header ops 1-4 are the dv1_217 ->
+dv1_218 version-string set) -----
+
+[OP01 | H1-title-L6 | FILE HEADER]
+REMOVED FRAGMENT (verbatim):
+<title>0500000 System Architecture Overview dv1_217</title>
+LIVE REPLACEMENT: '<title>0500000 System Architecture Overview dv1_218</title>'
+
+[OP02 | H2-DocVersion-L135 | FILE HEADER]
+REMOVED FRAGMENT (verbatim):
+<tr><td>DocVersion</td><td>dv1_217</td></tr>
+LIVE REPLACEMENT: '<tr><td>DocVersion</td><td>dv1_218</td></tr>'
+
+[OP03 | H3-DocPath-L137 | FILE HEADER]
+REMOVED FRAGMENT (verbatim):
+0500000_System_Architecture_Overview_dv1_217_Claude_Source.html</td></tr>
+LIVE REPLACEMENT: '0500000_System_Architecture_Overview_dv1_218_Claude_Source.html</td></tr>'
+
+[OP04 | H4-DocTime-L139 | FILE HEADER]
+REMOVED FRAGMENT (verbatim):
+<tr><td>DocTime</td><td>17:10:00 UTC</td></tr>
+LIVE REPLACEMENT: '<tr><td>DocTime</td><td>07:35:00 UTC</td></tr>'
+
+[OP05 | D5-1-rootdesc | register D5-1 | CLASS C | x1]
+SURFACE: D5 root <desc> provenance line (DW-2 bare-pointer form)
+REMOVED FRAGMENT (verbatim):
+    provenance: R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00636). CURRENT R: R16.
+    governs: mod:CIATS,
+LIVE REPLACEMENT (verbatim):
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R16.
+    governs: mod:CIATS,
+
+[OP06 | D5-2-rootgapnote | register D5-2 | CLASS D | x1]
+SURFACE: D5 root <desc> registry_gap_note historical block (v1_47-verified residue note left)
+REMOVED FRAGMENT (verbatim):
+    registry_gap_note: The seven CIATS sub-component mod: tokens (mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store) are referenced in D5 R1 and preserved in R2 + R3 per RR-SCOPE-007 but are not currently registered in 0311001 v1_10 §15.12.1 mod: registry. Surfaced as a registry-amendment requirement per TB00160 NSI §8.1; deferred to a future 0311001 increment per TB00165 NSI §8.7 (registry housekeeping outside DR-012 closure scope is out of bounds at Stage K-1). NEW R3 additions with registry-gap status: mod:RegimeEngine (not currently in §15.12.1), rule:HR-CI-002 / HR-CI-004 / HR-CI-008 / HR-CI-009 (not currently in §15.12.9 — 0211001 dv1_0 §13 hard rules predate the §15.12.9 registry; rule:PA-001 IS registered in §15.12.9), rule:PS-HK-001 (not currently in §15.12.9 — 0611001 dv1_0 §6.2 hard rule), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not currently in §15.12.7), param:half_kelly_applied_pct (not currently in §15.12.8). Stage K-1 preserves these R3 references per the diagram-as-authoritative principle (DD-001) — registry amendments to absorb the references are deferred to a future 0311001 increment after Step 1 + Step 2 + Step 3 completion per TB00165 NSI §8.7. NEW R6 additions with registry-gap status (TB00239 AMENDMENT-3): contract:Sizing_Curve_Per_Module (not currently in 0311001 v1_15 §15.12.3 contract: registry — the CIATS-owned function form factor mapping expected R:R to per-trade allocation, instantiated per parallel-module per v2_38 §9.6); param:per_trade_size_usd (not currently in 0311001 v1_15 §15.12.8 param: registry — CIATS-OWNED PER-MODULE INSTANTIATED, Kraken per-pair minimum ~$0.50 starting per v2_38 §9.17); param:expected_rr_acceptance_rule (not currently in §15.12.8 — CIATS-OWNED, A1 starting per v2_38 §9.10 + §9.17 — reject candidate trades whose point-estimate expected R:R is below 1:1.5). dv1_61 preserves these R6 references per DD-001 + DD-004 NO PROSE-FIRST AUTHORING (R6 architectural identifiers encoded in the diagram FIRST; namespace-registry amendments follow per the established registry-gap-note carry-forward pattern). Registry amendments to absorb the three R6 references are deferred to a future 0311001 housekeeping increment. NEW R8 additions with registry-binding CLOSED (TB00279 AMENDMENT-ELP-01): evt:ENTRY_PRICE_COMPUTED + evt:ENTRY_PRICE_INVALID + evt:ENTRY_PRICE_SIDE_MISSING ARE registered in 0311001 v1_18 §15.12.7 evt: Event Registry as bundled companion artifact this same session per TB00279 NSI §1.3 scope (b) — deliberate departure from the R6 carry-forward precedent because the three ENTRY_PRICE evt: tokens are bundle-eligible with the AMENDMENT-ELP-01 single-cycle DEC-012 S-2 step. No registry-gap-note carry-forward required for the R8 additions; 0311001 v1_18 §15.12.7 closure is verified at session-close DR-007 HTML scope + companion 0311001 v1_18 delivery.
+LIVE REPLACEMENT (verbatim):
+    registry_gap_note: Still-unregistered D5 tokens against 0311001 v1_47 §15.12 (verified this session): mod:RegimeEngine (§15.12.1 holds mod:Regime_Engine; token-form gap), rule:HR-CI-002 / rule:HR-CI-004 / rule:HR-CI-008 / rule:HR-CI-009 / rule:PS-HK-001 (not in §15.12.9), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not in §15.12.7), param:half_kelly_applied_pct (not in §15.12.8). All other formerly gap-noted D5 tokens (the CIATS sub-component mod: tokens, contract:CIATS_Trade_Outcome_Bus, contract:Sizing_Curve_Per_Module, param:per_trade_size_usd, param:expected_rr_acceptance_rule, the three ENTRY_PRICE evt: tokens) are registered.
+
+[OP07 | D5-4a-q1do-HRLG007 | register D5-4 | CLASS B | x1]
+SURFACE: D5 logger_box q1_do -- HR-LG-007 SUPERSEDED-FOR-ROUTING echo
+REMOVED FRAGMENT (verbatim):
+; delivery routing is DECOUPLED from log level per rule:HR-RPT-002, so the prior rule:HR-LG-007 CRITICAL/HIGH/MEDIUM email policy is SUPERSEDED-FOR-ROUTING; non-immediate conditions (evt:SESSION_PAUSE_TRIGGERED 5pct, CUSUM, fee/latency drift) route to the C2 daily dashboard per contract:Operator_Reporting_Hierarchy, not email. Maintains contract:Two_Stream_Record_Architecture
+LIVE REPLACEMENT (verbatim):
+; delivery routing is DECOUPLED from log level per rule:HR-RPT-002; non-immediate conditions (evt:SESSION_PAUSE_TRIGGERED 5pct, CUSUM, fee/latency drift) route to the C2 daily dashboard per contract:Operator_Reporting_Hierarchy, not email. Maintains contract:Two_Stream_Record_Architecture
+
+[OP08 | D5-3a-q1do-G124bracket | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box q1_do -- G1/G2/G4 migration bracket + TB00609/LG-ALERT-004 (dv1_5 / OI-029) migration header
+REMOVED FRAGMENT (verbatim):
+ -- canonical log-record wire-format + diagnostic-file-management spec in q5_logs [Logger consolidation gaps G1 NDJSON-format + G2 serialization/no-float + G4 file-management migrated diagram-first from 1011007 sec 4-5-9 per TB00607] ; SMTP ALERT DELIVERY CONTRACT [migrated diagram-first from 1011007 sec 8 LG-ALERT-004 (dv1_5 / OI-029) per TB00609; rule:HR-LG-009 delivery-contract elaboration]:
+LIVE REPLACEMENT (verbatim):
+ -- canonical log-record wire-format + diagnostic-file-management spec in q5_logs ; SMTP ALERT DELIVERY CONTRACT [rule:HR-LG-009]:
+
+[OP09 | D5-3b-q1do-OI029tail | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box q1_do -- OI-029 defect-history tail
+REMOVED FRAGMENT (verbatim):
+the C1 set (evt:EMERGENCY_SL_FIRED, evt:FULL_HALT_TRIGGERED, unprotected-position, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL) must reach the operator -- the prior single-attempt 5s-timeout config permanently lost these alerts on transient SMTP timeouts (OI-029)
+LIVE REPLACEMENT (verbatim):
+the C1 set (evt:EMERGENCY_SL_FIRED, evt:FULL_HALT_TRIGGERED, unprotected-position, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL) must reach the operator
+
+[OP10 | D5-4b-q4triggers-HRLG007 | register D5-4 | CLASS B | x1]
+SURFACE: D5 logger_box q4_triggers -- HR-LG-007 SUPERSEDED-FOR-ROUTING echo
+REMOVED FRAGMENT (verbatim):
+mod:CIATS analytical computations, Entry Limit Placement AR-069 computations); triggers channel:logger_async_queue write per log-call; triggers evt:ALERT_SENT on SMTP delivery success per rule:HR-LG-011; triggers evt:ALERT_SMTP_FAILED CRITICAL on SMTP failure per rule:HR-LG-012; triggers evt:TRADE_RECORD_WRITE_FAILED CRITICAL on Stream 2 disk-write failure per rule:HR-LG-010; triggers evt:LOG_QUEUE_FULL CRITICAL on 10,000-entry queue saturation back-pressure per ar:AR-061; triggers Mail_Alerts SMTP dispatch via mail:alert_send to alerts@tothbot.com ONLY on C1 IMMEDIATE conditions that meet the email bar per rule:HR-RPT-001 (routing decoupled from log level per rule:HR-RPT-002; single ladder INFO/WARNING/CRITICAL per rule:HR-RPT-003; prior rule:HR-LG-007 CRITICAL/HIGH/MEDIUM dispatch SUPERSEDED-FOR-ROUTING per rule:LG-ALERT-005)
+LIVE REPLACEMENT (verbatim):
+mod:CIATS analytical computations, Entry Limit Placement AR-069 computations); triggers channel:logger_async_queue write per log-call; triggers evt:ALERT_SENT on SMTP delivery success per rule:HR-LG-011; triggers evt:ALERT_SMTP_FAILED CRITICAL on SMTP failure per rule:HR-LG-012; triggers evt:TRADE_RECORD_WRITE_FAILED CRITICAL on Stream 2 disk-write failure per rule:HR-LG-010; triggers evt:LOG_QUEUE_FULL CRITICAL on 10,000-entry queue saturation back-pressure per ar:AR-061; triggers Mail_Alerts SMTP dispatch via mail:alert_send to alerts@tothbot.com ONLY on C1 IMMEDIATE conditions that meet the email bar per rule:HR-RPT-001 (routing decoupled from log level per rule:HR-RPT-002; single ladder INFO/WARNING/CRITICAL per rule:HR-RPT-003)
+
+[OP11 | D5-4c-q5logs-HRLG007 | register D5-4 | CLASS B | x1]
+SURFACE: D5 logger_box q5_logs -- HR-LG-007 SUPERSEDED-FOR-ROUTING echo + G1/G2 migration bracket (combined anchor)
+REMOVED FRAGMENT (verbatim):
+gated by the email bar per rule:HR-RPT-001 (C1 IMMEDIATE push only; routing decoupled from log level per rule:HR-RPT-002; prior rule:HR-LG-007 CRITICAL/HIGH/MEDIUM email policy SUPERSEDED-FOR-ROUTING); the queryable two-stream log retains the full INFO/WARNING/CRITICAL record per rule:HR-RPT-003 + rule:LG-ALERT-005 for PULL reporting C2-C6 per contract:Operator_Reporting_Hierarchy ; LOG-RECORD WIRE FORMAT [G1 + G2; migrated diagram-first from 1011007 sec 5 TB00607]:
+LIVE REPLACEMENT (verbatim):
+gated by the email bar per rule:HR-RPT-001 (C1 IMMEDIATE push only; routing decoupled from log level per rule:HR-RPT-002); the queryable two-stream log retains the full INFO/WARNING/CRITICAL record per rule:HR-RPT-003 + rule:LG-ALERT-005 for PULL reporting C2-C6 per contract:Operator_Reporting_Hierarchy ; LOG-RECORD WIRE FORMAT:
+
+[OP12 | D5-3c-q5logs-G4bracket | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box q5_logs -- G4 migration bracket
+REMOVED FRAGMENT (verbatim):
+DIAGNOSTIC LOG FILE MANAGEMENT [G4; migrated diagram-first from 1011007 sec 4-9 TB00607]: the diagnostic tothbot.log
+LIVE REPLACEMENT (verbatim):
+DIAGNOSTIC LOG FILE MANAGEMENT: the diagnostic tothbot.log
+
+[OP13 | D5-3d-eventregistry-header | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box event_registry -- G6/TB00608/DEC-096 migration header
+REMOVED FRAGMENT (verbatim):
+        event_registry: [G6; migrated diagram-first from 1011007 sec 6 LG-EVT-001 per TB00608; DEC-096 binary test = organism architecture -&gt; 0500000; descriptive coding-fact reconstruction, no new evt: token minted for operational codes per the TB00607 G1/G2/G4 precedent]. The complete Logger event-code registry:
+LIVE REPLACEMENT (verbatim):
+        event_registry: The complete Logger event-code registry:
+
+[OP14 | D5-3e-queuehealth-bracket | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box queue_health_monitor -- G7/TB00608 migration bracket (live loss-prevention framing kept)
+REMOVED FRAGMENT (verbatim):
+        queue_health_monitor: [G7; migrated diagram-first from 1011007 LG-QUEUE-006 per TB00608; loss-prevention -- proactive pre-saturation warning]. A monitor_log_queue task
+LIVE REPLACEMENT (verbatim):
+        queue_health_monitor: [loss-prevention -- proactive pre-saturation warning]. A monitor_log_queue task
+
+[OP15 | D5-3f-rpthier-header | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box reporting_hierarchy -- TB00605/TB00604/DEC-096 authored-diagram-first header
+REMOVED FRAGMENT (verbatim):
+        reporting_hierarchy: contract:Operator_Reporting_Hierarchy [authored diagram-first TB00605; ratified Bill TB00604 Q1-Q5; binary test DEC-096 = organism architecture -&gt; 0500000]. Operator reporting surface
+LIVE REPLACEMENT (verbatim):
+        reporting_hierarchy: contract:Operator_Reporting_Hierarchy. Operator reporting surface
+
+[OP16 | D5-3g-rpthier-G3 | register D5-3 | CLASS C | x1]
+SURFACE: D5 logger_box reporting_hierarchy -- Logger gap G3 CLOSED TB00606 + TB00602 prior-defect narrative
+REMOVED FRAGMENT (verbatim):
+DATA SOURCE [Logger gap G3 CLOSED TB00606]: C5 reads from the permanent trade-record file /home/tothbot/records/trades_&lt;YYYY&gt;.jsonl (append-only, fsync-per-write, annual UTC segmentation, no rotation, independent of the rotating tothbot.log) -- now authored diagram-first into contract:Two_Stream_Record_Architecture as the durable Stream 2 sink per rule:HR-LG-013. The prior loss-prevention defect (Stream 2 routed only to the self-deleting tothbot.log per TB00602 gap register) is corrected; C5 calendar-year segmentation is the annual JSONL file itself.
+LIVE REPLACEMENT (verbatim):
+DATA SOURCE: C5 reads from the permanent trade-record file /home/tothbot/records/trades_&lt;YYYY&gt;.jsonl (append-only, fsync-per-write, annual UTC segmentation, no rotation, independent of the rotating tothbot.log) -- the durable Stream 2 sink of contract:Two_Stream_Record_Architecture per rule:HR-LG-013; C5 calendar-year segmentation is the annual JSONL file itself.
+
+[OP17 | D5-5+D6-FIELD15-x3 | register D5-5 + D6 FIELD-15 lockstep | CLASS B | x3]
+SURFACE: FIELD-15 exit_reason retirement narrative x3: D5 trade_close_box q4_triggers + D5 stream2_box schema_fields_canonical + D6 schema_fields mirror (V-038 parity)
+REMOVED FRAGMENT (verbatim):
+normal-operation reasons per DEC-066 as amended by DEC-124: TP_FILL, TIME_EXPIRY, and SUB_MIN_RESIDUAL_ABANDONED retired - reversal carries the take-profit, no max-hold, and no resting TP so no partial-fill dust; EMERGENCY_SL_FIRED is NOT
+LIVE REPLACEMENT (verbatim):
+normal-operation reasons; EMERGENCY_SL_FIRED is NOT
+
+[OP18 | D5-6-regimeengine-gapnote | register D5-6 | CLASS D | x1]
+SURFACE: D5 regime_engine_box registry_gap_note (v1_47-verified one-line token-form gap note left)
+REMOVED FRAGMENT (verbatim):
+        registry_gap_note: mod:RegimeEngine not currently registered in 0311001 v1_10 §15.12.1 mod: registry. Surfaced as registry-amendment requirement per Stage K-1 D5 R3 closure; deferred to a future 0311001 increment after Step 1 + Step 2 + Step 3 complete per TB00165 NSI §8.7.
+LIVE REPLACEMENT (verbatim):
+        registry_gap_note: mod:RegimeEngine not currently registered in 0311001 v1_47 §15.12.1 (the registry entry is mod:Regime_Engine; token-form gap).
+
+[OP19 | D5-7a-pins | register D5-7 | CLASS C/DW-3 | x1]
+SURFACE: D5 ewma ciats_ownership -- sec-9.16/9.17 pins re-pointed to TB00000 sec 8
+REMOVED FRAGMENT (verbatim):
+are CIATS-OWNED UNIVERSAL threshold-monitoring parameters (per §9.16/§9.17; single account-level monitoring cycle, not per-module).
+LIVE REPLACEMENT (verbatim):
+are CIATS-OWNED UNIVERSAL threshold-monitoring parameters (per TB00000 §8; single account-level monitoring cycle, not per-module).
+
+[OP20 | D5-7b-migration-lead | register D5-7 | CLASS C | x1]
+SURFACE: D5 ewma ciats_ownership -- 0911002/DEC-039/TB00413/DEC-051 migration framing + v1_29->v1_30 registration narrative
+REMOVED FRAGMENT (verbatim):
+named in its q1_do field. Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039, TB00413 / DEC-051): the parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 §9.17 (pointer, not value). Both tokens were ABSENT from 0311001 v1_29 §15.12.8 (live grep-verified this session) and are registered this session 0311001 v1_29 -> v1_30 (two new tokens; annotated "TB00000 §9.17"; no value carried). Single owning element
+LIVE REPLACEMENT (verbatim):
+named in its q1_do field. The parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 §8 (pointer, not value). Both tokens are registered in 0311001 §15.12.8. Single owning element
+
+[OP21 | D5-7c-choice3-tail | register D5-7 | CLASS C/DW-3 | x1]
+SURFACE: D5 ewma ciats_ownership -- CHOICE 3 / TB00410 Determination tail + sec-9.17 pin re-pointed
+REMOVED FRAGMENT (verbatim):
+(source/enforcer split + exchange-fee-adjacent) and stay in §9.17 (CHOICE 3) per TB00410 Determination §3.2(b)/(c).
+LIVE REPLACEMENT (verbatim):
+(source/enforcer split + exchange-fee-adjacent) and stay in TB00000 §8.
+
+[OP22 | D5-8a-produces-seed | register D5-8 | CLASS B/C | x1]
+SURFACE: D5 proposal_box produces -- stale ~$0.50 v2_38 sec-9.17 seed corrected to the live DEC-122 CR-06 pair-relative formula pointer (value home TB00000 sec 8)
+REMOVED FRAGMENT (verbatim):
+        produces: param:per_trade_size_usd proposed values (CIATS-OWNED PER-MODULE INSTANTIATED, starts at Kraken per-pair minimum ~$0.50 per v2_38 §9.17; CIATS-adjustable function of expected R:R
+LIVE REPLACEMENT (verbatim):
+        produces: param:per_trade_size_usd proposed values (CIATS-OWNED PER-MODULE INSTANTIATED, pair-relative max(50, 5 * max(costmin, ordermin * entry_limit_price)) starting per DEC-122 CR-06, value home TB00000 §8; CIATS-adjustable function of expected R:R
+
+[OP23 | D5-8b-produces-curvepin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 proposal_box produces -- v2_38 sec-9.10 pin re-pointed to TB00000 sec 7
+REMOVED FRAGMENT (verbatim):
+CIATS MAY propose Half-Kelly, fixed-fractional, or other sizing methodologies as the underlying curve form per TB00000 v2_38 §9.10; methodology is CIATS-owned)
+LIVE REPLACEMENT (verbatim):
+CIATS MAY propose Half-Kelly, fixed-fractional, or other sizing methodologies as the underlying curve form per TB00000 §7; methodology is CIATS-owned)
+
+[OP24 | D5-8c-produces-A1pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 proposal_box produces -- v2_38 sec-9.17 pin re-pointed to TB00000 sec 8
+REMOVED FRAGMENT (verbatim):
+param:expected_rr_acceptance_rule proposed values (CIATS-OWNED, A1 starting per v2_38 §9.17; CIATS MAY propose A2
+LIVE REPLACEMENT (verbatim):
+param:expected_rr_acceptance_rule proposed values (CIATS-OWNED, A1 starting per TB00000 §8; CIATS MAY propose A2
+
+[OP25 | D5-8d-proposal-gapnote-delete | register D5-8 | CLASS C | x1]
+SURFACE: D5 proposal_box registry_gap_note line removed wholesale -- every named token verified registered in 0311001 v1_47
+REMOVED FRAGMENT (verbatim):
+        registry_gap_note: mod:CIATS_Proposal_Engine not currently registered in 0311001 v1_15 §15.12.1; preserved per RR-SCOPE-007 from D5 R1 root governs reference. contract:Sizing_Curve_Per_Module (NEW R6) not currently registered in §15.12.3; param:per_trade_size_usd / expected_rr_acceptance_rule (NEW R6) not currently registered in §15.12.8; preserved per DD-001 + DD-004 NO PROSE-FIRST AUTHORING from D5 R6 root governs reference per TB00239 AMENDMENT-3; registry amendments deferred to future 0311001 housekeeping increment.
+      </desc>
+    <rect x="525" y="640" width="450" height="180"
+LIVE REPLACEMENT (verbatim):
+      </desc>
+    <rect x="525" y="640" width="450" height="180"
+
+[OP26 | D5-8e-constraints-910pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box constraints -- v2_38 sec-9.10 pin re-pointed to TB00000 sec 7
+REMOVED FRAGMENT (verbatim):
+hardcoded outside CIATS authority per HR-CI-006; the floor is the only number CIATS does not own per TB00000 v2_38 §9.10)
+LIVE REPLACEMENT (verbatim):
+hardcoded outside CIATS authority per HR-CI-006; the floor is the only number CIATS does not own per TB00000 §7)
+
+[OP27 | D5-8f-constraints-44pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box constraints -- PA-001 TB00000 sec-4.4 pin re-pointed to sec 4.3 (PAPER IS THE MASTER)
+REMOVED FRAGMENT (verbatim):
+rule:PA-001 (paper-as-master per TB00000 §4.4 — paper-canonical parameter values per PA-007 govern live parameter changes)
+LIVE REPLACEMENT (verbatim):
+rule:PA-001 (paper-as-master per TB00000 §4.3 — paper-canonical parameter values per PA-007 govern live parameter changes)
+
+[OP28 | D5-8g-constraints-96pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box constraints -- v2_38 sec-9.6 pin re-pointed to TB00000 sec 7 PARALLEL MODULES
+REMOVED FRAGMENT (verbatim):
+instantiated per parallel-module per TB00000 v2_38 §9.6 PER-MODULE CIATS FRAMEWORK; Long_Module curve and Short_Module curve held independently)
+LIVE REPLACEMENT (verbatim):
+instantiated per parallel-module per TB00000 §7 PARALLEL MODULES; Long_Module curve and Short_Module curve held independently)
+
+[OP29 | D5-8h-q1do-910pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box q1_do -- v2_58 sec-9.10 pin re-pointed to TB00000 sec 7
+REMOVED FRAGMENT (verbatim):
+the floor is the only number CIATS does not own per TB00000 v2_58 §9.10); applies writes ONLY at confirmed inter-trade boundaries per rule:HR-CI-003 (never mid-pipeline-evaluation, never while an order is pending); enforces 200-trade HARD FLOOR per rule:HR-CI-004 + Half-Kelly K_full ≤ 0 rejection per rule:HR-CI-008 + rule:HR-CI-011 Bill approval gate; produces contract:Parameter_Store_Snapshot (TothBot reads frozen
+LIVE REPLACEMENT (verbatim):
+the floor is the only number CIATS does not own per TB00000 §7); applies writes ONLY at confirmed inter-trade boundaries per rule:HR-CI-003 (never mid-pipeline-evaluation, never while an order is pending); enforces 200-trade HARD FLOOR per rule:HR-CI-004 + Half-Kelly K_full ≤ 0 rejection per rule:HR-CI-008 + rule:HR-CI-011 Bill approval gate; produces contract:Parameter_Store_Snapshot (TothBot reads frozen
+
+[OP30 | D5-8i-q1do-96pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box q1_do -- sec-9.6 framework pin re-pointed to TB00000 sec 7 PARALLEL MODULES
+REMOVED FRAGMENT (verbatim):
+(Long_Module + Short_Module independent) per PER-MODULE CIATS FRAMEWORK §9.6
+LIVE REPLACEMENT (verbatim):
+(Long_Module + Short_Module independent) per TB00000 §7 PARALLEL MODULES
+
+[OP31 | D5-8j-produces-A1pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box produces -- v2_38 sec-9.17 pin re-pointed to TB00000 sec 8
+REMOVED FRAGMENT (verbatim):
+param:expected_rr_acceptance_rule (A1 starting per v2_38 §9.17 — reject candidate trades
+LIVE REPLACEMENT (verbatim):
+param:expected_rr_acceptance_rule (A1 starting per TB00000 §8 — reject candidate trades
+
+[OP32 | D5-8k-produces-910pin | register D5-8 | CLASS C/DW-3 | x1]
+SURFACE: D5 param_store_box produces -- v2_38 sec-9.10 pin re-pointed to TB00000 sec 7
+REMOVED FRAGMENT (verbatim):
+methodology and function shape are CIATS-owned above the rule:Sacred_R_R_1_to_1_5 floor per v2_38 §9.10)
+LIVE REPLACEMENT (verbatim):
+methodology and function shape are CIATS-owned above the rule:Sacred_R_R_1_to_1_5 floor per TB00000 §7)
+
+[OP33 | D5-8l-produces-V041-delete | register D5-8 | CLASS B | x1]
+SURFACE: D5 param_store_box produces -- TB00365 V-041 P-CC2 / entry_timeout_sec removal narrative parenthetical
+REMOVED FRAGMENT (verbatim):
+param:session_pause_drawdown_pct, param:spot_usd_balance (TB00365 V-041 P-CC2 ADD-only producer-binding closure — 15 param tokens enumerated here after the param:entry_timeout_sec removal TB00666, token RETIRED per DEC-122 CR-17; the additional 2 P-CC2 tokens param:per_trade_size_usd + param:session_pause_drawdown are already enumerated above in the sizing / drawdown produces line)
+
+LIVE REPLACEMENT (verbatim):
+param:session_pause_drawdown_pct, param:spot_usd_balance
+
+
+[OP34 | D5-8m-paramstore-gapnote-delete | register D5-8 | CLASS C | x1]
+SURFACE: D5 param_store_box registry_gap_note line removed wholesale -- every named token verified registered in 0311001 v1_47
+REMOVED FRAGMENT (verbatim):
+        registry_gap_note: mod:CIATS_Parameter_Store not currently registered in 0311001 v1_15 §15.12.1; preserved per RR-SCOPE-007 from D5 R1 root governs reference. contract:Sizing_Curve_Per_Module (NEW R6) not currently registered in §15.12.3; param:per_trade_size_usd / expected_rr_acceptance_rule (NEW R6) not currently registered in §15.12.8; preserved per DD-001 + DD-004 NO PROSE-FIRST AUTHORING from D5 R6 root governs reference per TB00239 AMENDMENT-3; registry amendments deferred to future 0311001 housekeeping increment.
+      </desc>
+    <rect x="40" y="920" width="1420" height="120"
+LIVE REPLACEMENT (verbatim):
+      </desc>
+    <rect x="40" y="920" width="1420" height="120"
+
+[OP35 | D5-9-figcaption | register D5-9 | CLASS A/C | x1]
+SURFACE: D5 figcaption reduced to DW-1 bare form; relocation manifest text relocated
+REMOVED FRAGMENT (verbatim):
+    Image5 CIATS Architecture (R16). Forensic provenance — the §15.16.3 / V-040 55-cell design-completeness attestation, the OPTION-R extension stack, the CI-005/CI-006 visible-stack rolling narratives, and all prior amendment narratives — relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00636). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).<br>
+LIVE REPLACEMENT (verbatim):
+    Image5 CIATS Architecture (R16). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R16.<br>
+
+[OP36 | D6-q1do-HRLG007 | register D6-6 (lockstep) | CLASS B | x1]
+SURFACE: D6 Logger mirror q1_do -- HR-LG-007 SUPERSEDED-FOR-ROUTING echo
+REMOVED FRAGMENT (verbatim):
+; delivery routing is DECOUPLED from log level per rule:HR-RPT-002, so the prior rule:HR-LG-007 CRITICAL/HIGH/MEDIUM email policy is SUPERSEDED-FOR-ROUTING; non-immediate conditions (evt:SESSION_PAUSE_TRIGGERED 5pct, CUSUM, fee/latency drift) route to the C2 daily dashboard per contract:Operator_Reporting_Hierarchy, not email; maintains contract:Two_Stream_Record_Architecture
+LIVE REPLACEMENT (verbatim):
+; delivery routing is DECOUPLED from log level per rule:HR-RPT-002; non-immediate conditions (evt:SESSION_PAUSE_TRIGGERED 5pct, CUSUM, fee/latency drift) route to the C2 daily dashboard per contract:Operator_Reporting_Hierarchy, not email; maintains contract:Two_Stream_Record_Architecture
+
+[OP37 | D6-q4triggers-HRLG007 | register D6-6 (lockstep) | CLASS B | x1]
+SURFACE: D6 Logger mirror q4_triggers -- HR-LG-007 SUPERSEDED-FOR-ROUTING echo
+REMOVED FRAGMENT (verbatim):
+mod:CIATS sub-module analytical computations); triggers channel:logger_async_queue write per log-call; triggers evt:ALERT_SENT on SMTP delivery success per rule:HR-LG-011; triggers evt:ALERT_SMTP_FAILED CRITICAL on SMTP failure per rule:HR-LG-012; triggers evt:TRADE_RECORD_WRITE_FAILED CRITICAL on Stream 2 disk-write failure per rule:HR-LG-010; triggers evt:LOG_QUEUE_FULL CRITICAL on 10,000-entry queue saturation back-pressure per ar:AR-014; triggers Mail_Alerts SMTP dispatch via mail:alert_send to alerts@tothbot.com ONLY on C1 IMMEDIATE conditions that meet the email bar per rule:HR-RPT-001 (routing decoupled from log level per rule:HR-RPT-002; single ladder INFO/WARNING/CRITICAL per rule:HR-RPT-003; prior rule:HR-LG-007 CRITICAL/HIGH/MEDIUM dispatch SUPERSEDED-FOR-ROUTING per rule:LG-ALERT-005)
+LIVE REPLACEMENT (verbatim):
+mod:CIATS sub-module analytical computations); triggers channel:logger_async_queue write per log-call; triggers evt:ALERT_SENT on SMTP delivery success per rule:HR-LG-011; triggers evt:ALERT_SMTP_FAILED CRITICAL on SMTP failure per rule:HR-LG-012; triggers evt:TRADE_RECORD_WRITE_FAILED CRITICAL on Stream 2 disk-write failure per rule:HR-LG-010; triggers evt:LOG_QUEUE_FULL CRITICAL on 10,000-entry queue saturation back-pressure per ar:AR-014; triggers Mail_Alerts SMTP dispatch via mail:alert_send to alerts@tothbot.com ONLY on C1 IMMEDIATE conditions that meet the email bar per rule:HR-RPT-001 (routing decoupled from log level per rule:HR-RPT-002; single ladder INFO/WARNING/CRITICAL per rule:HR-RPT-003)
+
+[OP38 | D6-q5logs-HRLG007 | register D6-6 (lockstep) | CLASS B | x1]
+SURFACE: D6 Logger mirror q5_logs -- HR-LG-007 SUPERSEDED-FOR-ROUTING echo
+REMOVED FRAGMENT (verbatim):
+mail:alert_send SMTP push to alerts@tothbot.com gated by the email bar per rule:HR-RPT-001 (C1 IMMEDIATE push only; routing decoupled from log level per rule:HR-RPT-002; prior rule:HR-LG-007 CRITICAL/HIGH/MEDIUM email policy SUPERSEDED-FOR-ROUTING); the queryable two-stream log retains the full INFO/WARNING/CRITICAL record per rule:HR-RPT-003 + rule:LG-ALERT-005 for PULL reporting C2-C6 per contract:Operator_Reporting_Hierarchy ; DIAGNOSTIC LOG-RECORD FORMAT
+LIVE REPLACEMENT (verbatim):
+mail:alert_send SMTP push to alerts@tothbot.com gated by the email bar per rule:HR-RPT-001 (C1 IMMEDIATE push only; routing decoupled from log level per rule:HR-RPT-002); the queryable two-stream log retains the full INFO/WARNING/CRITICAL record per rule:HR-RPT-003 + rule:LG-ALERT-005 for PULL reporting C2-C6 per contract:Operator_Reporting_Hierarchy ; DIAGNOSTIC LOG-RECORD FORMAT
+
+----- END DEC-125 SLICE 3 OP RECORD -----
 
 ============================================================
 END OF DOCUMENT
