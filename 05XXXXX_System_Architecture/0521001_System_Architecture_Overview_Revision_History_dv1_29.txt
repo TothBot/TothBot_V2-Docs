@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_28
+DocVersion: dv1_29
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_28.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_29.txt
 DocDate:    06-11-2026
-DocTime:    07:55:00 UTC
+DocTime:    09:35:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18051,6 +18051,418 @@ AMENDMENT NARRATIVE -- D6 R14 HELD (TB00659; 0500000 dv1_210 -> dv1_211; DEC-124
   max_hold/TIME_EXPIRY ~line 5930; loss/win attribution naming TIME_EXPIRY + TP_FILL ~lines 6024-6030;
   PAPER_TP_FILL_DETECTED ~line 7473), all out of this slice's sanctioned scope and flagged for a
   dedicated D6 DEC-124 re-pass.
+
+
+
+AMENDMENT NARRATIVE -- D6 R14 -> R15 (TB00672; 0500000 dv1_218 -> dv1_219;
+DEC-125 SLICE 4: D6 COMPLETE SYSTEM -- D6-1..D6-9 REMAINDER):
+  Register instances executed this slice (TB00668 register; NSI TB00672 sec 2):
+  D6-1 (root-desc DW-2 bare pointer), D6-2 (the (a)-(f) registry-housekeeping
+  historical block RELOCATED verbatim below; pair_cache / contract:Pair_Cache and
+  ar:AR-073 verified STILL UNREGISTERED in 0311001 v1_47 -- grep zero hits in
+  sec 15.12.3 / sec 15.12.13 -- so one one-line still-true gap note left in the
+  root desc; the six CIATS sub-component mod: tokens, rule:PA-001, and
+  contract:CIATS_Trade_Outcome_Bus verified REGISTERED -- those gap-note clauses
+  fully resolved, nothing left), D6-3 (three AR-066 retirement-echo tails deleted;
+  sole-writer / dispatch-seam rules stand), D6-4 (three desc no-resting-TP tails +
+  the VISIBLE matching-engine row negation deleted; the row keeps "Off-book emergSL
+  only (Layer 3)"), D6-5 (DW-4 D-08 governs-line token + the two Top-N /
+  max_concurrent retirement echoes deleted; the positive bound "bounded by the
+  module wallet balance" kept at both surfaces), D6-6 remainder (the four Logger-
+  mirror gap/TB cite brackets G1/G2/G4-TB00607, LG-ALERT-004-TB00609,
+  G1/G2/G4-TB00607 q5_logs, G6/G7-TB00608 deleted/relocated, mirroring the TB00671
+  D5-3 treatment; every live "canonical full spec in D5 logger_box" pointer
+  stays), D6-7 (VISIBLE "(gap recovery dv1_7 A-10)" stripped from the GetOpenOrders
+  row), D6-8 (four live DEC-124 cite-tail strips at the Exit-Controller
+  q1_do/q4_triggers/q5_logs + Risk-Engine q1_do surfaces; the stale "per F-1
+  OPTION A TB00572 -- Kraken per-pair min ~$0.50 seed" clause corrected to the live
+  DEC-122 CR-06 pair-relative formula pointer max(50, 5 * max(costmin, ordermin *
+  entry_limit_price)) starting per DEC-122 CR-06, live-read per pair, value home
+  TB00000 sec 8 -- the TB00671 D5-8a precedent wording), D6-9 (figcaption DW-1
+  bare form; manifest text relocated in this entry).
+  LOCKSTEP VERIFY-CLEAN (executed TB00671, not re-executed): zero
+  SUPERSEDED-FOR-ROUTING and zero TP_FILL / TIME_EXPIRY / SUB_MIN_RESIDUAL
+  strings in the D6 block; FIELD-15 carries the live four-value enum.
+  REGISTER LOCATOR NOTE: the fifth D6-8 locator (dv1_215 L4750) resolves to no
+  live DEC-124 cite surface by content in dv1_218 -- consistent with the TB00671
+  D5-5/D6 FIELD-15 lockstep having already removed that narrative; the four live
+  surfaces executed.
+  D6 PROHIBITIONS (P-1 / P-4 / P-14): the NOT USED / REJECTED panel rows verified
+  ALREADY history-free and codable at their D6 surfaces (no DEC/TB/dv cites; the
+  governing prohibition rules live in the desc fields + the D1 P-set
+  restatements) -- no edit required (TB00670 precedent), preserving the
+  visible-diff constraint.
+  R-BUMP (TB00453): visible SVG <text> deletions at D6-4 + D6-7 drive D6
+  R14 -> R15 -- exactly 3 visible <text> contents changed (the two content rows +
+  the title-bar R string). R15 propagated to SVG <title> + diagram_canonical +
+  title-bar visible identifier + root <desc> CURRENT R + figcaption (R14)->(R15).
+  All edits assertion-verified exact-match Python ops, count==1 asserted per
+  anchor, abort-on-fail, zero silent partials (30 ops total: 4 file-header,
+  3 R-string, 23 content).
+  INTEGRITY: diff localized to file-header lines {6,135,137,139} + the D6 figure
+  block; all 9 other figures byte-identical (DEC-003 Path A); tag balance figure
+  10/10, svg 10/10, desc 125/125, figcaption 10/10, text 961/961; SVG-text
+  extraction visible diff set == exactly the planned D6-4/D6-7 rows + the
+  title-bar R string, all other figures' visible text IDENTICAL; html.parser pass
+  0 exceptions (DR-007.9); exactly one <h2>14. Revision History</h2>; D6-block
+  residue greps clean on every edited line (zero former-AR-066 tails, zero
+  no-resting-TP, zero gap-recovery cite, zero D-08 token, zero Top-N/
+  max_concurrent-retired echoes, zero TB00607/TB00608/TB00609 brackets, zero
+  TB00572/~$0.50 in the Risk-Engine clause, zero Phase-M/TB00637 stacks, zero
+  R14 strings). Reverse-reconstruction verified: the op record below applied in
+  reverse to dv1_219 reproduces dv1_218 byte-identical (md5
+  b561d46217d4791ad7b3b86a5deaa692); forward replay reproduces dv1_219
+  byte-identical (md5 e711218c4edb51a394ebe02723e26888).
+  FLAGGED (not fixed; one-campaign-per-slice -- see TB00672 SL sec 4): the
+  Parameter-Store mirror stale pin + TB00365 V-041 parenthetical (NSI flag vii --
+  no D6-8 clause rewrite touched those clauses, so NOT pulled in); the
+  Kelly-engine "~$0.50 seed" + "no max_concurrent" residue (one occurrence,
+  count-asserted); the sacred-floor node's three DEC-124/TB00650 cites + stale
+  TB00000 v2_58 sec-9.10 / sec-9 pins; the surviving negation phrasings on the
+  D6-8 lines ("NO fixed gross_target TP and NO max-hold time-expiry backstop",
+  "no max-hold time-expiry") left per exact-register-scope (cite-strip only).
+  0500000 dv1_218 -> dv1_219 (md5 e711218c4edb51a394ebe02723e26888); this
+  archive dv1_28 -> dv1_29 (append-only; all prior content byte-identical).
+
+----- DEC-125 SLICE 4 OP RECORD -- REMOVED / RESTATED D6 CONTENT
+      (VERBATIM, ORDERED, ANCHORED; supports reverse-reconstruction;
+      context-extended anchors -- each REMOVED string unique in dv1_218,
+      each LIVE REPLACEMENT unique in dv1_219; TB00671 op-pair method) -----
+
+[H1|header|HTML title]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000 System Architecture Overview dv1_218</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000 System Architecture Overview dv1_219</title>
+</pre>
+
+[H2|header|DocVersion]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocVersion</td><td>dv1_218</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocVersion</td><td>dv1_219</td></tr>
+</pre>
+
+[H3|header|DocPath]
+REMOVED (VERBATIM):
+<pre>
+0500000_System_Architecture_Overview_dv1_218_Claude_Source.html</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_System_Architecture_Overview_dv1_219_Claude_Source.html</td></tr>
+</pre>
+
+[H4|header|DocTime]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocTime</td><td>07:35:00 UTC</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocTime</td><td>09:30:00 UTC</td></tr>
+</pre>
+
+[R1|R-string|SVG <title>]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000_Image6_T2_R14_Complete_System</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000_Image6_T2_R15_Complete_System</title>
+</pre>
+
+[R2|R-string|diagram_canonical]
+REMOVED (VERBATIM):
+<pre>
+diagram_canonical: 0500000_Image6_T2_R14_Complete_System
+</pre>
+LIVE REPLACEMENT:
+<pre>
+diagram_canonical: 0500000_Image6_T2_R15_Complete_System
+</pre>
+
+[R3|R-string|title-bar visible identifier (VISIBLE)]
+REMOVED (VERBATIM):
+<pre>
+0500000_Image6_T2_R14_Complete_System  |  schema_version: 1.0
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_Image6_T2_R15_Complete_System  |  schema_version: 1.0
+</pre>
+
+[O1|D6-1|root-desc DW-2 bare pointer + CURRENT R R14->R15]
+REMOVED (VERBATIM):
+<pre>
+    provenance: R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00637). CURRENT R: R14.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R15.
+</pre>
+
+[O2|D6-2|root-desc resident historical block RELOCATED; still-true one-line gap notes left]
+REMOVED (VERBATIM):
+<pre>
+    registry_gap_note: (a) seven CIATS sub-component mod: tokens (mod:CIATS_EWMA_Monitor,
+      mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine,
+      mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store; mod:CIATS_Trade_Outcome_Bus is
+      registered as contract:CIATS_Trade_Outcome_Bus per §15.12.3 — used in contract: form
+      throughout this diagram) preserved per RR-SCOPE-007 carry from D5 R2 (TB00160 §7.1)
+      pending §15.12.1 amendment (Path A recommended). (b) CLOSED at TB00164 STAGE J:
+      rule:PA-001 added to 0311001 v1_10 §15.12.9; rule:HR-PA-001 evaluated and rejected
+      at §15.12.9 amendment time per the §15.12.9 NOTE entry (TB00163 Part 1 verification).
+      D6 R3 governs list now cites rule:PA-001 as a registered token; the prior "by section
+      reference" form is retired. (c) D6 R1 cited "ar: AR-001 through AR-025 (system level)"
+      range form — R3 governs continues to enumerate AR-001, AR-008, AR-014, AR-066 (the AR
+      tokens actually depicted in D6 visual content); the broader R1 range is documented here
+      as the original R1 intent per RR-SCOPE-007. (d) D6 R1 cited "container: KRAKEN, TOTHBOT,
+      CIATS" informal forms — R2/R3 governs uses registered container:Kraken_Zone,
+      container:TothBot_Zone, container:CIATS_Zone forms; semantic intent preserved. (e)
+      DR-013 wire-up callout group (cross-module wire-up order at startup) is rendered as a
+      decoration-class &lt;g&gt; with class="decoration" per 0311001 v1_6 §15.11.3 (decoration
+      groups exempt from T-2+ namespace-token tagging requirements); the architectural
+      contracts that the wire-up depicts are governed by registered rule:HR-EC-013,
+      rule:HR-EC-014, rule:HR-PM-009 cited within the visual annotation text and in the
+      affected mod: group desc fields (mod:Exit_Controller, mod:WS_Manager, mod:Position_Mirror,
+      mod:Selection_Controller, mod:Long_Module). The pair_cache identifier mentioned in TB00153
+      §6 DR-013 cross-reference is referenced as a free-form attribute name within the
+      mod:WS_Manager group desc rather than as a registered contract: token; future §15.12.3
+      amendment to register contract:Pair_Cache is a Stage L+ housekeeping target. (f) ar:AR-073
+      (Selection Controller state update via WS Manager per HR-EC-014) is NOT yet registered
+      in §15.12.13; D6 R3 cites the AR-073 number within rule:HR-EC-014 constraint annotation
+      text rather than as a registered ar: token; future §15.12.13 amendment is a Stage L+
+      housekeeping target.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    registry_gap_note: contract:Pair_Cache not yet registered in 0311001 §15.12.3 (pair_cache referenced as a free-form attribute in the mod:WS_Manager group desc — the authoritative pair-spec source for ALL TothBot modules; registration is a Stage L+ housekeeping target); ar:AR-073 not yet registered in 0311001 §15.12.13 (the AR-073 identifier is cited inline within rule:HR-EC-014 constraint annotation text; registration is a Stage L+ housekeeping target).
+</pre>
+
+[O3|D6-3|Public-WS q1_do AR-066 tail]
+REMOVED (VERBATIM):
+<pre>
+ (former ar:AR-066 binding corrected TB00666 — token retired) so all WS push
+</pre>
+LIVE REPLACEMENT:
+<pre>
+ so all WS push
+</pre>
+
+[O4|D6-3|REST q1_do AR-066 tail]
+REMOVED (VERBATIM):
+<pre>
+(sole dispatch gatekeeper; former ar:AR-066 binding corrected TB00666 — token retired)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(sole dispatch gatekeeper)
+</pre>
+
+[O5|D6-3|WS_Manager constraints AR-066 tail]
+REMOVED (VERBATIM):
+<pre>
+ (former ar:AR-066 binding corrected TB00666 — token retired); paper/live byte-identical pathway per PA-005)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+; paper/live byte-identical pathway per PA-005)
+</pre>
+
+[O6|D6-4|matching-engine q1_do negation echo]
+REMOVED (VERBATIM):
+<pre>
+last-line-of-defense); under DEC-124 run-to-reversal there is NO resting take-profit order — the take-profit is regime reversal, a TothBot-issued market sell (not a matching-engine resting order), so the only TothBot-placed resting order is the L3 emergSL; does NOT
+</pre>
+LIVE REPLACEMENT:
+<pre>
+last-line-of-defense); the only TothBot-placed resting order is the L3 emergSL; does NOT
+</pre>
+
+[O7|D6-4|matching-engine q4_triggers tail]
+REMOVED (VERBATIM):
+<pre>
+(entry limit + emergSL placement; no resting TP under DEC-124 run-to-reversal); triggered by REST CancelOrder
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(entry limit + emergSL placement); triggered by REST CancelOrder
+</pre>
+
+[O8|D6-4|signal-pipeline q4_triggers tail]
+REMOVED (VERBATIM):
+<pre>
+(entry limit + emergSL placement; no resting TP under DEC-124 run-to-reversal); triggers evt:ENTRY_SUBMITTED
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(entry limit + emergSL placement); triggers evt:ENTRY_SUBMITTED
+</pre>
+
+[O9|D6-4|VISIBLE row: negation deleted, positive bound kept (R-BUMP)]
+REMOVED (VERBATIM):
+<pre>
+>Off-book emergSL only (Layer 3) — no resting TP (run-to-reversal)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>Off-book emergSL only (Layer 3)</text>
+</pre>
+
+[O10|D6-5|governs enumeration D-08 token line DELETED]
+REMOVED (VERBATIM):
+<pre>
+:AR-009, ar:AR-014,
+             decision:D-08_Top_N_Cap_Retired,
+             param:p
+</pre>
+LIVE REPLACEMENT:
+<pre>
+:AR-009, ar:AR-014,
+             param:p
+</pre>
+
+[O11|D6-5|signal-pipeline constraints D-08 trail]
+REMOVED (VERBATIM):
+<pre>
+decision:D-08_Top_N_Cap_Retired (Top-N pair cap retired per dv1_71 — G5 Selection Controller operates without artificial concurrency cap, bounded instead by the module wallet balance via param:per_trade_size_usd sizing [K_half × module_wallet_balance; wallet is the sole sizing boundary; max_concurrent retired])
+</pre>
+LIVE REPLACEMENT:
+<pre>
+G5 Selection Controller bounded by the module wallet balance via param:per_trade_size_usd sizing [K_half × module_wallet_balance; wallet is the sole sizing boundary]
+</pre>
+
+[O12|D6-5|signal-pipeline q1_do D-08 trail]
+REMOVED (VERBATIM):
+<pre>
+G5 Selection Controller per decision:D-08_Top_N_Cap_Retired operates without Top-N artificial cap (retired dv1_71 — bounded by the module wallet balance via Half-Kelly per_trade_size_usd sizing; max_concurrent retired); produces evt:ENTRY_SUBMITTED
+</pre>
+LIVE REPLACEMENT:
+<pre>
+G5 Selection Controller bounded by the module wallet balance via Half-Kelly per_trade_size_usd sizing; produces evt:ENTRY_SUBMITTED
+</pre>
+
+[O13|D6-6|q1_do G1/G2/G4 TB00607 bracket]
+REMOVED (VERBATIM):
+<pre>
+q5_logs [Logger gaps G1/G2/G4, TB00607] ; the SMTP
+</pre>
+LIVE REPLACEMENT:
+<pre>
+q5_logs; the SMTP
+</pre>
+
+[O14|D6-6|q1_do LG-ALERT-004 TB00609 bracket]
+REMOVED (VERBATIM):
+<pre>
+ec in D5 logger_box q1_do [Logger LG-ALERT-004 SMTP delivery contract, TB00609]
+      q4_triggers: 
+</pre>
+LIVE REPLACEMENT:
+<pre>
+ec in D5 logger_box q1_do
+      q4_triggers: 
+</pre>
+
+[O15|D6-6|q5_logs G1/G2/G4 TB00607 bracket]
+REMOVED (VERBATIM):
+<pre>
+[G1/G2/G4; canonical full spec in D5 logger_box q5_logs, TB00607]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+[canonical full spec in D5 logger_box q5_logs]
+</pre>
+
+[O16|D6-6|q5_logs G6/G7 TB00608 bracket]
+REMOVED (VERBATIM):
+<pre>
+[G6/G7; canonical full spec in D5 logger_box event_registry + queue_health_monitor, TB00608]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+[canonical full spec in D5 logger_box event_registry + queue_health_monitor]
+</pre>
+
+[O17|D6-7|VISIBLE GetOpenOrders row cite stripped (R-BUMP)]
+REMOVED (VERBATIM):
+<pre>
+>GetOpenOrders (gap recovery dv1_7 A-10) • CancelAllOrders</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>GetOpenOrders • CancelAllOrders</text>
+</pre>
+
+[O18|D6-8|exit-controller q1_do DEC-124 cite]
+REMOVED (VERBATIM):
+<pre>
+) per DEC-124 — L1a is
+</pre>
+LIVE REPLACEMENT:
+<pre>
+) — L1a is
+</pre>
+
+[O19|D6-8|exit-controller q4_triggers DEC-124 cite]
+REMOVED (VERBATIM):
+<pre>
+no max-hold time-expiry per DEC-124)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+no max-hold time-expiry)
+</pre>
+
+[O20|D6-8|exit-controller q5_logs DEC-124 cite]
+REMOVED (VERBATIM):
+<pre>
+(no exit-time R:R enforcement under DEC-124)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(no exit-time R:R enforcement)
+</pre>
+
+[O21|D6-8|risk-engine q1_do stale ~$0.50 -> live DEC-122 CR-06 pair-relative formula pointer; F-1/TB00572 cites stripped]
+REMOVED (VERBATIM):
+<pre>
+(CIATS-owned per-module dollar allocation per F-1 OPTION A TB00572 — Kraken per-pair min ~$0.50 seed, an expected-R:R-driven function of contract:Sizing_Curve_Per_Module above the 200-trade floor; Half-Kelly is the CIATS curve-derivation mechanism that sets per_trade_size_usd, NOT recomputed inline at G8)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(CIATS-owned per-module dollar allocation — pair-relative max(50, 5 * max(costmin, ordermin * entry_limit_price)) starting per DEC-122 CR-06, live-read per pair, value home TB00000 §8; an expected-R:R-driven function of contract:Sizing_Curve_Per_Module above the 200-trade floor; Half-Kelly is the CIATS curve-derivation mechanism that sets per_trade_size_usd, NOT recomputed inline at G8)
+</pre>
+
+[O22|D6-8|risk-engine q1_do floor-clause DEC-124 cite]
+REMOVED (VERBATIM):
+<pre>
+never constructs an exit price per DEC-124)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+never constructs an exit price)
+</pre>
+
+[O23|D6-9|figcaption DW-1 bare form (R14)->(R15)]
+REMOVED (VERBATIM):
+<pre>
+    Image6 Complete System (R14). Forensic provenance — the §15.16.3 / V-040 95-cell design-completeness attestation, the OPTION-R extension stack, the CI-005/CI-006 visible-stack rolling narratives, and all prior amendment narratives — relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00637). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).<br>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    Image6 Complete System (R15). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R15.<br>
+</pre>
+
+----- END DEC-125 SLICE 4 OP RECORD -----
 
 ------------------------------------------------------------
 5.3 D3 -- Image3 Exit Architecture
