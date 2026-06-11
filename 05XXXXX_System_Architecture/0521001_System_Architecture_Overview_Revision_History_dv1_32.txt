@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_31
+DocVersion: dv1_32
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_31.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_32.txt
 DocDate:    06-11-2026
-DocTime:    11:45:00 UTC
+DocTime:    21:10:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -21507,6 +21507,613 @@ DISPATCH-SEAM DISPOSITION):
   R-STATE: R11 propagated to SVG <title> + diagram_canonical + title-bar +
   figcaption (R10)->(R11); root <desc> CURRENT-R R10 -> R11 + relocation clause
   appended (this narrative).
+
+AMENDMENT NARRATIVE -- D2 R11 -> R12 (TB00675; 0500000 dv1_221 -> dv1_222;
+DEC-125 SLICE 7: D2 TRADING PIPELINE -- D2-1..D2-9 + THE BILL-RATIFIED
+FOLD-IN (A) VISIBLE CLEANUP):
+  REGISTER-ERROR RECORD + BILL RULING (flag-(iii) of the TB00674 SL, surfaced
+  at session open per the TB00675 NSI): the TB00668 register's D2 section
+  carried the determination "no Class B/C hits in D2 visible text" -- found
+  WRONG BY CONTENT at the pre-edit visible-text sweep. THREE visible rows
+  carried registered-class signatures: (1) the footer row "D-08 Top-N cap
+  RETIRED · ... (ar:AR-070 amended) · ... TB00000 sec-4.4 governs PA-001..010"
+  (DW-4 echo + AR-070-amended form + the same stale sec-4.4 governance pin
+  corrected on D7 at TB00674 -- the live home verified TB00000 v2_90 sec 4.3
+  PAPER IS THE MASTER); (2) the G5-band row "Top-N cap retired per
+  decision:D-08_Top_N_Cap_Retired -- full surviving universe proceeds" (pure
+  DW-4 visible echo); (3) the universe row "(decision:D-03_Universe_Scope <-
+  ar:AR-070 amended)" (retired-alias provenance-arrow form). Surfaced as A/B
+  (A = fold the visible cleanup into Slice 7, one R11->R12 bump; B = execute
+  registered scope desc/figcaption-only, R HELD, defer visible to a later
+  bump). BILL RULING (TB00675, verbatim): "Proceed with A, Fold the visible
+  cleanup into Slice 7." Executed under A: ops V1/V2/V3; D2 R11 -> R12.
+  Register instances executed this slice (TB00668 register; NSI TB00675 sec 2):
+  D2-1 (root-desc reduced to the DW-2 bare pointer + CURRENT R: R12; the prior
+  provenance line -- the Phase M (TB00645) relocation parenthetical WITH the
+  pre-existing TB00354/TB00366 stray-duplicate R-chain note + the appended
+  R10->R11 DEC-122 dispatch-seam clause (TB00666) -- relocated VERBATIM in op
+  C1 below),
+  D2-2 (AR-054 header cites "-- DEC-122 CR-10 reframe as amended TB00666;
+  dv1_13; amended dv1_43" stripped with the live "direction-symmetric" fact
+  kept; the structurally-OBVIATED legacy-GTD-stub clause deleted; the DEC-065
+  dual-ownership / SIGNAL_DECAY / partial-fill / DR-079 retirement sentences
+  deleted with the live "see gate:G5_Selection_Controller
+  entry_fill_disposition field" pointer kept; the positive marketable-IOC
+  fill-disposition spec stays verbatim. AR-070 DETERMINATION: the
+  AR-070_Universe_Scope_Retired alias was deleted from the ar: enumeration
+  WITHOUT an in-line substitute -- decision:D-03_Universe_Scope is already
+  cited directly on the root-desc decision line, satisfying the register's
+  "cite D-03 directly" disposition; no retirement echo re-minted),
+  D2-3 (HR-SP-008 "migrated from 0511002 dv1_1 sec 14 ... TB00501" tail
+  stripped; the SYSTEM-WIDE Decimal-not-float rule stays verbatim incl. the
+  loss-prevention rationale),
+  D2-4 (D-08_Top_N_Cap_Retired token removed from the root-desc decision line
+  and the G5 constraints; the G5 q1_do echo restated POSITIVE: "Full surviving
+  universe proceeds (no cap per decision:D-03_Universe_Scope)."; the HR-SC-006
+  "architectural rule migrated into D2 from 0511002 ... TB00501" tail stripped
+  with the monotonic-clock loss-prevention rule kept verbatim),
+  D2-5 (the Pre-Gate-1 WS-INST-009 "as amended TB00666" cite and the G1
+  q5_logs "per TB00666" cite stripped; CONTENT-CLUSTER MEMBER on the same G1
+  q5_logs surface: the "per 0511002 sec 4" retired-spec authority cite
+  stripped in the same op C12 -- a Class C retired-document citation in a live
+  field, surfaced by the post-edit residue grep; the SYSTEM_STATE_BLOCKED
+  logged-only rule stays),
+  D2-6 (the 0911002 Campaign Phase-1 migration narratives, the 0311001
+  token-registration narratives, and the DEC-042-precedent owning-element
+  parentheticals relocated VERBATIM from the G2 min_volume, Signal_Pipeline
+  SSS seven-param, and G5 SC three-param ciats_ownership fields (ops C13/C16/
+  C17); the bare facts stay -- parameter existence + CIATS-OWNED PER-MODULE
+  INSTANTIATED at the owning element + "Single owning element" identity; ALL
+  pre-restructure pins re-pointed per DW-3: "(per sec-9.16/sec-9.17)" -> 
+  "(value home TB00000 sec 8)" and "canonical value home is TB00000 sec-9.17"
+  -> "TB00000 sec 8" at all three fields; the G4 q1_do "(fact migrated from
+  retired 0711002 dv1_3 sec 8 per CF-V040-METHOD TB00599 ...)" parenthetical
+  deleted with the NON_DIR_NORMAL-skips-Gate-4 rule kept verbatim),
+  D2-7 (the full SIGNAL_DECAY DETECTION RETIRED block deleted ENTIRE from the
+  Signal_Pipeline constraints field (op C15e; the detector, its rationale, and
+  its no-emission negations -- the post-fill decay ownership fact remains live
+  at the FILL DISPOSITION sentence and on D3); ALL migration cites in the same
+  field stripped: the 0511001-dv1_9/0911002-Phase-2/TB00394 cite, the two
+  0511002/TB00501 recurrence cites, the 0711001/DR-078/TB00599 PASS-rule cite,
+  and the 0711001/TB00600 SEEDING bracket (ops C15a/b/c/f); the 0711001
+  spec-reject-code reconciliation note relocated as Class C provenance by
+  definition (op C15d; the live token SIGNAL_REJECTED stays); every RSI/EMA/
+  VolumeMA/SSS computation, seeding, and guard rule stays VERBATIM),
+  D2-8 (entry_fill_disposition header cites stripped; the GTD dual-ownership
+  narrative deleted; both RETIRED blocks -- partial-fill/DR-079/dust and the
+  CR-09 SIGNAL_DECAY retirement incl. its stale figcaption-EXTENSIONS forensic
+  pointer (the EXTENSIONS stack itself was relocated off the figcaption at
+  Phase M) -- deleted entire (op C18c); the positive IOC disposition rules
+  (FILL DISPOSITION sentence, CR-07/CR-06 above-minimums guarantee) stay
+  verbatim. CONTENT-TEST CLUSTER MEMBERS executed across the whole D2 block
+  per the NSI signature sweep (RETIRED / OBVIATED / SIGNAL_DECAY / DR-079 /
+  partial-fill / GTD-dual-ownership): the G5 q4_triggers CR-09 retirement
+  parenthetical deleted (op C19); the WSManager_Dispatch_Seam ciats_ownership
+  param:entry_timeout_sec RETIRED narrative replaced by the positive boundary
+  fact "Under IOC there is no GTD window and no entry-order timeout; unfilled
+  qty expires at submission." (op C20) and the q1_do "(CR-17, executed
+  TB00666)" cite stripped (op C21); the ON FILL handler header cites + its
+  SIGNAL_DECAY / partial-fill / DR-079 retirement sentences deleted with the
+  live see-pointer kept (ops C22a/C22b). GTD DETERMINATION: the three
+  remaining "GTD" strings in D2 are live IOC boundary facts (no resting GTD
+  order / no GTD window / no GTD timeout), not retirement echoes -- they
+  stay),
+  D2-9 (figcaption reduced to the campaign bare form matching D3/D5/D6/D7:
+  "Image2 Trading Pipeline - 8-Gate System (R12). Provenance relocated to
+  0521001 (anchor 0520000) per DEC-123. CURRENT R: R12."; the full forensic
+  manifest -- the TB00567/TB00457 lead block, the V-040 80-cell attestation,
+  the OPTION-R (i)-(xviii) stack summary, the CI-005/CI-006 narratives, the
+  stray-duplicate defect note -- relocated VERBATIM in op C24 below).
+  ADDITIONAL CONTENT-TEST DETERMINATION (D7-3 census precedent -- register
+  instance membership resolves BY CONTENT, not locator): the G8 q1_do
+  "MINIMUM-SIZE VALIDATION (migrated from 0511002 dv1_1 sec 12 + sec 14 per
+  the binary architecture test, TB00501):" carries the IDENTICAL
+  0511002/binary-test/TB00501 signature as the registered D2-3/D2-4 instances
+  -- third cluster member, executed (op C25); the validation rule, ROUND_DOWN
+  quantization, and HR-SC-005 loss-prevention rationale stay verbatim.
+  DW-3 members on the D2 surface: the Long_Module q1_do "per TB00000 v2_38
+  sec-9.3 parallel-module framework" -> "per TB00000 sec 7" and "own drawdown
+  halts per v2_38 sec-9.7 per-wallet rule" -> "per TB00000 sec 8 per-wallet
+  rule" (ops C23a/C23b; the live TB00000 v2_90 map: parallel modules = sec 7,
+  per-wallet drawdown halts / CIATS seeds = sec 8 -- same re-points executed
+  on D7 at TB00674).
+  R-BUMP (TB00453): visible SVG <text> changes at V1 (universe row), V2 (D-08
+  echo row), V3 (footer row, three signatures in one row) -- plus the
+  title-bar R string -- drive D2 R11 -> R12. R12 propagated to the SVG <title>
+  + diagram_canonical + title-bar visible identifier + root <desc> CURRENT R +
+  figcaption (R11)->(R12); D2 has no sub-figure parent_diagram pointer
+  (cross-figure Image2_T2_R1/R2/R6 frozen forms are other-figure/forensic
+  scope, untouched).
+  All edits assertion-verified exact-match Python ops, count==1 asserted per
+  anchor against the pristine baseline, abort-on-fail, zero silent partials
+  (44 ops total: 4 file-header, 3 R-string, 34 content, 3 visible); long
+  anchors EXTRACTED from the baseline file bytes, not transcribed.
+  INTEGRITY: diff localized to file-header lines {6,135,137,139} + the D2
+  figure block (dv1_221 L2150-2677; 25 changed ranges, all in-block); all 9
+  other figures byte-identical (DEC-003 Path A); tag balance figure 10/10,
+  svg 10/10, desc 125/125, figcaption 10/10, text 956/956 (no visible row
+  added or deleted -- all three visible ops are REPLACEMENTS); SVG-text
+  extraction visible diff set == exactly the planned set (title-bar R string +
+  V1 + V2 + V3 replaced; visible text IDENTICAL on all 9 other figures);
+  html.parser pass 0 exceptions (DR-007.9); exactly one <h2>14. Revision
+  History</h2>; D2-block residue greps CLEAN on the full signature battery
+  (zero OBVIATED / SIGNAL_DECAY / DR-079 / split-mechanic / dust /
+  dual-ownership / D-08 / AR-070 / Top-N / RETIRED-retired / TB00666 /
+  TB00633 / TB00650 / TB00501 / TB00599 / TB00600 / TB00394 / TB00645 /
+  0911002 / 0711002 / 0711001 / 0511001 / 0511002 / DEC-039 / DEC-042 /
+  DEC-043 / DEC-049 / DEC-050 / entry_timeout_sec / v2_38 / sec-9.x pins /
+  sec-4.4 pin / stale-R11 forms). Reverse-reconstruction verified: the op
+  record below applied in reverse to dv1_222 reproduces dv1_221 byte-identical
+  (md5 4d5bd2f034d2ce26f3cbbe7534f6aadf); forward replay reproduces dv1_222
+  byte-identical (md5 133a80e592561e8c07b33a1e91152142).
+  FLAGGED (not fixed; one-campaign-per-slice / exact-register-scope -- see
+  TB00675 SL sec 4): (NEW) the D2 AR-053 "dv1_13; amended dv1_43 M-2 ..."
+  amendment-cite tail in the root-desc ar: line -- same Class C family but NOT
+  matching the register's quoted "(... as amended TB00666; dv1_13; amended
+  dv1_43 ...)" strip signature (no TB00666 component); desc-only,
+  final-audit-sweep scope (the live long_pending_orders + short_pending_orders
+  / Gate-7 USD-check facts stay regardless); (NEW) the D2 Long_Module q1_do
+  "closes TB00148 F30 finding" cite -- the TB00148 strip class was registered
+  per-figure at D7-3, not document-wide; desc-only, final-audit; (NEW) the
+  VISIBLE footer EWMA row "require 200 trades for parameter changes per
+  TB00000 sec-7" -- the 200-trade decision threshold's canonical home is
+  TB00000 sec 5 (sec 7 is live-map but imprecise); NOT a DW-3 member (sec 7 is
+  a live-map section, not a pre-restructure pin) and outside the Bill ruling's
+  three-item fold-in scope; visible, so the fix would force a future R-bump --
+  surfaced to final-audit planning; (CARRIED) the D2 drill_targets
+  Image7_T2_R0 stale frozen form (TB00674 flag iv class, cross-figure R-token
+  forms); the TB00674 SL flags i (D7 HR-EE-014/015 self-cites), ii (D7 AR-009
+  tail), v (TB00673-carried set) remain open; F-1 (D1 q1_do stale TP clause)
+  remains an open Bill scope-in.
+  0500000 dv1_221 -> dv1_222 (md5 133a80e592561e8c07b33a1e91152142); this
+  archive dv1_31 -> dv1_32 (append-only; all prior content byte-identical).
+
+----- DEC-125 SLICE 7 OP RECORD -- REMOVED / RESTATED D2 CONTENT
+      (VERBATIM, ORDERED, ANCHORED; supports reverse-reconstruction;
+      context-extended anchors -- each REMOVED string unique in dv1_221,
+      each LIVE REPLACEMENT unique in dv1_222; TB00671 op-pair method) -----
+
+[H1|header|HTML title]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000 System Architecture Overview dv1_221</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000 System Architecture Overview dv1_222</title>
+</pre>
+
+[H2|header|DocVersion]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocVersion</td><td>dv1_221</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocVersion</td><td>dv1_222</td></tr>
+</pre>
+
+[H3|header|DocPath]
+REMOVED (VERBATIM):
+<pre>
+0500000_System_Architecture_Overview_dv1_221_Claude_Source.html</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_System_Architecture_Overview_dv1_222_Claude_Source.html</td></tr>
+</pre>
+
+[H4|header|DocTime]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocTime</td><td>11:30:00 UTC</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocTime</td><td>21:00:00 UTC</td></tr>
+</pre>
+
+[R1|R-string|SVG title]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000_Image2_T2_R11_Trading_Pipeline</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000_Image2_T2_R12_Trading_Pipeline</title>
+</pre>
+
+[R2|R-string|diagram_canonical]
+REMOVED (VERBATIM):
+<pre>
+diagram_canonical: 0500000_Image2_T2_R11_Trading_Pipeline
+</pre>
+LIVE REPLACEMENT:
+<pre>
+diagram_canonical: 0500000_Image2_T2_R12_Trading_Pipeline
+</pre>
+
+[R3|R-string|title-bar visible identifier -- R-BUMP propagation]
+REMOVED (VERBATIM):
+<pre>
+0500000_Image2_T2_R11_Trading_Pipeline  |  schema_version: 1.0
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_Image2_T2_R12_Trading_Pipeline  |  schema_version: 1.0
+</pre>
+
+[C1|D2-1|root-desc bare pointer + CURRENT R: R12]
+REMOVED (VERBATIM):
+<pre>
+    provenance: R-increment history (R8 -&gt; R9 proper chain + the pre-existing TB00354/TB00366 stray-duplicate R4-&gt;R5 / R3-&gt;R4 / R2-&gt;R3 tail) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00645); R10-&gt;R11 DEC-122 dispatch-seam disposition relocated per DEC-123 standing discipline (TB00666). CURRENT R: R11.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R12.
+</pre>
+
+[C2|D2-2|AR-054 header cite strip]
+REMOVED (VERBATIM):
+<pre>
+AR-054 (Entry fill disposition under marketable-IOC -- DEC-122 CR-10 reframe as amended TB00666; dv1_13; amended dv1_43 direction-symmetric): under
+</pre>
+LIVE REPLACEMENT:
+<pre>
+AR-054 (Entry fill disposition under marketable-IOC, direction-symmetric): under
+</pre>
+
+[C3|D2-2|AR-054 OBVIATED legacy-GTD-stub clause deleted]
+REMOVED (VERBATIM):
+<pre>
+there is no resting post_only GTD order, so the legacy exec_type=expired/canceled-with-cum_qty&gt;0 unprotected-stub scenario (a GTD order that partial-fills then expires leaving an unprotected position) is structurally OBVIATED -- the IOC fills-or-kills
+</pre>
+LIVE REPLACEMENT:
+<pre>
+there is no resting post_only GTD order -- the IOC fills-or-kills
+</pre>
+
+[C4|D2-2|AR-054 retirement sentences (DEC-065 dual-ownership / SIGNAL_DECAY / partial-fill / DR-079) deleted; live see-pointer kept]
+REMOVED (VERBATIM):
+<pre>
+pair minimums. The former DEC-065 Q2 dual-ownership bisection and the SIGNAL_DECAY Selection-side entry-cancel are RETIRED (CR-09, Bill-ratified TB00633); the partial-fill split mechanic and the DR-079 abandon-and-surface dust write-off are RETIRED (DEC-124 TB00650; Bill ruling TB00666 -- no partial-fill, split, or dust handling exists in the live design); see gate:G5_Selection_Controller entry_fill_disposition field)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+pair minimums; see gate:G5_Selection_Controller entry_fill_disposition field)
+</pre>
+
+[C5|D2-2|ar: enumeration -- AR-070_Universe_Scope_Retired alias deleted (decision:D-03 cited directly on the decision line)]
+REMOVED (VERBATIM):
+<pre>
+AR-069, AR-070_Universe_Scope_Retired (amended -&gt; decision:D-03_Universe_Scope), AR-072, AR-074, AR-076
+</pre>
+LIVE REPLACEMENT:
+<pre>
+AR-069, AR-072, AR-074, AR-076
+</pre>
+
+[C6|D2-3|HR-SP-008 migration-cite tail]
+REMOVED (VERBATIM):
+<pre>
+so this is loss-prevention; migrated from 0511002 dv1_1 sec 14 HR-SP-008 per the binary architecture test, TB00501), HR-WM-024
+</pre>
+LIVE REPLACEMENT:
+<pre>
+so this is loss-prevention), HR-WM-024
+</pre>
+
+[C7|D2-4/DW-4|root-desc decision line D-08 trail]
+REMOVED (VERBATIM):
+<pre>
+decision: D-03_Universe_Scope (USD + USDC + USDT), D-04_Liquidity_Floor ($500k USD/day), D-06_Paper_Live_Parity, D-08_Top_N_Cap_Retired
+</pre>
+LIVE REPLACEMENT:
+<pre>
+decision: D-03_Universe_Scope (USD + USDC + USDT), D-04_Liquidity_Floor ($500k USD/day), D-06_Paper_Live_Parity
+</pre>
+
+[C8|D2-4/DW-4|G5 constraints D-08 token]
+REMOVED (VERBATIM):
+<pre>
+constraints: ar:AR-072, decision:D-08_Top_N_Cap_Retired, rule:HR-SC-006
+</pre>
+LIVE REPLACEMENT:
+<pre>
+constraints: ar:AR-072, rule:HR-SC-006
+</pre>
+
+[C9|D2-4|HR-SC-006 migration-cite tail]
+REMOVED (VERBATIM):
+<pre>
+a loss event; architectural rule migrated into D2 from 0511002 dv1_1 sec 14 per the binary architecture test, TB00501)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+a loss event)
+</pre>
+
+[C10|D2-4/DW-4|G5 q1_do D-08 echo -> D-03 positive restatement]
+REMOVED (VERBATIM):
+<pre>
+PASS on all four; SKIP SELECTION_REJECTED otherwise. decision:D-08_Top_N_Cap_Retired — full surviving universe proceeds (no Top-N cap).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+PASS on all four; SKIP SELECTION_REJECTED otherwise. Full surviving universe proceeds (no cap per decision:D-03_Universe_Scope).
+</pre>
+
+[C11|D2-5|Pre-Gate-1 q1_do TB00666 cite]
+REMOVED (VERBATIM):
+<pre>
+post_only joins the NO-ENTRY set per WS-INST-009 as amended TB00666)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+post_only joins the NO-ENTRY set per WS-INST-009)
+</pre>
+
+[C12|D2-5|G1 q5_logs TB00666 cite + the per-0511002-sec-4 retired-spec cite (content cluster member, same surface)]
+REMOVED (VERBATIM):
+<pre>
+(post_only|cancel_only|maintenance — post_only blocks the CR-03 taker entry per TB00666) per 0511002 sec 4; logged-only
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(post_only|cancel_only|maintenance — post_only blocks the CR-03 taker entry); logged-only
+</pre>
+
+[C13|D2-6/DW-3|G2 ciats_ownership -- 0911002 Phase-1 migration + token narrative relocated; sec-9.16/9.17 pins -> TB00000 sec 8]
+REMOVED (VERBATIM):
+<pre>
+        ciats_ownership: param:min_volume_usd_daily is CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17). This is the signal-model liquidity floor (24h USD-volume minimum) consumed and enforced at this owning element gate:G2_Liquidity (decision:D-04_Liquidity_Floor; rule:HR-SP-004). Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039): the parameter's EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; its starting VALUE is NOT encoded in 0500000 — canonical value home is TB00000 §9.17 ($500k USD/day starting; pointer, not value). Token registered in 0311001 §15.12.8 (pre-existing; no registry amendment this session). This token is the fifth/final token of the §9.17 "Regime engine + signal model" group; its four regime-engine siblings (adx_threshold + atr_percentile_thresh + atr_rolling_window + htf_ema_periods) were migrated at TB00401/DEC-043 to D4 mod:Regime_Engine — this migration completes that named group.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+        ciats_ownership: param:min_volume_usd_daily is CIATS-OWNED PER-MODULE INSTANTIATED (value home TB00000 sec 8). This is the signal-model liquidity floor (24h USD-volume minimum) consumed and enforced at this owning element gate:G2_Liquidity (decision:D-04_Liquidity_Floor; rule:HR-SP-004). The parameter's EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; its starting VALUE is NOT encoded in 0500000 — canonical value home is TB00000 sec 8 (pointer, not value).
+</pre>
+
+[C14|D2-6|G4 q1_do retired-0711002 migration cite]
+REMOVED (VERBATIM):
+<pre>
+at the 1H HTF (fact migrated from retired 0711002 dv1_3 sec 8 per CF-V040-METHOD TB00599, verified against the git-history source; DIAGRAMS-GOVERN).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+at the 1H HTF.
+</pre>
+
+[C15a|D2-7|Signal_Pipeline constraints -- 0511001/0911002 migration cite]
+REMOVED (VERBATIM):
+<pre>
+rule:HR-WM-018 (RSI(14) uses Wilder's SMMA alpha=1/14; standard EMA alpha=2/15 MUST NOT be used for RSI [AR-076] — indicator-computation rule migrated here from 0511001 dv1_9 per 0911002 Phase 2 D2 portion of the TB00394 0511001 MOVE; this is the owning element that computes RSI(14) per q1_do.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule:HR-WM-018 (RSI(14) uses Wilder's SMMA alpha=1/14; standard EMA alpha=2/15 MUST NOT be used for RSI [AR-076] — this is the owning element that computes RSI(14) per q1_do.
+</pre>
+
+[C15b|D2-7|RSI(14) Wilder recurrence migration cite]
+REMOVED (VERBATIM):
+<pre>
+RSI(14) Wilder recurrence (canonical, migrated from 0511002 dv1_1 sec 8 SC-SSS-1 per the binary architecture test, TB00501): avg_gain
+</pre>
+LIVE REPLACEMENT:
+<pre>
+RSI(14) Wilder recurrence (canonical): avg_gain
+</pre>
+
+[C15c|D2-7|SC-SSS-2 0511002 cite + SSS PASS-rule 0711001 migration cite]
+REMOVED (VERBATIM):
+<pre>
+NOT Wilder, per 0511002 dv1_1 sec 8 SC-SSS-2 SSS three-factor PASS rule (canonical, migrated from 0711001 dv1_3 sec 4 SSS-001..004 + HR-SSS-001 per the binary architecture test, DR-078 / CF-V040-METHOD TB00599): SSS PASS =
+</pre>
+LIVE REPLACEMENT:
+<pre>
+NOT Wilder. SSS three-factor PASS rule (canonical): SSS PASS =
+</pre>
+
+[C15d|D2-7|0711001 reject-code reconciliation note (Class C by definition; relocated)]
+REMOVED (VERBATIM):
+<pre>
+SSS FAIL logs event_type=SIGNAL_REJECTED (the 0711001 spec reject code is SELECTION_REJECTED__SSS_SIGNAL_FAIL; the diagram token SIGNAL_REJECTED governs per DIAGRAMS-GOVERN).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+SSS FAIL logs event_type=SIGNAL_REJECTED.
+</pre>
+
+[C15e|D2-7|SIGNAL_DECAY DETECTION RETIRED block deleted entire]
+REMOVED (VERBATIM):
+<pre>
+SIGNAL_DECAY DETECTION RETIRED (DEC-122 CR-09, Bill-ratified TB00633): the former pending-entry-order decay detector (signal_decay = RSI(14) &lt;= param:rsi_long_low OR EMA9 &lt;= EMA21, re-evaluated while an entry order was still working, emitting SELECTION_CANCEL__SSS_SIGNAL_DECAY) is RETIRED. Under the CR-03 marketable-IOC entry model an entry order fills-or-kills atomically at submission and never rests as a still-working unfilled order, so the detector's event population is empty -- there is no working entry order to re-evaluate or cancel. The decay detector's loss-prevention purpose (do not let a resting entry fill into a position whose signal has died) is structurally satisfied by IOC itself (the order fills at the committed-candle instant where SSS-PASS holds), and a signal that decays after fill is owned by mod:Exit_Controller (L1a regime/downgrade run-to-reversal, L2 MAE, L3 emergency SL). No decay_params, no SELECTION_CANCEL__SSS_SIGNAL_DECAY code, and no short-side decay variant are emitted by sss_engine. SSS INDICATOR SEEDING
+</pre>
+LIVE REPLACEMENT:
+<pre>
+SSS INDICATOR SEEDING
+</pre>
+
+[C15f|D2-7|SSS INDICATOR SEEDING migration bracket reduced]
+REMOVED (VERBATIM):
+<pre>
+SSS INDICATOR SEEDING + COMPUTATION [migrated from 0711001 dv1_3 sec 5-6 SSS-005..012 + ar:AR-068 + ar:AR-075 per the binary architecture test, DR-078 / CF-D2-0711001-REAUDIT TB00600; the in-diagram fact a coder needs to seed and compute the four SSS indicators each SSS evaluation consumes -- previously derivable only from sec-8 prose, not from any diagram]: all four
+</pre>
+LIVE REPLACEMENT:
+<pre>
+SSS INDICATOR SEEDING + COMPUTATION: all four
+</pre>
+
+[C16|D2-6/DW-3|SSS ciats_ownership -- migration + token-registration + DEC-042-precedent narratives relocated; pins -> TB00000 sec 8]
+REMOVED (VERBATIM):
+<pre>
+        ciats_ownership: param:rsi_long_low + param:rsi_long_high + param:rsi_short_low + param:rsi_short_high + param:sss_ema_short + param:sss_ema_long + param:volume_sss_threshold are CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17; Long_Module + Short_Module each instantiate their own value). These are the seven SSS signal-model parameters consumed at this owning element mod:Signal_Pipeline (element sss_engine, per ar:AR-067): param:rsi_long_low + param:rsi_long_high set the long-side RSI-in-zone momentum bounds, param:rsi_short_low + param:rsi_short_high set the short-side RSI-in-zone momentum bounds (direction-symmetric short scoring per mod:Short_Module), param:sss_ema_short (EMA9) + param:sss_ema_long (EMA21) set the two EMA-cross periods, and param:volume_sss_threshold sets the volume-confirmation factor (volume vs MA(20)) — all seven are direct inputs to this element's single SSS three-factor scoring computation named in its q1_do field. The short-side RSI bounds are signal-computation inputs to THIS engine, NOT sizing parameters. Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039, TB00412 / DEC-050): the parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 §9.17 (pointer, not value). All seven tokens were ABSENT from 0311001 v1_28 §15.12.8 (live grep-verified this session) and are registered this session 0311001 v1_28 -> v1_29 (seven new tokens; annotated "TB00000 §9.17"; no value carried). Single owning element mod:Signal_Pipeline / sss_engine (not split across diagrams; the D5/D6 mod:CIATS_Parameter_Store produces are the universal CIATS producer, not the owning element, per the DEC-042 precedent excluding the universal producer).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+        ciats_ownership: param:rsi_long_low + param:rsi_long_high + param:rsi_short_low + param:rsi_short_high + param:sss_ema_short + param:sss_ema_long + param:volume_sss_threshold are CIATS-OWNED PER-MODULE INSTANTIATED (value home TB00000 sec 8; Long_Module + Short_Module each instantiate their own value). These are the seven SSS signal-model parameters consumed at this owning element mod:Signal_Pipeline (element sss_engine, per ar:AR-067): param:rsi_long_low + param:rsi_long_high set the long-side RSI-in-zone momentum bounds, param:rsi_short_low + param:rsi_short_high set the short-side RSI-in-zone momentum bounds (direction-symmetric short scoring per mod:Short_Module), param:sss_ema_short (EMA9) + param:sss_ema_long (EMA21) set the two EMA-cross periods, and param:volume_sss_threshold sets the volume-confirmation factor (volume vs MA(20)) — all seven are direct inputs to this element's single SSS three-factor scoring computation named in its q1_do field. The short-side RSI bounds are signal-computation inputs to THIS engine, NOT sizing parameters. The parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 sec 8 (pointer, not value). Single owning element mod:Signal_Pipeline / sss_engine.
+</pre>
+
+[C17|D2-6/DW-3|SC ciats_ownership -- migration + token-registration + DEC-042-precedent narratives relocated; pins -> TB00000 sec 8]
+REMOVED (VERBATIM):
+<pre>
+        ciats_ownership: param:sc_body_threshold + param:sc_cooldown_seconds + param:sc_consecutive_limit are CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17; Long_Module + Short_Module each instantiate their own value). These are the three Selection-Controller quality-gate parameters consumed and enforced at this owning element gate:G5_Selection_Controller (per ar:AR-072): param:sc_body_threshold sets the candle body-strength filter, param:sc_cooldown_seconds sets the post-exit cooldown filter, and param:sc_consecutive_limit sets the consecutive-loss filter — all three named in this element's q1_do field (the three value-bearing SC quality gates among the six). Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039, TB00408 / DEC-049): the parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 §9.17 (pointer, not value). All three tokens were ABSENT from 0311001 v1_27 §15.12.8 (live grep-verified this session) and are registered this session 0311001 v1_27 -> v1_28 (three new tokens; annotated "TB00000 §9.17"; no value carried). Single owning element gate:G5_Selection_Controller (not split across diagrams; the D5/D6 mod:CIATS_Parameter_Store produces are the universal CIATS producer, not the owning element, per the DEC-042 precedent excluding the universal producer).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+        ciats_ownership: param:sc_body_threshold + param:sc_cooldown_seconds + param:sc_consecutive_limit are CIATS-OWNED PER-MODULE INSTANTIATED (value home TB00000 sec 8; Long_Module + Short_Module each instantiate their own value). These are the three Selection-Controller quality-gate parameters consumed and enforced at this owning element gate:G5_Selection_Controller (per ar:AR-072): param:sc_body_threshold sets the candle body-strength filter, param:sc_cooldown_seconds sets the post-exit cooldown filter, and param:sc_consecutive_limit sets the consecutive-loss filter — all three named in this element's q1_do field (the three value-bearing SC quality gates among the six). The parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 sec 8 (pointer, not value). Single owning element gate:G5_Selection_Controller.
+</pre>
+
+[C18a|D2-8|entry_fill_disposition header cites]
+REMOVED (VERBATIM):
+<pre>
+entry_fill_disposition: MARKETABLE-IOC ENTRY FILL DISPOSITION (DEC-122 CR-08 reframe of the former GTD dual-ownership bisection, as amended TB00666; CR-09 SIGNAL_DECAY entry-cancel RETIRED, Bill-ratified TB00633). Under
+</pre>
+LIVE REPLACEMENT:
+<pre>
+entry_fill_disposition: MARKETABLE-IOC ENTRY FILL DISPOSITION. Under
+</pre>
+
+[C18b|D2-8|GTD dual-ownership narrative deleted; positive consequence kept]
+REMOVED (VERBATIM):
+<pre>
+There is therefore NO still-working unfilled entry remainder and NO mod:Selection_Controller-owned working order after dispatch -- the prior GTD-resting-order dual-ownership bisection (a working order that could sit unfilled or partially-filled across candles) describes an object the IOC model structurally never produces. FILL DISPOSITION:
+</pre>
+LIVE REPLACEMENT:
+<pre>
+There is therefore NO still-working unfilled entry remainder and NO mod:Selection_Controller-owned working order after dispatch. FILL DISPOSITION:
+</pre>
+
+[C18c|D2-8|both RETIRED blocks (partial-fill/DR-079 + CR-09 SIGNAL_DECAY incl. figcaption-EXTENSIONS forensic pointer) deleted]
+REMOVED (VERBATIM):
+<pre>
+guard + the CR-06 5x-floor sizing keep every dispatched order above the live pair minimums. RETIRED: the partial-fill split mechanic, the DR-079 abandon-and-surface dust write-off, and all sub-minimum dust special-casing (DEC-124 TB00650; Bill ruling TB00666 -- the system design carries no partial-fill, split, or dust handling; references removed as not-live-coding-design). RETIRED (CR-09, Bill-ratified TB00633): the SIGNAL_DECAY pending-entry-order cancel trigger, the mod:Selection_Controller remainder-cancel control logic, and the G3(b) contract:WSManager_Dispatch_Seam remainder-cancel dispatch wiring (formerly authored here at TB00451 / TB00626) are RETIRED -- they acted on a still-working unfilled entry remainder that the marketable-IOC model cannot produce (event population N=0). The loss-prevention purpose of SIGNAL_DECAY (do not let a resting entry fill into a position whose entry signal has died) is structurally satisfied by IOC itself: the order fills-or-kills at the committed-candle decision instant where indicator:SSS PASS already holds, so a stale-signal fill of a resting order cannot occur. A signal that decays AFTER fill is an open-position concern owned by mod:Exit_Controller (layer:L1a HTF-regime / daily-downgrade run-to-reversal, layer:L2 MAE 1.5x ATR, layer:L3 emergency SL) -- no entry-side fence is required. The forensic record of the retired SIGNAL_DECAY paradigm is preserved verbatim in the figcaption EXTENSIONS (xii) / (xiv) / (xvii) and the sec-14 history per CI-005 + CI-006 (forensic record, not a live governing surface).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+guard + the CR-06 5x-floor sizing keep every dispatched order above the live pair minimums.
+</pre>
+
+[C19|D2-8 cluster|G5 q4_triggers CR-09 retirement parenthetical]
+REMOVED (VERBATIM):
+<pre>
+(mod:Logger SELECTION_STATE_UPDATED). (DEC-122 CR-09, Bill-ratified TB00633: the former SIGNAL_DECAY pending-entry-order cancel trigger and its contract:WSManager_Dispatch_Seam remainder-cancel downstream are RETIRED under the marketable-IOC entry model -- an IOC entry fills-or-kills atomically at submission and leaves no still-working unfilled remainder for mod:Selection_Controller to cancel; see entry_fill_disposition field.)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(mod:Logger SELECTION_STATE_UPDATED).
+</pre>
+
+[C20|D2-8 cluster|WS-seam ciats_ownership entry_timeout_sec RETIRED echo -> positive IOC statement]
+REMOVED (VERBATIM):
+<pre>
+, zero new tokens). param:entry_timeout_sec RETIRED per DEC-122 CR-17, executed TB00666: the GTD entry-order timeout it governed does not exist under IOC (no GTD window; unfilled qty expires at submission). Token retired 0311001 v1_47; former 30-60s value in git history.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+, zero new tokens). Under IOC there is no GTD window and no entry-order timeout; unfilled qty expires at submission.
+</pre>
+
+[C21|D2-8 cluster|WS-seam q1_do CR-17 cite]
+REMOVED (VERBATIM):
+<pre>
+MPP slippage cap (DEC-122 CR-03); no GTD timeout exists (CR-17, executed TB00666).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+MPP slippage cap (DEC-122 CR-03); no GTD timeout exists.
+</pre>
+
+[C22a|D2-8 cluster|ON FILL handler header cites]
+REMOVED (VERBATIM):
+<pre>
+not on fill). MARKETABLE-IOC FILL DISPOSITION (DEC-122 CR-08 reframe as amended TB00666; CR-09 SIGNAL_DECAY RETIRED, Bill-ratified TB00633): under
+</pre>
+LIVE REPLACEMENT:
+<pre>
+not on fill). MARKETABLE-IOC FILL DISPOSITION: under
+</pre>
+
+[C22b|D2-8 cluster|ON FILL retirement sentences deleted; live see-pointer kept]
+REMOVED (VERBATIM):
+<pre>
+and does NOT become a working mod:Selection_Controller order -- there is no remainder to protect, own, or cancel here, and no SIGNAL_DECAY entry-cancel path (retired). The partial-fill split mechanic and the DR-079 dust write-off are RETIRED (DEC-124 TB00650; Bill ruling TB00666) (see gate:G5_Selection_Controller entry_fill_disposition field).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+and does NOT become a working mod:Selection_Controller order -- there is no remainder to protect, own, or cancel here (see gate:G5_Selection_Controller entry_fill_disposition field).
+</pre>
+
+[C23a|DW-3|Long_Module q1_do v2_38 sec-9.3 pin -> TB00000 sec 7]
+REMOVED (VERBATIM):
+<pre>
+per TB00000 v2_38 §9.3 parallel-module framework
+</pre>
+LIVE REPLACEMENT:
+<pre>
+per TB00000 sec 7 parallel-module framework
+</pre>
+
+[C23b|DW-3|Long_Module q1_do v2_38 sec-9.7 pin -> TB00000 sec 8]
+REMOVED (VERBATIM):
+<pre>
+own drawdown halts per v2_38 §9.7 per-wallet rule
+</pre>
+LIVE REPLACEMENT:
+<pre>
+own drawdown halts per TB00000 sec 8 per-wallet rule
+</pre>
+
+[V1|VISIBLE / fold-in A|universe row AR-070-amended form -- R-BUMP driver]
+REMOVED (VERBATIM):
+<pre>
+(decision:D-03_Universe_Scope ← ar:AR-070 amended)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(decision:D-03_Universe_Scope)
+</pre>
+
+[V2|VISIBLE / fold-in A + DW-4|D-08 retirement-echo row -> positive D-03 restatement -- R-BUMP driver]
+REMOVED (VERBATIM):
+<pre>
+>Top-N cap retired per decision:D-08_Top_N_Cap_Retired — full surviving universe proceeds</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>Full surviving universe proceeds (no cap per decision:D-03_Universe_Scope)</text>
+</pre>
+
+[V3|VISIBLE / fold-in A + DW-3/DW-4|footer row -- D-08 echo + AR-070-amended form deleted; sec-4.4 pin -> sec 4.3 -- R-BUMP driver]
+REMOVED (VERBATIM):
+<pre>
+>D-08 Top-N cap RETIRED  ·  D-03 universe = USD + USDC + USDT (ar:AR-070 amended)  ·  D-04 liquidity floor = $500k USD/day  ·  TB00000 §4.4 governs PA-001..010</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>D-03 universe = USD + USDC + USDT  ·  D-04 liquidity floor = $500k USD/day  ·  TB00000 §4.3 governs PA-001..010</text>
+</pre>
+
+[C24|D2-9|figcaption bare form -- R-BUMP propagation]
+REMOVED (VERBATIM):
+<pre>
+    Image2 Trading Pipeline - 8-Gate System (R11). Forensic provenance - the lead reconciliation block (TB00567 CF-G2-VOL-FORMULA D2 reconcile + TB00457 RA-6 exit-enum), the §15.16.3 / V-040 80-cell design-completeness attestation (TB00377 INDEPENDENT VERIFICATION; 16 components x 5 = 80 cells), the OPTION-R extension stack (i)-(xviii) (incl. the 0911002 Phase-1 CIATS-ownership migrations [Entry-timing / min_volume / Selection-Controller], the TB00432 bucket-(c) reject tokens, the TB00451 dual-ownership partial-fill paradigm, the TB00501 binary-architecture-test Signal_Pipeline migration, the TB00599/TB00600 0711001 SSS DD-014 verification + re-audit, the TB00625/TB00626 PHASE-1 G1/G2/G3a + G3(b) gap-fixes, and the TB00633 DEC-122 SLICE-S3 marketable-IOC entry-model + SIGNAL_DECAY retirement), the CI-005/CI-006 visible-stack rolling narratives, and the pre-existing root-&lt;desc&gt; stray-duplicate R-chain defect note - relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00645). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    Image2 Trading Pipeline - 8-Gate System (R12). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R12.<br>
+</pre>
+
+[C25|D2-3/D2-4 cluster|G8 q1_do MINIMUM-SIZE VALIDATION migration cite (content-test determination: same 0511002/TB00501 signature class)]
+REMOVED (VERBATIM):
+<pre>
+MINIMUM-SIZE VALIDATION (migrated from 0511002 dv1_1 sec 12 + sec 14 per the binary architecture test, TB00501): after sizing
+</pre>
+LIVE REPLACEMENT:
+<pre>
+MINIMUM-SIZE VALIDATION: after sizing
+</pre>
+
+----- END DEC-125 SLICE 7 OP RECORD -----
 
 
 ============================================================
