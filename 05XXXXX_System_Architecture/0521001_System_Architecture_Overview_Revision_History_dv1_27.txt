@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_26
+DocVersion: dv1_27
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_26.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_27.txt
 DocDate:    06-11-2026
-DocTime:    05:45:00 UTC
+DocTime:    17:20:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18463,6 +18463,376 @@ DEC-124 FINAL RE-AUDIT RESIDUAL-FIX SLICE):
   narration, and the figcaption forensic stacks remain UNTOUCHED
   (historical/forensic classification, TB00662 precedent).
 
+
+
+AMENDMENT NARRATIVE -- D1 R15 -> R16 (TB00670; 0500000 dv1_216 -> dv1_217;
+DEC-125 SLICE 2: D1 PART 2 -- VISIBLE CLASS B/C DELETIONS + FIGCAPTION TRIM +
+PROHIBITION RESTATEMENTS + F-1):
+  Register instances executed this slice (TB00668 register; NSI TB00670 sec 2):
+  D1-3, D1-4, D1-5, D1-6, D1-7, D1-8, D1-9, D1-12, D1-13, D1-14, D1-15, D1-16,
+  D1-17, D1-18, D1-19, D1-20, plus the P-set prohibition restatements at D1
+  surfaces (P-1 panel row; P-2 = TB00669 flag (ii); P-3 at three surfaces;
+  P-11 = TB00669 flag (iii); P-4/P-6/P-7/P-9/P-10 verified already clean,
+  codable, history-free at their D1 surfaces -- no edit required), plus F-1
+  (register sec 5) under explicit Bill scope-in this session: the sacred-
+  constraint node's stale pre-DEC-124 TP-target canon restated to the Gate-8
+  acceptance rule A1 entry-acceptance floor across q1_do/q4_triggers/q5_logs
+  (three clauses, one node, desc-only).
+  R-BUMP (TB00453): visible SVG <text> deletions and modifications drive D1
+  R15 -> R16 -- 12 visible <text> contents modified and 9 visible <text>
+  elements deleted (D1-4 row, D1-17 row, the six D1-18 panel texts, the D1-19
+  footer banner). All edits assertion-verified exact-match Python ops,
+  count==1 asserted per anchor, abort-on-fail, zero silent partials (37 ops
+  total: 4 file-header, 4 R-string, 29 content).
+  R-STATE: R16 propagated to SVG <title> + diagram_canonical + title-bar
+  visible identifier + figcaption (R15)->(R16); root <desc> CURRENT-R
+  R15 -> R16 (bare DEC-123 pointer form per DEC-125 D1-1, unchanged otherwise).
+  INTEGRITY: diff localized to file-header lines {6,135,137,139} + the D1
+  figure block; all 9 other figures byte-identical (DEC-003 Path A); tag
+  balance figure 10/10, svg 10/10, desc 125/125, text 970 -> 961 open=close;
+  html.parser pass 0 exceptions (DR-007.9); exactly one <h2>14. Revision
+  History</h2>; D1-block residue greps clean (zero TP-target, zero 'no
+  resting TP' negations, zero RETIRED-per-DEC-124 echoes, zero D-08-retired/
+  TB00141-144/TB00135/OI-060 cites, zero R15 strings). Reverse-reconstruction
+  verified: the op record below applied in reverse to dv1_217 reproduces
+  dv1_216 byte-identical (md5 2cdc5514f25b3ed789fffdcd322ba8f1).
+  0500000 dv1_216 -> dv1_217 (md5 07ec75de8829e06597869a3abd898c64); this
+  archive dv1_26 -> dv1_27 (append-only; all prior content byte-identical).
+
+----- DEC-125 SLICE 2 OP RECORD -- REMOVED / RESTATED D1 CONTENT
+      (VERBATIM, ORDERED, ANCHORED; supports reverse-reconstruction) -----
+
+[R1 | R-string] SVG <title> identifier R15 -> R16
+REMOVED (VERBATIM):
+<pre>
+<title>0500000_Image1_T2_R15_Kraken_API_Connection_Architecture</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000_Image1_T2_R16_Kraken_API_Connection_Architecture</title>
+</pre>
+
+[R2 | R-string] diagram_canonical identifier R15 -> R16
+REMOVED (VERBATIM):
+<pre>
+diagram_canonical: 0500000_Image1_T2_R15_Kraken_API_Connection_Architecture
+</pre>
+LIVE REPLACEMENT:
+<pre>
+diagram_canonical: 0500000_Image1_T2_R16_Kraken_API_Connection_Architecture
+</pre>
+
+[R3 | R-string] root <desc> provenance pointer CURRENT R: R15 -> R16
+REMOVED (VERBATIM):
+<pre>
+provenance: R-increment history relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R15.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+provenance: R-increment history relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R16.
+</pre>
+
+[R4 | R-string] title-bar visible identifier <text> R15 -> R16 (visible)
+REMOVED (VERBATIM):
+<pre>
+0500000_Image1_T2_R15_Kraken_API_Connection_Architecture  |  schema_version: 1.0
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_Image1_T2_R16_Kraken_API_Connection_Architecture  |  schema_version: 1.0
+</pre>
+
+[O1 | D1-3 / Class C / VISIBLE] WS-shard depiction row: forensic tail relocated
+REMOVED (VERBATIM):
+<pre>
+>depicted N=2 (TB00141/TB00142 long Phase D 2hr clean)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>depicted N=2</text>
+</pre>
+
+[O2 | D1-4 / Class B / VISIBLE] NO TOP-N CAP retirement-echo row DELETED (positive universe fact lives at the D-03 row)
+REMOVED (VERBATIM):
+<pre>
+    <text x="42" y="430" font-size="9" font-weight="600" fill="#0f172a" text-anchor="start">NO TOP-N CAP (D-08 retired); AR-070 amended dv1_20</text>
+</pre>
+LIVE REPLACEMENT:
+''
+
+[O3 | D1-5 / Class B / desc] rule:HR-WM-010 DEC-124 parenthetical DELETED
+REMOVED (VERBATIM):
+<pre>
+would cancel the resting emergSL on disconnect destroying Layer 3 crash protection (the sole resting protective order under DEC-124 — no resting TP exists); CRITICAL bug if called
+</pre>
+LIVE REPLACEMENT:
+<pre>
+would cancel the resting emergSL on disconnect destroying Layer 3 crash protection; CRITICAL bug if called
+</pre>
+
+[O4 | D1-6 / Class B / desc] Matching-Engine q1_do DEC-124 tail DELETED
+REMOVED (VERBATIM):
+<pre>
+(sole position protection per ar:AR-001 if Layers 1a/2 unavailable; no resting TP exists under DEC-124)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(sole position protection per ar:AR-001 if Layers 1a/2 unavailable)
+</pre>
+
+[O5 | D1-7 / Class B / VISIBLE] Matching-Engine decoration: echo + cite DELETED
+REMOVED (VERBATIM):
+<pre>
+>off-book emergSL only (L3) — no resting TP (DEC-124)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>off-book emergSL only (L3)</text>
+</pre>
+
+[O6 | D1-8 / Class B / VISIBLE] batch_add row (DEC-124) cite DELETED
+REMOVED (VERBATIM):
+<pre>
+>emergSL single leg atomic on fill (DEC-124)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>emergSL single leg atomic on fill</text>
+</pre>
+
+[O7 | D1-9 / P-3 / VISIBLE] amend_order row restated clean per P-3 (no dv cite)
+REMOVED (VERBATIM):
+<pre>
+>PRIMARY (edit_order DEPRECATED dv1_6)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>sole modification method — edit_order PROHIBITED</text>
+</pre>
+
+[O8 | D1-9 / P-3 / desc] root governs ar:AR-018 entry restated per P-3
+REMOVED (VERBATIM):
+<pre>
+ar:AR-018 (amend_order PRIMARY; edit_order DEPRECATED on Kraken WS v2 — canonical primary mechanism for live order modification)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+ar:AR-018 (amend_order is the sole order-modification method — preserves book queue position at lower rate cost; edit_order PROHIBITED)
+</pre>
+
+[O9 | D1-9 / P-3 / desc] WS-AMD-002 restated per P-3 (DEPRECATED/PROHIBITED -> PROHIBITED)
+REMOVED (VERBATIM):
+<pre>
+(ar:AR-018; edit_order DEPRECATED/PROHIBITED)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(ar:AR-018; edit_order PROHIBITED)
+</pre>
+
+[O10 | D1-12 / Class C / VISIBLE] universe row: D-08/AR-070 trail DELETED; D-03 form kept
+REMOVED (VERBATIM):
+<pre>
+>universe = USD+USDC+USDT (D-03); no Top-N (D-08 retired); AR-070 amended</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>universe = USD+USDC+USDT (D-03)</text>
+</pre>
+
+[O11 | D1-13 / Class B / desc] Exit-Controller q1_do lead DEC-124 cite DELETED
+REMOVED (VERBATIM):
+<pre>
+q1_do: 3-layer exit controller per DEC-124 — Layer 1a regime-reversal exit
+</pre>
+LIVE REPLACEMENT:
+<pre>
+q1_do: 3-layer exit controller — Layer 1a regime-reversal exit
+</pre>
+
+[O12 | D1-13 / Class B / desc] Exit-Controller q1_do 'no resting TP, no max-hold' negation tail DELETED
+REMOVED (VERBATIM):
+<pre>
+TothBot-emitted market sell on EC-L1A-001/EC-L1A-002; no resting TP, no max-hold), Layer 2 MAE-threshold
+</pre>
+LIVE REPLACEMENT:
+<pre>
+TothBot-emitted market sell on EC-L1A-001/EC-L1A-002), Layer 2 MAE-threshold
+</pre>
+
+[O13 | D1-13 / Class B / desc] Exit-Controller q1_do L1b retirement echo DELETED
+REMOVED (VERBATIM):
+<pre>
+fires ONLY on VPS/TothBot/internet failure); the former Layer 1b TP-fill resting limit is RETIRED per DEC-124; enforces the Sacred
+</pre>
+LIVE REPLACEMENT:
+<pre>
+fires ONLY on VPS/TothBot/internet failure); enforces the Sacred
+</pre>
+
+[O14 | D1-14 / Class B / desc] Exit-Controller q4_triggers TP-partial retirement echo DELETED
+REMOVED (VERBATIM):
+<pre>
+(never two records for same position; Layer 2 priority over in-progress Layer 1a; the former TP-partial conflict branch is RETIRED per DEC-124 — no resting TP, no TP partial fill).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(never two records for same position; Layer 2 priority over in-progress Layer 1a).
+</pre>
+
+[O15 | D1-15 / Class B / VISIBLE] Exit-Controller node row (DEC-124) cite DELETED
+REMOVED (VERBATIM):
+<pre>
+>Layer 1a · 2 · 3 — owns ALL normal exits (DEC-124)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>Layer 1a · 2 · 3 — owns ALL normal exits</text>
+</pre>
+
+[O16 | D1-16 / Class C / VISIBLE] Cloudflare bound row: (TB00135 forensic) cite relocated
+REMOVED (VERBATIM):
+<pre>
+>IP-LEVEL CLOUDFLARE: ~150 subscribes / 10min / IP (TB00135 forensic)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>IP-LEVEL CLOUDFLARE: ~150 subscribes / 10min / IP</text>
+</pre>
+
+[O17 | D1-16 / Class C / VISIBLE] systemd cap rationale row: OI-060 cite relocated; live rationale kept
+REMOVED (VERBATIM):
+<pre>
+>caps restart cycles vs IP-Cloudflare bound; defends OI-060 storm path</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>caps restart cycles vs IP-Cloudflare bound; defends the subscribe-storm path</text>
+</pre>
+
+[O18 | D1-16 / Class C / VISIBLE] token-bucket rationale row: OI-060 defect-name cite relocated; live rationale kept
+REMOVED (VERBATIM):
+<pre>
+>CIATS-owned values · code-layer defense for OI-060 WS_SUBSCRIBE_RATE_LIMIT_STORM</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>CIATS-owned values · code-layer defense against WS subscribe-rate-limit storms</text>
+</pre>
+
+[O19 | D1-16 / Class C / VISIBLE] silent-pair row: TB00142 Rabbit 1 cite relocated
+REMOVED (VERBATIM):
+<pre>
+>no automatic universe removal (HR-WM-031 anti-AR-070); TB00142 Rabbit 1 closure</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>no automatic universe removal (HR-WM-031 anti-AR-070)</text>
+</pre>
+
+[O20 | D1-17 / Class B / VISIBLE] REJECTED-panel PATH 1 supersession row DELETED (retirement echo; PATH 2 is the design)
+REMOVED (VERBATIM):
+<pre>
+    <text x="1012" y="968" font-size="10" font-weight="700" fill="#991b1b" text-anchor="start">PATH 1 single-connection — superseded by PATH 2 (HR-WM-028)</text>
+</pre>
+LIVE REPLACEMENT:
+''
+
+[O21 | D1-18 / Class C / VISIBLE] PATH 2 ADR Empirical Validation panel (rect + title + five TB00141-144 forensic rows) relocated wholesale; empty container removed with its rows
+REMOVED (VERBATIM):
+<pre>
+  <g id="ciats_path2_adr" class="decoration">
+    <rect x="1000" y="990" width="450" height="100" fill="#ecfeff" stroke="#0e7490" stroke-width="1.5" rx="6"/>
+    <text x="1225" y="1010" font-size="11" font-weight="700" fill="#0e7490" text-anchor="middle">PATH 2 ADR — Empirical Validation</text>
+    <text x="1012" y="1028" font-size="9" fill="#0f172a" text-anchor="start">TB00141 Phase B: 650-700 single-conn ceiling (bisection)</text>
+    <text x="1012" y="1042" font-size="9" fill="#0f172a" text-anchor="start">TB00141/TB00142 Phase D: 2-hour clean run, 2 shards, 748 pairs</text>
+    <text x="1012" y="1056" font-size="9" fill="#0f172a" text-anchor="start">TB00142 Rabbit 1: silent-pair characterization (~0.8% rate)</text>
+    <text x="1012" y="1070" font-size="9" fill="#0f172a" text-anchor="start">TB00143: token-bucket FP/DP three-layer defense</text>
+    <text x="1012" y="1084" font-size="9" fill="#0f172a" text-anchor="start">TB00144: ws_manager.py dv1_25 clean-slate rewrite</text>
+  </g>
+</pre>
+LIVE REPLACEMENT:
+''
+
+[O22 | D1-19 / Class C / VISIBLE] footer R1->R2 provenance banner relocated
+REMOVED (VERBATIM):
+<pre>
+    <text x="750.0" y="1547" font-size="11" font-weight="600" fill="#fef9c3" text-anchor="middle">*** R1 → R2 PATH 2 multi-shard rewrite (DR-006) + AR-014/AR-038/AR-039 restored (DR-014) + USD+USDC+USDT verified (DR-003) + Top-N retired verified (DR-002) + AR-070 amended verified (DR-007)  ·  All labeled &lt;g&gt; tagged per §15.11.3 schema_version 1.0 ***</text>
+</pre>
+LIVE REPLACEMENT:
+''
+
+[O23 | P-1 / VISIBLE] REJECTED-panel DMS row restated clean (PROHIBITED added)
+REMOVED (VERBATIM):
+<pre>
+>DMS (cancel_all_orders_after) — destroys crash prot · AR-001</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>DMS (cancel_all_orders_after) PROHIBITED — destroys crash prot · AR-001</text>
+</pre>
+
+[O24 | P-2 / desc (TB00669 flag ii)] REST-CAO-004/005 Full-Halt NOT-for clause: stale 'per-position TP + emergency-SL' restated to live form
+REMOVED (VERBATIM):
+<pre>
+preserves the per-position TP + emergency-SL of positions still being managed
+</pre>
+LIVE REPLACEMENT:
+<pre>
+preserves the per-position emergency-SL of positions still being managed
+</pre>
+
+[O25 | P-11 / desc (TB00669 flag iii)] RL-MON-003 never-suppressed list: stale 'TP' restated to the live exit set
+REMOVED (VERBATIM):
+<pre>
+exit and cancel orders (TP, emergSL, the MAE Layer-2 cancel, the Full-Halt batch_cancel) are NEVER suppressed
+</pre>
+LIVE REPLACEMENT:
+<pre>
+exit and cancel orders (the L1a/L2 exit market sells, emergSL, the MAE Layer-2 cancel, the Full-Halt batch_cancel) are NEVER suppressed
+</pre>
+
+[O26 | F-1 / desc (Bill scope-in this session)] sacred-constraint q1_do: stale TP-target enforcement clause restated to the Gate-8 A1 entry-acceptance floor
+REMOVED (VERBATIM):
+<pre>
+enforced at mod:Exit_Controller TP-target setting at every entry-fill; declarative constraint with no inputs or outputs.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+enforced as the Gate-8 acceptance rule A1 entry-acceptance floor (reject any candidate whose point-estimate expected R:R is below 1:1.5) at every entry evaluation; declarative constraint with no inputs or outputs.
+</pre>
+
+[O27 | F-1 / desc] sacred-constraint q4_triggers restated to Gate-8 A1 acceptance evaluation
+REMOVED (VERBATIM):
+<pre>
+q4_triggers: Triggered at every TP-target computation by mod:Exit_Controller at every entry-fill event; emits no events
+</pre>
+LIVE REPLACEMENT:
+<pre>
+q4_triggers: Triggered at every Gate-8 A1 acceptance evaluation of a candidate entry; emits no events
+</pre>
+
+[O28 | F-1 / desc] sacred-constraint q5_logs restated to Gate-8 A1 acceptance evaluation
+REMOVED (VERBATIM):
+<pre>
+enforcement-confirm marker logged at every TP-target setting confirming Net 1:1.5 R:R applied
+</pre>
+LIVE REPLACEMENT:
+<pre>
+enforcement-confirm marker logged at every Gate-8 A1 acceptance evaluation confirming the Net 1:1.5 R:R floor applied
+</pre>
+
+[O29 | D1-20 / DW-1 / figcaption] figcaption relocation-manifest enumeration relocated; bare DEC-123 pointer form with CURRENT R: R16
+REMOVED (VERBATIM):
+<pre>
+    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R15). Forensic provenance — the §15.16.3 / V-040 65-cell design-completeness attestation, the OPTION-R extension stack, the CI-005/CI-006 visible-stack rolling narratives, and all prior amendment narratives — relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00639). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).<br>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R16). Provenance relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R16.<br>
+</pre>
+
+----- END DEC-125 SLICE 2 OP RECORD -----
 
 5.5 D4 -- Image4 Regime Taxonomy
     (relocated at TB00640; 0500000 dv1_195 -> dv1_196; D4 R7 HELD)
