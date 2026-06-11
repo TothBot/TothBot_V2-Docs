@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_220</title>
+<title>0500000 System Architecture Overview dv1_221</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_220</td></tr>
+  <tr><td>DocVersion</td><td>dv1_221</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_220_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_221_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-11-2026</td></tr>
-  <tr><td>DocTime</td><td>17:05:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>11:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7452,14 +7452,14 @@ prefix taxonomy:
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 2380"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary</title>
+  <title>0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary</title>
   <desc>
-    diagram_canonical: 0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary
+    diagram_canonical: 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_R0_System_Context
     schema_version: 1.0
-    R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641); R8-&gt;R9 DEC-124 run-to-reversal restoration + R9-&gt;R10 DEC-122 dispatch-seam disposition (TB00666) relocated per DEC-123 standing discipline (TB00662). CURRENT R: R9.
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R11.
     governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-032, rule:HR-WM-033, rule:HR-EE-013, rule:HR-EE-014, rule:HR-EE-015, rule:HR-PM-009, rule:HR-REGIME-007, ar:PA-001, ar:PA-002, ar:PA-003, ar:PA-004, ar:PA-005, ar:PA-006, ar:PA-007, ar:AR-009, ar:AR-052, ar:AR-072, ar:AR-073, decision:D-05_Paper_Starting_Balance, decision:D-06_Paper_Live_Parity, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003, contract:WSManager_Dispatch_Seam, contract:Synthetic_Capital_Ledger, contract:CIATS_Trade_Outcome_Bus, contract:Drawdown_Formula, container:Private_WS_v2, mod:WS_Manager, mod:Execution_Engine, mod:Exit_Controller, mod:Long_Module, mod:Short_Module, mod:Signal_Pipeline, mod:Position_Mirror, mod:Startup_Sequence, mod:Risk_Engine, layer:Configuration_Layer, state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet, param:paper_trading_mode, param:paper_starting_balance, param:paper_starting_balance_long_usd, param:paper_starting_balance_short_usd, param:session_pause_drawdown_pct, param:full_halt_drawdown_pct, evt:G7_DRAWDOWN_HALT, evt:SESSION_PAUSE_TRIGGERED, evt:SESSION_PAUSE_RECOVERED, evt:FULL_HALT_TRIGGERED, evt:FULL_HALT_BATCH_CANCEL_RESULT
     drill_targets: 0811005_dv1_0_Short_Module_Specification, 0811001_dv1_0_Long_Module_Specification
     sacred_constraints: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
@@ -7495,7 +7495,7 @@ prefix taxonomy:
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 7 — Paper-Mode Dispatch Boundary Architecture</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
+      0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -7506,7 +7506,6 @@ prefix taxonomy:
     <!-- Asymmetric encoding: paper-side green primary block (LEFT, full saturation, larger) -->
     <rect x="32" y="110" width="600" height="44" fill="#14532d" rx="3"/>
     <text x="332" y="132" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">PAPER  =  CANONICAL  (PA-001 master)</text>
-    <text x="332" y="150" font-size="10" font-style="italic" text-anchor="middle" fill="#dcfce7">empirically validated against live Kraken WS — TB00141..144 STREAM 4</text>
     <!-- Asymmetric arrow from PAPER (left, primary) into LIVE (right, secondary) -->
     <line x1="640" y1="132" x2="868" y2="132" stroke="#92400e" stroke-width="3" marker-end="url(#d7_arrow_amber)"/>
     <text x="754" y="124" font-size="10" font-weight="700" text-anchor="middle" fill="#92400e">live mimics paper</text>
@@ -7550,7 +7549,7 @@ prefix taxonomy:
         constraints: rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime), ar:PA-003, rule:SS-PRE-001, rule:SS-PRE-002, rule:SS-PRE-003, rule:SS-PRE-004, rule:SS-PRE-005, rule:SS-STARTUP-024, rule:SS-STARTUP-025, rule:SS-STARTUP-007_NOTE, rule:SS-STARTUP-009, rule:SS-WARMUP-003_NOTE, rule:SS-WARMUP-HTF_alpha, rule:SS-PAPER-005, rule:SS-PAPER-006, rule:SS-RECON-004, rule:SS-RECON-008, rule:SS-RECON-012, rule:SS-RECON-015, rule:SS-RECON-016, rule:SS-WIRE-001, rule:HR-SS-001, rule:HR-SS-002, rule:HR-SS-007, rule:HR-SS-008, rule:HR-SS-009, rule:HR-SS-010, ar:AR-049, ar:AR-056, ar:AR-044, ar:AR-068, ar:AR-050, ar:AR-038, ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-055, ar:AR-003, ar:AR-026, ar:AR-017, ar:AR-001, ar:AR-004, ar:AR-016, ar:AR-020, ar:AR-029, ar:AR-034, ar:AR-036, ar:AR-039, contract:WM-PACE-001, contract:WM-PACE-002, contract:CIATS_Trade_Outcome_Bus, rule:SS-BUILD-001
         consumes: param:paper_trading_mode, param:portfolio_baseline_USD
         produces: evt:POSITION_CLOSED_DURING_GAP, evt:INVARIANT_BREACH, evt:INCOMPLETE_PROTECTION, evt:PAPER_TRADING_MODE_ON, evt:PAPER_TRADING_MODE_OFF
-        q1_do: Boot-sequence orchestrator that reads param:paper_trading_mode + param:portfolio_baseline_USD from layer:Configuration_Layer and instantiates mod:WS_Manager via WSManager.__init__(paper_mode=True/False) per rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime); runs SS-PRE / SS-STARTUP / SS-WARMUP / SS-PAPER / SS-RECON / SS-WIRE phase sequences per ar:AR-049 + ar:AR-056 + ar:AR-068 cold-start cascade; binds paper-mode invariant for process lifetime. rule:SS-WIRE-001 construction-timing wiring (closes DEFECT-SS-009, the gap-(d) residual from retired 1011014 dv1_8 sec 12 + 1011002 dv1_26, certified by TB00619 / DEC-118): mod:Regime_Engine is CONSTRUCTED with a default single-pair universe (BTC/USD) because the full monitored_universe is not known until mod:WS_Manager has processed the Kraken instrument-channel snapshot at startup (per ar:AR-070 universe build); therefore the daily 00:00-UTC regime computation MUST be driven with the CURRENT WS_Manager-built monitored_universe read at call time -- guard: pass the current monitored_universe if WS_Manager has populated it, else fall back to the construction-time default -- and MUST NEVER be driven with the construction-time universe; passing the construction-time universe silently collapses regime classification to BTC/USD only, after which gate:G3_Regime_Filter blocks every non-BTC candidate (the DEFECT-SS-009 loss-of-opportunity failure that degrades the whole pipeline). rule:SS-BUILD-001 parallel-module construction order (F-12 derive-from-diagram per the PARALLEL-MODULE FRAMEWORK dv1_42 + TB00000 sec 9.3/9.6 PER-MODULE CIATS FRAMEWORK + DEC-011 Stage M; wallet-sourcing facet ar:AR-050; NOTE the prior dv1_183 forward-reference cited ar:AR-048/AR-050 imprecisely -- ar:AR-048 is the Exit-Controller MAE/bid-price AR, NOT construction authority): after WSManager.__init__ and the SS-phase cascade the organism is constructed in this STRICT ORDER -- (1) construct the SINGLE-INSTANCE shared infrastructure exactly ONCE: mod:WS_Manager (ONE Kraken WebSocket subscribing to the UNION of module universes -- a single instance is MANDATORY per Kraken rate limits + rule:HR-WM-024 sharding; constructing one WS_Manager per module is PROHIBITED), mod:Position_Mirror (single sole-writer per rule:HR-PM-009), mod:Logger (single sole-CIATS-read-source), pair_cache (single authoritative pair-spec source for ALL modules per DR-013); (2) for EACH sibling module in order [mod:Long_Module first, then mod:Short_Module] construct the module and INJECT the SAME four shared-infra instances from step (1) into it by reference (the siblings SHARE one WS_Manager / Position_Mirror / Logger / pair_cache; these are NEVER re-instantiated per module); (3) within each sibling construct its OWN isolated per-module state: its own CIATS instance + statistical pool (no cross-module contamination per sec 9.6 -- Long and Short pools and contract:Sizing_Curve_Per_Module evolve independently), its own trading wallet (param:paper_starting_balance_long_usd $5,000 for Long sourced from spot/main, param:paper_starting_balance_short_usd $5,000 for Short sourced from margin/main per ar:AR-050 + ar:AR-009 Kraken margin; live funding operator-controlled per sec 9.4), its own per-wallet drawdown halt state machine [state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet] per ar:AR-052 (session_pause_drawdown_pct 5% / full_halt_drawdown_pct 10%), and its own per-side Selection-Controller state per ar:AR-073; (4) wire HALT-ISOLATION: each sibling halt state machine is INDEPENDENT -- a SESSION_PAUSE or FULL_HALT on one module wallet MUST NOT halt the sibling module wallet (and vice versa) per ar:AR-052 per-wallet independence, and the step-(1) shared infrastructure keeps running for the un-halted sibling. The per-module wallet balance is the sole sizing boundary (no ceiling); the net 1:1.5 R:R minimum remains the only hardcoded value. This ordered build + single-instance injection + per-module isolation + halt-isolation is the F-12 construction layer required for the Bill-ratified OPTION B clean-slate organism build.
+        q1_do: Boot-sequence orchestrator that reads param:paper_trading_mode + param:portfolio_baseline_USD from layer:Configuration_Layer and instantiates mod:WS_Manager via WSManager.__init__(paper_mode=True/False) per rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime); runs SS-PRE / SS-STARTUP / SS-WARMUP / SS-PAPER / SS-RECON / SS-WIRE phase sequences per ar:AR-049 + ar:AR-056 + ar:AR-068 cold-start cascade; binds paper-mode invariant for process lifetime. rule:SS-WIRE-001 construction-timing wiring: mod:Regime_Engine is CONSTRUCTED with a default single-pair universe (BTC/USD) because the full monitored_universe is not known until mod:WS_Manager has processed the Kraken instrument-channel snapshot at startup (per ar:AR-070 universe build); therefore the daily 00:00-UTC regime computation MUST be driven with the CURRENT WS_Manager-built monitored_universe read at call time -- guard: pass the current monitored_universe if WS_Manager has populated it, else fall back to the construction-time default -- and MUST NEVER be driven with the construction-time universe; passing the construction-time universe silently collapses regime classification to BTC/USD only, after which gate:G3_Regime_Filter blocks every non-BTC candidate (the DEFECT-SS-009 loss-of-opportunity failure that degrades the whole pipeline). rule:SS-BUILD-001 parallel-module construction order (wallet-sourcing facet ar:AR-050): after WSManager.__init__ and the SS-phase cascade the organism is constructed in this STRICT ORDER -- (1) construct the SINGLE-INSTANCE shared infrastructure exactly ONCE: mod:WS_Manager (ONE Kraken WebSocket subscribing to the UNION of module universes -- a single instance is MANDATORY per Kraken rate limits + rule:HR-WM-024 sharding; constructing one WS_Manager per module is PROHIBITED), mod:Position_Mirror (single sole-writer per rule:HR-PM-009), mod:Logger (single sole-CIATS-read-source), pair_cache (single authoritative pair-spec source for ALL modules per DR-013); (2) for EACH sibling module in order [mod:Long_Module first, then mod:Short_Module] construct the module and INJECT the SAME four shared-infra instances from step (1) into it by reference (the siblings SHARE one WS_Manager / Position_Mirror / Logger / pair_cache; these are NEVER re-instantiated per module); (3) within each sibling construct its OWN isolated per-module state: its own CIATS instance + statistical pool (no cross-module contamination per TB00000 sec 7 -- Long and Short pools and contract:Sizing_Curve_Per_Module evolve independently), its own trading wallet (param:paper_starting_balance_long_usd $5,000 for Long sourced from spot/main, param:paper_starting_balance_short_usd $5,000 for Short sourced from margin/main per ar:AR-050 + ar:AR-009 Kraken margin; live funding operator-controlled per TB00000 sec 7), its own per-wallet drawdown halt state machine [state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet] per ar:AR-052 (session_pause_drawdown_pct 5% / full_halt_drawdown_pct 10%), and its own per-side Selection-Controller state per ar:AR-073; (4) wire HALT-ISOLATION: each sibling halt state machine is INDEPENDENT -- a SESSION_PAUSE or FULL_HALT on one module wallet MUST NOT halt the sibling module wallet (and vice versa) per ar:AR-052 per-wallet independence, and the step-(1) shared infrastructure keeps running for the un-halted sibling. The per-module wallet balance is the sole sizing boundary (no ceiling); the net 1:1.5 R:R minimum remains the only hardcoded value. This ordered build + single-instance injection + per-module isolation + halt-isolation is the F-12 construction layer required for the Bill-ratified OPTION B clean-slate organism build.
         q4_triggers: Triggered by systemd tothbot.service start (boot) and mid-session restart per ar:AR-056 reconnect cascade; consumes layer:Configuration_Layer config read at process start; triggers WSManager.__init__ paper_mode binding (immutable for lifetime per HR-WM-021); emits evt:PAPER_TRADING_MODE_ON or evt:PAPER_TRADING_MODE_OFF at config-read time; emits evt:POSITION_CLOSED_DURING_GAP + evt:INVARIANT_BREACH + evt:INCOMPLETE_PROTECTION during SS-RECON gap-protection cycle per rule:HR-SS-001..010.
         q5_logs: All 5 produced events (evt:PAPER_TRADING_MODE_ON, evt:PAPER_TRADING_MODE_OFF, evt:POSITION_CLOSED_DURING_GAP, evt:INVARIANT_BREACH, evt:INCOMPLETE_PROTECTION) routed to mod:Logger; paper-mode binding emission is the canonical session-start record establishing process-lifetime paper-vs-live state; INVARIANT_BREACH + POSITION_CLOSED_DURING_GAP + INCOMPLETE_PROTECTION logged at CRITICAL/HIGH alert level for SS-RECON outcomes.
         schema_version: 1.0
@@ -7605,7 +7604,7 @@ prefix taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: contract:WSManager_Dispatch_Seam
-        constraints: ar:PA-005, rule:HR-EE-013 (LM emergency-IOC MUST traverse seam — TB00148 F30; never call ws_private direct), ar:AR-052 (per-wallet drawdown formula + state machine — Long_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 v2_38 §9.7 PER-WALLET DRAWDOWN HALTS), param:paper_starting_balance_long_usd ($5,000 starting per TB00000 v2_38 §9.17 OPERATOR-CONTROLLED), state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet (per-wallet state machine — Long_Module wallet halt does NOT halt Short_Module wallet and vice versa)
+        constraints: ar:PA-005, rule:HR-EE-013 (LM emergency-IOC MUST traverse seam; never call ws_private direct), ar:AR-052 (per-wallet drawdown formula + state machine — Long_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 sec 8 PER-WALLET DRAWDOWN HALTS), param:paper_starting_balance_long_usd ($5,000 starting per TB00000 sec 8 OPERATOR-CONTROLLED), state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet (per-wallet state machine — Long_Module wallet halt does NOT halt Short_Module wallet and vice versa)
         consumes: param:full_halt_drawdown_pct, param:session_pause_drawdown_pct, param:paper_starting_balance_long_usd
         produces: evt:ENTRY_SUBMITTED, evt:PAPER_ORDER_SIMULATED (via seam), evt:SESSION_PAUSE_TRIGGERED (Long wallet), evt:FULL_HALT_TRIGGERED (Long wallet)
         q1_do: Long-side entry dispatcher operating ABOVE the WSManager dispatch seam in mode-blind fashion per ar:PA-005; routes emergency-IOC closes through contract:WSManager_Dispatch_Seam per rule:HR-EE-013 (never call ws_private direct); maintains per-wallet drawdown state machine (NORMAL_per_wallet → SESSION_PAUSE_per_wallet → FULL_HALT_per_wallet) per ar:AR-052 evaluated INDEPENDENTLY against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% against param:paper_starting_balance_long_usd=$5,000 baseline.
@@ -7617,11 +7616,10 @@ prefix taxonomy:
     <text x="555" y="488" font-size="13" font-weight="700" text-anchor="middle">mod:Long_Module</text>
     <text x="555" y="510" font-size="10" text-anchor="middle">selection → entry orders</text>
     <text x="555" y="528" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">emergency-IOC market sell</text>
-    <text x="555" y="548" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">TB00148 F30 enforced</text>
     <text x="555" y="568" font-size="9" font-weight="700" text-anchor="middle" fill="#b91c1c">MUST traverse seam (no direct ws_private)</text>
   </g>
 
-  <!-- mod:Short_Module (LABELED) — short-side parallel sibling to mod:Long_Module (TB00000 v2_29 §9.3 parallel-module framework + DEC-011 Stage M ratification chain + 0811005 dv1_0) -->
+  <!-- mod:Short_Module (LABELED) — short-side parallel sibling to mod:Long_Module (TB00000 sec 7 parallel-module framework) -->
   <g id="sm_above_seam" class="tier-2">
     <title>mod:Short_Module</title>
     <desc>
@@ -7629,10 +7627,10 @@ prefix taxonomy:
         tier: 2
         parent_diagram: 0500000_Context_T1_R0_System_Context
         drill_targets: contract:WSManager_Dispatch_Seam, 0811005_dv1_0_Short_Module_Specification
-        constraints: ar:PA-005 (byte-identical above seam outside PA-004 divergence points), ar:AR-009 (amended dv1_41 — Kraken margin trading enables short-side), ar:AR-072 (SC-GATE-1 variant for short-side selection), ar:AR-073 (per-side state management for parallel modules), rule:HR-REGIME-007 (directional-cascade entry trigger for short-side; mirrors long-side regime taxonomy via D4 / §5; 0711002 retired TB00596), rule:HR-EE-013 (SM emergency-IOC margin-position close MUST traverse seam — mirrors LM TB00148 F30; never call ws_private direct), ar:AR-052 (per-wallet drawdown formula + state machine — Short_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 v2_38 §9.7 PER-WALLET DRAWDOWN HALTS), param:paper_starting_balance_short_usd ($5,000 starting per TB00000 v2_38 §9.17 OPERATOR-CONTROLLED), state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet (per-wallet state machine — Short_Module wallet halt does NOT halt Long_Module wallet and vice versa)
+        constraints: ar:PA-005 (byte-identical above seam outside PA-004 divergence points), ar:AR-009 (amended dv1_41 — Kraken margin trading enables short-side), ar:AR-072 (SC-GATE-1 variant for short-side selection), ar:AR-073 (per-side state management for parallel modules), rule:HR-REGIME-007 (directional-cascade entry trigger for short-side; mirrors long-side regime taxonomy via D4 / §5), rule:HR-EE-013 (SM emergency-IOC margin-position close MUST traverse seam — mirrors LM; never call ws_private direct), ar:AR-052 (per-wallet drawdown formula + state machine — Short_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 sec 8 PER-WALLET DRAWDOWN HALTS), param:paper_starting_balance_short_usd ($5,000 starting per TB00000 sec 8 OPERATOR-CONTROLLED), state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet (per-wallet state machine — Short_Module wallet halt does NOT halt Long_Module wallet and vice versa)
         consumes: param:full_halt_drawdown_pct, param:session_pause_drawdown_pct, param:paper_starting_balance_short_usd
         produces: evt:ENTRY_SUBMITTED, evt:PAPER_ORDER_SIMULATED (via seam — short-side margin entry orders), evt:SESSION_PAUSE_TRIGGERED (Short wallet), evt:FULL_HALT_TRIGGERED (Short wallet)
-        q1_do: Short-side entry dispatcher operating ABOVE the WSManager dispatch seam in mode-blind fashion per ar:PA-005; routes short-side margin entries (per ar:AR-009 amended Kraken margin trading) and emergency-IOC margin-position closes through contract:WSManager_Dispatch_Seam per rule:HR-EE-013; applies SC-GATE-1 short-side selection variant per ar:AR-072 and directional-cascade entry trigger per rule:HR-REGIME-007 (mirrors long-side regime taxonomy via D4 / §5; 0711002 retired TB00596); maintains per-wallet drawdown state machine (NORMAL_per_wallet → SESSION_PAUSE_per_wallet → FULL_HALT_per_wallet) per ar:AR-052 evaluated INDEPENDENTLY against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% against param:paper_starting_balance_short_usd=$5,000 baseline.
+        q1_do: Short-side entry dispatcher operating ABOVE the WSManager dispatch seam in mode-blind fashion per ar:PA-005; routes short-side margin entries (per ar:AR-009 amended Kraken margin trading) and emergency-IOC margin-position closes through contract:WSManager_Dispatch_Seam per rule:HR-EE-013; applies SC-GATE-1 short-side selection variant per ar:AR-072 and directional-cascade entry trigger per rule:HR-REGIME-007 (mirrors long-side regime taxonomy via D4 / §5); maintains per-wallet drawdown state machine (NORMAL_per_wallet → SESSION_PAUSE_per_wallet → FULL_HALT_per_wallet) per ar:AR-052 evaluated INDEPENDENTLY against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% against param:paper_starting_balance_short_usd=$5,000 baseline.
         q4_triggers: Triggered by evt:ENTRY_SUBMITTED arrivals from mod:Signal_Pipeline G1..G8 full-pass for short-side pairs (per-side state management per ar:AR-073); triggers contract:WSManager_Dispatch_Seam dispatch (live = real margin order RPC; paper = synthetic ledger update via seam); per-wallet drawdown threshold breach triggers evt:SESSION_PAUSE_TRIGGERED (Short wallet) at 5% or evt:FULL_HALT_TRIGGERED (Short wallet) at 10% — Short wallet halt does NOT halt Long_Module wallet (per-wallet independence per AR-052).
         q5_logs: All 4 produced events (evt:ENTRY_SUBMITTED, evt:PAPER_ORDER_SIMULATED, evt:SESSION_PAUSE_TRIGGERED Short wallet, evt:FULL_HALT_TRIGGERED Short wallet) routed to mod:Logger; per-wallet drawdown state-machine transitions logged with prior_state + new_state + wallet_pnl_pct + threshold for AR-052 audit; CRITICAL alert level for FULL_HALT_TRIGGERED.
         schema_version: 1.0
@@ -7641,7 +7639,7 @@ prefix taxonomy:
     <text x="555" y="628" font-size="13" font-weight="700" text-anchor="middle">mod:Short_Module</text>
     <text x="555" y="650" font-size="10" text-anchor="middle">selection → margin entry orders</text>
     <text x="555" y="668" font-size="10" font-weight="700" fill="#b91c1c" text-anchor="middle">emergency-IOC margin-position close</text>
-    <text x="555" y="688" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">parallel-module sibling — TB00000 §9.3</text>
+    <text x="555" y="688" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">parallel-module sibling — TB00000 sec 7</text>
     <text x="555" y="708" font-size="9" font-weight="700" text-anchor="middle" fill="#b91c1c">MUST traverse seam (no direct ws_private)</text>
   </g>
 
@@ -7680,8 +7678,8 @@ prefix taxonomy:
         constraints: rule:HR-EC-013, rule:HR-EC-014, ar:PA-005
         consumes: none
         produces: evt:TRADE_CLOSE
-        q1_do: 3-layer exit controller (L1a Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE Threshold, L3 Emergency SL; the former L1b TP Fill layer is RETIRED per DEC-124 - no resting TP) operating ABOVE the WSManager dispatch seam per ar:PA-005 byte-identical paper/live; enforces rule:HR-EC-013 (paper-live close-path parity) + rule:HR-EC-014 (Exit Controller is sole SC state updater in both modes); routes paper exits through Exit Controller for behavioral parity with live exits per rule:HR-WM-033 referenced upstream in root governs.
-        q4_triggers: Triggered by L1a Regime-Reversal Exit (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE - the run-to-reversal take-profit; no fixed TP and no max-hold per DEC-124); L2 MAE Threshold per-tick MAE breach evaluations; L3 Emergency SL crash-protection layer; emits evt:TRADE_CLOSE on ANY exit-layer completion as ONE unified record per rule:HR-EC-014 sole-SC-state-updater contract.
+        q1_do: 3-layer exit controller (L1a Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE Threshold, L3 Emergency SL) operating ABOVE the WSManager dispatch seam per ar:PA-005 byte-identical paper/live; enforces rule:HR-EC-013 (paper-live close-path parity) + rule:HR-EC-014 (Exit Controller is sole SC state updater in both modes); routes paper exits through Exit Controller for behavioral parity with live exits per rule:HR-WM-033 referenced upstream in root governs.
+        q4_triggers: Triggered by L1a Regime-Reversal Exit (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE - the run-to-reversal take-profit); L2 MAE Threshold per-tick MAE breach evaluations; L3 Emergency SL crash-protection layer; emits evt:TRADE_CLOSE on ANY exit-layer completion as ONE unified record per rule:HR-EC-014 sole-SC-state-updater contract.
         q5_logs: evt:TRADE_CLOSE routed to mod:Logger via channel:logger_async_queue (consumed downstream by contract:CIATS_Trade_Outcome_Bus); per-layer trigger telemetry logged (L1a/L2/L3 source attribution per exit); byte-identical exit telemetry paper ↔ live per ar:PA-005 + rule:HR-EC-013 close-path parity.
         schema_version: 1.0
       </desc>
@@ -7700,11 +7698,11 @@ prefix taxonomy:
   <line x1="890" y1="585" x2="890" y2="763" stroke="#1e40af" stroke-width="2" marker-end="url(#d7_arrow)"/>
   <line x1="1252" y1="585" x2="1252" y2="763" stroke="#1e40af" stroke-width="2" marker-end="url(#d7_arrow)"/>
 
-  <!-- LM emergency-IOC red arrow descending through the seam header band (DR-010 D7 — TB00148 F30 symmetric with D2 R2) — dogleg-routed RIGHT around mod:Short_Module column to mirror LM main arrow path -->
+  <!-- LM emergency-IOC red arrow descending through the seam header band — dogleg-routed RIGHT around mod:Short_Module column to mirror LM main arrow path -->
   <g id="lm_emergency_arrow" class="decoration">
     <path d="M 555 585 L 555 600 L 728 600 L 728 770" fill="none" stroke="#b91c1c" stroke-width="3" stroke-dasharray="5,3" marker-end="url(#d7_arrow_emerg)"/>
     <text x="735" y="608" font-size="9" font-weight="700" fill="#b91c1c" text-anchor="start">LM emergency-IOC</text>
-    <text x="735" y="620" font-size="8" font-style="italic" fill="#b91c1c" text-anchor="start">(traverses seam — TB00148 F30)</text>
+    <text x="735" y="620" font-size="8" font-style="italic" fill="#b91c1c" text-anchor="start">(traverses seam)</text>
   </g>
 
   <!-- mod:Short_Module main dispatch arrow — straight down from Short_Module bottom (y=725) to seam header band (y=763); routes IDENTICALLY to mod:Long_Module per PA-005 dispatch parity (the dogleg vs straight-down difference is purely visual geometry to avoid the stacked-sibling overlap; semantic dispatch path is identical for both modules) -->
@@ -7753,7 +7751,6 @@ prefix taxonomy:
     <!-- Paper cell -->
     <text x="395" y="746" font-size="11" font-weight="700" fill="#14532d" text-anchor="middle">NOT CONNECTED</text>
     <text x="395" y="763" font-size="10" fill="#0f172a" text-anchor="middle">no authenticated session, no TRADE key exercise</text>
-    <text x="395" y="779" font-size="9" font-style="italic" fill="#14532d" text-anchor="middle">empirical test config TB00141..144 STREAM 4 ran without private WS</text>
     <!-- Live cell — container:Private_WS_v2 nested labeled group -->
     <g id="private_ws_live_only" class="tier-2">
       <title>container:Private_WS_v2</title>
@@ -7918,16 +7915,16 @@ prefix taxonomy:
     <text x="40" y="1448" fill="#cbd5e1" font-size="10">  (1) private WS connection (live-only)  ·  (2) order dispatch (the central seam)  ·  (3) capital ledger (paper synthetic / live real)  ·  (4) Position Mirror sourcing (paper sim / live executions)</text>
     <text x="40" y="1472" fill="#fbbf24" font-size="11" font-weight="700">PA-001  paper-as-master  ·  paper IS canonical · live MIMICS paper · arrows point left → right (paper drives live shape, never the reverse)</text>
     <text x="40" y="1494" fill="#cbd5e1" font-size="10">PA-002 ONE set of documents  ·  PA-003 ONE set of code  ·  PA-005 byte-identical OUTSIDE the four PA-004 points  ·  PA-007 paper-validated parameter values are canonical for live</text>
-    <text x="40" y="1516" fill="#94a3b8" font-size="10" font-style="italic">D7 scope starts at module-layer (post-G2 universe filter)  ·  no Top-N glyphs (D-08 retired)  ·  no universe filter glyphs (pre-G2)  ·  AR-070 amended-form not applicable to dispatch-seam</text>
-    <text x="40" y="1534" fill="#94a3b8" font-size="10" font-style="italic">Drill from D2 R2 G8→Execution_Engine PA-004(2) sub-element  ·  Sacred 1:1.5 R:R applies upstream at G8 (rule:Sacred_R_R_1_to_1_5)  ·  TB00000 §4.4 governs PA-001..010</text>
+    <text x="40" y="1516" fill="#94a3b8" font-size="10" font-style="italic">D7 scope starts at module-layer (post-G2 universe filter)</text>
+    <text x="40" y="1534" fill="#94a3b8" font-size="10" font-style="italic">Drill from D2 R2 G8→Execution_Engine PA-004(2) sub-element  ·  Sacred 1:1.5 R:R applies upstream at G8 (rule:Sacred_R_R_1_to_1_5)  ·  TB00000 §4.3 governs PA-001..010</text>
   </g>
-  <!-- F-12 PARALLEL-MODULE CONSTRUCTION ORDER sub-figure (TB00620; rule:SS-BUILD-001; governed by mod:Startup_Sequence) -->
+  <!-- F-12 PARALLEL-MODULE CONSTRUCTION ORDER sub-figure (rule:SS-BUILD-001; governed by mod:Startup_Sequence) -->
   <g id="f12_construction_order" class="subfigure">
     <desc>
         canonical: rule:SS-BUILD-001 (parallel-module construction order; visual realization)
         governed_by: mod:Startup_Sequence
         tier: 3
-        parent_diagram: 0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary
+        parent_diagram: 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
         constraints: rule:SS-BUILD-001, ar:AR-050, ar:AR-052, ar:AR-073, ar:AR-009, rule:HR-WM-024, rule:HR-PM-009, contract:Sizing_Curve_Per_Module
         q1_do: visible ordered-build topology for the OPTION B clean-slate parallel organism build -- single-instance shared infra constructed once then injected by reference into both siblings; per-module CIATS instance + statistical pool + wallet ($5,000 each) + per-wallet halt state machine instantiated inside each sibling; halt isolation wired so one module halt does not halt the sibling. Authoritative contract text in mod:Startup_Sequence q1_do rule:SS-BUILD-001.
         q4_triggers: systemd tothbot.service start (boot) construction phase, after WSManager.__init__ + SS-phase cascade.
@@ -7935,7 +7932,7 @@ prefix taxonomy:
         schema_version: 1.0
       </desc>
     <rect x="20" y="1718" width="1460" height="34" fill="#0f2e1a" rx="4"/>
-    <text x="40" y="1741" fill="#ffffff" font-size="13" font-weight="700">PARALLEL-MODULE CONSTRUCTION ORDER (F-12)  -  rule:SS-BUILD-001  -  derive-from-diagram (PARALLEL-MODULE FRAMEWORK dv1_42 / TB00000 sec 9.6 / DEC-011 Stage M)</text>
+    <text x="40" y="1741" fill="#ffffff" font-size="13" font-weight="700">PARALLEL-MODULE CONSTRUCTION ORDER (F-12)  -  rule:SS-BUILD-001  -  derive-from-diagram (TB00000 sec 7)</text>
 
     <rect x="40" y="1772" width="1420" height="86" fill="#dcfce7" stroke="#14532d" stroke-width="1.5" rx="4"/>
     <text x="60" y="1794" font-size="12" font-weight="700" fill="#14532d">STEP 1  -  construct the SINGLE-INSTANCE shared infrastructure ONCE (shared by BOTH siblings)</text>
@@ -7950,7 +7947,7 @@ prefix taxonomy:
     <rect x="40" y="1900" width="690" height="300" fill="#ecfdf5" stroke="#14532d" stroke-width="1.5" rx="4"/>
     <text x="60" y="1924" font-size="12" font-weight="700" fill="#14532d">STEP 2/3  -  mod:Long_Module  (built FIRST)</text>
     <text x="60" y="1948" font-size="11">injected shared infra (by reference): WS_Manager / Position_Mirror / Logger / pair_cache</text>
-    <text x="60" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per sec 9.6)</text>
+    <text x="60" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per TB00000 sec 7)</text>
     <text x="60" y="1996" font-size="11">own contract:Sizing_Curve_Per_Module  (evolves independently)</text>
     <text x="60" y="2020" font-size="11">own wallet  param:paper_starting_balance_long_usd = $5,000  (spot/main; ar:AR-050)</text>
     <text x="60" y="2044" font-size="11">own halt state machine  NORMAL / SESSION_PAUSE / FULL_HALT per_wallet</text>
@@ -7960,7 +7957,7 @@ prefix taxonomy:
     <rect x="770" y="1900" width="690" height="300" fill="#ecfdf5" stroke="#14532d" stroke-width="1.5" rx="4"/>
     <text x="790" y="1924" font-size="12" font-weight="700" fill="#14532d">STEP 2/3  -  mod:Short_Module  (built SECOND)</text>
     <text x="790" y="1948" font-size="11">injected SAME shared infra (by reference): WS_Manager / Position_Mirror / Logger / pair_cache</text>
-    <text x="790" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per sec 9.6)</text>
+    <text x="790" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per TB00000 sec 7)</text>
     <text x="790" y="1996" font-size="11">own contract:Sizing_Curve_Per_Module  (evolves independently)</text>
     <text x="790" y="2020" font-size="11">own wallet  param:paper_starting_balance_short_usd = $5,000  (margin/main; ar:AR-050 + ar:AR-009)</text>
     <text x="790" y="2044" font-size="11">own halt state machine  NORMAL / SESSION_PAUSE / FULL_HALT per_wallet</text>
@@ -7976,7 +7973,7 @@ prefix taxonomy:
 </svg>
   </div>
   <figcaption>
-    Image7 Paper-Mode Dispatch Boundary (R10). Forensic provenance - the sec 15.16.3 / V-040 65-cell design-completeness attestation (the TB00382 IV + the (a)/(b)/(c)/(d) blocks), the OPTION-R extension stack (i)-(iii) + the SLICE-4/F-12 (TB00620) + SLICE-3/D2 (TB00619) + R6 to R7 paper-balance (TB00614) amendment narratives, the CI-005/CI-006 visible-stack rolling narratives, the prior R6 (TB00355) attestation preserved-for-reference block, and all prior amendment narratives - relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641). The diagram remains design-complete and derivable from the SVG + governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+    Image7 Paper-Mode Dispatch Boundary (R11). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R11.<br>
   </figcaption>
 
 </figure>

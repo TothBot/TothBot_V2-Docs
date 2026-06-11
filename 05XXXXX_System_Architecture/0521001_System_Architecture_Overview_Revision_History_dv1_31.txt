@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_30
+DocVersion: dv1_31
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_30.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_31.txt
 DocDate:    06-11-2026
-DocTime:    17:20:00 UTC
+DocTime:    11:45:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -20094,6 +20094,542 @@ DISPATCH-SEAM DISPOSITION):
   figcaption (R9)->(R10) + the f12_construction_order subfigure parent_diagram
   pointer; root <desc> R9->R10 relocation clause appended (this narrative).
 
+
+
+AMENDMENT NARRATIVE -- D7 R10 -> R11 (TB00674; 0500000 dv1_220 -> dv1_221;
+DEC-125 SLICE 6: D7 PAPER-MODE DISPATCH BOUNDARY -- D7-1..D7-10 INCL. THE F-2
+CURRENT-R FIX):
+  Register instances executed this slice (TB00668 register; NSI TB00674 sec 2):
+  D7-1 + F-2 (root-desc reduced to the DW-2 bare pointer + CURRENT R: R11; the
+  whole prior provenance line -- the four-chain parenthetical, the Phase M
+  (TB00641) cite, and the appended combined "R8->R9 DEC-124 run-to-reversal
+  restoration + R9->R10 DEC-122 dispatch-seam disposition (TB00666) relocated per
+  DEC-123 standing discipline (TB00662)" clause -- relocated VERBATIM in op C1
+  below. F-2 DEFECT RECORD (Class A pointer maintenance, registered at D7-1):
+  the removed line read "CURRENT R: R9" while the SVG <title> /
+  diagram_canonical / figcaption all read R10, and cited TB00662 as the
+  relocating session for the R9->R10 TB00666 narrative -- chronologically
+  impossible (TB00662 predates TB00666). VERIFIED against this archive's 5.6 D7
+  subsection (read this session, not guessed): the R8->R9 DEC-124 narrative was
+  relocated at TB00662 (its own amendment session); the R9->R10 DEC-122
+  narrative was relocated at TB00666 (its own amendment session, "root <desc>
+  R9->R10 relocation clause appended (this narrative)"); the TB00666 session
+  appended the combined clause citing TB00662 in error and left the CURRENT-R
+  identity stale at R9. CORRECTED STATE: the live desc now carries the bare
+  DW-2 pointer with no per-session relocation clauses (each relocation is
+  recorded in this archive at its own amendment narrative) + CURRENT R: R11),
+  D7-2 (the SS-WIRE-001 closure cites "(closes DEFECT-SS-009, the gap-(d)
+  residual from retired 1011014 dv1_8 sec 12 + 1011002 dv1_26, certified by
+  TB00619 / DEC-118)" stripped; the F-12 provenance-cite parenthetical
+  "(F-12 derive-from-diagram per the PARALLEL-MODULE FRAMEWORK dv1_42 + TB00000
+  sec 9.3/9.6 PER-MODULE CIATS FRAMEWORK + DEC-011 Stage M; ... NOTE the prior
+  dv1_183 forward-reference cited ar:AR-048/AR-050 imprecisely ...)" stripped
+  with the live "(wallet-sourcing facet ar:AR-050)" binding KEPT; ALL
+  construction-order rules stay verbatim incl. P-12 one-WS_Manager-per-module
+  PROHIBITED; the two in-body stale section pins "per sec 9.6" / "per sec 9.4"
+  re-pointed to "per TB00000 sec 7" as DW-3 members -- the live TB00000 v2_90
+  map: parallel modules / wallets / no-cross-module-contamination = sec 7),
+  D7-3 (TB00148-F30 cite tails stripped at FIVE surfaces located BY CONTENT:
+  the LM and SM rule:HR-EE-013 constraints parentheticals (cites stripped, the
+  rule "emergency-IOC MUST traverse the seam; never call ws_private direct"
+  stays verbatim at both), the VISIBLE pure-cite row "TB00148 F30 enforced"
+  DELETED (op C8; the row carried ONLY the cite -- the rule remains visible at
+  the adjacent "MUST traverse seam (no direct ws_private)" row and the
+  "(traverses seam)" arrow label, and machine-readable at both HR-EE-013
+  descs; R-BUMP driver), the VISIBLE arrow label "(traverses seam -- TB00148
+  F30)" reduced to "(traverses seam)" (R-BUMP driver), and the LM red-arrow
+  HTML comment cite parenthetical "(DR-010 D7 -- TB00148 F30 symmetric with D2
+  R2)" stripped. D7-3 CENSUS DETERMINATION (RR-SCOPE-008 -- register locators
+  are dv1_215 convenience only): the register enumerated three desc surfaces
+  (L7659/L7683/L7710); the by-content census of the whole D7 block found
+  exactly TWO live TB00148 desc surfaces (the LM and SM HR-EE-013
+  parentheticals) + two VISIBLE + one comment; the dv1_215 L7710 locator
+  resolves to NO live TB00148 desc surface by content in dv1_220 (the
+  uniform -51 D7 offset lands it on the Execution_Engine produces line, which
+  carries no TB00148 string); five surfaces executed, nothing guessed),
+  D7-4 (stale TB00000 v2_38 / v2_29 pins re-pointed per DW-3 at the LM and SM
+  constraints lines -- "per TB00000 v2_38 sec 9.7 PER-WALLET DRAWDOWN HALTS" ->
+  "per TB00000 sec 8 PER-WALLET DRAWDOWN HALTS" and "$5,000 starting per
+  TB00000 v2_38 sec 9.17 OPERATOR-CONTROLLED" -> "per TB00000 sec 8
+  OPERATOR-CONTROLLED" (the live v2_90 registry is sec 8: drawdown-halt seeds
+  under CIATS - drawdown halts (per-wallet); paper starting balances under
+  OPERATOR) -- and at the mod:Short_Module comment, "(TB00000 v2_29 sec 9.3
+  parallel-module framework + DEC-011 Stage M ratification chain + 0811005
+  dv1_0)" -> "(TB00000 sec 7 parallel-module framework)" with the
+  ratification-chain cites stripped),
+  D7-5 (the two retirement-echo clauses deleted: q1_do "; the former L1b TP
+  Fill layer is RETIRED per DEC-124 - no resting TP" and q4_triggers "; no
+  fixed TP and no max-hold per DEC-124"; the positive 3-layer enumeration (L1a
+  Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE Threshold, L3
+  Emergency SL) stands. CONTENT-TEST DETERMINATION per the NSI sec 2(e)
+  mandate (Slice 5 precedent): the "RETIRED per DEC-124" / "no fixed TP" /
+  "no max-hold" / DR-079 / SUB_MIN_RESIDUAL / TP_FILL / TIME_EXPIRY / ar:AR-066
+  signature sweep over the WHOLE D7 block returned EXACTLY the two enumerated
+  clauses -- no unenumerated same-signature cluster members exist on D7),
+  D7-6 (the two VISIBLE empirical-validation forensic rows RELOCATED -- deleted
+  live, preserved verbatim in ops C17/C18 below: "empirically validated against
+  live Kraken WS -- TB00141..144 STREAM 4" and "empirical test config
+  TB00141..144 STREAM 4 ran without private WS"; R-BUMP drivers),
+  D7-7 (the VISIBLE scope-note row reduced to the live scope note "D7 scope
+  starts at module-layer (post-G2 universe filter)"; the "no Top-N glyphs
+  (D-08 retired)", "no universe filter glyphs (pre-G2)", and "AR-070
+  amended-form not applicable to dispatch-seam" echo clauses deleted per the
+  register's quoted span; R-BUMP driver. NOTE: the live ar:AR-070 token binding
+  inside SS-WIRE-001 ("per ar:AR-070 universe build") is LIVE rule content and
+  is retained -- it is not the D7-7 echo),
+  D7-8 (the F-12 sub-figure comment "(TB00620; ...)" cite stripped; the VISIBLE
+  band title reduced to "PARALLEL-MODULE CONSTRUCTION ORDER (F-12)  -
+  rule:SS-BUILD-001  -  derive-from-diagram (TB00000 sec 7)" -- the
+  "PARALLEL-MODULE FRAMEWORK dv1_42 / TB00000 sec 9.6 / DEC-011 Stage M"
+  provenance cites stripped, the rule + a live TB00000 section pointer kept per
+  the register disposition; R-BUMP driver),
+  D7-9 (the VISIBLE live governance pointer KEPT and its section pin corrected
+  "TB00000 sec 4.4 governs PA-001..010" -> "TB00000 sec 4.3 governs
+  PA-001..010" -- VERIFIED BY CONTENT against TB00000 v2_90 sec 4 this session
+  (not guessed): sec 4.3 is PAPER IS THE MASTER (the paper/live parity frame
+  that governs the PA-001..010 paper-architecture rules; sec 4.4 is C: DRIVE
+  AND GITHUB); confirms the TB00672 flag (vi) determination; R-affecting),
+  D7-10 (figcaption heavy manifest -> DW-1 bare form "(R10)" -> "(R11)"; the
+  full manifest text relocated verbatim in op C27 below).
+  ADDITIONAL DOCUMENT-WIDE-CLASS MEMBERS LOCATED BY CONTENT (the Slice 5
+  content-test precedent -- instance membership by content, not locator list;
+  each determination follows): DW-3 VISIBLE members: "parallel-module sibling
+  -- TB00000 sec 9.3" -> "TB00000 sec 7" (op C14) and the two F-12 band rows
+  "own CIATS instance + statistical pool  (independent per sec 9.6)" -> "(
+  independent per TB00000 sec 7)" (ops C23/C24) -- all three are stale
+  pre-restructure TB00000 section pins squarely inside the DW-3 document-wide
+  class, executed in this slice because they sit on the D7 surface (visible;
+  folded into the same R10->R11 bump). DW-5 members: the two "; 0711002
+  retired TB00596" retired-document citation tails at the SM constraints and
+  SM q1_do HR-REGIME-007 parentheticals deleted (ops C25/C26; DW-5 mandates
+  deletion "everywhere it appears"; the live rule text and the live "via D4 /
+  sec 5" cross-reference stay).
+  R-BUMP (TB00453): visible SVG <text> changes at D7-3 (row deleted + arrow
+  label reduced), D7-6 (two rows deleted), D7-7 (echo clauses deleted), D7-8
+  (band title cites stripped), D7-9 (sec 4.4 -> 4.3), C14/C23/C24 (DW-3 pins)
+  -- plus the title-bar R string -- drive D7 R10 -> R11. R11 propagated to the
+  SVG <title> + diagram_canonical + title-bar visible identifier + root <desc>
+  CURRENT R + figcaption (R10)->(R11) + the f12_construction_order sub-figure
+  parent_diagram pointer (the same five-site set + sub-figure pointer the
+  TB00666 R9->R10 propagation used).
+  All edits assertion-verified exact-match Python ops, count==1 asserted per
+  anchor, abort-on-fail, zero silent partials (37 ops total: 4 file-header,
+  4 R-string, 29 content).
+  INTEGRITY: diff localized to file-header lines {6,135,137,139} + the D7
+  figure block (dv1_220 L7451-7982); all 9 other figures byte-identical
+  (DEC-003 Path A); tag balance figure 10/10, svg 10/10, desc 125/125,
+  figcaption 10/10, text 956/956 (959 -> 956: three visible rows deleted);
+  SVG-text extraction visible diff set == exactly the planned set -- the D7-3
+  cite row + the two D7-6 forensic rows DELETED; the D7-3 arrow label, D7-7
+  scope note, D7-8 band title, D7-9 governance pin, C14 sibling pin, C23/C24
+  pool pins, and title-bar R string REPLACED; visible text IDENTICAL on all 9
+  other figures; html.parser pass 0 exceptions (DR-007.9); exactly one <h2>14.
+  Revision History</h2>; D7-block residue greps clean on every edited line
+  (zero RETIRED-per-DEC-124, zero no-fixed-TP / no-max-hold, zero TB00148,
+  zero TB00141 / STREAM 4, zero Top-N, zero AR-070-amended-form echo, zero
+  TB00620 / TB00619 / DEC-118 / closes-DEFECT-SS-009, zero v2_38 / v2_29,
+  zero sec 9.x pins, zero 0711002 / TB00596, zero sec-4.4 pin, zero
+  Image7_T2_R10, zero TB00662 / TB00666 / TB00641 / dv1_42 / dv1_183 /
+  DEC-011-Stage-M / DR-010 cites, zero D-08). Reverse-reconstruction verified:
+  the op record below applied in reverse to dv1_221 reproduces dv1_220
+  byte-identical (md5 251429ee9057973757cfb7d55860b6e9); forward replay
+  reproduces dv1_221 byte-identical (md5 4d5bd2f034d2ce26f3cbbe7534f6aadf).
+  FLAGGED (not fixed; one-campaign-per-slice / exact-register-scope -- see
+  TB00674 SL sec 4): the D7 Execution_Engine HR-EE-014/HR-EE-015 stale
+  self-cites ("per 0511003 dv1_1 sec 6 + 0500000 dv1_24 sec 12.3", twice) --
+  unenumerated cite residue, desc-only; the SM constraints "ar:AR-009 (amended
+  dv1_41 ...)" amendment-cite tail -- unenumerated, desc-only; the D2 figure's
+  twin VISIBLE "TB00000 sec 4.4 governs PA-001..010" pin (dv1_221 ~L2669) --
+  same DW-3 / sec-4.3 correction needed but D2 (Slice 7) is planned
+  desc/figcaption-only with R HOLD at R11, so this visible fix would force a
+  D2 R-bump (surfaced to Slice 7 planning); the cross-figure stale Image7
+  drill_target R-token forms (T1 bare/R1 forms; D2 R0 forms) -- pre-existing,
+  other-figure scope; the TB00673 SL sec 4 carried flag set remains open.
+  0500000 dv1_220 -> dv1_221 (md5 4d5bd2f034d2ce26f3cbbe7534f6aadf); this
+  archive dv1_30 -> dv1_31 (append-only; all prior content byte-identical).
+
+----- DEC-125 SLICE 6 OP RECORD -- REMOVED / RESTATED D7 CONTENT
+      (VERBATIM, ORDERED, ANCHORED; supports reverse-reconstruction;
+      context-extended anchors -- each REMOVED string unique in dv1_220,
+      each LIVE REPLACEMENT unique in dv1_221; TB00671 op-pair method;
+      deletion ops carry the following live line as anchoring context) -----
+
+[H1|header|HTML title]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000 System Architecture Overview dv1_220</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000 System Architecture Overview dv1_221</title>
+</pre>
+
+[H2|header|DocVersion]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocVersion</td><td>dv1_220</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocVersion</td><td>dv1_221</td></tr>
+</pre>
+
+[H3|header|DocPath]
+REMOVED (VERBATIM):
+<pre>
+0500000_System_Architecture_Overview_dv1_220_Claude_Source.html</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_System_Architecture_Overview_dv1_221_Claude_Source.html</td></tr>
+</pre>
+
+[H4|header|DocTime]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocTime</td><td>17:05:00 UTC</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocTime</td><td>11:30:00 UTC</td></tr>
+</pre>
+
+[R1|R-string|SVG title]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary</title>
+</pre>
+
+[R2|R-string|diagram_canonical]
+REMOVED (VERBATIM):
+<pre>
+    diagram_canonical: 0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    diagram_canonical: 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
+</pre>
+
+[R3|R-string|title-bar visible identifier]
+REMOVED (VERBATIM):
+<pre>
+      0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
+</pre>
+LIVE REPLACEMENT:
+<pre>
+      0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary  |  schema_version: 1.0  |  parent: 0500000_Context_T1_R0_System_Context  |  HTML inline
+</pre>
+
+[R4|R-string|f12 sub-figure parent_diagram]
+REMOVED (VERBATIM):
+<pre>
+        parent_diagram: 0500000_Image7_T2_R10_Paper_Mode_Dispatch_Boundary
+</pre>
+LIVE REPLACEMENT:
+<pre>
+        parent_diagram: 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
+</pre>
+
+[C1|D7-1/F-2|root-desc bare pointer]
+REMOVED (VERBATIM):
+<pre>
+    R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641); R8-&gt;R9 DEC-124 run-to-reversal restoration + R9-&gt;R10 DEC-122 dispatch-seam disposition (TB00666) relocated per DEC-123 standing discipline (TB00662). CURRENT R: R9.
+    governs: rule:HR-WM-021
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R11.
+    governs: rule:HR-WM-021
+</pre>
+
+[C2|D7-2|SS-WIRE-001 cite strip]
+REMOVED (VERBATIM):
+<pre>
+rule:SS-WIRE-001 construction-timing wiring (closes DEFECT-SS-009, the gap-(d) residual from retired 1011014 dv1_8 sec 12 + 1011002 dv1_26, certified by TB00619 / DEC-118): mod:Regime_Engine
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule:SS-WIRE-001 construction-timing wiring: mod:Regime_Engine
+</pre>
+
+[C3|D7-2|SS-BUILD-001 cite strip]
+REMOVED (VERBATIM):
+<pre>
+rule:SS-BUILD-001 parallel-module construction order (F-12 derive-from-diagram per the PARALLEL-MODULE FRAMEWORK dv1_42 + TB00000 sec 9.3/9.6 PER-MODULE CIATS FRAMEWORK + DEC-011 Stage M; wallet-sourcing facet ar:AR-050; NOTE the prior dv1_183 forward-reference cited ar:AR-048/AR-050 imprecisely -- ar:AR-048 is the Exit-Controller MAE/bid-price AR, NOT construction authority): after WSManager.__init__
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule:SS-BUILD-001 parallel-module construction order (wallet-sourcing facet ar:AR-050): after WSManager.__init__
+</pre>
+
+[C4|D7-2/DW-3|sec 9.6 re-point (q1_do body)]
+REMOVED (VERBATIM):
+<pre>
+no cross-module contamination per sec 9.6 -- Long and Short pools
+</pre>
+LIVE REPLACEMENT:
+<pre>
+no cross-module contamination per TB00000 sec 7 -- Long and Short pools
+</pre>
+
+[C5|D7-2/DW-3|sec 9.4 re-point (q1_do body)]
+REMOVED (VERBATIM):
+<pre>
+live funding operator-controlled per sec 9.4)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+live funding operator-controlled per TB00000 sec 7)
+</pre>
+
+[C6|D7-3|LM HR-EE-013 cite strip]
+REMOVED (VERBATIM):
+<pre>
+rule:HR-EE-013 (LM emergency-IOC MUST traverse seam — TB00148 F30; never call ws_private direct)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule:HR-EE-013 (LM emergency-IOC MUST traverse seam; never call ws_private direct)
+</pre>
+
+[C7|D7-3|SM HR-EE-013 cite strip]
+REMOVED (VERBATIM):
+<pre>
+rule:HR-EE-013 (SM emergency-IOC margin-position close MUST traverse seam — mirrors LM TB00148 F30; never call ws_private direct)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule:HR-EE-013 (SM emergency-IOC margin-position close MUST traverse seam — mirrors LM; never call ws_private direct)
+</pre>
+
+[C8|D7-3|VISIBLE TB00148 row delete]
+REMOVED (VERBATIM):
+<pre>
+    <text x="555" y="548" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">TB00148 F30 enforced</text>
+    <text x="555" y="568" font-size="9" font-weight="700" text-anchor="middle" fill="#b91c1c">MUST traverse seam (no direct ws_private)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    <text x="555" y="568" font-size="9" font-weight="700" text-anchor="middle" fill="#b91c1c">MUST traverse seam (no direct ws_private)</text>
+</pre>
+
+[C9|D7-3|VISIBLE traverses-seam cite strip]
+REMOVED (VERBATIM):
+<pre>
+>(traverses seam — TB00148 F30)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>(traverses seam)</text>
+</pre>
+
+[C10|D7-3|comment cite strip]
+REMOVED (VERBATIM):
+<pre>
+<!-- LM emergency-IOC red arrow descending through the seam header band (DR-010 D7 — TB00148 F30 symmetric with D2 R2) — dogleg-routed RIGHT around mod:Short_Module column to mirror LM main arrow path -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<!-- LM emergency-IOC red arrow descending through the seam header band — dogleg-routed RIGHT around mod:Short_Module column to mirror LM main arrow path -->
+</pre>
+
+[C11a|D7-4/DW-3|LM drawdown pin]
+REMOVED (VERBATIM):
+<pre>
+Long_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 v2_38 §9.7 PER-WALLET DRAWDOWN HALTS
+</pre>
+LIVE REPLACEMENT:
+<pre>
+Long_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 sec 8 PER-WALLET DRAWDOWN HALTS
+</pre>
+
+[C11b|D7-4/DW-3|LM balance pin]
+REMOVED (VERBATIM):
+<pre>
+param:paper_starting_balance_long_usd ($5,000 starting per TB00000 v2_38 §9.17 OPERATOR-CONTROLLED)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+param:paper_starting_balance_long_usd ($5,000 starting per TB00000 sec 8 OPERATOR-CONTROLLED)
+</pre>
+
+[C12a|D7-4/DW-3|SM drawdown pin]
+REMOVED (VERBATIM):
+<pre>
+Short_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 v2_38 §9.7 PER-WALLET DRAWDOWN HALTS
+</pre>
+LIVE REPLACEMENT:
+<pre>
+Short_Module wallet evaluated independently against session_pause_drawdown_pct=5% + full_halt_drawdown_pct=10% per TB00000 sec 8 PER-WALLET DRAWDOWN HALTS
+</pre>
+
+[C12b|D7-4/DW-3|SM balance pin]
+REMOVED (VERBATIM):
+<pre>
+param:paper_starting_balance_short_usd ($5,000 starting per TB00000 v2_38 §9.17 OPERATOR-CONTROLLED)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+param:paper_starting_balance_short_usd ($5,000 starting per TB00000 sec 8 OPERATOR-CONTROLLED)
+</pre>
+
+[C13|D7-4/DW-3|SM comment pin]
+REMOVED (VERBATIM):
+<pre>
+<!-- mod:Short_Module (LABELED) — short-side parallel sibling to mod:Long_Module (TB00000 v2_29 §9.3 parallel-module framework + DEC-011 Stage M ratification chain + 0811005 dv1_0) -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<!-- mod:Short_Module (LABELED) — short-side parallel sibling to mod:Long_Module (TB00000 sec 7 parallel-module framework) -->
+</pre>
+
+[C14|DW-3|VISIBLE sibling pin]
+REMOVED (VERBATIM):
+<pre>
+>parallel-module sibling — TB00000 §9.3</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>parallel-module sibling — TB00000 sec 7</text>
+</pre>
+
+[C15|D7-5|q1_do retirement clause delete]
+REMOVED (VERBATIM):
+<pre>
+(L1a Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE Threshold, L3 Emergency SL; the former L1b TP Fill layer is RETIRED per DEC-124 - no resting TP)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(L1a Regime-Reversal Exit = run-to-reversal take-profit, L2 MAE Threshold, L3 Emergency SL)
+</pre>
+
+[C16|D7-5|q4_triggers negation clause delete]
+REMOVED (VERBATIM):
+<pre>
+(HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE - the run-to-reversal take-profit; no fixed TP and no max-hold per DEC-124)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE - the run-to-reversal take-profit)
+</pre>
+
+[C17|D7-6|VISIBLE forensic row 1 delete]
+REMOVED (VERBATIM):
+<pre>
+    <text x="332" y="150" font-size="10" font-style="italic" text-anchor="middle" fill="#dcfce7">empirically validated against live Kraken WS — TB00141..144 STREAM 4</text>
+    <!-- Asymmetric arrow from PAPER (left, primary) into LIVE (right, secondary) -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    <!-- Asymmetric arrow from PAPER (left, primary) into LIVE (right, secondary) -->
+</pre>
+
+[C18|D7-6|VISIBLE forensic row 2 delete]
+REMOVED (VERBATIM):
+<pre>
+    <text x="395" y="779" font-size="9" font-style="italic" fill="#14532d" text-anchor="middle">empirical test config TB00141..144 STREAM 4 ran without private WS</text>
+    <!-- Live cell — container:Private_WS_v2 nested labeled group -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    <!-- Live cell — container:Private_WS_v2 nested labeled group -->
+</pre>
+
+[C19|D7-7|VISIBLE echo clauses delete]
+REMOVED (VERBATIM):
+<pre>
+>D7 scope starts at module-layer (post-G2 universe filter)  ·  no Top-N glyphs (D-08 retired)  ·  no universe filter glyphs (pre-G2)  ·  AR-070 amended-form not applicable to dispatch-seam</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>D7 scope starts at module-layer (post-G2 universe filter)</text>
+</pre>
+
+[C20|D7-8|comment cite strip]
+REMOVED (VERBATIM):
+<pre>
+<!-- F-12 PARALLEL-MODULE CONSTRUCTION ORDER sub-figure (TB00620; rule:SS-BUILD-001; governed by mod:Startup_Sequence) -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<!-- F-12 PARALLEL-MODULE CONSTRUCTION ORDER sub-figure (rule:SS-BUILD-001; governed by mod:Startup_Sequence) -->
+</pre>
+
+[C21|D7-8|VISIBLE band title cite strip]
+REMOVED (VERBATIM):
+<pre>
+>PARALLEL-MODULE CONSTRUCTION ORDER (F-12)  -  rule:SS-BUILD-001  -  derive-from-diagram (PARALLEL-MODULE FRAMEWORK dv1_42 / TB00000 sec 9.6 / DEC-011 Stage M)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>PARALLEL-MODULE CONSTRUCTION ORDER (F-12)  -  rule:SS-BUILD-001  -  derive-from-diagram (TB00000 sec 7)</text>
+</pre>
+
+[C22|D7-9/DW-3|VISIBLE PA governance pin]
+REMOVED (VERBATIM):
+<pre>
+(rule:Sacred_R_R_1_to_1_5)  ·  TB00000 §4.4 governs PA-001..010</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(rule:Sacred_R_R_1_to_1_5)  ·  TB00000 §4.3 governs PA-001..010</text>
+</pre>
+
+[C23|DW-3|VISIBLE F-12 LM pool pin]
+REMOVED (VERBATIM):
+<pre>
+    <text x="60" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per sec 9.6)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    <text x="60" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per TB00000 sec 7)</text>
+</pre>
+
+[C24|DW-3|VISIBLE F-12 SM pool pin]
+REMOVED (VERBATIM):
+<pre>
+    <text x="790" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per sec 9.6)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    <text x="790" y="1972" font-size="11">own CIATS instance + statistical pool  (independent per TB00000 sec 7)</text>
+</pre>
+
+[C25|DW-5|SM constraints retired-doc tail]
+REMOVED (VERBATIM):
+<pre>
+rule:HR-REGIME-007 (directional-cascade entry trigger for short-side; mirrors long-side regime taxonomy via D4 / §5; 0711002 retired TB00596), rule:HR-EE-013
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule:HR-REGIME-007 (directional-cascade entry trigger for short-side; mirrors long-side regime taxonomy via D4 / §5), rule:HR-EE-013
+</pre>
+
+[C26|DW-5|SM q1_do retired-doc tail]
+REMOVED (VERBATIM):
+<pre>
+directional-cascade entry trigger per rule:HR-REGIME-007 (mirrors long-side regime taxonomy via D4 / §5; 0711002 retired TB00596); maintains
+</pre>
+LIVE REPLACEMENT:
+<pre>
+directional-cascade entry trigger per rule:HR-REGIME-007 (mirrors long-side regime taxonomy via D4 / §5); maintains
+</pre>
+
+[C27|D7-10|figcaption bare form]
+REMOVED (VERBATIM):
+<pre>
+    Image7 Paper-Mode Dispatch Boundary (R10). Forensic provenance - the sec 15.16.3 / V-040 65-cell design-completeness attestation (the TB00382 IV + the (a)/(b)/(c)/(d) blocks), the OPTION-R extension stack (i)-(iii) + the SLICE-4/F-12 (TB00620) + SLICE-3/D2 (TB00619) + R6 to R7 paper-balance (TB00614) amendment narratives, the CI-005/CI-006 visible-stack rolling narratives, the prior R6 (TB00355) attestation preserved-for-reference block, and all prior amendment narratives - relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00641). The diagram remains design-complete and derivable from the SVG + governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    Image7 Paper-Mode Dispatch Boundary (R11). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R11.<br>
+</pre>
+
+----- END DEC-125 SLICE 6 OP RECORD -----
 
 5.7 D8 -- Image8 Gate 7 Risk Guard Detail
     (relocated at TB00642; 0500000 dv1_197 -> dv1_198; D8 R3 HELD)
