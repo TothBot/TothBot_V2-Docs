@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_222</title>
+<title>0500000 System Architecture Overview dv1_223</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_222</td></tr>
+  <tr><td>DocVersion</td><td>dv1_223</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_222_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_223_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-11-2026</td></tr>
-  <tr><td>DocTime</td><td>21:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>15:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -2916,15 +2916,15 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 980"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image9_T3_R4_Gate_8_Position_Sizer_Detail</title>
+  <title>0500000_Image9_T3_R5_Gate_8_Position_Sizer_Detail</title>
   <desc>
-    diagram_canonical: 0500000_Image9_T3_R4_Gate_8_Position_Sizer_Detail
+    diagram_canonical: 0500000_Image9_T3_R5_Gate_8_Position_Sizer_Detail
     tier: 3
     parent_dcn: 0500000
     parent_diagram: 0500000_Image2_T2_R2_Trading_Pipeline
     parent_element: gate:G8_Position_Sizer
     schema_version: 1.0
-    provenance: R-increment history (R-increment + R-increment-prior chains), V-040 attestation, main-title V-040 tail, and all prior amendment narratives -- incl. the TB00654 DEC-124 RUN-TO-REVERSAL RESTORATION (R3 -&gt; R4) -- relocated to 0521001 section 5.8 (anchor 0520000) per DEC-123 standing discipline. CURRENT R: R4.
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R5.
     governs:
       gate: G8_Position_Sizer
       rule: Sacred_R_R_1_to_1_5, Expected_RR_A1_Acceptance
@@ -2932,7 +2932,7 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
       indicator: ATR_14
       param: mae_mult, emergency_sl_mult
       evt: G8_A1_REJECT, G8_SIZED
-    sacred_constraints: Net 1:1.5 R:R minimum floor -- the only hardcoded number in TothBot V2 -- never CIATS-owned (rule:Sacred_R_R_1_to_1_5 per TB00000 sec 9). Under DEC-124 the floor is the ENTRY-ACCEPTANCE test (admit iff expected_reward / net_loss &gt;= 1.5); it NEVER constructs an exit price and NEVER closes a position.
+    sacred_constraints: Net 1:1.5 R:R minimum floor -- the only hardcoded number in TothBot V2 -- never CIATS-owned (rule:Sacred_R_R_1_to_1_5 per TB00000 sec 8). The floor is the ENTRY-ACCEPTANCE test (admit iff expected_reward / net_loss &gt;= 1.5); it NEVER constructs an exit price and NEVER closes a position.
   </desc>
   <defs>
     <marker id="arrow_g8" viewBox="0 0 10 10" refX="9" refY="5"
@@ -2954,9 +2954,9 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
   <g id="g8d_title_bar" class="decoration">
     <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
-          text-anchor="middle">DIAGRAM 9 — Gate 8 Position Sizer Detail — R4</text>
+          text-anchor="middle">DIAGRAM 9 — Gate 8 Position Sizer Detail — R5</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image9_T3_R4_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R2_Trading_Pipeline
+      0500000_Image9_T3_R5_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R2_Trading_Pipeline
     </text>
   </g>
 
@@ -2972,15 +2972,15 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
     <text x="750" y="176" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">ADMISSION INPUTS (computed in parallel, before the A1 floor test)</text>
   </g>
 
-  <!-- LEFT INPUT: RUN-TO-REVERSAL EXPECTED-REWARD ESTIMATOR (CIATS-owned, NEW under DEC-124) -->
+  <!-- LEFT INPUT: RUN-TO-REVERSAL EXPECTED-REWARD ESTIMATOR (CIATS-owned) -->
   <g id="g8d_expected_reward" class="tier-3">
     <title>compute:expected_reward_run_to_reversal</title>
     <desc>
         canonical: compute:expected_reward_run_to_reversal
         tier: 3
         parent_element: gate:G8_Position_Sizer
-        q1_do: produce expected_reward -- the CIATS-owned estimate of the favorable price excursion the candidate is expected to realize before its RUN-TO-REVERSAL exit fires (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE) -- expressed as a FRACTION of entry_fill_price (the same unit as net_loss, so the A1 ratio is dimensionless). PRE-200-TRADES the estimate is SEEDED from a HISTORICAL BACKTEST: replay the regime-reversal exit condition over available historical OHLC for the candidate pair/regime and take the central-tendency realized favorable excursion (DEC-124 point 3: data-driven, never guessed; actual historical data is the admissible kick-start, Bill ruling TB00654). POST the 200-trade CIATS data floor the estimate is tuned/replaced from realized PAPER run-to-reversal outcomes (CIATS-owned). The per-candidate Gate-8 path READS the current estimate for the candidate pair/regime from the tick-start snapshot (contract:Pre_Computation_Cache_Read / contract:Parameter_Store_Snapshot); the historical backtest and the paper-tuning run OFF the hot path, never per-candidate in the candle loop.
-        constraints: CIATS-owned (NOT hardcoded); the only hardcoded value remains rule:Sacred_R_R_1_to_1_5. expected_reward NEVER constructs an exit price and NEVER closes a position (DEC-124). The numeric SEED VALUE home is TB00000 sec 9, not this diagram (binary test DEC-096: the estimator existence + CIATS-ownership is trading-organism architecture and is encoded HERE; the transient seed value is a sec-9 registry entry).
+        q1_do: produce expected_reward -- the CIATS-owned estimate of the favorable price excursion the candidate is expected to realize before its RUN-TO-REVERSAL exit fires (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE) -- expressed as a FRACTION of entry_fill_price (the same unit as net_loss, so the A1 ratio is dimensionless). PRE-200-TRADES the estimate is SEEDED from a HISTORICAL BACKTEST: replay the regime-reversal exit condition over available historical OHLC for the candidate pair/regime and take the central-tendency realized favorable excursion (data-driven, never guessed; actual historical data is the admissible kick-start). POST the 200-trade CIATS data floor the estimate is tuned/replaced from realized PAPER run-to-reversal outcomes (CIATS-owned). The per-candidate Gate-8 path READS the current estimate for the candidate pair/regime from the tick-start snapshot (contract:Pre_Computation_Cache_Read / contract:Parameter_Store_Snapshot); the historical backtest and the paper-tuning run OFF the hot path, never per-candidate in the candle loop.
+        constraints: CIATS-owned (NOT hardcoded); the only hardcoded value remains rule:Sacred_R_R_1_to_1_5. expected_reward NEVER constructs an exit price and NEVER closes a position. The numeric SEED VALUE home is TB00000 sec 8, not this diagram (binary test DEC-096: the estimator existence + CIATS-ownership is trading-organism architecture and is encoded HERE; the transient seed value is a sec-8 registry entry).
         consumes: candidate pair + regime band (regime context carried from gate:G6_Regime_Sizer); the CIATS run-to-reversal expected-return estimate read from the tick-start snapshot; entry_fill_price (actual fill, ar:AR-008 -- to express the estimate as a fraction).
         produces: expected_reward (fraction of entry_fill_price; consumed by rule:Expected_RR_A1_Acceptance at g8d_a1_acceptance).
         q4_triggers: every candidate trade arriving at Gate 8 entry (after all Gate 7 checks pass); evaluated once per candidate, IN PARALLEL with the mae/net_loss risk-leg chain. Both must complete before the A1 test.
@@ -3024,8 +3024,8 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
         canonical: compute:net_loss
         tier: 3
         parent_element: gate:G8_Position_Sizer
-        q1_do: compute the all-in net loss percentage (the RISK LEG / R:R denominator) as net_loss = mae_pct + entry_taker_fee + mae_taker_fee. BOTH fee legs are TAKER (FEE_TAKER_PCT): entry is a marketable-IOC taker fill (DEC-122 entry-execution model) and the MAE protective exit is a taker market sell. There is NO maker fee in the risk leg under DEC-124 (no resting maker TP exit exists).
-        constraints: fee schedule per 0411003 -- FEE_TAKER_PCT on both legs (Kraken spot tier; the fee seed VALUE lives in TB00000 sec 8/9 per the binary test, not in this diagram).
+        q1_do: compute the all-in net loss percentage (the RISK LEG / R:R denominator) as net_loss = mae_pct + entry_taker_fee + mae_taker_fee. BOTH fee legs are TAKER (FEE_TAKER_PCT): entry is a marketable-IOC taker fill and the MAE protective exit is a taker market sell.
+        constraints: fee schedule per 0411003 -- FEE_TAKER_PCT on both legs (Kraken spot tier; the fee seed VALUE lives in TB00000 sec 8 per the binary test, not in this diagram).
         consumes: mae_pct (from g8d_mae); FEE_TAKER_PCT (entry taker fill); FEE_TAKER_PCT (MAE taker exit)
         produces: net_loss (consumed by rule:Expected_RR_A1_Acceptance at g8d_a1_acceptance)
         q4_triggers: g8d_mae has produced mae_pct.
@@ -3044,19 +3044,19 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
   <line x1="1140" y1="298" x2="720" y2="356" stroke="#b91c1c" stroke-width="2" fill="none" marker-end="url(#arrow_g8_red)"/>
   <text x="1010" y="330" font-size="9" font-weight="700" fill="#b91c1c" text-anchor="middle">net_loss</text>
 
-  <!-- A1 ENTRY-ACCEPTANCE FLOOR (DEC-124: admission test, never an exit price) -->
+  <!-- A1 ENTRY-ACCEPTANCE FLOOR (admission test, never an exit price) -->
   <g id="g8d_a1_acceptance" class="tier-3">
     <title>rule:Expected_RR_A1_Acceptance</title>
     <desc>
         canonical: rule:Expected_RR_A1_Acceptance
         tier: 3
         parent_element: gate:G8_Position_Sizer
-        q1_do: the SACRED ENTRY-ACCEPTANCE test (DEC-124, ratified TB00650). Compute expected_RR = expected_reward / net_loss and ACCEPT the candidate iff expected_RR &gt;= 1.5 (the SACRED hardcoded floor, rule:Sacred_R_R_1_to_1_5 -- the only hardcoded value in TothBot V2); REJECT below the floor. expected_reward is the CIATS run-to-reversal estimate from compute:expected_reward_run_to_reversal; net_loss is the risk leg from g8d_net_loss. The floor NEVER constructs an exit price and NEVER closes a position -- there is NO gross_target and NO fixed TP limit; the take-profit is regime reversal (run to reversal). emergSL_dist is NEVER in this ratio (layer:L3 crash brake only).
-        constraints: rule:Sacred_R_R_1_to_1_5 (floor = 1.5, HARDCODED, never CIATS-owned, never overridable, TB00000 sec 9). All inputs use ACTUAL entry_fill_price (ar:AR-008), never limit price.
+        q1_do: the SACRED ENTRY-ACCEPTANCE test. Compute expected_RR = expected_reward / net_loss and ACCEPT the candidate iff expected_RR &gt;= 1.5 (the SACRED hardcoded floor, rule:Sacred_R_R_1_to_1_5 -- the only hardcoded value in TothBot V2); REJECT below the floor. expected_reward is the CIATS run-to-reversal estimate from compute:expected_reward_run_to_reversal; net_loss is the risk leg from g8d_net_loss. The floor NEVER constructs an exit price and NEVER closes a position -- there is NO gross_target and NO fixed TP limit; the take-profit is regime reversal (run to reversal). emergSL_dist is NEVER in this ratio (layer:L3 crash brake only).
+        constraints: rule:Sacred_R_R_1_to_1_5 (floor = 1.5, HARDCODED, never CIATS-owned, never overridable, TB00000 sec 8). All inputs use ACTUAL entry_fill_price (ar:AR-008), never limit price.
         consumes: expected_reward (from compute:expected_reward_run_to_reversal); net_loss (from g8d_net_loss)
-        produces: PASS signal into the CIATS-owned sizing chain (on expected_RR &gt;= 1.5); evt:G8_A1_REJECT (on expected_RR &lt; 1.5). ACCEPT SIGNAL (G4, TB00627, Bill-ratified Option B, PRESERVED): on accept NO dedicated A1-accept event is minted at this element; the acceptance is recorded downstream by evt:G8_SIZED emitted at the end of the sizing pipeline, the canonical accept-side observable mirroring evt:G8_A1_REJECT on the reject side.
+        produces: PASS signal into the CIATS-owned sizing chain (on expected_RR &gt;= 1.5); evt:G8_A1_REJECT (on expected_RR &lt; 1.5). ACCEPT SIGNAL: on accept NO dedicated A1-accept event is minted at this element; the acceptance is recorded downstream by evt:G8_SIZED emitted at the end of the sizing pipeline, the canonical accept-side observable mirroring evt:G8_A1_REJECT on the reject side.
         q4_triggers: every candidate trade, once BOTH the expected_reward estimate AND net_loss are computed (after all Gate 7 checks pass); evaluated once per candidate, BEFORE order dispatch; gates all downstream sizing.
-        q5_logs: evt:G8_A1_REJECT on the below-floor reject path (includes expected_RR value, expected_reward, net_loss, candidate identifier). On the accept path this element emits no event; the accepted outcome is logged downstream by evt:G8_SIZED (the canonical accept-side log record per G4 / TB00627). Admitting a candidate whose expected_reward / net_loss &lt; 1.5 is a CRITICAL system-invariant breach -- must NEVER occur (hardcoded floor).
+        q5_logs: evt:G8_A1_REJECT on the below-floor reject path (includes expected_RR value, expected_reward, net_loss, candidate identifier). On the accept path this element emits no event; the accepted outcome is logged downstream by evt:G8_SIZED (the canonical accept-side log record). Admitting a candidate whose expected_reward / net_loss &lt; 1.5 is a CRITICAL system-invariant breach -- must NEVER occur (hardcoded floor).
         evaluation_order: 3 (after the parallel expected_reward + net_loss inputs; precedes all sizing)
         schema_version: 1.0
       </desc>
@@ -3122,23 +3122,22 @@ Risk_Engine_Coding_Spec (retired this audit cycle).
     <text x="40" y="539" font-size="9" font-weight="400" fill="#475569" text-anchor="start">entry_fill_price (actual fill — AR-008)</text>
     <text x="40" y="551" font-size="9" font-weight="400" fill="#475569" text-anchor="start">FEE_TAKER_PCT (entry + MAE exit; 0411003)</text>
     <text x="40" y="563" font-size="9" font-weight="400" fill="#475569" text-anchor="start">expected_reward (CIATS run-to-reversal est;</text>
-    <text x="40" y="575" font-size="9" font-weight="400" fill="#475569" text-anchor="start">  historical-backtest seed — TB00000 sec 9)</text>
+    <text x="40" y="575" font-size="9" font-weight="400" fill="#475569" text-anchor="start">  historical-backtest seed — TB00000 sec 8)</text>
     <text x="40" y="589" font-size="9" font-weight="700" fill="#1e3a8a" text-anchor="start">Floor = 1.5 (HARDCODED, sacred)</text>
   </g>
 
   <g id="g8d_footer" class="decoration">
     <rect x="20" y="800" width="1460" height="160" fill="#1a2942" rx="4"/>
     <text x="40" y="828" fill="#ffffff" font-size="13" font-weight="700">Gate 8 Position Sizer — Coder Implementation Notes</text>
-    <text x="40" y="852" fill="#cbd5e1" font-size="10" font-weight="400">A1 ENTRY-ACCEPTANCE FLOOR (DEC-124): a candidate is admitted iff expected_reward / net_loss &gt;= 1.5, evaluated once per candidate at Gate 8 entry. expected_reward is the CIATS run-to-reversal estimate; net_loss is the risk leg (mae_pct + entry taker fee + MAE taker fee). The floor NEVER builds an exit price and NEVER closes a position (TB00000 sec 9 ACCEPTANCE RULE A1).</text>
+    <text x="40" y="852" fill="#cbd5e1" font-size="10" font-weight="400">A1 ENTRY-ACCEPTANCE FLOOR: a candidate is admitted iff expected_reward / net_loss &gt;= 1.5, evaluated once per candidate at Gate 8 entry. expected_reward is the CIATS run-to-reversal estimate; net_loss is the risk leg (mae_pct + entry taker fee + MAE taker fee). The floor NEVER builds an exit price and NEVER closes a position (TB00000 sec 8 ACCEPTANCE RULE A1).</text>
     <text x="40" y="876" fill="#fbbf24" font-size="11" font-weight="700">SACRED: the 1.5 floor is the ONLY hardcoded number in TothBot V2 (rule:Sacred_R_R_1_to_1_5). CIATS owns everything above it — the expected-reward estimator and the sizing curve (per_trade_size_usd as a function of expected_RR; the module wallet balance is the sole sizing boundary — no ceiling, cap, or limit).</text>
-    <text x="40" y="900" fill="#cbd5e1" font-size="10" font-weight="400">RUN-TO-REVERSAL: there is NO fixed take-profit and NO max-hold. The take-profit is regime reversal (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE). expected_reward is SEEDED from a historical OHLC backtest of that exit, then tuned from paper data after the 200-trade floor (data-driven, never guessed; seed value → TB00000 sec 9).</text>
+    <text x="40" y="900" fill="#cbd5e1" font-size="10" font-weight="400">RUN-TO-REVERSAL: there is NO fixed take-profit and NO max-hold. The take-profit is regime reversal (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE). expected_reward is SEEDED from a historical OHLC backtest of that exit, then tuned from paper data after the 200-trade floor (data-driven, never guessed; seed value → TB00000 sec 8).</text>
     <text x="40" y="924" fill="#cbd5e1" font-size="10" font-weight="400">ALL CALCULATIONS USE ACTUAL FILL PRICE — never limit price. This is why OTO was rejected (ar:AR-008): OTO uses limit price for child-order pricing and breaks the actual-fill-price requirement.</text>
-    <text x="40" y="948" fill="#cbd5e1" font-size="10" font-style="italic">emergSL_dist NEVER appears in the R:R ratio — layer:L3 emergency brake only (VPS/TothBot/internet failure). Migrated from 1011011 Risk_Engine_Coding_Spec (retired this audit cycle); A1 + sacred floor are diagram-canonical per TB00000 sec 4.5 DD-001.</text>
   </g>
 </svg>
   </div>
   <figcaption>
-    Image9 Gate 8 Position Sizer Detail (R4). Forensic provenance — the figure's R-increment history, the V-040 / 30-cell design-completeness attestation, the OPTION-R extension stack, the relocated main-title V-040 tail, and all prior amendment narratives (including the TB00654 DEC-124 run-to-reversal restoration that produced this R3 → R4 state) live in 0521001 section 5.8 (anchor 0520000) per DEC-123. The diagram carries only live governing content + D9's current R-number + this pointer, and remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone.
+    Image9 Gate 8 Position Sizer Detail (R5). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R5.<br>
 </figcaption>
 </figure>
 
