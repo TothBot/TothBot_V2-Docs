@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_223</title>
+<title>0500000 System Architecture Overview dv1_224</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_223</td></tr>
+  <tr><td>DocVersion</td><td>dv1_224</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_223_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_224_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-11-2026</td></tr>
-  <tr><td>DocTime</td><td>15:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>18:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -2689,15 +2689,15 @@ This figure replaces the architectural detail previously carried in
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1100"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image8_T3_R4_Gate_7_Risk_Guard_Detail</title>
+  <title>0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail</title>
   <desc>
-    diagram_canonical: 0500000_Image8_T3_R4_Gate_7_Risk_Guard_Detail
+    diagram_canonical: 0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail
     tier: 3
     parent_dcn: 0500000
     parent_diagram: 0500000_Image2_T2_R2_Trading_Pipeline
     parent_element: gate:G7_Risk_Guard
     schema_version: 1.0
-    provenance: R-increment history (R-increment + R-increment-prior + R-increment-prior-2) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00642); main-title visible-text catch-up + V-040 tail strip relocated to 0521001 5.7 (TB00646). CURRENT R: R4.
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R5.
     governs:
       gate: G7_Risk_Guard
       rule: HR-WM-024
@@ -2722,9 +2722,9 @@ This figure replaces the architectural detail previously carried in
   <g id="g7d_title_bar" class="decoration">
     <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
-          text-anchor="middle">DIAGRAM 8 — Gate 7 Risk Guard Detail (4 Sequential Checks) — R4</text>
+          text-anchor="middle">DIAGRAM 8 — Gate 7 Risk Guard Detail (4 Sequential Checks) — R5</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image8_T3_R4_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R2_Trading_Pipeline  |  revision history: 0521001 (anchor 0520000)
+      0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R2_Trading_Pipeline  |  revision history: 0521001 (anchor 0520000)
     </text>
   </g>
 
@@ -2744,10 +2744,10 @@ This figure replaces the architectural detail previously carried in
         constraints: rule:HR-WM-024
         consumes: param:spot_usd_balance, param:portfolio_baseline, param:full_halt_drawdown_pct, param:session_pause_drawdown_pct
         produces: evt:G7_DRAWDOWN_HALT (on fail)
-        ciats_ownership: param:session_pause_drawdown_pct + param:full_halt_drawdown_pct are CIATS-OWNED PER-MODULE INSTANTIATED (per-wallet per §9.7 + §9.16/§9.17). Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039): the parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 — canonical value home is TB00000 §9.17 (pointer, not value). Both tokens pre-registered in 0311001 §15.12.8 (P-2 satisfied; zero new tokens this migration).
+        ciats_ownership: param:session_pause_drawdown_pct + param:full_halt_drawdown_pct are CIATS-OWNED PER-MODULE INSTANTIATED (per-wallet evaluation per TB00000 sec 7). The parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 — canonical value home is TB00000 sec 8 parameter registry.
         evaluation_order: 1
         schema_version: 1.0
-        q1_do: Computes per-wallet drawdown_pct = (portfolio_baseline - spot_usd_balance) / portfolio_baseline. PASS condition = drawdown_pct &lt; full_halt_drawdown_pct AND drawdown_pct &lt; session_pause_drawdown_pct. FAIL emits evt:G7_DRAWDOWN_HALT and short-circuits the remaining 4 checks (rule:HR-WM-024 strict evaluation order). Two-threshold cascade — full_halt_drawdown_pct (default 10% starting) triggers HALT disposition (module-wide stop until Bill ratifies); session_pause_drawdown_pct (default 5% starting) triggers PAUSE disposition (current session stops, resumes next session). Per-wallet evaluation per TB00000 v2_29 §9.7 — Long_Module and Short_Module evaluate independently against their own wallet balances.
+        q1_do: Computes per-wallet drawdown_pct = (portfolio_baseline - spot_usd_balance) / portfolio_baseline. PASS condition = drawdown_pct &lt; full_halt_drawdown_pct AND drawdown_pct &lt; session_pause_drawdown_pct. FAIL emits evt:G7_DRAWDOWN_HALT and short-circuits the remaining 4 checks (rule:HR-WM-024 strict evaluation order). Two-threshold cascade — full_halt_drawdown_pct (default 10% starting) triggers HALT disposition (module-wide stop until Bill ratifies); session_pause_drawdown_pct (default 5% starting) triggers PAUSE disposition (current session stops, resumes next session). Per-wallet evaluation per TB00000 sec 7 — Long_Module and Short_Module evaluate independently against their own wallet balances.
         q4_triggers: Triggered at start of every G7 Risk Guard evaluation (one per pipeline cycle per candidate trade per module). Drawdown computed against the immutable portfolio_baseline established at module-creation time. FAIL triggers: (1) emission of evt:G7_DRAWDOWN_HALT to mod:Logger with reason_code + drawdown_pct + threshold_crossed (full_halt vs session_pause); (2) short-circuit of CHECK 2-5; (3) module-wide HALT or session PAUSE per threshold crossed; (4) HIGH SMTP alert to alerts@tothbot.com via mod:Logger LG-ALERT-005 dispatch.
         q5_logs: evt:G7_DRAWDOWN_HALT written to tothbot.log via mod:Logger async-bounded-queue. Log record includes: timestamp, module (Long/Short), wallet_balance, portfolio_baseline, drawdown_pct, threshold_crossed (full_halt_drawdown_pct vs session_pause_drawdown_pct), disposition (HALT vs PAUSE), candidate_trade_rejected_id. PASS path emits no log entry (cheap-state-probe convention; CIATS observes FAIL frequency via EWMA Monitor on the labeled evt token).
       </desc>
@@ -2760,7 +2760,7 @@ This figure replaces the architectural detail previously carried in
     <text x="40" y="210" font-size="9" font-weight="400" fill="#475569" text-anchor="start">spot_usd_balance, portfolio_baseline,</text>
     <text x="40" y="222" font-size="9" font-weight="400" fill="#475569" text-anchor="start">full_halt_drawdown_pct (10% starting),</text>
     <text x="40" y="234" font-size="9" font-weight="400" fill="#475569" text-anchor="start">session_pause_drawdown_pct (5% starting)</text>
-    <text x="40" y="248" font-size="9" font-weight="400" fill="#475569" text-anchor="start">Per-wallet evaluation (TB00000 v2_29 §9.7)</text>
+    <text x="40" y="248" font-size="9" font-weight="400" fill="#475569" text-anchor="start">Per-wallet evaluation (TB00000 sec 7)</text>
   </g>
   <g class="decoration">
     <line x1="870" y1="200" x2="1098" y2="200" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow_g7_red)"/>
@@ -2781,7 +2781,7 @@ This figure replaces the architectural detail previously carried in
         parent_element: gate:G7_Risk_Guard
         consumes: positions_held_count_per_module, param:concentration_limit_per_module
         produces: evt:G7_CONCENTRATION_BREACH (on fail)
-        ciats_ownership: param:concentration_limit_per_module is CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17; Long_Module + Short_Module each instantiate their own value — independent per-module concentration limits). This is the Gate 7 CHECK 2 concentration limit consumed and enforced at this owning element check:G7_CHECK_2_Concentration: PASS condition = positions_held_count_per_module &lt; concentration_limit_per_module; FAIL emits evt:G7_CONCENTRATION_BREACH and short-circuits the remaining checks. Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039, TB00406 / DEC-047): the parameter's EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; its starting SEED VALUE is concentration_limit_per_module = 100% of wallet (NON-BINDING — the module wallet balance is the sole sizing boundary per §7; at seed, single-position size is governed by per_trade_size_usd $0.50). CIATS-OWNED from the 200-trade data floor onward (CIATS may set this up to 100% of wallet in a single position). Bill-ratified seed per TB00614 / DEC-115; canonical value home is TB00000 §8 parameter registry. Token pre-registered in 0311001 §15.12.8 (since v1_25 / TB00395; P-2 satisfied; zero new tokens this migration). SCOPE NOTE: the partner Gate 7 cap param:exposure_limit_pct (CHECK 3) is bound at a SEPARATE owning element (check:G7_CHECK_3_Exposure, this same diagram D8) and is NOT migrated this session — carried forward to its own one-mission/one-diagram session per DEC-003 Path A (one owning element / one diagram per session), keeping this a single-element single-diagram migration.
+        ciats_ownership: param:concentration_limit_per_module is CIATS-OWNED PER-MODULE INSTANTIATED (Long_Module + Short_Module each instantiate their own value — independent per-module concentration limits). This is the Gate 7 CHECK 2 concentration limit consumed and enforced at this owning element check:G7_CHECK_2_Concentration: PASS condition = positions_held_count_per_module &lt; concentration_limit_per_module; FAIL emits evt:G7_CONCENTRATION_BREACH and short-circuits the remaining checks. The parameter's EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; its starting SEED VALUE is concentration_limit_per_module = 100% of wallet (NON-BINDING — the module wallet balance is the sole sizing boundary per TB00000 sec 7). CIATS-OWNED from the 200-trade data floor onward (CIATS may set this up to 100% of wallet in a single position). Bill-ratified seed; canonical value home is TB00000 sec 8 parameter registry.
         evaluation_order: 2
         schema_version: 1.0
         q1_do: Computes per-module count of currently held positions (from mod:Position_Mirror) and compares against the CIATS-owned concentration_limit_per_module parameter. PASS condition = positions_held_count &lt; concentration_limit. FAIL emits evt:G7_CONCENTRATION_BREACH and short-circuits the remaining 3 checks. Per-module evaluation — Long_Module concentration counted only against Long open positions, Short_Module concentration counted only against Short open positions (independent caps).
@@ -2819,10 +2819,10 @@ This figure replaces the architectural detail previously carried in
         produces: evt:G7_EXPOSURE_BREACH (on fail)
         evaluation_order: 3
         schema_version: 1.0
-        q1_do: Computes per-module exposure_ratio = total_committed_usd / wallet_balance and compares against the CIATS-owned exposure_limit_pct parameter. PASS condition = exposure_ratio &lt; exposure_limit. FAIL emits evt:G7_EXPOSURE_BREACH and short-circuits the remaining 2 checks. total_committed_usd is the sum of currently-committed capital across all open positions for the module; wallet_balance is the module-specific wallet from mod:Position_Mirror. Per-module evaluation enforces wallet-independence between Long_Module and Short_Module (TB00000 v2_29 §9.3 + §9.7).
+        q1_do: Computes per-module exposure_ratio = total_committed_usd / wallet_balance and compares against the CIATS-owned exposure_limit_pct parameter. PASS condition = exposure_ratio &lt; exposure_limit. FAIL emits evt:G7_EXPOSURE_BREACH and short-circuits the remaining 2 checks. total_committed_usd is the sum of currently-committed capital across all open positions for the module; wallet_balance is the module-specific wallet from mod:Position_Mirror. Per-module evaluation enforces wallet-independence between Long_Module and Short_Module (TB00000 sec 7).
         q4_triggers: Triggered at start of every G7 Risk Guard evaluation that passed CHECK 1 + CHECK 2 (one per pipeline cycle per candidate trade per module). FAIL triggers: (1) emission of evt:G7_EXPOSURE_BREACH to mod:Logger with reason_code + total_committed_usd + wallet_balance + exposure_ratio + exposure_limit_pct; (2) short-circuit of CHECK 4-5; (3) BLOCK disposition on this candidate (candidate dropped; module continues for next candidate); (4) no SMTP alert (BLOCK is normal flow control).
         q5_logs: evt:G7_EXPOSURE_BREACH written to tothbot.log via mod:Logger async-bounded-queue. Log record includes: timestamp, module, total_committed_usd, wallet_balance, exposure_ratio, exposure_limit_pct, candidate_trade_rejected_id. PASS path emits no log entry. CIATS observes FAIL frequency per module via EWMA Monitor.
-        ciats_ownership: param:exposure_limit_pct is CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17; Long_Module + Short_Module each instantiate their own value — independent per-module exposure limits). This is the Gate 7 CHECK 3 exposure limit consumed and enforced at this owning element check:G7_CHECK_3_Exposure: PASS condition = exposure_ratio = total_committed_usd_per_module / wallet_balance_per_module &lt; exposure_limit_pct; FAIL emits evt:G7_EXPOSURE_BREACH and short-circuits the remaining checks. Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039, TB00407 / DEC-048): the parameter's EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; its starting SEED VALUE is exposure_limit_pct = 100% of wallet (NON-BINDING — the module wallet balance is the sole sizing boundary per §7). CIATS-OWNED from the 200-trade data floor onward (CIATS may use up to 100% of wallet across all open positions). Bill-ratified seed per TB00614 / DEC-115; canonical value home is TB00000 §8 parameter registry. Token pre-registered in 0311001 §15.12.8 (since v1_25 / TB00395; P-2 satisfied; zero new tokens this migration). PAIR-COMPLETION NOTE: this migration completes the value-less D8-caps pair — the partner Gate 7 cap param:concentration_limit_per_module (CHECK 2) was migrated to its owning element check:G7_CHECK_2_Concentration at the prior session (TB00406 / DEC-047); with this CHECK 3 migration both D8 Gate 7 caps now carry the CIATS-ownership architectural fact at their respective single owning elements per DEC-003 Path A (one owning element / one diagram per session).
+        ciats_ownership: param:exposure_limit_pct is CIATS-OWNED PER-MODULE INSTANTIATED (Long_Module + Short_Module each instantiate their own value — independent per-module exposure limits). This is the Gate 7 CHECK 3 exposure limit consumed and enforced at this owning element check:G7_CHECK_3_Exposure: PASS condition = exposure_ratio = total_committed_usd_per_module / wallet_balance_per_module &lt; exposure_limit_pct; FAIL emits evt:G7_EXPOSURE_BREACH and short-circuits the remaining checks. The parameter's EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; its starting SEED VALUE is exposure_limit_pct = 100% of wallet (NON-BINDING — the module wallet balance is the sole sizing boundary per TB00000 sec 7). CIATS-OWNED from the 200-trade data floor onward (CIATS may use up to 100% of wallet across all open positions). Bill-ratified seed; canonical value home is TB00000 sec 8 parameter registry.
       </desc>
     <polygon points="610,400 870,440 610,480 350,440" fill="#dbeafe" stroke="#1e40af" stroke-width="2"/>
     <text x="610" y="435" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">CHECK 3 — Exposure</text>
@@ -2855,7 +2855,7 @@ This figure replaces the architectural detail previously carried in
         produces: evt:G7_SEMAPHORE_BUSY (on fail = locked)
         evaluation_order: 4
         schema_version: 1.0
-        q1_do: Non-blocking probe of the per-module BoundedSemaphore via semaphore.locked() (does NOT acquire; only reads lock state). PASS condition = semaphore.locked() == False (FREE). FAIL = semaphore.locked() == True (LOCKED — held by mod:Execution_Engine during an in-flight dispatch for this module). FAIL emits evt:G7_SEMAPHORE_BUSY. CHECK 4 (Semaphore) is the final check in the 4-check cascade, so a LOCKED result yields a SKIP-cycle disposition with no further checks. Per-module semaphore — Long_Module has its own semaphore; Short_Module has its own semaphore; independent serialization (TB00000 v2_29 §9.3). Pattern per ar:AR-043 (BoundedSemaphore = per-module dispatch serialization without blocking the broader pipeline).
+        q1_do: Non-blocking probe of the per-module BoundedSemaphore via semaphore.locked() (does NOT acquire; only reads lock state). PASS condition = semaphore.locked() == False (FREE). FAIL = semaphore.locked() == True (LOCKED — held by mod:Execution_Engine during an in-flight dispatch for this module). FAIL emits evt:G7_SEMAPHORE_BUSY. CHECK 4 (Semaphore) is the final check in the 4-check cascade, so a LOCKED result yields a SKIP-cycle disposition with no further checks. Per-module semaphore — Long_Module has its own semaphore; Short_Module has its own semaphore; independent serialization (TB00000 sec 7). Pattern per ar:AR-043 (BoundedSemaphore = per-module dispatch serialization without blocking the broader pipeline).
         q4_triggers: Triggered at start of every G7 Risk Guard evaluation that passed CHECK 1 + 2 + 3 (one per pipeline cycle per candidate trade per module). LOCKED triggers: (1) emission of evt:G7_SEMAPHORE_BUSY to mod:Logger with reason_code + module + candidate_trade_id; (2) no further checks (CHECK 4 is the final check in the 4-check cascade); (3) SKIP cycle disposition — candidate retried on the next candle (NOT BLOCK — semaphore lock is transient, not a policy rejection); (4) no SMTP alert (SKIP is normal flow control during high-frequency dispatch contention).
         q5_logs: evt:G7_SEMAPHORE_BUSY written to tothbot.log via mod:Logger async-bounded-queue. Log record includes: timestamp, module, semaphore_id, candidate_trade_id_retried, dispatch_in_flight_lock_holder. FREE path emits no log entry. CIATS observes LOCKED frequency per module via EWMA Monitor (sustained high-LOCKED frequency would indicate dispatch latency tuning need).
       </desc>
@@ -2891,13 +2891,12 @@ This figure replaces the architectural detail previously carried in
     <text x="40" y="928" fill="#ffffff" font-size="13" font-weight="700">Gate 7 Risk Guard — Coder Implementation Notes</text>
     <text x="40" y="952" fill="#cbd5e1" font-size="10" font-weight="400">EVALUATION ORDER IS STRICT — first failure short-circuits the remaining checks. Cheapest checks first (drawdown, concentration, exposure are cached state probes); semaphore is a non-blocking lock probe.</text>
     <text x="40" y="976" fill="#cbd5e1" font-size="10" font-weight="400">EVERY FAILURE EMITS its labeled event identifier to mod:Logger (sole CIATS data source). Reason code on every reject. CIATS observes failure frequency per check via EWMA Monitor.</text>
-    <text x="40" y="1000" fill="#cbd5e1" font-size="10" font-weight="400">PER-MODULE EVALUATION — each trading module (Long, Short, future) evaluates Gate 7 against its own wallet + own positions + own semaphore. Long failure does not block Short, and vice versa (TB00000 v2_29 §9.3 + §9.7).</text>
-    <text x="40" y="1052" fill="#cbd5e1" font-size="10" font-style="italic">Migrated from 1011011 Risk_Engine_Coding_Spec dv1_3 (retired this audit cycle). All four checks become diagram-canonical per TB00000 §4.5 DD-001.</text>
+    <text x="40" y="1000" fill="#cbd5e1" font-size="10" font-weight="400">PER-MODULE EVALUATION — each trading module (Long, Short, future) evaluates Gate 7 against its own wallet + own positions + own semaphore. Long failure does not block Short, and vice versa (TB00000 sec 7).</text>
   </g>
 </svg>
   </div>
   <figcaption>
-    Image8 Gate 7 Risk Guard Detail (R4). Forensic provenance — the §15.16.3 / V-040 20-cell design-completeness attestation, the OPTION-R extension stack (i)-(xi) (incl. the 0911002 Phase-1 CIATS-ownership migrations, the TB00614 Gate-7 cap-seed definitions, and the TB00593 DR-078 fact-level comprehensiveness verification), the CI-005/CI-006 visible-stack rolling narratives, the TB00360 R1→R2 V-040 original attestation preserved-for-reference block, and all prior amendment narratives — relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00642). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+    Image8 Gate 7 Risk Guard Detail (R5). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R5.<br>
   </figcaption>
 </figure>
 
