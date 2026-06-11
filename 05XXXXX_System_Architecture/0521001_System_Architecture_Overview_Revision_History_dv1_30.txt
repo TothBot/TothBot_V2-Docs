@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_29
+DocVersion: dv1_30
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_29.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_30.txt
 DocDate:    06-11-2026
-DocTime:    09:35:00 UTC
+DocTime:    17:20:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -18659,6 +18659,480 @@ AMENDMENT NARRATIVE -- D3 R9 -> R10 (TB00652; 0500000 dv1_206 -> dv1_207; DEC-12
   STATUS: all DEC-124 D3 corrections complete; dust/partial-fill split resolved per Bill ruling
   (TB00652) -- "no split and no dust." No D3 open items.
 
+
+AMENDMENT NARRATIVE -- D3 R10 -> R11 (TB00673; 0500000 dv1_219 -> dv1_220;
+DEC-125 SLICE 5: D3 EXIT ARCHITECTURE -- D3-1..D3-10 + BILL-RATIFIED FEE-LINE FIX):
+  Register instances executed this slice (TB00668 register; NSI TB00673 sec 2):
+  D3-1 (root-desc DW-2 bare pointer; the four-chain parenthetical + the Phase M
+  (TB00638) cite + the appended "R9->R10 run-to-reversal restoration relocated per
+  DEC-123 standing discipline (TB00652)" narrative relocated in this entry), D3-2
+  (the (a)-(d) registry_gap_note R4-era amendment narrative -- incl. the dead
+  ar:AR-066 enumeration and the stale DR-040 / Trade-Outcome-Bus carry-forwards --
+  RELOCATED verbatim below; line deleted), D3-3 (the 3.9 KB Exit-Controller
+  parameter-group migration narrative (TB00403/DEC-045 + TB00404/DEC-046 session
+  stories, P-2 token-register narration, bracketed completion block) RELOCATED in
+  the op record below; the live four-token group restated history-free (mae_mult,
+  emergency_sl_mult, cancel_timeout_window, mpp_retry_count; CIATS-OWNED PER-MODULE
+  INSTANTIATED; value home TB00000 sec 8); the embedded max_hold_candles retirement
+  narrative DELETED (Class B); 0311001 v1_47 verified live this session: all four
+  live tokens REGISTERED, param:max_hold_candles marked RETIRED v1_47 TB00666),
+  D3-4 (the "(c) RETIRED per DEC-124" echo cluster: every bracketed/parenthetical
+  retirement clause DELETED at the eight register-listed surfaces; rule:HR-EC-016
+  restated positively as exactly two rules -- (a) L1a Step 1 pair-status
+  precondition; (b) Layer 2 priority over in-progress Layer 1a -- at the q1_do
+  three->two count, the rule_text rule-(c) sentence, and the constraints clause;
+  the rule_text label "(verbatim -- NEW dv1_48)" reduced to "(verbatim)" as a
+  same-clause accuracy pull-in, because after the rule-(c) removal the text is the
+  live restated rule, no longer the dv1_48 verbatim), D3-5 (VISIBLE no-resting-TP
+  row DELETED, rect + text; the positive L1a sequence -- cancel emergSL THEN market
+  sell -- fully determines; R-BUMP driver), D3-6 (VISIBLE callout title
+  "(TP-partial branch retired, DEC-124)" parenthetical deleted; R-BUMP driver),
+  D3-7 (VISIBLE DEC-124/TB00650 retirement callout row DELETED entire; the
+  take-profit-is-regime-reversal sentence is already canonical in the L1a band;
+  R-BUMP driver), D3-8 (the "(DEC-124, ratified TB00650)" cite stripped from the
+  estimator q1_do; REGISTER PATTERN DETERMINATION: the "(Bill ruling TB00654)"
+  cite pattern resolves to NO live D3 surface by content in dv1_219 -- grep zero
+  hits -- consistent with the TB00654 narrative having been relocated at TB00652;
+  nothing guessed), D3-9 (the two HTML provenance comments (NEW R2 -- DR-011 /
+  NEW R4 -- TB00214) DELETED, recorded verbatim in the op record below; the
+  VISIBLE D6 cross-reference stale "R3 (TB00166 STAGE K-2)" pin stripped, bare
+  cross-reference kept; R-BUMP driver), D3-10 (figcaption DW-1 bare form
+  (R10)->(R11); manifest text relocated in this entry).
+  CLUSTER MEMBERS LOCATED BY CONTENT (RR-SCOPE-008 -- register locators are
+  dv1_215 convenience only; instance membership verified by content): (i) the
+  Exit_Controller q5_logs surface (dv1_219 L3277; the TB00671 SL sec 4 flag (vi)
+  D3 FIELD-15 paren-variant) carries three cluster-member retirement clauses --
+  the "as amended by DEC-124: TP_FILL, TIME_EXPIRY, and SUB_MIN_RESIDUAL_ABANDONED
+  retired ... dust" paren-variant, the "former TP-partial+L2 conflict branch is
+  RETIRED per DEC-124" clause, and the trailing DR-079/SUB_MIN_RESIDUAL Bill-ruling
+  bracket -- all three DELETED under D3-4 (the NSI sec 2(d) content test: the
+  surface IS a cluster line); TB00671 flag (vi) is CLOSED; the live FIELD-15
+  four-value enum {MAE_THRESHOLD_BREACH, HTF_REGIME_REVERSAL,
+  DAILY_REGIME_DOWNGRADE, PAIR_LIMIT_ONLY_EXIT} per DEC-066 stands; (ii) the L2
+  q1_do surface (dv1_219 L3378) carries the "rule:HR-EC-016 rule (c) is RETIRED
+  per DEC-124" cluster-member clause (DELETED under D3-4) and the desc-side
+  content twin of the D3-5 visible row ("no resting take-profit order to cancel
+  under run-to-reversal (DEC-124)") (DELETED under the D3-5 content signature).
+  Desc-only; no additional R impact.
+  FEE-LINE (OPEN BILL INPUT 2 -- RESOLVED, BILL-RATIFIED THIS SESSION TB00673):
+  the register's carried fold-in proposal assumed a grep-confirm no-op ("live D3
+  fee text already reads taker basis; zero maker-out/0.32%/0.42% strings" --
+  TB00667 SL 4(b)). The register term set returns zero hits, but a by-content
+  check found one stale VISIBLE maker-basis fee line the term set missed, at the
+  D3 Gate-8/R:R panel: "net_loss = mae_pct + 0.16% (entry maker) + 0.26% (MAE
+  taker)" (dv1_219 L3482). This contradicted live canon (DEC-122 CR-03 marketable
+  IOC entry = always taker; D1 FEE-BASE-003/004 taker-in/taker-out; the D3-8 desc
+  on the same element already read "entry taker fee") and was loss-relevant: an
+  understated entry fee understates net_loss and inflates expected R:R at the
+  sacred A1 floor. Bill ruling (TB00673, verbatim): 'Fix" -- Fold the corrected
+  taker-basis line into this slice's dv1_220 (recorded as a Bill-ratified
+  fee-line instance in the SL + 0521001 entry.' Executed as op C23: the visible
+  line now reads "net_loss = mae_pct + 0.26% (entry taker) + 0.26% (MAE taker)"
+  (folded into the same R10->R11 bump).
+  R-BUMP (TB00453): visible SVG <text> changes at D3-5 (row deleted), D3-6
+  (parenthetical deleted), D3-7 (row deleted), D3-9 (xref pin stripped), and the
+  Bill-ratified fee line -- plus the title-bar R string -- drive D3 R10 -> R11.
+  R11 propagated to SVG <title> + diagram_canonical + title-bar visible
+  identifier + root <desc> CURRENT R + figcaption (R10)->(R11).
+  All edits assertion-verified exact-match Python ops, count==1 asserted per
+  anchor, abort-on-fail, zero silent partials (35 ops total: 4 file-header,
+  3 R-string, 28 content).
+  INTEGRITY: diff localized to file-header lines {6,135,137,139} + the D3 figure
+  block (dv1_219 L3226-3528); all 9 other figures byte-identical (DEC-003 Path
+  A); tag balance figure 10/10, svg 10/10, desc 125/125, figcaption 10/10, text
+  959/959 (961 -> 959: two visible rows deleted); SVG-text extraction visible
+  diff set == exactly the planned D3-5/D3-7 deletions + the D3-6 title, D3-9
+  xref, fee-line, and title-bar R-string replacements, all other figures' visible
+  text IDENTICAL; html.parser pass 0 exceptions (DR-007.9); exactly one <h2>14.
+  Revision History</h2>; D3-block residue greps clean on every edited line (zero
+  RETIRED-per-DEC-124, zero ar:AR-066, zero SUB_MIN_RESIDUAL, zero DR-079, zero
+  registry_gap_note, zero 0.16%/entry-maker, zero TB00166-STAGE-K-2, zero
+  NEW-R2/NEW-R4 comments, zero max_hold_candles, zero TB00403/TB00404/DEC-045/
+  DEC-046, zero Image3_T2_R10 strings). Reverse-reconstruction verified: the op
+  record below applied in reverse to dv1_220 reproduces dv1_219 byte-identical
+  (md5 e711218c4edb51a394ebe02723e26888); forward replay reproduces dv1_220
+  byte-identical (md5 251429ee9057973757cfb7d55860b6e9).
+  FLAGGED (not fixed; one-campaign-per-slice / exact-register-scope -- see
+  TB00673 SL sec 4): the L1a q4_triggers and Exit_Controller q4_triggers
+  surviving live-model parentheticals with negation + cite tails ("run to
+  reversal; no fixed TP(,) (and) no max-hold per DEC-124(, ratified TB00650)") --
+  no RETIRED signature, no in-scope instance match (TB00672 flag-iv class); the
+  VISIBLE ORIGINAL DESIGN justification block (0741001 sec 3.3/3.4 cite +
+  10,000-trial sim narrative + the visible "DEC-124 (ratified TB00650) - restores
+  documented behaviour" line); the HTML comment "(replaces former L1b TP-fill
+  layer; DEC-124)"; the D3-8 stale "the seed value in TB00000 sec 9" pointer
+  (live registry is sec 8; DW-3 class, loss-relevant, TB00672 flag-iii
+  precedent); the sec-12 prose stale pin "Canonical: D3 Image3_T2_R10" (now
+  stale against R11; prose-slice scope); unenumerated visible cite residue
+  ("(NEW dv1_5 -- I-6)" cancel-timeout title, "rule:HR-PM-009 (verbatim, 0511005
+  dv1_1)", "(0511005 dv1_1)" callout title, "strengthened by rule:HR-PM-011 (NEW
+  dv1_1)").
+  0500000 dv1_219 -> dv1_220 (md5 251429ee9057973757cfb7d55860b6e9); this
+  archive dv1_29 -> dv1_30 (append-only; all prior content byte-identical).
+
+----- DEC-125 SLICE 5 OP RECORD -- REMOVED / RESTATED D3 CONTENT
+      (VERBATIM, ORDERED, ANCHORED; supports reverse-reconstruction;
+      context-extended anchors -- each REMOVED string unique in dv1_219,
+      each LIVE REPLACEMENT unique in dv1_220; TB00671 op-pair method) -----
+
+[H1|header|HTML title]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000 System Architecture Overview dv1_219</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000 System Architecture Overview dv1_220</title>
+</pre>
+
+[H2|header|DocVersion]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocVersion</td><td>dv1_219</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocVersion</td><td>dv1_220</td></tr>
+</pre>
+
+[H3|header|DocPath]
+REMOVED (VERBATIM):
+<pre>
+0500000_System_Architecture_Overview_dv1_219_Claude_Source.html</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_System_Architecture_Overview_dv1_220_Claude_Source.html</td></tr>
+</pre>
+
+[H4|header|DocTime]
+REMOVED (VERBATIM):
+<pre>
+<tr><td>DocTime</td><td>09:30:00 UTC</td></tr>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<tr><td>DocTime</td><td>17:05:00 UTC</td></tr>
+</pre>
+
+[R1|R-string|SVG <title>]
+REMOVED (VERBATIM):
+<pre>
+<title>0500000_Image3_T2_R10_Exit_Architecture</title>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+<title>0500000_Image3_T2_R11_Exit_Architecture</title>
+</pre>
+
+[R2|R-string|diagram_canonical]
+REMOVED (VERBATIM):
+<pre>
+diagram_canonical: 0500000_Image3_T2_R10_Exit_Architecture
+</pre>
+LIVE REPLACEMENT:
+<pre>
+diagram_canonical: 0500000_Image3_T2_R11_Exit_Architecture
+</pre>
+
+[R3|R-string|title-bar visible identifier (R-BUMP)]
+REMOVED (VERBATIM):
+<pre>
+0500000_Image3_T2_R10_Exit_Architecture  |  schema_version: 1.0
+</pre>
+LIVE REPLACEMENT:
+<pre>
+0500000_Image3_T2_R11_Exit_Architecture  |  schema_version: 1.0
+</pre>
+
+[C1|D3-1|root-desc provenance DW-2 bare pointer (R9->R10 narrative + chain parenthetical relocated)]
+REMOVED (VERBATIM):
+<pre>
+    provenance: R-increment history (R-increment + R-increment-prior + R-increment-prior-2 + R-increment-prior-3) relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00638); R9-&gt;R10 run-to-reversal restoration relocated per DEC-123 standing discipline (TB00652). CURRENT R: R10.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R11.
+</pre>
+
+[C2|D3-2|registry_gap_note R4-era amendment narrative RELOCATED verbatim (line deleted)]
+REMOVED (VERBATIM):
+<pre>
+    registry_gap_note: (a) D3 R1 root desc used a generic 0311001 v1_6 §15.11/§15.12 binding reference rather than an enumerated governs list; R2 enumerated the governs list explicitly per the D6 R3 / D7 R2 precedent pattern. (b) R4 adds ONE new architectural identifier rule:HR-EC-016 (Layer 2 priority + TP-partial conflict resolution + L1a Step 1 pair-status precondition) and TWO previously-implicit ar: identifiers (ar:AR-040 pair status events + ar:AR-066 TP partial fill) now explicitly enumerated. rule:HR-EC-016 is the only NEW rule identifier created in dv1_48; ar:AR-040 + ar:AR-066 are already canonically defined in §10 AR registry and merely added to this diagram's enumerated governs list per V-038 diagram-prose parity (their tokens were already depicted in D3 R1 visual content via the cancel_only/maintenance HOLD callout and the TP partial fill amend logic shown in D2 ON FILL block). (c) DR-040 (Layer 2 mae_pct_reached field) DEFERRED — 1011006 dv1_2 Phase 1 spec not landed in /mnt/project/ at TB00214 cold-load; carries forward to a future Stage Kn after Phase 1 spec lands. (d) CIATS Trade Outcome Bus 24-field schema reconciliation (1011005 dv1_3 §9 EC-TOB-002 vs 0511004 dv1_3 §7.5 12-field schema) DEFERRED to a future dv1_NN session amending Diagram 5 under DEC-003 Path A one-diagram-per-session cadence; logged as carry-forward in TB00214 SL §7.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(LINE DELETED)
+</pre>
+
+[C3|D3-3|ciats_ownership migration narrative RELOCATED; live four-token group restated; embedded max_hold_candles retirement narrative DELETED (Class B)]
+REMOVED (VERBATIM):
+<pre>
+        ciats_ownership: param:mae_mult + param:emergency_sl_mult are CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17). These are the two exit-controller risk-leg multipliers of this owning element: param:mae_mult sets the Layer 2 MAE-threshold distance (entry_fill_price - bid) &gt;= ATR(14) x param:mae_mult, present in this element's consumes field + q4_triggers field + D3 root governs; param:emergency_sl_mult sets the Layer 3 off-book emergency-SL distance ATR(14) x param:emergency_sl_mult, present in the layer:L3_Emergency_SL sub-element consumes/q1_do + D3 root governs. Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039): the parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element mod:Exit_Controller on D3; their starting VALUES are NOT encoded in 0500000 — canonical value home is TB00000 §9.17 (mae_mult 1.5x ATR(14) / emergency_sl_mult 3.0x ATR(14) starting; pointer, not value). Both tokens pre-registered in 0311001 §15.12.8 (P-2 satisfied; zero new tokens this migration). SCOPE NOTE: the §9.17 Exit-controller group names five tokens; its other three (param:cancel_timeout_window + param:mpp_retry_count + param:max_hold_candles) appear in 0500000 ONLY in §8 architectural-reasoning prose / §9 value-mirror / revision-history (AR-077 / AR-078 / AR-071) and are NOT bound as structured param: tokens in any single owning diagram element — they are OUT OF SCOPE this session and carried forward to their own one-mission/one-diagram session per DEC-003 Path A, keeping this a single-element single-diagram migration. [TB00404 / DEC-046 — EXIT-CONTROLLER GROUP COMPLETION: the three carried-forward tokens param:cancel_timeout_window + param:mpp_retry_count + param:max_hold_candles are NOW migrated to this same owning element mod:Exit_Controller on D3 per 0911002 dv1_1 §8 P-1..P-6 (Option A / DEC-039). All three are CIATS-OWNED PER-MODULE INSTANTIATED (per §9.16/§9.17) and govern machinery of this owning element: param:cancel_timeout_window (AR-077) sets how long mod:Exit_Controller waits for a cancel_order ACK before the cancel-timeout fallback recovery (I-6 protocol, Layer 1a/2 exit sequences); param:mpp_retry_count (AR-078) sets the number of IOC limit-sell retries at best_bid - 0.2% increments after an MPP market-sell rejection (C-1 MPP IOC retry, Layer 1a/2 exit sequences); param:max_hold_candles (AR-071) formerly set a Layer 1a time-expiry backstop; that backstop is RETIRED per DEC-124 (run-to-reversal has no max-hold time cap), so max_hold_candles is no longer an operative exit parameter. Architectural fact migrated: the three parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element mod:Exit_Controller on D3; their starting VALUES are NOT encoded in 0500000 — canonical value home is TB00000 §9.17 (cancel_timeout_window 5.0 seconds / mpp_retry_count 3 attempts; the former max_hold_candles 24-candle value is RETIRED per DEC-124; pointer, not value). P-2 TOKEN REGISTER: all three tokens were ABSENT from 0311001 v1_26 §15.12.8 (live grep-verified this session); 0311001 v1_26 -&gt; v1_27 registers param:cancel_timeout_window + param:mpp_retry_count + param:max_hold_candles (three new tokens this migration). This migration COMPLETES the §9.17 Exit-controller group (all five tokens now CIATS-ownership-attested at mod:Exit_Controller: mae_mult + emergency_sl_mult at TB00403 / DEC-045; cancel_timeout_window + mpp_retry_count + max_hold_candles at TB00404 / DEC-046). DEC-124 (ratified TB00650): the former max_hold time-expiry backstop is RETIRED (run-to-reversal); param:max_hold_candles is no longer operative, so the live exit-controller param group is now FOUR tokens (mae_mult, emergency_sl_mult, cancel_timeout_window, mpp_retry_count); the max_hold_candles §9 value and its 0311001 token entry are retired in the DEC-124 prose / governance slices.]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+        ciats_ownership: the live Exit-Controller parameter group is FOUR tokens, all CIATS-OWNED PER-MODULE INSTANTIATED: param:mae_mult sets the Layer 2 MAE-threshold distance (entry_fill_price - bid) &gt;= ATR(14) x param:mae_mult (present in this element's consumes field + q4_triggers field + D3 root governs); param:emergency_sl_mult sets the Layer 3 off-book emergency-SL distance ATR(14) x param:emergency_sl_mult (present in the layer:L3_Emergency_SL sub-element consumes/q1_do + D3 root governs); param:cancel_timeout_window sets how long mod:Exit_Controller waits for a cancel_order ACK before the cancel-timeout fallback recovery (I-6 protocol, Layer 1a/2 exit sequences); param:mpp_retry_count sets the number of IOC limit-sell retries at best_bid - 0.2% increments after an MPP market-sell rejection (C-1 MPP IOC retry, Layer 1a/2 exit sequences). The four parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element mod:Exit_Controller on D3; their starting VALUES are NOT encoded in 0500000 -- canonical value home is TB00000 sec 8 (pointer, not value).
+</pre>
+
+[C4|D3-4|Exit_Controller q1_do retirement clause]
+REMOVED (VERBATIM):
+<pre>
+enforces rule:HR-EC-016 conflict resolution (L1a Step 1 pair-status precondition + L2 priority over in-progress L1a; the former TP-partial+L2 conflict branch is RETIRED per DEC-124 - no resting TP, no TP partial fill).
+</pre>
+LIVE REPLACEMENT:
+<pre>
+enforces rule:HR-EC-016 conflict resolution (L1a Step 1 pair-status precondition + L2 priority over in-progress L1a).
+</pre>
+
+[C5|D3-4|Exit_Controller q4_triggers AR-066 bracket]
+REMOVED (VERBATIM):
+<pre>
+gating L1a Step 1 precondition; [the ar:AR-066 TP-partial conflict-resolution branch (former HR-EC-016 rule c) is RETIRED per DEC-124 - no resting TP, no TP partial fill]; ar:AR-040 limit_only
+</pre>
+LIVE REPLACEMENT:
+<pre>
+gating L1a Step 1 precondition; ar:AR-040 limit_only
+</pre>
+
+[C6|D3-4|Exit_Controller q4_triggers trailing DR-079/SUB_MIN_RESIDUAL Bill-ruling bracket]
+REMOVED (VERBATIM):
+<pre>
+ [DEC-124 (Bill ruling TB00652): the TP-partial-fill split mechanic and the DR-079 abandon-and-surface dust write-off (former exit_reason SUB_MIN_RESIDUAL_ABANDONED, former token ar:AR-066) are RETIRED - with no resting TP there is no TP partial fill, no order split, and no sub-minimum dust remainder.]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(DELETED -- no replacement text)
+</pre>
+
+[C7|D3-4|L2 q5_logs rule-c retirement clause]
+REMOVED (VERBATIM):
+<pre>
+operator alert); rule:HR-EC-016 rule (c) RETIRED per DEC-124 (no resting take-profit, no partial-TP conflict); paper mode
+</pre>
+LIVE REPLACEMENT:
+<pre>
+operator alert); paper mode
+</pre>
+
+[C8|D3-4|HR-EC-016 constraints retirement clause]
+REMOVED (VERBATIM):
+<pre>
+precondition binding; the former TP-partial conflict-resolution branch is RETIRED per DEC-124); ar:AR-040
+</pre>
+LIVE REPLACEMENT:
+<pre>
+precondition binding); ar:AR-040
+</pre>
+
+[C9|D3-4|HR-EC-016 q1_do three->two rules]
+REMOVED (VERBATIM):
+<pre>
+q1_do: encodes three architectural conflict-resolution rules
+</pre>
+LIVE REPLACEMENT:
+<pre>
+q1_do: encodes two architectural conflict-resolution rules
+</pre>
+
+[C10|D3-4|HR-EC-016 q1_do trailing DEC-124 bracket]
+REMOVED (VERBATIM):
+<pre>
+ (NOT original L1a reason). [DEC-124: the former rule (c) TP-partial-fill conflict is RETIRED - with no resting TP limit there is no TP partial fill to conflict with an MAE breach.]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+ (NOT original L1a reason).
+</pre>
+
+[C11|D3-4|HR-EC-016 q4_triggers rule-c bracket]
+REMOVED (VERBATIM):
+<pre>
+ [rule (c) RETIRED per DEC-124 - no resting TP limit, so no TP partial-fill event exists to conflict with an MAE breach.]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(DELETED -- no replacement text)
+</pre>
+
+[C12|D3-4|HR-EC-016 q5_logs rule-c bracket]
+REMOVED (VERBATIM):
+<pre>
+ [rule (c) RETIRED per DEC-124 - no resting TP, no TP-partial conflict.]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(DELETED -- no replacement text)
+</pre>
+
+[C13|D3-4|HR-EC-016 rule_text rule-c sentence (positive two-rule restatement)]
+REMOVED (VERBATIM):
+<pre>
+(not the original L1a reason). (c) RETIRED per DEC-124 (ratified TB00650): with no resting TP limit there is no TP partial fill, so the former TP-partial-vs-MAE conflict rule no longer exists."
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(not the original L1a reason)."
+</pre>
+
+[C14|D3-4|HR-EC-016 rule_text label (same-clause accuracy pull-in: text is no longer the dv1_48 verbatim)]
+REMOVED (VERBATIM):
+<pre>
+rule_text: rule:HR-EC-016 (verbatim — NEW dv1_48): "
+</pre>
+LIVE REPLACEMENT:
+<pre>
+rule_text: rule:HR-EC-016 (verbatim): "
+</pre>
+
+[C15|D3-5|VISIBLE no-resting-TP row DELETED (rect + text)]
+REMOVED (VERBATIM):
+<pre>
+</text>
+
+    <rect x="1020" y="354" width="420" height="32" fill="#dbeafe" stroke="#1e40af" stroke-width="1" rx="4"/>
+    <text x="1230" y="374" font-size="11" font-weight="600" fill="#1e3a8a" text-anchor="middle">no resting take-profit order to cancel (run-to-reversal, DEC-124)</text>
+
+    <rect x="1020" y="394"
+</pre>
+LIVE REPLACEMENT:
+<pre>
+</text>
+
+    <rect x="1020" y="394"
+</pre>
+
+[C16|D3-6|VISIBLE callout title parenthetical deleted]
+REMOVED (VERBATIM):
+<pre>
+>L1a STEP 1 PAIR-STATUS PRECONDITION + LAYER 2 PRIORITY — rule:HR-EC-016 (TP-partial branch retired, DEC-124)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>L1a STEP 1 PAIR-STATUS PRECONDITION + LAYER 2 PRIORITY — rule:HR-EC-016</text>
+</pre>
+
+[C17|D3-7|VISIBLE DEC-124 callout row DELETED]
+REMOVED (VERBATIM):
+<pre>
+    <text x="60" y="1405" font-size="10" font-weight="600" fill="#7c2d12" text-anchor="start">DEC-124 (ratified TB00650): the former TP-PARTIAL conflict rule is RETIRED. With no resting TP limit there is no TP partial fill, so no TP-vs-MAE conflict exists. Take-profit is regime reversal (Layer 1, run to reversal); the 1:1.5 R:R floor is an entry-acceptance test only.</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(LINE DELETED)
+</pre>
+
+[C18|D3-8|estimator q1_do DEC-124 cite strip]
+REMOVED (VERBATIM):
+<pre>
+the sacred 1:1.5 R:R is the ENTRY-ACCEPTANCE FLOOR (DEC-124, ratified TB00650) - a minimum
+</pre>
+LIVE REPLACEMENT:
+<pre>
+the sacred 1:1.5 R:R is the ENTRY-ACCEPTANCE FLOOR - a minimum
+</pre>
+
+[C19|D3-9|HTML provenance comment (NEW R2 -- DR-011) DELETED (recorded verbatim in 0521001)]
+REMOVED (VERBATIM):
+<pre>
+  <!-- HR-PM-009 sole-writer architectural callout band (NEW R2 — DR-011 D3 portion closure per TB00153 §6 Master Defect Register + Diagram Alter/Add/Remove Plan §6 D3 ALTER L3) -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(LINE DELETED)
+</pre>
+
+[C20|D3-9|HTML provenance comment (NEW R4 -- TB00214) DELETED (recorded verbatim in 0521001)]
+REMOVED (VERBATIM):
+<pre>
+  <!-- L1a Step 1 pair-status precondition + L2 priority + TP-partial conflict resolution architectural callout (NEW R4 — TB00214 Phase 1 1011005 audit migration: closes EC-TP-006 priority rule + EC-L1A-SEQ Step 1 binding gap per 1011005 dv1_3 §5.1 + §6.2 + §10) -->
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(LINE DELETED)
+</pre>
+
+[C21|D3-9|VISIBLE D6 cross-reference stale R3 pin + TB cite stripped]
+REMOVED (VERBATIM):
+<pre>
+>Cross-reference: D6 Complete_System R3 (TB00166 STAGE K-2) depicts the system-level wireup_callout for HR-PM-009 enforcement across all 8 reader modules.</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>Cross-reference: D6 Complete_System depicts the system-level wireup_callout for HR-PM-009 enforcement across all 8 reader modules.</text>
+</pre>
+
+[C22|D3-10|figcaption DW-1 bare form (R10)->(R11); manifest text relocated]
+REMOVED (VERBATIM):
+<pre>
+    Image3 Exit Architecture (R10). Forensic provenance — the §15.16.3 / V-040 35-cell design-completeness attestation, the OPTION-R extension stack, the CI-005/CI-006 visible-stack rolling narratives, and all prior amendment narratives — relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123 Phase M (TB00638). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).<br>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+    Image3 Exit Architecture (R11). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R11.<br>
+</pre>
+
+[C23|FEE|Bill-ratified taker-basis correction of the VISIBLE net_loss fee line (loss-relevant; R-BUMP)]
+REMOVED (VERBATIM):
+<pre>
+>net_loss = mae_pct + 0.16% (entry maker) + 0.26% (MAE taker)</text>
+</pre>
+LIVE REPLACEMENT:
+<pre>
+>net_loss = mae_pct + 0.26% (entry taker) + 0.26% (MAE taker)</text>
+</pre>
+
+[C24|D3-4|Exit_Controller q5_logs FIELD-15 paren-variant (TB00671 flag vi closed; cluster member by content)]
+REMOVED (VERBATIM):
+<pre>
+(the four Exit-Controller normal-operation reasons per DEC-066 as amended by DEC-124: TP_FILL, TIME_EXPIRY, and SUB_MIN_RESIDUAL_ABANDONED retired - reversal carries take-profit, no max-hold, and no resting TP so no partial-fill dust)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(the four Exit-Controller normal-operation reasons per DEC-066)
+</pre>
+
+[C25|D3-4|Exit_Controller q5_logs TP-partial+L2 retirement clause (cluster member by content)]
+REMOVED (VERBATIM):
+<pre>
+(never two records for same position; the former TP-partial+L2 conflict branch is RETIRED per DEC-124)
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(never two records for same position)
+</pre>
+
+[C26|D3-4|Exit_Controller q5_logs trailing DR-079/SUB_MIN_RESIDUAL Bill-ruling bracket (cluster member by content)]
+REMOVED (VERBATIM):
+<pre>
+ [DEC-124 (Bill ruling TB00652): the SUB_MIN_RESIDUAL_ABANDONED / DR-079 dust logging is RETIRED - no resting TP, no partial-fill split, no dust; the live Exit-Controller exit_reason set is the four-value DEC-066 set (as amended by DEC-124) enumerated above.]
+</pre>
+LIVE REPLACEMENT:
+<pre>
+(DELETED -- no replacement text)
+</pre>
+
+[C27|D3-4|L2 q1_do rule-c retirement clause (cluster member by content)]
+REMOVED (VERBATIM):
+<pre>
+ exit_reason override; rule:HR-EC-016 rule (c) is RETIRED per DEC-124 - with no resting take-profit order there is no partial-TP fill to conflict with an MAE breach.
+</pre>
+LIVE REPLACEMENT:
+<pre>
+ exit_reason override.
+</pre>
+
+[C28|D3-5|L2 q1_do desc-side content twin of the deleted D3-5 visible row]
+REMOVED (VERBATIM):
+<pre>
+ (rule:HR-EC-014 sequence-critical); there is no resting take-profit order to cancel under run-to-reversal (DEC-124); req_id registry
+</pre>
+LIVE REPLACEMENT:
+<pre>
+ (rule:HR-EC-014 sequence-critical); req_id registry
+</pre>
+
+----- END DEC-125 SLICE 5 OP RECORD -----
 
 
 5.4 D1 -- Image1 Kraken API Connection Architecture
