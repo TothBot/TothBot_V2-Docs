@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_224</title>
+<title>0500000 System Architecture Overview dv1_225</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_224</td></tr>
+  <tr><td>DocVersion</td><td>dv1_225</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_224_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_225_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-11-2026</td></tr>
-  <tr><td>DocTime</td><td>18:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>21:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -217,8 +217,7 @@ flows; gray arrows mark operational channels (Bill / VPS / GitHub / Mail).
 <p>
 Tier 1 RULE: this diagram has parent_diagram = none (it is itself the root).
 Every labeled &lt;g&gt; group in this diagram carries class="tier-1" and a
-structured &lt;title&gt;+&lt;desc&gt; per 0311001 v1_7 §15.11.6 (Tier 1 root-desc
-contract — added in this dv1_25 amendment cycle bundled with TB00154 Stage A).
+structured &lt;title&gt;+&lt;desc&gt; per 0311001 v1_7 §15.11.6 (Tier 1 root-desc contract).
 The seven drill_target attributes in the root &lt;desc&gt; resolve to the seven
 Tier 2 diagrams (D1 - D7) below.
 </p>
@@ -226,14 +225,14 @@ Tier 2 diagrams (D1 - D7) below.
   <div class="diagram-svg">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
          font-family="Arial, Helvetica, sans-serif" font-size="12">
-      <title>0500000_Context_T1_R2_System_Context</title>
+      <title>0500000_Context_T1_R3_System_Context</title>
       <desc>
-        diagram_canonical: 0500000_Context_T1_R2_System_Context
+        diagram_canonical: 0500000_Context_T1_R3_System_Context
         tier: 1
         parent_dcn: 0500000
         schema_version: 1.0
-        provenance: R-increment history (R-increment + R-increment-prior + R-increment-prior-2; actual amendment count R24 → R25 through TB00392, display label frozen at R2 per V-041 Class A campaign-pause TB00374) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00644). CURRENT display R: R2.
-        governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 v2_20 §4.4 paper-as-master) + ar:AR-001..AR-076 (system-level architectural rules cumulative through 0500000 dv1_24) + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
+        provenance: R-increment history relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R3.
+        governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 sec 4.3 paper-as-master) + ar:AR-001..AR-076 + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
         drill_targets: 0500000_Image1_T2_Kraken_API_Connection_Architecture, 0500000_Image2_T2_Trading_Pipeline, 0500000_Image3_T2_Exit_Architecture, 0500000_Image4_T2_Regime_Taxonomy, 0500000_Image5_T2_CIATS_Architecture, 0500000_Image6_T2_Complete_System, 0500000_Image7_T2_Paper_Mode_Dispatch_Boundary
         Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
       </desc>
@@ -257,7 +256,7 @@ Tier 2 diagrams (D1 - D7) below.
         <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
               text-anchor="middle">DIAGRAM 0 — Tier 1 System Context</text>
         <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-          0500000_Context_T1_R2_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
+          0500000_Context_T1_R3_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
         </text>
       </g>
       <g id="pa_master_banner" class="decoration">
@@ -266,7 +265,7 @@ Tier 2 diagrams (D1 - D7) below.
           PA-001  Paper IS Master   ·   Live MIMICS Paper   ·   PA-004 four divergence points only
         </text>
         <text x="750.0" y="129" fill="#1e40af" font-size="10" font-style="italic" text-anchor="middle">
-          (1) Private WS connection   (2) Order dispatch   (3) Capital ledger   (4) Position Mirror sourcing  ·  TB00000 v2_20 §4.4
+          (1) Private WS connection   (2) Order dispatch   (3) Capital ledger   (4) Position Mirror sourcing  ·  TB00000 sec 4.3
         </text>
       </g>
       <g id="tothbot_v2_organism" class="tier-1">
@@ -289,7 +288,7 @@ Tier 2 diagrams (D1 - D7) below.
         <rect x="80" y="178" width="950" height="16" fill="#0c4a6e"/>
         <text x="555.0" y="182" fill="#ffffff" font-size="16" font-weight="700" text-anchor="middle">TOTHBOT V2 ORGANISM</text>
         <text x="555.0" y="210" fill="#0f172a" font-size="10" font-style="italic" text-anchor="middle">
-          The three-system organism (TB00000 §1)  ·  one whole at three time scales  ·  not three separate systems
+          The three-system organism (TB00000 sec 1)  ·  one whole at three time scales  ·  not three separate systems
         </text>
         <g id="kraken_role" class="tier-1">
           <title>container:Kraken_Zone</title>
@@ -323,8 +322,7 @@ Tier 2 diagrams (D1 - D7) below.
           <text x="186" y="414" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">connected in paper mode</text>
           <text x="114" y="436" font-size="11" font-weight="700" fill="#0f172a" text-anchor="start">Universe:</text>
           <text x="186" y="436" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">USD + USDC + USDT spot</text>
-          <text x="186" y="452" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">(D-03 LOCKED, no Top-N cap</text>
-          <text x="186" y="468" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start"> per D-08 LOCKED)</text>
+          <text x="186" y="452" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">(D-03 LOCKED)</text>
           <text x="114" y="490" font-size="11" font-weight="700" fill="#0f172a" text-anchor="start">Liquidity:</text>
           <text x="186" y="490" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">$500k USD/day floor</text>
           <text x="186" y="506" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">(D-04 LOCKED)</text>
@@ -380,7 +378,7 @@ Tier 2 diagrams (D1 - D7) below.
               tier: 1
               parent_diagram: none
               drill_targets: 0500000_Image5_T2_R1_CIATS_Architecture
-              constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned), decision:D-08 (Top-N retired)
+              constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned)
               consumes: contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE
               produces: contract:Parameter_Store_Snapshot, param:per_trade_size_usd, param:mae_mult, param:emergency_sl_mult, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods, param:min_volume_usd_daily
               q1_do: continuous-improvement container - consumes contract:CIATS_Trade_Outcome_Bus + evt:TRADE_CLOSE; produces contract:Parameter_Store_Snapshot with CIATS-owned starting values; applies Mann-Whitney U + Sharpe + Spearman + CUSUM + Half-Kelly statistics at 200+ trade threshold
@@ -422,7 +420,7 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: none
-            constraints: rule:TB00000_v2_20_§1_sole_operator_acknowledgment
+            constraints: rule:TB00000_sec1_sole_operator_acknowledgment
             consumes: evt:ALERT_DELIVERED (via mail boundary)
             produces: ssh:operational_command, github:commit_event, git:push
             q1_do: external sole-operator actor - ratifies decisions, commits documents to GitHub, deploys VPS via SSH, receives alerts via alerts@tothbot.com read-only inbox; authoritative for all PA-006 + RR-SCOPE-009 overrides per TB00000 sole-operator acknowledgment
@@ -451,7 +449,7 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: none
-            constraints: rule:TB00000_v2_20_§11_storage_authoritative
+            constraints: rule:TB00000_sec9_storage_authoritative
             consumes: ssh:operational_command (from Bill), git:pull (from TothBot_V2-Code)
             produces: file:tothbot.log, mail:alert_send (via Mail_Alerts)
             q1_do: hosting-boundary container - hosts tothbot.service systemd process 24/7/365 on Ubuntu 24.04.4 LTS + Python 3.12.3 at 87.99.141.44 Ashburn VA Hetzner CPX22; runs TothBot V2 process + operations/ scripts (Pathway 2 only per HR-TP002)
@@ -480,10 +478,10 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: none
-            constraints: rule:TB00000_v2_20_§9.7_alert_routing, ar:OI-019_singular_to_plural_endpoint_correction
+            constraints: rule:TB00000_sec7_alert_routing
             consumes: mail:alert_send (from Logger via VPS)
             produces: mail:alert_inbox_delivery (to Bill)
-            q1_do: alert-delivery-boundary actor - receives mail:alert_send from Logger via VPS SMTP; routes to alerts@tothbot.com endpoint (plural - OI-019 singular-to-plural fix); supports CRITICAL HIGH MEDIUM LOW levels per Logger taxonomy; singular alert@ rejected by Proton catch-all
+            q1_do: alert-delivery-boundary actor - receives mail:alert_send from Logger via VPS SMTP; routes to alerts@tothbot.com endpoint; supports CRITICAL HIGH MEDIUM LOW levels per Logger taxonomy; singular alert@ rejected by Proton catch-all
             q4_triggers: triggered by mail:alert_send SMTP push from VPS Logger; triggers mail:alert_inbox_delivery to Bill_Operator inbox at alerts@tothbot.com
             q5_logs: none directly (delivery success/failure logged in VPS SMTP client logs and Proton inbox event log; alert content itself is the inbox message)
             schema_version: 1.0
@@ -493,10 +491,10 @@ Tier 2 diagrams (D1 - D7) below.
         <rect x="1060" y="475" width="410" height="15" fill="#334155"/>
         <text x="1265.0" y="480" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">MAIL — Alert Delivery Boundary</text>
         <text x="1074" y="510" font-size="11" font-weight="700" fill="#0f172a">Endpoint:</text>
-        <text x="1136" y="510" font-size="10" fill="#0f172a">alerts@tothbot.com  (plural — OI-019 fix)</text>
+        <text x="1136" y="510" font-size="10" fill="#0f172a">alerts@tothbot.com</text>
         <text x="1074" y="530" font-size="11" font-weight="700" fill="#0f172a">Levels:</text>
         <text x="1136" y="530" font-size="10" fill="#0f172a">CRITICAL · HIGH · MEDIUM · LOW (Logger taxonomy)</text>
-        <text x="1074" y="550" font-size="9" font-style="italic" fill="#475569">Singular alert@ rejected by Proton catch-all (OI-019).</text>
+        <text x="1074" y="550" font-size="9" font-style="italic" fill="#475569">Singular alert@ rejected by Proton catch-all.</text>
       </g>
       <g id="actor_github_repos" class="tier-1">
         <title>actor:GitHub_Repositories</title>
@@ -505,10 +503,10 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: none
-            constraints: rule:TB00000_v2_20_§11_storage_authoritative, rule:HR-TP001..HR-TP007_pathway_separation
+            constraints: rule:TB00000_sec9_storage_authoritative, rule:HR-TP001..HR-TP007_pathway_separation
             consumes: git:push (from Bill)
             produces: git:pull (to VPS), github_actions:trigger (Pathway 1 only)
-            q1_do: source-of-truth-boundary actor - hosts TothBot_V2-Docs (controlled docs + diagrams + DC automation Pathway 1) + TothBot_V2-Code (tothbot Python package + operations scripts + tests Pathway 2) + TothBot_V2-SessionLogs (TB-prefix files per DD-013); authoritative repo for governance per TB00000 sec 11
+            q1_do: source-of-truth-boundary actor - hosts TothBot_V2-Docs (controlled docs + diagrams + DC automation Pathway 1) + TothBot_V2-Code (tothbot Python package + operations scripts + tests Pathway 2) + TothBot_V2-SessionLogs (TB-prefix files per DD-013); authoritative repo for governance per TB00000 sec 9
             q4_triggers: triggered by git:push from Bill_Operator; triggers github_actions:trigger (Pathway 1 commits only on TothBot_V2-Docs) + git:pull events on scheduled VPS pulls from TothBot_V2-Code
             q5_logs: GitHub Actions audit log captures Pathway 1 workflow runs; git commit history on all three repos captures every commit author + timestamp + diff
             schema_version: 1.0
@@ -523,7 +521,7 @@ Tier 2 diagrams (D1 - D7) below.
         <text x="1074" y="684" font-size="10" fill="#0f172a">tothbot/ Python package · operations/ scripts · tests/ (Pathway 2)</text>
         <text x="1074" y="706" font-size="11" font-weight="700" fill="#0f172a">Pathway separation:</text>
         <text x="1074" y="722" font-size="10" fill="#0f172a">HR-TP001..007 (Pathway 1 ⊥ Pathway 2 — never share code)</text>
-        <text x="1074" y="736" font-size="9" font-style="italic" fill="#475569">Authoritative repo for governance (TB00000 §11).</text>
+        <text x="1074" y="736" font-size="9" font-style="italic" fill="#475569">Authoritative repo for governance (TB00000 sec 9).</text>
       </g>
       <g id="actor_kraken_exchange" class="tier-1">
         <title>actor:Kraken_Exchange</title>
@@ -630,10 +628,10 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: 0500000_Image5_T2_R1_CIATS_Architecture
-            constraints: ar:AR-008 (Net 1:1.5 R:R sacred), decision:D-08 (Top-N retired)
+            constraints: ar:AR-008 (Net 1:1.5 R:R sacred)
             consumes: contract:Parameter_Store_Snapshot (TOTHBOT reads CIATS values)
             produces: evt:TRADE_CLOSE (TOTHBOT publishes outcomes to CIATS)
-            q1_do: bidirectional internal contract carrying trade outcomes from TothBot_Zone to CIATS_Zone and Parameter_Store_Snapshot from CIATS_Zone to TothBot_Zone; consumes contract:Parameter_Store_Snapshot (TothBot reads CIATS values) + evt:TRADE_CLOSE; produces parameter updates consumed by Signal_Pipeline + Execution_Engine + Exit_Controller; ar:AR-008 Net 1:1.5 R:R sacred floor + decision:D-08 Top-N retired
+            q1_do: bidirectional internal contract carrying trade outcomes from TothBot_Zone to CIATS_Zone and Parameter_Store_Snapshot from CIATS_Zone to TothBot_Zone; consumes contract:Parameter_Store_Snapshot (TothBot reads CIATS values) + evt:TRADE_CLOSE; produces parameter updates consumed by Signal_Pipeline + Execution_Engine + Exit_Controller; ar:AR-008 Net 1:1.5 R:R sacred floor
             q4_triggers: triggered by trade close in Exit_Controller (Layer 1 signal + Layer 2 MAE + Layer 3 emergSL exits) + parameter snapshot refresh in CIATS at 50/200/600 trade thresholds; triggers CIATS statistical analysis + Parameter_Store_Snapshot consumption by Signal_Pipeline + Execution_Engine + Exit_Controller
             q5_logs: trade close outcomes + parameter snapshot reads + CIATS parameter proposals logged by Logger to tothbot.log; parameter proposals requiring Bill ratification escalated to HIGH alert via Mail_Alerts
             schema_version: 1.0
@@ -649,10 +647,10 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: none
-            constraints: rule:TB00000_v2_20_§9.7_alert_routing, ar:OI-019
+            constraints: rule:TB00000_sec7_alert_routing
             consumes: evt:LOGGER_CRITICAL, evt:LOGGER_HIGH, evt:LOGGER_MEDIUM
             produces: mail:alert_send
-            q1_do: out-of-band alert-delivery flow from Logger to Mail boundary - consumes evt:LOGGER_CRITICAL + evt:LOGGER_HIGH + evt:LOGGER_MEDIUM emitted by Logger inside TothBot_Zone; produces mail:alert_send SMTP push to Mail_Alerts boundary; ar:OI-019 plural-endpoint correction
+            q1_do: out-of-band alert-delivery flow from Logger to Mail boundary - consumes evt:LOGGER_CRITICAL + evt:LOGGER_HIGH + evt:LOGGER_MEDIUM emitted by Logger inside TothBot_Zone; produces mail:alert_send SMTP push to Mail_Alerts boundary
             q4_triggers: triggered by Logger emitting CRITICAL or HIGH or MEDIUM-level event; triggers mail:alert_send SMTP push to Mail_Alerts (alerts@tothbot.com) consumed downstream by Bill_Operator inbox
             q5_logs: alert-send dispatch events logged by Logger inside the calling event record at the alert source-event level - every alert dispatched leaves a record in tothbot.log with alert-id + level + recipient
             schema_version: 1.0
@@ -667,7 +665,7 @@ Tier 2 diagrams (D1 - D7) below.
             tier: 1
             parent_diagram: none
             drill_targets: none
-            constraints: rule:TB00000_v2_20_§1_sole_operator, rule:HR-TP001..HR-TP007_pathway_separation
+            constraints: rule:TB00000_sec1_sole_operator, rule:HR-TP001..HR-TP007_pathway_separation
             consumes: ssh:operational_command, git:push
             produces: vps:command_response, github:commit_event
             q1_do: operational-channel bundle for Bill_Operator - SSH commands to VPS (deploy + monitor + maintenance) + git:push to TothBot_V2-Docs and TothBot_V2-Code and TothBot_V2-SessionLogs (governance + code + session-log commits) + inbound alert delivery via Mail boundary; rule:HR-TP001..HR-TP007 pathway-separation governs
@@ -694,7 +692,7 @@ Tier 2 diagrams (D1 - D7) below.
       <g id="sacred_banner" class="decoration">
         <rect x="20" y="965" width="1460" height="44" fill="#fef9c3" stroke="#a16207" stroke-width="2" rx="4"/>
         <text x="750.0" y="987" fill="#713f12" font-size="13" font-weight="700" text-anchor="middle">
-          ⚠  SACRED CONSTRAINT  ·  Net 1:1.5 R:R  ·  HARDCODED  ·  the only number not owned by CIATS  ·  TB00000 v2_20 §9.10
+          ⚠  SACRED CONSTRAINT  ·  Net 1:1.5 R:R  ·  HARDCODED  ·  the only number not owned by CIATS  ·  TB00000 sec 7
         </text>
         <text x="750.0" y="1003" fill="#713f12" font-size="10" font-style="italic" text-anchor="middle">
           Every parameter except this one is a CIATS-owned starting value subject to PDCA + statistical inference at 200+ trades.
@@ -730,7 +728,7 @@ Tier 2 diagrams (D1 - D7) below.
     </svg>
   </div>
   <figcaption>
-    Tier 1 System Context — parent of Diagrams D1-D9 (10 diagrams total counting this Tier 1 root) (R2). Forensic provenance — the §15.16.3 / V-040 75-cell design-completeness attestation (TB00352 R0→R1 V-040 FIRST per-diagram amendment + TB00375 V-040 INDEPENDENT VERIFICATION; 15 components × 5 = 75 cells), the OPTION-R extension stack (i)-(iii) (the cross-diagram Q2 interface audit, the namespace-registry batching check, the V-040 IV-campaign subsequent-session sequence), the V-041 §3 P-CC6 git:push producer-binding + §4 P-CP8 external-boundary closure-exception narratives, the CI-005/CI-006 visible-stack 3-deep rolling narratives, and all prior amendment narratives (actual amendment count through R25, display label frozen at R2 per V-041 Class A campaign-pause TB00374) — relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00644). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+    Tier 1 System Context (R3). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R3.
   </figcaption>
 </figure>
 

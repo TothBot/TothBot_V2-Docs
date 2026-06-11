@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_34
+DocVersion: dv1_35
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_34.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_35.txt
 DocDate:    06-11-2026
-DocTime:    18:35:00 UTC
+DocTime:    21:35:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -22019,6 +22019,316 @@ RELOCATED BLOCK C -- figcaption interior (VERBATIM):
 
     <strong>Per CI-005 + CI-006 visible-stack 3-deep rolling policy:</strong> Prior figcaption (R2/dv1_96 V-041 P-CC4 REST canonicalization attestation text for (a)) preserved verbatim in §14 dv1_101 revision history entry below. Original R0 figcaption preserved in §14 dv1_83.
 </pre>
+
+AMENDMENT NARRATIVE -- Context R2 -> R3 (TB00678; 0500000 dv1_224 -> dv1_225;
+DEC-125 SLICE 10: T1 TIER 1 SYSTEM CONTEXT -- T1-1..T1-8 + F-3 TOKEN-RENAME
+VERIFICATION + R-STATE DISPLAY-LABEL POLICY GATE):
+  DEC-125 live-surface purification of the Tier 1 System Context figure per
+  TB00668 register sec 2.1 (instances resolved BY CONTENT against fresh dv1_224
+  HEAD; register locators authored against dv1_215 held for T1 -- the D8 slice
+  changed nothing before L2688). 30 ops (4 DC-header + 26 T1), assertion-
+  verified exact-match,
+  count==1 per anchor, all anchors extracted from baseline bytes.
+
+  R-STATE DETERMINATION -- V-041 FROZEN-LABEL GATE (executed BEFORE the bump,
+  per the TB00678 NSI R-STATE clause): the T1 display label had been frozen at
+  R2 since the V-041 Class A campaign-pause deferral (TB00374 SL sec 4), with
+  the actual amendment count advancing to R25 through TB00392 and the
+  display-label catch-up deferred as a separate housekeeping item. The gate
+  read the relocated V-041 narratives in this archive (sec 5.9 Block A,
+  TB00644 entry) + 0311003 v1_3. FINDINGS: (1) V-041 appears NOWHERE in the
+  live 0311003 v1_3 versioning procedure -- the frozen-label convention is a
+  campaign-era deferral, not live governance; (2) the V-041 audit campaign
+  closed (FAIL-C 40/40 at TB00391, FAIL-P 34/34 at TB00392); (3) the freeze
+  deferred only the LABEL CATCH-UP (itself a visible-text change); it does not
+  bar a bump driven by a live TB00453 visible-change event; (4) the live
+  TB00453 bright line (visible SVG text or geometry change bumps figure R) is
+  the governing canon and this slice carries planned visible changes (T1-3,
+  T1-5 visible sites, T1-6 visible sites). DETERMINATION (DD-011 OUTCOME 1,
+  single compliant path, not surfaced as ratification): the freeze NO LONGER
+  BINDS a TB00453 bump -- display label bumped R2 -> R3 and propagated (SVG
+  <title> + diagram_canonical + title-bar subtitle identifier + root-desc
+  CURRENT R + figcaption). The ACTUAL amendment count increments R25 -> R26
+  with this amendment; the display-vs-actual divergence (R3 display vs R26
+  actual) persists and remains a FLAGGED deferred housekeeping item (the
+  catch-up was NOT performed -- out of slice scope). The T1 main title
+  (DIAGRAM 0 -- Tier 1 System Context) carries no R label and was left
+  byte-identical.
+
+  F-3 TOKEN-RENAME DETERMINATION: the DW-3 pin class on T1 includes four rule
+  tokens embedding stale TB00000 v2_20 section-sign pins
+  (rule:TB00000_v2_20_S1_sole_operator_acknowledgment at L425,
+  rule:TB00000_v2_20_S11_storage_authoritative at L454 + L508,
+  rule:TB00000_v2_20_S9.7_alert_routing at L483 + L652,
+  rule:TB00000_v2_20_S1_sole_operator at L670 -- section-sign rendered S here;
+  the op record below carries the exact bytes). Verified against 0311001 v1_47:
+  NONE of the four tokens appears in any sec 15.12 registry (incl. the 15.12.9
+  rule: HardRule Registry) -- they are UNREGISTERED LOCAL STRINGS. Verified by
+  document-wide grep that all 6 occurrences sit INSIDE the T1 figure element,
+  so the DW-3 everywhere-consistency requirement is satisfied in-slice without
+  touching any other figure (DEC-003 Path A preserved). Renamed in-slice to the
+  live TB00000 v2_90 section map: sec 1 (identity/sole operator), sec 9
+  (storage authoritative), sec 7 (alert routing/notifications). NO 0311001
+  v1_47 -> v1_48 companion amendment required.
+
+  EXECUTED INSTANCES (TB00668 register sec 2.1, BY CONTENT):
+  T1-1 root-desc -> DW-2 bare pointer + CURRENT R: R3; the frozen-label
+       narrative relocated verbatim (op record OP T1-1).
+  T1-2 governs stale self-citation "(system-level architectural rules
+       cumulative through 0500000 dv1_24)" stripped; the same-line v2_20 S4.4
+       pin re-pointed to live sec 4.3 paper-as-master (merged op, TB00675
+       merge precedent).
+  T1-3 VISIBLE no-Top-N echo deleted; "(D-03 LOCKED)" kept; the second <text>
+       row (y=468) deleted entire (D8/TB00677 V3 row-deletion precedent;
+       tag balance -1 <text>). R-BUMP driver.
+  T1-4 three decision:D-08 trails deleted from constraints/q1_do enumerations
+       (DW-4); the adjacent ar:AR-008 sacred-floor callouts kept BYTE-EXACT.
+  T1-5 six OI-019 fix-history tails deleted (2 constraints tokens, 2 q1_do
+       tails, 2 VISIBLE sites); live facts kept: endpoint alerts@tothbot.com;
+       singular alert@ rejected by Proton catch-all. R-BUMP drivers (the two
+       visible sites).
+  T1-6 all stale TB00000 v2_20 pins + pre-restructure section-map cites
+       re-pointed to the live v2_90 map (trading system sec 7; registry sec 8;
+       working rules sec 4; storage sec 9; identity sec 1): VISIBLE
+       four-divergence legend v2_20 S4.4 -> sec 4.3; VISIBLE sacred banner
+       cite v2_20 S9.10 -> sec 7 (cite tail ONLY -- the sacred callout text
+       itself byte-exact per the T1 prohibition); VISIBLE governance-repo
+       cite S11 -> sec 9; VISIBLE organism cite S1 -> sec 1 (section-sign
+       form normalized -- CONTENT-TEST determination: live-correct section
+       number, sign form is the pin signature and the NSI battery requires
+       zero section-sign pins inside the figure); q1_do "per TB00000 sec 11"
+       -> sec 9; + the four F-3 token renames above. R-BUMP drivers.
+  T1-7 prose-lead clause "-- added in this dv1_25 amendment cycle bundled
+       with TB00154 Stage A" stripped (relocated in the op record); the
+       surrounding 0311001 v1_7 S15.11.6 prose-lead pin is OUTSIDE the figure
+       element and outside T1-7's quoted scope -- FLAGGED for the prose slice,
+       not fixed (one-campaign-per-slice).
+  T1-8 figcaption -> campaign bare form "Tier 1 System Context (R3).
+       Provenance relocated to 0521001 (anchor 0520000) per DEC-123.
+       CURRENT R: R3." matching the D2/D3/D5/D6/D7/D8/D9 form; the full
+       forensic manifest (the 75-cell V-040 attestation reference, the
+       OPTION-R stack (i)-(iii), the V-041 S3 P-CC6 + S4 P-CP8 narratives,
+       the CI-005/CI-006 references, the frozen-label clause) relocated
+       verbatim (op record OP T1-8).
+
+  CONTENT TEST: the whole T1 block swept for every registered signature class
+  (D-08 trails, OI-019 tails, v2_20/section-sign pins, no-Top-N echoes,
+  retired-document cites, migration narratives). Cluster members executed by
+  content beyond the register's convenience locators: the VISIBLE
+  "(TB00000 S11)" governance-repo cite and the q1_do "per TB00000 sec 11"
+  stale section-map cite (both DW-3 members). DW-5 retired-document cites:
+  ZERO on the T1 surface. Sacred-floor callouts: all four kept byte-exact
+  (root-desc Sacred constraint line; two ar:AR-008 enumeration callouts
+  post-D-08-strip; the visible banner text).
+
+  VERIFICATION BATTERY (all PASS): anchor uniqueness both directions
+  (full-line anchors, global count==1; line-index content-equality asserts);
+  forward replay md5 7d1d6edf888711b0cf21268842d9aea3 (9,677 lines, net -2:
+  T1-7 merge -1, T1-3 row deletion -1); record-driven reverse replay
+  reproduces dv1_224 b3afcab7d4ccc8a0f51c7c3a6f6cebe9 byte-identical; diff
+  localized to header lines {6,135,137,139} + the T1 block (incl. its prose
+  lead L220-221); 9 other figures byte-identical (DEC-003 Path A); tag
+  balance (-1 <text>, exactly the T1-3 deletion; all other tags balanced);
+  SVG-text visible-diff set == exactly the planned 8 (R3 subtitle + the 7
+  planned content sites); html.parser 0 exceptions; one
+  <h2>14. Revision History</h2>; T1 residue grep battery CLEAN (TB00374 /
+  TB00392 / V-041 / dv1_24 / dv1_25 / TB00154 / v2_20 / OI-019 / Top-N /
+  D-08 / section-sign -- zero hits inside the T1 figure element).
+
+  FLAGGED (not fixed; one-campaign-per-slice -- see TB00678 SL sec 5):
+  (i) child-figure parent pointers Image3 + Image6 subtitles carry
+  parent: 0500000_Context_T1_R2_System_Context, now one R behind (known
+  cross-figure drift class, final-audit scope); (ii) the sec-13 archive block
+  reference 0500000_Context_T1_R2_System_Context (historical archive text,
+  final-audit scope); (iii) the T1 prose-lead 0311001 v1_7 S15.11.6 stale
+  version pin (prose-slice scope); (iv) display-vs-actual R divergence (R3
+  display vs R26 actual; deferred housekeeping).
+
+----- DEC-125 SLICE 10 OP RECORD -- REMOVED / LIVE T1 CONTENT (VERBATIM, ORDERED) -----
+
+OP H1 (dv1_224 L6):
+REMOVED (verbatim):
+<title>0500000 System Architecture Overview dv1_224</title>
+LIVE (verbatim):
+<title>0500000 System Architecture Overview dv1_225</title>
+
+OP H2 (dv1_224 L135):
+REMOVED (verbatim):
+  <tr><td>DocVersion</td><td>dv1_224</td></tr>
+LIVE (verbatim):
+  <tr><td>DocVersion</td><td>dv1_225</td></tr>
+
+OP H3 (dv1_224 L137):
+REMOVED (verbatim):
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_224_Claude_Source.html</td></tr>
+LIVE (verbatim):
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_225_Claude_Source.html</td></tr>
+
+OP H4 (dv1_224 L139):
+REMOVED (verbatim):
+  <tr><td>DocTime</td><td>18:30:00 UTC</td></tr>
+LIVE (verbatim):
+  <tr><td>DocTime</td><td>21:30:00 UTC</td></tr>
+
+OP T1-7 (dv1_224 L220-L221):
+REMOVED (verbatim):
+structured &lt;title&gt;+&lt;desc&gt; per 0311001 v1_7 §15.11.6 (Tier 1 root-desc
+contract — added in this dv1_25 amendment cycle bundled with TB00154 Stage A).
+LIVE (verbatim):
+structured &lt;title&gt;+&lt;desc&gt; per 0311001 v1_7 §15.11.6 (Tier 1 root-desc contract).
+
+OP R3-title (dv1_224 L229):
+REMOVED (verbatim):
+      <title>0500000_Context_T1_R2_System_Context</title>
+LIVE (verbatim):
+      <title>0500000_Context_T1_R3_System_Context</title>
+
+OP R3-canon (dv1_224 L231):
+REMOVED (verbatim):
+        diagram_canonical: 0500000_Context_T1_R2_System_Context
+LIVE (verbatim):
+        diagram_canonical: 0500000_Context_T1_R3_System_Context
+
+OP T1-1 (dv1_224 L235):
+REMOVED (verbatim):
+        provenance: R-increment history (R-increment + R-increment-prior + R-increment-prior-2; actual amendment count R24 → R25 through TB00392, display label frozen at R2 per V-041 Class A campaign-pause TB00374) relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00644). CURRENT display R: R2.
+LIVE (verbatim):
+        provenance: R-increment history relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R3.
+
+OP T1-2 (dv1_224 L236):
+REMOVED (verbatim):
+        governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 v2_20 §4.4 paper-as-master) + ar:AR-001..AR-076 (system-level architectural rules cumulative through 0500000 dv1_24) + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
+LIVE (verbatim):
+        governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 sec 4.3 paper-as-master) + ar:AR-001..AR-076 + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
+
+OP R3-subtitle (dv1_224 L260):
+REMOVED (verbatim):
+          0500000_Context_T1_R2_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
+LIVE (verbatim):
+          0500000_Context_T1_R3_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
+
+OP T1-6-V1 (dv1_224 L269):
+REMOVED (verbatim):
+          (1) Private WS connection   (2) Order dispatch   (3) Capital ledger   (4) Position Mirror sourcing  ·  TB00000 v2_20 §4.4
+LIVE (verbatim):
+          (1) Private WS connection   (2) Order dispatch   (3) Capital ledger   (4) Position Mirror sourcing  ·  TB00000 sec 4.3
+
+OP T1-6-V2 (dv1_224 L292):
+REMOVED (verbatim):
+          The three-system organism (TB00000 §1)  ·  one whole at three time scales  ·  not three separate systems
+LIVE (verbatim):
+          The three-system organism (TB00000 sec 1)  ·  one whole at three time scales  ·  not three separate systems
+
+OP T1-3 (dv1_224 L326-L327):
+REMOVED (verbatim):
+          <text x="186" y="452" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">(D-03 LOCKED, no Top-N cap</text>
+          <text x="186" y="468" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start"> per D-08 LOCKED)</text>
+LIVE (verbatim):
+          <text x="186" y="452" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">(D-03 LOCKED)</text>
+
+OP T1-4a (dv1_224 L383):
+REMOVED (verbatim):
+              constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned), decision:D-08 (Top-N retired)
+LIVE (verbatim):
+              constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned)
+
+OP T1-4b (dv1_224 L633):
+REMOVED (verbatim):
+            constraints: ar:AR-008 (Net 1:1.5 R:R sacred), decision:D-08 (Top-N retired)
+LIVE (verbatim):
+            constraints: ar:AR-008 (Net 1:1.5 R:R sacred)
+
+OP T1-4c (dv1_224 L636):
+REMOVED (verbatim):
+            q1_do: bidirectional internal contract carrying trade outcomes from TothBot_Zone to CIATS_Zone and Parameter_Store_Snapshot from CIATS_Zone to TothBot_Zone; consumes contract:Parameter_Store_Snapshot (TothBot reads CIATS values) + evt:TRADE_CLOSE; produces parameter updates consumed by Signal_Pipeline + Execution_Engine + Exit_Controller; ar:AR-008 Net 1:1.5 R:R sacred floor + decision:D-08 Top-N retired
+LIVE (verbatim):
+            q1_do: bidirectional internal contract carrying trade outcomes from TothBot_Zone to CIATS_Zone and Parameter_Store_Snapshot from CIATS_Zone to TothBot_Zone; consumes contract:Parameter_Store_Snapshot (TothBot reads CIATS values) + evt:TRADE_CLOSE; produces parameter updates consumed by Signal_Pipeline + Execution_Engine + Exit_Controller; ar:AR-008 Net 1:1.5 R:R sacred floor
+
+OP F3a (dv1_224 L425):
+REMOVED (verbatim):
+            constraints: rule:TB00000_v2_20_§1_sole_operator_acknowledgment
+LIVE (verbatim):
+            constraints: rule:TB00000_sec1_sole_operator_acknowledgment
+
+OP F3b (dv1_224 L454):
+REMOVED (verbatim):
+            constraints: rule:TB00000_v2_20_§11_storage_authoritative
+LIVE (verbatim):
+            constraints: rule:TB00000_sec9_storage_authoritative
+
+OP F3c-T1-5a (dv1_224 L483):
+REMOVED (verbatim):
+            constraints: rule:TB00000_v2_20_§9.7_alert_routing, ar:OI-019_singular_to_plural_endpoint_correction
+LIVE (verbatim):
+            constraints: rule:TB00000_sec7_alert_routing
+
+OP T1-5b (dv1_224 L486):
+REMOVED (verbatim):
+            q1_do: alert-delivery-boundary actor - receives mail:alert_send from Logger via VPS SMTP; routes to alerts@tothbot.com endpoint (plural - OI-019 singular-to-plural fix); supports CRITICAL HIGH MEDIUM LOW levels per Logger taxonomy; singular alert@ rejected by Proton catch-all
+LIVE (verbatim):
+            q1_do: alert-delivery-boundary actor - receives mail:alert_send from Logger via VPS SMTP; routes to alerts@tothbot.com endpoint; supports CRITICAL HIGH MEDIUM LOW levels per Logger taxonomy; singular alert@ rejected by Proton catch-all
+
+OP T1-5-V4 (dv1_224 L496):
+REMOVED (verbatim):
+        <text x="1136" y="510" font-size="10" fill="#0f172a">alerts@tothbot.com  (plural — OI-019 fix)</text>
+LIVE (verbatim):
+        <text x="1136" y="510" font-size="10" fill="#0f172a">alerts@tothbot.com</text>
+
+OP T1-5-V5 (dv1_224 L499):
+REMOVED (verbatim):
+        <text x="1074" y="550" font-size="9" font-style="italic" fill="#475569">Singular alert@ rejected by Proton catch-all (OI-019).</text>
+LIVE (verbatim):
+        <text x="1074" y="550" font-size="9" font-style="italic" fill="#475569">Singular alert@ rejected by Proton catch-all.</text>
+
+OP F3d (dv1_224 L508):
+REMOVED (verbatim):
+            constraints: rule:TB00000_v2_20_§11_storage_authoritative, rule:HR-TP001..HR-TP007_pathway_separation
+LIVE (verbatim):
+            constraints: rule:TB00000_sec9_storage_authoritative, rule:HR-TP001..HR-TP007_pathway_separation
+
+OP T1-6b (dv1_224 L511):
+REMOVED (verbatim):
+            q1_do: source-of-truth-boundary actor - hosts TothBot_V2-Docs (controlled docs + diagrams + DC automation Pathway 1) + TothBot_V2-Code (tothbot Python package + operations scripts + tests Pathway 2) + TothBot_V2-SessionLogs (TB-prefix files per DD-013); authoritative repo for governance per TB00000 sec 11
+LIVE (verbatim):
+            q1_do: source-of-truth-boundary actor - hosts TothBot_V2-Docs (controlled docs + diagrams + DC automation Pathway 1) + TothBot_V2-Code (tothbot Python package + operations scripts + tests Pathway 2) + TothBot_V2-SessionLogs (TB-prefix files per DD-013); authoritative repo for governance per TB00000 sec 9
+
+OP T1-6-V6 (dv1_224 L526):
+REMOVED (verbatim):
+        <text x="1074" y="736" font-size="9" font-style="italic" fill="#475569">Authoritative repo for governance (TB00000 §11).</text>
+LIVE (verbatim):
+        <text x="1074" y="736" font-size="9" font-style="italic" fill="#475569">Authoritative repo for governance (TB00000 sec 9).</text>
+
+OP F3e-T1-5c (dv1_224 L652):
+REMOVED (verbatim):
+            constraints: rule:TB00000_v2_20_§9.7_alert_routing, ar:OI-019
+LIVE (verbatim):
+            constraints: rule:TB00000_sec7_alert_routing
+
+OP T1-5d (dv1_224 L655):
+REMOVED (verbatim):
+            q1_do: out-of-band alert-delivery flow from Logger to Mail boundary - consumes evt:LOGGER_CRITICAL + evt:LOGGER_HIGH + evt:LOGGER_MEDIUM emitted by Logger inside TothBot_Zone; produces mail:alert_send SMTP push to Mail_Alerts boundary; ar:OI-019 plural-endpoint correction
+LIVE (verbatim):
+            q1_do: out-of-band alert-delivery flow from Logger to Mail boundary - consumes evt:LOGGER_CRITICAL + evt:LOGGER_HIGH + evt:LOGGER_MEDIUM emitted by Logger inside TothBot_Zone; produces mail:alert_send SMTP push to Mail_Alerts boundary
+
+OP F3f (dv1_224 L670):
+REMOVED (verbatim):
+            constraints: rule:TB00000_v2_20_§1_sole_operator, rule:HR-TP001..HR-TP007_pathway_separation
+LIVE (verbatim):
+            constraints: rule:TB00000_sec1_sole_operator, rule:HR-TP001..HR-TP007_pathway_separation
+
+OP T1-6-V7 (dv1_224 L697):
+REMOVED (verbatim):
+          ⚠  SACRED CONSTRAINT  ·  Net 1:1.5 R:R  ·  HARDCODED  ·  the only number not owned by CIATS  ·  TB00000 v2_20 §9.10
+LIVE (verbatim):
+          ⚠  SACRED CONSTRAINT  ·  Net 1:1.5 R:R  ·  HARDCODED  ·  the only number not owned by CIATS  ·  TB00000 sec 7
+
+OP T1-8 (dv1_224 L733):
+REMOVED (verbatim):
+    Tier 1 System Context — parent of Diagrams D1-D9 (10 diagrams total counting this Tier 1 root) (R2). Forensic provenance — the §15.16.3 / V-040 75-cell design-completeness attestation (TB00352 R0→R1 V-040 FIRST per-diagram amendment + TB00375 V-040 INDEPENDENT VERIFICATION; 15 components × 5 = 75 cells), the OPTION-R extension stack (i)-(iii) (the cross-diagram Q2 interface audit, the namespace-registry batching check, the V-040 IV-campaign subsequent-session sequence), the V-041 §3 P-CC6 git:push producer-binding + §4 P-CP8 external-boundary closure-exception narratives, the CI-005/CI-006 visible-stack 3-deep rolling narratives, and all prior amendment narratives (actual amendment count through R25, display label frozen at R2 per V-041 Class A campaign-pause TB00374) — relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00644). The diagram remains design-complete and derivable from the SVG visual rendering + the governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+LIVE (verbatim):
+    Tier 1 System Context (R3). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R3.
+
+----- END DEC-125 SLICE 10 OP RECORD -----
 
 5.10 D2 -- Image2 Trading Pipeline (8 Gates)
     (relocated at TB00645; 0500000 dv1_200 -> dv1_201; D2 R9 HELD)
