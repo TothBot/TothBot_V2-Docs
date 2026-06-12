@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_228</title>
+<title>0500000 System Architecture Overview dv1_229</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_228</td></tr>
+  <tr><td>DocVersion</td><td>dv1_229</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_228_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_229_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-12-2026</td></tr>
-  <tr><td>DocTime</td><td>03:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>05:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -5188,7 +5188,18 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   AR-049 ★: Formal startup sequence required. TothBot MUST complete the
                     10-step startup sequence before any pipeline evaluation. No pipeline
                     evaluations permitted until at least one pair reaches READY state.
-                    Complete specification in 1011014 Startup_Sequence_Coding_Spec.
+                    This entry plus the per-step detail on the diagram&#39;s own
+                    surfaces (ar:AR-038 Status check; ar:AR-004 WS token; ar:AR-029 +
+                    ar:AR-058 + ar:AR-059 + ar:AR-060 WS connect; ar:AR-020 instrument
+                    snapshot; ar:AR-003 private-WS connect/reconcile; ar:AR-044 REST
+                    warm-up; ar:AR-045 candle-close init; ar:AR-050 wallet sourcing;
+                    ar:AR-052 drawdown baseline; ar:AR-068 indicator WARM_UP-&gt;READY;
+                    ar:AR-056 mid-session reconnect; rule:SS-WIRE-001 + rule:SS-BUILD-001
+                    on mod:Startup_Sequence; the four PA-004 divergence surfaces) is the
+                    CANONICAL and COMPLETE startup specification; no external coding spec
+                    is required to code it (1011014 Startup_Sequence_Coding_Spec RETIRED
+                    into this diagram per the TB00000 sec 3 binary test; provenance in
+                    0521001 anchor 0520000).
                     Sequence: (1) Kraken Status API check, (2) GetWebSocketsToken,
                     (3) Connect public WS + subscribe, (4) Process instrument snapshot,
                     (5) Connect private WS + subscribe executions/balances,
@@ -5199,7 +5210,9 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                           regime classification handled independently by mod:Regime_Engine
                           per OI-NEW-001 closure),
                     (9) First READY pair -&gt; enter OPERATIONAL, (10) Continuous operation.
-                    Assign: 1011002 WM-STARTUP-001 through -012, 1011014 (full spec).
+                    Provenance: the WM-STARTUP / SS-STARTUP rule families; source coding
+                    specs 1011002 and 1011014 RETIRED, content consolidated here
+                    (0521001 anchor 0520000).
   AR-050 ★: Balances channel — per-module wallet sourcing.
                     LONG MODULE: spot/main wallet (USD asset). wallets[type=&quot;spot&quot;][id=&quot;main&quot;].balance on snapshot;
                     wallet_type==&quot;spot&quot; AND wallet_id==&quot;main&quot; AND asset==&quot;USD&quot; on
@@ -5390,9 +5403,14 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                       queued during reconnect are DISCARDED after completion.
                     Fatal reconnect: 20 total attempts spanning ~481 seconds (~8 minutes) -&gt; log CRITICAL -&gt;
                       systemd restart -&gt; full startup sequence.
-                    Complete specification in 1011014 Section 2.
-                    Assign: 1011002 WM-RECONNECT-001 through -015,
-                            1011014 SS-RECON-001 through -016.
+                    The 11-step reconnect (R1-R11), its invariants, and the fatal-reconnect
+                    path above are CANONICAL and COMPLETE on this surface; no external coding
+                    spec is required to code reconnect (1011014 Startup_Sequence_Coding_Spec
+                    RETIRED into this diagram per the TB00000 sec 3 binary test; provenance
+                    0521001 anchor 0520000).
+                    Provenance: WM-RECONNECT / SS-RECON rule families; source coding specs
+                    1011002 and 1011014 RETIRED, content consolidated here (0521001 anchor
+                    0520000).
   AR-057 ★: amended exec_type MUST be in dispatch table. The complete Kraken
                     executions channel exec_type list is 10 values: pending_new, new,
                     trade, filled, iceberg_refill, canceled, expired, amended, restated,
@@ -7056,7 +7074,7 @@ prefix taxonomy:
         constraints: rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime), ar:PA-003, rule:SS-PRE-001, rule:SS-PRE-002, rule:SS-PRE-003, rule:SS-PRE-004, rule:SS-PRE-005, rule:SS-STARTUP-024, rule:SS-STARTUP-025, rule:SS-STARTUP-007_NOTE, rule:SS-STARTUP-009, rule:SS-WARMUP-003_NOTE, rule:SS-WARMUP-HTF_alpha, rule:SS-PAPER-005, rule:SS-PAPER-006, rule:SS-RECON-004, rule:SS-RECON-008, rule:SS-RECON-012, rule:SS-RECON-015, rule:SS-RECON-016, rule:SS-WIRE-001, rule:HR-SS-001, rule:HR-SS-002, rule:HR-SS-007, rule:HR-SS-008, rule:HR-SS-009, rule:HR-SS-010, ar:AR-049, ar:AR-056, ar:AR-044, ar:AR-068, ar:AR-050, ar:AR-038, ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-055, ar:AR-003, ar:AR-026, ar:AR-017, ar:AR-001, ar:AR-004, ar:AR-016, ar:AR-020, ar:AR-029, ar:AR-034, ar:AR-036, ar:AR-039, contract:WM-PACE-001, contract:WM-PACE-002, contract:CIATS_Trade_Outcome_Bus, rule:SS-BUILD-001
         consumes: param:paper_trading_mode, param:portfolio_baseline_USD
         produces: evt:POSITION_CLOSED_DURING_GAP, evt:INVARIANT_BREACH, evt:INCOMPLETE_PROTECTION, evt:PAPER_TRADING_MODE_ON, evt:PAPER_TRADING_MODE_OFF
-        q1_do: Boot-sequence orchestrator that reads param:paper_trading_mode + param:portfolio_baseline_USD from layer:Configuration_Layer and instantiates mod:WS_Manager via WSManager.__init__(paper_mode=True/False) per rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime); runs SS-PRE / SS-STARTUP / SS-WARMUP / SS-PAPER / SS-RECON / SS-WIRE phase sequences per ar:AR-049 + ar:AR-056 + ar:AR-068 cold-start cascade; binds paper-mode invariant for process lifetime. rule:SS-WIRE-001 construction-timing wiring: mod:Regime_Engine is CONSTRUCTED with a default single-pair universe (BTC/USD) because the full monitored_universe is not known until mod:WS_Manager has processed the Kraken instrument-channel snapshot at startup (per ar:AR-070 universe build); therefore the daily 00:00-UTC regime computation MUST be driven with the CURRENT WS_Manager-built monitored_universe read at call time -- guard: pass the current monitored_universe if WS_Manager has populated it, else fall back to the construction-time default -- and MUST NEVER be driven with the construction-time universe; passing the construction-time universe silently collapses regime classification to BTC/USD only, after which gate:G3_Regime_Filter blocks every non-BTC candidate (the DEFECT-SS-009 loss-of-opportunity failure that degrades the whole pipeline). rule:SS-BUILD-001 parallel-module construction order (wallet-sourcing facet ar:AR-050): after WSManager.__init__ and the SS-phase cascade the organism is constructed in this STRICT ORDER -- (1) construct the SINGLE-INSTANCE shared infrastructure exactly ONCE: mod:WS_Manager (ONE Kraken WebSocket subscribing to the UNION of module universes -- a single instance is MANDATORY per Kraken rate limits + rule:HR-WM-024 sharding; constructing one WS_Manager per module is PROHIBITED), mod:Position_Mirror (single sole-writer per rule:HR-PM-009), mod:Logger (single sole-CIATS-read-source), pair_cache (single authoritative pair-spec source for ALL modules per DR-013); (2) for EACH sibling module in order [mod:Long_Module first, then mod:Short_Module] construct the module and INJECT the SAME four shared-infra instances from step (1) into it by reference (the siblings SHARE one WS_Manager / Position_Mirror / Logger / pair_cache; these are NEVER re-instantiated per module); (3) within each sibling construct its OWN isolated per-module state: its own CIATS instance + statistical pool (no cross-module contamination per TB00000 sec 7 -- Long and Short pools and contract:Sizing_Curve_Per_Module evolve independently), its own trading wallet (param:paper_starting_balance_long_usd $5,000 for Long sourced from spot/main, param:paper_starting_balance_short_usd $5,000 for Short sourced from margin/main per ar:AR-050 + ar:AR-009 Kraken margin; live funding operator-controlled per TB00000 sec 7), its own per-wallet drawdown halt state machine [state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet] per ar:AR-052 (session_pause_drawdown_pct 5% / full_halt_drawdown_pct 10%), and its own per-side Selection-Controller state per ar:AR-073; (4) wire HALT-ISOLATION: each sibling halt state machine is INDEPENDENT -- a SESSION_PAUSE or FULL_HALT on one module wallet MUST NOT halt the sibling module wallet (and vice versa) per ar:AR-052 per-wallet independence, and the step-(1) shared infrastructure keeps running for the un-halted sibling. The per-module wallet balance is the sole sizing boundary (no ceiling); the net 1:1.5 R:R minimum remains the only hardcoded value. This ordered build + single-instance injection + per-module isolation + halt-isolation is the F-12 construction layer required for the Bill-ratified OPTION B clean-slate organism build.
+        q1_do: Boot-sequence orchestrator that reads param:paper_trading_mode + param:portfolio_baseline_USD from layer:Configuration_Layer and instantiates mod:WS_Manager via WSManager.__init__(paper_mode=True/False) per rule:HR-WM-021 (paper_mode set once at __init__; immutable for process lifetime); runs SS-PRE / SS-STARTUP / SS-WARMUP / SS-PAPER / SS-RECON / SS-WIRE phase sequences per ar:AR-049 + ar:AR-056 + ar:AR-068 cold-start cascade; binds paper-mode invariant for process lifetime. rule:SS-WIRE-001 construction-timing wiring: mod:Regime_Engine is CONSTRUCTED with a default single-pair universe (BTC/USD) because the full monitored_universe is not known until mod:WS_Manager has processed the Kraken instrument-channel snapshot at startup (per ar:AR-070 universe build); therefore the daily 00:00-UTC regime computation MUST be driven with the CURRENT WS_Manager-built monitored_universe read at call time -- guard: pass the current monitored_universe if WS_Manager has populated it, else fall back to the construction-time default -- and MUST NEVER be driven with the construction-time universe; passing the construction-time universe silently collapses regime classification to BTC/USD only, after which gate:G3_Regime_Filter blocks every non-BTC candidate (the DEFECT-SS-009 loss-of-opportunity failure that degrades the whole pipeline). rule:SS-BUILD-001 parallel-module construction order (wallet-sourcing facet ar:AR-050): after WSManager.__init__ and the SS-phase cascade the organism is constructed in this STRICT ORDER -- (1) construct the SINGLE-INSTANCE shared infrastructure exactly ONCE: mod:WS_Manager (ONE Kraken WebSocket subscribing to the UNION of module universes -- a single instance is MANDATORY per Kraken rate limits + rule:HR-WM-024 sharding; constructing one WS_Manager per module is PROHIBITED), mod:Position_Mirror (single sole-writer per rule:HR-PM-009), mod:Logger (single sole-CIATS-read-source), pair_cache (single authoritative pair-spec source for ALL modules per DR-013); (2) for EACH sibling module in order [mod:Long_Module first, then mod:Short_Module] construct the module and INJECT the SAME four shared-infra instances from step (1) into it by reference (the siblings SHARE one WS_Manager / Position_Mirror / Logger / pair_cache; these are NEVER re-instantiated per module); (3) within each sibling construct its OWN isolated per-module state: its own CIATS instance + statistical pool (no cross-module contamination per TB00000 sec 7 -- Long and Short pools and contract:Sizing_Curve_Per_Module evolve independently), its own trading wallet (param:paper_starting_balance_long_usd $5,000 for Long sourced from spot/main, param:paper_starting_balance_short_usd $5,000 for Short sourced from margin/main per ar:AR-050 + ar:AR-009 Kraken margin; live funding operator-controlled per TB00000 sec 7), its own per-wallet drawdown halt state machine [state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet] per ar:AR-052 (session_pause_drawdown_pct 5% / full_halt_drawdown_pct 10%), and its own per-side Selection-Controller state per ar:AR-073; (4) wire HALT-ISOLATION: each sibling halt state machine is INDEPENDENT -- a SESSION_PAUSE or FULL_HALT on one module wallet MUST NOT halt the sibling module wallet (and vice versa) per ar:AR-052 per-wallet independence, and the step-(1) shared infrastructure keeps running for the un-halted sibling. The per-module wallet balance is the sole sizing boundary (no ceiling); the net 1:1.5 R:R minimum remains the only hardcoded value. This ordered build + single-instance injection + per-module isolation + halt-isolation is the F-12 construction layer required for the Bill-ratified OPTION B clean-slate organism build. The SS-PRE / SS-STARTUP / SS-WARMUP / SS-PAPER / SS-RECON / HR-SS rule families cited in this group&#39;s constraints field are CANONICAL and COMPLETE on the diagram&#39;s own surfaces -- the 10-step cascade and its per-step detail at ar:AR-049 + ar:AR-044 + ar:AR-045 + ar:AR-050 + ar:AR-052 + ar:AR-068 (this diagram&#39;s sec-8 AR registry), the 11-step mid-session reconnect at ar:AR-056, the universe-timing guard rule:SS-WIRE-001 and the construction order rule:SS-BUILD-001 here, the D1 REST wire contracts, and the four PA-004 paper/live divergence surfaces -- so the startup sequence is codable from this diagram ALONE with no external or retired spec (1011014 RETIRED; provenance 0521001 anchor 0520000).
         q4_triggers: Triggered by systemd tothbot.service start (boot) and mid-session restart per ar:AR-056 reconnect cascade; consumes layer:Configuration_Layer config read at process start; triggers WSManager.__init__ paper_mode binding (immutable for lifetime per HR-WM-021); emits evt:PAPER_TRADING_MODE_ON or evt:PAPER_TRADING_MODE_OFF at config-read time; emits evt:POSITION_CLOSED_DURING_GAP + evt:INVARIANT_BREACH + evt:INCOMPLETE_PROTECTION during SS-RECON gap-protection cycle per rule:HR-SS-001..010.
         q5_logs: All 5 produced events (evt:PAPER_TRADING_MODE_ON, evt:PAPER_TRADING_MODE_OFF, evt:POSITION_CLOSED_DURING_GAP, evt:INVARIANT_BREACH, evt:INCOMPLETE_PROTECTION) routed to mod:Logger; paper-mode binding emission is the canonical session-start record establishing process-lifetime paper-vs-live state; INVARIANT_BREACH + POSITION_CLOSED_DURING_GAP + INCOMPLETE_PROTECTION logged at CRITICAL/HIGH alert level for SS-RECON outcomes.
         schema_version: 1.0
