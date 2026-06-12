@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_37
+DocVersion: dv1_38
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_37.txt
-DocDate:    06-11-2026
-DocTime:    23:50:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_38.txt
+DocDate:    06-12-2026
+DocTime:    03:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -29506,6 +29506,296 @@ LIVE REPLACEMENT (verbatim):
 <tr><td>DocTime</td><td>23:45:00 UTC</td></tr>
 
 ----- END DEC-125 PROSE SLICE PART 2 OP RECORD -----
+
+
+------------------------------------------------------------
+8.8 dv1_227 -> dv1_228 -- DEC-125 FINAL RE-AUDIT
+    (REGISTER SLICE 16; TB00682) -- CAMPAIGN CLOSE
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE: DEC-125 final re-audit executed BY
+CONTENT against fresh dv1_227 HEAD (RR-SCOPE-008; baseline md5
+0d33fc167dfccb496de904735174a586). Full grep sweep run to ZERO
+Class B/C/D residue per the TB00668 register disposition key +
+DW-1..DW-5 classes (battery: TP_FILL / TIME_EXPIRY /
+SUB_MIN_RESIDUAL / ar:AR-066 / AR-071 / DR-079 /
+max_hold_candles / entry_timeout_sec / rule:TB00000_v2_20 /
+D-08 / stale TB00000 v2_NN + sec-9.x + sec-4.4 pins / DEC-124
++ DEC-122 + TB00650/TB00666/TB00148 cite tails / NEW dv1_5 /
+amended dv1_NN trails / retired-doc version pins / dead Logger
+tokens / 0911002 migration narratives / stale registry gap
+notes / pre-V2 session narratives -- all zero in dv1_228).
+131 assertion-verified exact-match edits; every anchor
+count-asserted; abort-on-fail; no silent partial edits.
+
+CARRIED-FLAG DISPOSITIONS (TB00681 SL sec 5/6 queue):
+- TB00681 NEW-i (D5/D6 figure-desc stale v2_38/v2_58/v2_84
+  pins + ~$0.50 seed framing): FIXED -- repointed to live
+  TB00000 sec 5 / sec 7 / sec 8; ~$0.50 seed framing rewritten
+  to the CR-07 live-minimum dispatch guard + CR-06 pre-Kelly
+  starting form at both Kelly surfaces (LOSS-RELEVANT).
+- TB00681 NEW-ii / TB00680 NEW-i (AR-051 stale flat-$0.50
+  starting form): FIXED -- sec-8 prose rewritten to the live
+  CR-06 pair-relative formula pointer form (value home TB00000
+  sec 8) per the D6-8 canon-residue precedent.
+- TB00680 NEW-ii (AR-057 "TothBot V1" typo): FIXED to V2
+  (derivable typo; the dispatch-table sentence describes the
+  live V2 organism).
+- TB00679 NEW-i (Image8_T3_R1 drill pointers inside D2):
+  FIXED -- migrated to bare canonical-name form in the D2
+  R-bump per the S0 0.1 convention schedule.
+- TB00678 NEW-ii (Image3/Image6 subtitle parents
+  Context_T1_R2): FIXED -- bare-form migration in the D3/D6
+  bumps.
+- TB00677 NEW-i (D8 stale 5-check cascade counts): FIXED --
+  CHECK 2-5 / 3-5 / 4-5 corrected to CHECK 2-4 / 3-4 / 4
+  (desc-only; D8 R holds at R5 per TB00453).
+- TB00677 NEW-ii (D8 governs-list drift): FIXED --
+  per_trade_size_usd removed; concentration_limit_per_module +
+  exposure_limit_pct added (desc-only).
+- TB00677 flag-iv + TB00676 (D8/D9 parent pointers
+  Image2_T2_R2): CONVENTION-DEFERRED -- D8/D9 hold their R
+  this audit; per the S0 0.1 registered schedule their
+  pointer-form migration occurs at each figure's next
+  R-increment. NOT a defect; NOT Bill-deferred.
+- TB00675 set: D2 AR-053 dv-cite tail FIXED; D2 TB00148 cites
+  FIXED (desc + visible + comments); D2 visible sec-7
+  200-trade pin FIXED to TB00000 sec 5 (R-bump); D2
+  Image7_T2_R0 forms FIXED to bare form.
+- TB00674 i (D7 HR-EE-014/015 stale self-cites): FIXED
+  (desc-only; D7 R holds). TB00674 ii (D7 AR-009 amended-dv
+  tail): FIXED. TB00674 v / TB00673 carried set: the D3
+  surviving parentheticals FIXED (cites stripped; the "no
+  fixed TP, no max-hold" negations RETAINED as live fences
+  matching TB00000 sec 7 canon); D3 VISIBLE ORIGINAL DESIGN
+  block + L1b comment FIXED (panel relocated below; comment
+  reduced); D3 estimator "TB00000 sec 9" stale value-home
+  pointer FIXED to sec 8 (LOSS-RELEVANT) at all three sacred
+  surfaces (D3 estimator q1_do, D6 sacred q1_do, D2 G8 q1_do
+  was already sec 8).
+- TB00678 NEW-i (T1 display R3 vs actual R26 label):
+  BILL-DEFERRED housekeeping (TB00678 precedent ruling). The
+  D2 visible title-bar "-- R10" display label is the same
+  class and is likewise BILL-DEFERRED (subtitle manifest line
+  carries the authoritative R13).
+- F-1 (D1 sacred q1_do TP-target clause): closure re-verified
+  -- zero TP-target strings document-wide. F-2 (D7 CURRENT-R
+  defect): re-verified -- D7 root-desc reads CURRENT R: R11
+  consistent with title/figcaption. F-3 (rule:TB00000_v2_20
+  token set): re-verified -- zero tokens document-wide; no
+  0311001 amendment required.
+
+AUDIT-FOR-PEERS (register sec 4 clause): prohibition battery
+P-1..P-20 verified PRESENT, clean, codable, history-free at
+owning surfaces in dv1_228 (P-18 fence wording is "NEVER
+market sell with ambiguous order state" + retry-once /
+second-timeout-HOLD sequence at the sec-3 prose + D3 visible
+callout). No unclassified MUST NOT / NEVER / PROHIBITED /
+REJECTED / EMERGENCY-ONLY rule found outside the P-list; the
+sanctioned-KEEP set (bare source tokens 0411002 REST-XXX /
+0511004 sec-cites / 0711002 RE-003 / 1011013 VPS-spec config
+provenance; sec-12 binding-map spec inventory rows; AR-070
+"no Top-N cap" positive-scope wording; Assign/Bind blocks)
+retained per the D1-10 precedent and register rulings.
+
+BEYOND-INVENTORY FINDINGS (fixed in-slice under the register
+audit-for-peers + DW classes):
+(a) mod:CIATS_Proposal_Engine verified REGISTERED in 0311001
+    v1_47 (grep x2) -- its stale Path-A gap note is the SIXTH
+    of the gap-note set (register counted four); all six
+    deleted (D6) + four v1_7-pinned D5 component notes
+    deleted. The two TRUE gap notes (mod:RegimeEngine
+    token-form gap; contract:Pair_Cache pending registration)
+    RETAINED -- still accurate against v1_47.
+(b) T1 Bill-operator node consumed dead token
+    evt:ALERT_DELIVERED (L414/L417 class) -- same
+    coding-surface defect class as the T1/D5/D6 Logger
+    LOGGER_CRITICAL/HIGH/MEDIUM dead-token set; ALL corrected
+    to the live event_registry self-observability set
+    (evt:ALERT_SENT et al.). None of the dead tokens was ever
+    registered in 0311001 v1_47 -- no registry companion
+    required.
+(c) D5/D6 schema_fields historical-seed (1011005) migration
+    narratives -- same Class C family; stripped to the bare
+    DD-001/DD-002 canonical statement (verbatim below).
+(d) D7 Short_Module element carried a second dead 0811005
+    drill target (beyond the root line) -- removed; live seam
+    target retained (desc-only; D7 R holds).
+
+R-STATE RESULT (TB00453): D1 R16->R17, D2 R12->R13,
+D3 R11->R12, D4 R7->R8, D5 R16->R17, D6 R15->R16 (visible
+text touched). HOLD: T1 R3, D7 R11, D8 R5, D9 R5 (desc-only
+edits; D9 byte-identical). Hold-figure integrity
+diff-verified: zero visible <text> changes in T1/D7/D8.
+
+POINTER CONVENTION (S0 0.1): the six bumping figures migrated
+ALL in-figure pointer tokens (drill_targets, parent_diagram,
+subtitle parents, q1_do drill refs) to bare canonical-name
+form (95 tokens total: D1 15, D2 24, D3 7, D4 14, D5 14,
+D6 21). S0 0.1 prose amended to record the migrated state;
+holding figures retain _R[R] forms until their next increment
+per the registered schedule.
+
+HTML well-formedness verified: figure/svg/desc/figcaption/g/
+text/title tag balance all matched. DD-014 from-diagram-alone
+RE-CONFIRMED: every edit was a citation/narrative strip,
+pointer correction, or dead-token correction -- no live rule,
+contract, parameter, or wire fact was removed; the four
+loss-relevant value-home pointers now direct the coder to the
+correct TB00000 sections (sec 5 thresholds, sec 7 trading
+system, sec 8 registry).
+
+REVERSE-RECONSTRUCTION VERIFICATION: each REMOVED FRAGMENT
+below was diff-extracted from the dv1_227 -> dv1_228 edit log
+(131 ops) and re-matched verbatim against dv1_227 (every
+anchor count-asserted == expected at execution). dv1_228 md5
+52f13e683f96f60b81a160178c65ff03.
+
+DEC-125 register state: SLICE 16 CLOSED. ALL register
+instances dispositioned. DEC-125 CLOSED. PHASE 2 OPTION B
+UNGATED (clean-slate organism code generation in Claude Code,
+never in chat).
+
+----- DEC-125 FINAL RE-AUDIT OP RECORD -- RELOCATED / REMOVED
+CONTENT (VERBATIM, ORDERED) -----
+
+[FA-01 | D1 Exit-Controller pair-status matrix locator (Class C strip)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+per the sec-9 pair-status adaptation matrix [L236-237]
+
+[FA-02 | D1 visible (NEW dv1_5) authoring-cite set (Class C strip)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+Cancel timeout fallback (NEW dv1_5 — I-6) / GetOHLCData (NEW dv1_5) / Parameter Store (NEW dv1_5) / PATH 2 params (NEW dv1_5)
+
+[FA-03 | D2 AR-053 amendment-cite tail (Class C strip)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+dv1_13; amended dv1_43 M-2 short-direction per-module routing
+
+[FA-04 | D2 Long_Module dead drill_targets (retired 0811001/1011008; line deleted)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+drill_targets: 0811001_Long_Module_Specification, 1011008_Long_Module_Coding_Spec
+
+[FA-05 | D2 TB00148-F30 cite set (Class C strip; rule stays)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+TB00148 F30 — never call ws_private direct / closes TB00148 F30 finding / comment cites x2
+
+[FA-06 | D3 VISIBLE ORIGINAL DESIGN justification sub-panel (Class C/D; deleted from R12 figure)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+    <rect x="540" y="476" width="420" height="100" fill="#fafafa" stroke="#cbd5e1" stroke-width="1" rx="4"/>
+    <text x="750" y="496" font-size="10" font-weight="700" fill="#475569" text-anchor="middle">ORIGINAL DESIGN (0741001 sec 3.3 / 3.4)</text>
+    <text x="750" y="512" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">a fixed TP caps winner upside arbitrarily; reversal is the</text>
+    <text x="750" y="526" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">take-profit mechanism (one exit rule governs all)</text>
+    <text x="750" y="542" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">10,000-trial sim 2026-03-17: run-to-reversal &gt; fixed-TP on</text>
+    <text x="750" y="556" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">avg win + profit factor AND lower max drawdown (1.64% vs 1.97%)</text>
+    <text x="750" y="570" font-size="9" font-style="italic" fill="#7f1d1d" text-anchor="middle">DEC-124 (ratified TB00650) - restores documented behaviour</text>
+
+[FA-07 | D3 visible cite residue set (Class C strip)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+(NEW dv1_5 — I-6) cancel-timeout title / (0511004) retry row / (0511005 dv1_1) POSITION MIRROR title + verbatim cite
+
+[FA-08 | D4 DW-5 retired-document tails (Class B delete)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+1011012 retired TB00227, 0711002 retired TB00596 (visible x2 + desc x1)
+
+[FA-09 | D4 figcaption relocation-manifest enumeration (Class C; figcaption reduced to bare DW-1 form)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+Image4 Regime Taxonomy (R7). Forensic provenance - the sec 15.16.3 / V-040 60-cell design-completeness attestation, the OPTION-R extension stack (i)-(viii), the CI-005/CI-006 visible-stack rolling narratives, the prior R5 attestation preserved-for-reference block, and all prior amendment narratives - relocated to 0521001 (anchor 0520000) per DEC-123 Phase M (TB00640). The diagram remains design-complete and derivable from the SVG + governing &lt;desc&gt; fields alone (V-040 validation unchanged).
+
+[FA-10 | D5/D6 Logger 'superseding the prior 5-level vocabulary' echoes (Class B delete x2)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+single V2 log ladder per rule:HR-RPT-003, superseding the prior 5-level vocabulary
+
+[FA-11 | D5/D6 Logger produces dead-token set (Class B; coding-surface defect fix)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+evt:ALERT_DELIVERED, evt:LOGGER_CRITICAL, evt:LOGGER_HIGH, evt:LOGGER_MEDIUM (pre-V2-ladder residue tokens, never registered in 0311001 v1_47; replaced by the live event_registry self-observability set)
+
+[FA-12 | D5 event_registry LEVEL DERIVATION narrative + ratification cite (Class C)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+LEVEL DERIVATION: the single V2 ladder INFO/WARNING/CRITICAL (rule:HR-RPT-003, ratified TB00604/TB00605) is applied by the monotonic 5-to-3 collapse of the 1011007 source levels -- {DEBUG, INFO} -> INFO; {WARN, HIGH} -> WARNING; {CRITICAL} -> CRITICAL. 
+
+[FA-13 | D6 stale Path-A registry gap notes x6 (Class D; all six CIATS module tokens verified REGISTERED in 0311001 v1_47 §15.12.1 this session: mod:CIATS_EWMA_Monitor(5), mod:CIATS_Statistical_Engine(3), mod:CIATS_PDCA_Engine(2), mod:CIATS_Regime_Library(2), mod:CIATS_Proposal_Engine(2), mod:CIATS_Parameter_Store(2))]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+registry_gap_note: [mod:CIATS_EWMA_Monitor referenced here per RR-SCOPE-007 carry-forward from D5 R2 (TB00160 §3.1.3 row 4);] §15.12.1 amendment Path A recommended per TB00160 §7.1 + TB00161 §7.1.
+
+[FA-14 | D5 stale v1_7-pinned registry gap notes x4 (Class D; tokens verified registered in v1_47)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+registry_gap_note: mod:CIATS_{EWMA_Monitor|Statistical_Engine|PDCA_Engine|Regime_Library} not currently registered in 0311001 v1_7 §15.12.1; preserved per RR-SCOPE-007 from D5 R1 root governs reference.
+
+[FA-15 | D5 ciats_tracking peak_portfolio_USD migration + registration narrative (Class C/D)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+ (migrated per 0911002 Stream 2 / Phase 3 / E2 from 0611002 Drawdown_and_Halt_Rules dv1_0 sec 11 DD-PEAK-001..005; TB00573 / F-2 OPTION A under the DEC-096 binary architecture test) |  BINARY TEST (DEC-096): a CIATS-tracked, Logger-emitted, Trade-Outcome-Bus-read statistic IS trading-organism (CIATS) architecture -> D5 (YES); no seed VALUE is involved (peak is a computed running maximum, not a tunable parameter, so nothing is added to TB00000 sec 8). Token param:peak_portfolio_USD registered this session in 0311001 §15.12.8 (v1_37 -> v1_38; previously ABSENT, grep-verified). R HELD at R13 per the TB00453 bright line (a &lt;desc&gt;-only field ADD touches no visible &lt;text&gt; / geometry / viewBox).
+
+[FA-16 | D5 Proposal-Engine stale TB00000 v2_38/v2_58/v2_84 + §9.x pins and ~$0.50 seed framing (Class C + canon-residue correction to CR-06/CR-07 live form)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+per TB00000 v2_38 §9.10 / v2_38 §9.6 / v2_58 §9.10 / §9.6 / v2_84 sec 7 / v2_84 §9.17; 'floored at the Kraken per-pair minimum (~$0.50 seed)'
+
+[FA-17 | D6 Logger consumes V-041/V-042 closure attestation bracket (Class C)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+[registered evt:* token enumeration per V-041 P-CP2..P-CP7 + V-042 V042-PG-C0-* consumer-binding closure]
+
+[FA-18 | D6 reporting_hierarchy authoring/ratification + gap-closure cites (Class C)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+authored TB00605; ratified TB00604 Q1-Q5 / Logger gap G3 CLOSED TB00606
+
+[FA-19 | D6 Trade-Outcome-Bus stale session-cascade parenthetical (Class D)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+(currently dv1_5; dv1_6 cascade pending Turn 3 this session to re-point §7.5 citation from "1011005 dv1_3 §9" to "0500000 dv1_50 Diagram 5 Image5_T2_R5 + Diagram 6 Image6_T2_R6")
+
+[FA-20 | D5/D6 schema_fields historical-seed migration narratives (Class C; retired 1011005 authoring-substrate story + stale deferred-cascade plan)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+; historical seed: 1011005 dv1_3 §9 EC-TOB-002 lines 353-384 — that coding spec was the bottom-up authoring substrate from which TB00217 Turn 1 pulled this schema into the diagram; 1011005 dv1_3 actual retirement deferred to a future cascade that handles assignment-list cleanup at downstream sites in 0500000 §5300-7000 + §11 RELATED DOCUMENTS) | ; historical seed: 1011005 dv1_3 §9 EC-TOB-002 lines 353-384 — that coding spec was the bottom-up authoring substrate from which TB00217 Turn 1 pulled this schema into the diagram; 1011005 dv1_3 actual retirement deferred to a future cascade)
+
+[FA-21 | D6 Parameter-Store produces V-041 P-CC2 closure + entry_timeout_sec retirement narrative (Class C/B)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+(TB00365 V-041 P-CC2 ADD-only producer-binding closure — 18 P-CC2 param: tokens enumerated after the param:entry_timeout_sec removal TB00666, token RETIRED per DEC-122 CR-17; at the D6 standalone write-owner mod:CIATS_Parameter_Store per TB00365 chat-turn 1 FP/DP-derivability-test OUTCOME 1 Option (ε'); NSI §3.5 target corrected from non-existent D6 mod:Regime_Engine standalone to actual D6 mod:CIATS_Parameter_Store standalone)
+
+[FA-22 | D6 wire-up-order retired-doc version cites (Class C)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+per 0511004 dv1_3 §7 + HR-EC-014; 0511005 dv1_1 HR-PM-009; 0511001 dv1_5
+
+[FA-23 | D7 root dead drill_targets (retired 0811005/0811001; line deleted)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+drill_targets: 0811005_dv1_0_Short_Module_Specification, 0811001_dv1_0_Long_Module_Specification
+
+[FA-24 | D7 HR-EE-014/HR-EE-015 stale self-cites (Class C; TB00674 flag i CLOSED)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+per 0511003 dv1_1 §6 + 0500000 dv1_24 §12.3 (x2)
+
+[FA-25 | Sec-7 prose '08NN005 parallel sibling spec' authoring plan (Class B; diagrams-govern)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+new 08NN005 specification authored as parallel sibling;
+
+[FA-26 | AR-051 stale '$0.50 flat starting form' sentence (canon-residue; rewritten to live CR-06 pointer form)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+Starting form: flat across expected_R_R buckets at per-pair Kraken minimum (~$0.50 per trade)
+
+[FA-27 | Sec-8 Assign pending-1011002-amendment tail (Class D; stale plan)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+pending 1011002 amendment for direction-symmetric reduce_only market-buy dispatch
+
+[FA-28 | D4 Regime-Engine ciats_ownership 0911002 migration framing + registration narrative + stale §9.17-group SCOPE NOTE (Class C; live ownership facts retained)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+Architectural fact migrated here per 0911002 Campaign Phase 1 (Option A / DEC-039) | (param:atr_rolling_window registered this session v1_25 -> v1_26 per P-2, the one regime-engine registry gap; the other three pre-existing) | SCOPE NOTE: the §9.17 group is named "Regime engine + signal model"; its fifth token param:min_volume_usd_daily (signal-model liquidity floor) is owned at a DIFFERENT element (D2 gate:G2 liquidity check, NOT this engine) and is NOT migrated this session — carried forward to its own one-mission/one-diagram session per DEC-003 Path A.
+
+[FA-29 | D6 Exit-Controller mirror 0511004 dv1_3 version-pinned cites (Class C strip; HR-EC-014 rule + bare 0511004 §7.2 source token stay)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+per 0511004 dv1_3 §HR-EC-014 / (per 0511004 dv1_3 §7.2) / visible (HR-EC-014: ... — 0511004 dv1_3)
+
+[FA-30 | Sec-7 prose retired-0811005 spec pointer (Class B; diagrams-govern)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+0811005 Short_Module_Specification
+
+[FA-31 | D7 Short_Module dead drill target (retired 0811005; live seam target retained)]
+REMOVED/RELOCATED FRAGMENT (verbatim):
+drill_targets: ..., 0811005_dv1_0_Short_Module_Specification
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_227 / DocPath ...dv1_227... /
+DocDate 06-11-2026 / DocTime 23:45:00 UTC
+LIVE: DocVersion dv1_228 / DocPath ...dv1_228... /
+DocDate 06-12-2026 / DocTime 03:30:00 UTC
+
+----- END DEC-125 FINAL RE-AUDIT OP RECORD -----
 
 ============================================================
 END OF DOCUMENT
