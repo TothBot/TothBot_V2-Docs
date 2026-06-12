@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_225</title>
+<title>0500000 System Architecture Overview dv1_226</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_225</td></tr>
+  <tr><td>DocVersion</td><td>dv1_226</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_225_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_226_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-11-2026</td></tr>
-  <tr><td>DocTime</td><td>21:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -146,12 +146,7 @@ directly as inline SVG XML. Bill opens this file by double-click to view text
 and diagrams together in one rendered view. Claude reads the same file as text
 from /mnt/project/ and parses prose and SVG directly. ONE file format. ONE
 source of truth. No .docx, no .pdf, no _svg.txt sidecars, no PNG sidecars.
-Governed by 0311001 v1_6 §15.13 and TB00000 v2_20 §4.1 DR-002-HTML.
-</p>
-<p class="format-note">
-<strong>SUPERSEDES dv1_23 .txt + .docx + .pdf + 4 _svg.txt + 6 PNG (13 files).</strong>
-The 13-file retirement cascade executes at TB00151e STAGE 4 after Bill approval
-of this completed dv1_24 .html.
+Governed by 0311001 §15.13 and TB00000 sec 4.6 DR-002-HTML.
 </p>
 </header>
 
@@ -165,26 +160,22 @@ prose-side reading rules supporting interpretation of canonical-form
 identifiers and inter-figure navigation pointers.
 </p>
 <p>
-0.1 Tier 1 drill_targets bare canonical-name convention (NEW dv1_37
-per DEC-009 ratified at TB00170 + 0311001 v1_11 §15.11.5 T1-B amendment).
+0.1 Tier 1 drill_targets bare canonical-name convention.
 The Tier 1 figure (Image1_T1) root &lt;desc&gt; drill_targets field
 enumerates pointers to its seven Tier 2 children (Image1_T2 through
 Image7_T2) using BARE CANONICAL-NAME form
 [DCN]_Image[N]_T2_[ShortTitle], without R-state suffix. R-states of
-target figures (D1=R-2, D2=R-1, D3=R-3, D4=R-1, D5=R-3, D6=R-3,
-D7=R-1 as of dv1_37 enactment) are mutable and discoverable from each
+target figures are mutable and discoverable from each
 target figure's own &lt;title&gt;diagram_canonical&lt;/title&gt; field;
 drill_target pointers reference the figure regardless of current
-R-state. Pre-dv1_37 [DCN]_Image[N]_T2_R[R]_[ShortTitle] form is
-RETIRED for Tier 1 root &lt;desc&gt; drill_targets. Tier 2
+R-state. Tier 2
 element-level drill_targets (within Tier 2 figures pointing to other
-Tier 2 figures) currently retain pre-v1_11 _R[R] form; migration to
-bare canonical-name is sequenced for next R-increment of each Tier 2
-figure per DEC-003 Path A (one diagram per session).
+Tier 2 figures) currently retain the _R[R] form; migration to
+bare canonical-name occurs at the next R-increment of each Tier 2
+figure (one diagram per session).
 </p>
 <p>
-0.2 Canonical-token-form discipline (V-038.3 reconciliation per DR-042
-NEW + CLOSED at TB00170). Architectural identifiers in §1-§13 prose use
+0.2 Canonical-token-form discipline. Architectural identifiers in §1-§13 prose use
 canonical-token form with namespace prefix per 0311001 §15.11.3 type-
 prefix taxonomy: rule:HR-XX-NNN, ar:AR-NNN, layer:NAME, channel:NAME,
 pt_mode:NAME, contract:NAME, gate:NAME, regime:NAME, evt:NAME,
@@ -192,8 +183,7 @@ param:NAME, decision:D-NN, container:NAME, mod:NAME, indicator:NAME.
 Bare-form citation (e.g., "HR-PM-009" without rule: prefix) is
 permitted as informal reference but the FIRST and ARCHITECTURAL
 mention in any §1-§13 narrative of an identifier MUST use canonical
-form. This dv1_37 enactment closes V-038.3 prose-zero gaps for the
-TB00170 NSI §3.1 carry-forward set across §2, §3, §4, §8, §11.
+form.
 </p>
 
 <h2>Tier 1 System Context Diagram</h2>
@@ -201,7 +191,7 @@ TB00170 NSI §3.1 carry-forward set across §2, §3, §4, §8, §11.
 This is the Tier 1 Context view of TothBot V2 — the system-level overview that
 serves as parent for every Tier 2 diagram in this document (Diagrams 1-7). It
 depicts the TothBot V2 organism (KRAKEN role + TOTHBOT role + CIATS role per
-TB00000 §1) and its primary external actors / boundaries: Bill (sole operator),
+TB00000 sec 1) and its primary external actors / boundaries: Bill (sole operator),
 Hetzner VPS (hosting boundary), Mail Alerts (alert delivery via
 alerts@tothbot.com), GitHub Repositories (source-of-truth), and the external
 Kraken Exchange infrastructure (Public WS v2 + Private WS v2 + REST).
@@ -217,7 +207,7 @@ flows; gray arrows mark operational channels (Bill / VPS / GitHub / Mail).
 <p>
 Tier 1 RULE: this diagram has parent_diagram = none (it is itself the root).
 Every labeled &lt;g&gt; group in this diagram carries class="tier-1" and a
-structured &lt;title&gt;+&lt;desc&gt; per 0311001 v1_7 §15.11.6 (Tier 1 root-desc contract).
+structured &lt;title&gt;+&lt;desc&gt; per 0311001 §15.11.6 (Tier 1 root-desc contract).
 The seven drill_target attributes in the root &lt;desc&gt; resolve to the seven
 Tier 2 diagrams (D1 - D7) below.
 </p>
@@ -758,7 +748,7 @@ Three functional zones, one organism:
 <br>
   Kraken:  generates events, executes orders, holds resting off-book emergency SL
 <br>
-           stop orders on matching engine (no resting TP per DEC-124 run-to-reversal)
+           stop orders on matching engine
 <br>
   TothBot: processes Kraken events, executes trading strategy, manages positions
 <br>
@@ -776,12 +766,12 @@ Loss prevention takes priority over profit generation. Everything else is second
   Exchange:          Kraken Spot (Long_Module) + Kraken Margin (Short_Module)
                      — parallel-module framework supporting Long_Module,
                      Short_Module, and future trading modules (per TB00000
-                     v2_29 §9.3; diagrams remain canonical per §4.5 DD-001/
-                     DD-002 + 0311001 v1_12 §15.14)
+                     sec 7; diagrams remain canonical per sec 4.2 DD-001/
+                     DD-002 + 0311001 §15.14)
   Language:          Python 3.12.3
   VPS:               Hetzner CPX22 — 87.99.141.44 — Ashburn VA
                      (Kraken Spot servers: AWS us-west-2 Oregon)
-                     ★ Evaluate Hillsboro OR [dv1_6 IMP-01 — adjacent to Kraken AWS]
+                     ★ Evaluate Hillsboro OR [IMP-01 — adjacent to Kraken AWS]
   System Clock:      Kraken OHLC 5-minute candle close event (WS v2 push)
   Fee Baseline:      Maker 0.16% / Taker 0.26% (CIATS monitors actuals)
   Operation:         24/7/365 — CIATS may add stand-down periods via PDCA if data supports
@@ -789,41 +779,33 @@ Loss prevention takes priority over profit generation. Everything else is second
   Wallets:               paper_starting_balance_long_usd  = $5,000  (Long_Module)
                          paper_starting_balance_short_usd = $5,000  (Short_Module)
                      Live-trading wallet funding is a separate Bill decision informed by
-                     paper-trading results. Per TB00000 v2_29 §9.4.
+                     paper-trading results. Per TB00000 sec 7.
   Sacred constraint: Net 1:1.5 R:R MINIMUM floor on every trade — HARDCODED — the only
                      number not owned by CIATS. CIATS owns the sizing curve ABOVE the
                      floor (trades with expected R:R above 1:1.5 may receive larger
                      allocations, bounded only by the module wallet balance — no ceiling,
-                     cap, or limit on trade size). Per TB00000 §7.
+                     cap, or limit on trade size). Per TB00000 sec 7.
 </pre>
 <h2>2. Kraken API Connection Architecture</h2>
 <p>
-2.0 Canonical Identifiers (NEW dv1_37 — V-038.3 reconciliation per DR-042;
-DD-002 prose-follows-diagram). The pair_cache architectural element narrated
+2.0 Canonical Identifiers. The pair_cache architectural element narrated
 in this section (and cross-referenced in §3 Trading Pipeline + §11 Trade
 Lifecycle) resolves to canonical-token form pair_cache per 0311001 §15.11.3.
 WS Manager owns and maintains pair_cache as the authoritative pair-spec source;
 all consumers (Selection Controller, Long Module, Position Mirror) read from
 pair_cache via startup injection per ar:AR-073 + rule:HR-EC-014. Encoded in
-D1 Kraken API Connection Architecture across 6 SVG sites.
-</p>
-<p>
-All connection points verified across 3 independent analysis passes (15 sources) plus
-<br>
-2 deep validation sessions (144+ sources total) plus 10-search FP/DP Kraken validation
-<br>
-[dv1_6] (126 sources).
+D1 Kraken API Connection Architecture.
 </p>
 <p>
 2.1 Key Connection Points
 </p>
 <pre>
   Public WS v2:
-    instrument  — asset specs + per-pair status cache ★ dv1_6
-                  price_increment / qty_min / cost_min ★ GAP-C/D dv1_9
+    instrument  — asset specs + per-pair status cache
+                  price_increment / qty_min / cost_min
     status      — global engine state (online/post_only/cancel_only/maintenance)
     ohlc(5m)    — SYSTEM CLOCK (pipeline trigger, fires on trade events)
-    ohlc(60)    — 1H HTF cache for Gate 4 ★ NEW dv1_5
+    ohlc(60)    — 1H HTF cache for Gate 4
     ticker      — price data, event_trigger:bbo (pairs with open positions) or
                   event_trigger:trades (pairs without). WS Manager manages per-pair.
 </pre>
@@ -831,29 +813,29 @@ All connection points verified across 3 independent analysis passes (15 sources)
   Private WS v2 inbound:
     executions  — fills/expirations/SL-TP triggers, ratecounter:true (A-1),
                   snap_orders:true, snap_trades:true, order_status:true on reconnect (A-3),
-                  sequence gap detection ★ A-10 dv1_7
-                  CRITICAL ★ GAP-A dv1_9: order_status:true MANDATORY — without it amended
+                  sequence gap detection (A-10)
+                  CRITICAL: order_status:true MANDATORY — without it amended
                   and restated exec_types are silently dropped, breaking A-12 and A-13
-    balances    — real-time settlement, sequence gap detection ★ A-9 dv1_6
+    balances    — real-time settlement, sequence gap detection (A-9)
 </pre>
 <pre>
   Private WS v2 outbound:
-    add_order   — entry: marketable IOC limit + MPP slippage cap (DEC-122 CR-03)/cl_ord_id/stp_type:cancel_newest/deadline:now+5s
-    amend_order — PRIMARY amendment method (edit_order DEPRECATED ★ dv1_6)
-    batch_add   — emergSL single leg on fill (no TP per DEC-124). cl_ord_id/stp_type:cancel_newest/deadline:now+5s
+    add_order   — entry: marketable IOC limit + MPP slippage cap/cl_ord_id/stp_type:cancel_newest/deadline:now+5s
+    amend_order — PRIMARY amendment method (edit_order PROHIBITED)
+    batch_add   — emergSL single leg on fill. cl_ord_id/stp_type:cancel_newest/deadline:now+5s
     cancel_order — exit leg cleanup, req_id tracked
-    batch_cancel — Full Halt multi-order cancel ★ dv1_6
+    batch_cancel — Full Halt multi-order cancel
     All messages carry req_id (A-2), cl_ord_id (A-2), stp_type:cancel_newest (A-4) [WS v2 underscore]
 </pre>
 <pre>
   REST:
     GetWebSocketsToken  — startup/reconnect
-    GetOHLCData         — daily regime computation 00:00 UTC ★ NEW dv1_5
-                          CRITICAL: exclude response[-1] always ★ dv1_6
-    GetOpenOrders       — restart reconcile fallback / executions gap recovery ★ dv1_7
-    GetAccountBalance   — restart reconcile fallback / balances gap recovery ★ dv1_6
+    GetOHLCData         — daily regime computation 00:00 UTC
+                          CRITICAL: exclude response[-1] always
+    GetOpenOrders       — restart reconcile fallback / executions gap recovery
+    GetAccountBalance   — restart reconcile fallback / balances gap recovery
     CancelAllOrders     — kill switch emergency only
-    Status API          — startup proactive maintenance check (AR-038 dv1_12)
+    Status API          — startup proactive maintenance check (AR-038)
                           GET https://status.kraken.com/api/v2/
                           scheduled-maintenances/upcoming.json
                           No authentication. Informational only. Does not block startup.
@@ -861,9 +843,8 @@ All connection points verified across 3 independent analysis passes (15 sources)
 <pre>
   Matching Engine:
     Resting off-book emergency SL stop orders survive any TothBot failure
-    independently — crash protection always active. No resting TP orders exist under
-    DEC-124 (run-to-reversal): the take-profit is the Layer 1a regime-reversal exit
-    executed by the Exit Controller.
+    independently — crash protection always active. The take-profit is the Layer 1a
+    regime-reversal exit executed by the Exit Controller.
 </pre>
 <pre>
   EVALUATED AND REJECTED:
@@ -876,7 +857,7 @@ All connection points verified across 3 independent analysis passes (15 sources)
 </p>
 <pre>
   online       — All orders. Signal pipeline runs normally.
-  post_only    — No new entries (the CR-03 taker marketable-IOC entry is rejected under post_only). Exit Controller adapts exit placement per WS-EXIT-003 (limit-based exit path); resting emergSL remains active on the engine.
+  post_only    — No new entries (the taker marketable-IOC entry is rejected under post_only). Exit Controller adapts exit placement per WS-EXIT-003 (limit-based exit path); resting emergSL remains active on the engine.
   cancel_only  — No new entries. Exit Controller can cancel. Resting orders active.
   maintenance  — No orders, no cancels. Resting emergSL active on engine.
 </pre>
@@ -891,13 +872,13 @@ All connection points verified across 3 independent analysis passes (15 sources)
   Rate counter decay (per second):      2.34
   Max open orders (per pair):          80
   Add order fixed cost:                +1
-  Amend order cost ★ dv1_6 (PRIMARY): +1 fixed, +3(&lt;5s), +2(&lt;10s), +1(&lt;15s)
-  Edit order (DEPRECATED ★ dv1_6):    +1 fixed, +6(&lt;5s), +5(&lt;10s) — DO NOT USE
+  Amend order cost (PRIMARY):         +1 fixed, +3(&lt;5s), +2(&lt;10s), +1(&lt;15s)
+  Edit order (PROHIBITED):            +1 fixed, +6(&lt;5s), +5(&lt;10s) — DO NOT USE
   Batch add fixed cost:                +(n/2)
   Cancel order cost (&lt; 5s old):        +8
   Cancel order cost (&lt; 10s old):       +6
   Cancel order cost (&lt; 300s old):      +1
-  Batch cancel cost ★ dv1_6:          Cumulative sum of individual order cancel costs
+  Batch cancel cost:                  Cumulative sum of individual order cancel costs
 </pre>
 <pre>
   amend_order is 43% cheaper than edit_order for orders resting &lt;5s (+4 vs +7).
@@ -924,7 +905,7 @@ A-2  req_id and cl_ord_id on all outbound WS messages:
 <br>
      cl_ord_id at dispatch time before Kraken response. Position Mirror records cl_ord_id
 <br>
-     immediately at dispatch — no async gap. WS Manager maintains pending-request registry. cl_ord_id and req_id MUST each be unique per outstanding order - they are the correlation keys used to bind acknowledgements and fills to the originating order, so a collision misattributes a fill. The uniqueness-achieving construction scheme (e.g. symbol prefix + millisecond timestamp) is an implementation choice, not architecture (dv1_141; TB00511).
+     immediately at dispatch — no async gap. WS Manager maintains pending-request registry. cl_ord_id and req_id MUST each be unique per outstanding order - they are the correlation keys used to bind acknowledgements and fills to the originating order, so a collision misattributes a fill. The uniqueness-achieving construction scheme (e.g. symbol prefix + millisecond timestamp) is an implementation choice, not architecture.
 <br>
      Assign to 0511001, 0511003, 0511005.
 </p>
@@ -960,14 +941,14 @@ A-5  Reconnect behavior distinction:
      Both implemented as separate paths in WS Manager. Assign to 0511001.
 </p>
 <p>
-A-6 (dv1_5)  OTO conditional orders — REJECTED:
+A-6  OTO conditional orders — REJECTED:
 <br>
      OTO uses limit price not actual fill price — violates sacred R:R. Creates Position
 <br>
      Mirror race condition. batch_add on fill confirmed correct. See AR-008.
 </p>
 <p>
-A-7 (dv1_6) ★  WS Ping / Keepalive Strategy:
+A-7  WS Ping / Keepalive Strategy:
 <br>
      Kraken WS server disconnects after ~60 seconds of inactivity. Cloudflare idle
 <br>
@@ -980,7 +961,7 @@ A-7 (dv1_6) ★  WS Ping / Keepalive Strategy:
      distinct from TCP keepalive. Assign to 0511001, 1011002.
 </p>
 <p>
-A-8 (dv1_6) ★  Zombie Connection Detection:
+A-8  Zombie Connection Detection:
 <br>
      A WS connection can appear alive (ping/pong passing) while delivering no real market
 <br>
@@ -993,7 +974,7 @@ A-8 (dv1_6) ★  Zombie Connection Detection:
      Assign to 0511001, 1011002.
 </p>
 <p>
-A-9 (dv1_6) ★  Balances Channel Sequence Gap Detection:
+A-9  Balances Channel Sequence Gap Detection:
 <br>
      Every balances channel message carries a sequence integer. WS Manager MUST track
 <br>
@@ -1006,7 +987,7 @@ A-9 (dv1_6) ★  Balances Channel Sequence Gap Detection:
      Assign to 0511001, 1011002.
 </p>
 <p>
-A-10 (dv1_7) ★  Executions Channel Sequence Gap Detection:
+A-10  Executions Channel Sequence Gap Detection:
 <br>
      Every executions channel message carries a sequence integer. WS Manager MUST track
 <br>
@@ -1027,7 +1008,7 @@ A-10 (dv1_7) ★  Executions Channel Sequence Gap Detection:
      Assign to 0511001, 1011002.
 </p>
 <p>
-A-11 (dv1_8) ★  Executions Channel: cancel_reason Deprecated — Use reason Field:
+A-11  Executions Channel: cancel_reason Deprecated — Use reason Field:
 <br>
      The cancel_reason field in executions channel events is DEPRECATED since WS v2.0.0
 <br>
@@ -1040,7 +1021,7 @@ A-11 (dv1_8) ★  Executions Channel: cancel_reason Deprecated — Use reason Fi
      Assign to 1011002 WM-EXE-002 through WM-EXE-004.
 </p>
 <p>
-A-12 (dv1_8) ★  Executions Channel: Complete exec_type Enum Handling Required:
+A-12  Executions Channel: Complete exec_type Enum Handling Required:
 <br>
      WS Manager MUST handle all exec_type values: pending_new, new, trade, filled,
 <br>
@@ -1057,7 +1038,7 @@ A-12 (dv1_8) ★  Executions Channel: Complete exec_type Enum Handling Required:
      Assign to 1011002 WM-EXE-005 through WM-EXE-007.
 </p>
 <p>
-A-13 (dv1_8) ★  Executions Channel: restated exec_type Must Not Trigger Position Change:
+A-13  Executions Channel: restated exec_type Must Not Trigger Position Change:
 <br>
      restated fires when Kraken&#x27;s matching engine amends an order for maintenance purposes.
 <br>
@@ -1074,7 +1055,7 @@ A-13 (dv1_8) ★  Executions Channel: restated exec_type Must Not Trigger Positi
      Assign to 1011002 WM-EXE-008 through WM-EXE-010.
 </p>
 <p>
-A-14 (dv1_8) ★  Spot REST Authentication: Confirmed Unchanged — PL-014 RESOLVED:
+A-14  Spot REST Authentication: Confirmed Unchanged — PL-014 RESOLVED:
 <br>
      The October 1, 2025 authentication breaking change applied to Futures REST ONLY.
 <br>
@@ -1087,7 +1068,7 @@ A-14 (dv1_8) ★  Spot REST Authentication: Confirmed Unchanged — PL-014 RESOL
      Assign to 0411001 WS-AUTH-001 through WS-AUTH-003.
 </p>
 <p>
-A-15 (dv1_9) ★  Executions Channel: order_status:true MANDATORY — GAP-A CRITICAL FIX:
+A-15  Executions Channel: order_status:true MANDATORY — GAP-A CRITICAL FIX:
 <br>
      Without order_status:true in the executions subscription, the channel only delivers:
 <br>
@@ -1104,7 +1085,7 @@ A-15 (dv1_9) ★  Executions Channel: order_status:true MANDATORY — GAP-A CRIT
      Assign to 0411001 WS-OSTA-001 through WS-OSTA-003, 1011002 WM-EXE-011/-012.
 </p>
 <p>
-A-16 (dv1_9) ★  OHLC Channel: interval_begin Replaces Deprecated timestamp — GAP-B:
+A-16  OHLC Channel: interval_begin Replaces Deprecated timestamp — GAP-B:
 <br>
      The Kraken WS v2 OHLC channel deprecated the timestamp field. Subscription ACK warns:
 <br>
@@ -1115,7 +1096,7 @@ A-16 (dv1_9) ★  OHLC Channel: interval_begin Replaces Deprecated timestamp —
      Assign to 0411001 WS-OHLC-002 through -005, 1011002 WM-OHLC-001 through -003.
 </p>
 <p>
-A-17 (dv1_9) ★  Instrument Channel: price_increment / qty_min / cost_min — GAP-C/D:
+A-17  Instrument Channel: price_increment / qty_min / cost_min — GAP-C/D:
 <br>
      (GAP-C) The instrument channel deprecated tick_size. Use price_increment exclusively.
 <br>
@@ -1130,7 +1111,7 @@ A-17 (dv1_9) ★  Instrument Channel: price_increment / qty_min / cost_min — G
      Assign to 0411001 WS-INST-001 through -007, 1011002 WM-INST-001 through -005.
 </p>
 <p>
-A-18 (dv1_9) ★  WebSocket Library max_size = 10MB — GAP-E:
+A-18  WebSocket Library max_size = 10MB — GAP-E:
 <br>
      Python websockets library default max_size = 1MB. The Kraken instrument channel
 <br>
@@ -1141,7 +1122,7 @@ A-18 (dv1_9) ★  WebSocket Library max_size = 10MB — GAP-E:
      Assign to 0411001 WS-LIB-001 through -003, 1011002 WM-LIB-001 through -003.
 </p>
 <p>
-A-19 (dv1_9) ★  maxratecount from Executions ACK is Operative Rate Threshold — IMP-11:
+A-19  maxratecount from Executions ACK is Operative Rate Threshold — IMP-11:
 <br>
      The executions subscription ACK returns maxratecount — the actual operative rate
 <br>
@@ -1154,7 +1135,7 @@ A-19 (dv1_9) ★  maxratecount from Executions ACK is Operative Rate Threshold �
      Assign to 0411001 WS-RL-003, WS-EXEC-001a, 1011002 WM-RATE-001 through -003.
 </p>
 <p>
-A-20 (dv1_10) ★  stp_type Format CORRECTION — WS v2 Uses Underscore, Not Hyphen:
+A-20  stp_type Format CORRECTION — WS v2 Uses Underscore, Not Hyphen:
 <br>
      Official Kraken WS v2 documentation and batch_add examples use underscore format:
 <br>
@@ -1166,14 +1147,12 @@ A-20 (dv1_10) ★  stp_type Format CORRECTION — WS v2 Uses Underscore, Not Hyp
 <br>
      (add_order, batch_add) MUST use the underscore format. Using the hyphen format in
 <br>
-     WS v2 will cause order rejection or silent failure. This was an error in all
-<br>
-     prior dv1_9 and earlier specifications. Corrected here as AR-032.
+     WS v2 will cause order rejection or silent failure (ar:AR-032).
 <br>
      Assign to 0411001 WS-STP-001 through -003, 1011002 WM-STP-001 through -003.
 </p>
 <p>
-A-21 (dv1_10) ★  deadline Parameter on All WS v2 Order Submissions:
+A-21  deadline Parameter on All WS v2 Order Submissions:
 <br>
      Both add_order and batch_add support a deadline parameter: an ISO 8601 UTC
 <br>
@@ -1191,7 +1170,7 @@ A-21 (dv1_10) ★  deadline Parameter on All WS v2 Order Submissions:
 <br>
      CRITICAL: deadline also applies to batch_add. A delayed batch_add with incorrect
 <br>
-     TP/emergSL prices due to fill price slippage is prevented by deadline enforcement.
+     emergSL prices due to fill price slippage is prevented by deadline enforcement.
 <br>
      Generate: deadline = (datetime.utcnow() + timedelta(seconds=5)).strftime(
 <br>
@@ -1200,7 +1179,7 @@ A-21 (dv1_10) ★  deadline Parameter on All WS v2 Order Submissions:
      Assign to 0411001 WS-DL-001 through -004, 1011002 WM-DL-001 through -004.
 </p>
 <p>
-A-22 (dv1_10) ★  aiohttp ClientSession Timeout and Connector Configuration:
+A-22  aiohttp ClientSession Timeout and Connector Configuration:
 <br>
      All REST calls use a single shared aiohttp.ClientSession with explicit timeout and
 <br>
@@ -1229,7 +1208,7 @@ A-22 (dv1_10) ★  aiohttp ClientSession Timeout and Connector Configuration:
      Assign to 1011002 WM-REST-006 through -011, 1011001 BP-HTTP-001 through -004.
 </p>
 <p>
-A-23 (dv1_10) ★  Ticker event_trigger per Position State:
+A-23  Ticker event_trigger per Position State:
 <br>
      The ticker channel event_trigger parameter controls when updates are published.
 <br>
@@ -1260,7 +1239,7 @@ A-23 (dv1_10) ★  Ticker event_trigger per Position State:
      Assign to 0411001 WS-TKR-001 through -004, 1011002 WM-TKR-001 through -004.
 </p>
 <p>
-A-24 (dv1_10) ★  Regime Engine GetOHLCData Rate Limit Staggering:
+A-24  Regime Engine GetOHLCData Rate Limit Staggering:
 <br>
      REST public GetOHLCData is rate-limited by IP address + currency pair at 1/second.
 <br>
@@ -1277,11 +1256,9 @@ A-24 (dv1_10) ★  Regime Engine GetOHLCData Rate Limit Staggering:
      On rate limit error (HTTP 429): exponential backoff, log REGIME_OHLC_RATE_LIMITED,
 <br>
      retry up to 3 times. If all fail: use stale regime (per RE-SCH-004).
-<br>
-     1011012 RE-RL-001 through -004 retired TB00227; 0711002 retired TB00596 — canonical authority is the Diagram 4 regime-engine visual / §5 (see 0500000 dv1_55 §12.5 Bind block).
 </p>
 <p>
-2.5 Data Architecture: Pre-Computation Cache (NEW dv1_5 — I-2)
+2.5 Data Architecture: Pre-Computation Cache (I-2)
 </p>
 <p>
 HOT PATH RULE: The 5-minute pipeline hot path reads cached values ONLY. No computation
@@ -1291,7 +1268,7 @@ occurs during pipeline evaluation. All indicators maintained as incremental runn
 calculations updated on each event trigger.
 </p>
 <p>
-IMP-06 (dv1_8) ★  aiohttp Mandatory for All REST Calls:
+IMP-06  aiohttp Mandatory for All REST Calls:
 <br>
      All Kraken REST calls MUST use aiohttp (async HTTP). Never use the requests library
 <br>
@@ -1302,7 +1279,7 @@ IMP-06 (dv1_8) ★  aiohttp Mandatory for All REST Calls:
      Assign to 1011002 WM-REST-001 through WM-REST-005.
 </p>
 <p>
-IMP-07 (dv1_8) ★  asyncio TaskManager Pattern — Mandatory for 24/7 Operation:
+IMP-07  asyncio TaskManager Pattern — Mandatory for 24/7 Operation:
 <br>
      All asyncio.create_task() calls MUST store a strong reference AND register a done
 <br>
@@ -1319,7 +1296,7 @@ IMP-07 (dv1_8) ★  asyncio TaskManager Pattern — Mandatory for 24/7 Operation
      Assign to 1011002 WM-TASK-001 through WM-TASK-004.
 </p>
 <p>
-IMP-08 (dv1_8) ★  systemd Watchdog Integration — Frozen Process Detection:
+IMP-08  systemd Watchdog Integration — Frozen Process Detection:
 <br>
      TothBot MUST run as a systemd service with WatchdogSec=120 and Type=notify. A
 <br>
@@ -1331,10 +1308,10 @@ IMP-08 (dv1_8) ★  systemd Watchdog Integration — Frozen Process Detection:
 <br>
      TothBot with open positions is undetected indefinitely.
 <br>
-     Assign to 0211002 IN-PM-003 + 0211002 IN-PM-004 + D7 systemd-tier visual cluster (per DD-001 diagrams-canonical; 1011013 dv1_6 retired in TB00228 RANK 7 cascade).
+     Assign to 0211002 IN-PM-003 + 0211002 IN-PM-004 + D7 systemd-tier visual cluster.
 </p>
 <p>
-IMP-16 (dv1_10) ★  aiohttp ClientSession Timeout — Required for REST Reliability:
+IMP-16  aiohttp ClientSession Timeout — Required for REST Reliability:
 <br>
      All REST calls via aiohttp MUST use explicit timeout and connector configuration.
 <br>
@@ -1347,7 +1324,7 @@ IMP-16 (dv1_10) ★  aiohttp ClientSession Timeout — Required for REST Reliabi
      See A-22 for full specification. Assign to 1011002 WM-REST-006 through -011.
 </p>
 <p>
-IMP-17 (dv1_10) ★  aiohttp TCPConnector for Connection Reuse:
+IMP-17  aiohttp TCPConnector for Connection Reuse:
 <br>
      TCPConnector(limit=10, limit_per_host=5, force_close=False) enables HTTP keepalive.
 <br>
@@ -1360,7 +1337,7 @@ IMP-17 (dv1_10) ★  aiohttp TCPConnector for Connection Reuse:
      See A-22 for full specification. Assign to 1011002 WM-REST-009 through -011.
 </p>
 <p>
-IMP-18 (dv1_10) ★  Ticker event_trigger:bbo for Open Position MAE Detection:
+IMP-18  Ticker event_trigger:bbo for Open Position MAE Detection:
 <br>
      Pairs with open positions MUST use event_trigger:bbo on ticker subscription.
 <br>
@@ -1373,7 +1350,7 @@ IMP-18 (dv1_10) ★  Ticker event_trigger:bbo for Open Position MAE Detection:
      See A-23 for full specification. Assign to 0411001, 1011002.
 </p>
 <p>
-IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
+IMP-19  Regime Engine REST Rate Limit Stagger Required:
 <br>
      All GetOHLCData calls in the Regime Engine must use asyncio.sleep(1.1) between
 <br>
@@ -1381,98 +1358,18 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
 <br>
      for 50+ pairs at 00:00 UTC hit the rate limit and corrupt regime classification
 <br>
-     for all affected pairs. See A-24. 1011012 RE-RL-001 through -004 retired TB00227; 0711002 retired TB00596 — canonical authority is the Diagram 4 regime-engine visual / §5 (see 0500000 dv1_55 §12.5 Bind block).
+     for all affected pairs. See A-24.
 </p>
 <pre>
   Value                          Pre-computed by    Update Trigger                      Cache Read On
   Regime classification          Regime Engine      Daily 00:00 UTC REST GetOHLCData    Every 5m eval (Gate 3+6)
                                                     [CRITICAL: exclude response[-1] ★]
   1H EMA(20) and EMA(50)         Signal Pipeline    1H candle close ohlc(60) WS event   Gate 4
-                                                    (parse interval_begin ★ A-16 dv1_9)
+                                                    (parse interval_begin, A-16)
   ATR(14) per pair               Signal Pipeline    Each 5m candle close (incremental)  Gate 8 + Exit Controller
   24h liquidity per pair (USD)   Signal Pipeline    Daily ticker or daily OHLC pull     Gate 2
   Per-pair instrument status ★   WS Manager         instrument channel events (live)    Gates 1/2 pre-filter
 </pre>
-<p>
-<strong>A-25 (dv1_144) ★ Keepalive, Sequence-Gap Recovery, and Connection Logging (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_144 migration; TB00532):</strong>
-<br>
-     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for these wire facts (SD-9-verified vs 0411001 dv1_13):
-<br>
-     (i) Dead-connection: a sent application ping that receives no Kraken pong within 10 seconds marks the connection dead and forces reconnect [WS-PING-002, 0411001 L980-981].
-<br>
-     (ii) Zombie detection: WS Manager tracks last_real_data_time per connection; if time.monotonic() minus last_real_data_time exceeds 90 seconds the connection is a zombie — log ZOMBIE_CONNECTION_DETECTED and reconnect [WS-ZOM-003, 0411001 L1008-1011].
-<br>
-     (iii) Executions sequence gap: on a sequence jump greater than 1 on the executions stream, alert EXECUTIONS_SEQUENCE_GAP immediately and trigger a REST GetOpenOrders reconciliation [WS-EXE-019, 0411001 L576-578] — prevents Position Mirror desync.
-<br>
-     (iv) Balances sequence gap: on a sequence jump greater than 1 on the balances stream, alert BALANCES_SEQUENCE_GAP immediately and trigger a REST balance reconciliation [WS-BAL-005, 0411001 L607-608] — prevents capital-calculation error.
-<br>
-     (v) Connection logging: log connection_id on every new WS connection as WS_CONNECTED(uri, connection_id); connection_id enables Kraken support diagnosis [WS-STAT-006, 0411001 L289-292].
-</p>
-<p>
-<strong>A-26 (dv1_144) ★ Exit Controller Pair-Status Adaptation (DD-002 prose-follows-diagram for the D1 mod:Exit_Controller dv1_144 migration; TB00532):</strong>
-<br>
-     The diagram mod:Exit_Controller constraints &lt;desc&gt; is canonical (WS-EXIT-003; SD-9-verified vs 0411001 dv1_13 sec 9): the Exit Controller adapts exit-order placement to the live Kraken pair trading-status — limit_only places an IOC/GTC limit order only and never a market order [L228/L1103]; cancel_only cancels resting orders only and places no new orders [L230/L264]; reduce_only / work_in_progress / maintenance / delisted follow the sec-9 pair-status adaptation matrix [L236-237]. Submitting a non-permitted order type under a restricted pair-status is Kraken-rejected and would leave an open position unprotected (loss-prevention: wrong-exit-mode loss).
-</p>
-<p>
-<strong>A-27 (dv1_145) ★ Public Market Data: Pair/Engine Status, OHLC, and Ticker (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_145 migration; TB00533):</strong>
-<br>
-     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for the four public market-data channels (GROUP 2 wire facts, SD-9-verified vs 0411001 dv1_13). INSTRUMENT/STATUS: the instrument channel reports a pair trading-status with 8 states (online, post_only, limit_only, reduce_only, cancel_only, work_in_progress, maintenance, delisted [WS-INST-008]); of these, seven — post_only, cancel_only, work_in_progress, delisted, limit_only, reduce_only, maintenance — are the NO-ENTRY set that blocks all new entry orders, so only online pairs are entry-eligible (post_only joined the NO-ENTRY set under the DEC-122 CR-03 taker entry: a marketable IOC order is Kraken-rejected on a post_only pair; amended TB00666) [WS-INST-009; AR-039]. The status channel additionally reports 4 GLOBAL engine states (online / post_only / cancel_only / maintenance) to which WS_Manager reacts immediately on change [WS-STAT-002], and carries a connection_id field identifying the specific WS connection [WS-STAT-005] — the value the WS-STAT-006 mandatory connection log records. OHLC: two ohlc subscriptions are maintained at startup for every monitored pair — interval=5 (the 5-minute SYSTEM CLOCK) and interval=60 (1-hour HTF Gate 4) [WS-OHLC-001]; interval_begin is the canonical candle-start field and timestamp is DEPRECATED (parse only interval_begin) [WS-OHLC-002; AR-027], formatted as an RFC3339 nanosecond string parsed to a timezone-aware datetime [WS-OHLC-003]. TICKER: the ticker event_trigger has two modes — bbo for pairs WITH an open position (faster adverse-price detection; for longs the bid is the realizable exit price) and trades for pairs WITHOUT a position (sufficient for the Gate-2 24h-volume read) [WS-TKR-002] — and WS_Manager switches a pair's event_trigger on every position-state change (opened → bbo, closed → trades) [WS-TKR-003]. These nine facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit).
-</p>
-<p>
-<strong>A-28 (dv1_146) ★ Private-Channel Inbound: exec_type Enumeration, Partial-Fill Fields, and Spot/Main Balance Merge (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_146 migration; TB00535):</strong>
-<br>
-     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for the Kraken private-channel inbound wire facts (GROUP 3, SD-9-verified vs 0411001 dv1_13). The executions channel reports a 10-value exec_type dispatch table (pending_new, new, trade, filled, iceberg_refill, canceled, expired, amended, restated, status) all handled explicitly with unknown values logged WARN [WS-EXE-009]; exec_type=trade fires on every fill event of an order and does not by itself imply a full fill [WS-EXE-011]; and each trade event carries cum_qty + avg_price (consumed by Position Mirror and R:R sizing) plus last_qty + last_price (fill-level / slippage analytics) [WS-EXE-012]. The balances channel is filtered to wallets[type=spot][id=main] ONLY — futures and staking balances are never included in portfolio calculations [WS-BAL-002] — and is parsed as a full snapshot at subscription followed by delta updates merged into the cached spot/main balance [WS-BAL-003]. These five facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit).
-</p>
-<p>
-<strong>A-29 (dv1_147; amended dv1_214 — DEC-122 disposition TB00666) &#9733; Outbound Orders: deadline Range, Marketable-IOC Entry, amend_order Queue-Position Preservation, and the Single-Leg emergSL batch_add (DD-002 prose-follows-diagram for the D1 mod:WS_Manager + mod:Exit_Controller dv1_147 migration; TB00536):</strong>
-<br>
-     The diagram mod:WS_Manager and mod:Exit_Controller constraints &lt;desc&gt; are canonical for the Kraken outbound-order wire facts (GROUP 4, SD-9-verified vs 0411001 dv1_13). The deadline field on every add_order and batch_add accepts a 500ms-to-60s range from current time, with TothBot using the 5s standard value; an order whose deadline has passed at processing time is Kraken-rejected, preventing stale entry placement from network delay or event-loop pause [WS-DL-002]. Entry orders are MARKETABLE IOC LIMIT orders (time_in_force=ioc, marketable limit price) bounded by a maximum-permissible-price (MPP) slippage cap on the worst acceptable fill; any unfilled IOC remainder expires immediately, so there is no resting working entry order and no entry-side dust; the MPP cap is the CIATS-owned bound and the architecture fact is the marketable-IOC-with-MPP-cap contract, not a seed value (the legacy GTD param:entry_timeout_sec seed is RETIRED per DEC-122 CR-17, executed TB00666; token retired 0311001 v1_47) [WS-ADD-002; DEC-122 CR-03]. amend_order preserves the order's queue position on the Kraken book whereas cancel+resubmit loses it, which is why amend_order is the sole modification method (ar:AR-018; edit_order DEPRECATED) and the preferred mechanism under rate-limit pressure [WS-AMD-002]. The batch_add fired atomically on entry fill carries ONE leg: the emergSL leg (stop-loss, triggers.reference='last', triggers.price_type='static' for a fixed-price crash-protection stop that must be set explicitly), with stp_type=cancel_newest and deadline [WS-BA-002 as amended by DEC-124 — no TP leg; the take-profit is the Layer 1a run-to-reversal regime exit executed by the Exit Controller as a market sell]. The former partial-TP-fill emergSL amendment (WS-TP-003) and the DR-079 abandon-and-surface sub-minimum dust write-off are RETIRED (DEC-124 ratified TB00650; DEC-122 disposition Bill ruling TB00666 — no partial-fill, split, or dust handling exists in the live design; historical mechanic in git history, dv1_213 and prior). These facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit).
-</p>
-<p>
-<strong>A-30 (dv1_148) &#9733; Reconnect Residual: Scenario B Maintenance-Delay and the On-Reconnect Restore Sequence (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_148 GROUP 5 migration; TB00537):</strong>
-<br>
-     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for the two remaining Kraken keepalive/reconnect wire facts (GROUP 5 residual, SD-9-verified vs 0411001 dv1_13). Reconnection has two distinct behaviours: Scenario A (a random disconnect) reconnects immediately with up to 5 attempts and then exponential backoff from 1s, while Scenario B (a disconnect after a confirmed Kraken trading-engine maintenance window) waits a MINIMUM of 5 seconds before attempting to reconnect, so TothBot does not hammer an engine still finishing maintenance [WS-REC-003]. On every reconnect the WS_Manager runs a full restore sequence (the ar:AR-056 mid-session restore path, which rule:HR-WM-016 keeps as a separate code path from cold start): it acquires a fresh WebSocket token, reconnects with the full WS-LIB connection parameters, re-subscribes every channel with identical parameters and parses each subscription-ACK warnings[] list, re-extracts maxratecount from the executions ACK to reset the operative rate-counter ceiling (never hardcoding 125, ar:AR-030), resumes the zombie-detection and 30-second ping keepalive tasks, restores the Position Mirror from snap_orders so no live position is left unmanaged after the gap, and restores the per-pair ticker event_trigger subscriptions [WS-REC-004]. Per the RR-SCOPE-010 confirm-absent check against live dv1_147, the other two GROUP 5 register entries — WS-PING-004 (a pong does not reset the zombie timer) and WS-ZOM-002 (track last_real_data_time using a monotonic clock) — were found already derivable from the existing rule:HR-WM-004 (reset on real channel events only) plus the dv1_144 WS-ZOM-003 time.monotonic()/last_real_data_time encoding, so they were not re-migrated. These facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); with GROUP 5 closed, the remaining D1 register gaps are the GROUP 1 connection/auth trio (WS-EP-003, WS-LIB-001, WS-AUTH-002) and the GROUP 2 candle-close fact (WS-OHLC-005). R holds at R10 (a &lt;desc&gt;-only edit).
-</p>
-<p>
-<strong>A-31 (dv1_149) &#9733; Connection/Library/Auth Trio: WS v2 Endpoint Scope, the websockets asyncio Client, and the Spot REST HMAC-SHA512 Signing Model (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_149 GROUP 1 migration; TB00538):</strong>
-<br>
-     The diagram mod:WS_Manager constraints &lt;desc&gt; is now canonical for the three GROUP 1 connection-establishment wire facts (SD-9-verified vs 0411001 dv1_13). ENDPOINT SCOPE: the general private/authenticated Spot WS v2 endpoint that carries executions, balances, order events, add/cancel order and openOrders/ownTrades is wss://ws-auth.kraken.com/v2, which is CURRENT and NOT deprecated; only the level3 (full order-book) WS endpoint moved to wss://ws-l3.kraken.com/v2 in the Kraken API change of 2 December 2025, and that change is scoped to the L3 endpoint alone — TothBot subscribes to NO level3 channel, so wss://ws-l3.kraken.com/v2 appears nowhere in TothBot's architecture [WS-EP-003; closes the prior uncited "ws-auth deprecated" note]. CLIENT LIBRARY: the WS_Manager connects with the Python websockets library's asyncio-native client, imported as "from websockets.asyncio.client import connect"; the legacy "websockets.connect()" entry point is prohibited [WS-LIB-001] — the connection invariants it is called with (max_size=10MB, open_timeout=10, max_queue=None, ping_interval=None) are already canonical at rule:HR-WM-002. REST AUTH MODEL: every Kraken Spot REST request, including the GetWebSocketsToken call that issues the pre-connect WS token, is signed with HMAC-SHA512 of (URI path + SHA256(nonce + POST data)) using the base64-decoded API secret; the 1 October 2025 Kraken authentication breaking change applied to Kraken FUTURES REST only, so the Spot REST signing model is UNCHANGED — the visible REST-API decoration already states the unchanged status, and this migration adds the signing construction a coder needs [WS-AUTH-002]. These three facts are TothBot-organism (Kraken event-source) connection architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); with GROUP 1 closed, the sole remaining D1 register gap is the GROUP 2 candle-close fact WS-OHLC-005 (a Signal_Pipeline concern carried forward). R holds at R10 (a &lt;desc&gt;-only edit).
-</p>
-<p>
-<strong>A-32 (dv1_150) &#9733; Candle-Close Signal-Evaluation Semantics: the Committed Candle Drives the Pipeline, the Forming Candle Does Not (DD-002 prose-follows-diagram for the D1 mod:Signal_Pipeline dv1_150 GROUP 2 migration; TB00539):</strong>
-<br>
-     The diagram mod:Signal_Pipeline constraints &lt;desc&gt; is now canonical for the candle-close signal-evaluation rule (SD-9-verified vs 0411001 dv1_13 L323-326). On each 5-minute candle-close event — detected when a new ohlc(5m) frame arrives bearing a DIFFERENT interval_begin than the prior frame, which means the prior interval_begin's candle is now committed — the PREVIOUS, just-committed candle's OHLC values are the ones fed to ALL signal computations across the eight gates; the NEW candle (the current/forming interval_begin, still in progress) is NOT used in any signal calculation [WS-OHLC-005]. This is the live-WS analogue of the REST-seeding exclusion already canonical at rule:HR-WM-013 on container:Kraken_REST_API (GetOHLCData last/forming candle [-1] EXCLUDED, only closed candles seeded), and it lives on a DISTINCT component — the live candle-close signal path on mod:Signal_Pipeline — rather than the connection/channel layer of mod:WS_Manager, which is why it was carried forward from the GROUP 1-5 mod:WS_Manager cluster rather than bundled with it. The fact is TothBot-organism (Kraken event-source -> Signal_Pipeline) trading architecture per the binary test and is now derivable from the D1 diagram alone (DD-014); the Signal_Pipeline q1_do/q4_triggers previously stated only THAT the pipeline fires on candle-close, never WHICH candle's OHLC drives the computation, so the fact was genuinely absent in its codeable form before this migration. With WS-OHLC-005 landed, every one of the 37 TB00530 D1 register entries is now resolved (35 in-diagram across TB00531-539 plus the 2 reclassified-already-present at TB00537), so figure D1 Kraken_API_Connection_Architecture has reached FACT-LEVEL COMPREHENSIVENESS under the strict DD-014 from-the-diagram-alone standard: a coder can answer the five questions for every D1 component from the SVG + governs descriptors + figcaption alone. The DR-078 OPEN portion (D1 fact-level comprehensiveness) is thereby resolved, and 0411001 Kraken_WS_v2_Specification retirement (git rm --cached per CD-003) is UNBLOCKED — it is the SEPARATE TB00540 next-session primary (DEC-003 Path A / RR-SCOPE-011; not bundled here), to be preceded by the TB00511 cold-load precondition check. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
-</p>
-<p>
-<strong>A-33 (dv1_152) &#9733; REST Connection, Authentication, and HTTP-Client Primitives: Headers, Nonce, aiohttp Session Config, Base URLs, and Per-Key Permission Scopes (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_152 CLUSTER R1 migration; TB00559):</strong>
-<br>
-     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the eleven CLUSTER R1 REST connection / authentication / HTTP-client wire facts (SD-9-verified vs 0411002 dv1_1; the first of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). AUTH: every private REST call carries three headers — API-Key (the TRADE key value), API-Sign (the HMAC-SHA512 signature per the already-canonical WS-AUTH-002 signing model), and Content-Type: application/x-www-form-urlencoded — plus a strictly-increasing integer nonce constructed as int(time.time()*1000); Kraken rejects any call whose nonce is more than 10,000 ms behind current time, so the VPS clock must be NTP-synchronized [REST-AUTH-003 / 004 / 005]. HTTP CLIENT: all REST uses a single process-lifetime aiohttp.ClientSession (the synchronous requests library is prohibited because it blocks the asyncio loop) configured with ClientTimeout(total=10, connect=5, sock_read=8) and TCPConnector(limit=10, limit_per_host=5, force_close=False) — force_close=False keeps HTTP keepalive so the TCP connection is reused across calls [REST-HTTP-001 / 002 / 004 / 005]. ENDPOINTS: both private and public REST use base URL https://api.kraken.com, private endpoints POST to /0/private/[Endpoint], public endpoints GET or POST to /0/public/[Endpoint] [REST-HTTP-006 / 007]. KEYS: TothBot uses two API keys whose permission scopes differ — the DATA key holds query-only scopes (Query Funds, Query Open Orders and Trades, Query Closed Orders) and MUST NOT be able to trade, while the TRADE key adds Create and Modify Orders + Cancel and Close Orders; both are stored on the VPS, never hardcoded, loaded from an environment variable or encrypted config at startup [REST-KEY-003 / 004]. These eleven facts are TothBot-organism (Kraken event-source) connection architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); all eleven were confirmed absent from the live dv1_151 diagram-alone corpus before encoding (RR-SCOPE-010). CLUSTER R1 is the first of the six TB00558 clusters; the remaining 38 REST gaps (R2..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
-</p>
-<p>
-<strong>A-34 (dv1_153) &#9733; REST GetWebSocketsToken and GetOHLCData Wire Contract: Endpoints, Request Bodies, Response Schemas, Token Validity, Startup Warm-Up Seeding, and the General-Error vs Rate-Limit Retry Paths (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_153 CLUSTER R2 migration; TB00560):</strong>
-<br>
-     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the nine CLUSTER R2 wire facts covering the two foundational REST data calls (SD-9-verified vs 0411002 dv1_1; the second of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). GetWebSocketsToken: a POST to /0/private/GetWebSocketsToken with a nonce-only body (TRADE key) returns {token, expires (seconds)}; the token is valid approximately 900 s, must be obtained fresh on every reconnect and never cached (the fresh-per-reconnect behaviour itself is already canonical at WS-REC-004, so only the 900 s validity value and the do-not-cache rule are added here), and on error it retries three times at 1 s and then HALTS startup and alerts the operator because no token means no authenticated private stream [REST-WST-002 / 003 / 004 / 006]. GetOHLCData: a GET to /0/public/OHLC with pair + interval=1440 (+ optional since) returns per-pair candle rows [time, open, high, low, close, vwap, volume, count] plus last, every field a string converted to Decimal on parse; up to 720 rows arrive, and after the already-canonical rule:HR-WM-013 forming-candle response[-1] exclusion up to 719 committed daily candles remain (~2 years); startup warm-up issues three calls per pair (interval=5 ATR seed, interval=60 EMA20/50 seed, interval=1440 initial regime) under the same [-1] exclusion and the same ar:AR-035 1.1 s staggering [REST-OHLC-002 / 003 / 005 / 008]. ERROR PATHS (the TB00558 R-D8 RECONCILE, resolved here): the GetOHLCData general-error path retries ONCE at 2 s, then logs OHLC_FETCH_FAILED and falls back to the prior regime without halting — this is DISTINCT from the rate-limit (HTTP 429) path already narrated at A-24 (retry up to 3 times, then stale regime); the 1-versus-3 retry-count difference is correct because they are different Kraken error classes, so neither value was silently overwritten [REST-OHLC-009 general vs REST-ERR-005 rate-limit]. CLUSTER R2 is the second of six; the remaining 29 REST gaps (R3..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
-</p>
-<p>
-<strong>A-35 (dv1_154) &#9733; REST Reconciliation-Endpoint Wire Contract: GetOpenOrders, GetAccountBalance, and QueryOrders Endpoints, Request Bodies, Response Schemas, the Decimal Parse and portfolio_baseline_USD Assignment, and the DEGRADED-State Error Policies (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_154 CLUSTER R3 migration; TB00561):</strong>
-<br>
-     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the eight CLUSTER R3 reconciliation-endpoint wire facts (SD-9-verified vs 0411002 dv1_1; the third of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). GetOpenOrders: a POST to /0/private/OpenOrders with a nonce body (TRADE key, optional trades=true) returns result.open keyed by order_id, each carrying refid, userref, status, opentm/starttm/expiretm, descr, vol, vol_exec, cost, fee, price, stopprice, limitprice, misc, and oflags &#8212; every numeric field a string converted to Decimal on parse &#8212; and on error it retries once at 2 s, then logs RECONCILIATION_FAILED, alerts the operator, and enters DEGRADED state (monitor only, no new entries) because trading on a stale open-order book is an unmanaged-state loss event [REST-OO-002 / 003 / 006]. GetAccountBalance: a POST to /0/private/Balance with a nonce-only body (TRADE key) returns result keyed by asset (ZUSD, XXBT, ...) as strings converted to Decimal, the returned USD assigned directly as portfolio_baseline_USD (the spot/main-wallet-only restriction is already canonical at WS-BAL-002 and is not duplicated), and on error it retries once at 2 s, then logs BALANCE_RECONCILIATION_FAILED, alerts the operator, and enters DEGRADED state because sizing against a stale balance is a loss event [REST-BAL-002 / 003 / 004 / 007]. QueryOrders: a POST to /0/private/QueryOrders with nonce + txid + trades=true returns the GetOpenOrders result structure for only the queried order_ids (targeted single-order reconciliation), and on error falls back to GetOpenOrders for a full reconciliation [REST-QOI-002 / 003 / 005]. The three call names, purposes, and reconcile triggers (R-E1 WS-EXE-019, R-E5 WS-BAL-005/002, R-E9 REST drill_target/q1_do) were already canonical and were not re-migrated; all eight wire facts were confirmed absent from the live dv1_153 diagram-alone corpus before encoding (RR-SCOPE-010). CLUSTER R3 is the third of six; the remaining 21 REST gaps (R4..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
-</p>
-<p>
-<strong>A-36 (dv1_155) &#9733; REST Emergency-Cancel and Status Wire Contract: the CancelAllOrders Kill-Switch Endpoint with its EMERGENCY-ONLY Use Restriction and Post-Call HALT, and the Status-API Scheduled-Maintenance Check (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_155 CLUSTER R4 migration; TB00562):</strong>
-<br>
-     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the seven CLUSTER R4 wire facts (SD-9-verified vs 0411002 dv1_1; the fourth of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). CancelAllOrders: a POST to /0/private/CancelAll with a nonce-only body (TRADE key) returns result.count, the integer number of orders canceled [REST-CAO-002/003]. Its use is EMERGENCY ONLY [loss-prevention]: because the call cancels every open order on the account, including the off-book emergency-SL stop orders (the sole resting protective orders under DEC-124 — no resting TP exists), calling it in normal operation destroys crash protection, so it may be invoked only by a manual operator emergency action or an explicit EMERGENCY_HALT code path triggered by Bill, never by automation; it is specifically NOT the mechanism for normal MAE Layer-2 exits (those use cancel_order on the one position), NOT for the Full-Halt drawdown circuit breaker (that uses WS batch_cancel, which preserves the per-position emergency-SL — the sole resting protective order under DEC-124), and NOT for any automated routine operation [REST-CAO-004/005]. After any CancelAllOrders call the system logs EMERGENCY_KILL_SWITCH_ACTIVATED(count), alerts the operator at PRIORITY_CRITICAL, and enters HALT state; position state is then unknown and a manual operator review is required before restart [REST-CAO-006]. Status API: a GET to https://status.kraken.com/api/v2/scheduled-maintenances/upcoming.json on the Kraken Status page API (no API key, no nonce, issued on the same shared aiohttp ClientSession and timeout) returns an array of maintenance windows, each with name, scheduled_for, scheduled_until, and status (scheduled, in_progress, verifying, or completed) [REST-STAT-002/003/005]. For any window whose scheduled_for is within 2 hours of startup, the system logs KRAKEN_MAINTENANCE_SCHEDULED and alerts the operator at PRIORITY_HIGH; this is informational only and does not block startup (ar:AR-038), and on any error or timeout it logs MAINTENANCE_CHECK_FAILED, does not retry, and continues startup [REST-STAT-004/006]. The CancelAllOrders kill-switch purpose (R-F1) and the Status-API startup maintenance-detection purpose (R-F5) were already canonical in the visible figure and were not re-migrated; all seven wire facts were confirmed absent from the live dv1_154 diagram-alone corpus before encoding, the Status-endpoint URL having previously lived in section 2 prose only (RR-SCOPE-010). CLUSTER R4 is the fourth of six; the remaining 14 REST gaps (R5..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
-</p>
-<p>
-<strong>A-37 (dv1_156) &#9733; REST Ticker 24h-Volume Wire Contract: the Public Ticker Endpoint, Classic-Pair-Name Mapping, the v[1]*p[1] USD-Volume Computation, the Startup-and-Periodic-Refresh Triggers, and the Instrument-Channel-Has-No-Volume HARD RULE (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API CLUSTER R5 migration; TB00563):</strong>
-<br>
-     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the ten CLUSTER R5 Ticker wire facts (SD-9-verified vs 0411002 dv1_1 section 4.8; the fifth of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). Ticker is the SOLE correct source of 24h rolling USD volume for the liquidity_24h cache: the WS-v2 instrument channel carries pair metadata only and NO volume, so reading 24h volume from the instrument channel is a defect (DEFECT-SS-006) [REST-TKR-001/010]. The endpoint is the public GET /0/public/Ticker?pair=[comma-separated CLASSIC pair names] (no auth, no nonce); WS-v2 symbols (BTC/USD) are mapped to Kraken classic names (XXBTZUSD) via the reverse map built at startup from the instrument-snapshot wsname field [REST-TKR-002/003]. Per pair the response v[1] is the 24h base-currency volume and p[1] is the 24h VWAP in USD, both numeric strings converted to Decimal; usd_volume_24h = Decimal(v[1]) * Decimal(p[1]) is stored in liquidity_24h[ws_pair] after reverse-mapping the classic key back to the WS symbol, with a pair missing from the response logged LIQUIDITY_PAIR_NOT_FOUND and EXCLUDED so Gate 2 blocks it (fail-safe) [REST-TKR-004/005/006]. It is called once for all pairs at startup during _warm_up_all_pairs() before SYSTEM_OPERATIONAL and then periodically every liquidity_refresh_hours (the 4h seed VALUE stays in section 9 per the binary test; the diagram fact is the periodic-refresh trigger), never on candle close; a single call covers up to 50 pairs as one request with no staggering [REST-TKR-007/008]. On a startup failure it logs REST_TICKER_FAILED, retries once after 2s, and on a second failure logs LIQUIDITY_SEED_FAILED, leaves the cache empty (Gate 2 blocks all entries, fail-safe) and does NOT halt; on a periodic-refresh failure it logs LIQUIDITY_REFRESH_FAILED and preserves the prior cached values; success logs LIQUIDITY_SEEDED / LIQUIDITY_REFRESHED [REST-TKR-009]. A cross-diagram drift was flagged and carried (CF-G2-VOL-FORMULA, NOT corrected this session): D2 gate:G2_Liquidity q1_do computes the figure as vol_24h * mid_price, which diverges from this canonical v[1]*p[1] (24h VWAP) wire fact and is the D2 side to reconcile (Gate 2 liquidity accuracy is loss-prevention-relevant). These facts are TothBot-organism (Kraken event-source) connection architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
-</p>
-<p>
-<strong>A-38 (dv1_157) &#9733; REST General-Error Taxonomy and Handling Policies: the error[] Success/Failure Criterion, the Six-Prefix Error Taxonomy, and the Invalid-Key / Service-Unavailable / Rate-Limit Policies (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API CLUSTER R6 migration; TB00564):</strong>
-<br>
-     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the five CLUSTER R6 general-error facts (SD-9-verified vs 0411002 dv1_1 section 5; the sixth and final cluster in the TB00558 D1 REST-API Fact-Level Gap Register). Every Kraken REST response carries an error[] array, and the single dispatch test applied before any result is consumed is REST-ERR-001: the call succeeded only if error[] is empty and a result field is present, and failed if error[] is non-empty. Each error string carries a leading prefix that classifies the fault -- EGeneral, EAPI, EOrder, ETrade, EQuery, or EService (REST-ERR-002) -- on which the handler dispatches. Three prefix-specific policies are now canonical: EAPI:Invalid key is logged CRITICAL with an immediate operator alert and is NOT retried, because a bad key cannot be cured by retrying and leaves TothBot blind and unmanaged (REST-ERR-003, loss-prevention); EService:Unavailable is logged WARN and retried after 5 s up to 3 attempts, then escalated as a maintenance condition (REST-ERR-004); and EAPI:Rate limit exceeded is logged WARN with endpoint and timestamp, backed off 5 s before retry, and escalated if hit more than 3 times in one session as a systematic over-use condition requiring CIATS review (REST-ERR-005). REST-ERR-005 is the general REST rate-limit policy and is distinct both from the WS rate-limit mechanism already canonical at ar:AR-030 / ar:AR-080 and from the GetOHLCData-specific HTTP-429 stale-regime path narrated at A-24, which the CLUSTER R2 REST-OHLC-009 entry only cross-references by label; its own WARN / back-off-5s / escalate-after-3 policy was not derivable from the diagram alone and is encoded this amendment. The never-swallow-errors logging rule (REST-ERR-006) was already canonical in the container q5_logs field and is not duplicated. All five facts were confirmed absent from the live dv1_156 diagram-alone corpus before encoding (RR-SCOPE-010). With CLUSTER R6 landed, all six TB00558 REST clusters are migrated and D1 REST is fact-level comprehensive for 0411002; a clean DD-014 re-audit (separate downstream session) zeroes the register, after which the DR-078-gated retirement of 0411002 unblocks (preceded by the TB00511 cold-load precondition check). R holds at R10 per the TB00453 bright line.
-</p>
 <figure class="diagram">
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1600"
@@ -2065,7 +1962,7 @@ IMP-19 (dv1_10) ★  Regime Engine REST Rate Limit Stagger Required:
 <p>
 The pipeline fires on every 5-minute OHLC candle close event. Synchronous and event-driven.
 <br>
-8 gates. Gate 3 (Regime Pre-Filter) new in dv1_5. Per-pair status check new in dv1_6.
+8 gates.
 </p>
 <p>
 NOTE — OHLC fires on trade events, not wall clock: If no trades occur after an interval
@@ -2080,19 +1977,19 @@ Addressed in 0511002 Signal Pipeline Specification.
 3.1 Gate Summary
 </p>
 <pre>
-  PRE-STEP: Parameter Store Snapshot Frozen (NEW dv1_5 — I-4)
+  PRE-STEP: Parameter Store Snapshot Frozen (I-4)
     CIATS params captured as read-only snapshot at pipeline start. Consistent throughout
     full eval. CIATS writes applied only at inter-trade boundaries.
 </pre>
 <pre>
-  PRE-STEP: Pre-Computation Cache Read (NEW dv1_5 — I-2)
+  PRE-STEP: Pre-Computation Cache Read (I-2)
     Hot path reads: regime cache | 1H EMA cache (ohlc-60) | ATR(14) running value |
     24h liquidity | per-pair status. Zero computation on hot path.
 </pre>
 <pre>
-  ★ dv1_6: Per-pair Instrument Status Check
+  Per-pair Instrument Status Check
     Skip pairs in reduce_only, work_in_progress, delisted, limit_only,
-    cancel_only, or maintenance state ★ dv1_12.
+    cancel_only, or maintenance state.
     Only online pairs proceed into pipeline.
     Prevents wasted rate counter. Full status list per 0411001 WS-INST-008.
 </pre>
@@ -2105,37 +2002,37 @@ Addressed in 0511002 Signal Pipeline Specification.
     24h volume &lt; $500k USD: SKIP → LIQUIDITY_REJECTED
 </pre>
 <pre>
-  Gate 3: Regime Pre-Filter ★ NEW dv1_5 (I-1)
+  Gate 3: Regime Pre-Filter (I-1)
     TRENDING_NEG (any vol) or NON_DIR+ELEVATED: STOP → REGIME_BLOCKED
     Eliminates SSS computation on all no-trade regimes.
 </pre>
 <pre>
-  Gate 4: 1H HTF Confirmation ★ (was Gate 3)
+  Gate 4: 1H HTF Confirmation ★
     1H EMA(20) &lt;= EMA(50) for TRENDING_POS entries: SKIP → HTF_GATE_REJECTED
-    Cache read from ohlc(60) WS subscription (NEW dv1_5).
+    Cache read from ohlc(60) WS subscription.
 </pre>
 <pre>
   SSS Signal Engine
     Scores 5-min candle. Only reached if Gate 3 pre-filter passed.
 </pre>
 <pre>
-  Gate 5: Selection Controller (was Gate 4)
+  Gate 5: Selection Controller
     Signal fails any of 4 quality gates: SKIP → SELECTION_REJECTED
 </pre>
 <pre>
-  Gate 6: Regime Gate / Sizer ★ (was Gate 5)
+  Gate 6: Regime Gate / Sizer ★
     NON_DIR+NORMAL: 50% position size. All NO ENTRY cases blocked by Gate 3.
 </pre>
 <pre>
-  Gate 7: Risk Guard (was Gate 6)
+  Gate 7: Risk Guard
     Drawdown halt / concentration / exposure. Pass or HALT.
-    ★ Ticker-driven continuous drawdown monitoring between candle closes (I-7 dv1_5)
+    ★ Ticker-driven continuous drawdown monitoring between candle closes (I-7)
 </pre>
 <pre>
-  Gate 8: Position Sizer ★ (was Gate 7)
+  Gate 8: Position Sizer ★
     MAE = ATR(14) x 1.5x (incremental), emergSL = ATR(14) x 3.0x. A1 floor: admit iff
     expected_reward / net_loss &gt;= 1.5, where expected_reward = CIATS run-to-reversal
-    estimate (DEC-124; no TP price computed).
+    estimate.
     Never blocks — only sizes.
 </pre>
 <p>
@@ -2679,8 +2576,6 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
 Sub-figure elaborating gate:G7_Risk_Guard. Five sequential checks evaluated in
 strict order; first failure short-circuits. Each check shows the data inputs
 required, the pass/fail branches, and the event identifier emitted on failure.
-This figure replaces the architectural detail previously carried in
-1011011 Risk_Engine_Coding_Spec (retired this audit cycle).
 </p>
 
 <figure class="diagram">
@@ -2903,10 +2798,8 @@ This figure replaces the architectural detail previously carried in
 Sub-figure elaborating gate:G8_Position_Sizer. A1 acceptance floor evaluated
 at gate entry (reject if expected R:R below the sacred 1:1.5 floor); then the
 sizing math computes MAE / emergSL from ATR(14), with expected reward taken
-from the CIATS run-to-reversal estimator (no TP price per DEC-124); the sacred
-1:1.5 R:R floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned. This
-figure replaces the architectural detail previously carried in 1011011
-Risk_Engine_Coding_Spec (retired this audit cycle).
+from the CIATS run-to-reversal estimator; the sacred
+1:1.5 R:R floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned.
 </p>
 
 <figure class="diagram">
@@ -3145,8 +3038,7 @@ Rebuilt from zero for Kraken. Exit Controller owns all normal exits. Kraken off-
 emergency SL stop order is crash protection only. OTO evaluated and rejected (AR-008).
 </p>
 <p>
-4.0 Canonical Identifiers (NEW dv1_37 — V-038.3 reconciliation per DR-042; DD-002
-prose-follows-diagram). Architectural elements in §4 prose below resolve to the
+4.0 Canonical Identifiers. Architectural elements in §4 prose below resolve to the
 following canonical-token-form identifiers per 0311001 §15.11.3 type-prefix
 taxonomy:
 </p>
@@ -3158,17 +3050,15 @@ taxonomy:
                               feeds Exit Controller continuous drawdown
                               monitoring (this section, Layer 2 trigger
                               evaluation). Encoded in D1 + D3 + D6 SVG.
-  rule:HR-PM-009              Position Mirror sole-writer architectural rule
-                              (per 0511005 dv1_1 §HR-PM-009 + 0511004 dv1_3).
+  rule:HR-PM-009              Position Mirror sole-writer architectural rule.
                               Witnessed by D3 + D6 SVG; Exit Controller
                               reads Position Mirror state, never writes.
   rule:HR-EC-013              Exit Controller cancel-then-sell sequencing
-                              hard rule (per 0511004 dv1_3 §HR-EC-013).
+                              hard rule.
                               Witnessed in 4.1 Layer 2 SEQUENCE CRITICAL
                               block below.
   rule:HR-EC-014              Exit Controller / Selection Controller state-
-                              update authority via WS Manager (per
-                              0511004 dv1_3 §HR-EC-014). Witnessed across
+                              update authority via WS Manager. Witnessed across
                               D3 + D5 + D6 wire-up callout decoration
                               groups.
 </pre>
@@ -3178,27 +3068,26 @@ taxonomy:
 <pre>
   Layer 1a — Regime-Based Exit:
     HTF regime reversal (EC-L1A-001) / daily regime downgrade (EC-L1A-002). This IS
-    the take-profit under DEC-124 run-to-reversal (EC-L1A-003 max-hold RETIRED).
+    the take-profit (run-to-reversal).
     Step-1 pair-status precondition (AR-040); else WS cancel emergSL -&gt; market sell.
 </pre>
 <pre>
   Layer 2 ★ — MAE Threshold:
     (entry_fill_price - bid_price) &gt;= ATR(14) x 1.5x.
-    SEQUENCE CRITICAL: (1) cancel emergSL  THEN  (2) market sell. No resting TP
-    to cancel under DEC-124 (run-to-reversal).
-    CANCEL TIMEOUT FALLBACK (NEW dv1_5 — I-6):
+    SEQUENCE CRITICAL: (1) cancel emergSL  THEN  (2) market sell.
+    CANCEL TIMEOUT FALLBACK (I-6):
       req_id registry tracks each cancel ACK. On timeout: check executions channel state.
       Confirmed cancelled: proceed. State unknown: retry once. Second timeout: ALERT +
       hold position + alert operator. NEVER issue market sell with ambiguous order state.
       Assign to 0511001 and 0511004.
-    MPP RISK (C-1 dv1_4): market sell may reject on wide spread. EC MUST handle MPP
+    MPP RISK (C-1): market sell may reject on wide spread. EC MUST handle MPP
       rejection and retry. Assign to 0511004.
 </pre>
 <pre>
   Layer 3 ★ — Emergency Brake:
     VPS/TothBot/internet failure ONLY. Off-book emergSL stop order at ATR(14) x 3.0x
     on Kraken matching engine. NEVER in normal operation.
-    MPP RISK (C-1 dv1_4): triggered market order subject to MPP on wide spread.
+    MPP RISK (C-1): triggered market order subject to MPP on wide spread.
     Assign to 0411001.
 </pre>
 <p>
@@ -3207,9 +3096,8 @@ taxonomy:
 <pre>
   mae_pct         = ATR(14) x 1.5x / entry_fill_price  (CIATS-owned, uses ACTUAL fill price)
   net_loss        = mae_pct + 0.26% + 0.26%             (entry taker + MAE taker exit, both
-                                                         taker per DEC-122 marketable-IOC;
-                                                         canonical D9)
-  expected_reward = CIATS run-to-reversal estimate      (NO gross_target TP per DEC-124)
+                                                         taker; canonical D9)
+  expected_reward = CIATS run-to-reversal estimate
   ACCEPT entry iff expected_reward / net_loss &gt;= 1.5    *** SACRED — hardcoded — entry-
                                                          acceptance floor only; NEVER a
                                                          cap; NEVER an exit price ***
@@ -3525,17 +3413,17 @@ both asset_regime and market_regime (BTC proxy). Computed daily at 00:00 UTC.
 5.1 Computation
 </p>
 <p>
-DATA SOURCE (NEW dv1_5 — FLAG 2 — FP/DP VERIFIED):
+DATA SOURCE:
 <br>
   Daily candles via REST GetOHLCData called once per monitored pair at 00:00 UTC.
 <br>
   Returns 720 entries.
 </p>
 <pre>
-  CRITICAL dv1_6 (GAP-03): The last entry (response[-1]) is ALWAYS the current
+  CRITICAL: The last entry (response[-1]) is ALWAYS the current
   not-yet-committed candle. MUST be excluded from ALL calculations (ADX, EMA, ATR).
   Use only response[:-1]. Including the uncommitted candle corrupts all regime indicators
-  and produces incorrect regime classification. See the Diagram 4 regime-engine visual / §5 + AR-017 (0711002 retired TB00596).
+  and produces incorrect regime classification. See the Diagram 4 regime-engine visual / §5 + AR-017.
 </pre>
 <pre>
   Directional state:  ADX(14) + EMA(20) vs EMA(50) on DAILY candles (response[:-1] ONLY)
@@ -4003,7 +3891,7 @@ the Logger. Writes only to the Parameter Store. Deming PDCA governs every change
 </p>
 <pre>
   Stream 1: EWMA Monitor
-    288 candle evals/day. Valid at 50 evals (~4 hrs). lambda=0.2 [FP/DP validated dv1_6:
+    288 candle evals/day. Valid at 50 evals (~4 hrs). lambda=0.2 [FP/DP validated:
     half-life=3.1 evals]. Three monitoring signals:
       (1) rejection_rate_by_regime (F6)
       (2) rate_counter_by_pair from executions channel (A-1)
@@ -4016,18 +3904,18 @@ the Logger. Writes only to the Parameter Store. Deming PDCA governs every change
     MAE reached, fees, exit reason, both regime tags, signal params at entry, actual R:R, P/L.
 </pre>
 <p>
-LOGGER — ASYNC BOUNDED QUEUE (NEW dv1_5 — I-5):
+LOGGER — ASYNC BOUNDED QUEUE (I-5):
 <br>
   Logger writes go to an in-memory bounded queue. Queue size: 10,000 entries
 <br>
-  [FP/DP validated dv1_6: 20 positions x 10 events/candle x 50-candle buffer].
+  [FP/DP validated: 20 positions x 10 events/candle x 50-candle buffer].
 <br>
   Separate async writer flushes to disk. Logger NEVER blocks the trading hot path.
 <br>
   Queue must be bounded with immediate alert if queue fills. Assign to 0511006.
 </p>
 <p>
-PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
+PARAMETER STORE — SNAPSHOT PATTERN (I-4):
 <br>
   TothBot takes frozen snapshot of all CIATS parameters at start of each pipeline eval.
 <br>
@@ -4043,16 +3931,16 @@ PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
 <pre>
   50 candle evals:       EWMA Monitor valid. Monitoring only. lambda=0.2 validated.
   200 trades HARD FLOOR: Inference valid. Proposal Engine activates. Half-Kelly activates.
-                         SE(win_rate)~3.5%, SE(Sharpe)~7.2% [FP/DP validated dv1_6].
+                         SE(win_rate)~3.5%, SE(Sharpe)~7.2% [FP/DP validated].
   600 trades:            Per-regime analysis. 100+ per bucket. MW power ~85% at alpha=0.01.
   Rolling 200-300:       Current performance window.
   Full corpus:           Zero-cost historical library.
 </pre>
 <pre>
-  Mann-Whitney alpha (dv1_6) ★:  alpha=0.01 (one-sided). 99% confidence required.
-  Spearman rho threshold (dv1_6) ★: |rho| &gt; 0.3 AND p &lt; 0.05 (both conditions).
-  CUSUM parameters (dv1_6) ★:    k=0.5*sigma, h=4*sigma. Starting values.
-  PDCA minimum interval (dv1_6) ★: Min 50 trades between any two parameter changes.
+  Mann-Whitney alpha ★:  alpha=0.01 (one-sided). 99% confidence required.
+  Spearman rho threshold ★: |rho| &gt; 0.3 AND p &lt; 0.05 (both conditions).
+  CUSUM parameters ★:    k=0.5*sigma, h=4*sigma. Starting values.
+  PDCA minimum interval ★: Min 50 trades between any two parameter changes.
 </pre>
 <figure class="diagram">
   <div class="diagram-svg">

@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_35
+DocVersion: dv1_36
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_35.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_36.txt
 DocDate:    06-11-2026
-DocTime:    21:35:00 UTC
+DocTime:    23:05:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -24491,6 +24491,1041 @@ LIVE REPLACEMENT (verbatim):
 mail:alert_send SMTP push to alerts@tothbot.com gated by the email bar per rule:HR-RPT-001 (C1 IMMEDIATE push only; routing decoupled from log level per rule:HR-RPT-002); the queryable two-stream log retains the full INFO/WARNING/CRITICAL record per rule:HR-RPT-003 + rule:LG-ALERT-005 for PULL reporting C2-C6 per contract:Operator_Reporting_Hierarchy ; DIAGNOSTIC LOG-RECORD FORMAT
 
 ----- END DEC-125 SLICE 3 OP RECORD -----
+
+------------------------------------------------------------
+8.6 dv1_225 -> dv1_226 -- DEC-125 PROSE SLICE PART 1:
+    REGISTER SEC 3 INSTANCES S-HEAD-1..S5-1 + CONTENT-TEST
+    CLUSTER MEMBERS (T1 PROSE LEAD, SEC 6 PROSE) (TB00679)
+------------------------------------------------------------
+
+AMENDMENT NARRATIVE: First half of the TB00668 register sec 3
+prose/section inventory, split at the NSI-named clean boundary
+(after S5; remainder S8-1..S14-1 carries to TB00680 per the
+TB00679 NSI SIZE NOTE). Register instances executed BY CONTENT
+against fresh dv1_225 (RR-SCOPE-008): S-HEAD-1 (C), S-HEAD-2
+(D; the full SUPERSEDES format-note paragraph relocated as one
+cluster -- the supersession <strong> line is the same stale
+historical-plan cluster as the register-quoted cascade
+sentence), S0-1 (C; sec-0 conventions restated bare and
+history-free, DEC-009/TB00170/dv1_37 ratification + migration
+narrative relocated), S1-1 (B), S1-2 (C; v2_29/v2_20-era and
+section-sign TB00000 pins re-pointed to the live v2_90 map:
+sec 1 / sec 4.2 / sec 4.6 / sec 7; 0311001 cites normalized to
+pinless live-section form, sections 15.13 / 15.11.3 / 15.11.6 /
+15.14 each verified present in 0311001 v1_47), S2-1..S2-9 (incl.
+the A-25..A-38 migration-narrative entries relocated WHOLESALE
+verbatim below under the register S2-9 MAY-remain discretion --
+every entry self-attests its wire facts canonical in D1 and
+DD-014 derivable from the diagram alone, so no bare-rule prose
+summary was retained; the embedded A-29 Class B retirement
+echoes travel inside the relocated block), S3-1 (4 sites),
+S4-1 (incl. the TB00676 FOUR prose DEC-cite/echo hits between
+the D9 and D3 figure blocks -- same sites), S5-1, the TB00678
+NEW-iii T1 prose-lead 0311001 v1_7 S15.11.6 pin (DW-3 strip),
+and CONTENT-TEST cluster members beyond register locators
+(stated per NSI sec 2): the T1 prose-lead section-sign TB00000
+sec-1 pin; the sec-2/sec-3/sec-4/sec-5/sec-6 star-dv amendment
+trails (dv1_4/dv1_5/dv1_6/dv1_7/dv1_8/dv1_9/dv1_10/dv1_12/
+dv1_37/dv1_141 pins) stripped per DW-3 class with live tokens
+(I-N, C-1, GAP cross-refs to A-NN, AR-NNN) retained; the A-2
+(dv1_141; TB00511) tail; the A-20 prior-spec correction-history
+sentences reduced to the live ar:AR-032 cite; the A-21 stale
+"TP/emergSL" DEC-124 residue reduced to "emergSL"; the sec-2.2
+CR-03 cite stripped from the live post_only rule text; the
+edit_order DEPRECATED rows restated PROHIBITED per register
+sec 4 P-3 (queue-position + rate-cost rationale retained,
+history-free).
+
+DISPOSITIONS HELD: S2-5 REJECTED list (DMS/FIX/OTO) verified
+already clean, codable, history-free per P-1/P-4/P-14 -- no-op.
+Standalone star highlight markers (no attached pin) retained --
+not a register class, one-campaign-per-slice. "Addressed in
+0511002" / "Assign to 05NNNNN" pointers retained as live Assign
+targets per the register S8-10/S2-8 Assign-target retention
+rule. EVIDENCE BASE research-source paragraph retained (not a
+register class).
+
+SCOPE PROHIBITION UPHELD: all ten figure blocks BYTE-IDENTICAL
+(block extraction + equality assert); all ten figure R numbers
+HOLD per TB00453. The NSI scope item (b) Image8_T3_R1 drill
+pointers were located BY CONTENT INSIDE the D2 figure element
+(D2 gate:G7 drill_targets + q1_do desc fields, dv1_226 L2483/
+L2487) -- the figure-byte-identical prohibition governs over
+the scope item; FLAGGED to final-audit with the parent-pointer
+drift class, NOT fixed.
+
+VERIFICATION: every op anchor count==1 against pristine dv1_225
+(7d1d6edf888711b0cf21268842d9aea3); forward replay reproduces
+dv1_226 md5 83a82a0138994929f0a69ccee9d197a9; reverse
+(record-driven) replay reproduces dv1_225 byte-identical; tag
+balance unchanged; html.parser zero exceptions; one
+<h2>14. Revision History</h2>; residue grep battery CLEAN over
+the non-figure body ahead of the sec-8 boundary (term set per
+NSI sec 3 + broad dv1_N/vN_N/TB00NNN/DEC/CR/section-sign scan:
+remaining tokens are live TB00000 sec-form cites, dv1_226
+self-version, 0311001 / self-section sign cites, standalone
+stars). Lines 9,677 -> 9,565 (net -112: S-HEAD-2 paragraph,
+sec-2 verification paragraph, fourteen A-25..A-38 blocks, plus
+line merges). Sections 8-14 prose UNTOUCHED this slice
+(TB00680 scope).
+
+----- DEC-125 PROSE SLICE PART 1 OP RECORD -- REMOVED / LIVE CONTENT (VERBATIM, ORDERED) -----
+
+[OP01 | HDR-1 | CLASS HDR | x1]
+REMOVED FRAGMENT (verbatim):
+<title>0500000 System Architecture Overview dv1_225</title>
+LIVE REPLACEMENT (verbatim):
+<title>0500000 System Architecture Overview dv1_226</title>
+
+[OP02 | HDR-2 | CLASS HDR | x1]
+REMOVED FRAGMENT (verbatim):
+<tr><td>DocVersion</td><td>dv1_225</td></tr>
+LIVE REPLACEMENT (verbatim):
+<tr><td>DocVersion</td><td>dv1_226</td></tr>
+
+[OP03 | HDR-3 | CLASS HDR | x1]
+REMOVED FRAGMENT (verbatim):
+0500000_System_Architecture_Overview_dv1_225_Claude_Source.html</td></tr>
+LIVE REPLACEMENT (verbatim):
+0500000_System_Architecture_Overview_dv1_226_Claude_Source.html</td></tr>
+
+[OP04 | HDR-4 | CLASS HDR | x1]
+REMOVED FRAGMENT (verbatim):
+<tr><td>DocTime</td><td>21:30:00 UTC</td></tr>
+LIVE REPLACEMENT (verbatim):
+<tr><td>DocTime</td><td>23:00:00 UTC</td></tr>
+
+[OP05 | S-HEAD-1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Governed by 0311001 v1_6 §15.13 and TB00000 v2_20 §4.1 DR-002-HTML.
+LIVE REPLACEMENT (verbatim):
+Governed by 0311001 §15.13 and TB00000 sec 4.6 DR-002-HTML.
+
+[OP06 | S-HEAD-2 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p class="format-note">
+<strong>SUPERSEDES dv1_23 .txt + .docx + .pdf + 4 _svg.txt + 6 PNG (13 files).</strong>
+The 13-file retirement cascade executes at TB00151e STAGE 4 after Bill approval
+of this completed dv1_24 .html.
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP07 | S0-1a | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+ (NEW dv1_37
+per DEC-009 ratified at TB00170 + 0311001 v1_11 §15.11.5 T1-B amendment).
+LIVE REPLACEMENT (verbatim):
+.
+
+[OP08 | S0-1b | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+ (D1=R-2, D2=R-1, D3=R-3, D4=R-1, D5=R-3, D6=R-3,
+D7=R-1 as of dv1_37 enactment) are mutable
+LIVE REPLACEMENT (verbatim):
+ are mutable
+
+[OP09 | S0-1c | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+R-state. Pre-dv1_37 [DCN]_Image[N]_T2_R[R]_[ShortTitle] form is
+RETIRED for Tier 1 root &lt;desc&gt; drill_targets. Tier 2
+LIVE REPLACEMENT (verbatim):
+R-state. Tier 2
+
+[OP10 | S0-1d | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+currently retain pre-v1_11 _R[R] form; migration to
+LIVE REPLACEMENT (verbatim):
+currently retain the _R[R] form; migration to
+
+[OP11 | S0-1e | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+is sequenced for next R-increment of each Tier 2
+figure per DEC-003 Path A (one diagram per session).
+LIVE REPLACEMENT (verbatim):
+occurs at the next R-increment of each Tier 2
+figure (one diagram per session).
+
+[OP12 | S0-1f | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+ (V-038.3 reconciliation per DR-042
+NEW + CLOSED at TB00170). Architectural identifiers
+LIVE REPLACEMENT (verbatim):
+. Architectural identifiers
+
+[OP13 | S0-1g | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+ This dv1_37 enactment closes V-038.3 prose-zero gaps for the
+TB00170 NSI §3.1 carry-forward set across §2, §3, §4, §8, §11.
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP14 | FLAG-c | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+per 0311001 v1_7 §15.11.6 (Tier 1 root-desc contract)
+LIVE REPLACEMENT (verbatim):
+per 0311001 §15.11.6 (Tier 1 root-desc contract)
+
+[OP15 | S1-1 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+stop orders on matching engine (no resting TP per DEC-124 run-to-reversal)
+LIVE REPLACEMENT (verbatim):
+stop orders on matching engine
+
+[OP16 | S1-2a | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+(per TB00000
+                     v2_29 §9.3; diagrams remain canonical per §4.5 DD-001/
+                     DD-002 + 0311001 v1_12 §15.14)
+LIVE REPLACEMENT (verbatim):
+(per TB00000
+                     sec 7; diagrams remain canonical per sec 4.2 DD-001/
+                     DD-002 + 0311001 §15.14)
+
+[OP17 | S1-2b | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+★ Evaluate Hillsboro OR [dv1_6 IMP-01 — adjacent to Kraken AWS]
+LIVE REPLACEMENT (verbatim):
+★ Evaluate Hillsboro OR [IMP-01 — adjacent to Kraken AWS]
+
+[OP18 | S1-2c | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Per TB00000 v2_29 §9.4.
+LIVE REPLACEMENT (verbatim):
+Per TB00000 sec 7.
+
+[OP19 | S1-2d | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+cap, or limit on trade size). Per TB00000 §7.
+LIVE REPLACEMENT (verbatim):
+cap, or limit on trade size). Per TB00000 sec 7.
+
+[OP20 | S2-0a | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+2.0 Canonical Identifiers (NEW dv1_37 — V-038.3 reconciliation per DR-042;
+DD-002 prose-follows-diagram). The pair_cache
+LIVE REPLACEMENT (verbatim):
+2.0 Canonical Identifiers. The pair_cache
+
+[OP21 | S2-0b | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Encoded in
+D1 Kraken API Connection Architecture across 6 SVG sites.
+LIVE REPLACEMENT (verbatim):
+Encoded in
+D1 Kraken API Connection Architecture.
+
+[OP22 | S2-VER | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+All connection points verified across 3 independent analysis passes (15 sources) plus
+<br>
+2 deep validation sessions (144+ sources total) plus 10-search FP/DP Kraken validation
+<br>
+[dv1_6] (126 sources).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP23 | S2-p1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+per-pair status cache ★ dv1_6
+
+LIVE REPLACEMENT (verbatim):
+per-pair status cache
+
+
+[OP24 | S2-p2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+cost_min ★ GAP-C/D dv1_9
+
+LIVE REPLACEMENT (verbatim):
+cost_min
+
+
+[OP25 | S2-p3 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+1H HTF cache for Gate 4 ★ NEW dv1_5
+
+LIVE REPLACEMENT (verbatim):
+1H HTF cache for Gate 4
+
+
+[OP26 | S2-p4 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+sequence gap detection ★ A-10 dv1_7
+
+LIVE REPLACEMENT (verbatim):
+sequence gap detection (A-10)
+
+
+[OP27 | S2-p5 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+CRITICAL ★ GAP-A dv1_9: order_status:true MANDATORY
+LIVE REPLACEMENT (verbatim):
+CRITICAL: order_status:true MANDATORY
+
+[OP28 | S2-p6 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+sequence gap detection ★ A-9 dv1_6
+
+LIVE REPLACEMENT (verbatim):
+sequence gap detection (A-9)
+
+
+[OP29 | S2-1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+ + MPP slippage cap (DEC-122 CR-03)/cl_ord_id
+LIVE REPLACEMENT (verbatim):
+ + MPP slippage cap/cl_ord_id
+
+[OP30 | S2-2a | CLASS P | x1]
+REMOVED FRAGMENT (verbatim):
+(edit_order DEPRECATED ★ dv1_6)
+LIVE REPLACEMENT (verbatim):
+(edit_order PROHIBITED)
+
+[OP31 | S2-3 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+batch_add   — emergSL single leg on fill (no TP per DEC-124). cl_ord_id
+LIVE REPLACEMENT (verbatim):
+batch_add   — emergSL single leg on fill. cl_ord_id
+
+[OP32 | S2-p7 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Full Halt multi-order cancel ★ dv1_6
+
+LIVE REPLACEMENT (verbatim):
+Full Halt multi-order cancel
+
+
+[OP33 | S2-p8 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+daily regime computation 00:00 UTC ★ NEW dv1_5
+
+LIVE REPLACEMENT (verbatim):
+daily regime computation 00:00 UTC
+
+
+[OP34 | S2-p9 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+exclude response[-1] always ★ dv1_6
+
+LIVE REPLACEMENT (verbatim):
+exclude response[-1] always
+
+
+[OP35 | S2-p10 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+executions gap recovery ★ dv1_7
+
+LIVE REPLACEMENT (verbatim):
+executions gap recovery
+
+
+[OP36 | S2-p11 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+balances gap recovery ★ dv1_6
+
+LIVE REPLACEMENT (verbatim):
+balances gap recovery
+
+
+[OP37 | S2-p12 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+(AR-038 dv1_12)
+LIVE REPLACEMENT (verbatim):
+(AR-038)
+
+[OP38 | S2-4 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+independently — crash protection always active. No resting TP orders exist under
+    DEC-124 (run-to-reversal): the take-profit is the Layer 1a regime-reversal exit
+    executed by the Exit Controller.
+LIVE REPLACEMENT (verbatim):
+independently — crash protection always active. The take-profit is the Layer 1a
+    regime-reversal exit executed by the Exit Controller.
+
+[OP39 | S2-EXT1 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+(the CR-03 taker marketable-IOC entry is rejected under post_only)
+LIVE REPLACEMENT (verbatim):
+(the taker marketable-IOC entry is rejected under post_only)
+
+[OP40 | S2-2b | CLASS P | x1]
+REMOVED FRAGMENT (verbatim):
+Amend order cost ★ dv1_6 (PRIMARY): +1 fixed
+LIVE REPLACEMENT (verbatim):
+Amend order cost (PRIMARY):         +1 fixed
+
+[OP41 | S2-2c | CLASS P | x1]
+REMOVED FRAGMENT (verbatim):
+Edit order (DEPRECATED ★ dv1_6):    +1 fixed
+LIVE REPLACEMENT (verbatim):
+Edit order (PROHIBITED):            +1 fixed
+
+[OP42 | S2-p13 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Batch cancel cost ★ dv1_6:          Cumulative
+LIVE REPLACEMENT (verbatim):
+Batch cancel cost:                  Cumulative
+
+[OP43 | S2-h6 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-6 (dv1_5)  OTO
+LIVE REPLACEMENT (verbatim):
+A-6  OTO
+
+[OP44 | S2-h7 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-7 (dv1_6) ★  WS Ping
+LIVE REPLACEMENT (verbatim):
+A-7  WS Ping
+
+[OP45 | S2-h8 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-8 (dv1_6) ★  Zombie
+LIVE REPLACEMENT (verbatim):
+A-8  Zombie
+
+[OP46 | S2-h9 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-9 (dv1_6) ★  Balances
+LIVE REPLACEMENT (verbatim):
+A-9  Balances
+
+[OP47 | S2-h10 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-10 (dv1_7) ★  Executions
+LIVE REPLACEMENT (verbatim):
+A-10  Executions
+
+[OP48 | S2-h11 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-11 (dv1_8) ★  Executions
+LIVE REPLACEMENT (verbatim):
+A-11  Executions
+
+[OP49 | S2-h12 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-12 (dv1_8) ★  Executions
+LIVE REPLACEMENT (verbatim):
+A-12  Executions
+
+[OP50 | S2-h13 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-13 (dv1_8) ★  Executions
+LIVE REPLACEMENT (verbatim):
+A-13  Executions
+
+[OP51 | S2-h14 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-14 (dv1_8) ★  Spot REST
+LIVE REPLACEMENT (verbatim):
+A-14  Spot REST
+
+[OP52 | S2-h15 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-15 (dv1_9) ★  Executions
+LIVE REPLACEMENT (verbatim):
+A-15  Executions
+
+[OP53 | S2-h16 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-16 (dv1_9) ★  OHLC
+LIVE REPLACEMENT (verbatim):
+A-16  OHLC
+
+[OP54 | S2-h17 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-17 (dv1_9) ★  Instrument
+LIVE REPLACEMENT (verbatim):
+A-17  Instrument
+
+[OP55 | S2-h18 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-18 (dv1_9) ★  WebSocket
+LIVE REPLACEMENT (verbatim):
+A-18  WebSocket
+
+[OP56 | S2-h19 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-19 (dv1_9) ★  maxratecount
+LIVE REPLACEMENT (verbatim):
+A-19  maxratecount
+
+[OP57 | S2-h20 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-20 (dv1_10) ★  stp_type
+LIVE REPLACEMENT (verbatim):
+A-20  stp_type
+
+[OP58 | S2-h21 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-21 (dv1_10) ★  deadline
+LIVE REPLACEMENT (verbatim):
+A-21  deadline
+
+[OP59 | S2-h22 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-22 (dv1_10) ★  aiohttp
+LIVE REPLACEMENT (verbatim):
+A-22  aiohttp
+
+[OP60 | S2-h23 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-23 (dv1_10) ★  Ticker
+LIVE REPLACEMENT (verbatim):
+A-23  Ticker
+
+[OP61 | S2-h24 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+A-24 (dv1_10) ★  Regime
+LIVE REPLACEMENT (verbatim):
+A-24  Regime
+
+[OP62 | S2-A2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+ is an implementation choice, not architecture (dv1_141; TB00511).
+LIVE REPLACEMENT (verbatim):
+ is an implementation choice, not architecture.
+
+[OP63 | S2-A20 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+WS v2 will cause order rejection or silent failure. This was an error in all
+<br>
+     prior dv1_9 and earlier specifications. Corrected here as AR-032.
+LIVE REPLACEMENT (verbatim):
+WS v2 will cause order rejection or silent failure (ar:AR-032).
+
+[OP64 | S2-A21 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+A delayed batch_add with incorrect
+<br>
+     TP/emergSL prices due to fill price slippage
+LIVE REPLACEMENT (verbatim):
+A delayed batch_add with incorrect
+<br>
+     emergSL prices due to fill price slippage
+
+[OP65 | S2-7a | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+retry up to 3 times. If all fail: use stale regime (per RE-SCH-004).
+<br>
+     1011012 RE-RL-001 through -004 retired TB00227; 0711002 retired TB00596 — canonical authority is the Diagram 4 regime-engine visual / §5 (see 0500000 dv1_55 §12.5 Bind block).
+</p>
+LIVE REPLACEMENT (verbatim):
+retry up to 3 times. If all fail: use stale regime (per RE-SCH-004).
+</p>
+
+[OP66 | S2-5h | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+2.5 Data Architecture: Pre-Computation Cache (NEW dv1_5 — I-2)
+LIVE REPLACEMENT (verbatim):
+2.5 Data Architecture: Pre-Computation Cache (I-2)
+
+[OP67 | S2-i06 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-06 (dv1_8) ★  aiohttp
+LIVE REPLACEMENT (verbatim):
+IMP-06  aiohttp
+
+[OP68 | S2-i07 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-07 (dv1_8) ★  asyncio
+LIVE REPLACEMENT (verbatim):
+IMP-07  asyncio
+
+[OP69 | S2-i08 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-08 (dv1_8) ★  systemd
+LIVE REPLACEMENT (verbatim):
+IMP-08  systemd
+
+[OP70 | S2-8 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+D7 systemd-tier visual cluster (per DD-001 diagrams-canonical; 1011013 dv1_6 retired in TB00228 RANK 7 cascade).
+LIVE REPLACEMENT (verbatim):
+D7 systemd-tier visual cluster.
+
+[OP71 | S2-i16 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-16 (dv1_10) ★  aiohttp
+LIVE REPLACEMENT (verbatim):
+IMP-16  aiohttp
+
+[OP72 | S2-i17 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-17 (dv1_10) ★  aiohttp
+LIVE REPLACEMENT (verbatim):
+IMP-17  aiohttp
+
+[OP73 | S2-i18 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-18 (dv1_10) ★  Ticker
+LIVE REPLACEMENT (verbatim):
+IMP-18  Ticker
+
+[OP74 | S2-i19 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+IMP-19 (dv1_10) ★  Regime
+LIVE REPLACEMENT (verbatim):
+IMP-19  Regime
+
+[OP75 | S2-7b | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+for 50+ pairs at 00:00 UTC hit the rate limit and corrupt regime classification
+<br>
+     for all affected pairs. See A-24. 1011012 RE-RL-001 through -004 retired TB00227; 0711002 retired TB00596 — canonical authority is the Diagram 4 regime-engine visual / §5 (see 0500000 dv1_55 §12.5 Bind block).
+LIVE REPLACEMENT (verbatim):
+for 50+ pairs at 00:00 UTC hit the rate limit and corrupt regime classification
+<br>
+     for all affected pairs. See A-24.
+
+[OP76 | S2-tbl | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+(parse interval_begin ★ A-16 dv1_9)
+LIVE REPLACEMENT (verbatim):
+(parse interval_begin, A-16)
+
+[OP77 | S3-l1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+8 gates. Gate 3 (Regime Pre-Filter) new in dv1_5. Per-pair status check new in dv1_6.
+LIVE REPLACEMENT (verbatim):
+8 gates.
+
+[OP78 | S3-l2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+PRE-STEP: Parameter Store Snapshot Frozen (NEW dv1_5 — I-4)
+LIVE REPLACEMENT (verbatim):
+PRE-STEP: Parameter Store Snapshot Frozen (I-4)
+
+[OP79 | S3-l3 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+PRE-STEP: Pre-Computation Cache Read (NEW dv1_5 — I-2)
+LIVE REPLACEMENT (verbatim):
+PRE-STEP: Pre-Computation Cache Read (I-2)
+
+[OP80 | S3-l4 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+  ★ dv1_6: Per-pair Instrument Status Check
+LIVE REPLACEMENT (verbatim):
+  Per-pair Instrument Status Check
+
+[OP81 | S3-l5 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+maintenance state ★ dv1_12.
+LIVE REPLACEMENT (verbatim):
+maintenance state.
+
+[OP82 | S3-l6 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Gate 3: Regime Pre-Filter ★ NEW dv1_5 (I-1)
+LIVE REPLACEMENT (verbatim):
+Gate 3: Regime Pre-Filter (I-1)
+
+[OP83 | S3-l7 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Gate 4: 1H HTF Confirmation ★ (was Gate 3)
+LIVE REPLACEMENT (verbatim):
+Gate 4: 1H HTF Confirmation ★
+
+[OP84 | S3-l8 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Cache read from ohlc(60) WS subscription (NEW dv1_5).
+LIVE REPLACEMENT (verbatim):
+Cache read from ohlc(60) WS subscription.
+
+[OP85 | S3-l9 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Gate 5: Selection Controller (was Gate 4)
+LIVE REPLACEMENT (verbatim):
+Gate 5: Selection Controller
+
+[OP86 | S3-l10 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Gate 6: Regime Gate / Sizer ★ (was Gate 5)
+LIVE REPLACEMENT (verbatim):
+Gate 6: Regime Gate / Sizer ★
+
+[OP87 | S3-l11 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Gate 7: Risk Guard (was Gate 6)
+LIVE REPLACEMENT (verbatim):
+Gate 7: Risk Guard
+
+[OP88 | S3-l12 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+(I-7 dv1_5)
+LIVE REPLACEMENT (verbatim):
+(I-7)
+
+[OP89 | S3-l13 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Gate 8: Position Sizer ★ (was Gate 7)
+LIVE REPLACEMENT (verbatim):
+Gate 8: Position Sizer ★
+
+[OP90 | S3-1a | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+expected_reward = CIATS run-to-reversal
+    estimate (DEC-124; no TP price computed).
+LIVE REPLACEMENT (verbatim):
+expected_reward = CIATS run-to-reversal
+    estimate.
+
+[OP91 | S3-1b | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+required, the pass/fail branches, and the event identifier emitted on failure.
+This figure replaces the architectural detail previously carried in
+1011011 Risk_Engine_Coding_Spec (retired this audit cycle).
+</p>
+LIVE REPLACEMENT (verbatim):
+required, the pass/fail branches, and the event identifier emitted on failure.
+</p>
+
+[OP92 | S3-1c | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+from the CIATS run-to-reversal estimator (no TP price per DEC-124); the sacred
+LIVE REPLACEMENT (verbatim):
+from the CIATS run-to-reversal estimator; the sacred
+
+[OP93 | S3-1d | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+1:1.5 R:R floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned. This
+figure replaces the architectural detail previously carried in 1011011
+Risk_Engine_Coding_Spec (retired this audit cycle).
+</p>
+LIVE REPLACEMENT (verbatim):
+1:1.5 R:R floor is the only hardcoded parameter in TothBot V2 — never CIATS-owned.
+</p>
+
+[OP94 | S4-l1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+4.0 Canonical Identifiers (NEW dv1_37 — V-038.3 reconciliation per DR-042; DD-002
+prose-follows-diagram). Architectural
+LIVE REPLACEMENT (verbatim):
+4.0 Canonical Identifiers. Architectural
+
+[OP95 | S4-l2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Position Mirror sole-writer architectural rule
+                              (per 0511005 dv1_1 §HR-PM-009 + 0511004 dv1_3).
+
+LIVE REPLACEMENT (verbatim):
+Position Mirror sole-writer architectural rule.
+
+
+[OP96 | S4-l3 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+hard rule (per 0511004 dv1_3 §HR-EC-013).
+
+LIVE REPLACEMENT (verbatim):
+hard rule.
+
+
+[OP97 | S4-l4 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+update authority via WS Manager (per
+                              0511004 dv1_3 §HR-EC-014). Witnessed
+LIVE REPLACEMENT (verbatim):
+update authority via WS Manager. Witnessed
+
+[OP98 | S4-1a | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+This IS
+    the take-profit under DEC-124 run-to-reversal (EC-L1A-003 max-hold RETIRED).
+LIVE REPLACEMENT (verbatim):
+This IS
+    the take-profit (run-to-reversal).
+
+[OP99 | S4-1b+S4-l5 | CLASS B+C | x1]
+REMOVED FRAGMENT (verbatim):
+SEQUENCE CRITICAL: (1) cancel emergSL  THEN  (2) market sell. No resting TP
+    to cancel under DEC-124 (run-to-reversal).
+    CANCEL TIMEOUT FALLBACK (NEW dv1_5 — I-6):
+LIVE REPLACEMENT (verbatim):
+SEQUENCE CRITICAL: (1) cancel emergSL  THEN  (2) market sell.
+    CANCEL TIMEOUT FALLBACK (I-6):
+
+[OP100 | S4-l6 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+MPP RISK (C-1 dv1_4): market sell may reject
+LIVE REPLACEMENT (verbatim):
+MPP RISK (C-1): market sell may reject
+
+[OP101 | S4-l7 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+MPP RISK (C-1 dv1_4): triggered market order
+LIVE REPLACEMENT (verbatim):
+MPP RISK (C-1): triggered market order
+
+[OP102 | S4-1c | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+(entry taker + MAE taker exit, both
+                                                         taker per DEC-122 marketable-IOC;
+                                                         canonical D9)
+LIVE REPLACEMENT (verbatim):
+(entry taker + MAE taker exit, both
+                                                         taker; canonical D9)
+
+[OP103 | S4-1d | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+expected_reward = CIATS run-to-reversal estimate      (NO gross_target TP per DEC-124)
+
+LIVE REPLACEMENT (verbatim):
+expected_reward = CIATS run-to-reversal estimate
+
+
+[OP104 | S5-l1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+DATA SOURCE (NEW dv1_5 — FLAG 2 — FP/DP VERIFIED):
+LIVE REPLACEMENT (verbatim):
+DATA SOURCE:
+
+[OP105 | S5-l2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+CRITICAL dv1_6 (GAP-03): The last entry
+LIVE REPLACEMENT (verbatim):
+CRITICAL: The last entry
+
+[OP106 | S5-1 | CLASS B | x1]
+REMOVED FRAGMENT (verbatim):
+ + AR-017 (0711002 retired TB00596).
+LIVE REPLACEMENT (verbatim):
+ + AR-017.
+
+[OP107 | FLAG-c2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+CIATS role per
+TB00000 §1)
+LIVE REPLACEMENT (verbatim):
+CIATS role per
+TB00000 sec 1)
+
+[OP108 | S6-c1 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+lambda=0.2 [FP/DP validated dv1_6:
+    half-life=3.1 evals].
+LIVE REPLACEMENT (verbatim):
+lambda=0.2 [FP/DP validated:
+    half-life=3.1 evals].
+
+[OP109 | S6-c2 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+LOGGER — ASYNC BOUNDED QUEUE (NEW dv1_5 — I-5):
+LIVE REPLACEMENT (verbatim):
+LOGGER — ASYNC BOUNDED QUEUE (I-5):
+
+[OP110 | S6-c3 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+[FP/DP validated dv1_6: 20 positions x 10 events/candle x 50-candle buffer].
+LIVE REPLACEMENT (verbatim):
+[FP/DP validated: 20 positions x 10 events/candle x 50-candle buffer].
+
+[OP111 | S6-c4 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+PARAMETER STORE — SNAPSHOT PATTERN (NEW dv1_5 — I-4):
+LIVE REPLACEMENT (verbatim):
+PARAMETER STORE — SNAPSHOT PATTERN (I-4):
+
+[OP112 | S6-c5 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+SE(Sharpe)~7.2% [FP/DP validated dv1_6].
+LIVE REPLACEMENT (verbatim):
+SE(Sharpe)~7.2% [FP/DP validated].
+
+[OP113 | S6-c6 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Mann-Whitney alpha (dv1_6) ★:
+LIVE REPLACEMENT (verbatim):
+Mann-Whitney alpha ★:
+
+[OP114 | S6-c7 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+Spearman rho threshold (dv1_6) ★:
+LIVE REPLACEMENT (verbatim):
+Spearman rho threshold ★:
+
+[OP115 | S6-c8 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+CUSUM parameters (dv1_6) ★:
+LIVE REPLACEMENT (verbatim):
+CUSUM parameters ★:
+
+[OP116 | S6-c9 | CLASS C | x1]
+REMOVED FRAGMENT (verbatim):
+PDCA minimum interval (dv1_6) ★:
+LIVE REPLACEMENT (verbatim):
+PDCA minimum interval ★:
+
+[OP117 | S2-9-A25 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-25 (dv1_144) ★ Keepalive, Sequence-Gap Recovery, and Connection Logging (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_144 migration; TB00532):</strong>
+<br>
+     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for these wire facts (SD-9-verified vs 0411001 dv1_13):
+<br>
+     (i) Dead-connection: a sent application ping that receives no Kraken pong within 10 seconds marks the connection dead and forces reconnect [WS-PING-002, 0411001 L980-981].
+<br>
+     (ii) Zombie detection: WS Manager tracks last_real_data_time per connection; if time.monotonic() minus last_real_data_time exceeds 90 seconds the connection is a zombie — log ZOMBIE_CONNECTION_DETECTED and reconnect [WS-ZOM-003, 0411001 L1008-1011].
+<br>
+     (iii) Executions sequence gap: on a sequence jump greater than 1 on the executions stream, alert EXECUTIONS_SEQUENCE_GAP immediately and trigger a REST GetOpenOrders reconciliation [WS-EXE-019, 0411001 L576-578] — prevents Position Mirror desync.
+<br>
+     (iv) Balances sequence gap: on a sequence jump greater than 1 on the balances stream, alert BALANCES_SEQUENCE_GAP immediately and trigger a REST balance reconciliation [WS-BAL-005, 0411001 L607-608] — prevents capital-calculation error.
+<br>
+     (v) Connection logging: log connection_id on every new WS connection as WS_CONNECTED(uri, connection_id); connection_id enables Kraken support diagnosis [WS-STAT-006, 0411001 L289-292].
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP118 | S2-9-A26 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-26 (dv1_144) ★ Exit Controller Pair-Status Adaptation (DD-002 prose-follows-diagram for the D1 mod:Exit_Controller dv1_144 migration; TB00532):</strong>
+<br>
+     The diagram mod:Exit_Controller constraints &lt;desc&gt; is canonical (WS-EXIT-003; SD-9-verified vs 0411001 dv1_13 sec 9): the Exit Controller adapts exit-order placement to the live Kraken pair trading-status — limit_only places an IOC/GTC limit order only and never a market order [L228/L1103]; cancel_only cancels resting orders only and places no new orders [L230/L264]; reduce_only / work_in_progress / maintenance / delisted follow the sec-9 pair-status adaptation matrix [L236-237]. Submitting a non-permitted order type under a restricted pair-status is Kraken-rejected and would leave an open position unprotected (loss-prevention: wrong-exit-mode loss).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP119 | S2-9-A27 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-27 (dv1_145) ★ Public Market Data: Pair/Engine Status, OHLC, and Ticker (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_145 migration; TB00533):</strong>
+<br>
+     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for the four public market-data channels (GROUP 2 wire facts, SD-9-verified vs 0411001 dv1_13). INSTRUMENT/STATUS: the instrument channel reports a pair trading-status with 8 states (online, post_only, limit_only, reduce_only, cancel_only, work_in_progress, maintenance, delisted [WS-INST-008]); of these, seven — post_only, cancel_only, work_in_progress, delisted, limit_only, reduce_only, maintenance — are the NO-ENTRY set that blocks all new entry orders, so only online pairs are entry-eligible (post_only joined the NO-ENTRY set under the DEC-122 CR-03 taker entry: a marketable IOC order is Kraken-rejected on a post_only pair; amended TB00666) [WS-INST-009; AR-039]. The status channel additionally reports 4 GLOBAL engine states (online / post_only / cancel_only / maintenance) to which WS_Manager reacts immediately on change [WS-STAT-002], and carries a connection_id field identifying the specific WS connection [WS-STAT-005] — the value the WS-STAT-006 mandatory connection log records. OHLC: two ohlc subscriptions are maintained at startup for every monitored pair — interval=5 (the 5-minute SYSTEM CLOCK) and interval=60 (1-hour HTF Gate 4) [WS-OHLC-001]; interval_begin is the canonical candle-start field and timestamp is DEPRECATED (parse only interval_begin) [WS-OHLC-002; AR-027], formatted as an RFC3339 nanosecond string parsed to a timezone-aware datetime [WS-OHLC-003]. TICKER: the ticker event_trigger has two modes — bbo for pairs WITH an open position (faster adverse-price detection; for longs the bid is the realizable exit price) and trades for pairs WITHOUT a position (sufficient for the Gate-2 24h-volume read) [WS-TKR-002] — and WS_Manager switches a pair's event_trigger on every position-state change (opened → bbo, closed → trades) [WS-TKR-003]. These nine facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP120 | S2-9-A28 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-28 (dv1_146) ★ Private-Channel Inbound: exec_type Enumeration, Partial-Fill Fields, and Spot/Main Balance Merge (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_146 migration; TB00535):</strong>
+<br>
+     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for the Kraken private-channel inbound wire facts (GROUP 3, SD-9-verified vs 0411001 dv1_13). The executions channel reports a 10-value exec_type dispatch table (pending_new, new, trade, filled, iceberg_refill, canceled, expired, amended, restated, status) all handled explicitly with unknown values logged WARN [WS-EXE-009]; exec_type=trade fires on every fill event of an order and does not by itself imply a full fill [WS-EXE-011]; and each trade event carries cum_qty + avg_price (consumed by Position Mirror and R:R sizing) plus last_qty + last_price (fill-level / slippage analytics) [WS-EXE-012]. The balances channel is filtered to wallets[type=spot][id=main] ONLY — futures and staking balances are never included in portfolio calculations [WS-BAL-002] — and is parsed as a full snapshot at subscription followed by delta updates merged into the cached spot/main balance [WS-BAL-003]. These five facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP121 | S2-9-A29 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-29 (dv1_147; amended dv1_214 — DEC-122 disposition TB00666) &#9733; Outbound Orders: deadline Range, Marketable-IOC Entry, amend_order Queue-Position Preservation, and the Single-Leg emergSL batch_add (DD-002 prose-follows-diagram for the D1 mod:WS_Manager + mod:Exit_Controller dv1_147 migration; TB00536):</strong>
+<br>
+     The diagram mod:WS_Manager and mod:Exit_Controller constraints &lt;desc&gt; are canonical for the Kraken outbound-order wire facts (GROUP 4, SD-9-verified vs 0411001 dv1_13). The deadline field on every add_order and batch_add accepts a 500ms-to-60s range from current time, with TothBot using the 5s standard value; an order whose deadline has passed at processing time is Kraken-rejected, preventing stale entry placement from network delay or event-loop pause [WS-DL-002]. Entry orders are MARKETABLE IOC LIMIT orders (time_in_force=ioc, marketable limit price) bounded by a maximum-permissible-price (MPP) slippage cap on the worst acceptable fill; any unfilled IOC remainder expires immediately, so there is no resting working entry order and no entry-side dust; the MPP cap is the CIATS-owned bound and the architecture fact is the marketable-IOC-with-MPP-cap contract, not a seed value (the legacy GTD param:entry_timeout_sec seed is RETIRED per DEC-122 CR-17, executed TB00666; token retired 0311001 v1_47) [WS-ADD-002; DEC-122 CR-03]. amend_order preserves the order's queue position on the Kraken book whereas cancel+resubmit loses it, which is why amend_order is the sole modification method (ar:AR-018; edit_order DEPRECATED) and the preferred mechanism under rate-limit pressure [WS-AMD-002]. The batch_add fired atomically on entry fill carries ONE leg: the emergSL leg (stop-loss, triggers.reference='last', triggers.price_type='static' for a fixed-price crash-protection stop that must be set explicitly), with stp_type=cancel_newest and deadline [WS-BA-002 as amended by DEC-124 — no TP leg; the take-profit is the Layer 1a run-to-reversal regime exit executed by the Exit Controller as a market sell]. The former partial-TP-fill emergSL amendment (WS-TP-003) and the DR-079 abandon-and-surface sub-minimum dust write-off are RETIRED (DEC-124 ratified TB00650; DEC-122 disposition Bill ruling TB00666 — no partial-fill, split, or dust handling exists in the live design; historical mechanic in git history, dv1_213 and prior). These facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP122 | S2-9-A30 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-30 (dv1_148) &#9733; Reconnect Residual: Scenario B Maintenance-Delay and the On-Reconnect Restore Sequence (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_148 GROUP 5 migration; TB00537):</strong>
+<br>
+     The diagram mod:WS_Manager constraints &lt;desc&gt; is canonical for the two remaining Kraken keepalive/reconnect wire facts (GROUP 5 residual, SD-9-verified vs 0411001 dv1_13). Reconnection has two distinct behaviours: Scenario A (a random disconnect) reconnects immediately with up to 5 attempts and then exponential backoff from 1s, while Scenario B (a disconnect after a confirmed Kraken trading-engine maintenance window) waits a MINIMUM of 5 seconds before attempting to reconnect, so TothBot does not hammer an engine still finishing maintenance [WS-REC-003]. On every reconnect the WS_Manager runs a full restore sequence (the ar:AR-056 mid-session restore path, which rule:HR-WM-016 keeps as a separate code path from cold start): it acquires a fresh WebSocket token, reconnects with the full WS-LIB connection parameters, re-subscribes every channel with identical parameters and parses each subscription-ACK warnings[] list, re-extracts maxratecount from the executions ACK to reset the operative rate-counter ceiling (never hardcoding 125, ar:AR-030), resumes the zombie-detection and 30-second ping keepalive tasks, restores the Position Mirror from snap_orders so no live position is left unmanaged after the gap, and restores the per-pair ticker event_trigger subscriptions [WS-REC-004]. Per the RR-SCOPE-010 confirm-absent check against live dv1_147, the other two GROUP 5 register entries — WS-PING-004 (a pong does not reset the zombie timer) and WS-ZOM-002 (track last_real_data_time using a monotonic clock) — were found already derivable from the existing rule:HR-WM-004 (reset on real channel events only) plus the dv1_144 WS-ZOM-003 time.monotonic()/last_real_data_time encoding, so they were not re-migrated. These facts are TothBot-organism (Kraken event-source) architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); with GROUP 5 closed, the remaining D1 register gaps are the GROUP 1 connection/auth trio (WS-EP-003, WS-LIB-001, WS-AUTH-002) and the GROUP 2 candle-close fact (WS-OHLC-005). R holds at R10 (a &lt;desc&gt;-only edit).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP123 | S2-9-A31 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-31 (dv1_149) &#9733; Connection/Library/Auth Trio: WS v2 Endpoint Scope, the websockets asyncio Client, and the Spot REST HMAC-SHA512 Signing Model (DD-002 prose-follows-diagram for the D1 mod:WS_Manager dv1_149 GROUP 1 migration; TB00538):</strong>
+<br>
+     The diagram mod:WS_Manager constraints &lt;desc&gt; is now canonical for the three GROUP 1 connection-establishment wire facts (SD-9-verified vs 0411001 dv1_13). ENDPOINT SCOPE: the general private/authenticated Spot WS v2 endpoint that carries executions, balances, order events, add/cancel order and openOrders/ownTrades is wss://ws-auth.kraken.com/v2, which is CURRENT and NOT deprecated; only the level3 (full order-book) WS endpoint moved to wss://ws-l3.kraken.com/v2 in the Kraken API change of 2 December 2025, and that change is scoped to the L3 endpoint alone — TothBot subscribes to NO level3 channel, so wss://ws-l3.kraken.com/v2 appears nowhere in TothBot's architecture [WS-EP-003; closes the prior uncited "ws-auth deprecated" note]. CLIENT LIBRARY: the WS_Manager connects with the Python websockets library's asyncio-native client, imported as "from websockets.asyncio.client import connect"; the legacy "websockets.connect()" entry point is prohibited [WS-LIB-001] — the connection invariants it is called with (max_size=10MB, open_timeout=10, max_queue=None, ping_interval=None) are already canonical at rule:HR-WM-002. REST AUTH MODEL: every Kraken Spot REST request, including the GetWebSocketsToken call that issues the pre-connect WS token, is signed with HMAC-SHA512 of (URI path + SHA256(nonce + POST data)) using the base64-decoded API secret; the 1 October 2025 Kraken authentication breaking change applied to Kraken FUTURES REST only, so the Spot REST signing model is UNCHANGED — the visible REST-API decoration already states the unchanged status, and this migration adds the signing construction a coder needs [WS-AUTH-002]. These three facts are TothBot-organism (Kraken event-source) connection architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); with GROUP 1 closed, the sole remaining D1 register gap is the GROUP 2 candle-close fact WS-OHLC-005 (a Signal_Pipeline concern carried forward). R holds at R10 (a &lt;desc&gt;-only edit).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP124 | S2-9-A32 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-32 (dv1_150) &#9733; Candle-Close Signal-Evaluation Semantics: the Committed Candle Drives the Pipeline, the Forming Candle Does Not (DD-002 prose-follows-diagram for the D1 mod:Signal_Pipeline dv1_150 GROUP 2 migration; TB00539):</strong>
+<br>
+     The diagram mod:Signal_Pipeline constraints &lt;desc&gt; is now canonical for the candle-close signal-evaluation rule (SD-9-verified vs 0411001 dv1_13 L323-326). On each 5-minute candle-close event — detected when a new ohlc(5m) frame arrives bearing a DIFFERENT interval_begin than the prior frame, which means the prior interval_begin's candle is now committed — the PREVIOUS, just-committed candle's OHLC values are the ones fed to ALL signal computations across the eight gates; the NEW candle (the current/forming interval_begin, still in progress) is NOT used in any signal calculation [WS-OHLC-005]. This is the live-WS analogue of the REST-seeding exclusion already canonical at rule:HR-WM-013 on container:Kraken_REST_API (GetOHLCData last/forming candle [-1] EXCLUDED, only closed candles seeded), and it lives on a DISTINCT component — the live candle-close signal path on mod:Signal_Pipeline — rather than the connection/channel layer of mod:WS_Manager, which is why it was carried forward from the GROUP 1-5 mod:WS_Manager cluster rather than bundled with it. The fact is TothBot-organism (Kraken event-source -> Signal_Pipeline) trading architecture per the binary test and is now derivable from the D1 diagram alone (DD-014); the Signal_Pipeline q1_do/q4_triggers previously stated only THAT the pipeline fires on candle-close, never WHICH candle's OHLC drives the computation, so the fact was genuinely absent in its codeable form before this migration. With WS-OHLC-005 landed, every one of the 37 TB00530 D1 register entries is now resolved (35 in-diagram across TB00531-539 plus the 2 reclassified-already-present at TB00537), so figure D1 Kraken_API_Connection_Architecture has reached FACT-LEVEL COMPREHENSIVENESS under the strict DD-014 from-the-diagram-alone standard: a coder can answer the five questions for every D1 component from the SVG + governs descriptors + figcaption alone. The DR-078 OPEN portion (D1 fact-level comprehensiveness) is thereby resolved, and 0411001 Kraken_WS_v2_Specification retirement (git rm --cached per CD-003) is UNBLOCKED — it is the SEPARATE TB00540 next-session primary (DEC-003 Path A / RR-SCOPE-011; not bundled here), to be preceded by the TB00511 cold-load precondition check. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP125 | S2-9-A33 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-33 (dv1_152) &#9733; REST Connection, Authentication, and HTTP-Client Primitives: Headers, Nonce, aiohttp Session Config, Base URLs, and Per-Key Permission Scopes (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_152 CLUSTER R1 migration; TB00559):</strong>
+<br>
+     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the eleven CLUSTER R1 REST connection / authentication / HTTP-client wire facts (SD-9-verified vs 0411002 dv1_1; the first of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). AUTH: every private REST call carries three headers — API-Key (the TRADE key value), API-Sign (the HMAC-SHA512 signature per the already-canonical WS-AUTH-002 signing model), and Content-Type: application/x-www-form-urlencoded — plus a strictly-increasing integer nonce constructed as int(time.time()*1000); Kraken rejects any call whose nonce is more than 10,000 ms behind current time, so the VPS clock must be NTP-synchronized [REST-AUTH-003 / 004 / 005]. HTTP CLIENT: all REST uses a single process-lifetime aiohttp.ClientSession (the synchronous requests library is prohibited because it blocks the asyncio loop) configured with ClientTimeout(total=10, connect=5, sock_read=8) and TCPConnector(limit=10, limit_per_host=5, force_close=False) — force_close=False keeps HTTP keepalive so the TCP connection is reused across calls [REST-HTTP-001 / 002 / 004 / 005]. ENDPOINTS: both private and public REST use base URL https://api.kraken.com, private endpoints POST to /0/private/[Endpoint], public endpoints GET or POST to /0/public/[Endpoint] [REST-HTTP-006 / 007]. KEYS: TothBot uses two API keys whose permission scopes differ — the DATA key holds query-only scopes (Query Funds, Query Open Orders and Trades, Query Closed Orders) and MUST NOT be able to trade, while the TRADE key adds Create and Modify Orders + Cancel and Close Orders; both are stored on the VPS, never hardcoded, loaded from an environment variable or encrypted config at startup [REST-KEY-003 / 004]. These eleven facts are TothBot-organism (Kraken event-source) connection architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); all eleven were confirmed absent from the live dv1_151 diagram-alone corpus before encoding (RR-SCOPE-010). CLUSTER R1 is the first of the six TB00558 clusters; the remaining 38 REST gaps (R2..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP126 | S2-9-A34 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-34 (dv1_153) &#9733; REST GetWebSocketsToken and GetOHLCData Wire Contract: Endpoints, Request Bodies, Response Schemas, Token Validity, Startup Warm-Up Seeding, and the General-Error vs Rate-Limit Retry Paths (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_153 CLUSTER R2 migration; TB00560):</strong>
+<br>
+     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the nine CLUSTER R2 wire facts covering the two foundational REST data calls (SD-9-verified vs 0411002 dv1_1; the second of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). GetWebSocketsToken: a POST to /0/private/GetWebSocketsToken with a nonce-only body (TRADE key) returns {token, expires (seconds)}; the token is valid approximately 900 s, must be obtained fresh on every reconnect and never cached (the fresh-per-reconnect behaviour itself is already canonical at WS-REC-004, so only the 900 s validity value and the do-not-cache rule are added here), and on error it retries three times at 1 s and then HALTS startup and alerts the operator because no token means no authenticated private stream [REST-WST-002 / 003 / 004 / 006]. GetOHLCData: a GET to /0/public/OHLC with pair + interval=1440 (+ optional since) returns per-pair candle rows [time, open, high, low, close, vwap, volume, count] plus last, every field a string converted to Decimal on parse; up to 720 rows arrive, and after the already-canonical rule:HR-WM-013 forming-candle response[-1] exclusion up to 719 committed daily candles remain (~2 years); startup warm-up issues three calls per pair (interval=5 ATR seed, interval=60 EMA20/50 seed, interval=1440 initial regime) under the same [-1] exclusion and the same ar:AR-035 1.1 s staggering [REST-OHLC-002 / 003 / 005 / 008]. ERROR PATHS (the TB00558 R-D8 RECONCILE, resolved here): the GetOHLCData general-error path retries ONCE at 2 s, then logs OHLC_FETCH_FAILED and falls back to the prior regime without halting — this is DISTINCT from the rate-limit (HTTP 429) path already narrated at A-24 (retry up to 3 times, then stale regime); the 1-versus-3 retry-count difference is correct because they are different Kraken error classes, so neither value was silently overwritten [REST-OHLC-009 general vs REST-ERR-005 rate-limit]. CLUSTER R2 is the second of six; the remaining 29 REST gaps (R3..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP127 | S2-9-A35 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-35 (dv1_154) &#9733; REST Reconciliation-Endpoint Wire Contract: GetOpenOrders, GetAccountBalance, and QueryOrders Endpoints, Request Bodies, Response Schemas, the Decimal Parse and portfolio_baseline_USD Assignment, and the DEGRADED-State Error Policies (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_154 CLUSTER R3 migration; TB00561):</strong>
+<br>
+     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the eight CLUSTER R3 reconciliation-endpoint wire facts (SD-9-verified vs 0411002 dv1_1; the third of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). GetOpenOrders: a POST to /0/private/OpenOrders with a nonce body (TRADE key, optional trades=true) returns result.open keyed by order_id, each carrying refid, userref, status, opentm/starttm/expiretm, descr, vol, vol_exec, cost, fee, price, stopprice, limitprice, misc, and oflags &#8212; every numeric field a string converted to Decimal on parse &#8212; and on error it retries once at 2 s, then logs RECONCILIATION_FAILED, alerts the operator, and enters DEGRADED state (monitor only, no new entries) because trading on a stale open-order book is an unmanaged-state loss event [REST-OO-002 / 003 / 006]. GetAccountBalance: a POST to /0/private/Balance with a nonce-only body (TRADE key) returns result keyed by asset (ZUSD, XXBT, ...) as strings converted to Decimal, the returned USD assigned directly as portfolio_baseline_USD (the spot/main-wallet-only restriction is already canonical at WS-BAL-002 and is not duplicated), and on error it retries once at 2 s, then logs BALANCE_RECONCILIATION_FAILED, alerts the operator, and enters DEGRADED state because sizing against a stale balance is a loss event [REST-BAL-002 / 003 / 004 / 007]. QueryOrders: a POST to /0/private/QueryOrders with nonce + txid + trades=true returns the GetOpenOrders result structure for only the queried order_ids (targeted single-order reconciliation), and on error falls back to GetOpenOrders for a full reconciliation [REST-QOI-002 / 003 / 005]. The three call names, purposes, and reconcile triggers (R-E1 WS-EXE-019, R-E5 WS-BAL-005/002, R-E9 REST drill_target/q1_do) were already canonical and were not re-migrated; all eight wire facts were confirmed absent from the live dv1_153 diagram-alone corpus before encoding (RR-SCOPE-010). CLUSTER R3 is the third of six; the remaining 21 REST gaps (R4..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP128 | S2-9-A36 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-36 (dv1_155) &#9733; REST Emergency-Cancel and Status Wire Contract: the CancelAllOrders Kill-Switch Endpoint with its EMERGENCY-ONLY Use Restriction and Post-Call HALT, and the Status-API Scheduled-Maintenance Check (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API dv1_155 CLUSTER R4 migration; TB00562):</strong>
+<br>
+     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the seven CLUSTER R4 wire facts (SD-9-verified vs 0411002 dv1_1; the fourth of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). CancelAllOrders: a POST to /0/private/CancelAll with a nonce-only body (TRADE key) returns result.count, the integer number of orders canceled [REST-CAO-002/003]. Its use is EMERGENCY ONLY [loss-prevention]: because the call cancels every open order on the account, including the off-book emergency-SL stop orders (the sole resting protective orders under DEC-124 — no resting TP exists), calling it in normal operation destroys crash protection, so it may be invoked only by a manual operator emergency action or an explicit EMERGENCY_HALT code path triggered by Bill, never by automation; it is specifically NOT the mechanism for normal MAE Layer-2 exits (those use cancel_order on the one position), NOT for the Full-Halt drawdown circuit breaker (that uses WS batch_cancel, which preserves the per-position emergency-SL — the sole resting protective order under DEC-124), and NOT for any automated routine operation [REST-CAO-004/005]. After any CancelAllOrders call the system logs EMERGENCY_KILL_SWITCH_ACTIVATED(count), alerts the operator at PRIORITY_CRITICAL, and enters HALT state; position state is then unknown and a manual operator review is required before restart [REST-CAO-006]. Status API: a GET to https://status.kraken.com/api/v2/scheduled-maintenances/upcoming.json on the Kraken Status page API (no API key, no nonce, issued on the same shared aiohttp ClientSession and timeout) returns an array of maintenance windows, each with name, scheduled_for, scheduled_until, and status (scheduled, in_progress, verifying, or completed) [REST-STAT-002/003/005]. For any window whose scheduled_for is within 2 hours of startup, the system logs KRAKEN_MAINTENANCE_SCHEDULED and alerts the operator at PRIORITY_HIGH; this is informational only and does not block startup (ar:AR-038), and on any error or timeout it logs MAINTENANCE_CHECK_FAILED, does not retry, and continues startup [REST-STAT-004/006]. The CancelAllOrders kill-switch purpose (R-F1) and the Status-API startup maintenance-detection purpose (R-F5) were already canonical in the visible figure and were not re-migrated; all seven wire facts were confirmed absent from the live dv1_154 diagram-alone corpus before encoding, the Status-endpoint URL having previously lived in section 2 prose only (RR-SCOPE-010). CLUSTER R4 is the fourth of six; the remaining 14 REST gaps (R5..R6) carry forward one cluster per session, after which a clean re-audit gates the DR-078 retirement of 0411002. R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP129 | S2-9-A37 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-37 (dv1_156) &#9733; REST Ticker 24h-Volume Wire Contract: the Public Ticker Endpoint, Classic-Pair-Name Mapping, the v[1]*p[1] USD-Volume Computation, the Startup-and-Periodic-Refresh Triggers, and the Instrument-Channel-Has-No-Volume HARD RULE (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API CLUSTER R5 migration; TB00563):</strong>
+<br>
+     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the ten CLUSTER R5 Ticker wire facts (SD-9-verified vs 0411002 dv1_1 section 4.8; the fifth of six clusters in the TB00558 D1 REST-API Fact-Level Gap Register). Ticker is the SOLE correct source of 24h rolling USD volume for the liquidity_24h cache: the WS-v2 instrument channel carries pair metadata only and NO volume, so reading 24h volume from the instrument channel is a defect (DEFECT-SS-006) [REST-TKR-001/010]. The endpoint is the public GET /0/public/Ticker?pair=[comma-separated CLASSIC pair names] (no auth, no nonce); WS-v2 symbols (BTC/USD) are mapped to Kraken classic names (XXBTZUSD) via the reverse map built at startup from the instrument-snapshot wsname field [REST-TKR-002/003]. Per pair the response v[1] is the 24h base-currency volume and p[1] is the 24h VWAP in USD, both numeric strings converted to Decimal; usd_volume_24h = Decimal(v[1]) * Decimal(p[1]) is stored in liquidity_24h[ws_pair] after reverse-mapping the classic key back to the WS symbol, with a pair missing from the response logged LIQUIDITY_PAIR_NOT_FOUND and EXCLUDED so Gate 2 blocks it (fail-safe) [REST-TKR-004/005/006]. It is called once for all pairs at startup during _warm_up_all_pairs() before SYSTEM_OPERATIONAL and then periodically every liquidity_refresh_hours (the 4h seed VALUE stays in section 9 per the binary test; the diagram fact is the periodic-refresh trigger), never on candle close; a single call covers up to 50 pairs as one request with no staggering [REST-TKR-007/008]. On a startup failure it logs REST_TICKER_FAILED, retries once after 2s, and on a second failure logs LIQUIDITY_SEED_FAILED, leaves the cache empty (Gate 2 blocks all entries, fail-safe) and does NOT halt; on a periodic-refresh failure it logs LIQUIDITY_REFRESH_FAILED and preserves the prior cached values; success logs LIQUIDITY_SEEDED / LIQUIDITY_REFRESHED [REST-TKR-009]. A cross-diagram drift was flagged and carried (CF-G2-VOL-FORMULA, NOT corrected this session): D2 gate:G2_Liquidity q1_do computes the figure as vol_24h * mid_price, which diverges from this canonical v[1]*p[1] (24h VWAP) wire fact and is the D2 side to reconcile (Gate 2 liquidity accuracy is loss-prevention-relevant). These facts are TothBot-organism (Kraken event-source) connection architecture per the binary test and are now derivable from the D1 diagram alone (DD-014); R holds at R10 (a &lt;desc&gt;-only edit; no visible &lt;text&gt; / geometry / viewBox change).
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+[OP130 | S2-9-A38 | CLASS D | x1]
+REMOVED FRAGMENT (verbatim):
+<p>
+<strong>A-38 (dv1_157) &#9733; REST General-Error Taxonomy and Handling Policies: the error[] Success/Failure Criterion, the Six-Prefix Error Taxonomy, and the Invalid-Key / Service-Unavailable / Rate-Limit Policies (DD-002 prose-follows-diagram for the D1 container:Kraken_REST_API CLUSTER R6 migration; TB00564):</strong>
+<br>
+     The diagram container:Kraken_REST_API constraints &lt;desc&gt; is now canonical for the five CLUSTER R6 general-error facts (SD-9-verified vs 0411002 dv1_1 section 5; the sixth and final cluster in the TB00558 D1 REST-API Fact-Level Gap Register). Every Kraken REST response carries an error[] array, and the single dispatch test applied before any result is consumed is REST-ERR-001: the call succeeded only if error[] is empty and a result field is present, and failed if error[] is non-empty. Each error string carries a leading prefix that classifies the fault -- EGeneral, EAPI, EOrder, ETrade, EQuery, or EService (REST-ERR-002) -- on which the handler dispatches. Three prefix-specific policies are now canonical: EAPI:Invalid key is logged CRITICAL with an immediate operator alert and is NOT retried, because a bad key cannot be cured by retrying and leaves TothBot blind and unmanaged (REST-ERR-003, loss-prevention); EService:Unavailable is logged WARN and retried after 5 s up to 3 attempts, then escalated as a maintenance condition (REST-ERR-004); and EAPI:Rate limit exceeded is logged WARN with endpoint and timestamp, backed off 5 s before retry, and escalated if hit more than 3 times in one session as a systematic over-use condition requiring CIATS review (REST-ERR-005). REST-ERR-005 is the general REST rate-limit policy and is distinct both from the WS rate-limit mechanism already canonical at ar:AR-030 / ar:AR-080 and from the GetOHLCData-specific HTTP-429 stale-regime path narrated at A-24, which the CLUSTER R2 REST-OHLC-009 entry only cross-references by label; its own WARN / back-off-5s / escalate-after-3 policy was not derivable from the diagram alone and is encoded this amendment. The never-swallow-errors logging rule (REST-ERR-006) was already canonical in the container q5_logs field and is not duplicated. All five facts were confirmed absent from the live dv1_156 diagram-alone corpus before encoding (RR-SCOPE-010). With CLUSTER R6 landed, all six TB00558 REST clusters are migrated and D1 REST is fact-level comprehensive for 0411002; a clean DD-014 re-audit (separate downstream session) zeroes the register, after which the DR-078-gated retirement of 0411002 unblocks (preceded by the TB00511 cold-load precondition check). R holds at R10 per the TB00453 bright line.
+</p>
+
+LIVE REPLACEMENT (verbatim):
+(deleted -- no live replacement)
+
+----- END DEC-125 PROSE SLICE PART 1 OP RECORD -----
 
 ============================================================
 END OF DOCUMENT
