@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_234</title>
+<title>0500000 System Architecture Overview dv1_235</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_234</td></tr>
+  <tr><td>DocVersion</td><td>dv1_235</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_234_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_235_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-13-2026</td></tr>
   <tr><td>DocTime</td><td>07:35:00 UTC</td></tr>
 </table>
@@ -217,13 +217,13 @@ Tier 2 diagrams (D1 - D7) below.
   <div class="diagram-svg">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
          font-family="Arial, Helvetica, sans-serif" font-size="12">
-      <title>0500000_Context_T1_R3_System_Context</title>
+      <title>0500000_Context_T1_R4_System_Context</title>
       <desc>
-        diagram_canonical: 0500000_Context_T1_R3_System_Context
+        diagram_canonical: 0500000_Context_T1_R4_System_Context
         tier: 1
         parent_dcn: 0500000
         schema_version: 1.0
-        CURRENT R: R3.
+        CURRENT R: R4.
         governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 sec 4.3 paper-as-master) + ar:AR-001..AR-076 + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
         drill_targets: 0500000_Image1_T2_Kraken_API_Connection_Architecture, 0500000_Image2_T2_Trading_Pipeline, 0500000_Image3_T2_Exit_Architecture, 0500000_Image4_T2_Regime_Taxonomy, 0500000_Image5_T2_CIATS_Architecture, 0500000_Image6_T2_Complete_System, 0500000_Image7_T2_Paper_Mode_Dispatch_Boundary
         Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
@@ -248,7 +248,7 @@ Tier 2 diagrams (D1 - D7) below.
         <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
               text-anchor="middle">DIAGRAM 0 — Tier 1 System Context</text>
         <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-          0500000_Context_T1_R3_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
+          0500000_Context_T1_R4_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
         </text>
       </g>
       <g id="pa_master_banner" class="decoration">
@@ -352,7 +352,7 @@ Tier 2 diagrams (D1 - D7) below.
           <text x="510" y="392" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">· Position_Mirror · Logger</text>
           <text x="510" y="408" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">· Selection_Controller ·</text>
           <text x="510" y="424" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">Risk_Engine · Regime_Engine</text>
-          <text x="510" y="440" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">· Long_Module</text>
+          <text x="510" y="440" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">· Long_Module · Short_Module</text>
           <text x="424" y="462" font-size="11" font-weight="700" fill="#0f172a" text-anchor="start">PA-MASTER:</text>
           <text x="510" y="462" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">Paper code IS master</text>
           <text x="510" y="478" font-size="10" font-weight="400" fill="#0f172a" text-anchor="start">Live MIMICS paper byte-</text>
@@ -720,7 +720,7 @@ Tier 2 diagrams (D1 - D7) below.
     </svg>
   </div>
   <figcaption>
-    Tier 1 System Context (R3). CURRENT R: R3.
+    Tier 1 System Context (R4). CURRENT R: R4.
   </figcaption>
 </figure>
 
@@ -2010,14 +2010,14 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1700"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image2_T2_R13_Trading_Pipeline</title>
+  <title>0500000_Image2_T2_R14_Trading_Pipeline</title>
   <desc>
-    diagram_canonical: 0500000_Image2_T2_R13_Trading_Pipeline
+    diagram_canonical: 0500000_Image2_T2_R14_Trading_Pipeline
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R13.
+    CURRENT R: R14.
     governs:
       ar: AR-005 (WS v2 only), AR-016 (ATR(14) incremental O(1) per update), AR-053 (Per-module Pending Order Registry — capital commitment tracking; long_pending_orders + short_pending_orders dicts consumed by Gate 7 USD check), AR-054 (Entry fill disposition under marketable-IOC, direction-symmetric): under the CR-03 marketable-IOC entry there is no resting post_only GTD order -- the IOC fills-or-kills atomically at submission: any filled qty is a real position protected at the ON FILL batch_add (emergSL stop-market, mod:Exit_Controller-owned; the take-profit is the run-to-reversal regime exit -- a mod:Exit_Controller market sell, not a resting order) and any unfilled qty expires at the exchange at the same instant. The CR-07 live-minimum dispatch guard + the CR-06 5x-floor sizing keep every dispatched order above the live pair minimums; see gate:G5_Selection_Controller entry_fill_disposition field), AR-067 (SSS Signal Engine — direction-symmetric three-factor momentum scoring on 5-minute candles per 0500000 §4; canonical source for SC-SSS-1/2/3 long+short implementations + SSS-PASS gate-5 handoff), AR-069, AR-072, AR-074, AR-076
       rule: HR-EE-013, HR-SP-001, HR-SP-002, HR-SP-003, HR-SP-004, HR-SP-005, HR-SP-006, HR-SP-008 (SYSTEM-WIDE Decimal-not-float rule: all price / quantity / indicator / P&amp;L / R:R / sizing arithmetic in the TothBot organism uses Python Decimal via Decimal(str()) conversion on every numeric input; float arithmetic is PROHIBITED anywhere in the trading organism — enforces ar:AR-047; binds every computation element, notably mod:Signal_Pipeline indicator math and gate:G8_Position_Sizer sizing/R:R math; float rounding error in price/qty produces wrong orders and mis-stated P&amp;L, so this is loss-prevention), HR-WM-024, Sacred_R_R_1_to_1_5, Expected_RR_A1_Acceptance
@@ -2053,9 +2053,9 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
   <g id="title_bar" class="decoration">
     <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
     <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
-          text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline (8 Gates) — R10</text>
+          text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline (8 Gates) — R14</text>
     <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image2_T2_R13_Trading_Pipeline  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  PA-004(2) dispatch boundary visualized
+      0500000_Image2_T2_R14_Trading_Pipeline  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  PA-004(2) dispatch boundary visualized
     </text>
   </g>
 
@@ -2405,6 +2405,29 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
     <text x="150" y="1346" font-size="9" font-weight="700" fill="#b91c1c" text-anchor="middle">MUST traverse seam</text>
     <text x="150" y="1359" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">(never call ws_private direct)</text>
   </g>
+  <!-- Short Module (SM) - emergency-IOC buy-to-cover must traverse the seam (symmetric sibling of long_module) -->
+  <g id="short_module" class="tier-2">
+    <title>mod:Short_Module</title>
+    <desc>
+        canonical: mod:Short_Module
+        tier: 2
+        parent_diagram: 0500000_Context_T1_System_Context
+        constraints: rule:HR-EE-013, ar:AR-007, ar:AR-009
+        consumes: none
+        produces: emergency_ioc_cover_request
+        q1_do: Short-side parallel module sibling to mod:Long_Module per TB00000 sec 7 parallel-module framework. For G8-accepted short-side candidates: holds short-direction sizing, owns short-direction emergency-IOC buy-to-cover path on flash-crash / SL-breach per HR-EE-013 + ar:AR-007 (BUY emergSL stop reduce_only=true). Emergency-IOC covers MUST traverse contract:WSManager_Dispatch_Seam (NEVER call ws_private directly). Trades via Kraken margin per ar:AR-009; the short universe is the margin-eligible subset of the D-03 universe. Owns own wallet (paper_starting_balance_short_usd = $5,000 starting), own CIATS instance, own drawdown halts per TB00000 sec 8 per-wallet rule.
+        q4_triggers: Triggered by gate:G8_Position_Sizer sized-accepted short-side candidate. Also triggered by mod:Exit_Controller emergency-IOC dispatch path on layer:L3_Emergency_SL fire (flash-crash protection). Triggers downstream: contract:WSManager_Dispatch_Seam (entry add_order; emergency-IOC buy-to-cover market order).
+        q5_logs: Logs short-side entry dispatch + emergency-IOC events via mod:Logger to channel:audit_log + channel:trade_outcome_bus (event_type={SHORT_ENTRY_DISPATCHED|SHORT_EMERGENCY_IOC_DISPATCHED|SHORT_FILL_RECEIVED}, fields: pair, side=short, qty, price, cl_ord_id, dispatch_path, tick_id). Trade outcome events feed contract:CIATS_Trade_Outcome_Bus per AR-008.
+        schema_version: 1.0
+      </desc>
+    <rect x="40" y="1378" width="220" height="120" fill="#fef2f2" stroke="#b91c1c" stroke-width="2" rx="6"/>
+    <text x="150" y="1404" font-size="13" font-weight="700" fill="#7f1d1d" text-anchor="middle">mod:Short_Module</text>
+    <text x="150" y="1423" font-size="10" font-weight="600" fill="#7f1d1d" text-anchor="middle">Emergency-IOC buy-to-cover</text>
+    <text x="150" y="1442" font-size="9" font-weight="400" fill="#0f172a" text-anchor="middle">L3 Emergency SL trip</text>
+    <text x="150" y="1456" font-size="9" font-weight="400" fill="#0f172a" text-anchor="middle">L2 MAE breach</text>
+    <text x="150" y="1480" font-size="9" font-weight="700" fill="#b91c1c" text-anchor="middle">MUST traverse seam</text>
+    <text x="150" y="1493" font-size="9" font-weight="400" fill="#7f1d1d" text-anchor="middle">(never call ws_private direct)</text>
+  </g>
 
   <!-- Order Dispatch — WSManager Seam with PA-004(2) dispatch boundary -->
   <g id="order_dispatch" class="tier-2">
@@ -2511,6 +2534,10 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
     <line x1="262" y1="1304" x2="288" y2="1304" marker-end="url(#arrow_red)"/>
     <text x="275" y="1295" font-size="9" font-weight="700" fill="#b91c1c" text-anchor="middle">LM emergency-IOC</text>
   </g>
+  <g id="sm_emergency_arrow" class="decoration" stroke="#b91c1c" stroke-width="2.5" fill="none">
+    <line x1="262" y1="1395" x2="288" y2="1395" marker-end="url(#arrow_red)"/>
+    <text x="275" y="1386" font-size="9" font-weight="700" fill="#b91c1c" text-anchor="middle">SM emergency-IOC</text>
+  </g>
 
   <!-- System clock arrow into trigger -->
   <g class="decoration" stroke="#1e40af" stroke-width="2" fill="none">
@@ -2530,7 +2557,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
 </svg>
   </div>
   <figcaption>
-    Image2 Trading Pipeline - 8-Gate System (R13). CURRENT R: R13.<br>
+    Image2 Trading Pipeline - 8-Gate System (R14). CURRENT R: R14.<br>
 </figcaption>
 </figure>
 
@@ -4306,16 +4333,16 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
 </p>
 <figure class="diagram">
   <div class="diagram-svg">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1500"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1530"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image6_T2_R16_Complete_System</title>
+  <title>0500000_Image6_T2_R17_Complete_System</title>
   <desc>
-    diagram_canonical: 0500000_Image6_T2_R16_Complete_System
+    diagram_canonical: 0500000_Image6_T2_R17_Complete_System
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R16.
+    CURRENT R: R17.
     governs: container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone,
              container:Public_WS_v2, container:Private_WS_v2, container:Kraken_REST_API,
              container:Matching_Engine,
@@ -4355,7 +4382,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 6 — Complete System: One CIATS-Owned Organism</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image6_T2_R16_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image6_T2_R17_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -4842,7 +4869,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
        and mod:Long_Module above. Per DD-002, the diagram &lt;desc&gt; fields govern; this
        decoration group is a human-readable surfacing of that authority. -->
   <g id="wireup_callout" class="decoration">
-    <rect x="20" y="1280" width="1460" height="190" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" rx="4"/>
+    <rect x="20" y="1280" width="1460" height="224" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" rx="4"/>
     <text x="750" y="1306" font-size="14" font-weight="700" text-anchor="middle" fill="#1e40af">
       DR-013 CROSS-MODULE WIRE-UP ORDER — STARTUP INJECTION CHAIN (per HR-EC-014 + HR-PM-009)
     </text>
@@ -4871,19 +4898,23 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="50" y="1444" font-size="11" font-weight="700" fill="#14532d">mod:Long_Module</text>
     <text x="180" y="1444" font-size="11" fill="#1a1a1a">→ signals exits to mod:Exit_Controller (Layer 1a regime-reversal exits) • shares mod:Position_Mirror READ-ONLY access via WSManager helpers (HR-PM-009)</text>
 
+    <!-- Row 6b: Short Module exit signaling path (symmetric sibling of Row 6) -->
+    <text x="50" y="1466" font-size="11" font-weight="700" fill="#14532d">mod:Short_Module</text>
+    <text x="180" y="1466" font-size="11" fill="#1a1a1a">→ signals exits to mod:Exit_Controller (Layer 1a regime-reversal exits) • shares mod:Position_Mirror READ-ONLY access via WSManager helpers (HR-PM-009)</text>
+
     <!-- Footer note -->
-    <text x="750" y="1462" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">
+    <text x="750" y="1490" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">
       Wire-up depicted as architectural contracts (rule:HR-EC-013 + rule:HR-EC-014 + rule:HR-PM-009). Tier 3 module-construction-order elaboration is out of scope for D6; future Stage L+ Tier 3 diagram target.
     </text>
   </g>
 
-  <text x="750" y="1490" font-size="11" font-style="italic" text-anchor="middle" fill="#475569">
+  <text x="750" y="1518" font-size="11" font-style="italic" text-anchor="middle" fill="#475569">
     One organism, three time scales. Kraken (events). TothBot (decisions). CIATS (improvement). Logger is the membrane between TothBot and CIATS.
   </text>
 </svg>
   </div>
   <figcaption>
-    Image6 Complete System (R16). CURRENT R: R16.<br>
+    Image6 Complete System (R17). CURRENT R: R17.<br>
   </figcaption>
 </figure>
 <h2>8. Locked Architectural Decisions</h2>
