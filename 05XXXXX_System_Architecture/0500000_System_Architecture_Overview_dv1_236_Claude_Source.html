@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_235</title>
+<title>0500000 System Architecture Overview dv1_236</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_235</td></tr>
+  <tr><td>DocVersion</td><td>dv1_236</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_235_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_236_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-13-2026</td></tr>
   <tr><td>DocTime</td><td>07:35:00 UTC</td></tr>
 </table>
@@ -217,16 +217,16 @@ Tier 2 diagrams (D1 - D7) below.
   <div class="diagram-svg">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
          font-family="Arial, Helvetica, sans-serif" font-size="12">
-      <title>0500000_Context_T1_R4_System_Context</title>
+      <title>0500000_Context_T1_R5_System_Context</title>
       <desc>
-        diagram_canonical: 0500000_Context_T1_R4_System_Context
+        diagram_canonical: 0500000_Context_T1_R5_System_Context
         tier: 1
         parent_dcn: 0500000
         schema_version: 1.0
-        CURRENT R: R4.
+        CURRENT R: R5.
         governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 sec 4.3 paper-as-master) + ar:AR-001..AR-076 + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
         drill_targets: 0500000_Image1_T2_Kraken_API_Connection_Architecture, 0500000_Image2_T2_Trading_Pipeline, 0500000_Image3_T2_Exit_Architecture, 0500000_Image4_T2_Regime_Taxonomy, 0500000_Image5_T2_CIATS_Architecture, 0500000_Image6_T2_Complete_System, 0500000_Image7_T2_Paper_Mode_Dispatch_Boundary
-        Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
+        Sacred constraint: Net 1:1.5 R:R MINIMUM - the hardcoded entry-acceptance floor (never lowered; exceeded when expected R:R is higher); the only value CIATS does not own or lower (CIATS-monitored, owns the sizing curve above the floor).
       </desc>
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -248,7 +248,7 @@ Tier 2 diagrams (D1 - D7) below.
         <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
               text-anchor="middle">DIAGRAM 0 — Tier 1 System Context</text>
         <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-          0500000_Context_T1_R4_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
+          0500000_Context_T1_R5_System_Context  |  schema_version: 1.0  |  tier: 1 (root, no parent)  |  HTML inline
         </text>
       </g>
       <g id="pa_master_banner" class="decoration">
@@ -684,7 +684,7 @@ Tier 2 diagrams (D1 - D7) below.
       <g id="sacred_banner" class="decoration">
         <rect x="20" y="965" width="1460" height="44" fill="#fef9c3" stroke="#a16207" stroke-width="2" rx="4"/>
         <text x="750.0" y="987" fill="#713f12" font-size="13" font-weight="700" text-anchor="middle">
-          ⚠  SACRED CONSTRAINT  ·  Net 1:1.5 R:R  ·  HARDCODED  ·  the only number not owned by CIATS  ·  TB00000 sec 7
+          ⚠  SACRED CONSTRAINT  ·  Net 1:1.5 R:R MINIMUM  ·  the hardcoded entry-acceptance FLOOR — never lowered, exceeded when expected R:R is higher  ·  CIATS-monitored, owns the curve above  ·  TB00000 sec 7
         </text>
         <text x="750.0" y="1003" fill="#713f12" font-size="10" font-style="italic" text-anchor="middle">
           Every parameter except this one is a CIATS-owned starting value subject to PDCA + statistical inference at 200+ trades.
@@ -720,7 +720,7 @@ Tier 2 diagrams (D1 - D7) below.
     </svg>
   </div>
   <figcaption>
-    Tier 1 System Context (R4). CURRENT R: R4.
+    Tier 1 System Context (R5). CURRENT R: R5.
   </figcaption>
 </figure>
 
@@ -1340,16 +1340,16 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1600"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image1_T2_R18_Kraken_API_Connection_Architecture</title>
+  <title>0500000_Image1_T2_R19_Kraken_API_Connection_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image1_T2_R18_Kraken_API_Connection_Architecture
+    diagram_canonical: 0500000_Image1_T2_R19_Kraken_API_Connection_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R18.
+    CURRENT R: R19.
     governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-027, rule:HR-WM-028 (PATH 2 connection sharding), rule:HR-WM-029 (shard independence), rule:HR-WM-030 (silent-pair handling), rule:HR-WM-031 (subscribe-count vs max-concurrent decoupling), rule:HR-WM-032 (paper ledger update), rule:HR-WM-033 (paper exits route through Exit Controller), rule:HR-WM-034, contract:WM-PACE-001 (process-singleton token bucket), contract:WM-PACE-002 (SUBSCRIBE_RATE_PER_SEC=10, SUBSCRIBE_BURST_CAPACITY=20 — fixed engineering constants per DEC-127, not CIATS-owned), contract:WM-SHARD-001 (N_conns=ceil(universe/SYMBOLS_PER_CONN_SAFE), SYMBOLS_PER_CONN_SAFE=500 — fixed engineering constant per DEC-127, not CIATS-owned), contract:WM-SHARD-010 (silent-pair state machine; T_silent=60s fixed engineering constant per DEC-127, not CIATS-owned), contract:WM-RECONNECT-016 (transient WS catch + per-shard reconnect), contract:VD-SYS-008 (systemd StartLimitBurst=3 / StartLimitIntervalSec=600), decision:D-03 (universe scope USD+USDC+USDT, no Top-N cap), decision:D-06 (paper-live parity), ar:AR-001, ar:AR-002, ar:AR-006, ar:AR-007, ar:AR-008, ar:AR-010, ar:AR-011, ar:AR-014 (Logger async bounded queue), ar:AR-018 (amend_order is the sole order-modification method — preserves book queue position at lower rate cost; edit_order PROHIBITED), ar:AR-022, ar:AR-023, ar:AR-024, ar:AR-026, ar:AR-028 (qty_min/cost_min validation in Gate 8 BEFORE every add_order dispatch — orders below minimums are silently rejected by Kraken matching engine leaving Signal_Pipeline desynchronized; plus price_increment-replaces-tick_size in instrument channel parsing), ar:AR-029, ar:AR-030, ar:AR-031, ar:AR-032, ar:AR-033, ar:AR-035, ar:AR-038 (Kraken Status API startup maintenance check), ar:AR-039 (per-pair instrument channel status check expanded), ar:AR-046, ar:AR-047, ar:AR-055 (Dead Man's Switch cancel_all_orders_after EXPLICITLY PROHIBITED — DMS would destroy Layer 3 emergSL crash protection for open positions during VPS crash / network severance; HR-DMS-001 enforces with code-review reject mandate), ar:AR-056 (mid-session WS reconnect with pipeline-no-fire clause — 11-step reconnect sequence DISTINCT from cold-start with pipeline evaluations PROHIBITED during reconnect and candle events queued during reconnect DISCARDED after completion; portfolio_baseline_USD never reset, drawdown_pct + system_state preserved, ATR/EMA caches preserved unless gap > 15 minutes; architectural source for HR-SP-010 pipeline-gating rule), ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-064, ar:AR-068 (SSS indicator seeding at startup — startup REST GetOHLCData seeding of all five per-pair indicators ATR/RSI/EMA9/EMA21/VolumeMA20 with WARM_UP -> READY transition gating), ar:AR-070 (USD+USDC+USDT, no Top-N cap), ar:AR-072, ar:AR-080 (Cloudflare reconnect rate limit — 150 connection-establishment requests per rolling 10-minute window per source IP on Kraken WS v2 edge endpoint; bounds WS_Manager reconnect orchestration; breach would lock out reconnection for up to 10 minutes leaving Layer 3 emergSL as ONLY position protection per AR-001 + AR-055 invariant chain), container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_004 (private WS skipped in paper), ar:AR-057, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011
-    Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
+    Sacred constraint: Net 1:1.5 R:R MINIMUM - the hardcoded entry-acceptance floor (never lowered; exceeded when expected R:R is higher); the only value CIATS does not own or lower (CIATS-monitored, owns the sizing curve above the floor).
   </desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -1373,7 +1373,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
     <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 1 — Kraken API Connection Architecture (PATH 2 Multi-Shard)</text>
     <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image1_T2_R18_Kraken_API_Connection_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context
+      0500000_Image1_T2_R19_Kraken_API_Connection_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context
     </text>
   </g>
   <g id="col_kraken_hdr" class="decoration">
@@ -1881,7 +1881,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
       </desc>
     <rect x="1000" y="775" width="450" height="75" fill="#fee2e2" stroke="#b91c1c" stroke-width="3" rx="6"/>
     <text x="1225.0" y="797" font-size="13" font-weight="800" fill="#b91c1c" text-anchor="middle">*** SACRED CONSTRAINT ***</text>
-    <text x="1225.0" y="819" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">Net 1:1.5 R:R — HARDCODED — NOT CIATS-OWNED</text>
+    <text x="1225.0" y="819" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">Net 1:1.5 R:R — hardcoded MINIMUM (entry-acceptance FLOOR)</text>
     <text x="1225.0" y="837" font-size="10" font-weight="400" fill="#475569" text-anchor="middle" font-style="italic">TB00000 §8 — the only number CIATS does not own</text>
   </g>
 
@@ -1921,7 +1921,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
 </svg>
   </div>
   <figcaption>
-    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R18). CURRENT R: R18.<br>
+    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R19). CURRENT R: R19.<br>
   </figcaption>
 </figure>
 <h2>3. TothBot Trading Pipeline</h2>
@@ -2027,7 +2027,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
       pt_mode: PT_MODE_001, PT_MODE_002, PT_MODE_003
       mod: Long_Module, Short_Module, Signal_Pipeline, Execution_Engine
     drill_targets: 0500000_Image7_T2_Paper_Mode_Dispatch_Boundary (PA-004(2) order-dispatch divergence detail)
-    sacred_constraints: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
+    sacred_constraints: Net 1:1.5 R:R MINIMUM - the hardcoded entry-acceptance floor (never lowered; exceeded when expected R:R is higher); the only value CIATS does not own or lower (CIATS-monitored, owns the sizing curve above the floor).
   </desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -3431,14 +3431,14 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1280"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image4_T2_R8_Regime_Taxonomy</title>
+  <title>0500000_Image4_T2_R9_Regime_Taxonomy</title>
   <desc>
-    diagram_canonical: 0500000_Image4_T2_R8_Regime_Taxonomy
+    diagram_canonical: 0500000_Image4_T2_R9_Regime_Taxonomy
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R8.
+    CURRENT R: R9.
     governs: regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, mod:Regime_Engine, mod:Signal_Pipeline, mod:Long_Module, mod:Short_Module, mod:Logger, mod:CIATS, mod:Risk_Engine, contract:CIATS_Trade_Outcome_Bus, channel:kraken_rest_GetOHLCData, indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, gate:G3_Regime_Filter, gate:G6_Regime_Sizer, param:adx_threshold, param:atr_percentile_thresh, param:atr_rolling_window, param:htf_ema_periods, rule:HR-REGIME-007, ar:AR-009, ar:AR-017, ar:AR-036, ar:AR-072, ar:AR-073, ar:AR-074, decision:DEC-011
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
   </desc>
@@ -3457,7 +3457,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 4 — Regime Taxonomy (6-Regime 3x2 Grid + Two-Level Tagging)</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image4_T2_R8_Regime_Taxonomy  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image4_T2_R9_Regime_Taxonomy  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -3845,7 +3845,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
   <g id="sacred" class="decoration">
     <rect x="20" y="1192" width="1460" height="68" fill="#7f1d1d" rx="4"/>
     <text x="750" y="1216" fill="#fef2f2" font-size="13" font-weight="700" text-anchor="middle">
-      SACRED CONSTRAINT — rule:Sacred_R_R_1_to_1_5 — HARDCODED — NOT CIATS-OWNED — NEVER CHANGES
+      SACRED CONSTRAINT — rule:Sacred_R_R_1_to_1_5 — hardcoded MINIMUM (entry-acceptance FLOOR) — never lowered, exceeded when expected R:R is higher — CIATS-monitored, owns the curve above
     </text>
     <text x="750" y="1236" fill="#fecaca" font-size="10" text-anchor="middle">
       All regime thresholds (param:adx_threshold=25, param:atr_percentile_thresh=67th, param:htf_ema_periods=20/50, atr_rolling_window=50d) are CIATS-owned starting values.
@@ -3857,7 +3857,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
 </svg>
   </div>
   <figcaption>
-    Image4 Regime Taxonomy (R8). CURRENT R: R8.
+    Image4 Regime Taxonomy (R9). CURRENT R: R9.
   </figcaption>
 </figure>
 
@@ -3925,14 +3925,14 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image5_T2_R19_CIATS_Architecture</title>
+  <title>0500000_Image5_T2_R20_CIATS_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image5_T2_R19_CIATS_Architecture
+    diagram_canonical: 0500000_Image5_T2_R20_CIATS_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R19.
+    CURRENT R: R20.
     governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:Regime_Engine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:expected_rr_acceptance_rule, param:peak_portfolio_USD, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, evt:ENTRY_PRICE_COMPUTED, evt:ENTRY_PRICE_INVALID, evt:ENTRY_PRICE_SIDE_MISSING, rule:LG-ALERT-005
     drill_targets: none (D5 is a leaf Tier 2 detail of the CIATS feedback loop; CIATS internal sub-components are tagged at this diagram level, no Tier 3 drilldown defined)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
@@ -3956,7 +3956,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 5 — CIATS Architecture and Data Flows</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image5_T2_R19_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image5_T2_R20_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -4306,7 +4306,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   <g id="sacred" class="decoration">
     <rect x="20" y="1060" width="1460" height="80" fill="#7f1d1d" rx="4"/>
     <text x="750" y="1088" fill="#fef2f2" font-size="14" font-weight="700" text-anchor="middle">
-      SACRED CONSTRAINT — Net 1:1.5 R:R — HARDCODED — NOT CIATS-OWNED — NEVER CHANGES
+      SACRED CONSTRAINT — Net 1:1.5 R:R MINIMUM — the hardcoded entry-acceptance FLOOR — never lowered, exceeded when expected R:R is higher — CIATS-monitored, owns the curve above
     </text>
     <text x="750" y="1110" fill="#fecaca" font-size="11" text-anchor="middle">
       CIATS owns every other tunable parameter from day one of paper trading. Loss minimization is the priority over profit maximization.
@@ -4322,7 +4322,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
 </svg>
   </div>
   <figcaption>
-    Image5 CIATS Architecture (R19). CURRENT R: R19.<br>
+    Image5 CIATS Architecture (R20). CURRENT R: R20.<br>
   </figcaption>
 </figure>
 <h2>7. Complete System: One CIATS-Owned Organism</h2>
@@ -4335,14 +4335,14 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1530"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image6_T2_R17_Complete_System</title>
+  <title>0500000_Image6_T2_R18_Complete_System</title>
   <desc>
-    diagram_canonical: 0500000_Image6_T2_R17_Complete_System
+    diagram_canonical: 0500000_Image6_T2_R18_Complete_System
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R17.
+    CURRENT R: R18.
     governs: container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone,
              container:Public_WS_v2, container:Private_WS_v2, container:Kraken_REST_API,
              container:Matching_Engine,
@@ -4382,7 +4382,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 6 — Complete System: One CIATS-Owned Organism</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image6_T2_R17_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image6_T2_R18_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -4823,8 +4823,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       tier: 2
       parent_diagram: 0500000_Context_T1_System_Context
       drill_targets: none
-      constraints: HARDCODED — NOT CIATS-OWNED — NEVER CHANGES (TB00000 §8), ar:AR-009 (Short_Module via Kraken margin trading — depicted in rejected_panel "Other:" row; bound to sacred R:R rule via OTO rejection rationale: short positions executed through Kraken margin require same actual-fill-price 1:1.5 R:R discipline as long positions per ar:AR-008 OTO conditional-order rejection)
-      q1_do: hardcoded 1:1.5 R:R floor as the ENTRY-ACCEPTANCE FLOOR — a minimum-expected-value admission test on expected R:R AT ENTRY, evaluated at Gate-8 using ACTUAL entry_fill_price (not limit price — why ar:AR-008 rejects OTO conditional orders). Risk leg: mae_pct = ATR(14) × param:mae_mult / entry_fill_price; net_loss = mae_pct + entry taker fee + MAE taker fee (both legs FEE_TAKER_PCT). Reward leg: expected_reward = a CIATS-owned run-to-reversal estimate (seeded pre-200-trades, tuned from paper after the 200-trade floor; seed VALUE in TB00000 sec 8). ACCEPTANCE (rule A1): admit the candidate iff expected_reward / net_loss ≥ 1.5; reject below the floor. The floor NEVER constructs an exit price and NEVER closes a position — there is NO gross_target TP limit; the take-profit is regime reversal (run to reversal). NEVER CHANGES per TB00000 §8 — the only number CIATS does not own per rule:HR-CI-006; applies to both long positions (mod:Long_Module) and short positions (mod:Short_Module via Kraken margin per ar:AR-009)
+      constraints: hardcoded MINIMUM / entry-acceptance FLOOR, never lowered, exceeded when expected R:R is higher; CIATS-monitored, owns the curve above (TB00000 §8), ar:AR-009 (Short_Module via Kraken margin trading — depicted in rejected_panel "Other:" row; bound to sacred R:R rule via OTO rejection rationale: short positions executed through Kraken margin require same actual-fill-price 1:1.5 R:R discipline as long positions per ar:AR-008 OTO conditional-order rejection)
+      q1_do: hardcoded 1:1.5 R:R floor as the ENTRY-ACCEPTANCE FLOOR — a minimum-expected-value admission test on expected R:R AT ENTRY, evaluated at Gate-8 using ACTUAL entry_fill_price (not limit price — why ar:AR-008 rejects OTO conditional orders). Risk leg: mae_pct = ATR(14) × param:mae_mult / entry_fill_price; net_loss = mae_pct + entry taker fee + MAE taker fee (both legs FEE_TAKER_PCT). Reward leg: expected_reward = a CIATS-owned run-to-reversal estimate (seeded pre-200-trades, tuned from paper after the 200-trade floor; seed VALUE in TB00000 sec 8). ACCEPTANCE (rule A1): admit the candidate iff expected_reward / net_loss ≥ 1.5; reject below the floor. The floor NEVER constructs an exit price and NEVER closes a position — there is NO gross_target TP limit; the take-profit is regime reversal (run to reversal). Never lowered — a MINIMUM, exceeded when expected R:R is higher — per TB00000 §8 — the only number CIATS does not own per rule:HR-CI-006; applies to both long positions (mod:Long_Module) and short positions (mod:Short_Module via Kraken margin per ar:AR-009)
       q4_triggers: triggered by every mod:Risk_Engine G8 Position_Sizer evaluation (every pipeline tick) — computes net_loss and expected_reward, then admits iff expected_reward / net_loss ≥ 1.5 (rule A1); not triggered at exit — the floor is an entry-acceptance test only and performs no exit-time R:R validation; entry order placement (entry limit + emergSL) carries no TP leg; produces accept/reject flag consumed by mod:Risk_Engine + mod:Signal_Pipeline G8
       q5_logs: rule application logged via mod:Risk_Engine at G8 (no direct logger emission — the floor is enforced inline as an entry-acceptance test); a below-floor candidate is logged as an A1 rejection (evt:G8_A1_REJECT) at INFO; a rule:Sacred_R_R_1_to_1_5 admission-math fault (net_loss ≤ 0 or estimator-domain error at G8) at CRITICAL per rule:HR-LG-007 + rule:LG-ALERT-005 with SMTP alert per rule:HR-LG-009 (signals a sizing-engine bug — never expected in normal operation)
       consumes: none (rule applied at every position-sizing and exit decision)
@@ -4833,7 +4833,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     </desc>
     <rect x="20" y="950" width="1460" height="120" fill="#7f1d1d" rx="4"/>
     <text x="750" y="982" fill="#fef2f2" font-size="16" font-weight="700" text-anchor="middle">
-      SACRED CONSTRAINT — Net 1:1.5 R:R — HARDCODED — NOT CIATS-OWNED — NEVER CHANGES
+      SACRED CONSTRAINT — Net 1:1.5 R:R = hardcoded MINIMUM (entry-acceptance FLOOR) — never lowered, exceeded when better — CIATS-monitored
     </text>
     <text x="750" y="1008" fill="#fecaca" font-size="12" text-anchor="middle">
       ENTRY-ACCEPTANCE FLOOR — admit iff expected_reward / net_loss ≥ 1.5  |  net_loss = mae_pct + entry taker fee + MAE taker fee  |  no exit price (take-profit = regime reversal)
@@ -4914,7 +4914,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
 </svg>
   </div>
   <figcaption>
-    Image6 Complete System (R17). CURRENT R: R17.<br>
+    Image6 Complete System (R18). CURRENT R: R18.<br>
   </figcaption>
 </figure>
 <h2>8. Locked Architectural Decisions</h2>
@@ -4970,7 +4970,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
           DD-001/DD-002; this prose contextualizes but does not
           govern.
   AR-010: 24/7/365. CIATS adds stand-down via PDCA if data supports.
-  AR-011: Net 1:1.5 R:R — SACRED — HARDCODED — NOT CIATS-OWNED.
+  AR-011: Net 1:1.5 R:R — SACRED hardcoded MINIMUM (entry-acceptance floor); never lowered, exceeded when expected R:R is higher; CIATS-monitored, owns the sizing curve above the floor.
   AR-012: Fee baseline — Maker 0.16% / Taker 0.26%.
   AR-013: Kraken Pro Intermediate tier confirmed.
   AR-014: Logger async bounded queue (10,000 entries). Never blocks hot path. (I-5)
@@ -6881,7 +6881,7 @@ prefix taxonomy:
     schema_version: 1.0
     CURRENT R: R11.
     governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-032, rule:HR-WM-033, rule:HR-EE-013, rule:HR-EE-014, rule:HR-EE-015, rule:HR-PM-009, rule:HR-REGIME-007, ar:PA-001, ar:PA-002, ar:PA-003, ar:PA-004, ar:PA-005, ar:PA-006, ar:PA-007, ar:AR-009, ar:AR-052, ar:AR-072, ar:AR-073, decision:D-05_Paper_Starting_Balance, decision:D-06_Paper_Live_Parity, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003, contract:WSManager_Dispatch_Seam, contract:Synthetic_Capital_Ledger, contract:CIATS_Trade_Outcome_Bus, contract:Drawdown_Formula, container:Private_WS_v2, mod:WS_Manager, mod:Execution_Engine, mod:Exit_Controller, mod:Long_Module, mod:Short_Module, mod:Signal_Pipeline, mod:Position_Mirror, mod:Startup_Sequence, mod:Risk_Engine, layer:Configuration_Layer, state:NORMAL_per_wallet, state:SESSION_PAUSE_per_wallet, state:FULL_HALT_per_wallet, param:paper_trading_mode, param:paper_starting_balance, param:paper_starting_balance_long_usd, param:paper_starting_balance_short_usd, param:session_pause_drawdown_pct, param:full_halt_drawdown_pct, evt:G7_DRAWDOWN_HALT, evt:SESSION_PAUSE_TRIGGERED, evt:SESSION_PAUSE_RECOVERED, evt:FULL_HALT_TRIGGERED, evt:FULL_HALT_BATCH_CANCEL_RESULT
-    sacred_constraints: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
+    sacred_constraints: Net 1:1.5 R:R MINIMUM - the hardcoded entry-acceptance floor (never lowered; exceeded when expected R:R is higher); the only value CIATS does not own or lower (CIATS-monitored, owns the sizing curve above the floor).
   </desc>
   <defs>
     <marker id="d7_arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -7316,7 +7316,7 @@ prefix taxonomy:
         constraints: ar:PA-005 (byte-identical TRADE_CLOSE records paper ↔ live), ar:PA-007 (paper canonical for parameter values), decision:D-06_Paper_Live_Parity, rule:Sacred_R_R_1_to_1_5
         consumes: evt:TRADE_CLOSE
         produces: none
-        q1_do: Canonical contract for trade-outcome data flow from mod:Position_Mirror + mod:Exit_Controller into CIATS for statistical analysis; consumes evt:TRADE_CLOSE records and exposes them downstream to CIATS_Zone for Mann-Whitney U / Sharpe / Spearman / CUSUM / Half-Kelly statistical processing per ar:PA-007 paper-canonical-for-parameter-values + decision:D-06_Paper_Live_Parity; enforces ar:PA-005 byte-identical TRADE_CLOSE records paper ↔ live (paper and live records are INDISTINGUISHABLE at this contract per the paper-as-master invariant); honors rule:Sacred_R_R_1_to_1_5 (Net 1:1.5 R:R hardcoded — the only number not owned by CIATS).
+        q1_do: Canonical contract for trade-outcome data flow from mod:Position_Mirror + mod:Exit_Controller into CIATS for statistical analysis; consumes evt:TRADE_CLOSE records and exposes them downstream to CIATS_Zone for Mann-Whitney U / Sharpe / Spearman / CUSUM / Half-Kelly statistical processing per ar:PA-007 paper-canonical-for-parameter-values + decision:D-06_Paper_Live_Parity; enforces ar:PA-005 byte-identical TRADE_CLOSE records paper ↔ live (paper and live records are INDISTINGUISHABLE at this contract per the paper-as-master invariant); honors rule:Sacred_R_R_1_to_1_5 (Net 1:1.5 R:R hardcoded MINIMUM — the only value CIATS does not own or lower).
         q4_triggers: Triggered by evt:TRADE_CLOSE emission from mod:Position_Mirror + mod:Exit_Controller upstream; passes through to CIATS_Zone consumer (per D5 root govern — CIATS Architecture &amp; Data Flows); emits no events directly (passive data conduit).
         q5_logs: evt:TRADE_CLOSE records logged at this contract boundary by mod:Logger (per upstream D2 R6 + D1 R7 ciats_trade_outcome_bus q5_logs precedent — Logger is sole CIATS data source); byte-identical paper ↔ live records preserved for CIATS statistical integrity per PA-005 + PA-007; Sacred 1:1.5 R:R floor honored upstream at G8 sizing in mod:Signal_Pipeline.
         schema_version: 1.0

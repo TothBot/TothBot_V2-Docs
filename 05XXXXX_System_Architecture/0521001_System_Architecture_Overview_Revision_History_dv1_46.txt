@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_45
+DocVersion: dv1_46
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_45.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_46.txt
 DocDate:    06-13-2026
-DocTime:    19:00:00 UTC
+DocTime:    19:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30388,6 +30388,55 @@ LIVE: DocVersion dv1_45 / DocPath ...dv1_45... /
 DocDate 06-13-2026 / DocTime 19:00:00 UTC
 
 ----- END TB00700 dv1_235 OP RECORD -----
+
+
+----- BEGIN TB00700 dv1_236 OP RECORD -----
+
+TB00700 SACRED R:R FRAMING CORRECTION (Bill ruling, /btw audit).
+0500000 dv1_235 -> dv1_236.
+
+ISSUE (Bill caught): several visible "SACRED CONSTRAINT" banner
+captions mis-stated the net 1:1.5 R:R as "HARDCODED -- NOT
+CIATS-OWNED -- NEVER CHANGES" -- which reads as a FIXED TARGET.
+Wrong: 1:1.5 is a hard MINIMUM (entry-acceptance FLOOR), never
+lowered but EXCEEDED whenever the expected R:R is higher (higher
+R:R can earn a larger allocation per the CIATS sizing curve above
+the floor); and while the floor value is not CIATS-tunable, CIATS
+monitors / analyzes / reports R:R and owns the sizing curve ABOVE
+it. The correct floor framing was already canonical on the code-
+driving surfaces (Gate-8 "entry-acceptance floor -- admit iff
+expected_reward / net_loss >= 1.5", D3, footers); only the summary
+banners were wrong. (Claude Chat caption error.)
+
+CORRECTED (visible banners -> R bumps; desc / prose hold R):
+  Context R4 -> R5; Image1 R18 -> R19; Image4 R8 -> R9;
+  Image5 R19 -> R20 (the banner Bill quoted); Image6 R17 -> R18
+  (banner + the q1_do "NEVER CHANGES" clause + constraints field).
+  Plus desc / prose (R held): the per-figure "Sacred constraint:"
+  metadata field (Context / Image1 / Image2 / Image7), the Image7
+  Trade-Outcome-Bus desc, and the AR-011 prose line.
+New wording: "Net 1:1.5 R:R MINIMUM -- the hardcoded entry-
+acceptance FLOOR -- never lowered, exceeded when expected R:R is
+higher -- CIATS-monitored, owns the sizing curve above the floor."
+
+PRESERVED: sacred VALUE + floor mechanics unchanged (1:1.5 x54,
+admit iff >= 1.5, Sacred x78); the already-correct section-1 prose
+("MINIMUM floor ... CIATS owns the sizing curve ABOVE the floor")
+left intact.
+
+VERIFICATION (TB00699 sec 6): each edit count-asserted; HTML
+well-formed (all svg / g / text / desc / figure / figcaption
+balanced); "NEVER CHANGES" + "NOT CIATS-OWNED" residue = 0;
+retired-DCN + 0311001 residue 0. md5
+422a2d542778f90b29f6b72b86c36115.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_45 / DocPath ...dv1_45... /
+DocDate 06-13-2026 / DocTime 19:00:00 UTC
+LIVE: DocVersion dv1_46 / DocPath ...dv1_46... /
+DocDate 06-13-2026 / DocTime 19:30:00 UTC
+
+----- END TB00700 dv1_236 OP RECORD -----
 
 
 ============================================================
