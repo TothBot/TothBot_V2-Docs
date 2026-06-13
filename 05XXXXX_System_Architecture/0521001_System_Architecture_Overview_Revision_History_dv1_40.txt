@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_39
+DocVersion: dv1_40
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_39.txt
-DocDate:    06-12-2026
-DocTime:    05:30:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_40.txt
+DocDate:    06-13-2026
+DocTime:    00:59:19 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -29888,6 +29888,147 @@ LIVE: DocVersion dv1_39 / DocPath ...dv1_39... /
 DocDate 06-12-2026 / DocTime 05:30:00 UTC
 
 ----- END TB00684 dv1_229 OP RECORD -----
+
+----- TB00688 dv1_230 OP RECORD (appended at TB00688) -----
+
+AMENDMENT (dv1_229 -> dv1_230), session TB00688. Two concerns
+bundled by Bill direction (chat-turn ruling, this session):
+(A) the NSI item 2(a) retired-citation Assign-tail strip, widened
+by Bill chat-turn directive to ALL retired-DCN Assign citations
+(ground truth at dv1_229 HEAD: tails cited 15 retired DCNs --
+0211001, 0411001, 0411002, 0411003, 0511001..0511006, 0711001,
+0811002, 0811004, 1011002, 1011010, 1011014 -- not only the two
+the NSI named); (B) DEC-127 fixed-engineering-constant
+reclassification of SUBSCRIBE_RATE_PER_SEC, SUBSCRIBE_BURST_
+CAPACITY, SYMBOLS_PER_CONN_SAFE, T_silent (Bill ratification of
+the TB00688_SYMBOLS_PER_CONN_SAFE_Disposition_Analysis_v1_0
+OPT-2 recommendation, extended system-wide to the three sibling
+constants on Bill ruling). This closes the dv1_39 record's
+"RESIDUE FLAGGED" and "CARRIED, NOT BUNDLED" items.
+
+FIGURE R-STATE:
+  D1 0500000_Image1_T2 R17 -> R18 (TB00453: three VISIBLE SVG
+    <text> relabels -- the SYMBOLS_PER_CONN_SAFE ownership label,
+    the token-bucket "CIATS-owned values" footnote, the T_silent
+    ownership label -- replaced with fixed-engineering-constant
+    labels citing WM-SHARD-001 / WM-PACE-002 / WM-SHARD-010 +
+    DEC-127).
+  D5 0500000_Image5_T2 R17 HOLD (desc-only: four param: tokens
+    removed from the CIATS produces: list; no visible text or
+    geometry change -- diff-verified).
+  D6 0500000_Image6_T2 R16 HOLD (desc-only: same four param:
+    tokens removed from the Parameter Store produces: list;
+    diff-verified).
+  All other figures byte-identical (diff-verified at write).
+
+DEC-127 LIVE-CONTENT CHANGES:
+  (1) D1 root governs: WM-PACE-002 / WM-SHARD-001 / WM-SHARD-010
+      annotated "fixed engineering constant(s) per DEC-127, not
+      CIATS-owned".
+  (2) D1 mod:WS_Manager consumes: the four param: tokens replaced
+      by a fixed-engineering-constants clause keyed to the three
+      owning contracts.
+  (3) Section 9 registry preamble: the ALL-PARAMETERS-ARE-CIATS-
+      OWNED claim amended with the DEC-127 fixed-constant
+      exception (prose updated to match diagram; DD-001/DD-002).
+  Rationale of record: no CIATS statistical pathway exists from
+  trade outcomes to these infrastructure bounds; blind tuning in
+  either direction risks exit-protection failure (silent blind
+  pairs / AR-080 reconnect lockout); loss-min rejects the knob.
+  Canonical decision text: DEC-127 in TB00153 v1_94.
+
+ASSIGN-TAIL STRIP -- REMOVED/REWORKED FRAGMENTS (verbatim;
+consolidation-era spec-assignment bookkeeping; every cited spec
+RETIRED and consolidated in-diagram; content completeness was
+already affirmed at dv1_229 -- these were attribution residue,
+not completeness deferrals). Retained untouched: Assign citations
+to LIVE docs (0211002, 1011001), intra-document canonical
+pointers (AR-062 D3 pointer; AR-070 self-canonical; AR-043
+"(none)"), the AR-063 diagram-canonical clause (0511006 citation
+dropped, live clause kept), the AR-080 VD-SYS-008 clause (retired
+citations dropped, live clause kept), and all CI-005 forensic
+"RETIRED, content consolidated here" narrations. Removed lines:
+
+  rate_counter_by_pair as third monitoring signal. Assign to 0511003 and 0211001.
+  Assign to 0511001, 0511003, 0511005.
+  for restart reconciliation. Assign to 0511001, 0511006, 0211001.
+  Both implemented as separate paths in WS Manager. Assign to 0511001.
+  distinct from TCP keepalive. Assign to 0511001, 1011002.
+  Assign to 0511001, 1011002.
+  Assign to 0511001, 1011002.
+  Assign to 0511001, 1011002.
+  Assign to 1011002 WM-EXE-002 through WM-EXE-004.
+  Assign to 1011002 WM-EXE-005 through WM-EXE-007.
+  Assign to 1011002 WM-EXE-008 through WM-EXE-010.
+  Assign to 0411001 WS-AUTH-001 through WS-AUTH-003.
+  Assign to 0411001 WS-OSTA-001 through WS-OSTA-003, 1011002 WM-EXE-011/-012.
+  Assign to 0411001 WS-OHLC-002 through -005, 1011002 WM-OHLC-001 through -003.
+  Assign to 0411001 WS-INST-001 through -007, 1011002 WM-INST-001 through -005.
+  Assign to 0411001 WS-LIB-001 through -003, 1011002 WM-LIB-001 through -003.
+  Assign to 0411001 WS-RL-003, WS-EXEC-001a, 1011002 WM-RATE-001 through -003.
+  Assign to 0411001 WS-STP-001 through -003, 1011002 WM-STP-001 through -003.
+  Assign to 0411001 WS-DL-001 through -004, 1011002 WM-DL-001 through -004.
+  Assign to 1011002 WM-REST-006 through -011, 1011001 BP-HTTP-001 through -004.
+  Assign to 0411001 WS-TKR-001 through -004, 1011002 WM-TKR-001 through -004.
+  Assign to 1011002 WM-REST-001 through WM-REST-005.
+  Assign to 1011002 WM-TASK-001 through WM-TASK-004.
+  See A-22 for full specification. Assign to 1011002 WM-REST-006 through -011.
+  See A-22 for full specification. Assign to 1011002 WM-REST-009 through -011.
+  See A-23 for full specification. Assign to 0411001, 1011002.
+  Assign to 0511001 and 0511004.
+  rejection and retry. Assign to 0511004.
+  Assign to 0411001.
+  Queue must be bounded with immediate alert if queue fills. Assign to 0511006.
+  Assign to 0511002 and 0211001.
+  cancel_newest (underscore). Assign: 0411001, 1011002.
+  Assign: 0411001 WS-DL-001–004, 1011002 WM-DL-001–004.
+  Assign: 0411001 WS-TKR-001–004, 1011002 WM-TKR-001–004.
+  Assign: 1011002 WM-REST-006–011, 1011001 BP-HTTP-001–004.
+  Assign: 0411001 WS-STAT-001 through -004, 0211002 IN-ALT-003.
+  Assign: 0411001 WS-INST-008 through -011, 1011002 WM-PS-001 through -005.
+  Assign: 0411001 WS-EXIT-001 through -006, 1011002 WM-PS-003/004.
+  Assign: 0411001 WS-CAN-001 through -007, 1011002 WM-CAN-001 through -004.
+  Assign: 1011002 WM-ZOM-004 through -007.
+  Assign: 1011002 WM-STARTUP-001 through -008,
+  Assign: 1011002 WM-OHLC-001 through -006.
+  Assign: 0411001 WS-SL-001 through -003,
+  Assign: 1011001 BP-DEC-001 through -008,
+  Assign: 0411001 WS-TKR-005 through -007,
+  Assign: 0411001 WS-BAL-001 through -005 (long),
+  Assign: 1011002 WM-PS-005 through -009 (long sizing),
+  Assign: 1011002 WM-DD-001 through -008.
+  Assign: 1011002 WM-POR-001 through -007 (long),
+  Assign: 1011002 WM-DISP-020 through -028 (long),
+  Assign: HR-DMS-001 in 0411001 and 1011002.
+  Assign: 0411001 WS-AMEND-001 through -003,
+  Assign: 1011002 WM-CONN-001 through -003.
+  Assign: 1011002 WM-CONN-004 through -006.
+  Assign: 1011002 WM-CONN-007, 1011014 SS-PRE-006.
+  Assign: 0411001 WS-EXE-020 through -022,
+  Assign: 0511006 §3.1 + §3.2 (architectural rules
+  Assign: 0411001 WS-STAT-005 through -006,
+  Assign: 1011010 CIATS-KE-006 through -009.
+  Assign: 0711001 SSS-001 through -012 (long),
+  Assign: 1011002 WM-STARTUP-009 through -014, 1011014 SS-WARMUP-011 through -016.
+  Assign: 0811004 ELP-001 through -006, 0411001 WS-ENTRY-001 through -004,
+  Assign: 0811002 SC-001 through -024 (long),
+  Assign: 1011002 WM-SC-001 through -006 (long state),
+  Assign: 1011002 WM-SSS-001 through -008.
+  Assign: 1011002 WM-SSS-001 through -008 (RSI formula corrected),
+  Assign: 0511004 §6 cancel timeout fallback I-6 protocol.
+  Assign: 0511004 §3.3 MPP retry strategy.
+  Assign: 0411001 §6.9 batch_cancel (Kraken WS v2
+  Assign: 0411003 §RL-MON-004; 1011002 WM-RECONNECT-* contracts
+  Assign to 0511001 and 0511004.
+  MPP NOTE: Triggered market order subject to MPP. Assign to 0411001.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_39 / DocPath ...dv1_39... /
+DocDate 06-12-2026 / DocTime 05:30:00 UTC
+LIVE: DocVersion dv1_40 / DocPath ...dv1_40... /
+DocDate 06-13-2026 / DocTime 00:59:19 UTC
+
+----- END TB00688 dv1_230 OP RECORD -----
 
 ============================================================
 END OF DOCUMENT
