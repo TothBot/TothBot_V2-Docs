@@ -1,10 +1,10 @@
 DocDCN:     0311003
 DocTitle:   Versioning_Procedure
-DocVersion: v1_3
+DocVersion: v1_4
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_3.txt
-DocDate:    06-09-2026
-DocTime:    06:45:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_4.txt
+DocDate:    06-13-2026
+DocTime:    18:00:00 UTC
 
 ============================================================
 VERSIONING PROCEDURE
@@ -229,7 +229,13 @@ domain's history sub-domain, instead of inline, provided ALL of:
       archive.
   (b) the live document retains a pointer to the archive; a
       diagram-bearing document additionally retains each
-      figure's CURRENT R-state on the live surface.
+      figure's CURRENT R-state on the live surface. For a
+      live-coding diagram surface the live-surface pointer is a
+      SINGLE document-level pointer -- NO per-figure or per-desc
+      provenance pointers (DEC-125 live-coding-only; Bill ruling
+      TB00700 amends the DEC-123 per-figure-pointer practice and
+      DEC-125 Class A; precedent 0500000 dv1_234). Each figure's
+      CURRENT R-state lives in its canonical title + figcaption.
   (c) the complete change history remains retained across the
       archive PLUS git history.
 Rationale (binary test DEC-096): revision-history /
@@ -321,6 +327,20 @@ automation and automatically by Pathway 1 post-deployment.
 ============================================================
 8. REVISION HISTORY
 ============================================================
+
+  v1_4   06-13-2026  TB00700 VP-008(b) SINGLE-POINTER CLARIFICATION
+                     (DEC-125; Bill ruling). For a live-coding diagram
+                     surface the live-surface archive pointer is a
+                     SINGLE document-level pointer -- no per-figure or
+                     per-desc provenance pointers; each figure's CURRENT
+                     R-state is retained in its canonical title +
+                     figcaption. Amends the DEC-123 per-figure-pointer
+                     practice + DEC-125 Class A; the externalize-to-
+                     archive append-only discipline (VP-008 a/c) is
+                     UNCHANGED. Companion: 0500000 dv1_234, TB00000 v2_94
+                     sec 4.6, TB00153 v1_96, 0521001 dv1_44. Direct
+                     v1_3 -> v1_4 minor increment per VP-004 v -> v with
+                     Bill approval. DocDate / DocTime refreshed.
 
   v1_3   06-09-2026  TB00635 VP-008 EXTERNALIZED REVISION
                      HISTORY PROVISION (DEC-123). Added the
