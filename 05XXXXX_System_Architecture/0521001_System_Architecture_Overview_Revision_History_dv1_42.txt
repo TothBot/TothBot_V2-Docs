@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_41
+DocVersion: dv1_42
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_41.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_42.txt
 DocDate:    06-13-2026
-DocTime:    04:02:00 UTC
+DocTime:    06:58:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30085,6 +30085,97 @@ LIVE: DocVersion dv1_41 / DocPath ...dv1_41... /
 DocDate 06-13-2026 / DocTime 04:02:00 UTC
 
 ----- END TB00689 dv1_231 OP RECORD -----
+
+----- TB00694 dv1_232 OP RECORD (appended at TB00694) -----
+
+AMENDMENT (dv1_231 -> dv1_232), session TB00694. TB00691
+code-readiness audit findings O1/O2/O3 + Stage-L+ namespace
+housekeeping resolved per TB00693 NSI sec 2 (all pre-paper-boot,
+not pre-code; coding launch unaffected). No new DEC -- these are
+clarifications + token-form canonicalisation, not design
+decisions.
+
+FIGURE R-STATE:
+  D5 (Image5 CIATS Architecture) R17 -> R18: ONE visible SVG
+  <text> label changed ("mod: RegimeEngine -- vol_regime feed"
+  -> "mod: Regime_Engine -- vol_regime feed") per O3
+  canonicalisation; visible-text change bumps R per TB00453.
+  All other NINE figures HOLD their R-number and are
+  byte-identical (DEC-003 Path A; per-figure md5 diff-verified
+  at write: only Image5 differs).
+
+LIVE-CONTENT CHANGES:
+  (O3) D5 surface: mod:RegimeEngine canonicalised to
+      mod:Regime_Engine at all 10 occurrences (1 visible <text>,
+      9 in <title>/governs/canonical/desc/q-fields/HTML-comment).
+      The EIGHT genuinely-live D5 tokens were registered in
+      0311001 v1_48 -- mod:Regime_Engine 15.12.1; rule:HR-CI-002
+      / 004 / 008 + rule:PS-HK-001 15.12.9; evt:KELLY_UPDATE /
+      evt:KELLY_NEGATIVE 15.12.7; contract:Pair_Cache 15.12.3;
+      ar:AR-073 15.12.13. BOTH D5 registry_gap_note fields (root
+      desc + regime group desc) were REMOVED outright -- a
+      registry gap-note is namespace bookkeeping, not live
+      coding design, so per the binary test (TB00000 sec 3) it
+      does not belong on the live coding surface; with the gaps
+      now closed the fields are deleted, not rewritten.
+      FORENSIC RECORD (DEC-123 -- this archive is the home, NOT
+      the live diagram): the TB00693 NSI housekeeping list named
+      TEN tokens including rule:HR-CI-009 +
+      param:half_kelly_applied_pct. Live-HEAD verification this
+      session found each appeared EXACTLY ONCE in all of 0500000
+      dv1_231 -- solely inside the old D5 root gap-note text, on
+      NO live element. They are dead Half-Kelly normalization-
+      divisor residue (HR-CI-009: applied_pct = K_half /
+      max_concurrent; param:half_kelly_applied_pct = its output)
+      scrubbed from every live 0500000 surface at TB00586 per
+      Bill ruling (the module wallet balance is the sole sizing
+      boundary; live model per_trade_size_usd = K_half x
+      module_wallet_balance). They were NOT registered (re-
+      registration would resurrect deliberately-killed tokens)
+      and now appear NOWHERE in 0500000. (DD-011 brutal-honesty
+      NSI-divergence; also logged 0311001 v1_48 history +
+      TB00694 SL.)
+  (O1) AR-069 entry-limit-price construction (sec-8 prose, NOT a
+      figure surface, no R impact): the mpp_abs_cap_pct seed
+      recipe pinned to the 5 m OHLC series -- "...Q95 adverse
+      close-to-next-open displacement on the 5 m OHLC series per
+      pair/side...". Clarification only; the 5 m clock was
+      already uniquely fixed by AR-069 entry_ref_price =
+      last_complete_candle.close. Mirrored to TB00000 sec 8
+      mpp_abs_cap_pct (v2_93).
+  (O2) sec-9 CIATS parameter registry (prose, no R impact):
+      param:disallowed_regimes added with its seed state --
+      "[] at seed (empty list; CIATS-populated from the 600-trade
+      per-regime data floor per rule:HR-CI-004)"; produced by
+      mod:CIATS_Regime_Library (D5), consumed by
+      gate:G3_Regime_Filter; CIATS-OWNED PER-MODULE INSTANTIATED.
+  (O4) STALE $0.50 PURGE (Bill ruling this session): the old
+      ~$0.50 per-trade/per-pair-minimum seed -- residue of the
+      pre-CR-06 order model -- removed from 0500000 entirely (it
+      now appears NOWHERE). Two prose sites struck: the sec-8
+      AR-009 short-side reasoning ("Minimum order ~$0.50 USD"
+      sentence deleted) and the sec-9 registry line
+      (min_order_size_usd = Kraken per-pair minimum (~$0.50)
+      -- removed; superseded by the CR-06 $50 floor
+      per_trade_size_usd = max(50, 5 * max(costmin, ordermin *
+      entry_limit_price)) plus live-read per-pair cost_min /
+      qty_min under CR-07). The Fable 5 order-system rebuild
+      eliminated splitting/dust; the dispatched-order floor is
+      $50, never ~$0.50. No figure touched (both sites prose);
+      D5 remains the sole changed figure (DEC-003).
+  Companion: 0311001 v1_48 (O3 + Stage-L+ housekeeping
+  registrations), TB00000 v2_93 (O1 sec-8 clause + sec-4.4
+  C:-drive rewrite). Source: TB00691 audit; scope: TB00693 NSI
+  sec 2.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_41 / DocPath ...dv1_41... /
+DocDate 06-13-2026 / DocTime 04:02:00 UTC
+LIVE: DocVersion dv1_42 / DocPath ...dv1_42... /
+DocDate 06-13-2026 / DocTime 06:58:00 UTC
+
+----- END TB00694 dv1_232 OP RECORD -----
+
 
 ============================================================
 END OF DOCUMENT

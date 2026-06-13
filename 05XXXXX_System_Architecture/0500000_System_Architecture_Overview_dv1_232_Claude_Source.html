@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_231</title>
+<title>0500000 System Architecture Overview dv1_232</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_231</td></tr>
+  <tr><td>DocVersion</td><td>dv1_232</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_231_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_232_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-13-2026</td></tr>
-  <tr><td>DocTime</td><td>03:58:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>06:58:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -3900,18 +3900,17 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image5_T2_R17_CIATS_Architecture</title>
+  <title>0500000_Image5_T2_R18_CIATS_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image5_T2_R17_CIATS_Architecture
+    diagram_canonical: 0500000_Image5_T2_R18_CIATS_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R17.
-    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:RegimeEngine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:expected_rr_acceptance_rule, param:peak_portfolio_USD, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, evt:ENTRY_PRICE_COMPUTED, evt:ENTRY_PRICE_INVALID, evt:ENTRY_PRICE_SIDE_MISSING, rule:LG-ALERT-005
+    provenance: R-increment history relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R18.
+    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:Regime_Engine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:expected_rr_acceptance_rule, param:peak_portfolio_USD, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, evt:ENTRY_PRICE_COMPUTED, evt:ENTRY_PRICE_INVALID, evt:ENTRY_PRICE_SIDE_MISSING, rule:LG-ALERT-005
     drill_targets: none (D5 is a leaf Tier 2 detail of the CIATS feedback loop; CIATS internal sub-components are tagged at this diagram level, no Tier 3 drilldown defined)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
-    registry_gap_note: Still-unregistered D5 tokens against 0311001 v1_47 §15.12 (verified this session): mod:RegimeEngine (§15.12.1 holds mod:Regime_Engine; token-form gap), rule:HR-CI-002 / rule:HR-CI-004 / rule:HR-CI-008 / rule:HR-CI-009 / rule:PS-HK-001 (not in §15.12.9), evt:KELLY_UPDATE / evt:KELLY_NEGATIVE (not in §15.12.7), param:half_kelly_applied_pct (not in §15.12.8). All other formerly gap-noted D5 tokens (the CIATS sub-component mod: tokens, contract:CIATS_Trade_Outcome_Bus, contract:Sizing_Curve_Per_Module, param:per_trade_size_usd, param:expected_rr_acceptance_rule, the three ENTRY_PRICE evt: tokens) are registered.
   </desc>
   <defs>
     <marker id="d5_arrow" viewBox="0 0 10 10" refX="9" refY="5"
@@ -3932,7 +3931,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 5 — CIATS Architecture and Data Flows</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image5_T2_R17_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline  |  revision history: 0521001 (anchor 0520000)
+      0500000_Image5_T2_R18_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline  |  revision history: 0521001 (anchor 0520000)
     </text>
   </g>
 
@@ -3997,7 +3996,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: none (leaf — event surface)
         constraints: ar:AR-014 (logged via Logger async bounded queue), rule:Sacred_R_R_1_to_1_5 (R:R tagging on every closed trade record)
-        q1_do: event surface emitted by mod:Exit_Controller on every COMPLETE position close per 0511004 §7.5; carries 23-field canonical schema per contract:CIATS_Trade_Outcome_Bus + contract:Two_Stream_Record_Architecture / Stream 2 (this diagram is the canonical schema source per DD-001/DD-002); provides PRIMARY DATA SUBSTRATE for CIATS statistical inference, PDCA improvement cycle, Half-Kelly sizing computations, and Regime Library bucket accumulation; dual-tagged with asset_regime + market_regime per rule:HR-REGIME-010 from mod:RegimeEngine at entry time
+        q1_do: event surface emitted by mod:Exit_Controller on every COMPLETE position close per 0511004 §7.5; carries 23-field canonical schema per contract:CIATS_Trade_Outcome_Bus + contract:Two_Stream_Record_Architecture / Stream 2 (this diagram is the canonical schema source per DD-001/DD-002); provides PRIMARY DATA SUBSTRATE for CIATS statistical inference, PDCA improvement cycle, Half-Kelly sizing computations, and Regime Library bucket accumulation; dual-tagged with asset_regime + market_regime per rule:HR-REGIME-010 from mod:Regime_Engine at entry time
         q4_triggers: triggered by mod:Exit_Controller on every position close (exit_reason enum: MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | PAIR_LIMIT_ONLY_EXIT — the four mod:Exit_Controller normal-operation reasons; EMERGENCY_SL_FIRED is NOT an Exit-Controller exit_reason — it is the layer:L3_Emergency_SL crash-recovery reason emitted via channel:kraken_ws_executions exec_type=trade backfill on TothBot recovery, a distinct producer on the same contract:CIATS_Trade_Outcome_Bus (producer-partitioned exit_reason per DEC-066) — per stream2_box schema_fields_canonical); triggers contract:CIATS_Trade_Outcome_Bus ingest by mod:CIATS_Statistical_Engine (Mann-Whitney U + Sharpe + Spearman + Half-Kelly) + mod:CIATS_Proposal_Engine (≥200-trade hard floor inference) + mod:CIATS_Regime_Library (≥600-trade per-regime bucket accumulation, 100+ per bucket) + mod:CIATS_PDCA_Engine (shadow-evaluation against historical corpus)
         q5_logs: every emission logged by mod:Logger to tothbot.log via channel:logger_async_queue per ar:AR-014 with full 23-field canonical schema (ts + event + level + component + symbol + entry_fill_price + exit_price + entry_timestamp_utc + exit_timestamp_utc + hold_candle_count + MAE_pct_reached + fees_entry_usd + fees_exit_usd + fees_total_usd + exit_reason + asset_regime + vol_regime + market_regime + signal_params + actual_RR + net_PL_USD + net_gain_usd + net_loss_usd) per contract:Two_Stream_Record_Architecture; INFO level per rule:HR-LG-004; the TRADE_CLOSE record is appended to the permanent /home/tothbot/records/trades_&lt;YYYY&gt;.jsonl per rule:HR-LG-013 (the authoritative durable Stream 2 corpus, append-only, fsync-per-write, annual UTC segmentation) AND written byte-identically to the finite-retention rotating tothbot.log (operational fallback only, NOT the permanent corpus); permanent-file disk-write failure triggers evt:TRADE_RECORD_WRITE_FAILED CRITICAL per rule:HR-LG-010 (a C1 IMMEDIATE operator email per rule:HR-RPT-001)
         consumes: (none — event itself; emitted by mod:Exit_Controller on every position close per 0511004)
@@ -4011,9 +4010,9 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   </g>
 
   <g id="regime_engine_box" class="tier-2">
-    <title>mod:RegimeEngine</title>
+    <title>mod:Regime_Engine</title>
     <desc>
-        canonical: mod:RegimeEngine
+        canonical: mod:Regime_Engine
         tier: 2
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: 0500000_Image4_T2_Regime_Taxonomy (D4 — six-regime taxonomy detail)
@@ -4024,15 +4023,14 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
         consumes: (daily Wilder ATR(14) + ADX(14) + EMA(20)/(50) on DAILY candles per D4 / §5; BTC/USD anchor as market_regime source per D4 / §5)
         produces: regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED (asset_regime tag per pair at entry time + market_regime tag from BTC/USD anchor — both fields attached to every contract:CIATS_Trade_Outcome_Bus record at evt:TRADE_CLOSE)
         schema_version: 1.0
-        registry_gap_note: mod:RegimeEngine not currently registered in 0311001 v1_47 §15.12.1 (the registry entry is mod:Regime_Engine; token-form gap).
       </desc>
     <rect x="40" y="480" width="390" height="80" fill="#dcfce7" stroke="#14532d" stroke-width="1.5" rx="4"/>
-    <text x="235" y="506" font-size="13" font-weight="700" text-anchor="middle">mod: RegimeEngine — vol_regime feed</text>
+    <text x="235" y="506" font-size="13" font-weight="700" text-anchor="middle">mod: Regime_Engine — vol_regime feed</text>
     <text x="235" y="526" font-size="11" text-anchor="middle">asset_regime + market_regime tags / closed trade</text>
     <text x="235" y="546" font-size="10" font-style="italic" text-anchor="middle" fill="#14532d">6-regime taxonomy per 0711002 RE-003</text>
   </g>
 
-  <!-- A3 closure: vol_regime input feed arrow RegimeEngine -> Trade Outcome Bus -->
+  <!-- A3 closure: vol_regime input feed arrow Regime_Engine -> Trade Outcome Bus -->
   <g id="vol_regime_feed_arrow" class="decoration">
     <line x1="430" y1="520" x2="490" y2="475" stroke="#14532d" stroke-width="2"
           marker-end="url(#d5_arrow)"/>
@@ -4086,7 +4084,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
         q1_do: per-trade-close 23-field record contract carrying ALL fields needed for Half-Kelly W (win rate) + R (net reward:risk) computation per 0211001 dv1_0 CI-KE-002/CI-KE-003 + 0611001 dv1_0 PS-HK-003/PS-HK-004, Mann-Whitney U inference at alpha=0.01 per rule:HR-CI-007, Sharpe Ratio, Spearman rho with |rho|&gt;0.3 AND p&lt;0.05, and Regime Library bucket accumulation across asset_regime × market_regime cross-tab; this diagram is the canonical schema source per DD-001/DD-002 diagrams-canonical principle (no subordinate spec citation); paper/live byte-identical per ar:PA-005 + ar:PA-007
         q4_triggers: triggered by evt:TRADE_CLOSE emission from mod:Exit_Controller on every COMPLETE position close per 0511004 §7.5; triggers ingest by mod:CIATS_Statistical_Engine (Mann-Whitney U + Sharpe + Spearman + Half-Kelly computation paths) + mod:CIATS_Proposal_Engine (≥200-trade HARD FLOOR inference per rule:HR-CI-004) + mod:CIATS_Regime_Library (≥600-trade per-regime accumulation, 100+ per bucket) + mod:CIATS_PDCA_Engine (DO phase shadow-evaluation against historical corpus)
         q5_logs: every record written to tothbot.log by mod:Logger via channel:logger_async_queue per ar:AR-014 (INFO level per rule:HR-LG-004) with full 23-field canonical schema per contract:Two_Stream_Record_Architecture; the record is persisted permanently to the durable append-only permanent trade-record file /home/tothbot/records/trades_&lt;YYYY&gt;.jsonl per rule:HR-LG-013 (the authoritative Stream 2 inference corpus, fsync-per-write, annual UTC segmentation, no rotation, no size cap, 0o644 hard-pinned) -- NOT to the rotating tothbot.log, which holds only a byte-identical finite-retention operational copy; permanent-file disk-write failure triggers evt:TRADE_RECORD_WRITE_FAILED CRITICAL per rule:HR-LG-010 and SMTP alert per rule:HR-LG-009 (a C1 IMMEDIATE operator email per rule:HR-RPT-001); the permanent corpus feeds CIATS downstream consumption (Statistical Engine + Proposal Engine + Regime Library + PDCA)
-        consumes: evt:TRADE_CLOSE (one record per closed position), regime:TRENDING_POS_NORMAL / regime:TRENDING_POS_ELEVATED / regime:TRENDING_NEG_NORMAL / regime:TRENDING_NEG_ELEVATED / regime:NON_DIR_NORMAL / regime:NON_DIR_ELEVATED (asset_regime + market_regime tags from mod:RegimeEngine, attached to each trade close record per D4 / §5; six-regime taxonomy per 0311001 v1_10 §15.12.6)
+        consumes: evt:TRADE_CLOSE (one record per closed position), regime:TRENDING_POS_NORMAL / regime:TRENDING_POS_ELEVATED / regime:TRENDING_NEG_NORMAL / regime:TRENDING_NEG_ELEVATED / regime:NON_DIR_NORMAL / regime:NON_DIR_ELEVATED (asset_regime + market_regime tags from mod:Regime_Engine, attached to each trade close record per D4 / §5; six-regime taxonomy per 0311001 v1_10 §15.12.6)
         produces: (per-trade record with 23-field canonical schema — this diagram is the canonical source per DD-001/DD-002 — fed to mod:CIATS_Statistical_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library)
         schema_fields_canonical: 23-field set (this diagram is the canonical source per DD-001/DD-002 diagrams-canonical principle): (1) ts ISO 8601 UTC with microseconds; (2) event str literal "TRADE_CLOSE"; (3) level str literal "INFO"; (4) component str literal "EXIT_CTRL"; (5) symbol str; (6) entry_fill_price Decimal (avg_price at entry fill); (7) exit_price Decimal (weighted avg if partials per EC-TOB-003); (8) entry_timestamp_utc ISO 8601 UTC; (9) exit_timestamp_utc ISO 8601 UTC; (10) hold_candle_count int (5m candles held); (11) MAE_pct_reached Decimal (max adverse move as pct); (12) fees_entry_usd Decimal (taker fee on entry); (13) fees_exit_usd Decimal (taker fee on exit); (14) fees_total_usd Decimal; (15) exit_reason str enum: MAE_THRESHOLD_BREACH | HTF_REGIME_REVERSAL | DAILY_REGIME_DOWNGRADE | PAIR_LIMIT_ONLY_EXIT (the four mod:Exit_Controller normal-operation reasons; EMERGENCY_SL_FIRED is NOT an Exit-Controller exit_reason — it is the layer:L3_Emergency_SL crash-recovery reason emitted via channel:kraken_ws_executions exec_type=trade backfill on TothBot recovery, a distinct producer on the same contract:CIATS_Trade_Outcome_Bus, producer-partitioned exit_reason per DEC-066); (16) asset_regime str (pair regime at entry — one of six regime: tokens per 0311001 v1_10 §15.12.6 + D4 / §5); (17) vol_regime str enum NORMAL_VOL | ELEVATED_VOL; (18) market_regime str (BTC/USD anchor regime at entry per D4 / §5); (19) signal_params dict {rsi_14, ema_9, ema_21, volume_ratio, sss_pass}; (20) actual_RR Decimal (net_PL / risk_exposed); (21) net_PL_USD Decimal; (22) net_gain_usd Decimal (0.0 if loss); (23) net_loss_usd Decimal (0.0 if gain, positive value if loss).
         schema_version: 1.0
@@ -4219,7 +4217,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
         drill_targets: none (leaf — per-regime archive sub-component of CIATS, internal)
         constraints: rule:Sacred_R_R_1_to_1_5; per-regime analysis activates only at 600+ closed trades / 100+ per bucket (six-regime taxonomy per 0311001 v1_7 §15.12.6 + D4 / §5); regime tagging on every Stream 2 record per regime: tokens TRENDING_POS_NORMAL / TRENDING_POS_ELEVATED / NON_DIR_NORMAL / NON_DIR_ELEVATED / TRENDING_NEG_NORMAL / TRENDING_NEG_ELEVATED
         q1_do: accumulates per-regime P/L + win rate + Sharpe Ratio + MAE statistics across the six-regime asset_regime × market_regime cross-tab per 0311001 v1_24 §15.12.6 + D4 / §5; activates per-regime inference at ≥600 closed trades total AND 100+ trades per asset_regime × market_regime cell (per rule:HR-CI-004 floor + bucket-cardinality requirement); produces regime-segmented parameter proposals + disallowed-regime list (consumed by gate:G3_Regime_Filter input via param:disallowed_regimes); zero-cost historical archive — accumulates the full Stream 2 corpus indefinitely
-        q4_triggers: triggered by every contract:CIATS_Trade_Outcome_Bus record carrying asset_regime + market_regime tags from mod:RegimeEngine per rule:HR-REGIME-010; per-regime statistical analysis triggered when bucket cardinality reaches 100+ trades per asset_regime × market_regime cell + 600+ trades total per rule:HR-CI-004; triggers regime-segmented parameter proposals to mod:CIATS_Proposal_Engine + disallowed-regime list updates to param:disallowed_regimes (consumed by gate:G3_Regime_Filter inside mod:Signal_Pipeline)
+        q4_triggers: triggered by every contract:CIATS_Trade_Outcome_Bus record carrying asset_regime + market_regime tags from mod:Regime_Engine per rule:HR-REGIME-010; per-regime statistical analysis triggered when bucket cardinality reaches 100+ trades per asset_regime × market_regime cell + 600+ trades total per rule:HR-CI-004; triggers regime-segmented parameter proposals to mod:CIATS_Proposal_Engine + disallowed-regime list updates to param:disallowed_regimes (consumed by gate:G3_Regime_Filter inside mod:Signal_Pipeline)
         q5_logs: per-regime bucket accumulation events logged by mod:Logger to tothbot.log via channel:logger_async_queue per ar:AR-014 (INFO level per rule:HR-LG-004) on every trade-close ingest; bucket-cardinality threshold crossings (100+ per bucket + 600+ total) at HIGH level per rule:HR-LG-007; disallowed-regime list changes at HIGH level for operator visibility per rule:HR-LG-009 SMTP alert dispatch
         consumes: contract:CIATS_Trade_Outcome_Bus (Stream 2 records carry asset_regime + market_regime cross-tab), regime: tokens (six-regime taxonomy)
         produces: (regime-segmented parameter proposals; disallowed-regime list — feeds gate:G3_Regime_Filter input through param:disallowed_regimes)
@@ -4299,7 +4297,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
 </svg>
   </div>
   <figcaption>
-    Image5 CIATS Architecture (R17). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R17.<br>
+    Image5 CIATS Architecture (R18). Provenance relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R18.<br>
   </figcaption>
 </figure>
 <h2>7. Complete System: One CIATS-Owned Organism</h2>
@@ -4924,7 +4922,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
           OTO evaluated and REJECTED: uses limit price, violates R:R, Position Mirror race.
   AR-009 ★: Short via Kraken margin trading. Maximum 10x leverage (Kraken Pro
           Intermediate tier confirmed per AR-013). Margin trading toggle ON per Bill Kraken
-          account configuration. Minimum order ~$0.50 USD. Margin-eligible pair subset of D-03
+          account configuration. Margin-eligible pair subset of D-03
           universe — pair-level lookup at startup via REST GetAssetPairs (margin field).
           Short-side dispatch via parallel mod:Short_Module (0311001 §15.12.1).
           PARALLEL-MODULE FRAMEWORK: TothBot V2's module architecture is
@@ -5526,7 +5524,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     fact, computed per DEC-128 as mpp_cap_pct =
                     min(mpp_abs_cap_pct, rr_headroom) where mpp_abs_cap_pct
                     [seed] = the historical-OHLC Q95 adverse close-to-next-
-                    open displacement per pair/side (value home TB00000 sec
+                    open displacement on the 5 m OHLC series per pair/side
+                    (value home TB00000 sec
                     8) and rr_headroom = expected_reward - 1.5*net_loss is
                     the sacred floor at the execution boundary, never
                     tunable):
@@ -6140,10 +6139,17 @@ per TB00000 sec 7).
                              (decision:D-04_Liquidity_Floor); canonical
                              value home TB00000 sec 8.
 
+  disallowed_regimes       = [] at seed (empty list; CIATS-populated
+                             from the 600-trade per-regime data floor
+                             per rule:HR-CI-004). Produced by
+                             mod:CIATS_Regime_Library (D5); consumed by
+                             gate:G3_Regime_Filter inside
+                             mod:Signal_Pipeline. CIATS-OWNED PER-MODULE
+                             INSTANTIATED.
+
   Short-side specific (Short_Module only):
   leverage_cap_short       = 3x starting (Kraken native max 10x;
                              starting low per loss-minimization)
-  min_order_size_usd       = Kraken per-pair minimum (~$0.50) starting
 
   Liquidity cache (UNIVERSAL — same value applies to the single REST
   Ticker refresh cycle, not per-module):
