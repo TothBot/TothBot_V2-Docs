@@ -1,10 +1,10 @@
 DocDCN:     0311003
 DocTitle:   Versioning_Procedure
-DocVersion: v1_4
+DocVersion: v1_5
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_4.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/03XXXXX_Governance/0311003_Versioning_Procedure_v1_5.txt
 DocDate:    06-13-2026
-DocTime:    18:00:00 UTC
+DocTime:    18:30:00 UTC
 
 ============================================================
 VERSIONING PROCEDURE
@@ -259,7 +259,11 @@ Example:
 
 The filename version must match the DocVersion in the
 header at all times. When version increments, the filename
-changes. Both old and new versions are retained by Bill.
+changes. GitHub git history is the sole authoritative archive
+of all versions (both repos pushed every session); the
+superseded local copy need not be retained and is deleted at
+session close once the successor is verified present at GitHub
+HEAD (Bill ruling TB00700; TB00000 sec 4.4 SINGLE EXCEPTION).
 
 ------------------------------------------------------------
 VP-010  SUPERSEDED DOCUMENTS
@@ -269,13 +273,13 @@ When a document is updated, the prior version is handled
 per the document class and the authoritative storage
 tree in TB00000 §11:
 
-  (a) For session logs and TB00000 (non-Git files):
-      Prior versions are retained by Bill in the local
-      session-logs folder per TB00000 §11:
-
-        C:\Users\wstot\GitHub\TothBot\TBXXXXX_Session_Logs\
-
-      alongside the current version. No separate archive
+  (a) For session logs and TB00000 (now in the
+      TothBot_V2-SessionLogs git repo, pushed every session):
+      GitHub git history is the sole authoritative archive.
+      Superseded local copies are NOT retained -- they are
+      deleted at session close once the successor is verified
+      present at GitHub HEAD (Bill ruling TB00700; TB00000
+      sec 4.4 SINGLE EXCEPTION). No separate local archive
       location is used.
 
   (b) For all other controlled documents (TothBot_V2-Docs
@@ -327,6 +331,19 @@ automation and automatically by Pathway 1 post-deployment.
 ============================================================
 8. REVISION HISTORY
 ============================================================
+
+  v1_5   06-13-2026  TB00700 LOCAL-ARCHIVE-RETENTION RULE REMOVED
+                     (Bill ruling). GitHub git history is the sole
+                     authoritative archive (both repos pushed every
+                     session); superseded local copies are NOT retained
+                     and are deleted at session close once the successor
+                     is verified present at GitHub HEAD. VP-009 +
+                     VP-010(a) rewritten (session logs / TB00000 are now
+                     in the SessionLogs git repo, not non-Git files).
+                     Companion: TB00000 v2_95 sec 4.4 SINGLE EXCEPTION +
+                     sec 6, TB00700 SL v1_1. Direct v1_4 -> v1_5 minor
+                     increment per VP-004 v -> v with Bill approval.
+                     DocDate / DocTime refreshed.
 
   v1_4   06-13-2026  TB00700 VP-008(b) SINGLE-POINTER CLARIFICATION
                      (DEC-125; Bill ruling). For a live-coding diagram
