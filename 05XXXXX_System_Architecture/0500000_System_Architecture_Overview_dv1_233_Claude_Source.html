@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_232</title>
+<title>0500000 System Architecture Overview dv1_233</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_232</td></tr>
+  <tr><td>DocVersion</td><td>dv1_233</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_232_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_233_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-13-2026</td></tr>
-  <tr><td>DocTime</td><td>06:58:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>07:35:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -1347,7 +1347,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    provenance: R-increment history relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R17.
+    provenance: R-increment history relocated to 0521001 (anchor 0520000) per DEC-123. CURRENT R: R18.
     governs: rule:HR-WM-021, rule:HR-WM-022, rule:HR-WM-023, rule:HR-WM-024, rule:HR-WM-025, rule:HR-WM-026, rule:HR-WM-027, rule:HR-WM-028 (PATH 2 connection sharding), rule:HR-WM-029 (shard independence), rule:HR-WM-030 (silent-pair handling), rule:HR-WM-031 (subscribe-count vs max-concurrent decoupling), rule:HR-WM-032 (paper ledger update), rule:HR-WM-033 (paper exits route through Exit Controller), rule:HR-WM-034, contract:WM-PACE-001 (process-singleton token bucket), contract:WM-PACE-002 (SUBSCRIBE_RATE_PER_SEC=10, SUBSCRIBE_BURST_CAPACITY=20 — fixed engineering constants per DEC-127, not CIATS-owned), contract:WM-SHARD-001 (N_conns=ceil(universe/SYMBOLS_PER_CONN_SAFE), SYMBOLS_PER_CONN_SAFE=500 — fixed engineering constant per DEC-127, not CIATS-owned), contract:WM-SHARD-010 (silent-pair state machine; T_silent=60s fixed engineering constant per DEC-127, not CIATS-owned), contract:WM-RECONNECT-016 (transient WS catch + per-shard reconnect), contract:VD-SYS-008 (systemd StartLimitBurst=3 / StartLimitIntervalSec=600), decision:D-03 (universe scope USD+USDC+USDT, no Top-N cap), decision:D-06 (paper-live parity), ar:AR-001, ar:AR-002, ar:AR-006, ar:AR-007, ar:AR-008, ar:AR-010, ar:AR-011, ar:AR-014 (Logger async bounded queue), ar:AR-018 (amend_order is the sole order-modification method — preserves book queue position at lower rate cost; edit_order PROHIBITED), ar:AR-022, ar:AR-023, ar:AR-024, ar:AR-026, ar:AR-028 (qty_min/cost_min validation in Gate 8 BEFORE every add_order dispatch — orders below minimums are silently rejected by Kraken matching engine leaving Signal_Pipeline desynchronized; plus price_increment-replaces-tick_size in instrument channel parsing), ar:AR-029, ar:AR-030, ar:AR-031, ar:AR-032, ar:AR-033, ar:AR-035, ar:AR-038 (Kraken Status API startup maintenance check), ar:AR-039 (per-pair instrument channel status check expanded), ar:AR-046, ar:AR-047, ar:AR-055 (Dead Man's Switch cancel_all_orders_after EXPLICITLY PROHIBITED — DMS would destroy Layer 3 emergSL crash protection for open positions during VPS crash / network severance; HR-DMS-001 in 0411001 + 1011002 enforces with code-review reject mandate), ar:AR-056 (mid-session WS reconnect with pipeline-no-fire clause — 11-step reconnect sequence DISTINCT from cold-start with pipeline evaluations PROHIBITED during reconnect and candle events queued during reconnect DISCARDED after completion; portfolio_baseline_USD never reset, drawdown_pct + system_state preserved, ATR/EMA caches preserved unless gap > 15 minutes; architectural source for HR-SP-010 pipeline-gating rule), ar:AR-058, ar:AR-059, ar:AR-060, ar:AR-064, ar:AR-068 (SSS indicator seeding at startup — startup REST GetOHLCData seeding of all five per-pair indicators ATR/RSI/EMA9/EMA21/VolumeMA20 with WARM_UP -> READY transition gating), ar:AR-070 (USD+USDC+USDT, no Top-N cap), ar:AR-072, ar:AR-080 (Cloudflare reconnect rate limit — 150 connection-establishment requests per rolling 10-minute window per source IP on Kraken WS v2 edge endpoint; bounds WS_Manager reconnect orchestration; breach would lock out reconnection for up to 10 minutes leaving Layer 3 emergSL as ONLY position protection per AR-001 + AR-055 invariant chain), container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone, pt_mode:PT_MODE_001, pt_mode:PT_MODE_002, pt_mode:PT_MODE_004 (private WS skipped in paper), ar:AR-057, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011
     Sacred constraint: Net 1:1.5 R:R - hardcoded - the only number not owned by CIATS.
   </desc>
@@ -1921,7 +1921,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
 </svg>
   </div>
   <figcaption>
-    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R17). Provenance relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R17.<br>
+    Image1 Kraken API Connection Architecture — PATH 2 Multi-Shard (R18). Provenance relocated to 0521001_System_Architecture_Overview_Revision_History (anchor 0520000) per DEC-123. CURRENT R: R18.<br>
   </figcaption>
 </figure>
 <h2>3. TothBot Trading Pipeline</h2>

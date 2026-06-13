@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_42
+DocVersion: dv1_43
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_42.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_43.txt
 DocDate:    06-13-2026
-DocTime:    06:58:00 UTC
+DocTime:    07:35:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30175,6 +30175,88 @@ LIVE: DocVersion dv1_42 / DocPath ...dv1_42... /
 DocDate 06-13-2026 / DocTime 06:58:00 UTC
 
 ----- END TB00694 dv1_232 OP RECORD -----
+
+
+----- TB00697 dv1_233 OP RECORD (appended at TB00697) -----
+
+AMENDMENT (dv1_232 -> dv1_233), session TB00697. D1 (Image1
+Kraken_API_Connection_Architecture) internal R-number
+reconciliation. At dv1_232 the single D1 figure carried TWO
+different current-R values: R18 at the SVG <title>,
+diagram_canonical, and title-bar subtitle <text>; R17 at the
+root <desc> provenance line and the figcaption. This is a
+metadata/figcaption lag, NOT a content gap.
+
+AUTHORITATIVE R ESTABLISHED FROM THIS ARCHIVE (DEC-123 -- the
+provenance archive, not the diagram fields, is the source of
+truth): the last recorded D1 R-increment is R17 -> R18 at
+TB00688 (dv1_229 -> dv1_230 OP RECORD; three visible SVG <text>
+relabels, the DEC-127 fixed-engineering-constant labels). D1
+then HELD R18 at TB00689 (dv1_231; all ten figures held) and at
+TB00694 (dv1_232; only D5 bumped R17 -> R18, all other nine
+figures held + byte-identical). The authoritative current R for
+Image1/D1 at HEAD is therefore R18; the R18 fields were correct
+and the two R17 fields were the lag.
+
+FIX (DD-011 OUTCOME 1, single compliant path; not surfaced as a
+ratification question -- 0521001 is unambiguous, so NSI path (d)
+does not fire): the two stale R17 fields were reconciled UP to
+the authoritative R18. All five D1 R-fields are now R18 and
+internally consistent. Reconciling DOWN to R17 was rejected (it
+would revert a recorded increment).
+
+FIGURE R-STATE -- R18 HELD (TB00453 bright line): the only D1
+changes are the root <desc> provenance line and the HTML
+figcaption -- desc/figcaption-only, NO visible SVG <text> node
+or geometry change, no SVG <title> / diagram_canonical /
+title-bar / viewBox (1500x1600 preserved) / figure-count change.
+A desc/figcaption-only edit HOLDS the figure R; D1 stays R18 (no
+new R minted, no R-increment chain rotation). All NINE other
+figures byte-identical (DEC-003 Path A; diff localized to the D1
+figure span + the four DC-header lines).
+
+REMOVED / REPLACED FRAGMENTS (verbatim):
+  [D1 root <desc> provenance line]
+  OLD: ...per DEC-123. CURRENT R: R17.
+  NEW: ...per DEC-123. CURRENT R: R18.
+  [D1 figcaption]
+  OLD: Image1 Kraken API Connection Architecture -- PATH 2
+       Multi-Shard (R17). ... CURRENT R: R17.
+  NEW: Image1 Kraken API Connection Architecture -- PATH 2
+       Multi-Shard (R18). ... CURRENT R: R18.
+
+BINARY TEST (DEC-096): an R-number provenance label is
+document-control metadata, not trading-organism architecture --
+it is correctly the diagram's CURRENT-R pointer per DEC-123; no
+seed VALUE moved; TB00000 NOT amended.
+
+RR-SCOPE-001: R-state-token reconciliation scope only; no
+architectural identifier added or removed; no live rule,
+contract, parameter, or wire fact touched. RR-SCOPE-008 no-guess:
+the authoritative R was established by reading this archive's
+TB00688 / TB00689 / TB00694 OP records and the live dv1_232 D1
+fields in full this session; every anchor count-asserted == 1 at
+execution; located by content, not recalled line numbers.
+RR-SCOPE-011 one primary mission, one figure (D1).
+
+NO new TB00153 DECISION (a metadata reconciliation under DEC-123
++ TB00453; DR stays v1_95). NO paired MDR (lagging-label
+reconciliation closing no latent defect; V-038 remains 0 open).
+0311001 namespace UNCHANGED (no token minted). DR-007.9 HTML
+well-formedness parser pass confirmed pre-delivery (figure 10/10,
+svg 10/10, desc 125/125, figcaption 10/10; exactly ONE
+<h2>14. Revision History</h2> in the live diagram). Phase 2
+Option B (clean-slate organism code generation in Claude Code)
+remains launch-ready on Bill's go; this fix removes the last D1
+metadata inconsistency.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_42 / DocPath ...dv1_42... /
+DocDate 06-13-2026 / DocTime 06:58:00 UTC
+LIVE: DocVersion dv1_43 / DocPath ...dv1_43... /
+DocDate 06-13-2026 / DocTime 07:35:00 UTC
+
+----- END TB00697 dv1_233 OP RECORD -----
 
 
 ============================================================
