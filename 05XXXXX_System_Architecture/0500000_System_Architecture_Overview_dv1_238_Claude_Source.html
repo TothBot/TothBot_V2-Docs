@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_237</title>
+<title>0500000 System Architecture Overview dv1_238</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_237</td></tr>
+  <tr><td>DocVersion</td><td>dv1_238</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_237_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_238_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-13-2026</td></tr>
   <tr><td>DocTime</td><td>07:35:00 UTC</td></tr>
 </table>
@@ -288,7 +288,7 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:Kraken_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image1_T2_R1_Kraken_API_Connection_Architecture
+              drill_targets: 0500000_Image1_T2_R19_Kraken_API_Connection_Architecture
               constraints: ar:AR-001, ar:AR-002, ar:AR-014, ar:AR-038, ar:AR-039, decision:D-04
               consumes: channel:kraken_ws_ohlc_5m, channel:kraken_ws_ohlc_60m, channel:kraken_ws_ticker, channel:kraken_ws_instrument, channel:kraken_ws_status, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:OHLC_5m_System_Clock, evt:WS_RECONNECT, evt:WS_SUBSCRIBE_RATE_LIMIT
@@ -328,7 +328,7 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:TothBot_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image2_T2_R1_Trading_Pipeline, 0500000_Image3_T2_R1_Exit_Architecture, 0500000_Image6_T2_R1_Complete_System, 0500000_Image7_T2_R1_Paper_Mode_Dispatch_Boundary
+              drill_targets: 0500000_Image2_T2_R14_Trading_Pipeline, 0500000_Image3_T2_R12_Exit_Architecture, 0500000_Image6_T2_R18_Complete_System, 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
               constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-076
               consumes: contract:OHLC_5m_System_Clock, contract:Parameter_Store_Snapshot, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:WSManager_Dispatch_Seam, contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE, evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
@@ -369,7 +369,7 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:CIATS_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image5_T2_R1_CIATS_Architecture
+              drill_targets: 0500000_Image5_T2_R20_CIATS_Architecture
               constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned)
               consumes: contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE
               produces: contract:Parameter_Store_Snapshot, param:per_trade_size_usd, param:mae_mult, param:emergency_sl_mult, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods, param:min_volume_usd_daily
@@ -521,7 +521,7 @@ Tier 2 diagrams (D1 - D7) below.
             canonical: container:Kraken_Exchange
             tier: 1
             parent_diagram: none
-            drill_targets: 0500000_Image1_T2_R1_Kraken_API_Connection_Architecture, 0500000_Image7_T2_R1_Paper_Mode_Dispatch_Boundary
+            drill_targets: 0500000_Image1_T2_R19_Kraken_API_Connection_Architecture, 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
             constraints: rule:PA-004 (1)(2) (paper-mode private-WS suppression and order-dispatch suppression), ar:AR-001..AR-007
             consumes: ws_subscribe:public_v2, ws_subscribe:private_v2 (live mode only), channel:kraken_rest_GetAccountBalance, channel:kraken_rest_GetOpenOrders, channel:kraken_rest_GetOHLCData, channel:kraken_rest_GetWebSocketsToken
             produces: channel:kraken_ws_ohlc_5m, channel:kraken_ws_ohlc_60m, channel:kraken_ws_ticker, channel:kraken_ws_instrument, channel:kraken_ws_status, channel:kraken_ws_executions, channel:kraken_ws_balances
@@ -559,7 +559,7 @@ Tier 2 diagrams (D1 - D7) below.
             canonical: contract:OHLC_5m_System_Clock
             tier: 1
             parent_diagram: none
-            drill_targets: 0500000_Image1_T2_R1_Kraken_API_Connection_Architecture
+            drill_targets: 0500000_Image1_T2_R19_Kraken_API_Connection_Architecture
             constraints: ar:AR-001, ar:AR-002, decision:D-04
             consumes: channel:kraken_ws_ohlc_5m, channel:kraken_ws_ticker, channel:kraken_ws_instrument, channel:kraken_ws_status
             produces: evt:CANDLE_CLOSE_TRIGGER (TothBot internal)
@@ -579,7 +579,7 @@ Tier 2 diagrams (D1 - D7) below.
             canonical: contract:WSManager_Dispatch_Seam
             tier: 1
             parent_diagram: none
-            drill_targets: 0500000_Image1_T2_R1_Kraken_API_Connection_Architecture, 0500000_Image7_T2_R1_Paper_Mode_Dispatch_Boundary
+            drill_targets: 0500000_Image1_T2_R19_Kraken_API_Connection_Architecture, 0500000_Image7_T2_R11_Paper_Mode_Dispatch_Boundary
             constraints: rule:PA-004 (1) private WS NOT connected in paper, rule:PA-004 (2) order dispatch NOT transmitted in paper
             consumes: channel:kraken_ws_executions, channel:kraken_ws_balances
             produces: evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
@@ -599,7 +599,7 @@ Tier 2 diagrams (D1 - D7) below.
             canonical: contract:Reconciliation_REST
             tier: 1
             parent_diagram: none
-            drill_targets: 0500000_Image1_T2_R1_Kraken_API_Connection_Architecture
+            drill_targets: 0500000_Image1_T2_R19_Kraken_API_Connection_Architecture
             constraints: ar:AR-007, ar:AR-009 (REST snapshot + executions seq gap reconcile)
             consumes: channel:kraken_rest_GetAccountBalance, channel:kraken_rest_GetOpenOrders, channel:kraken_rest_GetOHLCData, channel:kraken_rest_GetWebSocketsToken, channel:kraken_rest_QueryOrdersInfo
             produces: evt:RECONCILE_COMPLETE
@@ -619,7 +619,7 @@ Tier 2 diagrams (D1 - D7) below.
             canonical: contract:CIATS_Trade_Outcome_Bus
             tier: 1
             parent_diagram: none
-            drill_targets: 0500000_Image5_T2_R1_CIATS_Architecture
+            drill_targets: 0500000_Image5_T2_R20_CIATS_Architecture
             constraints: ar:AR-008 (Net 1:1.5 R:R sacred)
             consumes: contract:Parameter_Store_Snapshot (TOTHBOT reads CIATS values)
             produces: evt:TRADE_CLOSE (TOTHBOT publishes outcomes to CIATS)
@@ -2577,7 +2577,7 @@ required, the pass/fail branches, and the event identifier emitted on failure.
     diagram_canonical: 0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail
     tier: 3
     parent_dcn: 0500000
-    parent_diagram: 0500000_Image2_T2_R2_Trading_Pipeline
+    parent_diagram: 0500000_Image2_T2_R14_Trading_Pipeline
     parent_element: gate:G7_Risk_Guard
     schema_version: 1.0
     CURRENT R: R5.
@@ -2607,7 +2607,7 @@ required, the pass/fail branches, and the event identifier emitted on failure.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 8 — Gate 7 Risk Guard Detail (4 Sequential Checks) — R5</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R2_Trading_Pipeline
+      0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R14_Trading_Pipeline
     </text>
   </g>
 
@@ -2801,7 +2801,7 @@ from the CIATS run-to-reversal estimator; the sacred
     diagram_canonical: 0500000_Image9_T3_R6_Gate_8_Position_Sizer_Detail
     tier: 3
     parent_dcn: 0500000
-    parent_diagram: 0500000_Image2_T2_R2_Trading_Pipeline
+    parent_diagram: 0500000_Image2_T2_R14_Trading_Pipeline
     parent_element: gate:G8_Position_Sizer
     schema_version: 1.0
     CURRENT R: R6.
@@ -2836,7 +2836,7 @@ from the CIATS run-to-reversal estimator; the sacred
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 9 — Gate 8 Position Sizer Detail — R6</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image9_T3_R6_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R2_Trading_Pipeline
+      0500000_Image9_T3_R6_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R14_Trading_Pipeline
     </text>
   </g>
 
