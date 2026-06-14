@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_49
+DocVersion: dv1_50
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_49.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_50.txt
 DocDate:    06-13-2026
-DocTime:    21:00:00 UTC
+DocTime:    21:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30559,6 +30559,54 @@ LIVE: DocVersion dv1_49 / DocPath ...dv1_49... /
 DocDate 06-13-2026 / DocTime 21:00:00 UTC
 
 ----- END TB00700 dv1_239 OP RECORD -----
+
+
+----- BEGIN TB00700 dv1_240 OP RECORD -----
+
+TB00700 DEC-125 DOC-DECISION CITATION SWEEP (TB00701 3a; Bill rule +
+Deming QA). 0500000 dv1_239 -> dv1_240.
+
+Bill ruling: "if it's not live coding it goes; historical and
+decision elements go in 0521001." Stripped EVERY opaque decision /
+authoring citation from the live coding surface, keeping the live
+rule each annotated. 91 citations across 64 lines removed:
+  DEC-### register refs (DEC-003 / 011 / 039 / 042 / 066 / 096 /
+    108 / 117 / 122 / 123 / 124 / 125 / 127 / 128) incl. the
+    decision:DEC-011 tokens;
+  DD-0## doc-decision refs (DD-001 / 002 / 012 / 013 / 014);
+  V-038 verification refs; RR-SCOPE-007 / 009 scope-rule refs;
+  "Bill-ratified" authoring annotations; leftover authoring session
+  refs (TB00130 / 021 / 160 / 161 / 616 / 153 / 689 / 395 / 645).
+Section 14 revision-history statement simplified to a single clean
+0521001 pointer (the DEC-122 / 123 + dv1_191 / TB00395 / TB00645
+historical detail dropped; that record already lives in this archive).
+
+KEPT (live coding / functional): all TB00000 sec-X value-home +
+governance pointers (171 -- the binary-test design tells the coder
+where each seed value + rule lives), all rule: / ar: / decision:D-##
+tokens (decision:D-## are LIVE design decisions -- D-03 universe,
+D-04 $500k floor, D-06 paper-live parity -- the code implements
+them), and every behavior / spec.
+
+R DISPOSITION (TB00453; per-figure visible-skeleton verified): Ctx
+R5->R6, Image1 R19->R20, Image5 R20->R21, Image6 R18->R19, Image7
+R11->R12 (each carried a citation in VISIBLE text). Image2 / 3 / 4 /
+8 / 9 desc-only -> R HELD. Drill-target + parent refs to the bumped
+figures updated in lockstep.
+
+VERIFICATION (TB00699 sec 6): each removal count-asserted; residue
+DEC-### / DD-0## / V-0## / RR-SCOPE / Bill-ratified = 0; NO new
+grammar artifacts; HTML well-formed (all tag classes balanced); 0
+stale figure-R refs; retired-DCN + 0311001 residue 0. md5
+64f3b870d0d649e12b4dd5b572589a5f.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_49 / DocPath ...dv1_49... /
+DocDate 06-13-2026 / DocTime 21:00:00 UTC
+LIVE: DocVersion dv1_50 / DocPath ...dv1_50... /
+DocDate 06-13-2026 / DocTime 21:30:00 UTC
+
+----- END TB00700 dv1_240 OP RECORD -----
 
 
 ============================================================
