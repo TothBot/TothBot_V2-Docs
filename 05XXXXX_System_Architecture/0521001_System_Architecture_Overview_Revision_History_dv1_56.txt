@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_55
+DocVersion: dv1_56
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_55.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_56.txt
 DocDate:    06-15-2026
-DocTime:    05:09:16 UTC
+DocTime:    05:22:07 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30883,6 +30883,53 @@ LIVE: DocVersion dv1_55 / DocPath ...dv1_55... /
 DocDate 06-15-2026 / DocTime 05:09:16 UTC
 
 ----- END TB00728 PARITY Image1 dv1_245 OP RECORD -----
+
+
+----- BEGIN TB00728 PARITY Image8+Image9 dv1_246 OP RECORD -----
+
+TB00728 LONG/SHORT PARITY CAMPAIGN -- Image8 Gate-7 Risk Guard + Image9
+Gate-8 Position Sizer detail figures made Long/Short symmetric (Bill
+directive 2026-06-15). 0500000 dv1_245 -> dv1_246.
+
+CONTEXT: Image8 was already largely symmetric (per-module evaluation
+stated on every check); the residual gaps were the short wallet TYPE
+(margin equity, not spot) and the leverage bound. Image9 (the sizer)
+was spot/long-only on the stop signs, fee legs, and the SIZED payload.
+
+CHANGE A (Image8 R5 -> R6): CHECK_1 drawdown wallet stated per side
+(LONG spot USD / SHORT Kraken margin-account equity, ar:AR-009);
+CHECK_3 exposure for the short adds the param:leverage_cap_short bound
+(short committed = margin/collateral requirement, not full notional,
+ar:AR-053).
+CHANGE B (Image9 R6 -> R7): MAE breach side (bid below / ask above
+entry); net_loss states both leg directions (L buy-open+sell-exit /
+S sell-open+buy-cover) + the SHORT param:margin_borrow_fee + the net
+P&L sign (LONG exit-entry / SHORT entry-exit); emergSL direction (L
+SELL stop below / S BUY-to-cover stop above entry); expected_reward
+backtest replays the candidate's own side (short favorable excursion
+DOWNWARD); evt:G8_SIZED payload gains side + order_type (L spot buy /
+S margin sell at leverage_cap_short); footer "no ceiling" qualified
+(long spot wallet unbounded / short bounded by leverage_cap_short).
+NO new seed VALUE encoded (margin_borrow_fee + leverage_cap_short are
+pointers to TB00000 sec 8; leverage_cap_short 3x already seeded).
+
+R DISPOSITION: Image8 R5 -> R6 (3 canonical-token + desc + title-bar +
+figcaption); Image9 R6 -> R7 (3 canonical-token + desc + title-bar +
+figcaption). The Tier-1 Context figure (ALSO at R6) was NOT touched --
+Image9's R6 was bumped by context anchor, not a global replace. All
+other figures R HELD.
+
+VERIFICATION: HTML well-formed (tag classes balanced); no residual
+dv1_245 / Image8-R5 / Image9-R6-as-Image9; the short risk/sizer clauses
+present.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_55 / DocPath ...dv1_55... /
+DocDate 06-15-2026 / DocTime 05:09:16 UTC
+LIVE: DocVersion dv1_56 / DocPath ...dv1_56... /
+DocDate 06-15-2026 / DocTime 05:22:07 UTC
+
+----- END TB00728 PARITY Image8+Image9 dv1_246 OP RECORD -----
 
 
 ============================================================
