@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_243</title>
+<title>0500000 System Architecture Overview dv1_244</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_243</td></tr>
+  <tr><td>DocVersion</td><td>dv1_244</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_243_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_244_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-15-2026</td></tr>
   <tr><td>DocTime</td><td>00:45:00 UTC</td></tr>
 </table>
@@ -325,7 +325,7 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:TothBot_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image2_T2_R15_Trading_Pipeline, 0500000_Image3_T2_R13_Exit_Architecture, 0500000_Image6_T2_R20_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
+              drill_targets: 0500000_Image2_T2_R15_Trading_Pipeline, 0500000_Image3_T2_R14_Exit_Architecture, 0500000_Image6_T2_R20_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
               constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-076
               consumes: contract:OHLC_5m_System_Clock, contract:Parameter_Store_Snapshot, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:WSManager_Dispatch_Seam, contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE, evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
@@ -3095,14 +3095,14 @@ taxonomy:
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1420"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image3_T2_R13_Exit_Architecture</title>
+  <title>0500000_Image3_T2_R14_Exit_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image3_T2_R13_Exit_Architecture
+    diagram_canonical: 0500000_Image3_T2_R14_Exit_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R13.
+    CURRENT R: R14.
     governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, ar:AR-007, ar:AR-040, mod:Exit_Controller, layer:L1a_Regime_Exit, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
     drill_targets: none (D3 is a leaf Tier 2 detail of the Exit Architecture depicted in D2)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
@@ -3122,7 +3122,7 @@ taxonomy:
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 3 — Exit Architecture: Ground Zero Redesign for Kraken</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image3_T2_R13_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context
+      0500000_Image3_T2_R14_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context
     </text>
   </g>
 
@@ -3137,10 +3137,10 @@ taxonomy:
         constraints: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, ar:AR-008, ar:AR-007
         consumes: channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, layer:L3_Emergency_SL
         produces: evt:TRADE_CLOSE
-        ciats_ownership: the live Exit-Controller parameter group is FOUR tokens, all CIATS-OWNED PER-MODULE INSTANTIATED: param:mae_mult sets the Layer 2 MAE-threshold distance (entry_fill_price - bid) &gt;= ATR(14) x param:mae_mult (present in this element's consumes field + q4_triggers field + D3 root governs); param:emergency_sl_mult sets the Layer 3 off-book emergency-SL distance ATR(14) x param:emergency_sl_mult (present in the layer:L3_Emergency_SL sub-element consumes/q1_do + D3 root governs); param:cancel_timeout_window sets how long mod:Exit_Controller waits for a cancel_order ACK before the cancel-timeout fallback recovery (I-6 protocol, Layer 1a/2 exit sequences); param:mpp_retry_count sets the number of IOC limit-sell retries at best_bid - 0.2% increments after an MPP market-sell rejection (C-1 MPP IOC retry, Layer 1a/2 exit sequences). The four parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element mod:Exit_Controller on D3; their starting VALUES are NOT encoded in 0500000 -- canonical value home is TB00000 sec 8 (pointer, not value).
+        ciats_ownership: the live Exit-Controller parameter group is FOUR tokens, all CIATS-OWNED PER-MODULE INSTANTIATED: param:mae_mult sets the Layer 2 MAE-threshold distance — LONG (entry_fill_price - bid) &gt;= ATR(14) x param:mae_mult / SHORT (ask - entry_fill_price) &gt;= ATR(14) x param:mae_mult (present in this element's consumes field + q4_triggers field + D3 root governs); param:emergency_sl_mult sets the Layer 3 off-book emergency-SL distance ATR(14) x param:emergency_sl_mult (present in the layer:L3_Emergency_SL sub-element consumes/q1_do + D3 root governs); param:cancel_timeout_window sets how long mod:Exit_Controller waits for a cancel_order ACK before the cancel-timeout fallback recovery (I-6 protocol, Layer 1a/2 exit sequences); param:mpp_retry_count sets the number of IOC retries after an MPP market-order rejection — LONG IOC limit-SELL at best_bid - 0.2% increments / SHORT IOC limit-BUY-to-cover at best_ask + 0.2% increments (C-1 MPP IOC retry, Layer 1a/2 exit sequences). The four parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element mod:Exit_Controller on D3; their starting VALUES are NOT encoded in 0500000 -- canonical value home is TB00000 sec 8 (pointer, not value).
         position_mirror_access: read-only via WSManager helper methods (e.g., wm.pm_get(symbol), wm.pm_iter()) per rule:HR-PM-009 sole-writer pattern; Exit Controller does NOT mutate Position Mirror.
-        q1_do: owns ALL normal exits across layers L1a (regime-reversal take-profit) and L2 (MAE threshold); L3 emergency SL is off-book Kraken-side crash protection only and is NOT owned by Exit Controller runtime; OTO conditional orders evaluated and REJECTED per ar:AR-008; reads Position Mirror via WSManager helper methods only (wm.pm_get / wm.pm_iter) per rule:HR-PM-009 sole-writer pattern; does NOT mutate Position Mirror; enforces rule:HR-EC-016 conflict resolution (L1a Step 1 pair-status precondition + L2 priority over in-progress L1a).
-        q4_triggers: L1a regime conditions EC-L1A-001 HTF Regime Reversal (1H EMA(20) crosses below 1H EMA(50)) / EC-L1A-002 Daily Regime Downgrade (00:00 UTC regime reclassification) (consumes mod:Regime_Engine regime classification + indicator:EMA20_daily + indicator:EMA50_daily); regime reversal is the take-profit exit (run to reversal; no fixed TP, no max-hold); L2 MAE breach (entry_fill_price - bid_price) &gt;= ATR(14) x param:mae_mult on channel:kraken_ws_ticker bid; ar:AR-040 instrument status events (cancel_only / maintenance) gating L1a Step 1 precondition; ar:AR-040 limit_only pair-status transition on an OPEN position (the instrument status channel reports limit_only per D1 WS-EXIT-003 / WS-INST-008) triggers an ACTIVE exit via a single IOC limit order at best_bid (NOT a market sell, and NOT the cancel_only / maintenance HOLD branch above which submits no order), emitting evt:TRADE_CLOSE with exit_reason = PAIR_LIMIT_ONLY_EXIT.
+        q1_do: owns ALL normal exits across layers L1a (regime-reversal take-profit) and L2 (MAE threshold), direction-symmetric — a LONG closes via spot market SELL, a SHORT closes via Kraken MARGIN market BUY-to-cover (reduce_only) per ar:AR-009; L3 emergency SL is off-book Kraken-side crash protection only and is NOT owned by Exit Controller runtime; OTO conditional orders evaluated and REJECTED per ar:AR-008; reads Position Mirror via WSManager helper methods only (wm.pm_get / wm.pm_iter) per rule:HR-PM-009 sole-writer pattern; does NOT mutate Position Mirror; enforces rule:HR-EC-016 conflict resolution (L1a Step 1 pair-status precondition + L2 priority over in-progress L1a).
+        q4_triggers: L1a regime conditions EC-L1A-001 HTF Regime Reversal (LONG 1H EMA(20) crosses below 1H EMA(50) / SHORT crosses above) / EC-L1A-002 Daily Regime Downgrade (00:00 UTC reclassification — LONG into TRENDING_NEG or NON_DIR_ELEVATED / SHORT into TRENDING_POS or NON_DIR_ELEVATED) (consumes mod:Regime_Engine regime classification + indicator:EMA20_daily + indicator:EMA50_daily); regime reversal is the take-profit exit (run to reversal; no fixed TP, no max-hold); L2 MAE breach — LONG (entry_fill_price - bid_price) / SHORT (ask_price - entry_fill_price) &gt;= ATR(14) x param:mae_mult on channel:kraken_ws_ticker (bid for long, ask for short); ar:AR-040 instrument status events (cancel_only / maintenance) gating L1a Step 1 precondition; ar:AR-040 limit_only pair-status transition on an OPEN position (the instrument status channel reports limit_only per D1 WS-EXIT-003 / WS-INST-008) triggers an ACTIVE exit via a single IOC limit order — LONG at best_bid (sell) / SHORT at best_ask (buy-to-cover) — (NOT a market order, and NOT the cancel_only / maintenance HOLD branch above which submits no order), emitting evt:TRADE_CLOSE with exit_reason = PAIR_LIMIT_ONLY_EXIT.
         q5_logs: emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus for every closed position with exit_reason in {MAE_THRESHOLD_BREACH, HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE, PAIR_LIMIT_ONLY_EXIT} (the four Exit-Controller normal-operation reasons); EMERGENCY_SL_FIRED is NOT an Exit-Controller exit_reason — it is the layer:L3_Emergency_SL crash-recovery reason emitted via channel:kraken_ws_executions exec_type=trade backfill on TothBot recovery, a distinct producer on the same contract:CIATS_Trade_Outcome_Bus (producer-partitioned exit_reason); per rule:HR-EC-016 emits ONE unified record per closed position (never two records for same position); CRITICAL alert logged when L1a Step 1 detects pair status == cancel_only OR maintenance (position HELD, no orders submitted); cancel-timeout fallback events (per layer_l2 req_id registry) logged when ACK not received within timeout window; on a PAIR_LIMIT_ONLY_EXIT the ar:AR-040 IOC-limit-at-best-bid exit is logged with its evt:TRADE_CLOSE record (exit_reason = PAIR_LIMIT_ONLY_EXIT).
         schema_version: 1.0
       </desc>
@@ -3174,7 +3174,7 @@ taxonomy:
         constraints: rule:HR-EC-013, rule:HR-EC-016, ar:AR-040
         consumes: mod:Regime_Engine, indicator:EMA20_daily, indicator:EMA50_daily
         produces: evt:TRADE_CLOSE
-        q1_do: regime-reversal / regime-downgrade exit path within mod:Exit_Controller; rule:HR-EC-016 Step 1 precondition — checks pair status via ar:AR-040 instrument status BEFORE any cancel or sell action; IF pair status == cancel_only OR maintenance THEN HOLD position, raise CRITICAL alert, do NOT proceed (resting emergSL on Kraken matching engine is the only protection in pair-disruption states); ELSE proceeds with WS cancel_order(emergSL) then WS market_sell sequence per rule:HR-EC-013; paper mode dispatches via PT_MODE_002 simulated local fill.
+        q1_do: regime-reversal / regime-downgrade exit path within mod:Exit_Controller; rule:HR-EC-016 Step 1 precondition — checks pair status via ar:AR-040 instrument status BEFORE any cancel or sell action; IF pair status == cancel_only OR maintenance THEN HOLD position, raise CRITICAL alert, do NOT proceed (resting emergSL on Kraken matching engine is the only protection in pair-disruption states); ELSE proceeds with WS cancel_order(emergSL) then the WS market close — LONG spot market SELL / SHORT Kraken MARGIN market BUY-to-cover (reduce_only) per ar:AR-009 — sequence per rule:HR-EC-013; paper mode dispatches via PT_MODE_002 simulated local fill.
         q4_triggers: EC-L1A-001 HTF Regime Reversal — 1H EMA(20) crosses BELOW 1H EMA(50) while long position open (Gate-4 symmetry; exit_reason HTF_REGIME_REVERSAL; short-side mirror, mod:Short_Module: 1H EMA(20) crosses ABOVE 1H EMA(50) while a short position is open); OR EC-L1A-002 Daily Regime Downgrade — 00:00 UTC regime refresh reclassifies an open-position pair TRENDING_POSITIVE -&gt; TRENDING_NEGATIVE or NON_DIR + ELEVATED_VOL (Gate-3 symmetry; exit_reason DAILY_REGIME_DOWNGRADE; short-side mirror: TRENDING_NEGATIVE -&gt; TRENDING_POSITIVE or NON_DIR + ELEVATED_VOL against an open short) - regime reversal IS the take-profit exit (run to reversal; no fixed TP and no max-hold); precondition gate: ar:AR-040 pair status events on instrument-status channel for pairs with open positions; if rule:HR-EC-016(b) priority applies, Layer 2 MAE breach during in-progress L1a sequence overrides L1a reason — complete cancel sequence, market_sell with exit_reason = MAE_THRESHOLD_BREACH (not the original L1a reason).
         q5_logs: exit_reason in {HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE}; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus; CRITICAL alert logged on Step 1 HOLD branch (pair status == cancel_only OR maintenance) — position retained, no orders submitted, alert routed to operator per ar:AR-040 + rule:HR-EC-016(a); if rule:HR-EC-016(b) priority override fires, exit_reason logged as MAE_THRESHOLD_BREACH (Layer 2 reason) not the original L1a reason.
         schema_version: 1.0
@@ -3183,7 +3183,7 @@ taxonomy:
 
     <rect x="60" y="254" width="420" height="46" fill="#eff6ff" stroke="#1e40af" stroke-width="1" rx="4"/>
     <text x="270" y="274" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">HTF Regime Reversal (EC-L1A-001)</text>
-    <text x="270" y="291" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">1H EMA(20) crosses below 1H EMA(50)</text>
+    <text x="270" y="291" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">L: 1H EMA20 below EMA50  ·  S: EMA20 above EMA50</text>
 
     <rect x="60" y="310" width="420" height="46" fill="#eff6ff" stroke="#1e40af" stroke-width="1" rx="4"/>
     <text x="270" y="330" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">Take-Profit = Reversal</text>
@@ -3191,10 +3191,10 @@ taxonomy:
 
     <rect x="60" y="366" width="420" height="46" fill="#eff6ff" stroke="#1e40af" stroke-width="1" rx="4"/>
     <text x="270" y="386" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">Daily Regime Downgrade (EC-L1A-002)</text>
-    <text x="270" y="403" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">00:00 UTC regime reclassification</text>
+    <text x="270" y="403" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">00:00 UTC reclass  ·  L: to TRENDING_NEG  ·  S: to TRENDING_POS</text>
 
     <rect x="60" y="426" width="420" height="64" fill="#dcfce7" stroke="#16a34a" stroke-width="2" rx="4"/>
-    <text x="270" y="450" font-size="13" font-weight="700" fill="#14532d" text-anchor="middle">ACTION: WS cancel_order(emergSL) + WS market_sell</text>
+    <text x="270" y="450" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">ACTION: cancel emergSL + L: market SELL / S: BUY-to-cover</text>
     <text x="270" y="470" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">Paper mode: simulated locally per pt_mode:PT_MODE_002</text>
 
     <rect x="60" y="500" width="420" height="36" fill="#fafafa" stroke="#cbd5e1" stroke-width="1" rx="4"/>
@@ -3235,8 +3235,8 @@ taxonomy:
         consumes: indicator:ATR_14, param:mae_mult
         produces: evt:TRADE_CLOSE
         position_mirror_access: read-only via WSManager helper methods per rule:HR-PM-009 (entry_fill_price + qty + fees_entry_usd read from PositionRecord at MAE-trigger time; Layer 2 does NOT mutate Position Mirror).
-        q1_do: MAE-threshold market-sell exit path within mod:Exit_Controller; on breach detection executes ordered sequence (1) WS cancel_order(emergSL off-book) -&gt; (2) WS add_order(market sell, taker 0.26% fee); the emergSL cancel MUST confirm before market sell (rule:HR-EC-014 sequence-critical); req_id registry tracks each cancel ACK with cancel-timeout fallback (timeout -&gt; check executions channel; confirmed -&gt; proceed; unknown -&gt; retry 1x; 2nd timeout -&gt; alert + hold position + alert operator); NEVER market sell with ambiguous order state; reads PositionRecord via wm.pm_get helper per rule:HR-PM-009 (does NOT mutate Position Mirror); rule:HR-EC-016(b) priority semantics — if L1a sequence in progress at breach time, complete L1a cancel sequence then execute market sell with exit_reason override.
-        q4_triggers: (entry_fill_price - bid_price) &gt;= ATR(14) x param:mae_mult (1.5x default) evaluated on channel:kraken_ws_ticker bbo bid for each open position; ATR_14 value sourced per-position from PositionRecord entry-time snapshot (not live-recomputed); evaluation cadence per tick update on subscribed ticker channel; MPP risk acknowledged (C-1 dv1_4) — market sell may reject on wide spread, Exit Controller must handle and retry.
+        q1_do: MAE-threshold market-sell exit path within mod:Exit_Controller; on breach detection executes ordered sequence (1) WS cancel_order(emergSL off-book) -&gt; (2) WS add_order — LONG spot market SELL / SHORT Kraken MARGIN market BUY-to-cover (reduce_only) per ar:AR-009 — taker 0.26% fee; the emergSL cancel MUST confirm before the market close (rule:HR-EC-014 sequence-critical); req_id registry tracks each cancel ACK with cancel-timeout fallback (timeout -&gt; check executions channel; confirmed -&gt; proceed; unknown -&gt; retry 1x; 2nd timeout -&gt; alert + hold position + alert operator); NEVER market sell with ambiguous order state; reads PositionRecord via wm.pm_get helper per rule:HR-PM-009 (does NOT mutate Position Mirror); rule:HR-EC-016(b) priority semantics — if L1a sequence in progress at breach time, complete L1a cancel sequence then execute market sell with exit_reason override.
+        q4_triggers: LONG (entry_fill_price - bid_price) / SHORT (ask_price - entry_fill_price) &gt;= ATR(14) x param:mae_mult (1.5x default) evaluated on channel:kraken_ws_ticker bbo (bid for long, ask for short) for each open position; ATR_14 value sourced per-position from PositionRecord entry-time snapshot (not live-recomputed); evaluation cadence per tick update on subscribed ticker channel; MPP risk acknowledged (C-1 dv1_4) — market sell may reject on wide spread, Exit Controller must handle and retry.
         q5_logs: exit_reason = MAE_THRESHOLD_BREACH; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus with realized P/L computed at market-sell taker fill price (taker 0.26% fee per ar:AR-007 fee structure); cancel-ACK timeout events logged via req_id registry; 2nd-timeout alert events logged (position HELD + operator alert); paper mode dispatches via PT_MODE_002 / PT_MODE_003 simulated locally.
         schema_version: 1.0
       </desc>
@@ -3244,7 +3244,7 @@ taxonomy:
 
     <rect x="1020" y="254" width="420" height="50" fill="#fff7ed" stroke="#9a3412" stroke-width="1" rx="4"/>
     <text x="1230" y="276" font-size="12" font-weight="700" fill="#7c2d12" text-anchor="middle">TRIGGER</text>
-    <text x="1230" y="294" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">(entry - bid) &gt;= ATR(14) x param:mae_mult (1.5x)</text>
+    <text x="1230" y="294" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">L:(entry-bid) / S:(ask-entry) &gt;= ATR(14) x mae_mult (1.5x)</text>
 
     <rect x="1020" y="314" width="420" height="32" fill="#dbeafe" stroke="#1e40af" stroke-width="1" rx="4"/>
     <text x="1230" y="334" font-size="11" font-weight="600" fill="#1e3a8a" text-anchor="middle">(1) WS cancel_order(emergSL off-book)</text>
@@ -3262,7 +3262,7 @@ taxonomy:
     <text x="1230" y="542" font-size="10" font-weight="400" fill="#7f1d1d" text-anchor="middle">2nd timeout -&gt; alert + hold position + alert operator</text>
 
     <rect x="1020" y="558" width="420" height="32" fill="#dcfce7" stroke="#16a34a" stroke-width="1" rx="4"/>
-    <text x="1230" y="578" font-size="11" font-weight="600" fill="#14532d" text-anchor="middle">(2) WS add_order (market sell — taker 0.26% fee)</text>
+    <text x="1230" y="578" font-size="11" font-weight="600" fill="#14532d" text-anchor="middle">(2) add_order — L: spot SELL / S: margin BUY-to-cover (0.26%)</text>
 
     <rect x="1020" y="598" width="420" height="42" fill="#fee2e2" stroke="#b91c1c" stroke-width="1" rx="4"/>
     <text x="1230" y="616" font-size="10" font-weight="700" fill="#991b1b" text-anchor="middle">MPP RISK (C-1 dv1_4)</text>
@@ -3293,7 +3293,7 @@ taxonomy:
         constraints: ar:AR-008, rule:HR-PM-009
         consumes: indicator:ATR_14, param:emergency_sl_mult
         produces: evt:TRADE_CLOSE
-        q1_do: off-book emergency stop-market resting on container:Matching_Engine — crash protection ONLY, NOT a normal exit path; placed at entry-time distance entry_fill_price - (ATR(14) x param:emergency_sl_mult) for longs (direction-symmetric for shorts per ar:AR-073); survives any TothBot failure mode (VPS crash, internet severed, unrecoverable WS disconnect, TothBot process death); Exit Controller does NOT actively manage L3 at runtime beyond initial placement at entry + final cancellation on normal exit (L1a or L2 completion); position_mirror_access semantics per rule:HR-PM-009 read-only via helpers.
+        q1_do: off-book emergency stop-market resting on container:Matching_Engine — crash protection ONLY, NOT a normal exit path; placed at entry-time distance — LONG entry_fill_price - (ATR(14) x param:emergency_sl_mult) as a resting SELL stop BELOW entry / SHORT entry_fill_price + (ATR(14) x param:emergency_sl_mult) as a resting BUY-to-cover stop ABOVE entry (Kraken margin, reduce_only) per ar:AR-073; survives any TothBot failure mode (VPS crash, internet severed, unrecoverable WS disconnect, TothBot process death); Exit Controller does NOT actively manage L3 at runtime beyond initial placement at entry + final cancellation on normal exit (L1a or L2 completion); position_mirror_access semantics per rule:HR-PM-009 read-only via helpers.
         q4_triggers: container:Matching_Engine stop-market price condition met while TothBot is OFFLINE (VPS crash / TothBot process down / internet severed / unrecoverable WS disconnect ar:AR-008); Kraken matching engine executes the stop-market autonomously without TothBot signaling required; SHOULD NEVER FIRE under normal operating conditions because L1a / L2 close positions first.
         q5_logs: exit_reason = EMERGENCY_SL_FIRED -&gt; evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus; record emitted on TothBot recovery / WS reconnect via channel:kraken_ws_executions exec_type=trade backfill at the stop-market price; if fired, system_failure_event must be investigated as a forensic incident (alert raised, post-mortem opened) — should never fire in normal operation per ar:AR-008.
         schema_version: 1.0
@@ -3304,7 +3304,7 @@ taxonomy:
     <text x="750" y="900" font-size="12" font-weight="700" fill="#7f1d1d" text-anchor="middle">FIRES ONLY: VPS crash / TothBot down / internet severed / unrecoverable WS disconnect</text>
 
     <rect x="60" y="924" width="1380" height="40" fill="#fef2f2" stroke="#7f1d1d" stroke-width="1" rx="4"/>
-    <text x="750" y="943" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">Off-book emergSL stop-market at ATR(14) x param:emergency_sl_mult (3.0x) on container:Matching_Engine</text>
+    <text x="750" y="943" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">Off-book emergSL stop-market ATR(14) x emergency_sl_mult (3.0x) — L: SELL stop below entry / S: BUY-to-cover stop above entry</text>
     <text x="750" y="958" font-size="10" font-weight="400" fill="#7f1d1d" text-anchor="middle">crash protection — survives any TothBot failure (ar:AR-008)</text>
 
     <rect x="60" y="974" width="900" height="40" fill="#fee2e2" stroke="#b91c1c" stroke-width="1" rx="4"/>
@@ -3325,7 +3325,7 @@ taxonomy:
         constraints: ar:AR-008
         consumes: indicator:ATR_14, param:mae_mult
         produces: none
-        q1_do: the sacred 1:1.5 R:R is the ENTRY-ACCEPTANCE FLOOR - a minimum-expected-value admission test on expected R:R AT ENTRY, evaluated at Gate-8 using ACTUAL entry_fill_price (NOT limit price - why OTO conditional orders were rejected per ar:AR-008). Risk leg: mae_pct = ATR(14) x param:mae_mult / entry_fill_price; net_loss = mae_pct + entry taker fee + MAE taker fee. Reward leg: expected_reward = a CIATS-owned RUN-TO-REVERSAL estimate (seeded pre-200-trades, tuned from paper data after the 200-trade floor; the estimator mechanism is at Gate-8, the seed value in TB00000 sec 8). ACCEPTANCE (rule A1): admit the candidate iff expected_reward / net_loss &gt;= 1.5 (SACRED - hardcoded - the only hardcoded value, rule:Sacred_R_R_1_to_1_5); reject below the floor. The floor NEVER constructs an exit price and NEVER closes a position - there is NO gross_target TP limit; the take-profit is regime reversal (run to reversal). emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price is NEVER in the R:R formula (L3 is crash protection only, not a risk leg).
+        q1_do: the sacred 1:1.5 R:R is the ENTRY-ACCEPTANCE FLOOR - a minimum-expected-value admission test on expected R:R AT ENTRY, evaluated at Gate-8 using ACTUAL entry_fill_price (NOT limit price - why OTO conditional orders were rejected per ar:AR-008). Risk leg: mae_pct = ATR(14) x param:mae_mult / entry_fill_price; net_loss = mae_pct + entry taker fee + MAE taker fee (direction-symmetric — LONG net P&amp;L = (exit - entry) x qty with a buy-to-open taker + a sell exit taker; SHORT net P&amp;L = (entry - exit) x qty with a sell-to-open taker + a buy-to-cover exit taker, PLUS the Kraken margin borrow/rollover fee, a CIATS-owned seed whose value home is TB00000 sec 8). Reward leg: expected_reward = a CIATS-owned RUN-TO-REVERSAL estimate (seeded pre-200-trades, tuned from paper data after the 200-trade floor; the estimator mechanism is at Gate-8, the seed value in TB00000 sec 8). ACCEPTANCE (rule A1): admit the candidate iff expected_reward / net_loss &gt;= 1.5 (SACRED - hardcoded - the only hardcoded value, rule:Sacred_R_R_1_to_1_5); reject below the floor. The floor NEVER constructs an exit price and NEVER closes a position - there is NO gross_target TP limit; the take-profit is regime reversal (run to reversal). emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price is NEVER in the R:R formula (L3 is crash protection only, not a risk leg).
         q4_triggers: candidate evaluation at entry (Gate-8 Position Sizer), BEFORE order dispatch; the expected-R:R admission test is computed once per candidate; on PASS the candidate proceeds into CIATS-owned sizing, on FAIL it is rejected (evt:G8_A1_REJECT). No exit-price artefact is persisted (no gross_target).
         q5_logs: A1 acceptance recorded downstream by evt:G8_SIZED on accept and evt:G8_A1_REJECT on reject (Gate-8); no gross_target is computed or persisted; rule violation (admitting a candidate whose expected_reward / net_loss &lt; 1.5) would be a CRITICAL system invariant breach - must NEVER occur (hardcoded floor).
         schema_version: 1.0
@@ -3335,8 +3335,8 @@ taxonomy:
     <rect x="40" y="1066" width="1420" height="16" fill="#1e40af"/>
     <text x="750" y="1072" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">1:1.5 R:R FLOOR — ENTRY-ACCEPTANCE TEST at Gate-8 (ACTUAL fill price; expected reward = CIATS run-to-reversal estimate)</text>
 
-    <text x="60" y="1110" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">mae_pct = ATR(14) x param:mae_mult / entry_fill_price</text>
-    <text x="60" y="1130" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">net_loss = mae_pct + 0.26% (entry taker) + 0.26% (MAE taker)</text>
+    <text x="60" y="1110" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">mae_pct = ATR(14) x param:mae_mult / entry_fill_price   (net P&amp;L: LONG exit-entry / SHORT entry-exit)</text>
+    <text x="60" y="1130" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">net_loss = mae_pct + 0.26% entry taker + 0.26% exit taker   (+ Kraken margin borrow fee for SHORT)</text>
     <text x="60" y="1150" font-size="11" font-weight="700" fill="#7f1d1d" text-anchor="start">ACCEPT entry iff expected_reward / net_loss &gt;= 1.5  ***  SACRED — hardcoded — rule:Sacred_R_R_1_to_1_5  ***</text>
     <text x="60" y="1170" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">expected_reward = CIATS run-to-reversal estimate  —  NO gross_target TP limit (take-profit = regime reversal)</text>
     <text x="60" y="1190" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price  —  NEVER in R:R formula</text>
@@ -3358,13 +3358,13 @@ taxonomy:
         canonical: rule:HR-EC-016
         parent: mod:Exit_Controller
         constraints: rule:HR-EC-016 (Layer 2 priority over Layer 1a + L1a Step 1 pair-status precondition binding); ar:AR-040 (pair status events); rule:Sacred_R_R_1_to_1_5
-        consumes: channel:kraken_ws_ticker (bbo bid for MAE breach detection)
+        consumes: channel:kraken_ws_ticker (bbo — bid for long / ask for short — for MAE breach detection)
         produces: contract:CIATS_Trade_Outcome_Bus (ONE evt:TRADE_CLOSE record per closed position — never two records)
-        q1_do: encodes two architectural conflict-resolution rules governing mod:Exit_Controller behavior under simultaneous-event conditions — (a) L1a sequence Step 1 pair-status precondition check via ar:AR-040 instrument status events: IF status == cancel_only OR maintenance THEN HOLD position + CRITICAL alert + NO orders (the resting emergSL provides protection in pair-disruption states); (b) Layer 2 MAE breach takes priority over any in-progress Layer 1a (regime-reversal) sequence: complete the L1a cancel sequence, then execute market sell with exit_reason = MAE_THRESHOLD_BREACH (NOT original L1a reason).
-        q4_triggers: rule (a) — ar:AR-040 instrument status events (cancel_only / maintenance) on instrument-status channel BEFORE any L1a action attempt; rule (b) — L2 MAE breach (entry - bid) &gt;= ATR(14) x param:mae_mult on channel:kraken_ws_ticker bid during an in-progress L1a cancel-sequence (timing window: L1a cancel_order(emergSL) submitted but final market_sell not yet emitted);
+        q1_do: encodes two architectural conflict-resolution rules governing mod:Exit_Controller behavior under simultaneous-event conditions — (a) L1a sequence Step 1 pair-status precondition check via ar:AR-040 instrument status events: IF status == cancel_only OR maintenance THEN HOLD position + CRITICAL alert + NO orders (the resting emergSL provides protection in pair-disruption states); (b) Layer 2 MAE breach takes priority over any in-progress Layer 1a (regime-reversal) sequence: complete the L1a cancel sequence, then execute the market close (LONG sell / SHORT buy-to-cover) with exit_reason = MAE_THRESHOLD_BREACH (NOT original L1a reason).
+        q4_triggers: rule (a) — ar:AR-040 instrument status events (cancel_only / maintenance) on instrument-status channel BEFORE any L1a action attempt; rule (b) — L2 MAE breach (LONG entry - bid / SHORT ask - entry) &gt;= ATR(14) x param:mae_mult on the channel:kraken_ws_ticker bbo during an in-progress L1a cancel-sequence (timing window: L1a cancel_order(emergSL) submitted but final market_sell not yet emitted);
         q5_logs: rule (a) — CRITICAL alert + position HOLD event logged (no order submission); operator alert routed; rule (b) — exit_reason logged as MAE_THRESHOLD_BREACH (NOT original L1a reason — HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE suppressed in favor of Layer 2 reason).
         schema_version: 1.0
-        rule_text: rule:HR-EC-016 (verbatim): "(a) Layer 1a (regime-reversal) sequence MUST check pair status as Step 1 before any cancel or sell action. If pair status == cancel_only OR maintenance, HOLD position, raise CRITICAL alert, and do NOT proceed with the L1a sequence. The resting emergSL on the Kraken matching engine is the only protection in these pair-disruption states. (b) Layer 2 MAE threshold breach takes priority over any in-progress Layer 1a sequence. If MAE breaches while the L1a cancel sequence is underway, complete the cancel sequence then execute market sell with exit_reason=MAE_THRESHOLD_BREACH (not the original L1a reason)."
+        rule_text: rule:HR-EC-016 (verbatim): "(a) Layer 1a (regime-reversal) sequence MUST check pair status as Step 1 before any cancel or sell action. If pair status == cancel_only OR maintenance, HOLD position, raise CRITICAL alert, and do NOT proceed with the L1a sequence. The resting emergSL on the Kraken matching engine is the only protection in these pair-disruption states. (b) Layer 2 MAE threshold breach takes priority over any in-progress Layer 1a sequence. If MAE breaches while the L1a cancel sequence is underway, complete the cancel sequence then execute the market close (long sell / short buy-to-cover) with exit_reason=MAE_THRESHOLD_BREACH (not the original L1a reason)."
     </desc>
     <rect x="40" y="1330" width="1420" height="80" fill="#fde68a" stroke="#92400e" stroke-width="2" rx="6"/>
     <rect x="40" y="1330" width="1420" height="22" fill="#92400e" rx="6"/>
@@ -3377,7 +3377,7 @@ taxonomy:
 </svg>
   </div>
   <figcaption>
-    Image3 Exit Architecture (R13). CURRENT R: R13.<br>
+    Image3 Exit Architecture (R14). CURRENT R: R14.<br>
   </figcaption>
 </figure>
 <h2>5. Regime Taxonomy</h2>

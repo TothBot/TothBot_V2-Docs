@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_53
+DocVersion: dv1_54
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_53.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_54.txt
 DocDate:    06-15-2026
-DocTime:    02:40:30 UTC
+DocTime:    05:00:07 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30782,6 +30782,53 @@ LIVE: DocVersion dv1_53 / DocPath ...dv1_53... /
 DocDate 06-15-2026 / DocTime 02:40:30 UTC
 
 ----- END TB00726 dv1_243 OP RECORD -----
+
+
+----- BEGIN TB00728 PARITY Image3 dv1_244 OP RECORD -----
+
+TB00728 LONG/SHORT PARITY CAMPAIGN -- Image3 Exit Architecture made
+Long/Short SYMMETRIC (Bill directive 2026-06-15; gap register TB00728).
+0500000 dv1_243 -> dv1_244.
+
+CONTEXT: the exit architecture (mod:Exit_Controller; layers L1a/L2/L3;
+rule:HR-EC-016; the 4.2 R:R formula band) was written bid/sell/spot-only
+-- the SHORT side was implied via an ar:AR-073 pointer, not spelled. Per
+Bill's parity directive every exit now states BOTH directions explicitly.
+
+CHANGE (Image3 R13 -> R14; descs + visible text):
+ - L2 MAE breach: LONG (entry - bid) / SHORT (ask - entry) &gt;= ATR(14) x
+   param:mae_mult, on the ticker bid (long) / ask (short).
+ - close order: LONG spot market SELL / SHORT Kraken MARGIN market
+   BUY-to-cover (reduce_only) per ar:AR-009; MPP IOC retry LONG at
+   best_bid -0.2% / SHORT at best_ask +0.2%.
+ - L3 emergSL: LONG entry - ATR*emergency_sl_mult as a SELL stop BELOW
+   entry / SHORT entry + ATR*emergency_sl_mult as a BUY-to-cover stop
+   ABOVE entry (Kraken margin, reduce_only).
+ - 4.2 R:R band: net P&L sign LONG (exit-entry) / SHORT (entry-exit); the
+   two taker fee legs per side; a SHORT additionally carries the Kraken
+   margin borrow/rollover fee (a CIATS-owned seed, value home TB00000
+   sec 8 -- Bill ruled MODEL IT; the numeric value lands when the seed is
+   registered, pending the Kraken published-rate lookup).
+ - rule:HR-EC-016 breach expression + override action generalized to
+   bid/ask + sell/buy-to-cover.
+NO new seed VALUE is encoded in the figure (the borrow fee is a pointer to
+TB00000 sec 8; leverage_cap_short 3x / mae_mult / emergency_sl_mult are
+already seeded).
+
+R DISPOSITION: Image3 R13 -> R14 (descs + visible text). All other figures
+R HELD. The 4 Image3 R-cross-refs updated in lockstep
+(Image3_T2_R14_Exit_Architecture).
+
+VERIFICATION: HTML well-formed (tag classes balanced); no residual dv1_243
+/ Image3-R13; the short-side exit clauses grep-confirmed present.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_53 / DocPath ...dv1_53... /
+DocDate 06-15-2026 / DocTime 02:40:30 UTC
+LIVE: DocVersion dv1_54 / DocPath ...dv1_54... /
+DocDate 06-15-2026 / DocTime 05:00:07 UTC
+
+----- END TB00728 PARITY Image3 dv1_244 OP RECORD -----
 
 
 ============================================================
