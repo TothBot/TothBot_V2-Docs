@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_60
+DocVersion: dv1_61
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_60.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_61.txt
 DocDate:    06-15-2026
-DocTime:    07:24:01 UTC
+DocTime:    23:59:30 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31144,6 +31144,54 @@ LIVE: DocVersion dv1_60 / DocPath ...dv1_60... /
 DocDate 06-15-2026 / DocTime 07:24:01 UTC
 
 ----- END TB00728 PARITY Image8 Gate-7 concentration dv1_250 OP RECORD -----
+
+
+----- BEGIN TB00751 CIATS stop-width self-tuning step seed dv1_251 OP RECORD -----
+
+TB00751 CIATS SELF-TUNING -- the stop-loss-width FORM->TEST->ROUTE step
+registered as a CIATS-owned seed (building Bill's TB00750 directive: the
+coach must self-form, TEST, and route trading theories -- profitable
+emails Bill, unprofitable is reported). 0500000 dv1_250 -> dv1_251.
+
+CONTEXT: the producer (per-trade signal_params levels + heat-taken on the
+TRADE_CLOSE) and the drift-triggered candidate IDENTIFICATION were wired
+TB00750. TB00751 builds the loop that ACTS on it: the Proposal Engine
+FORMS a mae_mult theory from the per-trade heat-taken (field 11 mae_pct_
+reached) vs realized-outcome Spearman gate, TESTS it via the shadow-replay
+DO cohort + the absolute CHECK, and ROUTES by result (a profitable result
+emails Bill a C1 HR-CI-011 approval; an unprofitable one is reported in
+the periodic pull reports). The mae_mult DIRECTION is data-derived (the
+Spearman sign: tighten when more heat predicts a worse outcome, loosen on
+the converse); only the MAGNITUDE is a new seed.
+
+CHANGE:
+ - 0500000 Stream-2 CIATS-proposal element q1_do: a note documenting the
+   stop-width self-tuning step + the entry re-simulation (re-decide entry
+   from the stored signal_params levels: volume_ratio -> volume_sss_
+   threshold clean 1:1, the rsi bounds by the Spearman-picked side, ema
+   defers level != period).
+NEW SEED VALUE encoded: param:mae_mult_nudge_pct = 0.10 (a conservative
+10pct relative nudge; CIATS-owned, per-module; value home TB00000 sec 8
+v2_101). The seed is needed because mae_mult is an ATR(14) multiple while
+mae_pct_reached is a price fraction and the per-trade ATR is not stored on
+the record, so an exact data value cannot be derived. The entry-filter
+dials need NO seed (data-derived loser-median value, re-tested by the
+entry re-simulation). NEVER the sacred 1:1.5 R:R.
+
+R DISPOSITION: no figure R bump (a textual q1_do note, no polygon/region
+change).
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text
+957/957, desc 126/126, svg 10/10, rect 313/313); no new double-escape; no
+residual dv1_250.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_60 / DocPath ...dv1_60... /
+DocDate 06-15-2026 / DocTime 07:24:01 UTC
+LIVE: DocVersion dv1_61 / DocPath ...dv1_61... /
+DocDate 06-15-2026 / DocTime 23:59:30 UTC
+
+----- END TB00751 CIATS stop-width self-tuning step seed dv1_251 OP RECORD -----
 
 
 ============================================================

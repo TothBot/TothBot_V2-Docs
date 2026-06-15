@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_250</title>
+<title>0500000 System Architecture Overview dv1_251</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_250</td></tr>
+  <tr><td>DocVersion</td><td>dv1_251</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_250_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_251_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-15-2026</td></tr>
-  <tr><td>DocTime</td><td>00:45:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:59:30 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -1800,7 +1800,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
         constraints: decision:D-06_Paper_Live_Parity, ar:AR-072
         consumes: evt:TRADE_CLOSE
         produces: param:per_trade_size_usd, param:mae_mult, param:emergency_sl_mult
-        q1_do: 23-field per-close record schema (canonical encoding site = D5 + D6); consumes evt:TRADE_CLOSE from mod:Logger; feeds Statistical Engine (Mann-Whitney U, Sharpe, Spearman, EWMA, CUSUM, Half-Kelly), PDCA, Proposal Engine, Regime Library; writes 3 CIATS-owned params to Parameter Store at inter-trade boundaries only per ar:AR-072 + rule:HR-CI-003.
+        q1_do: 23-field per-close record schema (canonical encoding site = D5 + D6); consumes evt:TRADE_CLOSE from mod:Logger; feeds Statistical Engine (Mann-Whitney U, Sharpe, Spearman, EWMA, CUSUM, Half-Kelly), PDCA, Proposal Engine, Regime Library; writes 3 CIATS-owned params to Parameter Store at inter-trade boundaries only per ar:AR-072 + rule:HR-CI-003. TB00751 stop-loss-width self-tuning step: on a drift signal the Proposal Engine FORMS the mae_mult theory from the per-trade heat-taken (field 11 mae_pct_reached) vs realized-outcome Spearman gate, TESTS it via the shadow-replay DO cohort + the absolute CHECK, and ROUTES by result (profitable emails Bill a C1 HR-CI-011 approval, unprofitable is reported in the periodic pull reports). The mae_mult DIRECTION is data-derived (the Spearman sign: tighten when more heat predicts a worse outcome, loosen on the converse); only the MAGNITUDE is the CIATS-owned seed param:mae_mult_nudge_pct = 0.10 (a bounded relative nudge, value home TB00000 sec 8), because mae_mult is an ATR(14) multiple while mae_pct_reached is a price fraction and the per-trade ATR is not stored on the record. The entry-filter dials (param:volume_sss_threshold, the rsi bounds) take a data-derived loser-median value (no seed), re-tested by the entry re-simulation that re-decides entry from the stored signal_params levels; an ema level cannot re-decide its period, so ema defers to the report track.
         q4_triggers: Triggered by every evt:TRADE_CLOSE record arrival from mod:Logger; emits parameter updates (param:per_trade_size_usd, param:mae_mult, param:emergency_sl_mult) at inter-trade boundaries only — NEVER emits during trade-active periods per rule:HR-CI-003 inter-trade-boundary discipline.
         q5_logs: Schema-fingerprint mismatch detection logged (if incoming evt:TRADE_CLOSE record fails 23-field schema validation); per-record acceptance/rejection logged; parameter-update events logged with prior value + new value + trade-count-at-update + statistical-significance metric.
         schema_version: 1.0
