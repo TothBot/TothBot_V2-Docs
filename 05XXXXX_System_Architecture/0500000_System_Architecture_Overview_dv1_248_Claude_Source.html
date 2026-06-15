@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_247</title>
+<title>0500000 System Architecture Overview dv1_248</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_247</td></tr>
+  <tr><td>DocVersion</td><td>dv1_248</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_247_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_248_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-15-2026</td></tr>
   <tr><td>DocTime</td><td>00:45:00 UTC</td></tr>
 </table>
@@ -3427,14 +3427,14 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1280"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image4_T2_R9_Regime_Taxonomy</title>
+  <title>0500000_Image4_T2_R10_Regime_Taxonomy</title>
   <desc>
-    diagram_canonical: 0500000_Image4_T2_R9_Regime_Taxonomy
+    diagram_canonical: 0500000_Image4_T2_R10_Regime_Taxonomy
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R9.
+    CURRENT R: R10.
     governs: regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, mod:Regime_Engine, mod:Signal_Pipeline, mod:Long_Module, mod:Short_Module, mod:Logger, mod:CIATS, mod:Risk_Engine, contract:CIATS_Trade_Outcome_Bus, channel:kraken_rest_GetOHLCData, indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, gate:G3_Regime_Filter, gate:G6_Regime_Sizer, param:adx_threshold, param:atr_percentile_thresh, param:atr_rolling_window, param:htf_ema_periods, rule:HR-REGIME-007, ar:AR-009, ar:AR-017, ar:AR-036, ar:AR-072, ar:AR-073, ar:AR-074
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
   </desc>
@@ -3453,7 +3453,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 4 — Regime Taxonomy (6-Regime 3x2 Grid + Two-Level Tagging)</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image4_T2_R9_Regime_Taxonomy  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image4_T2_R10_Regime_Taxonomy  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -3560,16 +3560,16 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, param:adx_threshold, param:atr_percentile_thresh
         produces: none
         schema_version: 1.0
-        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily > EMA50_daily AND ATR(14) percentile <= param:atr_percentile_thresh (confirmed uptrend + acceptable volatility). Carries Entry Permission = TRUE + position-size multiplier = 1.0 (100%) at gate:G8_Position_Sizer.
-        q4_triggers: Emitted by mod:Regime_Engine daily compute when the four classifier conditions match. Triggers gate:G3_Regime_Filter ALLOW + gate:G6_Regime_Sizer pass-through (no reduction) for any signal evaluated against this asset_regime.
+        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily > EMA50_daily AND ATR(14) percentile <= param:atr_percentile_thresh (confirmed uptrend + acceptable volatility). SYMMETRIC PER-SIDE PERMISSION: LONG permitted via mod:Long_Module — Entry Permission = TRUE + position-size multiplier = 1.0 (100%) at gate:G6_Regime_Sizer / gate:G8_Position_Sizer. SHORT blocked at gate:G3_Regime_Filter (directionally incorrect — shorting a confirmed uptrend) per rule:HR-REGIME-007 directional cascade.
+        q4_triggers: Emitted by mod:Regime_Engine daily compute when the four classifier conditions match. For LONG signals: triggers gate:G3_Regime_Filter ALLOW + gate:G6_Regime_Sizer pass-through (multiplier 1.0, no reduction) routing to mod:Long_Module. For SHORT signals: triggers gate:G3_Regime_Filter BLOCK (cascade per rule:HR-REGIME-007); mod:Short_Module never dispatched in this regime.
         q5_logs: Logged implicitly via mod:Regime_Engine REGIME_CLASSIFIED event with regime_token=TRENDING_POS_NORMAL. Per-trade asset_regime tag persists on evt:TRADE_CLOSE record per rule:HR-REGIME-010.
       </desc>
     <rect x="290" y="400" width="585" height="115" fill="#bbf7d0" stroke="#14532d" stroke-width="2" rx="4"/>
     <text x="582" y="425" font-size="14" font-weight="700" text-anchor="middle" fill="#14532d">REGIME 1 — regime:TRENDING_POS_NORMAL</text>
-    <text x="582" y="447" font-size="12" font-weight="700" text-anchor="middle" fill="#166534">ENTRY PERMITTED — FULL position size (100%)</text>
-    <text x="582" y="467" font-size="11" text-anchor="middle">Optimal regime for TothBot V2 strategy</text>
-    <text x="582" y="485" font-size="10" text-anchor="middle">Confirmed uptrend + acceptable volatility</text>
-    <text x="582" y="503" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter; standard size at gate:G8_Position_Sizer</text>
+    <text x="582" y="447" font-size="12" font-weight="700" text-anchor="middle" fill="#166534">LONG permitted — FULL size (mult 1.0) / SHORT blocked</text>
+    <text x="582" y="467" font-size="11" text-anchor="middle">Confirmed uptrend + acceptable volatility — optimal Long regime</text>
+    <text x="582" y="485" font-size="10" text-anchor="middle">SHORT blocked at gate:G3_Regime_Filter (shorting an uptrend is directionally incorrect)</text>
+    <text x="582" y="503" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">Long passes gate:G3; mult 1.0 at gate:G6_Regime_Sizer / gate:G8_Position_Sizer (HR-REGIME-007)</text>
   </g>
 
   <!-- regime:TRENDING_POS_ELEVATED  (Row 1, Col 2) -->
@@ -3584,15 +3584,16 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, param:adx_threshold, param:atr_percentile_thresh, param:mae_mult
         produces: none
         schema_version: 1.0
-        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily > EMA50_daily AND ATR(14) percentile > param:atr_percentile_thresh (confirmed uptrend + elevated volatility). Entry Permission = TRUE + position-size multiplier = 1.0; risk distance adapts via param:mae_mult applied to wider ATR.
-        q4_triggers: Emitted by mod:Regime_Engine when the four classifier conditions match. Triggers gate:G3_Regime_Filter ALLOW; downstream ATR-adaptive stop placement absorbs the elevated volatility per D4 / §5.
+        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily > EMA50_daily AND ATR(14) percentile > param:atr_percentile_thresh (confirmed uptrend + elevated volatility). SYMMETRIC PER-SIDE PERMISSION: LONG permitted via mod:Long_Module — Entry Permission = TRUE + position-size multiplier = 1.0 at gate:G6_Regime_Sizer; risk distance adapts via param:mae_mult applied to wider ATR. SHORT blocked at gate:G3_Regime_Filter (directionally incorrect) per rule:HR-REGIME-007 directional cascade.
+        q4_triggers: Emitted by mod:Regime_Engine when the four classifier conditions match. For LONG signals: triggers gate:G3_Regime_Filter ALLOW + gate:G6_Regime_Sizer multiplier 1.0 routing to mod:Long_Module; downstream ATR-adaptive stop placement absorbs the elevated volatility per D4 / §5. For SHORT signals: triggers gate:G3_Regime_Filter BLOCK (cascade per rule:HR-REGIME-007); mod:Short_Module never dispatched.
         q5_logs: Logged implicitly via REGIME_CLASSIFIED with regime_token=TRENDING_POS_ELEVATED. asset_regime tag persists on TRADE_CLOSE per HR-REGIME-010.
       </desc>
     <rect x="885" y="400" width="585" height="115" fill="#fed7aa" stroke="#9a3412" stroke-width="2" rx="4"/>
     <text x="1177" y="425" font-size="14" font-weight="700" text-anchor="middle" fill="#9a3412">REGIME 2 — regime:TRENDING_POS_ELEVATED</text>
-    <text x="1177" y="447" font-size="12" font-weight="700" text-anchor="middle" fill="#7c2d12">ENTRY PERMITTED — FULL position size (canonical: D4 / §5)</text>
-    <text x="1177" y="467" font-size="11" text-anchor="middle">Confirmed uptrend, ATR adapts risk distance via param:mae_mult</text>
-    <text x="1177" y="485" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter — D4 / §5 canonical</text>
+    <text x="1177" y="447" font-size="12" font-weight="700" text-anchor="middle" fill="#7c2d12">LONG permitted — FULL size (mult 1.0) / SHORT blocked (canonical: D4 / §5)</text>
+    <text x="1177" y="467" font-size="11" text-anchor="middle">Confirmed uptrend; ATR adapts Long risk distance via param:mae_mult</text>
+    <text x="1177" y="485" font-size="10" text-anchor="middle">SHORT blocked at gate:G3_Regime_Filter (directionally incorrect)</text>
+    <text x="1177" y="503" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">Long passes gate:G3 at mult 1.0 (gate:G6_Regime_Sizer); SHORT cascade-blocked (HR-REGIME-007)</text>
   </g>
 
   <!-- regime:NON_DIR_NORMAL  (Row 2, Col 1) -->
@@ -3607,15 +3608,15 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: indicator:ADX_14, indicator:ATR_14, param:adx_threshold, param:atr_percentile_thresh
         produces: none
         schema_version: 1.0
-        q1_do: Regime token emitted when ADX(14) <= param:adx_threshold AND ATR(14) percentile <= param:atr_percentile_thresh (no confirmed trend + acceptable volatility). Entry Permission = TRUE + position-size multiplier = 0.5 (50%) at gate:G6_Regime_Sizer per D4 / §5.
-        q4_triggers: Emitted by mod:Regime_Engine when the two classifier conditions match. Triggers gate:G3_Regime_Filter ALLOW + gate:G6_Regime_Sizer half-size reduction for any signal evaluated against this asset_regime.
+        q1_do: Regime token emitted when ADX(14) <= param:adx_threshold AND ATR(14) percentile <= param:atr_percentile_thresh (no confirmed trend + acceptable volatility). SYMMETRIC PER-SIDE PERMISSION (Bill ruling, DECISION B): BOTH sides permitted at HALF size — LONG via mod:Long_Module AND SHORT via mod:Short_Module, each Entry Permission = TRUE + position-size multiplier = 0.5 (50%) at gate:G6_Regime_Sizer per D4 / §5. Reduced conviction symmetric across both directions; no directional cascade applies (the only non-cascade tradeable cell for SHORT outside TRENDING_NEG).
+        q4_triggers: Emitted by mod:Regime_Engine when the two classifier conditions match. Triggers gate:G3_Regime_Filter ALLOW + gate:G6_Regime_Sizer half-size reduction (multiplier 0.5) for BOTH a LONG signal (routing to mod:Long_Module) AND a SHORT signal (routing to mod:Short_Module per ar:AR-009 Kraken margin) evaluated against this asset_regime.
         q5_logs: Logged implicitly via REGIME_CLASSIFIED with regime_token=NON_DIR_NORMAL. asset_regime tag persists on TRADE_CLOSE per HR-REGIME-010; mod:Signal_Pipeline logs ENTRY_SUBMITTED with half-size annotation.
       </desc>
     <rect x="290" y="525" width="585" height="115" fill="#fef9c3" stroke="#854d0e" stroke-width="2" rx="4"/>
     <text x="582" y="550" font-size="14" font-weight="700" text-anchor="middle" fill="#854d0e">REGIME 3 — regime:NON_DIR_NORMAL</text>
-    <text x="582" y="572" font-size="12" font-weight="700" text-anchor="middle" fill="#92400e">ENTRY PERMITTED — 50% position size (gate:G6_Regime_Sizer; canonical D4 / §5)</text>
-    <text x="582" y="592" font-size="11" text-anchor="middle">No confirmed trend, acceptable volatility — reduced conviction</text>
-    <text x="582" y="610" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">passes gate:G3_Regime_Filter — D4 / §5 canonical</text>
+    <text x="582" y="572" font-size="12" font-weight="700" text-anchor="middle" fill="#92400e">BOTH permitted — HALF size (mult 0.5) — LONG and SHORT (gate:G6_Regime_Sizer; D4 / §5)</text>
+    <text x="582" y="592" font-size="11" text-anchor="middle">No confirmed trend, acceptable volatility — reduced conviction, symmetric both sides</text>
+    <text x="582" y="610" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">LONG via mod:Long_Module + SHORT via mod:Short_Module, each mult 0.5 (Bill symmetric ruling)</text>
   </g>
 
   <!-- regime:NON_DIR_ELEVATED  (Row 2, Col 2) -->
@@ -3630,16 +3631,16 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: indicator:ADX_14, indicator:ATR_14, param:adx_threshold, param:atr_percentile_thresh
         produces: none
         schema_version: 1.0
-        q1_do: Regime token emitted when ADX(14) <= param:adx_threshold AND ATR(14) percentile > param:atr_percentile_thresh (no confirmed trend + elevated volatility = whipsaw). Entry Permission = FALSE unconditionally per rule:HR-REGIME-008; gate:G3_Regime_Filter blocks all signals.
-        q4_triggers: Emitted by mod:Regime_Engine when the two classifier conditions match. Triggers gate:G3_Regime_Filter BLOCK; signal evaluation halts; mod:Signal_Pipeline does not produce ENTRY_SUBMITTED for any pair currently classified as NON_DIR_ELEVATED.
+        q1_do: Regime token emitted when ADX(14) <= param:adx_threshold AND ATR(14) percentile > param:atr_percentile_thresh (no confirmed trend + elevated volatility = whipsaw). SYMMETRIC PER-SIDE PERMISSION: BOTH sides blocked — LONG (mod:Long_Module) AND SHORT (mod:Short_Module) Entry Permission = FALSE unconditionally per rule:HR-REGIME-008; gate:G3_Regime_Filter blocks all signals of either direction.
+        q4_triggers: Emitted by mod:Regime_Engine when the two classifier conditions match. Triggers gate:G3_Regime_Filter BLOCK for BOTH LONG and SHORT signals; signal evaluation halts on either side; mod:Signal_Pipeline does not produce ENTRY_SUBMITTED toward mod:Long_Module or mod:Short_Module for any pair currently classified as NON_DIR_ELEVATED.
         q5_logs: Logged implicitly via REGIME_CLASSIFIED with regime_token=NON_DIR_ELEVATED. mod:Signal_Pipeline logs G3_REGIME_FILTER_BLOCK event with reason=NON_DIR_ELEVATED for any candidate signal rejected here.
       </desc>
     <rect x="885" y="525" width="585" height="115" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="4"/>
     <text x="1177" y="550" font-size="14" font-weight="700" text-anchor="middle" fill="#991b1b">REGIME 4 — regime:NON_DIR_ELEVATED</text>
-    <text x="1177" y="572" font-size="12" font-weight="700" text-anchor="middle" fill="#7f1d1d">NO ENTRY — gate:G3_Regime_Filter BLOCKS</text>
+    <text x="1177" y="572" font-size="12" font-weight="700" text-anchor="middle" fill="#7f1d1d">NO ENTRY — LONG blocked AND SHORT blocked (gate:G3_Regime_Filter)</text>
     <text x="1177" y="592" font-size="11" text-anchor="middle">High volatility with no directional trend = whipsaw territory</text>
-    <text x="1177" y="610" font-size="10" text-anchor="middle">Risk-adjusted expectancy is negative for this combination</text>
-    <text x="1177" y="628" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">blocked at gate:G3_Regime_Filter unconditionally (HR-REGIME-008)</text>
+    <text x="1177" y="610" font-size="10" text-anchor="middle">Risk-adjusted expectancy negative both directions — symmetric block</text>
+    <text x="1177" y="628" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">both mod:Long_Module + mod:Short_Module blocked at gate:G3 unconditionally (HR-REGIME-008)</text>
   </g>
 
   <!-- regime:TRENDING_NEG_NORMAL  (Row 3, Col 1) -->
@@ -3654,16 +3655,16 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods
         produces: none
         schema_version: 1.0
-        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily < EMA50_daily AND ATR(14) percentile <= param:atr_percentile_thresh (confirmed downtrend + acceptable volatility). DIRECTIONAL CASCADE per rule:HR-REGIME-007: LONG blocked at gate:G3_Regime_Filter (directionally incorrect); SHORT permitted via mod:Short_Module dispatch per ar:AR-009 + ar:AR-072 + ar:AR-073.
-        q4_triggers: Emitted by mod:Regime_Engine when the four classifier conditions match. Triggers gate:G3_Regime_Filter BLOCK for Long signals; triggers mod:Short_Module dispatch for Short signals per HR-REGIME-007 Stage M sequencing.
+        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily < EMA50_daily AND ATR(14) percentile <= param:atr_percentile_thresh (confirmed downtrend + acceptable volatility). SYMMETRIC PER-SIDE PERMISSION — DIRECTIONAL CASCADE per rule:HR-REGIME-007 (mirror of TRENDING_POS): LONG blocked at gate:G3_Regime_Filter (directionally incorrect — buying a confirmed downtrend). SHORT permitted via mod:Short_Module dispatch per ar:AR-009 (Kraken margin) + ar:AR-072 + ar:AR-073 — Entry Permission = TRUE + position-size multiplier = 1.0 (100%) at gate:G6_Regime_Sizer (the clean mirror of Long's TRENDING_POS = 1.0).
+        q4_triggers: Emitted by mod:Regime_Engine when the four classifier conditions match. Triggers gate:G3_Regime_Filter BLOCK for Long signals; triggers mod:Short_Module dispatch for Short signals at gate:G6_Regime_Sizer multiplier 1.0 per HR-REGIME-007 Stage M sequencing -- the ordered steps routing a confirmed short signal: gate:G3_Regime_Filter (LONG-block / SHORT-route) -> gate:G6_Regime_Sizer (apply multiplier 1.0) -> gate:G8_Position_Sizer -> mod:Short_Module (Kraken margin dispatch per ar:AR-009).
         q5_logs: Logged via REGIME_CLASSIFIED with regime_token=TRENDING_NEG_NORMAL. mod:Signal_Pipeline logs G3_LONG_BLOCK + G3_SHORT_ROUTE events with reason=HR-REGIME-007 directional cascade.
       </desc>
     <rect x="290" y="650" width="585" height="115" fill="#fee2e2" stroke="#7f1d1d" stroke-width="2" rx="4"/>
     <text x="582" y="675" font-size="14" font-weight="700" text-anchor="middle" fill="#7f1d1d">REGIME 5 — regime:TRENDING_NEG_NORMAL</text>
-    <text x="582" y="697" font-size="12" font-weight="700" text-anchor="middle" fill="#991b1b">DIRECTIONAL CASCADE — gate:G3_Regime_Filter</text>
-    <text x="582" y="717" font-size="11" text-anchor="middle">LONG blocked: confirmed downtrend, long entry directionally incorrect</text>
-    <text x="582" y="735" font-size="10" text-anchor="middle">SHORT permitted via mod:Short_Module (ar:AR-009 Kraken margin)</text>
-    <text x="582" y="753" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">per HR-REGIME-007 directional cascade (ar:AR-072 + ar:AR-073)</text>
+    <text x="582" y="697" font-size="12" font-weight="700" text-anchor="middle" fill="#991b1b">LONG blocked / SHORT permitted — FULL size (mult 1.0) — DIRECTIONAL CASCADE</text>
+    <text x="582" y="717" font-size="11" text-anchor="middle">LONG blocked at gate:G3_Regime_Filter: long entry into a confirmed downtrend is directionally incorrect</text>
+    <text x="582" y="735" font-size="10" text-anchor="middle">SHORT permitted via mod:Short_Module at mult 1.0 (gate:G6_Regime_Sizer) — ar:AR-009 Kraken margin</text>
+    <text x="582" y="753" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">per HR-REGIME-007 directional cascade (Stage M: G3 to G6 to G8 to Short_Module; ar:AR-072 + ar:AR-073)</text>
   </g>
 
   <!-- regime:TRENDING_NEG_ELEVATED  (Row 3, Col 2) -->
@@ -3678,16 +3679,16 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: indicator:ADX_14, indicator:ATR_14, indicator:EMA20_daily, indicator:EMA50_daily, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods
         produces: none
         schema_version: 1.0
-        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily < EMA50_daily AND ATR(14) percentile > param:atr_percentile_thresh (confirmed downtrend + elevated volatility = worst-case for Longs). DIRECTIONAL CASCADE per HR-REGIME-007: LONG blocked at gate:G3_Regime_Filter; SHORT permitted via mod:Short_Module per ar:AR-009 + ar:AR-072 + ar:AR-073.
-        q4_triggers: Emitted by mod:Regime_Engine when the four classifier conditions match. Triggers gate:G3_Regime_Filter BLOCK for Long signals; triggers mod:Short_Module dispatch for Short signals per HR-REGIME-007 Stage M sequencing; Short side absorbs elevated volatility via ATR-adaptive stops.
+        q1_do: Regime token emitted when ADX(14) > param:adx_threshold AND EMA20_daily < EMA50_daily AND ATR(14) percentile > param:atr_percentile_thresh (confirmed downtrend + elevated volatility = worst-case for Longs). SYMMETRIC PER-SIDE PERMISSION — DIRECTIONAL CASCADE per HR-REGIME-007: LONG blocked at gate:G3_Regime_Filter. SHORT permitted via mod:Short_Module per ar:AR-009 (Kraken margin) + ar:AR-072 + ar:AR-073 — Entry Permission = TRUE + position-size multiplier = 1.0 (100%) at gate:G6_Regime_Sizer (mirror of Long's TRENDING_POS = 1.0); Short side absorbs the elevated volatility via ATR-adaptive stops.
+        q4_triggers: Emitted by mod:Regime_Engine when the four classifier conditions match. Triggers gate:G3_Regime_Filter BLOCK for Long signals; triggers mod:Short_Module dispatch for Short signals at gate:G6_Regime_Sizer multiplier 1.0 per HR-REGIME-007 Stage M sequencing -- the ordered steps routing a confirmed short signal: gate:G3_Regime_Filter (LONG-block / SHORT-route) -> gate:G6_Regime_Sizer (apply multiplier 1.0) -> gate:G8_Position_Sizer -> mod:Short_Module (Kraken margin dispatch per ar:AR-009); Short side absorbs elevated volatility via ATR-adaptive stops.
         q5_logs: Logged via REGIME_CLASSIFIED with regime_token=TRENDING_NEG_ELEVATED. mod:Signal_Pipeline logs G3_LONG_BLOCK + G3_SHORT_ROUTE events; never reaches gate:G8_Position_Sizer on Long path.
       </desc>
     <rect x="885" y="650" width="585" height="115" fill="#fecaca" stroke="#7f1d1d" stroke-width="2" rx="4"/>
     <text x="1177" y="675" font-size="14" font-weight="700" text-anchor="middle" fill="#7f1d1d">REGIME 6 — regime:TRENDING_NEG_ELEVATED</text>
-    <text x="1177" y="697" font-size="12" font-weight="700" text-anchor="middle" fill="#991b1b">DIRECTIONAL CASCADE — gate:G3_Regime_Filter</text>
-    <text x="1177" y="717" font-size="11" text-anchor="middle">LONG blocked: confirmed downtrend + high volatility = worst-case for longs</text>
-    <text x="1177" y="735" font-size="10" text-anchor="middle">SHORT permitted via mod:Short_Module (HR-REGIME-007 directional cascade)</text>
-    <text x="1177" y="753" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">per HR-REGIME-007 cascade (ar:AR-072 + ar:AR-073); never reaches Long sizing</text>
+    <text x="1177" y="697" font-size="12" font-weight="700" text-anchor="middle" fill="#991b1b">LONG blocked / SHORT permitted — FULL size (mult 1.0) — DIRECTIONAL CASCADE</text>
+    <text x="1177" y="717" font-size="11" text-anchor="middle">LONG blocked at gate:G3_Regime_Filter: confirmed downtrend + high volatility = worst-case for longs</text>
+    <text x="1177" y="735" font-size="10" text-anchor="middle">SHORT permitted via mod:Short_Module at mult 1.0 (gate:G6_Regime_Sizer); absorbs vol via ATR-adaptive stops</text>
+    <text x="1177" y="753" font-size="10" font-style="italic" text-anchor="middle" fill="#475569">HR-REGIME-007 cascade (Stage M: G3 to G6 to G8 to Short_Module; ar:AR-072 + ar:AR-073); never reaches Long sizing</text>
   </g>
 
   <!-- TWO-LEVEL TAGGING SECTION (decoration) -->
@@ -3732,14 +3733,14 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
         consumes: regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED
         produces: evt:ENTRY_SUBMITTED
         schema_version: 1.0
-        q1_do: Reads asset_regime from pre-comp regime cache populated by mod:Regime_Engine; applies gate:G3_Regime_Filter (BLOCK regime 4 unconditionally per HR-REGIME-008; cascade regimes 5+6 LONG-block + SHORT-route per HR-REGIME-007); applies gate:G6_Regime_Sizer (50% size for regime 3 per D4 / §5; 100% for regimes 1+2); dispatches to mod:Long_Module or mod:Short_Module based on cascade per ar:AR-072 SC-GATE-1 variant + ar:AR-073 per-side state management.
+        q1_do: Reads asset_regime from pre-comp regime cache populated by mod:Regime_Engine; applies gate:G3_Regime_Filter (BLOCK regime 4 for BOTH sides unconditionally per HR-REGIME-008; cascade regimes 5+6 LONG-block + SHORT-route per HR-REGIME-007; regimes 1+2 SHORT-block + LONG-allow); applies gate:G6_Regime_Sizer per-side multipliers (LONG 1.0 in regimes 1+2; BOTH sides 0.5 in regime 3 per D4 / §5 Bill symmetric ruling; SHORT 1.0 in regimes 5+6); dispatches to mod:Long_Module or mod:Short_Module based on the per-side cascade per ar:AR-072 SC-GATE-1 variant + ar:AR-073 per-side state management.
         q4_triggers: Triggered per candidate signal evaluated through the 8-gate pipeline. Triggers ENTRY_SUBMITTED emission to mod:Execution_Engine (Long path) or mod:Short_Module (Short path per cascade); triggers G3_BLOCK event when regime filter rejects.
         q5_logs: G3_REGIME_FILTER_BLOCK (per rejected signal, with reason=regime_token), G3_LONG_BLOCK (cascade), G3_SHORT_ROUTE (cascade), G6_REGIME_SIZER_REDUCE (regime 3 half-size), evt:ENTRY_SUBMITTED (with asset_regime field included in payload).
       </desc>
     <rect x="20" y="996" width="355" height="106" fill="#dbeafe" stroke="#1e40af" stroke-width="1.5" rx="4"/>
     <text x="197" y="1020" font-size="13" font-weight="700" text-anchor="middle" fill="#1e40af">mod:Signal_Pipeline</text>
-    <text x="197" y="1040" font-size="10" text-anchor="middle">gate:G3_Regime_Filter — block 4; cascade 5/6</text>
-    <text x="197" y="1056" font-size="10" text-anchor="middle">gate:G6_Regime_Sizer — 50% for Reg 3</text>
+    <text x="197" y="1040" font-size="10" text-anchor="middle">gate:G3 — block 4 both sides; short-block 1/2; long-block + short-route 5/6</text>
+    <text x="197" y="1056" font-size="10" text-anchor="middle">gate:G6 — Long 1.0 (1/2); both 0.5 (Reg 3); Short 1.0 (5/6)</text>
     <text x="197" y="1074" font-size="10" text-anchor="middle">Reads asset_regime from pre-comp cache</text>
     <text x="197" y="1092" font-size="9" font-style="italic" text-anchor="middle" fill="#475569">CIATS-owned regime allowlist</text>
   </g>
@@ -3853,7 +3854,7 @@ periods 20/50, rolling window 50 days — all starting values. CIATS validates e
 </svg>
   </div>
   <figcaption>
-    Image4 Regime Taxonomy (R9). CURRENT R: R9.
+    Image4 Regime Taxonomy (R10). CURRENT R: R10.
   </figcaption>
 </figure>
 

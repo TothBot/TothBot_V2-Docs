@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_57
+DocVersion: dv1_58
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_57.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_58.txt
 DocDate:    06-15-2026
-DocTime:    05:36:05 UTC
+DocTime:    05:47:02 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30989,6 +30989,52 @@ LIVE: DocVersion dv1_57 / DocPath ...dv1_57... /
 DocDate 06-15-2026 / DocTime 05:36:05 UTC
 
 ----- END TB00728 PARITY Image2 dv1_247 OP RECORD -----
+
+
+----- BEGIN TB00728 PARITY Image4 dv1_248 OP RECORD -----
+
+TB00728 LONG/SHORT PARITY CAMPAIGN -- Image4 Regime Taxonomy six-cell
+grid converted to an explicit per-cell Long+Short permission+size matrix
+(Bill directive 2026-06-15; DECISION B SYMMETRIC). 0500000 dv1_247 ->
+dv1_248.
+
+CONTEXT: cells 1-4 stated the LONG policy only (Short implied/absent);
+the TRENDING_NEG cells routed Short but gave NO size multiplier; "Stage
+M sequencing" was referenced but never defined. Every cell now states
+BOTH sides' permission + size.
+
+CHANGE (Image4 R9 -> R10; six cell descs + visible text + the
+mod:Signal_Pipeline consumer):
+ - Regime 1/2 TRENDING_POS: LONG 1.0 / SHORT blocked (mirror of the
+   TRENDING_NEG cascade) -- made explicit.
+ - Regime 3 NON_DIR_NORMAL: BOTH permitted at HALF size 0.5 (DECISION B
+   SYMMETRIC -- Bill ruled symmetric; previously long-only).
+ - Regime 4 NON_DIR_ELEVATED: BOTH blocked (whipsaw) -- made explicit.
+ - Regime 5/6 TRENDING_NEG: SHORT permitted at multiplier 1.0 at
+   gate:G6_Regime_Sizer (the clean mirror of long 1.0) -- added; LONG
+   blocked. "Stage M sequencing" DEFINED inline (G3 LONG-block/SHORT-
+   route -> G6 mult 1.0 -> G8 -> mod:Short_Module margin dispatch AR-009).
+ - mod:Signal_Pipeline consumer: per-side G3 routing + per-side G6
+   multipliers stated.
+NO new seed VALUE (the 0.5 / 1.0 multipliers + the permission policy are
+GIVEN by Bill, not invented). DECISION A margin fee not referenced in
+this figure.
+
+R DISPOSITION: Image4 R9 -> R10 (3 canonical-token + desc CURRENT R +
+figcaption). All other figures R HELD. One new visible <text> line added
+in Regime 2 (tag balance preserved -- text 957/957).
+
+VERIFICATION: HTML well-formed (tag classes balanced); no residual
+dv1_247 / Image4-R9; the six-cell both-sides matrix + Stage-M definition
+present.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_57 / DocPath ...dv1_57... /
+DocDate 06-15-2026 / DocTime 05:36:05 UTC
+LIVE: DocVersion dv1_58 / DocPath ...dv1_58... /
+DocDate 06-15-2026 / DocTime 05:47:02 UTC
+
+----- END TB00728 PARITY Image4 dv1_248 OP RECORD -----
 
 
 ============================================================
