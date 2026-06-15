@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_248</title>
+<title>0500000 System Architecture Overview dv1_249</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_248</td></tr>
+  <tr><td>DocVersion</td><td>dv1_249</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_248_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_249_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-15-2026</td></tr>
   <tr><td>DocTime</td><td>00:45:00 UTC</td></tr>
 </table>
@@ -220,8 +220,8 @@ Tier 2 diagrams (D1 - D7) below.
         tier: 1
         parent_dcn: 0500000
         schema_version: 1.0
-        CURRENT R: R6.
-        governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 sec 4.3 paper-as-master) + ar:AR-001..AR-076 + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
+        CURRENT R: R7.
+        governs: rule:HR-PA-001 + rule:PA-001..PA-010 (TB00000 sec 4.3 paper-as-master) + ar:AR-001..AR-080 + container:KRAKEN + container:TothBot_Zone + container:CIATS_Zone
         drill_targets: 0500000_Image1_T2_Kraken_API_Connection_Architecture, 0500000_Image2_T2_Trading_Pipeline, 0500000_Image3_T2_Exit_Architecture, 0500000_Image4_T2_Regime_Taxonomy, 0500000_Image5_T2_CIATS_Architecture, 0500000_Image6_T2_Complete_System, 0500000_Image7_T2_Paper_Mode_Dispatch_Boundary
         Sacred constraint: Net 1:1.5 R:R MINIMUM - the hardcoded entry-acceptance floor (never lowered; exceeded when expected R:R is higher); the only value CIATS does not own or lower (CIATS-monitored, owns the sizing curve above the floor).
       </desc>
@@ -325,11 +325,11 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:TothBot_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image2_T2_R16_Trading_Pipeline, 0500000_Image3_T2_R14_Exit_Architecture, 0500000_Image6_T2_R20_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
-              constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-076
+              drill_targets: 0500000_Image2_T2_R16_Trading_Pipeline, 0500000_Image3_T2_R14_Exit_Architecture, 0500000_Image6_T2_R21_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
+              constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-080
               consumes: contract:OHLC_5m_System_Clock, contract:Parameter_Store_Snapshot, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:WSManager_Dispatch_Seam, contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE, evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
-              q1_do: event-processor container - receives Kraken events, runs 8-gate trading pipeline, sizes + dispatches orders, manages exits; hosts WS_Manager + Signal_Pipeline + Execution_Engine + Exit_Controller + Position_Mirror + Logger + Selection_Controller + Risk_Engine + Regime_Engine + Long_Module
+              q1_do: event-processor container - receives Kraken events, runs 8-gate trading pipeline, sizes + dispatches orders, manages exits; hosts WS_Manager + Signal_Pipeline + Execution_Engine + Exit_Controller + Position_Mirror + Logger + Selection_Controller + Risk_Engine + Regime_Engine + Long_Module + Short_Module (co-equal parallel sibling modules sharing only the WS data layer; Long = Kraken spot, Short = Kraken margin per ar:AR-009)
               q4_triggers: triggered by evt:CANDLE_CLOSE_TRIGGER every 5 min from contract:OHLC_5m_System_Clock; triggers evt:ENTRY_SUBMITTED + evt:ENTRY_FILLED + evt:TRADE_CLOSE + evt:PAPER_DISPATCH_BLOCKED via WSManager_Dispatch_Seam
               q5_logs: tothbot.log (all decision events, CRITICAL/HIGH/MEDIUM/LOW levels per Logger taxonomy) + Mail_Alerts dispatch at CRITICAL + HIGH levels via Logger Alert Out Of Band flow
               schema_version: 1.0
@@ -366,11 +366,11 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:CIATS_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image5_T2_R21_CIATS_Architecture
+              drill_targets: 0500000_Image5_T2_R22_CIATS_Architecture
               constraints: ar:AR-008 (Net 1:1.5 R:R sacred not CIATS-owned)
               consumes: contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE
               produces: contract:Parameter_Store_Snapshot, param:per_trade_size_usd, param:mae_mult, param:emergency_sl_mult, param:adx_threshold, param:atr_percentile_thresh, param:htf_ema_periods, param:min_volume_usd_daily
-              q1_do: continuous-improvement container - consumes contract:CIATS_Trade_Outcome_Bus + evt:TRADE_CLOSE; produces contract:Parameter_Store_Snapshot with CIATS-owned starting values; applies Mann-Whitney U + Sharpe + Spearman + CUSUM + Half-Kelly statistics at 200+ trade threshold
+              q1_do: continuous-improvement container - consumes contract:CIATS_Trade_Outcome_Bus + evt:TRADE_CLOSE; produces contract:Parameter_Store_Snapshot with CIATS-owned starting values; applies Mann-Whitney U + Sharpe + Spearman + CUSUM + Half-Kelly statistics at 200+ trade threshold; CIATS is a PER-MODULE framework - one independent instance per trading module (Long + Short), each with its own statistical pool, own 200-trade floor, and own Parameter Store, sharing only the mod:Logger / contract:CIATS_Trade_Outcome_Bus membrane (ar:AR-009 + sec 7 + sec 9; no cross-module pooling)
               q4_triggers: triggered by evt:TRADE_CLOSE on Trade Outcome Bus + 50-eval EWMA monitor + 200-trade HARD FLOOR inference gate + 600-trade per-regime gate; triggers Parameter_Store_Snapshot updates consumed by TothBot_Zone
               q5_logs: CIATS analysis events + parameter-change proposals logged via Logger to tothbot.log; parameter-change proposals requiring Bill ratification emitted at HIGH alert level to alerts@tothbot.com
               schema_version: 1.0
@@ -616,7 +616,7 @@ Tier 2 diagrams (D1 - D7) below.
             canonical: contract:CIATS_Trade_Outcome_Bus
             tier: 1
             parent_diagram: none
-            drill_targets: 0500000_Image5_T2_R21_CIATS_Architecture
+            drill_targets: 0500000_Image5_T2_R22_CIATS_Architecture
             constraints: ar:AR-008 (Net 1:1.5 R:R sacred)
             consumes: contract:Parameter_Store_Snapshot (TOTHBOT reads CIATS values)
             produces: evt:TRADE_CLOSE (TOTHBOT publishes outcomes to CIATS)
@@ -717,7 +717,7 @@ Tier 2 diagrams (D1 - D7) below.
     </svg>
   </div>
   <figcaption>
-    Tier 1 System Context (R6). CURRENT R: R6.
+    Tier 1 System Context (R7). CURRENT R: R7.
   </figcaption>
 </figure>
 
@@ -730,7 +730,7 @@ TothBot is an automated cryptocurrency spot trading system on Kraken exchange. I
 <br>
 24/7/365 on a Hetzner VPS, processes 5-minute OHLC candle close events as its system
 <br>
-clock, and executes long-only trades using a momentum-based signal engine.
+clock, and executes direction-symmetric LONG and SHORT trades via the parallel Long_Module / Short_Module framework (long on Kraken spot, short on Kraken margin per ar:AR-009) using a momentum-based signal engine.
 </p>
 <p>
 TothBot is not an external system connected to Kraken — it IS Kraken&#x27;s event processor.
@@ -3922,15 +3922,15 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1200"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image5_T2_R21_CIATS_Architecture</title>
+  <title>0500000_Image5_T2_R22_CIATS_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image5_T2_R21_CIATS_Architecture
+    diagram_canonical: 0500000_Image5_T2_R22_CIATS_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R21.
-    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:Regime_Engine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:expected_rr_acceptance_rule, param:peak_portfolio_USD, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, evt:ENTRY_PRICE_COMPUTED, evt:ENTRY_PRICE_INVALID, evt:ENTRY_PRICE_SIDE_MISSING, rule:LG-ALERT-005
+    CURRENT R: R22.
+    governs: mod:CIATS, mod:CIATS_EWMA_Monitor, mod:CIATS_Trade_Outcome_Bus, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine, mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store, mod:Logger, mod:Long_Module, mod:Short_Module, mod:Regime_Engine, contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot, contract:Sizing_Curve_Per_Module, ar:AR-009, ar:AR-050, ar:AR-051, ar:AR-053, ar:AR-072, ar:AR-073, ar:AR-075, channel:kraken_ws_ohlc_5m, channel:logger_async_queue, evt:TRADE_CLOSE, evt:KELLY_UPDATE, evt:KELLY_NEGATIVE, regime:TRENDING_POS_NORMAL, regime:TRENDING_POS_ELEVATED, regime:TRENDING_NEG_NORMAL, regime:TRENDING_NEG_ELEVATED, regime:NON_DIR_NORMAL, regime:NON_DIR_ELEVATED, rule:HR-CI-002, rule:HR-CI-004, rule:HR-CI-008, rule:PS-HK-001, rule:PA-001, rule:Sacred_R_R_1_to_1_5, ar:AR-014, ar:AR-016, ar:AR-043, param:mae_mult, param:emergency_sl_mult, param:atr_percentile_thresh, param:adx_threshold, param:htf_ema_periods, param:min_volume_usd_daily, param:full_halt_drawdown, param:session_pause_drawdown, param:per_trade_size_usd, param:expected_rr_acceptance_rule, param:peak_portfolio_USD, ar:AR-061, ar:AR-063, rule:HR-LG-004, rule:HR-LG-007, rule:HR-LG-009, rule:HR-LG-010, rule:HR-LG-011, rule:HR-LG-012, contract:Two_Stream_Record_Architecture, evt:ALERT_SENT, evt:ALERT_SMTP_FAILED, evt:TRADE_RECORD_WRITE_FAILED, evt:LOG_QUEUE_FULL, evt:ENTRY_PRICE_COMPUTED, evt:ENTRY_PRICE_INVALID, evt:ENTRY_PRICE_SIDE_MISSING, rule:LG-ALERT-005
     drill_targets: none (D5 is a leaf Tier 2 detail of the CIATS feedback loop; CIATS internal sub-components are tagged at this diagram level, no Tier 3 drilldown defined)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
   </desc>
@@ -3953,7 +3953,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 5 — CIATS Architecture and Data Flows</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image5_T2_R21_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image5_T2_R22_CIATS_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -3961,7 +3961,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   <g id="inputs_hdr" class="decoration">
     <rect x="20" y="100" width="430" height="40" fill="#14532d" rx="4"/>
     <text x="235" y="126" fill="#ffffff" font-size="16" font-weight="700"
-          text-anchor="middle">INPUTS — Logger is sole CIATS data source</text>
+          text-anchor="middle">INPUTS — Logger / Trade-Outcome-Bus = the ONLY shared membrane (per-module Long + Short CIATS)</text>
   </g>
 
   <g id="logger_box" class="tier-2">
@@ -4140,8 +4140,8 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
         tier: 2
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: none (leaf — statistical methods sub-component of CIATS, internal)
-        constraints: rule:Sacred_R_R_1_to_1_5; HR-CI-007 (Mann-Whitney U alpha=0.01 one-sided is the absolute decision gate); HR-CI-010 (CPU-bound stats run in ThreadPoolExecutor, never block the asyncio event loop)
-        q1_do: applies six statistical methods to Stream 2 trade corpus (contract:CIATS_Trade_Outcome_Bus) + Stream 1 EWMA values (channel:logger_async_queue): (1) Mann-Whitney U one-sided at alpha=0.01 (absolute decision gate per rule:HR-CI-007), (2) Sharpe Ratio, (3) Spearman rho with |rho|&gt;0.3 AND p&lt;0.05, (4) EWMA (lambda=0.2), (5) CUSUM (k=0.5σ, h=4σ), (6) Half-Kelly K%=W-(1-W)/R with 50% application; runs CPU-bound statistical computations in ThreadPoolExecutor per rule:HR-CI-010 to never block the asyncio event loop; statistical thresholds: 50 candle evals (EWMA valid), 200 trades HARD FLOOR for inference per rule:HR-CI-004, 600 trades per-regime (100+ per bucket); SE(win_rate) ~3.5% at 200 trades, SE(Sharpe) ~7.2% at 200 trades, Mann-Whitney power ~85% at alpha=0.01 with 600 trades; OPERATIVE FORMULAS: EWMA recurrence EWMA_t = lambda*x_t + (1-lambda)*EWMA_(t-1) [lambda=0.2]; Sharpe = mean(net_gain_usd) / std(net_gain_usd) computed over the rolling 200-300 most-recent-closed-trade window; Half-Kelly inputs use REALIZED NET P/L AFTER ALL FEES ONLY (gross TP fills / gross price change are NEVER valid Kelly inputs -- loss-prevention: at ~0.42% round-trip fees a 1.5x gross trade nets ~1.4x, so a gross input inflates the bet ~7%): W = count(closed trades with net_gain_usd &gt; 0) / count(total closed trades in the rolling 200-300 window); R = mean(net_gain_usd of winning trades) / mean(abs(net_gain_usd) of losing trades); K_full = W - ((1-W)/R); K_half = K_full * 0.5; Kelly is recomputed every 50 closed trades after the 200-trade activation floor over the rolling 200-300 most-recent-closed-trade window, subject to rule:HR-CI-005 50-trade-since-last-change spacing; NET_GAIN PERFORMANCE CUSUM: a SECOND, DISTINCT CUSUM application -- on the Stream-2 net_gain_usd series (realized net P/L AFTER ALL FEES, contract:CIATS_Trade_Outcome_Bus), SEPARATE from the Stream-1 operational-health CUSUM at mod:CIATS_EWMA_Monitor (rejection_rate / rate_counter / latency). PARAMETERS: k = 0.5*sigma, h = 4*sigma where sigma = std(net_gain_usd) over the rolling 200-300 most-recent-closed-trade window (CIATS-owned starting values, optimized after the 200-trade floor; the same k/h convention as the operational CUSUM, applied to the net_gain metric). ACTIVATION GATE: computed ONLY after the 200-trade HARD FLOOR per rule:HR-CI-004 -- pre-floor net_gain sigma is not inference-valid (mirrors the Half-Kelly 200-trade activation; the net_gain CUSUM is dormant before the floor). DIRECTION: the loss-prevention-relevant LOWER arm only -- sustained DOWNWARD drift in net_gain (= trading-performance degradation); the cumulative sum of negative net_gain deviations exceeding h is a degradation signal (the upper arm is not a loss-control trigger and does not initiate PDCA). TRIGGER: a net_gain lower-CUSUM signal initiates an OUT-OF-CYCLE mod:CIATS_PDCA_Engine PLAN evaluation REGARDLESS of the rule:HR-CI-005 50-trade interval -- the loss-min purpose is to shorten time-to-detect on a decaying edge that the interval Mann-Whitney point test would miss between PDCA cycles. LOGGING: emits evt:CIATS_CUSUM_SIGNAL {metric=net_gain_usd, k, h, cusum_s} (the existing CUSUM event parameterized by the metric field; same descriptive event code as the operational CUSUM, no new token). DETECTION/MONITORING ONLY -- like all CIATS statistics it never writes mod:CIATS_Parameter_Store directly; every resulting parameter change still routes PDCA -> Bill approval per rule:HR-CI-011
+        constraints: rule:Sacred_R_R_1_to_1_5; HR-CI-007 (Mann-Whitney U alpha=0.01 one-sided is the absolute decision gate); HR-CI-010 (CPU-bound stats run in ThreadPoolExecutor, never block the asyncio event loop); PER-MODULE CIATS FRAMEWORK per TB00000 sec 7 + ar:AR-050 + ar:AR-051 -- mod:Long_Module and mod:Short_Module EACH own an independent mod:CIATS_Statistical_Engine instance over its OWN statistical pool (Long pool / Short pool, partitioned by the Stream-2 side field per ar:AR-072); the 200-trade inference floor (rule:HR-CI-004) and the 600-trade / 100-per-bucket per-regime floor are enforced PER MODULE against that module's own pool, NEVER against a combined corpus -- no cross-module pooling
+        q1_do: applies six statistical methods to Stream 2 trade corpus (contract:CIATS_Trade_Outcome_Bus) + Stream 1 EWMA values (channel:logger_async_queue): (1) Mann-Whitney U one-sided at alpha=0.01 (absolute decision gate per rule:HR-CI-007), (2) Sharpe Ratio, (3) Spearman rho with |rho|&gt;0.3 AND p&lt;0.05, (4) EWMA (lambda=0.2), (5) CUSUM (k=0.5σ, h=4σ), (6) Half-Kelly K%=W-(1-W)/R with 50% application; runs CPU-bound statistical computations in ThreadPoolExecutor per rule:HR-CI-010 to never block the asyncio event loop; statistical thresholds (enforced PER MODULE against that module's own Long/Short pool, no cross-module pooling, per TB00000 sec 7 + ar:AR-050/051/072): 50 candle evals (EWMA valid), 200 trades HARD FLOOR for inference per rule:HR-CI-004, 600 trades per-regime (100+ per bucket); SE(win_rate) ~3.5% at 200 trades, SE(Sharpe) ~7.2% at 200 trades, Mann-Whitney power ~85% at alpha=0.01 with 600 trades; OPERATIVE FORMULAS: EWMA recurrence EWMA_t = lambda*x_t + (1-lambda)*EWMA_(t-1) [lambda=0.2]; Sharpe = mean(net_gain_usd) / std(net_gain_usd) computed over the rolling 200-300 most-recent-closed-trade window; Half-Kelly inputs use REALIZED NET P/L AFTER ALL FEES ONLY (gross TP fills / gross price change are NEVER valid Kelly inputs -- loss-prevention: at ~0.42% round-trip fees a 1.5x gross trade nets ~1.4x, so a gross input inflates the bet ~7%): W = count(closed trades with net_gain_usd &gt; 0) / count(total closed trades in the rolling 200-300 window); R = mean(net_gain_usd of winning trades) / mean(abs(net_gain_usd) of losing trades); K_full = W - ((1-W)/R); K_half = K_full * 0.5; Kelly is recomputed every 50 closed trades after the 200-trade activation floor over the rolling 200-300 most-recent-closed-trade window, subject to rule:HR-CI-005 50-trade-since-last-change spacing; NET_GAIN PERFORMANCE CUSUM: a SECOND, DISTINCT CUSUM application -- on the Stream-2 net_gain_usd series (realized net P/L AFTER ALL FEES, contract:CIATS_Trade_Outcome_Bus), SEPARATE from the Stream-1 operational-health CUSUM at mod:CIATS_EWMA_Monitor (rejection_rate / rate_counter / latency). PARAMETERS: k = 0.5*sigma, h = 4*sigma where sigma = std(net_gain_usd) over the rolling 200-300 most-recent-closed-trade window (CIATS-owned starting values, optimized after the 200-trade floor; the same k/h convention as the operational CUSUM, applied to the net_gain metric). ACTIVATION GATE: computed ONLY after the 200-trade HARD FLOOR per rule:HR-CI-004 -- pre-floor net_gain sigma is not inference-valid (mirrors the Half-Kelly 200-trade activation; the net_gain CUSUM is dormant before the floor). DIRECTION: the loss-prevention-relevant LOWER arm only -- sustained DOWNWARD drift in net_gain (= trading-performance degradation); the cumulative sum of negative net_gain deviations exceeding h is a degradation signal (the upper arm is not a loss-control trigger and does not initiate PDCA). TRIGGER: a net_gain lower-CUSUM signal initiates an OUT-OF-CYCLE mod:CIATS_PDCA_Engine PLAN evaluation REGARDLESS of the rule:HR-CI-005 50-trade interval -- the loss-min purpose is to shorten time-to-detect on a decaying edge that the interval Mann-Whitney point test would miss between PDCA cycles. LOGGING: emits evt:CIATS_CUSUM_SIGNAL {metric=net_gain_usd, k, h, cusum_s} (the existing CUSUM event parameterized by the metric field; same descriptive event code as the operational CUSUM, no new token). DETECTION/MONITORING ONLY -- like all CIATS statistics it never writes mod:CIATS_Parameter_Store directly; every resulting parameter change still routes PDCA -> Bill approval per rule:HR-CI-011
         q4_triggers: triggered by every contract:CIATS_Trade_Outcome_Bus record ingest (every evt:TRADE_CLOSE) + channel:logger_async_queue Stream 1 EWMA value emission from mod:CIATS_EWMA_Monitor; triggers Mann-Whitney U p-values + Sharpe + Spearman rho + Half-Kelly outputs to mod:CIATS_PDCA_Engine (DO + CHECK phases) + mod:CIATS_Proposal_Engine (Half-Kelly sizing computations at 200-trade threshold per rule:HR-CI-004); triggers threshold-crossing events at 50/200/600-trade boundaries
         q5_logs: statistical computation results logged by mod:Logger to tothbot.log via channel:logger_async_queue per ar:AR-014 (Mann-Whitney U test outcomes + Sharpe + Spearman + EWMA + CUSUM + Half-Kelly values at INFO level per rule:HR-LG-004); Mann-Whitney U test outcomes at HIGH level per rule:HR-LG-007 when result drives parameter-change candidate emission to PDCA; threshold-crossing events (50 evals / 200 trades / 600 trades) at HIGH level for operator visibility
         consumes: contract:CIATS_Trade_Outcome_Bus (Stream 2 trade corpus), channel:logger_async_queue (Stream 1 EWMA values for CUSUM), param:peak_portfolio_USD (CIATS-tracked running-maximum drawdown statistic read via contract:CIATS_Trade_Outcome_Bus — see ciats_tracking) [the Stream-2 net_gain_usd series of contract:CIATS_Trade_Outcome_Bus is the input series for the net_gain performance CUSUM]
@@ -4160,7 +4160,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
     <line x1="1140" y1="330" x2="1440" y2="330" stroke="#1e40af" stroke-width="0.5"/>
     <text x="1290" y="356" font-size="12" font-weight="700" text-anchor="middle">Statistical Thresholds</text>
     <text x="1290" y="378" font-size="11" text-anchor="middle">50 candle evals: EWMA monitor valid</text>
-    <text x="1290" y="396" font-size="11" font-weight="700" text-anchor="middle" fill="#7f1d1d">200 trades: HARD FLOOR for inference</text>
+    <text x="1290" y="396" font-size="11" font-weight="700" text-anchor="middle" fill="#7f1d1d">200 trades: HARD FLOOR (per module: Long pool / Short pool)</text>
     <text x="1290" y="414" font-size="11" text-anchor="middle">600 trades: per-regime (100+ per bucket)</text>
     <line x1="1140" y1="430" x2="1440" y2="430" stroke="#1e40af" stroke-width="0.5"/>
     <text x="1290" y="454" font-size="11" text-anchor="middle">SE(win_rate) ~3.5% at 200 trades</text>
@@ -4261,7 +4261,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
   <g id="param_store_hdr" class="decoration">
     <rect x="20" y="860" width="1460" height="40" fill="#1e3a8a" rx="4"/>
     <text x="750" y="886" fill="#ffffff" font-size="16" font-weight="700"
-          text-anchor="middle">PARAMETER STORE — CIATS-OWNED — Snapshot pattern</text>
+          text-anchor="middle">PARAMETER STORE — CIATS-OWNED — per module instantiated (Long / Short) — Snapshot pattern</text>
   </g>
 
   <g id="param_store_box" class="tier-2">
@@ -4319,7 +4319,7 @@ PARAMETER STORE — SNAPSHOT PATTERN (I-4):
 </svg>
   </div>
   <figcaption>
-    Image5 CIATS Architecture (R21). CURRENT R: R21.<br>
+    Image5 CIATS Architecture (R22). CURRENT R: R22.<br>
   </figcaption>
 </figure>
 <h2>7. Complete System: One CIATS-Owned Organism</h2>
@@ -4332,19 +4332,19 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1530"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image6_T2_R20_Complete_System</title>
+  <title>0500000_Image6_T2_R21_Complete_System</title>
   <desc>
-    diagram_canonical: 0500000_Image6_T2_R20_Complete_System
+    diagram_canonical: 0500000_Image6_T2_R21_Complete_System
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R20.
+    CURRENT R: R21.
     governs: container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone,
              container:Public_WS_v2, container:Private_WS_v2, container:Kraken_REST_API,
              container:Matching_Engine,
              mod:WS_Manager, mod:Signal_Pipeline, mod:Position_Mirror, mod:Exit_Controller,
-             mod:Risk_Engine, mod:Logger, mod:CIATS, mod:Selection_Controller, mod:Long_Module,
+             mod:Risk_Engine, mod:Logger, mod:CIATS, mod:Selection_Controller, mod:Long_Module, mod:Short_Module,
              mod:CIATS_EWMA_Monitor, mod:CIATS_Statistical_Engine, mod:CIATS_PDCA_Engine,
              mod:CIATS_Proposal_Engine, mod:CIATS_Regime_Library, mod:CIATS_Parameter_Store,
              contract:CIATS_Trade_Outcome_Bus, contract:Parameter_Store_Snapshot,
@@ -4379,7 +4379,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 6 — Complete System: One CIATS-Owned Organism</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image6_T2_R20_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image6_T2_R21_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -4591,7 +4591,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       parent_diagram: 0500000_Context_T1_System_Context
       drill_targets: gate:G7_Risk_Guard, gate:G8_Position_Sizer
       constraints: param:mae_mult (1.5x), param:emergency_sl_mult (3.0x), param:per_trade_size_usd, param:full_halt_drawdown, param:session_pause_drawdown, param:paper_starting_balance (paper-mode initial equity per PA-004 + 0500000 §12.3 — Risk_Engine computes paper drawdown + position-sizing against this starting balance; live mode uses real account balance from REST GetAccountBalance), rule:HR-EE-013 (emergency-SL coordination contract — Risk_Engine computes emergSL_mult=3.0 × ATR(14) and submits emergSL order to Kraken matching engine for off-book layer:L3_Emergency_SL placement per ar:AR-001 no-DMS architecture)
-      q1_do: G7 Risk_Guard + G8 Position_Sizer engine — G7 enforces halt conditions (param:full_halt_drawdown trips module-wide halt (per-wallet; sibling isolated per AR-052), param:session_pause_drawdown trips session pause); G8 sizes the trade from param:per_trade_size_usd (CIATS-owned per-module dollar allocation — pair-relative max(50, 5 * max(costmin, ordermin * entry_limit_price)) starting per CR-06, live-read per pair, value home TB00000 §8; an expected-R:R-driven function of contract:Sizing_Curve_Per_Module above the 200-trade floor; Half-Kelly is the CIATS curve-derivation mechanism that sets per_trade_size_usd, NOT recomputed inline at G8) applying rule:Sacred_R_R_1_to_1_5 as the entry-acceptance floor at G8 (admit iff expected_reward / net_loss ≥ 1.5, net_loss = mae_pct + entry taker fee + MAE taker fee; the floor never constructs an exit price); computes layer:L2_MAE_Threshold from param:mae_mult × ATR(14)/fill_price and layer:L3_Emergency_SL from param:emergency_sl_mult × ATR(14)/fill_price per rule:HR-EE-013 emergSL coordination contract; submits emergSL order to Kraken matching engine via mod:WS_Manager dispatch seam at entry-order placement time so emergSL survives any TothBot crash; paper-mode operates against param:paper_starting_balance initial equity per PA-004; live-mode operates against real account balance from REST GetAccountBalance
+      q1_do: G7 Risk_Guard + G8 Position_Sizer engine — TWO INDEPENDENT per-wallet drawdown halt machines run as equal siblings (Long spot wallet / Short margin-equity wallet), each against its own wallet baseline per ar:AR-048, sibling-isolated per ar:AR-052 (a halt on one module never halts the other); G7 enforces halt conditions per module (param:full_halt_drawdown trips that module's module-wide halt, param:session_pause_drawdown trips that module's session pause); G8 sizes the trade from param:per_trade_size_usd (CIATS-owned per-module dollar allocation — pair-relative max(50, 5 * max(costmin, ordermin * entry_limit_price)) starting per CR-06, live-read per pair, value home TB00000 §8; an expected-R:R-driven function of contract:Sizing_Curve_Per_Module above the 200-trade floor; Half-Kelly is the CIATS curve-derivation mechanism that sets per_trade_size_usd, NOT recomputed inline at G8) applying rule:Sacred_R_R_1_to_1_5 as the entry-acceptance floor at G8 (admit iff expected_reward / net_loss ≥ 1.5, net_loss = mae_pct + entry taker fee + MAE taker fee; the floor never constructs an exit price); computes layer:L2_MAE_Threshold from param:mae_mult × ATR(14)/fill_price and layer:L3_Emergency_SL from param:emergency_sl_mult × ATR(14)/fill_price per rule:HR-EE-013 emergSL coordination contract; submits emergSL order to Kraken matching engine via mod:WS_Manager dispatch seam at entry-order placement time so emergSL survives any TothBot crash; paper-mode operates against param:paper_starting_balance initial equity per PA-004; live-mode operates against real account balance from REST GetAccountBalance
       q4_triggers: triggered by every channel:kraken_ws_ticker tick (drawdown monitor checks current equity vs starting balance per param:full_halt_drawdown + param:session_pause_drawdown); triggered by every 5m candle close for ATR(14) recompute; triggered by mod:Signal_Pipeline G7 + G8 gate evaluations per pipeline tick; triggers sizer outputs to mod:Signal_Pipeline G8 (qty + entry_limit_price); triggers halt signals to mod:Signal_Pipeline G7 (full_halt + session_pause); triggers emergSL order submission to Kraken matching engine via mod:WS_Manager per rule:HR-EE-013
       q5_logs: every G7 + G8 decision logged at INFO per rule:HR-LG-004 with parameter values + ATR(14) + computed_qty + computed_mae_pct + computed_emergsl_pct; param:full_halt_drawdown trip at CRITICAL per rule:HR-LG-007 + rule:LG-ALERT-005 with SMTP alert per rule:HR-LG-009 (halts all new entries); param:session_pause_drawdown trip at HIGH (pauses entries for session); evt:KELLY_NEGATIVE at CRITICAL per rule:HR-CI-008 when Half-Kelly K_full ≤ 0; rule:HR-EE-013 emergSL submission to matching engine at INFO with order_id + emergSL_mult × ATR price; emergSL submission failure at CRITICAL (loss-of-last-line-of-defense per ar:AR-001 no-DMS)
       consumes: indicator:ATR_14, position state (mod:Position_Mirror), channel:kraken_ws_ticker (drawdown monitor), evt:FULL_HALT_TRIGGERED, evt:SESSION_PAUSE_TRIGGERED, layer:L3_Emergency_SL, param:per_trade_size_usd
@@ -4704,7 +4704,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       tier: 2
       parent_diagram: 0500000_Context_T1_System_Context
       drill_targets: none
-      constraints: 200 trades HARD FLOOR for inference (TB00000 §7); statistical methods Mann-Whitney U / Sharpe / Spearman / EWMA / CUSUM / Half-Kelly
+      constraints: PER-MODULE-INSTANTIATED — one independent Statistical Engine instance per module (Long pool / Short pool), each over its own module's contract:CIATS_Trade_Outcome_Bus records partitioned by the top-level side field (long fills feed the long pool, short fills the short pool); 200 trades HARD FLOOR for inference per pool (TB00000 §7); statistical methods Mann-Whitney U / Sharpe / Spearman / EWMA / CUSUM / Half-Kelly
       q1_do: applies six statistical methods to Stream 2 trade corpus (contract:CIATS_Trade_Outcome_Bus) + Stream 1 EWMA values (channel:logger_async_queue): (1) Mann-Whitney U one-sided at alpha=0.01 per rule:HR-CI-007, (2) Sharpe Ratio, (3) Spearman rho with |rho|>0.3 AND p<0.05, (4) EWMA (lambda=0.2), (5) CUSUM (k=0.5σ, h=4σ), (6) Half-Kelly K%=W-(1-W)/R with 50% application; runs CPU-bound statistical computations in ThreadPoolExecutor per rule:HR-CI-010 to never block the asyncio event loop; statistical thresholds: 50 candle evals (EWMA valid), 200 trades HARD FLOOR for inference per rule:HR-CI-004, 600 trades per-regime (100+ per bucket)
       q4_triggers: triggered by every contract:CIATS_Trade_Outcome_Bus record ingest (every evt:TRADE_CLOSE) + channel:logger_async_queue Stream 1 EWMA value emission from mod:CIATS_EWMA_Monitor; triggers Mann-Whitney U p-values + Sharpe + Spearman rho + Half-Kelly outputs to mod:CIATS_PDCA_Engine (DO + CHECK phases) + mod:CIATS_Proposal_Engine (Half-Kelly sizing computations at 200-trade threshold per rule:HR-CI-004); triggers threshold-crossing events at 50/200/600-trade boundaries
       q5_logs: statistical computation results logged by mod:Logger to tothbot.log via channel:logger_async_queue per ar:AR-014 at INFO per rule:HR-LG-004 (Mann-Whitney U test outcomes + Sharpe + Spearman + EWMA + CUSUM + Half-Kelly values); Mann-Whitney U test outcomes at HIGH per rule:HR-LG-007 when result drives parameter-change candidate emission to PDCA; threshold-crossing events (50 evals / 200 trades / 600 trades) at HIGH for operator visibility
@@ -4716,7 +4716,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="1225" y="426" font-size="13" font-weight="700" text-anchor="middle">Statistical Engine</text>
     <text x="1225" y="446" font-size="11" text-anchor="middle">Mann-Whitney U • Sharpe • Spearman</text>
     <text x="1225" y="464" font-size="11" text-anchor="middle">EWMA • CUSUM • Half-Kelly</text>
-    <text x="1225" y="486" font-size="10" font-style="italic" text-anchor="middle" fill="#713f12">200 trades HARD FLOOR for inference</text>
+    <text x="1225" y="486" font-size="10" font-style="italic" text-anchor="middle" fill="#713f12">200 trades HARD FLOOR — per module (Long pool / Short pool)</text>
   </g>
 
   <g id="ciats_pdca">
@@ -4863,7 +4863,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   <!-- Decoration class — visual annotation rendering of the
        architectural contracts already encoded in the labeled-group &lt;desc&gt; fields of
        mod:Exit_Controller, mod:WS_Manager, mod:Position_Mirror, mod:Selection_Controller,
-       and mod:Long_Module above. The diagram &lt;desc&gt; fields govern; this
+       and the co-equal sibling modules mod:Long_Module + mod:Short_Module above. The diagram &lt;desc&gt; fields govern; this
        decoration group is a human-readable surfacing of that authority. -->
   <g id="wireup_callout" class="decoration">
     <rect x="20" y="1280" width="1460" height="224" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" rx="4"/>
@@ -4911,7 +4911,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
 </svg>
   </div>
   <figcaption>
-    Image6 Complete System (R20). CURRENT R: R20.<br>
+    Image6 Complete System (R21). CURRENT R: R21.<br>
   </figcaption>
 </figure>
 <h2>8. Locked Architectural Decisions</h2>
@@ -5247,6 +5247,15 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                           + sum(bid_price[sym] * position_qty[sym]
                                 for sym in position_mirror)
                     Uses bid price (AR-048) — realizable exit value, conservative.
+                    PER-WALLET / PER-SIDE [parallel-module isolation, TB00000 sec 7 +
+                    ar:AR-048]: this baseline + current_portfolio + drawdown are computed
+                    INDEPENDENTLY per module against that module's own wallet (no cross-
+                    module pooling; a halt on one module never halts the sibling per
+                    ar:AR-052). LONG module: wallet = spot_usd_balance, open longs marked
+                    to market at the BID. SHORT module: wallet = the Kraken MARGIN-account
+                    equity (borrow-adjusted, ar:AR-009), open shorts marked to market at the
+                    ASK (the realizable buy-to-cover price). Two independent baselines, two
+                    independent session_pause / full_halt machines.
                     DRAWDOWN:
                       drawdown_pct = max(0,
                           (portfolio_baseline_USD - current_portfolio_USD)
