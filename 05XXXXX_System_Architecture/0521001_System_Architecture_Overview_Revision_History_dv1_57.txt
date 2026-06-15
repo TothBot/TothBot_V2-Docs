@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_56
+DocVersion: dv1_57
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_56.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_57.txt
 DocDate:    06-15-2026
-DocTime:    05:22:07 UTC
+DocTime:    05:36:05 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30930,6 +30930,65 @@ LIVE: DocVersion dv1_56 / DocPath ...dv1_56... /
 DocDate 06-15-2026 / DocTime 05:22:07 UTC
 
 ----- END TB00728 PARITY Image8+Image9 dv1_246 OP RECORD -----
+
+
+----- BEGIN TB00728 PARITY Image2 dv1_247 OP RECORD -----
+
+TB00728 LONG/SHORT PARITY CAMPAIGN -- Image2 the 8-Gate Trading Pipeline
+made Long/Short symmetric (Bill directive 2026-06-15; DECISION B SYMMETRIC
+applied). 0500000 dv1_246 -> dv1_247.
+
+CONTEXT: as the figure read, a SHORT candidate was killed at G3
+(TRENDING_NEG -> unconditional STOP), had no G4 path, no G6 multiplier,
+and no G8 margin sizing -- the short side was NON-EXECUTABLE from Image2.
+Image2 already DREW the mod:Long_Module + mod:Short_Module sibling boxes
+(both present + the short box already margin/buy-to-cover aware), so the
+fix was the GATE LOGIC, not the module drawing.
+
+CHANGE (Image2 R15 -> R16; gate descs + visible text):
+ - G3_Regime_Filter: replaced the unconditional-block with a DIRECTION-
+   AWARE permitted_side tag (LONG | SHORT | BOTH | NONE): TRENDING_POS ->
+   LONG; TRENDING_NEG -> SHORT (margin, ar:AR-009); NON_DIR_NORMAL -> BOTH
+   at 0.5 (DECISION B SYMMETRIC); NON_DIR_ELEVATED -> NONE. permitted_side
+   carried to G4/G6.
+ - G4_HTF_Confirmation: short test spelled literally (EMA20_daily &lt;
+   EMA50_daily AND last 1H close &lt; 1H EMA20); routes by permitted_side;
+   TRENDING_NEG short path added.
+ - G5_Selection_Controller: 4 sub-gates given explicit pass conditions +
+   per-module independent counters/sets; body strength = absolute fraction
+   (direction-symmetric); entry_fill_disposition states the short buy-to-
+   cover emergSL above entry.
+ - G6_Regime_Sizer: short rows added (TRENDING_NEG = 1.0; NON_DIR_NORMAL
+   BOTH at 0.5) -- the clean mirror of long.
+ - G7_Risk_Guard: per-module independent instances (long spot wallet /
+   short margin equity); short exposure bounded by param:leverage_cap_short
+   (collateral = (qty*price)/leverage_cap_short*(1+taker), AR-053).
+ - G8_Position_Sizer: short margin sell-to-open sizing + leverage_cap_short
+   bound; MAE/emergSL per-side sign (LONG below/bid, SHORT above/ask buy-to-
+   cover); net_loss + param:margin_borrow_fee for short + net-P&L sign;
+   expected_reward replays the candidate's own side; CR-07 margin-pair mins.
+ - Pre_Gate_1: short universe = the MARGINABLE SUBSET (marginable flag TRUE,
+   ar:AR-073). G1 readiness side-shared (one WS layer serves both).
+ - SSS SC-SSS-1 short bound-ordering clarified (rsi_short_high=50 is the
+   numerically smaller bound; high/low name the momentum sense).
+NO new seed VALUE encoded (margin_borrow_fee + leverage_cap_short pointers
+to TB00000 sec 8; the 0.5 / 1.0 multipliers + rsi_short bounds already
+seeded). DECISION B SYMMETRIC (NON_DIR_NORMAL both at 0.5) applied per Bill.
+
+R DISPOSITION: Image2 R15 -> R16. The 8 Image2 R-cross-refs updated in
+lockstep (Image2_T2_R16_Trading_Pipeline -- incl. the Image8 + Image9
+parent_diagram refs). All other figures R HELD.
+
+VERIFICATION: HTML well-formed (tag classes balanced); no residual dv1_246
+/ Image2-R15; the short gate clauses present.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_56 / DocPath ...dv1_56... /
+DocDate 06-15-2026 / DocTime 05:22:07 UTC
+LIVE: DocVersion dv1_57 / DocPath ...dv1_57... /
+DocDate 06-15-2026 / DocTime 05:36:05 UTC
+
+----- END TB00728 PARITY Image2 dv1_247 OP RECORD -----
 
 
 ============================================================
