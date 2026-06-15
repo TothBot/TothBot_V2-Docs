@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_54
+DocVersion: dv1_55
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_54.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_55.txt
 DocDate:    06-15-2026
-DocTime:    05:00:07 UTC
+DocTime:    05:09:16 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30829,6 +30829,60 @@ LIVE: DocVersion dv1_54 / DocPath ...dv1_54... /
 DocDate 06-15-2026 / DocTime 05:00:07 UTC
 
 ----- END TB00728 PARITY Image3 dv1_244 OP RECORD -----
+
+
+----- BEGIN TB00728 PARITY Image1 dv1_245 OP RECORD -----
+
+TB00728 LONG/SHORT PARITY CAMPAIGN -- Image1 Kraken API Connection
+Architecture made Long/Short symmetric on the order / fee / instrument /
+REST layer (Bill directive 2026-06-15). 0500000 dv1_244 -> dv1_245.
+
+CONTEXT: Image1 was 100% spot/long -- no margin order path, no borrow
+fee, the marginable flag parsed but never consumed, no margin-position
+reconciliation. Shorts run on Kraken MARGIN (ar:AR-009), so the whole
+order/connection layer needed the short path made explicit.
+
+CHANGE (Image1 R21 -> R22; container:Private_WS_v2 + container:Kraken_REST_API
++ mod:WS_Manager descs + visible text):
+ - add_order direction-symmetric: LONG spot add_order(side=buy) / SHORT
+   Kraken MARGIN add_order(side=sell) carrying the leverage field
+   (leverage = param:leverage_cap_short, value home TB00000 sec 8) per
+   ar:AR-009; short exit/cover + short emergSL leg carry reduce_only.
+ - WS-BA-002 emergSL leg: LONG SELL stop BELOW entry / SHORT BUY-to-cover
+   stop ABOVE entry (reduce_only, margin).
+ - FEE-CALC net_pnl: LONG (exit-entry)*qty / SHORT (entry-exit)*qty minus
+   fees, SHORT additionally minus margin_borrow_fee (a CIATS-owned seed,
+   value home TB00000 sec 8 -- Bill ruled MODEL IT; numeric value lands
+   when the seed is registered).
+ - WS-BAL-002: SHORT wallet = Kraken margin account (balance + open-
+   margin-position equity), reconciled via REST OpenPositions; distinct
+   from the long spot/main wallet.
+ - WS-INST-009: SHORT restricted to MARGIN-ELIGIBLE pairs (instrument
+   marginable flag MUST be TRUE) -- the short universe is the marginable
+   subset of the D-03 universe (ar:AR-072 / ar:AR-073).
+ - RL-MON-003: exit/cover NEVER-suppressed set now names long sells /
+   short buy-to-covers.
+ - REST: NEW channel:kraken_rest_OpenPositions added (8 -> 9 channels)
+   for open Kraken margin / short position reconciliation on reconnect.
+NO new seed VALUE encoded in the figure (margin_borrow_fee + leverage_
+cap_short are pointers to TB00000 sec 8; leverage_cap_short 3x already
+seeded). The Kraken add_order margin/leverage field name + the
+OpenPositions endpoint shape are Kraken-API facts, not seeds.
+
+R DISPOSITION: Image1 R21 -> R22. The 8 Image1 R-cross-refs updated in
+lockstep (Image1_T2_R22_...). Image5 (also R21) NOT touched. All other
+figures R HELD.
+
+VERIFICATION: HTML well-formed (tag classes balanced); no residual
+dv1_244 / Image1-R21; the short-side order/fee/margin clauses present.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_54 / DocPath ...dv1_54... /
+DocDate 06-15-2026 / DocTime 05:00:07 UTC
+LIVE: DocVersion dv1_55 / DocPath ...dv1_55... /
+DocDate 06-15-2026 / DocTime 05:09:16 UTC
+
+----- END TB00728 PARITY Image1 dv1_245 OP RECORD -----
 
 
 ============================================================
