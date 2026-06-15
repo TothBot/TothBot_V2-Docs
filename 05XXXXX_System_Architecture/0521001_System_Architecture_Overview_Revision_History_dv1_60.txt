@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_59
+DocVersion: dv1_60
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_59.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_60.txt
 DocDate:    06-15-2026
-DocTime:    05:58:44 UTC
+DocTime:    07:24:01 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31097,6 +31097,53 @@ LIVE: DocVersion dv1_59 / DocPath ...dv1_59... /
 DocDate 06-15-2026 / DocTime 05:58:44 UTC
 
 ----- END TB00728 PARITY Image5+Image6+Context+prose dv1_249 OP RECORD -----
+
+
+----- BEGIN TB00728 PARITY Image8 Gate-7 concentration dv1_250 OP RECORD -----
+
+TB00728 LONG/SHORT PARITY CAMPAIGN -- Image8 Gate 7 Risk Guard Detail:
+CHECK 2 concentration corrected from the OBSOLETE position-COUNT form to a
+CAPITAL-fraction-of-wallet check; CIATS-owned, 100% seed NON-BINDING, no cap
+below 100% of wallet, identical Long/Short (Bill ruling 2026-06-15). 0500000
+dv1_249 -> dv1_250.
+
+CONTEXT: building Gate-7 from Image8 surfaced an internal contradiction --
+CHECK 2 q1_do compared a position COUNT (positions_held_count < limit) while
+the parameter value home (TB00000 sec 8) defines concentration_limit_per_
+module as 100% OF WALLET (a capital fraction). Bill ruled the count form
+OBSOLETE LEGACY: position sizing is 100% CIATS-owned -- start at the $50 (or
+pair-minimum) base order, and once CIATS has enough paper trades it may size
+a position up to 100% of the wallet with NO cap, for both Longs and Shorts.
+
+CHANGE:
+ - Image8 (R6 -> R7) CHECK 2 Concentration: consumes positions_held_count_
+   per_module -> candidate_committed_usd + wallet_balance_per_module; PASS =
+   candidate_committed_usd / wallet_balance_per_module <= concentration_
+   limit_per_module (a CAPITAL fraction of wallet, NOT a position count);
+   q1_do / ciats_ownership / q4_triggers / q5_logs / polygon text / input-
+   band text all restated; CIATS-owned, 100% seed NON-BINDING, no cap below
+   100% of wallet, identical Long/Short.
+ - Image8 (R6 -> R7) CHECK 3 Exposure: PASS comparison < -> <= (inclusive --
+   CIATS may commit UP TO 100% of wallet, no cap) in q1_do / ciats_ownership
+   / polygon text.
+NO new seed VALUE encoded (concentration_limit_per_module + exposure_limit_
+pct remain 100% / 1.0 NON-BINDING per TB00000 sec 8; this slice corrects the
+CHECK SEMANTICS, not a value).
+
+R DISPOSITION: Image8 R6 -> R7. All other figures R HELD. (Context + Image9
+also sit at R7 -- figure R numbers are per-figure, not globally unique.)
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text
+957/957, desc 126/126, svg 10/10, figure 10/10); no double-escape; no
+residual positions_held / Image8-R6 / dv1_249.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_59 / DocPath ...dv1_59... /
+DocDate 06-15-2026 / DocTime 05:58:44 UTC
+LIVE: DocVersion dv1_60 / DocPath ...dv1_60... /
+DocDate 06-15-2026 / DocTime 07:24:01 UTC
+
+----- END TB00728 PARITY Image8 Gate-7 concentration dv1_250 OP RECORD -----
 
 
 ============================================================
