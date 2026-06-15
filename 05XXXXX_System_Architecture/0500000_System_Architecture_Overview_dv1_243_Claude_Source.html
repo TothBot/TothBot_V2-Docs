@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_242</title>
+<title>0500000 System Architecture Overview dv1_243</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_242</td></tr>
+  <tr><td>DocVersion</td><td>dv1_243</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_242_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_243_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-15-2026</td></tr>
   <tr><td>DocTime</td><td>00:45:00 UTC</td></tr>
 </table>
@@ -325,7 +325,7 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:TothBot_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image2_T2_R14_Trading_Pipeline, 0500000_Image3_T2_R12_Exit_Architecture, 0500000_Image6_T2_R20_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
+              drill_targets: 0500000_Image2_T2_R15_Trading_Pipeline, 0500000_Image3_T2_R13_Exit_Architecture, 0500000_Image6_T2_R20_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
               constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-076
               consumes: contract:OHLC_5m_System_Clock, contract:Parameter_Store_Snapshot, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:WSManager_Dispatch_Seam, contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE, evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
@@ -2006,14 +2006,14 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1700"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image2_T2_R14_Trading_Pipeline</title>
+  <title>0500000_Image2_T2_R15_Trading_Pipeline</title>
   <desc>
-    diagram_canonical: 0500000_Image2_T2_R14_Trading_Pipeline
+    diagram_canonical: 0500000_Image2_T2_R15_Trading_Pipeline
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R14.
+    CURRENT R: R15.
     governs:
       ar: AR-005 (WS v2 only), AR-016 (ATR(14) incremental O(1) per update), AR-053 (Per-module Pending Order Registry — capital commitment tracking; long_pending_orders + short_pending_orders dicts consumed by Gate 7 USD check), AR-054 (Entry fill disposition under marketable-IOC, direction-symmetric): under the CR-03 marketable-IOC entry there is no resting post_only GTD order -- the IOC fills-or-kills atomically at submission: any filled qty is a real position protected at the ON FILL batch_add (emergSL stop-market, mod:Exit_Controller-owned; the take-profit is the run-to-reversal regime exit -- a mod:Exit_Controller market sell, not a resting order) and any unfilled qty expires at the exchange at the same instant. The CR-07 live-minimum dispatch guard + the CR-06 5x-floor sizing keep every dispatched order above the live pair minimums; see gate:G5_Selection_Controller entry_fill_disposition field), AR-067 (SSS Signal Engine — direction-symmetric three-factor momentum scoring on 5-minute candles per 0500000 §4; canonical source for SC-SSS-1/2/3 long+short implementations + SSS-PASS gate-5 handoff), AR-069, AR-072, AR-074, AR-076
       rule: HR-EE-013, HR-SP-001, HR-SP-002, HR-SP-003, HR-SP-004, HR-SP-005, HR-SP-006, HR-SP-008 (SYSTEM-WIDE Decimal-not-float rule: all price / quantity / indicator / P&amp;L / R:R / sizing arithmetic in the TothBot organism uses Python Decimal via Decimal(str()) conversion on every numeric input; float arithmetic is PROHIBITED anywhere in the trading organism — enforces ar:AR-047; binds every computation element, notably mod:Signal_Pipeline indicator math and gate:G8_Position_Sizer sizing/R:R math; float rounding error in price/qty produces wrong orders and mis-stated P&amp;L, so this is loss-prevention), HR-WM-024, Sacred_R_R_1_to_1_5, Expected_RR_A1_Acceptance
@@ -2051,7 +2051,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
     <text x="750.0" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 2 — TothBot Trading Pipeline (8 Gates) — R14</text>
     <text x="750.0" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image2_T2_R14_Trading_Pipeline  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  PA-004(2) dispatch boundary visualized
+      0500000_Image2_T2_R15_Trading_Pipeline  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  PA-004(2) dispatch boundary visualized
     </text>
   </g>
 
@@ -2263,7 +2263,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         tier: 2
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: indicator:SSS, indicator:RSI, indicator:EMA9, indicator:EMA21, indicator:VolumeMA20, indicator:ATR_14
-        constraints: ar:AR-005, ar:AR-016, ar:AR-069, ar:AR-076, rule:HR-SP-001, rule:HR-SP-002, rule:HR-WM-018 (RSI(14) uses Wilder's SMMA alpha=1/14; standard EMA alpha=2/15 MUST NOT be used for RSI [AR-076] — this is the owning element that computes RSI(14) per q1_do. RSI(14) Wilder recurrence (canonical): avg_gain = (prev_avg_gain*13 + gain) / 14; avg_loss = (prev_avg_loss*13 + loss) / 14; RS = avg_gain / avg_loss; RSI = 100 - (100 / (1 + RS)) [ar:AR-076]. EMA9 and EMA21 use STANDARD EMA (alpha 2/10 and 2/22 respectively), NOT Wilder. SSS three-factor PASS rule (canonical): SSS PASS = SC-SSS-1 AND SC-SSS-2 AND SC-SSS-3, all three simultaneously true at the committed candle close; two-of-three is a FAIL; no partial credit and no weighted score. SC-SSS-1 = param:rsi_long_low &lt; RSI(14) &lt; param:rsi_long_high (long-side; short-side uses param:rsi_short_low / param:rsi_short_high per mod:Short_Module). SC-SSS-2 = EMA9 &gt; EMA21 -- the crossover STATE that must hold at candle close, NOT the crossover event. SC-SSS-3 = current_candle_volume &gt; VolumeMA20 * param:volume_sss_threshold. SSS FAIL logs event_type=SIGNAL_REJECTED. RSI(14) division guard [HR-SSS-004]: if avg_loss == 0 and avg_gain &gt; 0 then RSI = 100; if avg_loss == 0 and avg_gain == 0 then RSI = 50 (defensive; should not arise from real market data). SSS INDICATOR SEEDING + COMPUTATION: all four SSS indicators (RSI(14), EMA9, EMA21, VolumeMA20), together with ATR(14) per ar:AR-016, are seeded per pair at startup from the SINGLE ar:AR-044 GetOHLCData(interval=5) call already made (NO additional REST call per HR-SSS-010), using committed candles ONLY -- response[:-1], the forming last candle EXCLUDED per HR-SSS-009 / rule:HR-WM-013. All seeding + update arithmetic is Decimal per rule:HR-SP-008. RSI(14) SEED over the first 14 committed closes: avg_gain = sum(gains)/14, avg_loss = sum(losses)/14, where gain = max(0, close - prev_close) and loss = max(0, prev_close - close); then the Wilder incremental recurrence above. EMA9 SEED = SMA sum(close[:9])/9, then incremental ema_9 = (close - prev_ema_9) * alpha + prev_ema_9 with alpha = 2/10. EMA21 SEED = SMA sum(close[:21])/21, then incremental ema_21 = (close - prev_ema_21) * alpha + prev_ema_21 with alpha = 2/22. VolumeMA20 SEED = SMA sum(volume[:20])/20, then the running-SMA incremental volume_ma_20 = ((prev_volume_ma_20 * 19) + current_volume)/20 (a running-SMA approximation, NOT a true rolling window; CIATS may evaluate a true rolling window after the 200-trade floor if the approximation proves material). Minimum committed candles to seed all five = 21 (EMA21-bound); GetOHLCData(interval=5) returns 700+ committed candles -- adequate. WARM_UP -&gt; READY transition requires ALL FIVE indicators seeded (ATR alone is insufficient) per HR-SSS-005 / rule:HR-WM-017 / ar:AR-068; a WARM_UP pair is NOT trade-eligible (skipped at the pipeline pre-check, no entries). PER-SYMBOL STATE held in the WS-Manager per-symbol state dict (ar:AR-075), updated incrementally on each committed ohlc(5m) close (same pattern as ATR(14) per ar:AR-016): rsi_14_avg_gain, rsi_14_avg_loss, ema_9, ema_21, volume_ma_20 (all Decimal).)
+        constraints: ar:AR-005, ar:AR-016, ar:AR-069, ar:AR-076, rule:HR-SP-001, rule:HR-SP-002, rule:HR-WM-018 (RSI(14) uses Wilder's SMMA alpha=1/14; standard EMA alpha=2/15 MUST NOT be used for RSI [AR-076] — this is the owning element that computes RSI(14) per q1_do. RSI(14) Wilder recurrence (canonical): avg_gain = (prev_avg_gain*13 + gain) / 14; avg_loss = (prev_avg_loss*13 + loss) / 14; RS = avg_gain / avg_loss; RSI = 100 - (100 / (1 + RS)) [ar:AR-076]. EMA9 and EMA21 use STANDARD EMA (alpha 2/10 and 2/22 respectively), NOT Wilder. SSS three-factor PASS rule (canonical): SSS PASS = SC-SSS-1 AND SC-SSS-2 AND SC-SSS-3, all three simultaneously true at the committed candle close; two-of-three is a FAIL; no partial credit and no weighted score. SC-SSS-1 = param:rsi_long_low &lt; RSI(14) &lt; param:rsi_long_high (long-side); short-side (mod:Short_Module) = param:rsi_short_high &lt; RSI(14) &lt; param:rsi_short_low (the same in-zone test mirrored across RSI=50). SC-SSS-2 = EMA9 &gt; EMA21 (long-side) / EMA9 &lt; EMA21 (short-side, mod:Short_Module -- the crossover inequality mirrored) -- the crossover STATE that must hold at candle close, NOT the crossover event. SC-SSS-3 = current_candle_volume &gt; VolumeMA20 * param:volume_sss_threshold. SSS FAIL logs event_type=SIGNAL_REJECTED. RSI(14) division guard [HR-SSS-004]: if avg_loss == 0 and avg_gain &gt; 0 then RSI = 100; if avg_loss == 0 and avg_gain == 0 then RSI = 50 (defensive; should not arise from real market data). SSS INDICATOR SEEDING + COMPUTATION: all four SSS indicators (RSI(14), EMA9, EMA21, VolumeMA20), together with ATR(14) per ar:AR-016, are seeded per pair at startup from the SINGLE ar:AR-044 GetOHLCData(interval=5) call already made (NO additional REST call per HR-SSS-010), using committed candles ONLY -- response[:-1], the forming last candle EXCLUDED per HR-SSS-009 / rule:HR-WM-013. All seeding + update arithmetic is Decimal per rule:HR-SP-008. RSI(14) SEED over the first 14 committed closes: avg_gain = sum(gains)/14, avg_loss = sum(losses)/14, where gain = max(0, close - prev_close) and loss = max(0, prev_close - close); then the Wilder incremental recurrence above. EMA9 SEED = SMA sum(close[:9])/9, then incremental ema_9 = (close - prev_ema_9) * alpha + prev_ema_9 with alpha = 2/10. EMA21 SEED = SMA sum(close[:21])/21, then incremental ema_21 = (close - prev_ema_21) * alpha + prev_ema_21 with alpha = 2/22. VolumeMA20 SEED = SMA sum(volume[:20])/20, then the running-SMA incremental volume_ma_20 = ((prev_volume_ma_20 * 19) + current_volume)/20 (a running-SMA approximation, NOT a true rolling window; CIATS may evaluate a true rolling window after the 200-trade floor if the approximation proves material). Minimum committed candles to seed all five = 21 (EMA21-bound); GetOHLCData(interval=5) returns 700+ committed candles -- adequate. WARM_UP -&gt; READY transition requires ALL FIVE indicators seeded (ATR alone is insufficient) per HR-SSS-005 / rule:HR-WM-017 / ar:AR-068; a WARM_UP pair is NOT trade-eligible (skipped at the pipeline pre-check, no entries). PER-SYMBOL STATE held in the WS-Manager per-symbol state dict (ar:AR-075), updated incrementally on each committed ohlc(5m) close (same pattern as ATR(14) per ar:AR-016): rsi_14_avg_gain, rsi_14_avg_loss, ema_9, ema_21, volume_ma_20 (all Decimal).)
         consumes: indicator:SSS, indicator:RSI, indicator:EMA9, indicator:EMA21, indicator:VolumeMA20, indicator:ATR_14, channel:kraken_ws_ohlc_5m
         produces: none
         ciats_ownership: param:rsi_long_low + param:rsi_long_high + param:rsi_short_low + param:rsi_short_high + param:sss_ema_short + param:sss_ema_long + param:volume_sss_threshold are CIATS-OWNED PER-MODULE INSTANTIATED (value home TB00000 sec 8; Long_Module + Short_Module each instantiate their own value). These are the seven SSS signal-model parameters consumed at this owning element mod:Signal_Pipeline (element sss_engine, per ar:AR-067): param:rsi_long_low + param:rsi_long_high set the long-side RSI-in-zone momentum bounds, param:rsi_short_low + param:rsi_short_high set the short-side RSI-in-zone momentum bounds (direction-symmetric short scoring per mod:Short_Module), param:sss_ema_short (EMA9) + param:sss_ema_long (EMA21) set the two EMA-cross periods, and param:volume_sss_threshold sets the volume-confirmation factor (volume vs MA(20)) — all seven are direct inputs to this element's single SSS three-factor scoring computation named in its q1_do field. The short-side RSI bounds are signal-computation inputs to THIS engine, NOT sizing parameters. The parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 sec 8 (pointer, not value). Single owning element mod:Signal_Pipeline / sss_engine.
@@ -2553,7 +2553,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
 </svg>
   </div>
   <figcaption>
-    Image2 Trading Pipeline - 8-Gate System (R14). CURRENT R: R14.<br>
+    Image2 Trading Pipeline - 8-Gate System (R15). CURRENT R: R15.<br>
 </figcaption>
 </figure>
 
@@ -2573,7 +2573,7 @@ required, the pass/fail branches, and the event identifier emitted on failure.
     diagram_canonical: 0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail
     tier: 3
     parent_dcn: 0500000
-    parent_diagram: 0500000_Image2_T2_R14_Trading_Pipeline
+    parent_diagram: 0500000_Image2_T2_R15_Trading_Pipeline
     parent_element: gate:G7_Risk_Guard
     schema_version: 1.0
     CURRENT R: R5.
@@ -2603,7 +2603,7 @@ required, the pass/fail branches, and the event identifier emitted on failure.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 8 — Gate 7 Risk Guard Detail (4 Sequential Checks) — R5</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R14_Trading_Pipeline
+      0500000_Image8_T3_R5_Gate_7_Risk_Guard_Detail  |  schema_version: 1.0  |  parent: gate:G7_Risk_Guard in 0500000_Image2_T2_R15_Trading_Pipeline
     </text>
   </g>
 
@@ -2797,7 +2797,7 @@ from the CIATS run-to-reversal estimator; the sacred
     diagram_canonical: 0500000_Image9_T3_R6_Gate_8_Position_Sizer_Detail
     tier: 3
     parent_dcn: 0500000
-    parent_diagram: 0500000_Image2_T2_R14_Trading_Pipeline
+    parent_diagram: 0500000_Image2_T2_R15_Trading_Pipeline
     parent_element: gate:G8_Position_Sizer
     schema_version: 1.0
     CURRENT R: R6.
@@ -2832,7 +2832,7 @@ from the CIATS run-to-reversal estimator; the sacred
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 9 — Gate 8 Position Sizer Detail — R6</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image9_T3_R6_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R14_Trading_Pipeline
+      0500000_Image9_T3_R6_Gate_8_Position_Sizer_Detail  |  schema_version: 1.0  |  parent: gate:G8_Position_Sizer in 0500000_Image2_T2_R15_Trading_Pipeline
     </text>
   </g>
 
@@ -3095,14 +3095,14 @@ taxonomy:
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1420"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image3_T2_R12_Exit_Architecture</title>
+  <title>0500000_Image3_T2_R13_Exit_Architecture</title>
   <desc>
-    diagram_canonical: 0500000_Image3_T2_R12_Exit_Architecture
+    diagram_canonical: 0500000_Image3_T2_R13_Exit_Architecture
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R12.
+    CURRENT R: R13.
     governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, ar:AR-007, ar:AR-040, mod:Exit_Controller, layer:L1a_Regime_Exit, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
     drill_targets: none (D3 is a leaf Tier 2 detail of the Exit Architecture depicted in D2)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
@@ -3122,7 +3122,7 @@ taxonomy:
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 3 — Exit Architecture: Ground Zero Redesign for Kraken</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image3_T2_R12_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context
+      0500000_Image3_T2_R13_Exit_Architecture  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context
     </text>
   </g>
 
@@ -3175,7 +3175,7 @@ taxonomy:
         consumes: mod:Regime_Engine, indicator:EMA20_daily, indicator:EMA50_daily
         produces: evt:TRADE_CLOSE
         q1_do: regime-reversal / regime-downgrade exit path within mod:Exit_Controller; rule:HR-EC-016 Step 1 precondition — checks pair status via ar:AR-040 instrument status BEFORE any cancel or sell action; IF pair status == cancel_only OR maintenance THEN HOLD position, raise CRITICAL alert, do NOT proceed (resting emergSL on Kraken matching engine is the only protection in pair-disruption states); ELSE proceeds with WS cancel_order(emergSL) then WS market_sell sequence per rule:HR-EC-013; paper mode dispatches via PT_MODE_002 simulated local fill.
-        q4_triggers: EC-L1A-001 HTF Regime Reversal — 1H EMA(20) crosses BELOW 1H EMA(50) while long position open (Gate-4 symmetry; exit_reason HTF_REGIME_REVERSAL); OR EC-L1A-002 Daily Regime Downgrade — 00:00 UTC regime refresh reclassifies an open-position pair TRENDING_POSITIVE -&gt; TRENDING_NEGATIVE or NON_DIR + ELEVATED_VOL (Gate-3 symmetry; exit_reason DAILY_REGIME_DOWNGRADE) - regime reversal IS the take-profit exit (run to reversal; no fixed TP and no max-hold); precondition gate: ar:AR-040 pair status events on instrument-status channel for pairs with open positions; if rule:HR-EC-016(b) priority applies, Layer 2 MAE breach during in-progress L1a sequence overrides L1a reason — complete cancel sequence, market_sell with exit_reason = MAE_THRESHOLD_BREACH (not the original L1a reason).
+        q4_triggers: EC-L1A-001 HTF Regime Reversal — 1H EMA(20) crosses BELOW 1H EMA(50) while long position open (Gate-4 symmetry; exit_reason HTF_REGIME_REVERSAL; short-side mirror, mod:Short_Module: 1H EMA(20) crosses ABOVE 1H EMA(50) while a short position is open); OR EC-L1A-002 Daily Regime Downgrade — 00:00 UTC regime refresh reclassifies an open-position pair TRENDING_POSITIVE -&gt; TRENDING_NEGATIVE or NON_DIR + ELEVATED_VOL (Gate-3 symmetry; exit_reason DAILY_REGIME_DOWNGRADE; short-side mirror: TRENDING_NEGATIVE -&gt; TRENDING_POSITIVE or NON_DIR + ELEVATED_VOL against an open short) - regime reversal IS the take-profit exit (run to reversal; no fixed TP and no max-hold); precondition gate: ar:AR-040 pair status events on instrument-status channel for pairs with open positions; if rule:HR-EC-016(b) priority applies, Layer 2 MAE breach during in-progress L1a sequence overrides L1a reason — complete cancel sequence, market_sell with exit_reason = MAE_THRESHOLD_BREACH (not the original L1a reason).
         q5_logs: exit_reason in {HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE}; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus; CRITICAL alert logged on Step 1 HOLD branch (pair status == cancel_only OR maintenance) — position retained, no orders submitted, alert routed to operator per ar:AR-040 + rule:HR-EC-016(a); if rule:HR-EC-016(b) priority override fires, exit_reason logged as MAE_THRESHOLD_BREACH (Layer 2 reason) not the original L1a reason.
         schema_version: 1.0
       </desc>
@@ -3377,7 +3377,7 @@ taxonomy:
 </svg>
   </div>
   <figcaption>
-    Image3 Exit Architecture (R12). CURRENT R: R12.<br>
+    Image3 Exit Architecture (R13). CURRENT R: R13.<br>
   </figcaption>
 </figure>
 <h2>5. Regime Taxonomy</h2>
@@ -5401,11 +5401,13 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   AR-062 ★: Exit Controller Layer 1a — two regime triggers.
                     Two Layer 1a exit triggers are derivable before SSS (OI-001):
                     EC-L1A-001 (HTF Regime Reversal): 1H EMA(20) crosses below EMA(50)
-                      while long open. Gate 4 symmetry. Check on every ohlc(60) close.
+                      while long open. Gate 4 symmetry (short-side mirror, mod:Short_Module:
+                      1H EMA(20) crosses ABOVE EMA(50) while short open). Check on every ohlc(60) close.
                       Exit sequence: cancel emergSL → market sell.
                     EC-L1A-002 (Daily Regime Downgrade): At 00:00 UTC regime refresh,
                       pair reclassified TRENDING_POS → TRENDING_NEG or NON_DIR+ELEVATED.
-                      Gate 3 symmetry. Check immediately after regime computation.
+                      Gate 3 symmetry (short-side mirror: TRENDING_NEG → TRENDING_POS or
+                      NON_DIR+ELEVATED against an open short). Check immediately after regime computation.
                       Exit sequence: cancel emergSL → market sell.
                     Both EC-L1A-001 and EC-L1A-002 use cancel timeout fallback (I-6).
                     Assign: 0500000 Diagram 3 Image3_T2_R4 Exit Architecture (canonical; rule:HR-EC-016 + L1a sequence visual content).

@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_52
+DocVersion: dv1_53
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_52.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_53.txt
 DocDate:    06-15-2026
-DocTime:    00:45:00 UTC
+DocTime:    02:40:30 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30718,6 +30718,70 @@ LIVE: DocVersion dv1_52 / DocPath ...dv1_52... /
 DocDate 06-15-2026 / DocTime 00:45:00 UTC
 
 ----- END TB00722 dv1_242 OP RECORD -----
+
+
+----- BEGIN TB00726 dv1_243 OP RECORD -----
+
+TB00726 SHORT-SIDE MIRROR LITERALIZATION -- the SSS three-factor
+short inequalities (Image2 sss_engine) + the layer:L1a short-side
+exit triggers (Image3 layer:L1a_Regime_Exit) spelled EXPLICITLY into
+the governing figure elements (Bill ruling; TB00726 chat-turn,
+resolving the TB00724 sec 7(3) + TB00726 sec 9(i) open short-mirror
+flag). 0500000 dv1_242 -> dv1_243.
+
+CONTEXT: the long-side SSS signal (SC-SSS-1/2) and the long-side L1a
+regime-reversal exit triggers (EC-L1A-001 / EC-L1A-002) were written
+literally in the figures; the SHORT side was carried as "direction-
+symmetric ... per mod:Short_Module" / "Gate-3 symmetry" / "Gate-4
+symmetry" WITHOUT the short inequalities spelled out. The TB00724 +
+TB00726 code implemented the only coherent symmetric reading; Bill
+ratified spelling it literally INTO the canonical figure elements
+(DIAGRAMS GOVERN) before any mod:Short_Module wiring. NO value
+invented -- the short RSI bounds (param:rsi_short_low 70 /
+param:rsi_short_high 50) already exist in TB00000 sec 8; only the
+inequality DIRECTIONS are made explicit. No new seed; NO TB00000
+sec 8 change.
+
+CHANGE A (Image2 sss_engine element, rule:HR-WM-018 constraint desc).
+SC-SSS-1 short-side made explicit: param:rsi_short_high &lt; RSI(14) &lt;
+param:rsi_short_low (the in-zone test mirrored across RSI=50).
+SC-SSS-2 short-side made explicit: EMA9 &lt; EMA21 (the crossover-STATE
+inequality mirrored from the long EMA9 &gt; EMA21). The AR-067 sec-4
+narrative already carried the short forms; this brings the canonical
+figure element into line with it.
+
+CHANGE B (Image3 layer:L1a_Regime_Exit element, q4_triggers desc +
+the sec-7 ar:AR-062 narrative). EC-L1A-001 short-side made explicit:
+1H EMA(20) crosses ABOVE 1H EMA(50) while a short position is open
+(mirror of the long crosses-BELOW). EC-L1A-002 short-side made
+explicit: TRENDING_NEGATIVE -&gt; TRENDING_POSITIVE or NON_DIR +
+ELEVATED_VOL against an open short (mirror of the long
+TRENDING_POSITIVE -&gt; TRENDING_NEGATIVE downgrade).
+
+R DISPOSITION: Image2 R14 -> R15 (sss_engine desc edit) + Image3 R12
+-> R13 (layer:L1a_Regime_Exit desc edit). All other figures R HELD.
+The Image2 + Image3 R-tagged cross-refs updated in lockstep
+(Image2_T2_R15_Trading_Pipeline x8 incl. the System-Context
+drill-target + the Image8 / Image9 parent_diagram refs;
+Image3_T2_R13_Exit_Architecture x4 incl. the drill-target). The
+Image7 R12 references (a distinct figure also at R12) were NOT
+touched. PRE-EXISTING NOTE (not changed this session): the ar:AR-062
+"Assign:" line carries a historical "Image3_T2_R4" assigned-at marker,
+not a current-R pointer -- left as-is.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217,
+text 956/956, desc 126/126, svg 10/10, figure 10/10, title 126/126,
+figcaption 10/10); no residual dv1_242 / Image2-R14 / Image3-R12 /
+"CURRENT R: R14"; the six short-side clauses present; the R + dv
+bumps + cross-refs updated in lockstep.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_52 / DocPath ...dv1_52... /
+DocDate 06-15-2026 / DocTime 00:45:00 UTC
+LIVE: DocVersion dv1_53 / DocPath ...dv1_53... /
+DocDate 06-15-2026 / DocTime 02:40:30 UTC
+
+----- END TB00726 dv1_243 OP RECORD -----
 
 
 ============================================================
