@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_51
+DocVersion: dv1_52
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_51.txt
-DocDate:    06-14-2026
-DocTime:    06:40:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_52.txt
+DocDate:    06-15-2026
+DocTime:    00:45:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -30666,6 +30666,58 @@ LIVE: DocVersion dv1_51 / DocPath ...dv1_51... /
 DocDate 06-14-2026 / DocTime 06:40:00 UTC
 
 ----- END TB00712 dv1_241 OP RECORD -----
+
+
+----- BEGIN TB00722 dv1_242 OP RECORD -----
+
+TB00722 PAPER EXIT LIFECYCLE -- ENTRY-TIME SNAPSHOT FIELDS AUTHORED
+INTO THE D6 PositionRecord (Bill ruling Path A; TB00720 SL / TB00721
+NSI). 0500000 dv1_241 -> dv1_242.
+
+CONTEXT: building the paper EXIT lifecycle (mod:Exit_Controller close
+path per 12.5 + the ticker bbo exit detection) found the figure
+code-INCOMPLETE: D2/D3 layer:L2_MAE_Threshold sources ATR(14) "per
+position from the PositionRecord entry-time snapshot" and the
+synthetic layer:L3_Emergency_SL touch fires on bid &lt;= emergsl_price
+(12.6 PAPER_EMERG_SL_TRIGGERED), but the canonical D6 PositionRecord
+net-position schema enumerated neither field. Bill directed Path A:
+author the missing entry-time snapshot fields into the figure first,
+then code (the v2_99 ruling -- diagram FILE edits are a Claude Code
+task).
+
+CHANGE (Diagram 6 / Image6 mod:Position_Mirror net-position schema).
+The D6 net-position state set gains TWO entry-time snapshot fields:
+{... regime_at_entry, exit_layer_armed, atr_14_entry, emergsl_price}.
+atr_14_entry = the ATR(14) value captured ONCE at the opening fill
+(mod:Exit_Controller reads it for the layer:L2_MAE_Threshold trigger
+(entry_fill_price - bid) &gt;= atr_14_entry x param:mae_mult per ar:AR-048,
+never live-recomputed); emergsl_price = the off-book emergSL stop
+price captured at entry (the synthetic layer:L3_Emergency_SL touch
+fires on bid &lt;= emergsl_price). Both Decimal-on-receipt per ar:AR-047.
+The mod:Position_Mirror q1_do schema set + the Image6 visual position
+box text updated in lockstep. No new seed VALUE (atr_14_entry is an
+indicator snapshot; emergsl_price derives from the existing
+param:emergency_sl_mult), so NO TB00000 sec 8 change. No other figure
+changed -- D2 g8 / D3 layer:L2 already referenced the entry-time
+snapshot; this amendment makes the canonical D6 schema match.
+
+R DISPOSITION: Image6 R19 -> R20 (the change is in Image6 desc +
+visible text + the System-Context drill-target ref). All other
+figures R HELD. The single Image6 R-tagged cross-ref updated in
+lockstep (Image6_T2_R20_Complete_System).
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217,
+text 956/956, desc 126/126, svg 10/10, figure 10/10); no residual
+dv1_241 / Image6-R19; the schema set + visual box text + R bumps
+updated in lockstep.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_51 / DocPath ...dv1_51... /
+DocDate 06-14-2026 / DocTime 06:40:00 UTC
+LIVE: DocVersion dv1_52 / DocPath ...dv1_52... /
+DocDate 06-15-2026 / DocTime 00:45:00 UTC
+
+----- END TB00722 dv1_242 OP RECORD -----
 
 
 ============================================================

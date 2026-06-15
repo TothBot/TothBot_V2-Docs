@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_241</title>
+<title>0500000 System Architecture Overview dv1_242</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_241</td></tr>
+  <tr><td>DocVersion</td><td>dv1_242</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_241_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>06-14-2026</td></tr>
-  <tr><td>DocTime</td><td>06:35:00 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_242_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>06-15-2026</td></tr>
+  <tr><td>DocTime</td><td>00:45:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -325,7 +325,7 @@ Tier 2 diagrams (D1 - D7) below.
               canonical: container:TothBot_Zone
               tier: 1
               parent_diagram: none
-              drill_targets: 0500000_Image2_T2_R14_Trading_Pipeline, 0500000_Image3_T2_R12_Exit_Architecture, 0500000_Image6_T2_R19_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
+              drill_targets: 0500000_Image2_T2_R14_Trading_Pipeline, 0500000_Image3_T2_R12_Exit_Architecture, 0500000_Image6_T2_R20_Complete_System, 0500000_Image7_T2_R12_Paper_Mode_Dispatch_Boundary
               constraints: rule:HR-PA-001, rule:PA-001, rule:PA-002, rule:PA-003, rule:PA-004, rule:PA-005, ar:AR-001..AR-076
               consumes: contract:OHLC_5m_System_Clock, contract:Parameter_Store_Snapshot, channel:kraken_ws_executions, channel:kraken_ws_balances
               produces: contract:WSManager_Dispatch_Seam, contract:CIATS_Trade_Outcome_Bus, evt:TRADE_CLOSE, evt:ENTRY_SUBMITTED, evt:ENTRY_FILLED, evt:PAPER_DISPATCH_BLOCKED
@@ -4331,14 +4331,14 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
   <div class="diagram-svg">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1530"
      font-family="Arial, Helvetica, sans-serif" font-size="12">
-  <title>0500000_Image6_T2_R19_Complete_System</title>
+  <title>0500000_Image6_T2_R20_Complete_System</title>
   <desc>
-    diagram_canonical: 0500000_Image6_T2_R19_Complete_System
+    diagram_canonical: 0500000_Image6_T2_R20_Complete_System
     tier: 2
     parent_dcn: 0500000
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
-    CURRENT R: R19.
+    CURRENT R: R20.
     governs: container:Kraken_Zone, container:TothBot_Zone, container:CIATS_Zone,
              container:Public_WS_v2, container:Private_WS_v2, container:Kraken_REST_API,
              container:Matching_Engine,
@@ -4378,7 +4378,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
           text-anchor="middle">DIAGRAM 6 — Complete System: One CIATS-Owned Organism</text>
     <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
-      0500000_Image6_T2_R19_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
+      0500000_Image6_T2_R20_Complete_System  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  HTML inline
     </text>
   </g>
 
@@ -4547,7 +4547,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
       parent_diagram: 0500000_Context_T1_System_Context
       drill_targets: contract:Executions_Channel_Sequence, contract:Reconciliation_REST
       constraints: rule:HR-PM-009 (WS Manager is the SOLE writer to Position Mirror; all other modules READ via WSManager helper methods per HR-PM-009 verbatim "WS Manager is the SOLE writer to Position Mirror. No other component may directly modify it." plus HR-PM-011 single-writer enforcement in BOTH paper and live modes per PA-005 byte-identical), PA-004 div #4 (paper sourced exclusively from local sim — divergence absorbed by WSManager dispatch seam per 0500000 §12.3, invisible to Position Mirror module), contract:Executions_Channel_Sequence (strict per-symbol sequence ordering of fill events per channel:kraken_ws_executions ingest semantics — Position Mirror reconstructs net position from sequenced fills, sequence-gap detection triggers contract:Reconciliation_REST fallback), param:paper_starting_balance (paper-mode initial equity context: Position_Mirror constructs paper position state against this starting balance per PA-004 + 0500000 §12.3 — live mode uses real account balance snapshot from REST GetAccountBalance)
-      q1_do: symbol-keyed dict O(1) lookup per ar:AR-002 holding net position state {qty, avg_entry_price, unrealized_pnl, fill_sequence_id, regime_at_entry, exit_layer_armed} for every open symbol; sole writer is mod:WS_Manager per rule:HR-PM-009 (all other modules read via WSManager helper methods, never direct dict access); fed exclusively by channel:kraken_ws_executions in live mode + evt:PAPER_FILL_SIMULATED in paper mode (PA-004 div #4 absorbed by dispatch seam invisible to module); reconciliation REST fallback triggered on channel:kraken_ws_executions sequence gap per contract:Executions_Channel_Sequence + contract:Reconciliation_REST; produces position state for mod:Exit_Controller (exit layer arming), mod:Signal_Pipeline (G1 State Machine), mod:Risk_Engine (drawdown), mod:Logger (record context); paper-mode initial state constructed against param:paper_starting_balance per 0500000 §12.3
+      q1_do: symbol-keyed dict O(1) lookup per ar:AR-002 holding net position state {qty, avg_entry_price, unrealized_pnl, fill_sequence_id, regime_at_entry, exit_layer_armed, atr_14_entry, emergsl_price} for every open symbol (atr_14_entry + emergsl_price are the ENTRY-TIME SNAPSHOT fields captured once at the opening fill and never live-recomputed: mod:Exit_Controller reads atr_14_entry for layer:L2_MAE_Threshold detection [(entry_fill_price - bid) &gt;= atr_14_entry x param:mae_mult per ar:AR-048] and emergsl_price for the off-book layer:L3_Emergency_SL touch [bid &lt;= emergsl_price]; both Decimal-on-receipt per ar:AR-047); sole writer is mod:WS_Manager per rule:HR-PM-009 (all other modules read via WSManager helper methods, never direct dict access); fed exclusively by channel:kraken_ws_executions in live mode + evt:PAPER_FILL_SIMULATED in paper mode (PA-004 div #4 absorbed by dispatch seam invisible to module); reconciliation REST fallback triggered on channel:kraken_ws_executions sequence gap per contract:Executions_Channel_Sequence + contract:Reconciliation_REST; produces position state for mod:Exit_Controller (exit layer arming), mod:Signal_Pipeline (G1 State Machine), mod:Risk_Engine (drawdown), mod:Logger (record context); paper-mode initial state constructed against param:paper_starting_balance per 0500000 §12.3
       q4_triggers: triggered by mod:WS_Manager dispatch of channel:kraken_ws_executions fill events (entry fill, exit fill, partial fill, emergSL fill, cancel ack) per HR-PM-009 sole-writer path; triggered by evt:PAPER_FILL_SIMULATED via local sim path in paper mode; triggered by reconciliation REST fallback on sequence gap; triggers position-state-update events consumed by mod:Exit_Controller (exit layer arming + exit decision) + mod:Signal_Pipeline (G1 + G5 state) + mod:Risk_Engine (drawdown monitor) + mod:Logger (record),
       q5_logs: every position state write logged at INFO per rule:HR-LG-004 with symbol + qty_delta + new_qty + avg_entry_price + fill_sequence_id + writer_id (must be "WS_Manager" per HR-PM-009 enforcement); HR-PM-009 sole-writer violation attempts at CRITICAL (defense-in-depth: any direct write from another module raises and is logged); contract:Executions_Channel_Sequence sequence gaps at HIGH (signals stream loss); reconciliation REST fallback at HIGH; paper-mode initial state construction at INFO with param:paper_starting_balance value; net-position-state delta drives downstream MAE/risk logs via mod:Exit_Controller and mod:Risk_Engine
       consumes: channel:kraken_ws_executions (live), evt:PAPER_FILL_SIMULATED (paper mode), evt:PAPER_ORDER_SIMULATED, evt:RECONCILE_COMPLETE
@@ -4556,7 +4556,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
     </desc>
     <rect x="525" y="400" width="430" height="80" fill="#dcfce7" stroke="#14532d" stroke-width="1.5" rx="4"/>
     <text x="740" y="426" font-size="13" font-weight="700" text-anchor="middle">mod: PositionMirror (symbol-keyed dict, O(1))</text>
-    <text x="740" y="446" font-size="11" text-anchor="middle">symbol • entry • qty • cl_ord_id • emergSL id</text>
+    <text x="740" y="446" font-size="11" text-anchor="middle">symbol • entry • qty • cl_ord_id • emergSL id • atr_14_entry • emergsl_price</text>
     <text x="740" y="464" font-size="10" font-style="italic" text-anchor="middle" fill="#1e40af">HR-PM-009: WS Manager is SOLE WRITER • PA-004 div #4: paper sourced from local sim</text>
   </g>
 
@@ -4910,7 +4910,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
 </svg>
   </div>
   <figcaption>
-    Image6 Complete System (R19). CURRENT R: R19.<br>
+    Image6 Complete System (R20). CURRENT R: R20.<br>
   </figcaption>
 </figure>
 <h2>8. Locked Architectural Decisions</h2>
