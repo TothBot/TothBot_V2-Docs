@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_61
+DocVersion: dv1_62
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_61.txt
-DocDate:    06-15-2026
-DocTime:    23:59:30 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_62.txt
+DocDate:    06-16-2026
+DocTime:    00:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31192,6 +31192,44 @@ LIVE: DocVersion dv1_61 / DocPath ...dv1_61... /
 DocDate 06-15-2026 / DocTime 23:59:30 UTC
 
 ----- END TB00751 CIATS stop-width self-tuning step seed dv1_251 OP RECORD -----
+
+
+----- BEGIN TB00759 C5 Form 8949 qty field schema 23 to 24 dv1_252 OP RECORD -----
+
+CHANGE: the contract:TRADE_CLOSE canonical schema is expanded from 23 to 24
+fields by adding (24) qty Decimal (the filled position quantity). This is the
+Bill TB00758 D1 ruling: C5 ANNUAL (FP6 / 26 CFR 1.6001-1 / IRS Form 8949)
+needs proceeds (exit_price x qty) and cost_basis (entry_fill_price x qty),
+and qty is NOT derivable from the other 23 fields (net_pl = (exit-entry)*qty
+- fees is undefined when exit == entry), so the quantity is carried
+explicitly. mod:Exit_Controller already holds it (position.qty at close).
+
+SITES (0500000 dv1_251 -> dv1_252): every "23-field" reference -> "24-field"
+(24 occurrences across the D5 logger_box / the CIATS_Trade_Outcome_Bus stream2
+box / the Statistical+Proposal+Regime+PDCA consumer boxes / the §7.5 visual);
+the schema_fields_canonical enumeration in BOTH canonical sites (the Trade
+Outcome Bus box + the stream2 box) gains "(24) qty Decimal"; the §7.5 visual
+field-list {...} gains ", qty". The schema is still the diagram-canonical
+source (no subordinate spec).
+
+NO NEW SEED: qty is a record field, not a CIATS-tuned value -- TB00000 stays
+v2_101. NEVER the sacred 1:1.5 R:R.
+
+R DISPOSITION: no figure R bump (a schema_fields_canonical + count + visual
+text change; no polygon/region change).
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text
+957/957, desc 126/126, svg 10/10); no residual "23-field"; no residual
+dv1_251; the (24) qty field present in both canonical enumerations + the
+visual.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_61 / DocPath ...dv1_61... /
+DocDate 06-15-2026 / DocTime 23:59:30 UTC
+LIVE: DocVersion dv1_62 / DocPath ...dv1_62... /
+DocDate 06-16-2026 / DocTime 00:30:00 UTC
+
+----- END TB00759 C5 Form 8949 qty field schema 23 to 24 dv1_252 OP RECORD -----
 
 
 ============================================================
