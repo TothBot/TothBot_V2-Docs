@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_66
+DocVersion: dv1_67
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_66.txt
-DocDate:    06-16-2026
-DocTime:    23:59:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_67.txt
+DocDate:    06-17-2026
+DocTime:    04:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31520,6 +31520,81 @@ LIVE: DocVersion dv1_66 / DocPath ...dv1_66... /
 DocDate 06-16-2026 / DocTime 23:59:00 UTC
 
 ----- END TB00769 Opt 5 cleanup drop the refused ohlc_60m + status subscribes and wire the HTF_1H_GAP REST self-heal dv1_256 OP RECORD -----
+
+
+----- BEGIN TB00770 B build the periodic SHORT-equity TradeBalance reconcile carry-forward REST-BAL-008 dv1_257 OP RECORD -----
+
+CONTEXT: TB00770 mission (B). The 0500000 AR-052 prose already NAMED the periodic
+reconcile (the resolved TB00766 ruling: "reconciled periodically to REST-BAL-008 e");
+the pipeline/portfolio.py docstring carried it as a deferred follow-on. This ticket
+BUILDS it in Code and SITES the now-wired mechanism into AR-052.
+
+THE DRIFT IT BOUNDS: the SHORT gate:G7 CHECK 1 drawdown numerator is
+current_portfolio_usd's reconstruction = margin collateral + open-short MTM at the
+ask - the ESTIMATED borrow rollover [param:margin_rollover_fee_pct per 4h block].
+The rollover term is an estimate; the cash + MTM marks drift from Kraken's true
+ledger. Un-reconciled the reconstruction is conservative (the estimate OVER-subtracts
+-> the breaker fires SOONER -> FN-safe, never a FALSE POSITIVE) but it accumulates.
+
+THE CARRY-FORWARD (Code, HEAD ce8f008): new mod pipeline/equity_reconcile.py
+PeriodicTradeBalanceReconcile, a live-only async poll loop. Each poll fetches the true
+margin equity e (REST-BAL-008 TradeBalance), computes the RAW reconstruction
+(current_portfolio_usd with reconcile_offset=0), and re-seeds the carry-forward offset
+on the WSManager: offset = e_true - raw. current_portfolio_usd adds that offset back
+for the SHORT so the numerator lands EXACTLY on e at the poll instant and tracks MTM
+between polls. UNLIKE the once-only startup baseline (rule:HR-WM-011) the offset is
+UPDATED every poll -- the running carry-forward. A poll that cannot compute (fetch
+None / wallet not fed / a missing quote ProviderNotReady) is SKIPPED cleanly (the
+prior offset stands), never a crash. evt:SHORT_EQUITY_RECONCILED [MEDIUM] telemetry.
+The cadence DEFAULT_RECONCILE_INTERVAL_SEC is hourly, an ENGINEERING constant (an
+operational poll interval like the keepalive ping) NOT a CIATS seed -- TB00000 stays
+v2_101, NO NEW SEED (the borrow rollover is the EXISTING param:margin_rollover_fee_pct
+TB00728 DEC-A).
+
+WIRING: the previously-DEAD REST drawdown-baseline edges now flow build_system ->
+assemble_operational -> PrivateConnectionAssembler: fetch_account_balance
+(REST-BAL-004 long spot USD) + fetch_trade_balance (REST-BAL-008 short margin equity
+e), so _capture_startup_baseline actually fires in the live path AND the SHORT
+TradeBalance edge ALSO builds the equity reconcile. OperationalSystem gains the
+equity_reconcile field; run() drives its loop concurrently, stop() halts it; live only
+(paper has no margin account). WSManager gains _short_equity_reconcile_offset +
+short_equity_reconcile_offset() accessor + set_short_equity_reconcile_offset();
+portfolio.py current_portfolio_usd gains the reconcile_offset param (None -> the wm
+offset via getattr, back-compat; the reconcile passes 0 for its raw read), SHORT only.
+
+SITES (this dv1_257 edit): the AR-052 reconcile clause -- "reconciled periodically to
+REST-BAL-008 e" now names mod:equity_reconcile the PeriodicTradeBalanceReconcile hourly
+poll, the carry-forward offset [wm.short_equity_reconcile_offset = e_true - raw] added
+back to the numerator, evt:SHORT_EQUITY_RECONCILED, the once-only-baseline contrast
+(HR-WM-011), and the before-first-poll / paper FN-safe fallback. Text-only inside the
+existing AR-052 desc prose.
+
+NO NEW SEED: the reconcile cadence is an engineering constant; the borrow fee is the
+EXISTING margin_rollover_fee_pct (TB00728 DEC-A) -- TB00000 stays v2_101. NEVER the
+sacred 1:1.5 R:R.
+
+R DISPOSITION: no figure R bump -- the single edit is q1_do / prose wording inside the
+existing AR-052 desc; no polygon/region/figure-structure change.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text 957/957,
+desc 126/126, svg 10/10, title 126/126, figcaption 10/10 -- unchanged, text-only edit
+inside an existing desc element); no residual dv1_256. Code 1143 -> 1158 green
+(HEAD ce8f008): test_equity_reconcile.py (the offset math + end-to-end re-anchor to e,
+the negative-offset case, the three clean SKIPs, the run/stop loop) +
+test_portfolio.py (the SHORT offset application + the param override + LONG never adds
+it + back-compat) + test_operational.py (live wires both baselines + builds the
+reconcile; no edge -> no reconcile; paper -> no reconcile).
+
+mission (C) the live-deploy tail (the real private socket + GetWebSocketsToken + the
+real REST credential edges) stays Bill-gated -- NOT wired here.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_66 / DocPath ...dv1_66... /
+DocDate 06-16-2026 / DocTime 23:59:00 UTC
+LIVE: DocVersion dv1_67 / DocPath ...dv1_67... /
+DocDate 06-17-2026 / DocTime 04:00:00 UTC
+
+----- END TB00770 B build the periodic SHORT-equity TradeBalance reconcile carry-forward REST-BAL-008 dv1_257 OP RECORD -----
 
 
 ============================================================

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_256</title>
+<title>0500000 System Architecture Overview dv1_257</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_256</td></tr>
+  <tr><td>DocVersion</td><td>dv1_257</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_256_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>06-16-2026</td></tr>
-  <tr><td>DocTime</td><td>23:59:00 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_257_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>06-17-2026</td></tr>
+  <tr><td>DocTime</td><td>04:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -5285,7 +5285,17 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     invariant to the open transaction and basis-consistent with the SHORT
                     current_portfolio; the SHORT current_portfolio = the running equity =
                     margin collateral + open-short MTM at the ASK - the borrow rollover accrual
-                    [param:margin_rollover_fee_pct], reconciled periodically to REST-BAL-008 e).
+                    [param:margin_rollover_fee_pct], reconciled periodically to REST-BAL-008 e by
+                    mod:equity_reconcile the PeriodicTradeBalanceReconcile hourly poll [live only;
+                    DEFAULT_RECONCILE_INTERVAL_SEC, an engineering cadence NOT a seed]: each poll fetches
+                    the true margin equity e [REST-BAL-008 TradeBalance], computes the RAW reconstruction,
+                    and re-anchors a carry-forward offset [wm.short_equity_reconcile_offset =
+                    e_true - raw] added back to THIS numerator so it lands on the true margin equity at
+                    the last poll instant and tracks MTM between polls, emitting evt:SHORT_EQUITY_RECONCILED;
+                    UNLIKE the once-only startup baseline [rule:HR-WM-011] the offset is UPDATED every
+                    poll [the running carry-forward]; before the first poll [and always in paper - no
+                    margin account] the offset is 0 and the reconstruction is conservative [an
+                    un-reconciled rollover OVER-subtracts, firing the breaker SOONER - FN-safe]).
                     Two independent baselines, two independent session_pause / full_halt machines.
                     DRAWDOWN:
                       drawdown_pct = max(0,
