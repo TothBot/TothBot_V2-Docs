@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_67
+DocVersion: dv1_68
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_67.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_68.txt
 DocDate:    06-17-2026
-DocTime:    04:00:00 UTC
+DocTime:    14:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31595,6 +31595,81 @@ LIVE: DocVersion dv1_67 / DocPath ...dv1_67... /
 DocDate 06-17-2026 / DocTime 04:00:00 UTC
 
 ----- END TB00770 B build the periodic SHORT-equity TradeBalance reconcile carry-forward REST-BAL-008 dv1_257 OP RECORD -----
+
+
+----- BEGIN TB00772 universe-expansion the global REST governor plus the two-stage pre-screen and CIATS viability seed dv1_258 OP RECORD -----
+
+CONTEXT: TB00772 the OWED Docs sync for the universe-expansion arc. TB00771 fixed the
+genuine warm-up REST-flood defect in Code (the global per-IP REST governor) and this
+session BUILT phases 2 and 3 in Code (the bulk pre-screen + the CIATS-owned viability
+seed); the 0500000 architecture was UNCHANGED across that arc (dv1_257). This ticket
+SITES the now-built mechanisms into 0500000 (dv1_257 -> dv1_258).
+
+THE DEFECT THE GOVERNOR FIXES (ar:AR-081, new): WarmupOrchestrator.warm_all fans out
+one coroutine PER PAIR via asyncio.gather; the prior per-pair 1.1s sleep spaced only a
+single pair's own two REST calls, so a large universe fired about one call per pair at
+once -- a sustained drain far over Kraken's ~1 per second per-IP budget -- mass
+rate-limit, mass WARM_UP_FAIL, a systemic FALSE NEGATIVE (a large fraction of the
+universe silently never seeds). FIX: every public AND private call on the shared
+KrakenRestClient now awaits ONE process-singleton leaky-bucket pacer
+(rest/rate_limiter.RestRateLimiter) -- rate 1/min_interval, NO burst credit, an
+asyncio.Lock held across the spacing sleep, AIMD back-off on a Kraken rate-limit
+response. This RELOCATES the ar:AR-036 per-IP budget from the daily-compute edge alone
+to the client itself. min_interval seed 1.1s = an ENGINEERING per-IP rate budget, NOT a
+CIATS-owned strategy seed.
+
+THE TWO-STAGE CUT (ar:AR-082, new): the full ar:AR-070 ELIGIBLE universe measures about
+735 pairs live; subscribing plus warming all of them firehoses the data layer and the
+per-IP REST budget. The FP/DP determination (over-admission CAUSES a systemic FN via
+flooding, so the optimum monitored cardinality N is interior; the heavy-tailed
+liquidity distribution gives a sharp cutoff) yields a TWO-STAGE cut. STAGE 1 (phase-2
+bulk pre-screen, app/prescreen.py): ONE bulk Ticker call ranks every pair by 24h USD
+volume; ONE AssetPairs call maps the REST pair key to the WS v2 symbol; trim to top-N.
+STAGE 2 (phase-3 CIATS viability seed, ciats/viability.py + app/viability_screen.py): a
+FORWARD historical re-sim per candidate (the SAME DEC-124 run-to-reversal harness
+compute_expected_reward uses) folds the per-regime realized excursions into ONE
+frequency-weighted per-pair expectancy; CIATS sets N by taking the top-N viable
+(greedy-optimal for summed captured expectancy under the capacity budget) -- CIATS
+picks N, NOT the operator. A non-viable pair is dropped; the ar:AR-074 BTC/USD anchor is
+ALWAYS monitored. The viability seed is a CIATS-OWNED parameter (the day-one estimate
+for the never-traded tail; DEC-124 seed-then-correct) TUNED live via the existing
+shadow_replay PDCA. The capacity budget N is an ENGINEERING constant (VPS plus per-IP
+data-layer capacity), NOT a strategy seed.
+
+SITES (this dv1_258 edit): NEW ar:AR-081 (global per-IP REST governor) + ar:AR-082
+(universe pre-screen plus CIATS-owned viability seed) appended to the AR registry;
+ar:AR-036 amended (the per-IP budget now enforced globally at the client via AR-081);
+ar:AR-044 amended (the warm-up gather now funnels through the AR-081 governor);
+ar:AR-070 amended (the monitored set is now capacity-bounded by the AR-082 two-stage
+cut; the "no top-N cap" stands as the LOGICAL eligibility scope, AR-082 selects which
+ELIGIBLE pairs are MONITORED); container:Kraken_REST_API constraints gains ar:AR-081 +
+ar:AR-082; the ar:AR-001..AR-080 range references bumped to ar:AR-001..AR-082.
+
+NO NEW SEED: the governor min_interval is an engineering per-IP rate budget and the
+viability capacity N is an engineering capacity constant; the viability seed itself is
+CIATS-owned (computed from data, not a literal) -- TB00000 stays v2_101. NEVER the
+sacred 1:1.5 R:R.
+
+R DISPOSITION: no figure R bump -- all edits are text inside the existing AR-registry
+<pre> block + the container:Kraken_REST_API desc constraints field; no polygon / region
+/ figure-structure change, no new visual geometry.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text 957/957,
+desc 126/126, svg 10/10, title 126/126, figcaption 10/10 -- unchanged, text-only edits;
+pre 112/112); no new bare-ampersand strict-XML issue introduced; no residual dv1_257.
+Code (this record pins HEAD c62e25a, 1188 green): bfff411 phase-2 (rest/client.py bulk
+Ticker + AssetPairs parsers + methods, app/prescreen.py, TOTHBOT_TOP_N wiring,
++13 tests) + c62e25a phase-3 (ciats/viability.py, app/viability_screen.py,
+TOTHBOT_VIABILITY_N wiring, +11 tests). Phase 1 (the governor itself, rest/rate_limiter
+.py) shipped TB00771 Code 2cd43a4.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_67 / DocPath ...dv1_67... /
+DocDate 06-17-2026 / DocTime 04:00:00 UTC
+LIVE: DocVersion dv1_68 / DocPath ...dv1_68... /
+DocDate 06-17-2026 / DocTime 14:00:00 UTC
+
+----- END TB00772 universe-expansion the global REST governor plus the two-stage pre-screen and CIATS viability seed dv1_258 OP RECORD -----
 
 
 ============================================================
