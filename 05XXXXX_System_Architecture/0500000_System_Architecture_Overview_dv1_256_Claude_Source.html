@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_255</title>
+<title>0500000 System Architecture Overview dv1_256</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_255</td></tr>
+  <tr><td>DocVersion</td><td>dv1_256</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_255_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_256_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-16-2026</td></tr>
-  <tr><td>DocTime</td><td>23:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:59:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -1401,7 +1401,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
         constraints: ar:AR-001, ar:AR-002, ar:AR-038, ar:AR-039, decision:D-03, rule:HR-WM-028, rule:HR-WM-029, rule:HR-WM-008 (instrument channel price_increment/qty_increment/qty_min/cost_min parsed as Decimal(str()) immediately on parse, no float arithmetic on financial values; price_increment replaces deprecated tick_size [AR-030]), rule:HR-WM-019 (every subscribe ACK warnings[] array parsed; non-empty warnings[] logged immediately, known deprecation warnings at INFO, unknown at WARN+alert [AR-031])
         consumes: none
         produces: evt:WS_RECONNECT, evt:WS_SUBSCRIBE_RATE_LIMIT, ws_subscribe:public_v2
-        q1_do: Kraken-edge WebSocket v2 public endpoint serving 4 channels (instrument, status, ohlc_5m, ticker); accepts subscribe/unsubscribe RPC from mod:WS_Manager and pushes channel data frames per subscription; subject to Cloudflare 150-conns/10-min ceiling per ar:AR-080.
+        q1_do: Kraken-edge WebSocket v2 public endpoint serving instrument, status, ohlc_5m, ticker; mod:WS_Manager SUBSCRIBES only instrument (GLOBAL, shard 0) + ohlc_5m + ticker (PER-PAIR) -- TB00769: status is AUTO-PUSHED (an explicit status subscribe is refused "Symbol(s) not found"; the receive loop adopts connection_id + maintenance from the auto-pushed frame, so no subscribe is needed) and the 1H HTF feed is DERIVED from ohlc_5m by mod:OhlcAggregator (Kraken refuses a 2nd ohlc interval per symbol per connection "Already subscribed to one ohlc interval"), so channel:kraken_ws_ohlc_60m is NOT subscribed; accepts subscribe/unsubscribe RPC from mod:WS_Manager and pushes channel data frames per subscription; subject to Cloudflare 150-conns/10-min ceiling per ar:AR-080.
         q4_triggers: TCP/WSS connection open by mod:WS_Manager (cold-start + mid-session reconnect per ar:AR-056); subscribe RPC per shard per channel per pair set governed by contract:WM-PACE-001 + WM-PACE-002 (SUBSCRIBE_RATE_PER_SEC=10, SUBSCRIBE_BURST_CAPACITY=20); emits channel data frames continuously, status frames on market open/close, evt:WS_RECONNECT on connection drop, evt:WS_SUBSCRIBE_RATE_LIMIT on Cloudflare AR-080 ceiling breach.
         q5_logs: External (Kraken-owned); logging at TothBot side via mod:WS_Manager wire-level capture routed to mod:Logger via channel:logger_async_queue; evt:WS_RECONNECT + evt:WS_SUBSCRIBE_RATE_LIMIT are TothBot-emitted logger events derived from connection-state observation.
         schema_version: 1.0
@@ -1417,7 +1417,7 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
     <text x="50" y="236" font-size="9" font-weight="700" fill="#0f172a" text-anchor="start">instrument</text>
     <text x="115" y="236" font-size="9" fill="#475569" text-anchor="start">global (shard 0 only)</text>
     <text x="50" y="250" font-size="9" font-weight="700" fill="#0f172a" text-anchor="start">status</text>
-    <text x="115" y="250" font-size="9" fill="#475569" text-anchor="start">global · AR-038 startup</text>
+    <text x="115" y="250" font-size="9" fill="#475569" text-anchor="start">global · AUTO-PUSHED not subscribed</text>
     <text x="50" y="264" font-size="9" font-weight="700" fill="#1e40af" text-anchor="start">ohlc(5m)</text>
     <text x="115" y="264" font-size="9" fill="#1e40af" text-anchor="start">partition i%N==0</text>
     <text x="50" y="278" font-size="9" font-weight="700" fill="#0f172a" text-anchor="start">ticker</text>
@@ -2244,7 +2244,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         constraints: rule:HR-SP-006
         consumes: indicator:EMA20_daily, indicator:EMA50_daily, channel:kraken_ws_ohlc_60m, param:htf_ema_periods
         produces: none
-        q1_do: Confirms 1H higher-timeframe momentum alignment with the candidate 5m signal direction by checking EMA20_daily vs EMA50_daily alignment + 1H candle close direction over channel:kraken_ws_ohlc_60m, selecting the test from the gate:G3_Regime_Filter permitted_side tag. Long-side (permitted_side=LONG, regime:TRENDING_POS): requires EMA20_daily > EMA50_daily AND last 1H close > 1H EMA20. Short-side (permitted_side=SHORT, regime:TRENDING_NEG, mod:Short_Module): requires EMA20_daily &lt; EMA50_daily AND last 1H close &lt; 1H EMA20 (the long test mirrored). PASS on alignment; SKIP HTF_GATE_REJECTED otherwise per HR-SP-006. Gate 4 directional HTF confirmation applies to the TRENDING regimes (TRENDING_POS routes the long test, TRENDING_NEG routes the short test): a regime:NON_DIR_NORMAL pair (permitted_side=BOTH, entry-permitted at 50% size at gate:G6_Regime_Sizer) SKIPS Gate 4 and proceeds directly to mod:Signal_Pipeline, because a non-directional regime has no trend to confirm at the 1H HTF.
+        q1_do: Confirms 1H higher-timeframe momentum alignment with the candidate 5m signal direction by checking EMA20_daily vs EMA50_daily alignment + 1H candle close direction over the 1H HTF feed (channel:kraken_ws_ohlc_60m as the logical 1H feed; per TB00768/769 the LIVE feed is DERIVED from ohlc_5m by mod:OhlcAggregator -- Kraken refuses a 2nd ohlc interval subscribe -- not a WS ohlc_60m subscription), selecting the test from the gate:G3_Regime_Filter permitted_side tag. Long-side (permitted_side=LONG, regime:TRENDING_POS): requires EMA20_daily > EMA50_daily AND last 1H close > 1H EMA20. Short-side (permitted_side=SHORT, regime:TRENDING_NEG, mod:Short_Module): requires EMA20_daily &lt; EMA50_daily AND last 1H close &lt; 1H EMA20 (the long test mirrored). PASS on alignment; SKIP HTF_GATE_REJECTED otherwise per HR-SP-006. Gate 4 directional HTF confirmation applies to the TRENDING regimes (TRENDING_POS routes the long test, TRENDING_NEG routes the short test): a regime:NON_DIR_NORMAL pair (permitted_side=BOTH, entry-permitted at 50% size at gate:G6_Regime_Sizer) SKIPS Gate 4 and proceeds directly to mod:Signal_Pipeline, because a non-directional regime has no trend to confirm at the 1H HTF.
         q4_triggers: Triggered by gate:G3_Regime_Filter PASS. Triggers downstream: mod:Signal_Pipeline SSS engine evaluation on PASS; mod:Logger SKIP entry on HTF_GATE_REJECTED.
         q5_logs: Logs HTF decision per pair via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type=G4_HTF_DECISION, fields: pair, ema20_daily, ema50_daily, htf_1h_close, htf_alignment, decision={PASS|HTF_GATE_REJECTED}, tick_id). Skip entries feed SKIP REJECT REGISTRY.
         schema_version: 1.0
@@ -5114,8 +5114,13 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     latency, zero incremental connection / rate-limit. COMPLETENESS-GATED
                     (emit only at twelve interval_begin-contiguous slots: the HR-WM-012
                     never-act-on-partial principle, FP->0); an hour-aligned shortfall (a
-                    reconnect dropped 5m closes) -> evt:HTF_1H_GAP for the REST GetOHLCData(60)
-                    self-heal (FN->0). The warm-up REST GetOHLCData(60) seed is unchanged.
+                    reconnect dropped 5m closes) -> evt:HTF_1H_GAP. TB00769 WIRES that gap's
+                    self-heal: HTF_1H_GAP auto-refetches one targeted REST GetOHLCData(60) and
+                    RE-SEEDS the HtfCache close_1h + EMA(20)/EMA(50) (the REST 1H series is
+                    authoritative - it already folds in the dropped hour), emits evt:HTF_1H_HEAL,
+                    then drives EC-L1A-001 once on the healed EMAs so a reversal the gap would
+                    have hidden still fires (FN->0). A REST failure leaves the cache to resume on
+                    the next complete hour (bounded). The warm-up REST GetOHLCData(60) seed is unchanged.
   AR-046 ★: emergSL triggers.reference MUST be explicit in all batch_add
                     calls. Never rely on API defaults for crash-protection parameters.
                     ALL emergSL stop-loss orders MUST include:

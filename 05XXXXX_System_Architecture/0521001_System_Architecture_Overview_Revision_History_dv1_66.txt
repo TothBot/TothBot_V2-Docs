@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_65
+DocVersion: dv1_66
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_65.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_66.txt
 DocDate:    06-16-2026
-DocTime:    23:55:00 UTC
+DocTime:    23:59:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31437,6 +31437,89 @@ LIVE: DocVersion dv1_65 / DocPath ...dv1_65... /
 DocDate 06-16-2026 / DocTime 23:55:00 UTC
 
 ----- END TB00768 derive the live 1H ohlc_60m feed by folding the 5m stream Opt 5 dv1_255 OP RECORD -----
+
+
+----- BEGIN TB00769 Opt 5 cleanup drop the refused ohlc_60m + status subscribes and wire the HTF_1H_GAP REST self-heal dv1_256 OP RECORD -----
+
+CHANGE: the TB00768 DEFERRED follow-up is DONE. (1) the two Kraken-REFUSED
+subscribes are DROPPED from the WS_Manager subscribe set -- ohlc_60m (the derived
+fold supersedes it) + status (Kraken auto-pushes it); (2) the HTF_1H_GAP self-heal
+is WIRED end-to-end -- a gapped pair now auto-refetches one targeted REST
+GetOHLCData(60), RE-SEEDS its HtfCache, and emits the new evt:HTF_1H_HEAL. This is
+the diagram literal for the TB00769 CODE build.
+
+WHY: the FIRST redeploy onto the TB00768 fix (VPS paper, real Kraken) confirmed the
+predicted refusals -- 3x "Already subscribed to one ohlc interval on this symbol"
+(ohlc_60m) + 1x "Symbol(s) not found" (status), now correctly surfaced as
+evt:SUBSCRIPTION_REJECTED (not phantom acks). Issuing two subscribes Kraken always
+refuses is pure waste + log noise; the derived 1H feed already supersedes ohlc_60m,
+and receive_loop._handle_status adopts connection_id + maintenance from the AUTO-
+PUSHED status frame BEFORE any dispatch-registered check, so status needs no
+subscribe and no handler. The gap self-heal closes the FN tail TB00768 opened: the
+gap was RECORDED but not yet healed; the REST 1H series is authoritative (it already
+folds in the dropped hour), so re-seeding restores the exact EMA(20)/EMA(50) the
+frozen cache would have missed and re-drives EC-L1A-001 once on the healed EMAs (a
+reversal the gap would have hidden still fires) -- FN->0.
+
+SITES (0500000 dv1_255 -> dv1_256):
+  - container:Public_WS_v2 (Kraken-edge endpoint) q1_do: now states mod:WS_Manager
+    SUBSCRIBES only instrument (GLOBAL, shard 0) + ohlc_5m + ticker (PER-PAIR) --
+    status is AUTO-PUSHED (explicit subscribe refused "Symbol(s) not found") and the
+    1H feed is DERIVED (ohlc_60m NOT subscribed, Kraken refuses a 2nd ohlc interval).
+  - Image1 SHARD ASSIGNMENT visual: the shard-0 "status" row note "global -- AR-038
+    startup" -> "global -- AUTO-PUSHED not subscribed" (ohlc(60) already off the
+    per-pair list at TB00768).
+  - gate:G4_HTF_Confirmation q1_do: the "1H candle close over channel:kraken_ws_
+    ohlc_60m" clause gains the derived-feed note (the logical 1H feed; the LIVE feed
+    is DERIVED from ohlc_5m by mod:OhlcAggregator, not a WS ohlc_60m subscription).
+  - ar:AR-045 derived-1H block: the evt:HTF_1H_GAP sentence gains the WIRED self-
+    heal -- auto-refetch GetOHLCData(60) -> RE-SEED HtfCache -> evt:HTF_1H_HEAL ->
+    drive EC-L1A-001 once on the healed EMAs (FN->0); a REST failure resumes on the
+    next complete hour (bounded).
+  NOTE: the external container:Kraken_Zone produces/q4_triggers KEEP ohlc_60m +
+  status -- those name Kraken's CAPABILITY (real channels it can deliver), not the
+  TothBot subscribe set; only the TothBot-side subscribe/consume sites change.
+
+CODE (TothBot_V2-Code, the build this record pins; reads 0500000 dv1_256; HEAD b5065ac):
+  - exchange/sharding.py: GLOBAL_CHANNELS drops PublicChannel.STATUS; PER_PAIR_
+    CHANNELS drops PublicChannel.OHLC_60M; docstrings note the Kraken refusals +
+    the derived feed. subscribe_count for 3 pairs 11 -> 7 (globals 2->1, per-pair 3->2).
+  - exchange/ohlc_aggregate.py: NEW evt:HTF_1H_HEAL (Htf1hHealed) -- the successful
+    self-heal completion.
+  - pipeline/live_driver.py: LiveSweepDriver gains htf_rest_client; the Htf1hGap
+    branch now awaits _heal_htf -- REST GetOHLCData(60) -> re-seed HtfCache (reuse
+    ema()) -> HTF_1H_HEAL -> drive EC-L1A-001; no client/REST-fail = bounded resume.
+  - pipeline/operational.py: wires the existing rest_client into the driver.
+  Tests: the self-heal re-seeds + HEAL event + reversal drive, and the no-client
+  path records gap but no heal (test_live_driver); subscribe-count 11->7 + the
+  channel lists (test_sharding/test_assembler). 1139 -> 1141 green.
+
+LIVE VALIDATION: the VPS paper organism (real Kraken) was redeployed onto b5065ac
+-- SUBSCRIPTION_REJECTED 4 -> 0, SUBSCRIPTION_ACK 7 (instrument + 3 ohlc_5m + 3
+ticker), SUBSCRIBE_PACE_BATCH_COMPLETE subscribe_count 11 -> 7, WS_CONNECTED with a
+connection_id (status still adopted from the auto-pushed frame), 3 pairs
+WARM_UP_READY, 0 tracebacks.
+
+NO NEW SEED: the dropped subscribes are efficiency; the self-heal reuses the warm-up
+GetOHLCData(60) + ema() seed math; HTF_1H_HEAL fires on the structural HTF_1H_GAP
+shortfall -- TB00000 stays v2_101. NEVER the sacred 1:1.5 R:R.
+
+R DISPOSITION: no figure R bump -- every edit is q1_do / visual-text wording (the
+subscribe-set correction + the HTF_1H_HEAL self-heal note); no polygon/region/
+figure-structure change.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text 957/957,
+desc 126/126, svg 10/10, title 126/126, figcaption 10/10 -- unchanged, text-only
+edits inside existing desc/text/td elements); no residual dv1_255; no residual
+"ohlc(60) WS subscription" / "ohlc(60) WS event". Code 1139 -> 1141 green (HEAD b5065ac).
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_65 / DocPath ...dv1_65... /
+DocDate 06-16-2026 / DocTime 23:55:00 UTC
+LIVE: DocVersion dv1_66 / DocPath ...dv1_66... /
+DocDate 06-16-2026 / DocTime 23:59:00 UTC
+
+----- END TB00769 Opt 5 cleanup drop the refused ohlc_60m + status subscribes and wire the HTF_1H_GAP REST self-heal dv1_256 OP RECORD -----
 
 
 ============================================================
