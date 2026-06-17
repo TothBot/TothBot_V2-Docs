@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_254</title>
+<title>0500000 System Architecture Overview dv1_255</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_254</td></tr>
+  <tr><td>DocVersion</td><td>dv1_255</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_254_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_255_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-16-2026</td></tr>
-  <tr><td>DocTime</td><td>03:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>23:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -1326,8 +1326,11 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
   Value                          Pre-computed by    Update Trigger                      Cache Read On
   Regime classification          Regime Engine      Daily 00:00 UTC REST GetOHLCData    Every 5m eval (Gate 3+6)
                                                     [CRITICAL: exclude response[-1] ★]
-  1H EMA(20) and EMA(50)         Signal Pipeline    1H candle close ohlc(60) WS event   Gate 4
-                                                    (parse interval_begin, A-16)
+  1H EMA(20) and EMA(50)         Signal Pipeline    1H candle close DERIVED from ohlc(5m) Gate 4
+                                                    (TB00768: Kraken WS v2 permits only ONE
+                                                    ohlc interval per symbol per connection,
+                                                    so the 1H candle is FOLDED from twelve
+                                                    contiguous 5m candles, parse interval_begin A-16)
   ATR(14) per pair               Signal Pipeline    Each 5m candle close (incremental)  Gate 8 + Exit Controller
   24h liquidity per pair (USD)   Signal Pipeline    Daily ticker or daily OHLC pull     Gate 2
   Per-pair instrument status ★   WS Manager         instrument channel events (live)    Gates 1/2 pre-filter
@@ -1969,7 +1972,8 @@ Same stall behavior applies to ohlc(60). TothBot must handle stalled system cloc
 <pre>
   Gate 4: 1H HTF Confirmation ★
     1H EMA(20) &lt;= EMA(50) for TRENDING_POS entries: SKIP → HTF_GATE_REJECTED
-    Cache read from ohlc(60) WS subscription.
+    Cache read from the 1H feed DERIVED by folding the ohlc(5m) stream (TB00768 Opt 5:
+    Kraken WS v2 refuses a 2nd ohlc interval per symbol per connection).
 </pre>
 <pre>
   SSS Signal Engine
@@ -2248,7 +2252,7 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
     <rect x="290" y="706" width="640" height="76" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
     <text x="610" y="731" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">Gate 4: 1H HTF Confirmation</text>
     <text x="610" y="750" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">LONG: 1H EMA20 &gt; EMA50 + close &gt; EMA20 (TRENDING_POS)  |  SHORT: 1H EMA20 &lt; EMA50 + close &lt; EMA20 (TRENDING_NEG)</text>
-    <text x="610" y="768" font-size="10" font-weight="400" fill="#1d4ed8" text-anchor="middle">Cache reads from ohlc(60) WS subscription</text>
+    <text x="610" y="768" font-size="10" font-weight="400" fill="#1d4ed8" text-anchor="middle">Cache reads from the 1H feed DERIVED from ohlc(5m) (TB00768)</text>
   </g>
   <g id="g4_skip" class="decoration">
     <rect x="1080" y="726" width="200" height="36" fill="#fee2e2" stroke="#b91c1c" stroke-width="1" rx="6"/>
@@ -5098,7 +5102,20 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                         last_interval_begin[S] = msg.interval_begin.
                     Initialize last_interval_begin[S] from startup GetOHLCData(5)
                     response[-2].interval_begin (last committed candle).
-                    Same logic for ohlc(60) with separate last_interval_begin_60.
+                    Same logic for the 1H candle with separate last_interval_begin_60.
+                    TB00768 (Opt 5): Kraken WS v2 permits only ONE ohlc interval per symbol
+                    per connection (a 2nd subscribe is refused: "Already subscribed to one
+                    ohlc interval on this symbol" -> evt:SUBSCRIPTION_REJECTED). So the LIVE
+                    1H candle is NOT a WS ohlc(60) feed - it is DERIVED by mod:OhlcAggregator
+                    folding the twelve contiguous ohlc(5m) closes that partition the hour
+                    (open=first, close=last, high=max, low=min, volume=sum: lossless, equals
+                    Kraken's own 1H when all twelve present). EAGER-emitted the instant the
+                    twelfth (the :55->:00) 5m candle closes = native 1H timing, zero added
+                    latency, zero incremental connection / rate-limit. COMPLETENESS-GATED
+                    (emit only at twelve interval_begin-contiguous slots: the HR-WM-012
+                    never-act-on-partial principle, FP->0); an hour-aligned shortfall (a
+                    reconnect dropped 5m closes) -> evt:HTF_1H_GAP for the REST GetOHLCData(60)
+                    self-heal (FN->0). The warm-up REST GetOHLCData(60) seed is unchanged.
   AR-046 ★: emergSL triggers.reference MUST be explicit in all batch_add
                     calls. Never rely on API defaults for crash-protection parameters.
                     ALL emergSL stop-loss orders MUST include:
@@ -5421,7 +5438,8 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     Two Layer 1a exit triggers are derivable before SSS (OI-001):
                     EC-L1A-001 (HTF Regime Reversal): 1H EMA(20) crosses below EMA(50)
                       while long open. Gate 4 symmetry (short-side mirror, mod:Short_Module:
-                      1H EMA(20) crosses ABOVE EMA(50) while short open). Check on every ohlc(60) close.
+                      1H EMA(20) crosses ABOVE EMA(50) while short open). Check on every DERIVED 1H
+                      close (TB00768: folded from twelve ohlc(5m) candles, not a WS ohlc(60) feed).
                       Exit sequence: cancel emergSL → market sell.
                     EC-L1A-002 (Daily Regime Downgrade): At 00:00 UTC regime refresh,
                       pair reclassified TRENDING_POS → TRENDING_NEG or NON_DIR+ELEVATED.

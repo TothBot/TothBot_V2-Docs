@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_64
+DocVersion: dv1_65
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_64.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_65.txt
 DocDate:    06-16-2026
-DocTime:    23:30:00 UTC
+DocTime:    23:55:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31354,6 +31354,89 @@ LIVE: DocVersion dv1_64 / DocPath ...dv1_64... /
 DocDate 06-16-2026 / DocTime 23:30:00 UTC
 
 ----- END TB00767 ar:AR-052 short equity drawdown baseline REST-BAL-008 TradeBalance dv1_254 OP RECORD -----
+
+
+----- BEGIN TB00768 derive the live 1H ohlc_60m feed by folding the 5m stream Opt 5 dv1_255 OP RECORD -----
+
+CHANGE: the LIVE 1H (ohlc_60m) candle is no longer a WS ohlc(60) subscription --
+it is DERIVED by folding the ohlc(5m) close stream (mod:OhlcAggregator). The HTF
+cache source wire facts (Gate 4 1H EMA, AR-045 1H tracker, EC-L1A-001 1H reversal
+check) are corrected to name the derived feed; the Kraken one-ohlc-interval-per-
+connection constraint + the two new WS events (SUBSCRIPTION_REJECTED, HTF_1H_GAP)
+are recorded. This is the diagram literal for the TB00768 CODE build.
+
+WHY: the live paper run captured Kraken's real subscribe responses and exposed
+that Kraken WS v2 permits only ONE ohlc interval per symbol per connection -- the
+ohlc(5m)+ohlc(60) pair the diagram subscribed on one shard connection had the 60m
+subscribe REFUSED ("Already subscribed to one ohlc interval on this symbol",
+success:false). The HtfCache, REST-seeded at warm-up, would then FREEZE (no live
+60m close to advance it) and the EC-L1A-001 1H reversal exit could NEVER fire -- a
+structural FALSE NEGATIVE for the loss-prevention layer (the same failure class as
+the resolved TB00766 FP/DP ruling). Bill ordered an FP/DP analysis to pick the
+best fix even outside the presented options; the determination is Opt 5 (derive 1H
+from 5m): a 1H candle IS the exact lossless fold of its twelve contiguous 5m
+candles, so it dominates a dedicated 60m connection (more reconnect surface = more
+FN windows) and a REST poll (staleness = poll interval) on BOTH accuracy and cost.
+
+SITES (0500000 dv1_254 -> dv1_255):
+  - HTF pre-compute table (Gate 4 1H EMA row): "1H candle close ohlc(60) WS event"
+    -> "1H candle close DERIVED from ohlc(5m)" + the TB00768 Kraken-limit note.
+  - Gate 4 prose ("Cache read from ohlc(60) WS subscription") + the Diagram-2
+    visual text ("Cache reads from ohlc(60) WS subscription") -> the derived feed.
+  - ar:AR-045: the "Same logic for ohlc(60)" line gains the TB00768 wire fact -- the
+    Kraken one-interval-per-connection limit; mod:OhlcAggregator folds the twelve
+    contiguous ohlc(5m) closes (open=first, close=last, high=max, low=min, volume=
+    sum: lossless = Kraken's own 1H when all twelve present); EAGER-emitted on the
+    twelfth (:55->:00) close (native timing, zero added latency, zero incremental
+    connection / rate-limit); COMPLETENESS-GATED (twelve interval_begin-contiguous
+    slots only: the HR-WM-012 never-act-on-partial principle, FP->0); an hour-
+    aligned shortfall -> evt:HTF_1H_GAP for the REST GetOHLCData(60) self-heal
+    (FN->0); the warm-up REST GetOHLCData(60) seed unchanged.
+  - ar:AR-062 EC-L1A-001: "Check on every ohlc(60) close" -> "on every DERIVED 1H
+    close (folded from twelve ohlc(5m) candles, not a WS ohlc(60) feed)".
+
+CODE (TothBot_V2-Code, the build this record pins; reads 0500000 dv1_255):
+  - exchange/ohlc_aggregate.py: NEW pure mod:OhlcAggregator -- folds closed 5m
+    CommittedCandles into the exact 1H candle; eager-emit on the twelfth contiguous
+    close; Closed1H / Htf1hGap result types; completeness gate.
+  - pipeline/live_driver.py: on_ohlc_5m folds each closed 5m candle; a complete
+    hour advances the HtfCache + drives EC-L1A-001 via the extracted _step_htf
+    (shared with the retained frame-driven on_ohlc_60m); an hour-aligned gap is
+    recorded as evt:HTF_1H_GAP.
+  - exchange/receive_loop.py: a refused subscribe (success:false, no result) now
+    emits evt:SUBSCRIPTION_REJECTED with Kraken's error string -- distinct from a
+    phantom channel=None/success=False SUBSCRIPTION_ACK; never arms silent-pair.
+  Tests: the lossless twelve-candle fold + completeness gate (test_ohlc_aggregate);
+  the derived-1H HtfCache advance + EC-L1A-001 drive + the gap signal
+  (test_live_driver); SUBSCRIPTION_REJECTED (test_receive_loop). 1128 -> 1139 green.
+
+DEFERRED (a clean code+diagram follow-up): DROP the now-superseded ohlc_60m
+subscribe from sharding PER_PAIR_CHANNELS + the explicit status subscribe (Kraken
+auto-pushes status; the explicit subscribe is refused "Symbol(s) not found") --
+both are pure efficiency cleanups; the derived feed already supersedes ohlc_60m and
+the refusals are now surfaced as SUBSCRIPTION_REJECTED, so this is non-urgent.
+
+NO NEW SEED: the 1H fold + completeness gate are structural (twelve = 3600/300),
+not tuned; HTF_1H_GAP self-heal triggers on the structural shortfall -- TB00000
+stays v2_101. NEVER the sacred 1:1.5 R:R.
+
+R DISPOSITION: no figure R bump -- every edit is q1_do / table-prose / visual-text
+wording (the derived-1H source rename + the AR-045/AR-062 wire facts); no
+polygon/region/figure-structure change.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text 957/957,
+desc 126/126, svg 10/10, title 126/126, figcaption 10/10 -- unchanged, text-only
+edits inside existing pre/text/td elements); no residual dv1_254; no residual
+"ohlc(60) WS subscription" / "ohlc(60) WS event" / "on every ohlc(60) close".
+Code 1128 -> 1139 green (HEAD d9bb5bb).
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_64 / DocPath ...dv1_64... /
+DocDate 06-16-2026 / DocTime 23:30:00 UTC
+LIVE: DocVersion dv1_65 / DocPath ...dv1_65... /
+DocDate 06-16-2026 / DocTime 23:55:00 UTC
+
+----- END TB00768 derive the live 1H ohlc_60m feed by folding the 5m stream Opt 5 dv1_255 OP RECORD -----
 
 
 ============================================================
