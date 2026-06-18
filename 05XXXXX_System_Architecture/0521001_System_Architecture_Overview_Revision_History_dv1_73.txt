@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_72
+DocVersion: dv1_73
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_72.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_73.txt
 DocDate:    06-18-2026
-DocTime:    19:30:00 UTC
+DocTime:    22:45:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31912,6 +31912,64 @@ LIVE: DocVersion dv1_72 / DocPath ...dv1_72... /
 DocDate 06-18-2026 / DocTime 19:30:00 UTC
 
 ----- END TB00790 ROUTE the LONG-ONLY entry/exit through the 24h DECISION dv1_262 OP RECORD -----
+
+
+----- TB00793 SITE the read-only STATE SNAPSHOT EMITTER for the operator dashboard dv1_263 OP RECORD -----
+
+TB00793: SITE the read-only STATE SNAPSHOT EMITTER -- the local-file materialization of the C2 DAILY
+operational-dashboard view -- into the operator-reporting surface, so a SEPARATE read-only dashboard
+process can render live organism state without ever touching the trading hot path. This is the
+diagram-first slice ahead of the code: the emitter is a new OUTPUT of the operator-reporting contract,
+so it is sited before it is built. PROSE-ONLY, in-place text inside the existing mod:Logger <desc> --
+NO new SVG geometry, NO tag added or removed, NO new namespace token (the emitter is a derived FP8
+single-source VIEW, not a new data capture or a ratifiable rule).
+
+0500000 EDITS (both surgical, in-place text inside the existing mod:Logger <desc>; element COUNT
+unchanged):
+ - mod:Logger q5_logs (the output-sink home, beside the rule:HR-LG-013 permanent trade-record file):
+   added the STATE SNAPSHOT FILE paragraph -- a read-only operator-dashboard feed materialized to a
+   local /home/tothbot/records/state_snapshot.json on the contract:OHLC_5m_System_Clock cadence
+   (the SAME clock that drives the periodic-pull scheduler; throttled to ~one write per 30-60s, NOT
+   one per 5m close per pair), written ATOMICALLY (temp file in the same dir then os.replace -- a
+   reader never sees a partial object), holding the current organism state the C2 dashboard renders
+   (ts; health = warm count / last-tick UTC / WS state; open positions per module with entry/mark/
+   unrealized-P/L + layer:L2 + layer:L3 stops; balances + portfolio valuation; the per-pair 24h
+   DECISION cache close_24h / EMA(decision_ema_fast) / EMA(decision_ema_slow) / bullish-bearish cross
+   state / ATR-14-daily; the per-pair mod:Regime_Engine classification; the CIATS per-module summary
+   trade_count / win-loss / net P/L / progress-to-200-floor / pending operator proposals). READ-ONLY
+   + DERIVED: a VIEW over live in-memory state + the two Logger streams (FP8 single-source, no new
+   capture); NEVER a writer into the trading hot path (rule:HR-PM-009 sole-writer preserved); NOT
+   authoritative for CIATS inference or tax records (rule:HR-LG-013 remains the sole durable Stream 2
+   corpus); a failed write is caught locally, never raised, leaving the prior snapshot in place. It is
+   consumed by a SEPARATE read-only localhost-bound dashboard process the operator reaches over an SSH
+   tunnel (no public port, no second writer). The file is overwritten each emit (ephemeral
+   current-state), independent of both the rotating tothbot.log and the permanent trades_<YYYY>.jsonl.
+ - mod:Logger reporting_hierarchy C2 DAILY entry: added a one-clause pointer recording that the C2
+   view is ALSO materialized to the local read-only state_snapshot.json on the OHLC_5m clock for the
+   SSH-tunnel-reached localhost dashboard (a derived FP8 single-source view, no new capture, no second
+   writer), cross-referencing the q5_logs STATE SNAPSHOT FILE spec.
+
+NO NEW CIATS SEED: the snapshot is a read-only operator-dashboard feed, not a trading-loop tunable;
+the emit cadence (throttle ~30-60s) is an engineering constant, not a CIATS-owned parameter. No
+TB00000 seed change.
+
+R DISPOSITION: no figure R bump -- both edits are in-place prose inside the existing mod:Logger
+<desc>; no polygon / region / figure-structure change, no new visual geometry (text ADDED inside an
+existing <desc>, element COUNT unchanged).
+
+VERIFICATION: HTML well-formed (html.parser pass, no exceptions); opening/closing tag classes balanced
+and UNCHANGED from the baseline -- g 217/217, text 957/957, desc 126/126, svg 10/10, title 126/126,
+figcaption 10/10 (in-place desc text adds/removes no tag); the one &lt;YYYY&gt; reference is entity-encoded
+(no bare-angle / bare-ampersand strict-XML issue); no residual dv1_262 in the live diagram. Code follows
+this slice (the StateSnapshotEmitter + the read-only dashboard server, pinned in the TB00793 SL).
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_72 / DocPath ...dv1_72... /
+DocDate 06-18-2026 / DocTime 19:30:00 UTC
+LIVE: DocVersion dv1_73 / DocPath ...dv1_73... /
+DocDate 06-18-2026 / DocTime 22:45:00 UTC
+
+----- END TB00793 SITE the read-only STATE SNAPSHOT EMITTER for the operator dashboard dv1_263 OP RECORD -----
 
 
 ============================================================
