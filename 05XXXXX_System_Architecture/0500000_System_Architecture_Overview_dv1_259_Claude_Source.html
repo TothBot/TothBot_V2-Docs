@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_258</title>
+<title>0500000 System Architecture Overview dv1_259</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_258</td></tr>
+  <tr><td>DocVersion</td><td>dv1_259</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_258_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>06-17-2026</td></tr>
-  <tr><td>DocTime</td><td>04:00:00 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_259_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>06-18-2026</td></tr>
+  <tr><td>DocTime</td><td>12:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -1332,6 +1332,8 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
                                                     so the 1H candle is FOLDED from twelve
                                                     contiguous 5m candles, parse interval_begin A-16)
   ATR(14) per pair               Signal Pipeline    Each 5m candle close (incremental)  Gate 8 + Exit Controller
+  24h decision bar (DERIVED) +   OhlcAggregator     24 contiguous 1H closes folded      Daily long-only entry +
+    EMA(12)/EMA(26)/ATR(14)                          into one UTC-day candle (TB00787)   exit (TB00787+ slices)
   24h liquidity per pair (USD)   Signal Pipeline    Daily ticker or daily OHLC pull     Gate 2
   Per-pair instrument status ★   WS Manager         instrument channel events (live)    Gates 1/2 pre-filter
 </pre>
@@ -5130,6 +5132,30 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     then drives EC-L1A-001 once on the healed EMAs so a reversal the gap would
                     have hidden still fires (FN->0). A REST failure leaves the cache to resume on
                     the next complete hour (bounded). The warm-up REST GetOHLCData(60) seed is unchanged.
+                    TB00787 (the validated long-only strategy): the 24h candle is the DECISION bar,
+                    so mod:OhlcAggregator gains a SECOND fold stage that folds the twenty-four
+                    contiguous hour-aligned 1H closes (each itself the TB00768 5m fold) that partition
+                    a UTC day [00:00,24:00) into one exact 24h decision candle (open=first, close=last,
+                    high=max, low=min, volume=sum: lossless, equals Kraken&#x27;s own 1440 daily whenever
+                    all twenty-four 1H present). EAGER-emitted the instant the 00:00-UTC 1H close
+                    completes the day = native daily timing, zero added latency, reusing the validated
+                    1H fold (a TB00769-healed 1H feeds the day fold, so the self-heal chains through).
+                    COMPLETENESS-GATED on twenty-four day-aligned contiguous 1H slots (the same HR-WM-012
+                    never-act-on-partial principle, FP-&gt;0); a day-aligned shortfall (a 1H step the gap
+                    self-heal could not recover) -&gt; evt:HTF_24H_GAP, self-healed by ONE targeted REST
+                    GetOHLCData(interval=1440) re-seed (the exact mirror of the 1H heal). The derived 24h
+                    series is the basis the forthcoming entry/exit compute on: indicator:EMA_fast (12) /
+                    indicator:EMA_slow (26) + indicator:ATR_14 on the daily closes, for a LONG-ONLY entry
+                    (EMA12/26 bullish cross) and exit (EMA12/26 bearish-cross reversal OR a wide
+                    param:atr_stop_mult x ATR(14) disaster stop, NO take-profit per decision:DEC-124).
+                    param:decision_bar_interval_min (1440, CIATS-owned, the decision cadence) joins the
+                    seed registry (only the net 1:1.5 R:R floor stays hardcoded). The ARCHITECTURE stays
+                    Long/Short-CAPABLE (mod:Short_Module plumbing intact) but the RATIFIED trading
+                    strategy is LONG-ONLY (TB00786, systematic shorts structurally unprofitable in
+                    crypto); the Short side stays dormant. THIS slice (TB00787) sites + builds the DERIVE
+                    layer only -- the 24h fold + its self-heal; the entry-gate (gate:G8) and Exit
+                    Controller (layer:L1a/L2) migration onto the 24h decision close are the subsequent
+                    slices.
   AR-046 ★: emergSL triggers.reference MUST be explicit in all batch_add
                     calls. Never rely on API defaults for crash-protection parameters.
                     ALL emergSL stop-loss orders MUST include:

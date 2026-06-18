@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_68
+DocVersion: dv1_69
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_68.txt
-DocDate:    06-17-2026
-DocTime:    14:00:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_69.txt
+DocDate:    06-18-2026
+DocTime:    12:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31670,6 +31670,75 @@ LIVE: DocVersion dv1_68 / DocPath ...dv1_68... /
 DocDate 06-17-2026 / DocTime 14:00:00 UTC
 
 ----- END TB00772 universe-expansion the global REST governor plus the two-stage pre-screen and CIATS viability seed dv1_258 OP RECORD -----
+
+
+----- BEGIN TB00787 build the validated long-only strategy DERIVE layer the 24h decision-bar fold dv1_259 OP RECORD -----
+
+CONTEXT: TB00787 opens the BUILD of the validated long-only strategy into the organism
+(the TB00780-786 research arc delivered the first proven, stress-tested edge: liquid
+USD/USDC/USDT universe, 24h decision bars, LONG-ONLY, fixed ~$50 notional, entry =
+EMA12/26 bullish cross on 24h, exit = EMA12/26 bearish-cross reversal OR a wide ~2.5x ATR
+disaster stop, no take-profit; honest forward OOS ~+2-3%/trade, win ~28%, 6/8 eras). The
+build is multi-session; this ticket scopes the CLEAN FIRST SLICE: the DERIVE layer -- the
+24h decision bar itself -- on which every later slice (entry gate, Exit Controller, the
+sacred-floor re-anchor) computes. Diagram-first per TB00000 v2_99 sec 4.7.
+
+THE FP/DP DETERMINATION (how to derive the 24h bar, for the OVERALL organism): fold the
+1H stream up, NOT a fresh 288-of-5m fold and NOT a REST 1440 poll. The TB00768 1H fold is
+already built, validated, completeness-gated and lossless, and it self-heals (TB00769); a
+24h candle is the exact lossless fold of its twenty-four contiguous hour-aligned 1H
+candles, which align naturally to 00:00 UTC (the Unix epoch is itself 00:00 UTC), the same
+boundary Kraken's native 1440 daily candle uses. Folding 1H->24h reuses the validated
+fold, inherits the 1H self-heal (a healed 1H feeds the day fold), keeps the robust 5m
+WS/liveness infra, and adds zero connection / rate-limit surface -- it dominates a fresh
+5m->24h fold (re-implements contiguity at a different granularity, no heal reuse) and a
+REST 1440 poll (poll staleness + a separate path, the very thing Opt 5 rejected for 1H).
+
+SITES (this dv1_258 -> dv1_259 edit, PROSE-ONLY, inside the AR-registry <pre> + the cache
+table <pre> -- no SVG geometry, no figure-R change): (1) ar:AR-045 (OhlcAggregator) gains
+the SECOND fold stage paragraph: twenty-four contiguous hour-aligned 1H closes -> one
+exact 24h DECISION candle (open=first / close=last / high=max / low=min / volume=sum),
+EAGER-emitted on the 00:00-UTC 1H close, COMPLETENESS-GATED on twenty-four day-aligned
+slots (HR-WM-012, FP->0), a day-aligned shortfall -> evt:HTF_24H_GAP self-healed by ONE
+targeted REST GetOHLCData(interval=1440) (the mirror of the 1H heal), the derived series
+carrying indicator:EMA_fast (12) / indicator:EMA_slow (26) / indicator:ATR_14 for the
+forthcoming LONG-ONLY entry+exit, and the NEW seed param:decision_bar_interval_min (1440,
+CIATS-owned); the ARCHITECTURE stays Long/Short-CAPABLE (mod:Short_Module intact) but the
+RATIFIED strategy is LONG-ONLY (TB00786) with the Short side dormant; THIS slice builds the
+DERIVE layer only, the entry-gate (gate:G8) + Exit-Controller (layer:L1a/L2) migration onto
+the 24h close are the subsequent slices. (2) the pre-compute cache table gains the row:
+24h decision bar (DERIVED) + EMA(12)/EMA(26)/ATR(14), folded by OhlcAggregator from 24
+contiguous 1H closes, read on the daily long-only entry+exit.
+
+NEW CIATS SEED (flagged for the TB00000 seed registry at session close): param:decision_
+bar_interval_min = 1440 (CIATS-owned, the decision cadence). Only the net 1:1.5 R:R floor
+stays hardcoded. The EMA periods (12/26), the ATR stop multiple (~2.5), and the interval
+are all CIATS-tunable seeds landing with their consuming slices.
+
+R DISPOSITION: no figure R bump -- all edits are text inside the existing AR-registry
+<pre> block + the pre-compute cache table <pre>; no polygon / region / figure-structure
+change, no new visual geometry.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text 957/957,
+desc 126/126, svg 10/10, title 126/126, figcaption 10/10 -- unchanged, text-only edits;
+pre 112/112); no new bare-ampersand strict-XML issue introduced; no residual dv1_258.
+Code (this record pins HEAD 2d8a610, 1203 green = 1194 + 9 new 24h-fold tests):
+tothbot/exchange/ohlc_aggregate.py gains day_begin_of + Closed24H / Htf24hGap /
+Htf24hHealed + _DayBucket + OhlcAggregator.fold_hour (the 1H->24h second fold stage,
+structural mirror of the 1H fold one timeframe up; the 1H path byte-unchanged, zero
+regression); tests/test_ohlc_aggregate.py +9 tests (the lossless 24-fold + eager-emit, the
+day-aligned-shortfall gap, the mid-day-partial discard, per-symbol independence, stale /
+already-emitted / consecutive-day rollover, and a 5m->1H->24h end-to-end chain over 288
+contiguous 5m closes). The DERIVE primitive is pure + fully tested; the live_driver wire-in
+lands with its entry/exit consumer next slice (no dead rail in the hot path this slice).
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_68 / DocPath ...dv1_68... /
+DocDate 06-17-2026 / DocTime 14:00:00 UTC
+LIVE: DocVersion dv1_69 / DocPath ...dv1_69... /
+DocDate 06-18-2026 / DocTime 12:00:00 UTC
+
+----- END TB00787 build the validated long-only strategy DERIVE layer the 24h decision-bar fold dv1_259 OP RECORD -----
 
 
 ============================================================
