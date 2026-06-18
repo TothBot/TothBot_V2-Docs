@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_69
+DocVersion: dv1_70
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_69.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_70.txt
 DocDate:    06-18-2026
-DocTime:    12:00:00 UTC
+DocTime:    14:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31739,6 +31739,68 @@ LIVE: DocVersion dv1_69 / DocPath ...dv1_69... /
 DocDate 06-18-2026 / DocTime 12:00:00 UTC
 
 ----- END TB00787 build the validated long-only strategy DERIVE layer the 24h decision-bar fold dv1_259 OP RECORD -----
+
+
+----- BEGIN TB00788 build the 24h DAILY DECISION CACHE the EMA12 26 plus ATR14 daily indicator state dv1_260 OP RECORD -----
+
+CONTEXT: TB00788 the second slice of the long-only build. TB00787 built the 24h DECISION
+bar (the OhlcAggregator fold_hour 1H->24h fold). This slice builds the DAILY DECISION
+CACHE that bar feeds: the per-pair daily indicator state the forthcoming long-only entry +
+exit read -- EMA(12)/EMA(26) on the daily closes (the entry bullish-cross + the exit
+reversal) + ATR(14) on the daily bars (the wide ~2.5x disaster-stop basis). The daily
+analog of the 1H HtfCache, one timeframe up.
+
+THE FP/DP DETERMINATION (the seed source, for the OVERALL organism): seed + gap-heal the
+daily decision cache from the SAME GetOHLCData(interval=1440) daily series mod:Regime_
+Engine ALREADY fetches per pair for its daily classification -- a SECOND consumer of that
+one fetch, NOT a third per-pair warm-up REST call. This DOMINATES adding a per-pair 1440
+warm-up call: zero added REST (the governor budget is precious at universe scale), one
+authoritative daily series per pair, and a natural 00:00-UTC alignment (the regime daily
+compute, the live 24h fold, and the daily decision all land on the same boundary). So
+ar:AR-049 step 8 ("interval 1440 is NOT part of the per-pair warm-up") STANDS unchanged --
+the daily decision cache rides the regime fetch, it does not add a warm-up leg. The cache
+ADVANCES incrementally on each live Closed24H: the standard EMA step (matching the AR-044
+HtfCache advance in live_driver._step_htf) + the Wilder ATR step (TR from the candle vs the
+prior 24h close the cache carries). PROVEN incrementality: one live advance is Decimal-
+IDENTICAL to a fresh re-seed over the extended series, so the live cache NEVER drifts from a
+Htf24hGap REST 1440 re-seed (the heal lands on the exact value the live cache would hold).
+
+SITES (this dv1_259 -> dv1_260 edit, PROSE-ONLY, inside the ar:AR-045 <pre> block -- no SVG
+geometry, no figure-R change): ar:AR-045 gains the DAILY DECISION CACHE paragraph -- the
+cache contents (close_24h + EMA decision_ema_fast=12 / decision_ema_slow=26 + ATR_14), the
+seed-from-the-regime-1440-series FP/DP (the second-consumer / no-third-warm-up-call ruling,
+AR-049 step 8 stands), the incremental live advance + the Decimal-exact no-drift property,
+and the scope line (cache structure + seed + advance are PURE + tested this slice; the
+live-wire + entry/exit consumer is the next slice, no dead rail until the consumer arrives).
+
+NEW CIATS SEEDS (flagged for the TB00000 seed registry at session close): param:decision_
+ema_fast = 12, param:decision_ema_slow = 26, param:decision_atr_period = 14 (all CIATS-owned
+decision-indicator periods on the derived 24h series; joining param:decision_bar_interval_
+min = 1440 from TB00787). Only the net 1:1.5 R:R floor stays hardcoded.
+
+R DISPOSITION: no figure R bump -- all edits are text inside the existing ar:AR-045 <pre>
+block; no polygon / region / figure-structure change, no new visual geometry.
+
+VERIFICATION: HTML well-formed (tag classes balanced -- g 217/217, text 957/957,
+desc 126/126, svg 10/10, title 126/126, figcaption 10/10 -- unchanged, text-only edits;
+pre 112/112); no new bare-ampersand strict-XML issue introduced; no residual dv1_259.
+Code (this record pins HEAD 12cb63f, 1209 green = 1203 + 6 new daily-decision tests):
+tothbot/exchange/daily_decision.py NEW (DailyDecisionCache frozen dataclass -- the bullish
+alignment property, the seed classmethod reusing regime.indicators ema() + atr_14_series(),
+the incremental advance, the DailyDecisionSeedError guard, the decision-period seed
+constants); tests/test_daily_decision.py +6 tests (seed == the batch helpers, the too-few-
+bars guard, the bullish property + cross transition, the ATR-uses-prior-close TR, and the
+INCREMENTALITY INVARIANT one advance == a full re-seed Decimal-exact, single + multi-step).
+The cache is pure + fully tested; the live_driver/Regime_Engine wire + the long-only entry
+(EMA12/26 bullish cross) + exit (reversal OR wide ATR stop) consumer is the next slice.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_69 / DocPath ...dv1_69... /
+DocDate 06-18-2026 / DocTime 12:00:00 UTC
+LIVE: DocVersion dv1_70 / DocPath ...dv1_70... /
+DocDate 06-18-2026 / DocTime 14:00:00 UTC
+
+----- END TB00788 build the 24h DAILY DECISION CACHE the EMA12 26 plus ATR14 daily indicator state dv1_260 OP RECORD -----
 
 
 ============================================================

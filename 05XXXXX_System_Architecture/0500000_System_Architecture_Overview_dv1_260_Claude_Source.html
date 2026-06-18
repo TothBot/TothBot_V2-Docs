@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_259</title>
+<title>0500000 System Architecture Overview dv1_260</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_259</td></tr>
+  <tr><td>DocVersion</td><td>dv1_260</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_259_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_260_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-18-2026</td></tr>
-  <tr><td>DocTime</td><td>12:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>14:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -5155,7 +5155,22 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     crypto); the Short side stays dormant. THIS slice (TB00787) sites + builds the DERIVE
                     layer only -- the 24h fold + its self-heal; the entry-gate (gate:G8) and Exit
                     Controller (layer:L1a/L2) migration onto the 24h decision close are the subsequent
-                    slices.
+                    slices. TB00787 built the fold; TB00788 builds the DAILY DECISION CACHE the fold
+                    feeds: a per-pair frozen cache holding close_24h + EMA(param:decision_ema_fast=12) /
+                    EMA(param:decision_ema_slow=26) on the daily closes + indicator:ATR_14 on the daily
+                    bars (the wide-stop basis). FP/DP (the seed source, for the overall organism): it is
+                    SEEDED + gap-healed from the SAME authoritative GetOHLCData(interval=1440) daily
+                    series mod:Regime_Engine ALREADY fetches per pair (a SECOND consumer of that one
+                    fetch, NOT a third per-pair warm-up REST call -- so ar:AR-049 step 8 &quot;interval 1440
+                    is NOT part of the per-pair warm-up&quot; STANDS, zero added REST), and ADVANCED
+                    incrementally on each live Closed24H (the standard EMA step matching the AR-044
+                    HtfCache advance + the Wilder ATR step); the regime 1440 fetch + the live fold both
+                    land at the 00:00-UTC boundary so the seed and the live advance agree. The advance is
+                    Decimal-EXACT against a fresh re-seed over the extended series (one live step equals
+                    re-seeding), so the live cache never drifts from a Htf24hGap REST 1440 re-seed. The
+                    cache structure + seed + incremental advance are PURE + fully unit-tested (TB00788);
+                    wiring the live advance into mod:Signal_Pipeline + the long-only entry/exit consumer
+                    is the next slice (no dead rail in the hot path until its consumer arrives).
   AR-046 ★: emergSL triggers.reference MUST be explicit in all batch_add
                     calls. Never rely on API defaults for crash-protection parameters.
                     ALL emergSL stop-loss orders MUST include:
