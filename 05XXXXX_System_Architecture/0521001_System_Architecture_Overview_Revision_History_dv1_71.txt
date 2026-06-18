@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_70
+DocVersion: dv1_71
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_70.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_71.txt
 DocDate:    06-18-2026
-DocTime:    14:00:00 UTC
+DocTime:    16:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31801,6 +31801,59 @@ LIVE: DocVersion dv1_70 / DocPath ...dv1_70... /
 DocDate 06-18-2026 / DocTime 14:00:00 UTC
 
 ----- END TB00788 build the 24h DAILY DECISION CACHE the EMA12 26 plus ATR14 daily indicator state dv1_260 OP RECORD -----
+
+
+----- BEGIN TB00789 WIRE the 24h DECISION live the derive layer into live_driver dv1_261 OP RECORD -----
+
+TB00789 (Code HEAD pinned below): WIRE the validated long-only 24h DECISION series LIVE -- the
+first of the TB00789 sub-slices (the live wire-in; the long-only entry + the exit migration are
+the subsequent sub-slices). Non-breaking: the live 5m/1H trading path is byte-unchanged, the
+decision cache is now LIVE-maintained per pair but nothing consumes it for a trade yet.
+
+0500000 EDIT (ar:AR-045 mod:OhlcAggregator descriptor, prose-only inside the existing <pre>, no
+geometry / no figure-R change): the DAILY DECISION CACHE scope line is amended from "the live-wire
++ entry/exit consumer is the next slice" to record that TB00789 WIRES the live advance --
+mod:Signal_Pipeline live_driver folds each Closed1H one timeframe up (fold_hour) and, on each
+Closed24H, advances that pair's DailyDecisionCache held in a per-pair DailyDecisionStore, SEEDED at
+the daily 00:00-UTC regime compute as the SECOND consumer of the regime GetOHLCData(1440) series
+(the DailyRegimeCompute on_daily_bars fan-out alongside the DEC-124 reward store, no third REST) and
+self-healing a day-aligned evt:HTF_24H_GAP from one REST GetOHLCData(1440) re-seed (the mirror of
+the 1H heal, emits evt:HTF_24H_HEAL). The long-only entry/exit CONSUMER (gate:G8 entry on the
+EMA12/26 bullish cross + the layer:L1a/L2 exit migration) remains flagged as the subsequent slice.
+
+NEW CIATS SEEDS: none this sub-slice (the four derive-layer seeds param:decision_bar_interval_min
+= 1440 / decision_ema_fast = 12 / decision_ema_slow = 26 / decision_atr_period = 14 stay flagged
+for the TB00000 seed registry at session close, now with a LIVE-wired consuming slice; the wide-stop
+param:decision_atr_stop_mult joins them with the exit sub-slice). Only the net 1:1.5 R:R floor stays
+hardcoded.
+
+R DISPOSITION: no figure R bump -- all edits are text inside the existing ar:AR-045 <pre> block; no
+polygon / region / figure-structure change, no new visual geometry.
+
+VERIFICATION: HTML well-formed (opening/closing tag classes balanced and UNCHANGED from the OP
+RECORD baseline -- g 217/217, text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption
+10/10 -- prose-only edit); no new bare-ampersand strict-XML issue introduced (the one new escaped
+entity uses &#x27;); no residual dv1_260 in the live diagram. Code (this record pins HEAD 4e55d46,
+1219 green = 1209 + 10 new wiring tests): tothbot/exchange/daily_decision.py +DailyDecisionStore
+(per-pair cache home: seed_from_bars = the regime-1440 second-consumer seed + the Htf24hGap re-seed
+seam; advance = the live Closed24H step; get = the consumer read; too-few-bars leaves a pair absent,
+a bounded WARM_UP-style skip; this record pins Code HEAD 4e55d46); tothbot/pipeline/live_driver.py wires the second fold stage into
+on_ohlc_5m (each Closed1H -> self._agg.fold_hour; Closed24H -> _decision.advance; Htf24hGap ->
+log + _heal_decision, the REST GetOHLCData(1440) re-seed mirror of _heal_htf) + the decision_store
+constructor arg; tothbot/pipeline/operational.py builds the DailyDecisionStore + fans on_daily_bars
+out to BOTH the reward store and the decision store (one fetch, two consumers) + threads the store
+into the LiveSweepDriver + exposes it on OperationalSystem; tests/test_daily_decision.py +5
+(DailyDecisionStore seed/get, too-few-bars skip, reseed-replace-and-clear, advance == full reseed,
+unseeded-advance noop); tests/test_live_driver.py +5 (advance on a complete day, no-store noop, the
+24h gap REST 1440 self-heal with + without a client, and the full 5m->1H->24h end-to-end advance).
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_70 / DocPath ...dv1_70... /
+DocDate 06-18-2026 / DocTime 14:00:00 UTC
+LIVE: DocVersion dv1_71 / DocPath ...dv1_71... /
+DocDate 06-18-2026 / DocTime 16:30:00 UTC
+
+----- END TB00789 WIRE the 24h DECISION live the derive layer into live_driver dv1_261 OP RECORD -----
 
 
 ============================================================

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_260</title>
+<title>0500000 System Architecture Overview dv1_261</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_260</td></tr>
+  <tr><td>DocVersion</td><td>dv1_261</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_260_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_261_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-18-2026</td></tr>
   <tr><td>DocTime</td><td>14:00:00 UTC</td></tr>
 </table>
@@ -5168,9 +5168,18 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     land at the 00:00-UTC boundary so the seed and the live advance agree. The advance is
                     Decimal-EXACT against a fresh re-seed over the extended series (one live step equals
                     re-seeding), so the live cache never drifts from a Htf24hGap REST 1440 re-seed. The
-                    cache structure + seed + incremental advance are PURE + fully unit-tested (TB00788);
-                    wiring the live advance into mod:Signal_Pipeline + the long-only entry/exit consumer
-                    is the next slice (no dead rail in the hot path until its consumer arrives).
+                    cache structure + seed + incremental advance are PURE + fully unit-tested (TB00788).
+                    TB00789 WIRES the live advance: mod:Signal_Pipeline live_driver folds each Closed1H
+                    one timeframe up (fold_hour) and, on each Closed24H, advances that pair&#x27;s
+                    DailyDecisionCache held in a per-pair DailyDecisionStore -- SEEDED at the daily
+                    00:00-UTC regime compute as the SECOND consumer of the regime 1440 series (the
+                    DailyRegimeCompute on_daily_bars fan-out alongside the DEC-124 reward store, no third
+                    REST) and self-healing a day-aligned evt:HTF_24H_GAP from one REST
+                    GetOHLCData(interval=1440) re-seed (the mirror of the 1H heal, emits evt:HTF_24H_HEAL).
+                    The decision cache is now LIVE-maintained per pair; the long-only entry/exit CONSUMER
+                    of it (the gate:G8 entry on the EMA12/26 bullish cross + the layer:L1a/L2 exit
+                    migration onto the 24h decision close) is the subsequent slice (no dead rail in the
+                    hot path until that consumer arrives).
   AR-046 ★: emergSL triggers.reference MUST be explicit in all batch_add
                     calls. Never rely on API defaults for crash-protection parameters.
                     ALL emergSL stop-loss orders MUST include:
