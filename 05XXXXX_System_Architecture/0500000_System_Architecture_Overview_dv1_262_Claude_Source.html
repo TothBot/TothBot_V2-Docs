@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_261</title>
+<title>0500000 System Architecture Overview dv1_262</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,9 +132,9 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_261</td></tr>
+  <tr><td>DocVersion</td><td>dv1_262</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_261_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_262_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-18-2026</td></tr>
   <tr><td>DocTime</td><td>14:00:00 UTC</td></tr>
 </table>
@@ -1332,8 +1332,8 @@ IMP-19  Regime Engine REST Rate Limit Stagger Required:
                                                     so the 1H candle is FOLDED from twelve
                                                     contiguous 5m candles, parse interval_begin A-16)
   ATR(14) per pair               Signal Pipeline    Each 5m candle close (incremental)  Gate 8 + Exit Controller
-  24h decision bar (DERIVED) +   OhlcAggregator     24 contiguous 1H closes folded      Daily long-only entry +
-    EMA(12)/EMA(26)/ATR(14)                          into one UTC-day candle (TB00787)   exit (TB00787+ slices)
+  24h decision bar (DERIVED) +   OhlcAggregator     24 contiguous 1H closes folded      Long-only entry (EMA12/26
+    EMA(12)/EMA(26)/ATR(14)                          into one UTC-day candle (TB00787)   bull cross) + L1a/L2 exit (TB00790)
   24h liquidity per pair (USD)   Signal Pipeline    Daily ticker or daily OHLC pull     Gate 2
   Per-pair instrument status ★   WS Manager         instrument channel events (live)    Gates 1/2 pre-filter
 </pre>
@@ -2274,13 +2274,13 @@ NON_DIRECTIONAL. Break-even 40% for 1:1.5 R:R.
         produces: none
         ciats_ownership: param:rsi_long_low + param:rsi_long_high + param:rsi_short_low + param:rsi_short_high + param:sss_ema_short + param:sss_ema_long + param:volume_sss_threshold are CIATS-OWNED PER-MODULE INSTANTIATED (value home TB00000 sec 8; Long_Module + Short_Module each instantiate their own value). These are the seven SSS signal-model parameters consumed at this owning element mod:Signal_Pipeline (element sss_engine, per ar:AR-067): param:rsi_long_low + param:rsi_long_high set the long-side RSI-in-zone momentum bounds, param:rsi_short_low + param:rsi_short_high set the short-side RSI-in-zone momentum bounds (direction-symmetric short scoring per mod:Short_Module), param:sss_ema_short (EMA9) + param:sss_ema_long (EMA21) set the two EMA-cross periods, and param:volume_sss_threshold sets the volume-confirmation factor (volume vs MA(20)) — all seven are direct inputs to this element's single SSS three-factor scoring computation named in its q1_do field. The short-side RSI bounds are signal-computation inputs to THIS engine, NOT sizing parameters. The parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element; their starting VALUES are NOT encoded in 0500000 as canonical — canonical value home is TB00000 sec 8 (pointer, not value). Single owning element mod:Signal_Pipeline / sss_engine.
         q1_do: Runs the SSS Signal Engine (ar:AR-067) on the pair: computes RSI_14 (zone bounds param:rsi_long_low / param:rsi_long_high for long-side, param:rsi_short_low / param:rsi_short_high for short-side) + EMA9 (period param:sss_ema_short) + EMA21 (period param:sss_ema_long) + VolumeMA20 (confirmation factor param:volume_sss_threshold) + SSS three-factor momentum score (RSI in zone + EMA9 crosses EMA21 + Volume confirmation) direction-symmetrically (long-side scoring + short-side scoring per mod:Short_Module). Emits SSS-PASS verdict on score threshold met. Also owns indicator incremental updates (ATR_14 O(1) per AR-016) and parameter snapshot reads per AR-076 + HR-SP-001/002.
-        q4_triggers: Triggered by gate:G4_HTF_Confirmation PASS. Triggers downstream: gate:G5_Selection_Controller on SSS-PASS (one SC-SSS record emitted per direction-side per pair); mod:Logger SKIP entry on SSS-FAIL (event_type=SIGNAL_REJECTED).
+        q4_triggers: Triggered by gate:G4_HTF_Confirmation PASS. Triggers downstream: gate:G5_Selection_Controller on SSS-PASS (one SC-SSS record emitted per direction-side per pair); mod:Logger SKIP entry on SSS-FAIL (event_type=SIGNAL_REJECTED). TB00790 VALIDATED LONG-ONLY MIGRATION: the LIVE entry TRIGGER is no longer the 5m three-factor SSS score — it is the 24h DECISION-bar EMA(param:decision_ema_fast=12) BULLISH CROSS above EMA(param:decision_ema_slow=26), detected on each Closed24H the mod:OhlcAggregator second fold stage (param:decision_bar_interval_min=1440) emits as the per-pair DailyDecisionCache advances (a cross = pre-bar NOT bullish, post-bar bullish). On that cross the LONG candidate runs the EXISTING gate:G1-G7 prefilters + gate:G8 sizing (the trigger candle = the Closed24H, entry_ref_price = its close; gate:G8 atr_14 + the entry-stamped atr_14_entry are OVERRIDDEN to the DAILY decision-bar ATR(14), and gate:G8 mae_mult = param:decision_atr_stop_mult), the SSS evaluator PASSES (the 24h cross IS the signal, carrying the 24h EMA levels as the field-19 signal_params). The 5m clock still steps the LiveIndicators + drives exits, but its 5m SSS no longer dispatches entries (the 5m sweep entry is DISABLED). Short-side mirror DORMANT (the machine stays symmetric-capable; the ratified strategy is LONG-ONLY, TB00786).
         q5_logs: Logs SSS evaluation per pair per direction via mod:Logger to channel:audit_log + channel:skip_log on reject (event_type={SIGNAL_PASS|SIGNAL_REJECTED}, fields: pair, side={long|short}, rsi_14, ema9, ema21, ema_cross, volume_vs_ma20, sss_score, threshold, decision, tick_id). SC-SSS records also emitted on PASS for Gate 5 consumption.
         schema_version: 1.0
       </desc>
     <rect x="290" y="802" width="640" height="56" fill="#ede9fe" stroke="#7c3aed" stroke-width="2" rx="6"/>
-    <text x="610" y="827" font-size="14" font-weight="700" fill="#5b21b6" text-anchor="middle">SSS Signal Engine (mod:Signal_Pipeline)</text>
-    <text x="610" y="845" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">Score 5-min candle — only runs if Gate 3 passed  ·  ar:AR-005 (WS v2 only)  ·  ar:AR-016 (ATR incremental)</text>
+    <text x="610" y="827" font-size="14" font-weight="700" fill="#5b21b6" text-anchor="middle">Signal Engine (mod:Signal_Pipeline)</text>
+    <text x="610" y="845" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">LIVE long-only trigger = 24h EMA12/26 BULLISH CROSS (TB00790)  ·  5m three-factor SSS retired as the live trigger  ·  G1-G7 still prefilter</text>
   </g>
 
   <!-- Gate 5: Selection Controller -->
@@ -2861,7 +2861,7 @@ from the CIATS run-to-reversal estimator; the sacred
         canonical: compute:expected_reward_run_to_reversal
         tier: 3
         parent_element: gate:G8_Position_Sizer
-        q1_do: produce expected_reward -- the CIATS-owned estimate of the favorable price excursion the candidate is expected to realize before its RUN-TO-REVERSAL exit fires (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE) -- expressed as a FRACTION of entry_fill_price (the same unit as net_loss, so the A1 ratio is dimensionless). PRE-200-TRADES the estimate is SEEDED from a HISTORICAL BACKTEST: replay the regime-reversal exit condition over available historical OHLC for the candidate pair/regime and take the central-tendency realized favorable excursion (data-driven, never guessed; actual historical data is the admissible kick-start) -- direction-aware: for a LONG the favorable excursion is UPWARD to the HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE exit, for a SHORT it is DOWNWARD to the short-mirror reversal (1H EMA20 crosses ABOVE EMA50 / regime upgrades to TRENDING_POS or NON_DIR_ELEVATED), so the backtest replays the candidate's own side; the estimate is seeded + tuned per-module (Long pool / Short pool). POST the 200-trade CIATS data floor the estimate is tuned/replaced from realized PAPER run-to-reversal outcomes (CIATS-owned). The per-candidate Gate-8 path READS the current estimate for the candidate pair/regime from the tick-start snapshot (contract:Pre_Computation_Cache_Read / contract:Parameter_Store_Snapshot); the historical backtest and the paper-tuning run OFF the hot path, never per-candidate in the candle loop.
+        q1_do: produce expected_reward -- the CIATS-owned estimate of the favorable price excursion the candidate is expected to realize before its RUN-TO-REVERSAL exit fires (HTF_REGIME_REVERSAL / DAILY_REGIME_DOWNGRADE) -- expressed as a FRACTION of entry_fill_price (the same unit as net_loss, so the A1 ratio is dimensionless). PRE-200-TRADES the estimate is SEEDED from a HISTORICAL BACKTEST: replay the regime-reversal exit condition over available historical OHLC for the candidate pair/regime and take the central-tendency realized favorable excursion (data-driven, never guessed; actual historical data is the admissible kick-start) -- direction-aware: for a LONG the favorable excursion is UPWARD to the HTF_REGIME_REVERSAL (TB00790: the 24h EMA(decision_ema_fast=12) crosses BELOW EMA(decision_ema_slow=26)) / DAILY_REGIME_DOWNGRADE exit, for a SHORT it is DOWNWARD to the short-mirror reversal (24h EMA12 crosses ABOVE EMA26 / regime upgrades to TRENDING_POS or NON_DIR_ELEVATED), so the backtest replays the candidate's own side at the 24h-decision reversal; the estimate is seeded + tuned per-module (Long pool / Short pool). POST the 200-trade CIATS data floor the estimate is tuned/replaced from realized PAPER run-to-reversal outcomes (CIATS-owned). The per-candidate Gate-8 path READS the current estimate for the candidate pair/regime from the tick-start snapshot (contract:Pre_Computation_Cache_Read / contract:Parameter_Store_Snapshot); the historical backtest and the paper-tuning run OFF the hot path, never per-candidate in the candle loop.
         constraints: CIATS-owned (NOT hardcoded); the only hardcoded value remains rule:Sacred_R_R_1_to_1_5. expected_reward NEVER constructs an exit price and NEVER closes a position. The numeric SEED VALUE home is TB00000 sec 8, not this diagram (binary test: the estimator existence + CIATS-ownership is trading-organism architecture and is encoded HERE; the transient seed value is a sec-8 registry entry).
         consumes: candidate pair + regime band (regime context carried from gate:G6_Regime_Sizer); the CIATS run-to-reversal expected-return estimate read from the tick-start snapshot; entry_fill_price (actual fill, ar:AR-008 -- to express the estimate as a fraction).
         produces: expected_reward (fraction of entry_fill_price; consumed by rule:Expected_RR_A1_Acceptance at g8d_a1_acceptance).
@@ -2885,9 +2885,9 @@ from the CIATS run-to-reversal estimator; the sacred
         canonical: compute:MAE
         tier: 3
         parent_element: gate:G8_Position_Sizer
-        q1_do: compute the maximum-adverse-excursion percentage for the candidate trade as mae_pct = ATR(14) * mae_mult / entry_fill_price (direction-symmetric magnitude; the adverse breach is measured BELOW entry on the BID for a LONG, ABOVE entry on the ASK for a SHORT). Output feeds the net_loss (risk-leg) computation.
-        constraints: indicator:ATR_14 (per-pair 14-bar ATR, ar:AR-016 incremental); param:mae_mult (CIATS-owned, 1.5x starting)
-        consumes: indicator:ATR_14 value; param:mae_mult; entry_fill_price (actual fill price, ar:AR-008)
+        q1_do: compute the maximum-adverse-excursion percentage for the candidate trade as mae_pct = ATR(14)-daily * param:decision_atr_stop_mult / entry_fill_price (TB00790 — the WIDE 24h-decision volatility stop, REPLACES the tight ATR(14) * mae_mult that structurally bled; the ATR(14) is the DAILY decision-bar ATR stamped at entry, NOT the 5m ATR; direction-symmetric magnitude; the adverse breach is measured BELOW entry on the BID for a LONG, ABOVE entry on the ASK for a SHORT). This mae_pct is BOTH the gate:G8 net_loss risk leg AND the layer:L2 live stop distance — ONE shared basis 1R = decision_atr_stop_mult x ATR(14)-daily, so the sacred 1:1.5 floor re-anchors automatically (the floor NEVER moves, only the basis). Output feeds the net_loss (risk-leg) computation.
+        constraints: indicator:ATR_14 (per-pair 14-bar DAILY decision-bar ATR); param:decision_atr_stop_mult (CIATS-owned, 2.5x starting — the legacy param:mae_mult 1.5x remains the registry seed for the retired 5m path + unit tests)
+        consumes: indicator:ATR_14 value (daily decision-bar); param:decision_atr_stop_mult; entry_fill_price (actual fill price, ar:AR-008)
         produces: mae_pct (consumed by g8d_net_loss)
         q4_triggers: candidate trade has passed all Gate 7 checks; the risk-leg chain runs in parallel with the expected_reward estimator.
         q5_logs: none directly; mae_pct value is included in evt:G8_SIZED + evt:G8_A1_REJECT payloads.
@@ -2895,8 +2895,8 @@ from the CIATS run-to-reversal estimator; the sacred
         schema_version: 1.0
       </desc>
     <rect x="880" y="196" width="520" height="42" fill="#f1f5f9" stroke="#475569" stroke-width="1.5" rx="4"/>
-    <text x="1140" y="218" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">mae_pct = ATR(14) × mae_mult / entry_fill_price</text>
-    <text x="1140" y="232" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">mae_mult = 1.5 (CIATS-owned starting; ar:AR-016 ATR(14) incremental)</text>
+    <text x="1140" y="218" font-size="12" font-weight="700" fill="#0f172a" text-anchor="middle">mae_pct = ATR(14)-daily × decision_atr_stop_mult / entry_fill_price</text>
+    <text x="1140" y="232" font-size="9" font-weight="400" fill="#475569" text-anchor="middle">decision_atr_stop_mult = 2.5 (CIATS-owned; the WIDE 24h-decision vol stop, TB00790)</text>
   </g>
   <line x1="1140" y1="238" x2="1140" y2="254" stroke="#b91c1c" stroke-width="2" fill="none" marker-end="url(#arrow_g8_red)"/>
 
@@ -2984,7 +2984,7 @@ from the CIATS run-to-reversal estimator; the sacred
         schema_version: 1.0
       </desc>
     <rect x="350" y="516" width="520" height="44" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5" rx="4"/>
-    <text x="610" y="538" font-size="12" font-weight="700" fill="#7c2d12" text-anchor="middle">emergSL_dist = ATR(14) × emergency_sl_mult / entry_fill_price</text>
+    <text x="610" y="538" font-size="12" font-weight="700" fill="#7c2d12" text-anchor="middle">emergSL_dist = ATR(14)-daily × emergency_sl_mult / entry_fill_price</text>
     <text x="610" y="553" font-size="9" font-weight="400" fill="#7c2d12" text-anchor="middle">emergency_sl_mult = 3.0. L: SELL stop below entry / S: BUY-to-cover stop above. Crash brake only — NEVER in R:R.</text>
   </g>
   <line x1="610" y1="560" x2="610" y2="578" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#arrow_g8)"/>
@@ -3000,7 +3000,7 @@ from the CIATS run-to-reversal estimator; the sacred
   <g class="decoration">
     <text x="40" y="500" font-size="10" font-weight="700" fill="#475569" text-anchor="start">Inputs:</text>
     <text x="40" y="515" font-size="9" font-weight="400" fill="#475569" text-anchor="start">indicator:ATR_14 (per-pair, 14-bar)</text>
-    <text x="40" y="527" font-size="9" font-weight="400" fill="#475569" text-anchor="start">param:mae_mult (1.5), emergency_sl_mult (3.0)</text>
+    <text x="40" y="527" font-size="9" font-weight="400" fill="#475569" text-anchor="start">param:decision_atr_stop_mult (2.5), emergency_sl_mult (3.0)</text>
     <text x="40" y="539" font-size="9" font-weight="400" fill="#475569" text-anchor="start">entry_fill_price (actual fill — AR-008)</text>
     <text x="40" y="551" font-size="9" font-weight="400" fill="#475569" text-anchor="start">FEE_TAKER_PCT (entry + MAE exit)</text>
     <text x="40" y="563" font-size="9" font-weight="400" fill="#475569" text-anchor="start">expected_reward (CIATS run-to-reversal est;</text>
@@ -3109,7 +3109,7 @@ taxonomy:
     parent_diagram: 0500000_Context_T1_System_Context
     schema_version: 1.0
     CURRENT R: R14.
-    governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, ar:AR-007, ar:AR-040, mod:Exit_Controller, layer:L1a_Regime_Exit, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
+    governs: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, rule:Sacred_R_R_1_to_1_5, ar:AR-008, ar:AR-007, ar:AR-040, mod:Exit_Controller, mod:OhlcAggregator, layer:L1a_Regime_Exit, layer:L2_MAE_Threshold, layer:L3_Emergency_SL, channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:emergency_sl_mult, param:decision_atr_stop_mult, param:decision_ema_fast, param:decision_ema_slow, param:decision_atr_period, param:decision_bar_interval_min, evt:TRADE_CLOSE, container:Matching_Engine, contract:CIATS_Trade_Outcome_Bus, pt_mode:PT_MODE_002, pt_mode:PT_MODE_003
     drill_targets: none (D3 is a leaf Tier 2 detail of the Exit Architecture depicted in D2)
     sacred_constraints: rule:Sacred_R_R_1_to_1_5
   </desc>
@@ -3141,12 +3141,12 @@ taxonomy:
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: layer:L1a_Regime_Exit, layer:L2_MAE_Threshold
         constraints: rule:HR-EC-013, rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009, ar:AR-008, ar:AR-007
-        consumes: channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, layer:L3_Emergency_SL
+        consumes: channel:kraken_ws_executions, channel:kraken_ws_ticker, indicator:ATR_14, param:mae_mult, param:decision_atr_stop_mult, layer:L3_Emergency_SL
         produces: evt:TRADE_CLOSE
         ciats_ownership: the live Exit-Controller parameter group is FOUR tokens, all CIATS-OWNED PER-MODULE INSTANTIATED: param:mae_mult sets the Layer 2 MAE-threshold distance — LONG (entry_fill_price - bid) &gt;= ATR(14) x param:mae_mult / SHORT (ask - entry_fill_price) &gt;= ATR(14) x param:mae_mult (present in this element's consumes field + q4_triggers field + D3 root governs); param:emergency_sl_mult sets the Layer 3 off-book emergency-SL distance ATR(14) x param:emergency_sl_mult (present in the layer:L3_Emergency_SL sub-element consumes/q1_do + D3 root governs); param:cancel_timeout_window sets how long mod:Exit_Controller waits for a cancel_order ACK before the cancel-timeout fallback recovery (I-6 protocol, Layer 1a/2 exit sequences); param:mpp_retry_count sets the number of IOC retries after an MPP market-order rejection — LONG IOC limit-SELL at best_bid - 0.2% increments / SHORT IOC limit-BUY-to-cover at best_ask + 0.2% increments (C-1 MPP IOC retry, Layer 1a/2 exit sequences). The four parameters' EXISTENCE and CIATS-OWNERSHIP are canonical at this owning element mod:Exit_Controller on D3; their starting VALUES are NOT encoded in 0500000 -- canonical value home is TB00000 sec 8 (pointer, not value).
         position_mirror_access: read-only via WSManager helper methods (e.g., wm.pm_get(symbol), wm.pm_iter()) per rule:HR-PM-009 sole-writer pattern; Exit Controller does NOT mutate Position Mirror.
         q1_do: owns ALL normal exits across layers L1a (regime-reversal take-profit) and L2 (MAE threshold), direction-symmetric — a LONG closes via spot market SELL, a SHORT closes via Kraken MARGIN market BUY-to-cover (reduce_only) per ar:AR-009; L3 emergency SL is off-book Kraken-side crash protection only and is NOT owned by Exit Controller runtime; OTO conditional orders evaluated and REJECTED per ar:AR-008; reads Position Mirror via WSManager helper methods only (wm.pm_get / wm.pm_iter) per rule:HR-PM-009 sole-writer pattern; does NOT mutate Position Mirror; enforces rule:HR-EC-016 conflict resolution (L1a Step 1 pair-status precondition + L2 priority over in-progress L1a).
-        q4_triggers: L1a regime conditions EC-L1A-001 HTF Regime Reversal (LONG 1H EMA(20) crosses below 1H EMA(50) / SHORT crosses above) / EC-L1A-002 Daily Regime Downgrade (00:00 UTC reclassification — LONG into TRENDING_NEG or NON_DIR_ELEVATED / SHORT into TRENDING_POS or NON_DIR_ELEVATED) (consumes mod:Regime_Engine regime classification + indicator:EMA20_daily + indicator:EMA50_daily); regime reversal is the take-profit exit (run to reversal; no fixed TP, no max-hold); L2 MAE breach — LONG (entry_fill_price - bid_price) / SHORT (ask_price - entry_fill_price) &gt;= ATR(14) x param:mae_mult on channel:kraken_ws_ticker (bid for long, ask for short); ar:AR-040 instrument status events (cancel_only / maintenance) gating L1a Step 1 precondition; ar:AR-040 limit_only pair-status transition on an OPEN position (the instrument status channel reports limit_only per D1 WS-EXIT-003 / WS-INST-008) triggers an ACTIVE exit via a single IOC limit order — LONG at best_bid (sell) / SHORT at best_ask (buy-to-cover) — (NOT a market order, and NOT the cancel_only / maintenance HOLD branch above which submits no order), emitting evt:TRADE_CLOSE with exit_reason = PAIR_LIMIT_ONLY_EXIT.
+        q4_triggers: L1a regime conditions EC-L1A-001 24h Decision Reversal (TB00790: LONG 24h EMA(decision_ema_fast=12) crosses below EMA(decision_ema_slow=26) / SHORT crosses above, evaluated on each Closed24H — REPLACES the legacy 1H EMA20/50 cross) / EC-L1A-002 Daily Regime Downgrade (00:00 UTC reclassification — LONG into TRENDING_NEG or NON_DIR_ELEVATED / SHORT into TRENDING_POS or NON_DIR_ELEVATED) (consumes mod:Regime_Engine regime classification + mod:OhlcAggregator 24h decision series + indicator:EMA20_daily + indicator:EMA50_daily); regime reversal is the take-profit exit (run to reversal; no fixed TP, no max-hold); L2 MAE breach — LONG (entry_fill_price - bid_price) / SHORT (ask_price - entry_fill_price) &gt;= ATR(14)-daily x param:decision_atr_stop_mult (the WIDE 2.5x volatility stop) on channel:kraken_ws_ticker (bid for long, ask for short); ar:AR-040 instrument status events (cancel_only / maintenance) gating L1a Step 1 precondition; ar:AR-040 limit_only pair-status transition on an OPEN position (the instrument status channel reports limit_only per D1 WS-EXIT-003 / WS-INST-008) triggers an ACTIVE exit via a single IOC limit order — LONG at best_bid (sell) / SHORT at best_ask (buy-to-cover) — (NOT a market order, and NOT the cancel_only / maintenance HOLD branch above which submits no order), emitting evt:TRADE_CLOSE with exit_reason = PAIR_LIMIT_ONLY_EXIT.
         q5_logs: emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus for every closed position with exit_reason in {MAE_THRESHOLD_BREACH, HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE, PAIR_LIMIT_ONLY_EXIT} (the four Exit-Controller normal-operation reasons); EMERGENCY_SL_FIRED is NOT an Exit-Controller exit_reason — it is the layer:L3_Emergency_SL crash-recovery reason emitted via channel:kraken_ws_executions exec_type=trade backfill on TothBot recovery, a distinct producer on the same contract:CIATS_Trade_Outcome_Bus (producer-partitioned exit_reason); per rule:HR-EC-016 emits ONE unified record per closed position (never two records for same position); CRITICAL alert logged when L1a Step 1 detects pair status == cancel_only OR maintenance (position HELD, no orders submitted); cancel-timeout fallback events (per layer_l2 req_id registry) logged when ACK not received within timeout window; on a PAIR_LIMIT_ONLY_EXIT the ar:AR-040 IOC-limit-at-best-bid exit is logged with its evt:TRADE_CLOSE record (exit_reason = PAIR_LIMIT_ONLY_EXIT).
         schema_version: 1.0
       </desc>
@@ -3178,18 +3178,18 @@ taxonomy:
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: mod:Exit_Controller
         constraints: rule:HR-EC-013, rule:HR-EC-016, ar:AR-040
-        consumes: mod:Regime_Engine, indicator:EMA20_daily, indicator:EMA50_daily
+        consumes: mod:Regime_Engine, mod:OhlcAggregator, indicator:EMA20_daily, indicator:EMA50_daily, param:decision_ema_fast, param:decision_ema_slow, param:decision_bar_interval_min
         produces: evt:TRADE_CLOSE
         q1_do: regime-reversal / regime-downgrade exit path within mod:Exit_Controller; rule:HR-EC-016 Step 1 precondition — checks pair status via ar:AR-040 instrument status BEFORE any cancel or sell action; IF pair status == cancel_only OR maintenance THEN HOLD position, raise CRITICAL alert, do NOT proceed (resting emergSL on Kraken matching engine is the only protection in pair-disruption states); ELSE proceeds with WS cancel_order(emergSL) then the WS market close — LONG spot market SELL / SHORT Kraken MARGIN market BUY-to-cover (reduce_only) per ar:AR-009 — sequence per rule:HR-EC-013; paper mode dispatches via PT_MODE_002 simulated local fill.
-        q4_triggers: EC-L1A-001 HTF Regime Reversal — 1H EMA(20) crosses BELOW 1H EMA(50) while long position open (Gate-4 symmetry; exit_reason HTF_REGIME_REVERSAL; short-side mirror, mod:Short_Module: 1H EMA(20) crosses ABOVE 1H EMA(50) while a short position is open); OR EC-L1A-002 Daily Regime Downgrade — 00:00 UTC regime refresh reclassifies an open-position pair TRENDING_POSITIVE -&gt; TRENDING_NEGATIVE or NON_DIR + ELEVATED_VOL (Gate-3 symmetry; exit_reason DAILY_REGIME_DOWNGRADE; short-side mirror: TRENDING_NEGATIVE -&gt; TRENDING_POSITIVE or NON_DIR + ELEVATED_VOL against an open short) - regime reversal IS the take-profit exit (run to reversal; no fixed TP and no max-hold); precondition gate: ar:AR-040 pair status events on instrument-status channel for pairs with open positions; if rule:HR-EC-016(b) priority applies, Layer 2 MAE breach during in-progress L1a sequence overrides L1a reason — complete cancel sequence, market_sell with exit_reason = MAE_THRESHOLD_BREACH (not the original L1a reason).
+        q4_triggers: EC-L1A-001 24h Decision Reversal (TB00790 validated long-only migration — REPLACES the 1H EMA20/50 cross) — the 24h DECISION-bar EMA(param:decision_ema_fast=12) crosses BELOW EMA(param:decision_ema_slow=26) while a long position open, evaluated on each Closed24H the mod:OhlcAggregator second fold stage (param:decision_bar_interval_min=1440) emits and the per-pair DailyDecisionCache advances (Gate-4 symmetry; exit_reason HTF_REGIME_REVERSAL; short-side mirror, mod:Short_Module: 24h EMA12 crosses ABOVE EMA26 while a short position is open — DORMANT, the ratified strategy is LONG-ONLY but the exit machine stays symmetric-capable); the legacy 1H EMA20/50 drive is RETIRED (the 1H HtfCache stays maintained for gate:G4 HTF confirmation only); OR EC-L1A-002 Daily Regime Downgrade — 00:00 UTC regime refresh reclassifies an open-position pair TRENDING_POSITIVE -&gt; TRENDING_NEGATIVE or NON_DIR + ELEVATED_VOL (Gate-3 symmetry; exit_reason DAILY_REGIME_DOWNGRADE; short-side mirror: TRENDING_NEGATIVE -&gt; TRENDING_POSITIVE or NON_DIR + ELEVATED_VOL against an open short) - regime reversal IS the take-profit exit (run to reversal; no fixed TP and no max-hold); precondition gate: ar:AR-040 pair status events on instrument-status channel for pairs with open positions; if rule:HR-EC-016(b) priority applies, Layer 2 MAE breach during in-progress L1a sequence overrides L1a reason — complete cancel sequence, market_sell with exit_reason = MAE_THRESHOLD_BREACH (not the original L1a reason).
         q5_logs: exit_reason in {HTF_REGIME_REVERSAL, DAILY_REGIME_DOWNGRADE}; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus; CRITICAL alert logged on Step 1 HOLD branch (pair status == cancel_only OR maintenance) — position retained, no orders submitted, alert routed to operator per ar:AR-040 + rule:HR-EC-016(a); if rule:HR-EC-016(b) priority override fires, exit_reason logged as MAE_THRESHOLD_BREACH (Layer 2 reason) not the original L1a reason.
         schema_version: 1.0
       </desc>
     <rect x="40" y="234" width="460" height="350" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="6"/>
 
     <rect x="60" y="254" width="420" height="46" fill="#eff6ff" stroke="#1e40af" stroke-width="1" rx="4"/>
-    <text x="270" y="274" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">HTF Regime Reversal (EC-L1A-001)</text>
-    <text x="270" y="291" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">L: 1H EMA20 below EMA50  ·  S: EMA20 above EMA50</text>
+    <text x="270" y="274" font-size="12" font-weight="700" fill="#1e3a8a" text-anchor="middle">24h Decision Reversal (EC-L1A-001)</text>
+    <text x="270" y="291" font-size="10" font-weight="400" fill="#0f172a" text-anchor="middle">L: 24h EMA12 below EMA26  ·  S: EMA12 above EMA26</text>
 
     <rect x="60" y="310" width="420" height="46" fill="#eff6ff" stroke="#1e40af" stroke-width="1" rx="4"/>
     <text x="270" y="330" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">Take-Profit = Reversal</text>
@@ -3238,11 +3238,11 @@ taxonomy:
         parent_diagram: 0500000_Context_T1_System_Context
         drill_targets: mod:Exit_Controller, channel:kraken_ws_executions
         constraints: rule:HR-EC-014, rule:HR-EC-016, rule:HR-PM-009
-        consumes: indicator:ATR_14, param:mae_mult
+        consumes: indicator:ATR_14, param:decision_atr_stop_mult
         produces: evt:TRADE_CLOSE
         position_mirror_access: read-only via WSManager helper methods per rule:HR-PM-009 (entry_fill_price + qty + fees_entry_usd read from PositionRecord at MAE-trigger time; Layer 2 does NOT mutate Position Mirror).
         q1_do: MAE-threshold market-sell exit path within mod:Exit_Controller; on breach detection executes ordered sequence (1) WS cancel_order(emergSL off-book) -&gt; (2) WS add_order — LONG spot market SELL / SHORT Kraken MARGIN market BUY-to-cover (reduce_only) per ar:AR-009 — taker 0.26% fee; the emergSL cancel MUST confirm before the market close (rule:HR-EC-014 sequence-critical); req_id registry tracks each cancel ACK with cancel-timeout fallback (timeout -&gt; check executions channel; confirmed -&gt; proceed; unknown -&gt; retry 1x; 2nd timeout -&gt; alert + hold position + alert operator); NEVER market sell with ambiguous order state; reads PositionRecord via wm.pm_get helper per rule:HR-PM-009 (does NOT mutate Position Mirror); rule:HR-EC-016(b) priority semantics — if L1a sequence in progress at breach time, complete L1a cancel sequence then execute market sell with exit_reason override.
-        q4_triggers: LONG (entry_fill_price - bid_price) / SHORT (ask_price - entry_fill_price) &gt;= ATR(14) x param:mae_mult (1.5x default) evaluated on channel:kraken_ws_ticker bbo (bid for long, ask for short) for each open position; ATR_14 value sourced per-position from PositionRecord entry-time snapshot (not live-recomputed); evaluation cadence per tick update on subscribed ticker channel; MPP risk acknowledged (C-1 dv1_4) — market sell may reject on wide spread, Exit Controller must handle and retry.
+        q4_triggers: LONG (entry_fill_price - bid_price) / SHORT (ask_price - entry_fill_price) &gt;= ATR(14)-daily x param:decision_atr_stop_mult (2.5x default — TB00790 WIDE volatility stop, REPLACES the tight 1.5x mae_mult that structurally bled; the stop-width sweet spot ~2-2.5x ATR validated TB00784/786) evaluated on channel:kraken_ws_ticker bbo (bid for long, ask for short) for each open position; the per-position ATR_14 snapshot is now the DAILY (decision-bar) ATR(14) stamped at entry by the 24h-decision entry path (NOT the 5m ATR), so the L2 stop, the L3 emergSL (param:emergency_sl_mult x the same daily ATR, stays OUTSIDE L2), and the close actual_rr all share the ONE basis 1R = param:decision_atr_stop_mult x ATR(14)-daily; ATR_14 value sourced per-position from PositionRecord entry-time snapshot (not live-recomputed); evaluation cadence per tick update on subscribed ticker channel; MPP risk acknowledged (C-1 dv1_4) — market sell may reject on wide spread, Exit Controller must handle and retry.
         q5_logs: exit_reason = MAE_THRESHOLD_BREACH; emits evt:TRADE_CLOSE -&gt; contract:CIATS_Trade_Outcome_Bus with realized P/L computed at market-sell taker fill price (taker 0.26% fee per ar:AR-007 fee structure); cancel-ACK timeout events logged via req_id registry; 2nd-timeout alert events logged (position HELD + operator alert); paper mode dispatches via PT_MODE_002 / PT_MODE_003 simulated locally.
         schema_version: 1.0
       </desc>
@@ -3250,7 +3250,7 @@ taxonomy:
 
     <rect x="1020" y="254" width="420" height="50" fill="#fff7ed" stroke="#9a3412" stroke-width="1" rx="4"/>
     <text x="1230" y="276" font-size="12" font-weight="700" fill="#7c2d12" text-anchor="middle">TRIGGER</text>
-    <text x="1230" y="294" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">L:(entry-bid) / S:(ask-entry) &gt;= ATR(14) x mae_mult (1.5x)</text>
+    <text x="1230" y="294" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">L:(entry-bid) / S:(ask-entry) &gt;= ATR(14)-daily x decision_atr_stop_mult (2.5x)</text>
 
     <rect x="1020" y="314" width="420" height="32" fill="#dbeafe" stroke="#1e40af" stroke-width="1" rx="4"/>
     <text x="1230" y="334" font-size="11" font-weight="600" fill="#1e3a8a" text-anchor="middle">(1) WS cancel_order(emergSL off-book)</text>
@@ -3310,7 +3310,7 @@ taxonomy:
     <text x="750" y="900" font-size="12" font-weight="700" fill="#7f1d1d" text-anchor="middle">FIRES ONLY: VPS crash / TothBot down / internet severed / unrecoverable WS disconnect</text>
 
     <rect x="60" y="924" width="1380" height="40" fill="#fef2f2" stroke="#7f1d1d" stroke-width="1" rx="4"/>
-    <text x="750" y="943" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">Off-book emergSL stop-market ATR(14) x emergency_sl_mult (3.0x) — L: SELL stop below entry / S: BUY-to-cover stop above entry</text>
+    <text x="750" y="943" font-size="11" font-weight="600" fill="#0f172a" text-anchor="middle">Off-book emergSL stop-market ATR(14)-daily x emergency_sl_mult (3.0x) — L: SELL stop below entry / S: BUY-to-cover stop above entry</text>
     <text x="750" y="958" font-size="10" font-weight="400" fill="#7f1d1d" text-anchor="middle">crash protection — survives any TothBot failure (ar:AR-008)</text>
 
     <rect x="60" y="974" width="900" height="40" fill="#fee2e2" stroke="#b91c1c" stroke-width="1" rx="4"/>
@@ -3331,7 +3331,7 @@ taxonomy:
         constraints: ar:AR-008
         consumes: indicator:ATR_14, param:mae_mult
         produces: none
-        q1_do: the sacred 1:1.5 R:R is the ENTRY-ACCEPTANCE FLOOR - a minimum-expected-value admission test on expected R:R AT ENTRY, evaluated at Gate-8 using ACTUAL entry_fill_price (NOT limit price - why OTO conditional orders were rejected per ar:AR-008). Risk leg: mae_pct = ATR(14) x param:mae_mult / entry_fill_price; net_loss = mae_pct + entry taker fee + MAE taker fee (direction-symmetric — LONG net P&amp;L = (exit - entry) x qty with a buy-to-open taker + a sell exit taker; SHORT net P&amp;L = (entry - exit) x qty with a sell-to-open taker + a buy-to-cover exit taker, PLUS the Kraken margin borrow/rollover fee, a CIATS-owned seed whose value home is TB00000 sec 8). Reward leg: expected_reward = a CIATS-owned RUN-TO-REVERSAL estimate (seeded pre-200-trades, tuned from paper data after the 200-trade floor; the estimator mechanism is at Gate-8, the seed value in TB00000 sec 8). ACCEPTANCE (rule A1): admit the candidate iff expected_reward / net_loss &gt;= 1.5 (SACRED - hardcoded - the only hardcoded value, rule:Sacred_R_R_1_to_1_5); reject below the floor. The floor NEVER constructs an exit price and NEVER closes a position - there is NO gross_target TP limit; the take-profit is regime reversal (run to reversal). emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price is NEVER in the R:R formula (L3 is crash protection only, not a risk leg).
+        q1_do: the sacred 1:1.5 R:R is the ENTRY-ACCEPTANCE FLOOR - a minimum-expected-value admission test on expected R:R AT ENTRY, evaluated at Gate-8 using ACTUAL entry_fill_price (NOT limit price - why OTO conditional orders were rejected per ar:AR-008). Risk leg (TB00790 re-anchor — the basis MOVES, the 1.5 floor NEVER does): mae_pct = ATR(14)-daily x param:decision_atr_stop_mult / entry_fill_price; net_loss = mae_pct + entry taker fee + MAE taker fee (direction-symmetric — LONG net P&amp;L = (exit - entry) x qty with a buy-to-open taker + a sell exit taker; SHORT net P&amp;L = (entry - exit) x qty with a sell-to-open taker + a buy-to-cover exit taker, PLUS the Kraken margin borrow/rollover fee, a CIATS-owned seed whose value home is TB00000 sec 8). Reward leg: expected_reward = a CIATS-owned RUN-TO-REVERSAL estimate (seeded pre-200-trades, tuned from paper data after the 200-trade floor; the estimator mechanism is at Gate-8, the seed value in TB00000 sec 8). ACCEPTANCE (rule A1): admit the candidate iff expected_reward / net_loss &gt;= 1.5 (SACRED - hardcoded - the only hardcoded value, rule:Sacred_R_R_1_to_1_5); reject below the floor. The floor NEVER constructs an exit price and NEVER closes a position - there is NO gross_target TP limit; the take-profit is regime reversal (run to reversal). emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price is NEVER in the R:R formula (L3 is crash protection only, not a risk leg).
         q4_triggers: candidate evaluation at entry (Gate-8 Position Sizer), BEFORE order dispatch; the expected-R:R admission test is computed once per candidate; on PASS the candidate proceeds into CIATS-owned sizing, on FAIL it is rejected (evt:G8_A1_REJECT). No exit-price artefact is persisted (no gross_target).
         q5_logs: A1 acceptance recorded downstream by evt:G8_SIZED on accept and evt:G8_A1_REJECT on reject (Gate-8); no gross_target is computed or persisted; rule violation (admitting a candidate whose expected_reward / net_loss &lt; 1.5) would be a CRITICAL system invariant breach - must NEVER occur (hardcoded floor).
         schema_version: 1.0
@@ -3341,11 +3341,11 @@ taxonomy:
     <rect x="40" y="1066" width="1420" height="16" fill="#1e40af"/>
     <text x="750" y="1072" fill="#ffffff" font-size="14" font-weight="700" text-anchor="middle">1:1.5 R:R FLOOR — ENTRY-ACCEPTANCE TEST at Gate-8 (ACTUAL fill price; expected reward = CIATS run-to-reversal estimate)</text>
 
-    <text x="60" y="1110" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">mae_pct = ATR(14) x param:mae_mult / entry_fill_price   (net P&amp;L: LONG exit-entry / SHORT entry-exit)</text>
+    <text x="60" y="1110" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">mae_pct = ATR(14)-daily x param:decision_atr_stop_mult / entry_fill_price   (net P&amp;L: LONG exit-entry / SHORT entry-exit)</text>
     <text x="60" y="1130" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">net_loss = mae_pct + 0.26% entry taker + 0.26% exit taker   (+ Kraken margin borrow fee for SHORT)</text>
     <text x="60" y="1150" font-size="11" font-weight="700" fill="#7f1d1d" text-anchor="start">ACCEPT entry iff expected_reward / net_loss &gt;= 1.5  ***  SACRED — hardcoded — rule:Sacred_R_R_1_to_1_5  ***</text>
     <text x="60" y="1170" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">expected_reward = CIATS run-to-reversal estimate  —  NO gross_target TP limit (take-profit = regime reversal)</text>
-    <text x="60" y="1190" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">emergSL_dist = ATR(14) x param:emergency_sl_mult (3.0x) / entry_fill_price  —  NEVER in R:R formula</text>
+    <text x="60" y="1190" font-size="11" font-weight="600" fill="#0f172a" text-anchor="start">emergSL_dist = ATR(14)-daily x param:emergency_sl_mult (3.0x) / entry_fill_price  —  NEVER in R:R formula</text>
   </g>
 
   <g id="pm_helper_callout" class="decoration">
@@ -5147,7 +5147,7 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     series is the basis the forthcoming entry/exit compute on: indicator:EMA_fast (12) /
                     indicator:EMA_slow (26) + indicator:ATR_14 on the daily closes, for a LONG-ONLY entry
                     (EMA12/26 bullish cross) and exit (EMA12/26 bearish-cross reversal OR a wide
-                    param:atr_stop_mult x ATR(14) disaster stop, NO take-profit per decision:DEC-124).
+                    param:decision_atr_stop_mult x ATR(14) disaster stop, NO take-profit per decision:DEC-124).
                     param:decision_bar_interval_min (1440, CIATS-owned, the decision cadence) joins the
                     seed registry (only the net 1:1.5 R:R floor stays hardcoded). The ARCHITECTURE stays
                     Long/Short-CAPABLE (mod:Short_Module plumbing intact) but the RATIFIED trading
@@ -5176,10 +5176,24 @@ halt thresholds, multipliers, and trading rules are CIATS-owned starting values.
                     DailyRegimeCompute on_daily_bars fan-out alongside the DEC-124 reward store, no third
                     REST) and self-healing a day-aligned evt:HTF_24H_GAP from one REST
                     GetOHLCData(interval=1440) re-seed (the mirror of the 1H heal, emits evt:HTF_24H_HEAL).
-                    The decision cache is now LIVE-maintained per pair; the long-only entry/exit CONSUMER
-                    of it (the gate:G8 entry on the EMA12/26 bullish cross + the layer:L1a/L2 exit
-                    migration onto the 24h decision close) is the subsequent slice (no dead rail in the
-                    hot path until that consumer arrives).
+                    The decision cache is now LIVE-maintained per pair. TB00790 WIRES the long-only
+                    entry/exit CONSUMER of it as ONE coupled slice: (B) on each Closed24H the live_driver
+                    detects the EMA(decision_ema_fast=12)/EMA(decision_ema_slow=26) BULLISH CROSS (pre NOT
+                    bullish, post bullish) and runs the EXISTING gate:G1-G7 prefilters + gate:G8 sizing for
+                    the LONG side (the Closed24H is the trigger, entry_ref_price = its close; gate:G8 atr_14
+                    + the entry-stamped atr_14_entry OVERRIDDEN to the DAILY decision-bar ATR(14); gate:G8
+                    mae_mult = param:decision_atr_stop_mult; the SSS evaluator passes on the cross), the 5m
+                    sweep entry DISABLED; (C) the exit migrates onto the 24h decision close -- layer:L1a is
+                    the 24h EMA12/26 bearish-cross reversal (the live_driver drives wm.on_htf_ohlc_close
+                    from the Closed24H branch with the 24h EMAs; the legacy 1H EMA20/50 reversal drive is
+                    RETIRED, the 1H HtfCache stays maintained for gate:G4 only), layer:L2 is the WIDE
+                    param:decision_atr_stop_mult (2.5x) x ATR(14)-daily stop (REPLACES the tight 1.5x
+                    mae_mult), layer:L3 emergSL stays param:emergency_sl_mult (3.0x) x the same daily ATR
+                    (outermost), decision:DEC-124 no-take-profit STANDS, and the sacred 1:1.5 R:R floor
+                    re-anchors AUTOMATICALLY onto the ONE shared basis 1R = decision_atr_stop_mult x
+                    ATR(14)-daily (the floor NEVER moves, only the basis). param:decision_atr_stop_mult
+                    (2.5, CIATS-owned) joins the seed registry alongside the four derive seeds; the
+                    Short-side mirror stays DORMANT (machine symmetric-capable, strategy LONG-ONLY).
   AR-046 ★: emergSL triggers.reference MUST be explicit in all batch_add
                     calls. Never rely on API defaults for crash-protection parameters.
                     ALL emergSL stop-loss orders MUST include:

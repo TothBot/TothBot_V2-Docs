@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_71
+DocVersion: dv1_72
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_71.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_72.txt
 DocDate:    06-18-2026
-DocTime:    16:30:00 UTC
+DocTime:    19:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31854,6 +31854,64 @@ LIVE: DocVersion dv1_71 / DocPath ...dv1_71... /
 DocDate 06-18-2026 / DocTime 16:30:00 UTC
 
 ----- END TB00789 WIRE the 24h DECISION live the derive layer into live_driver dv1_261 OP RECORD -----
+
+
+----- TB00790 ROUTE the LONG-ONLY entry/exit through the 24h DECISION dv1_262 OP RECORD -----
+
+TB00790: ROUTE the validated long-only ENTRY + EXIT through the now-live 24h DECISION cache -- the
+final TB00789 sub-slice, ONE coupled slice because the entry's gate:G8 net_loss, the layer:L2 stop,
+the layer:L3 emergSL, and the close actual_rr ALL share ONE basis 1R = param:decision_atr_stop_mult
+(2.5) x ATR(14)-on-DAILY. This is the VISUAL slice: Image3 (Exit Architecture) + Image9 (Gate-8
+detail) + Image2 (Signal Engine) + the ar:AR-045 mod:OhlcAggregator descriptor + the
+Pre-Computation Cache table are amended to record the new long-only routing.
+
+0500000 EDITS (all surgical, in-place text inside existing <text>/<desc>/<pre> elements -- NO new
+SVG geometry, NO tag added or removed, so every tag class is UNCHANGED from the baseline):
+ - Image3 (0500000_Image3_T2_R14_Exit_Architecture): L1a box "HTF Regime Reversal (EC-L1A-001)" ->
+   "24h Decision Reversal (EC-L1A-001)" with the basis "L: 24h EMA12 below EMA26 / S: EMA12 above
+   EMA26" (was 1H EMA20/50); L2 TRIGGER label "ATR(14) x mae_mult (1.5x)" -> "ATR(14)-daily x
+   decision_atr_stop_mult (2.5x)"; L3 + the R:R formula band + the emergSL_dist line re-based onto
+   ATR(14)-daily; the layer:L1a / layer:L2 / mod:Exit_Controller / rule:Sacred_R_R_1_to_1_5
+   descriptors + the root <desc> governs list updated (consumes param:decision_atr_stop_mult /
+   param:decision_ema_fast / decision_ema_slow / decision_bar_interval_min + mod:OhlcAggregator;
+   the legacy 1H EMA20/50 reversal RETIRED, the 1H HtfCache stays for gate:G4 only).
+ - Image9 (0500000_Image9_T3_R7_Gate_8_Position_Sizer_Detail): g8d_mae "mae_pct = ATR(14) x
+   mae_mult / entry_fill_price" -> "ATR(14)-daily x decision_atr_stop_mult / entry_fill_price" (2.5x,
+   the wide vol stop = ONE shared basis with L2, the sacred floor re-anchors automatically); g8d_emergsl
+   + the Inputs legend re-based onto ATR(14)-daily; the expected_reward estimator descriptor's
+   run-to-reversal exit updated to the 24h EMA12/26 cross.
+ - Image2 (0500000_Image2_T2_R16_Trading_Pipeline): the Signal Engine element label + its
+   mod:Signal_Pipeline descriptor record the LIVE long-only TRIGGER = the 24h EMA12/26 BULLISH CROSS
+   on each Closed24H (REPLACING the 5m three-factor SSS as the live trigger; the SSS evaluator passes
+   on the cross; gate:G1-G7 still prefilter; the 5m sweep entry DISABLED; Short mirror DORMANT).
+ - ar:AR-045 <pre> descriptor + the Pre-Computation Cache table row: the long-only entry/exit CONSUMER
+   is recorded as WIRED by TB00790 (B = the EMA12/26 bullish-cross entry with the daily-ATR override +
+   mae_mult = decision_atr_stop_mult; C = L1a 24h reversal drive + the wide L2 stop + L3 outermost +
+   DEC-124 no-TP + the automatic sacred-floor re-anchor), no longer "the subsequent slice".
+
+NEW CIATS SEED: param:decision_atr_stop_mult = 2.5 (CIATS-owned, the wide L2/L3 daily-ATR stop
+basis) is now diagram-sited (Image3 L2 + Image9 g8d_mae) and joins the TB00000 seed registry with
+the four already-sited derive seeds (param:decision_bar_interval_min = 1440 / decision_ema_fast = 12
+/ decision_ema_slow = 26 / decision_atr_period = 14). Only the net 1:1.5 R:R floor stays hardcoded
+(rule:Sacred_R_R_1_to_1_5 NEVER lowered -- only the net_loss BASIS changes).
+
+R DISPOSITION: no figure R bump -- every edit is in-place text inside existing elements; no polygon /
+region / figure-structure change, no new visual geometry (label CONTENT rewritten, element COUNT
+unchanged).
+
+VERIFICATION: HTML well-formed; opening/closing tag classes balanced and UNCHANGED from the baseline
+-- g 217/217, text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10 (in-place text
+edits add/remove no tag); no new bare-ampersand strict-XML issue; no residual dv1_261 in the live
+diagram. Code HEAD pinned at session close in the TB00790 SL (the B+C routing + the
+param:decision_atr_stop_mult registry seed + tests).
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_71 / DocPath ...dv1_71... /
+DocDate 06-18-2026 / DocTime 16:30:00 UTC
+LIVE: DocVersion dv1_72 / DocPath ...dv1_72... /
+DocDate 06-18-2026 / DocTime 19:30:00 UTC
+
+----- END TB00790 ROUTE the LONG-ONLY entry/exit through the 24h DECISION dv1_262 OP RECORD -----
 
 
 ============================================================
