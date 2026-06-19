@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_76
+DocVersion: dv1_77
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_76.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_77.txt
 DocDate:    06-19-2026
-DocTime:    04:45:00 UTC
+DocTime:    05:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32130,6 +32130,54 @@ LIVE: DocVersion dv1_76 / DocPath ...dv1_76... /
 DocDate 06-19-2026 / DocTime 04:45:00 UTC
 
 ----- END TB00796 SITE the perps EXIT SYNTHESIS 13.3 under LIMIT-ONLY + the synthetic-stop GAP RISK dv1_266 OP RECORD -----
+
+
+----- TB00796 SITE the perps DIRECTION MECHANISM 13.4 ASYMMETRIC long/short + the tension NAMED to Bill dv1_267 OP RECORD -----
+
+TB00796: SITE the perps DIRECTION MECHANISM -- a new Section 13.4 -- as the fourth slice of the perps
+design track. Diagram-first, PROSE-ONLY (new <p>/<pre> in the prose Section 13, NO SVG/figure geometry).
+This is the slice that touches a PRIOR Bill WHAT: TB00794 shows long and short want DIFFERENT mechanisms,
+which refines Bill's older "symmetric mirror" Short ruling. Per the what/how division the tension is
+NAMED here plainly, not silently overridden; the design PROCEEDS on the data unless Bill re-rules. NO new
+counted element, NO formally-minted namespace token, NO new CIATS seed (the short entry-filter / regime /
+trailing magnitudes are PROPOSED seeds, registered at the parameter-siting slice).
+
+0500000 EDITS (Section 13.4, appended after the 13.3 GAP RISK <pre>, before <h2>14</h2>):
+ - 13.4 lead <p>: on Bitnomial-class fees (~0.05% vs Kraken-spot 0.26%) systematic SHORTS revive, but
+   the long and short edges live in DIFFERENT mechanisms; the perps strategy runs ASYMMETRIC direction
+   mechanics on a machine whose ARCHITECTURE stays Long/Short-SYMMETRIC.
+ - LONG MECHANISM <pre> (carries the validated spot edge): entry breakout/trend (the 24h EMA bullish-
+   cross family), stop WIDE layer:L2 = decision_atr_stop_mult x ATR-14 daily, exit layer:L1a regime-
+   reversal (24h bearish cross), reversal-exit not a fixed target.
+ - SHORT MECHANISM <pre> (revived by the fee lever, NOT a mirror): entry MEAN-REVERSION / FILTERED (the
+   TB00794 survivors are mean-rev+filtered not breakout) + a REGIME FILTER, exit TRAILING-or-TARGET;
+   all short magnitudes PROPOSED CIATS seeds; sacred 1:1.5 floor untouched.
+ - SYMMETRY vs ASYMMETRY <pre> (the tension, named to Bill): Bill's earlier Long/Short parity ruling was
+   a SYMMETRIC short, a full mirror of long; TB00794 says the short edge is a DIFFERENT mechanism. The
+   resolution proposed on the data -- MACHINE stays Long/Short-SYMMETRIC in ARCHITECTURE (Short_Module +
+   side plumbing intact, co-equal, never ripped out), STRATEGY runs the data-validated ASYMMETRIC
+   mechanisms -- is named PLAINLY as a WHAT that touches Bill's prior WHAT; it PROCEEDS unless Bill
+   re-rules. A re-rule to force a symmetric mirror is recorded as the single open DECISION of the
+   direction-mechanism design.
+
+NO NEW CIATS SEED: the short entry-filter / regime / trailing magnitudes are PROPOSED seeds only,
+registered at the perps parameter-siting slice. No TB00000 seed change.
+
+R DISPOSITION: no figure R bump -- Section 13 remains prose with NO figure/SVG; <p>/<pre> prose only,
+no geometry change, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; the two apostrophes (Bill's)
+entity-encoded &#x27;, no bare-angle / bare-ampersand issue; no residual dv1_266 in the live diagram.
+Diagram-first: no perps code this slice; live connectivity gated on the 13.1 confirm-first items.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_76 / DocPath ...dv1_76... /
+DocDate 06-19-2026 / DocTime 04:45:00 UTC
+LIVE: DocVersion dv1_77 / DocPath ...dv1_77... /
+DocDate 06-19-2026 / DocTime 05:00:00 UTC
+
+----- END TB00796 SITE the perps DIRECTION MECHANISM 13.4 ASYMMETRIC long/short + the tension NAMED to Bill dv1_267 OP RECORD -----
 
 
 ============================================================
