@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_263</title>
+<title>0500000 System Architecture Overview dv1_264</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_263</td></tr>
+  <tr><td>DocVersion</td><td>dv1_264</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_263_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>06-18-2026</td></tr>
-  <tr><td>DocTime</td><td>22:45:00 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_264_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>06-19-2026</td></tr>
+  <tr><td>DocTime</td><td>04:15:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7734,6 +7734,80 @@ prefix taxonomy:
   basis for paper-trading data validity for live operation.
 </pre>
 <h2>13. Open Items — Require Specification Documents</h2>
+<p>
+13.1 Perpetual-Futures (Perps) Expansion — Bitnomial Venue (TB00796; diagram-first design GO)
+</p>
+<p>
+Bill ratified the perps expansion at TB00795 close — &#x22;go on the perps expansion and the
+next session designs it diagram-first.&#x22; The perps track is a NEW, isolated trading-venue
+organism designed diagram-first in the 0500000 corpus BEFORE any connectivity code, run
+paper-first; live go-live is a separate Bill gate (the mirror of the spot F4 gate). Per
+TB00000 sec 7 the parallel Long_Module / Short_Module framework already admits future
+trading modules; the perps expansion re-activates the dormant Short_Module on a venue whose
+fee structure makes systematic shorts viable. This section records the locked scope decisions
+and the confirm-first specification gate; the formal namespace and parameter registrations
+are DEFERRED to the per-element siting slices that follow, each its own clean non-breaking
+slice.
+</p>
+<pre>
+  PERPS EXPANSION — LOCKED SCOPE DECISIONS (TB00796; design HOWs resolved up front)
+
+  VENUE
+    Kraken Derivatives US / Bitnomial. Payward (Kraken parent) fully acquired Bitnomial
+    (closed 2026-05-01); US-retail perps live 2026-06-15 — one stack, so the old
+    &#x22;direct Bitnomial vs Kraken-Pro middleman&#x22; question is MOOT. Bitnomial holds the
+    full CFTC trifecta (DCM + DCO + FCM). Flat ~$0.07-0.10/contract fee (maker == taker)
+    — the short-revival FEE lever vs Kraken spot 0.26% taker. Native shorts; 8h funding
+    folded into Variation Margin; HMAC-SHA256 connection auth that MIRRORS the existing
+    Kraken signing; REST orders + REST funding-rates + WS market-data; 24/7 sandbox.
+
+  ACCESS MODE — DIRECT BITNOMIAL, ISOLATED PERPS ORGANISM (FP/DP resolved)
+    The perps organism connects DIRECT to Bitnomial as an isolated venue, NOT through the
+    Kraken-Pro unified wallet. Hot-path isolation (the perps organism cannot disturb the
+    live-in-paper spot organism) outweighs cross-collateral convenience, and the HMAC auth
+    mirrors Kraken at low new-surface cost. Matching / clearing is Bitnomial either way.
+
+  ORDER MODEL — LIMIT-ONLY, CLIENT-SIDE-SYNTHESIZED EXITS (FP/DP resolved)
+    Bitnomial is LIMIT-ORDERS-ONLY. The layer:L2 stop, the layer:L3 emergency-SL, and
+    market exits are SYNTHESIZED client-side. The sacred 1:1.5 R:R floor is UNAFFECTED —
+    it sets the limit exit prices and is NEVER lowered.
+
+  DIRECTION MECHANISM — ASYMMETRIC (named to Bill; proceed on data unless re-ruled)
+    TB00794 perps data shows long and short want DIFFERENT mechanisms: long = breakout /
+    trend + wide stop + reversal exit; short = mean-reversion / filtered + trailing-or-
+    target + regime filter. This REFINES the older &#x22;symmetric mirror&#x22; Short ruling: the
+    machine stays Long/Short-SYMMETRIC in ARCHITECTURE (Short_Module / side plumbing
+    intact), while the STRATEGY runs the data-validated asymmetric mechanisms. Named
+    plainly to Bill per the what/how division; proceeds on the data unless Bill re-rules.
+
+  STAGING
+    Paper-first. Perps live go-live is a Bill gate (mirror of spot F4). The spot organism
+    F3 observation continues unchanged in the background.
+
+  NAMESPACE / PARAMETER REGISTRATION — DEFERRED TO THE SITING SLICES
+    No new namespace token or CIATS seed is minted in this scope-anchor slice. The formal
+    registrations — the Bitnomial venue container, the perps connection-architecture node,
+    and the perps CIATS seeds (contract fee, funding, margin) — are introduced at the
+    per-element siting slices that follow.
+</pre>
+<pre>
+  CONFIRM-FIRST SPECIFICATION GATE — 6 Bitnomial open items
+  (must be confirmed with Bitnomial support BEFORE any live-connectivity code; the diagram
+   design proceeds immediately, code does NOT cross this gate)
+
+    1. Sandbox perp listing — the 24/7 sandbox currently lists NO perp product; confirm a
+       sandbox perp to test against before live connectivity.
+    2. USDC margin — confirm USDC as eligible margin collateral and its mechanics.
+    3. Minimums — confirm contract minimums / tick / lot so the CIATS-owned fixed-notional
+       sizing (~$50+/trade) maps onto whole contracts.
+    4. REST cancel / modify + kill-switch — confirm order cancel/modify endpoints and an
+       account-level kill-switch (required because exits are client-synthesized under the
+       limit-only order model).
+    5. base_symbol naming — confirm the perp symbol / naming convention for the product
+       universe.
+    6. Eligible-US-client criteria — confirm the eligibility criteria for a US-retail
+       client (the access constraint that drove the venue selection).
+</pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>
 <h2>END OF DOCUMENT</h2>

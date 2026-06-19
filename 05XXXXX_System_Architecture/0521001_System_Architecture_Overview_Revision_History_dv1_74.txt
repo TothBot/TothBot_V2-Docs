@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_73
+DocVersion: dv1_74
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_73.txt
-DocDate:    06-18-2026
-DocTime:    22:45:00 UTC
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_74.txt
+DocDate:    06-19-2026
+DocTime:    04:15:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -31970,6 +31970,64 @@ LIVE: DocVersion dv1_73 / DocPath ...dv1_73... /
 DocDate 06-18-2026 / DocTime 22:45:00 UTC
 
 ----- END TB00793 SITE the read-only STATE SNAPSHOT EMITTER for the operator dashboard dv1_263 OP RECORD -----
+
+
+----- TB00796 SITE the perps-expansion SCOPE ANCHOR + Bitnomial CONFIRM-FIRST gate dv1_264 OP RECORD -----
+
+TB00796: SITE the perps-expansion SCOPE ANCHOR -- the diagram-first record of Bill's TB00795-close GO
+on the perpetual-futures (perps) expansion -- into the previously EMPTY Section 13 (Open Items --
+Require Specification Documents). This is the first slice of the perps design track: the GO and the
+resolved design HOWs lived only in session memory; siting them into the canonical 0500000 corpus
+BEFORE any connectivity code is the correct diagram-first first move. PROSE-ONLY (new <p>/<pre> blocks
+in a prose section that carries NO SVG/figure geometry) -- NO new counted element, NO new namespace
+token, NO new CIATS seed. All formal namespace/parameter registration is DEFERRED to the per-element
+siting slices that follow.
+
+0500000 EDITS (Section 13, previously empty between the <h2>13</h2> and <h2>14</h2> headers):
+ - 13.1 Perpetual-Futures (Perps) Expansion -- Bitnomial Venue: a scope <p> recording Bill's GO
+   ("go on the perps expansion and the next session designs it diagram-first"), the perps track as a
+   NEW isolated trading-venue organism designed diagram-first and run paper-first (live go-live a
+   separate Bill gate, the mirror of spot F4), re-activating the dormant Short_Module per TB00000
+   sec 7, with the formal registrations deferred to the siting slices.
+ - LOCKED SCOPE DECISIONS <pre>: VENUE (Kraken Derivatives US / Bitnomial -- CFTC trifecta DCM+DCO+FCM,
+   flat ~$0.07-0.10/contract maker==taker the short-revival FEE lever, native shorts, 8h funding into
+   Variation Margin, HMAC-SHA256 auth mirroring Kraken, REST orders + REST funding-rates + WS market-
+   data, 24/7 sandbox); ACCESS MODE (DIRECT Bitnomial as an ISOLATED perps organism, NOT the Kraken-Pro
+   unified wallet -- hot-path isolation > cross-collateral convenience; FP/DP resolved); ORDER MODEL
+   (LIMIT-ONLY -- layer:L2 stop, layer:L3 emergency-SL, market exits synthesized client-side; the
+   sacred 1:1.5 R:R floor UNAFFECTED, sets the limit exit prices, NEVER lowered); DIRECTION MECHANISM
+   (ASYMMETRIC -- long breakout/trend+wide-stop+reversal, short mean-rev/filtered+trailing-or-target+
+   regime-filter per TB00794; refines the older "symmetric mirror" Short ruling -- ARCHITECTURE stays
+   Long/Short-symmetric, STRATEGY runs the data-validated asymmetric mechanisms; named plainly to Bill
+   per the what/how division, proceeds on the data unless re-ruled); STAGING (paper-first, live a Bill
+   gate, spot F3 observation continues); REGISTRATION DEFERRED.
+ - CONFIRM-FIRST SPECIFICATION GATE <pre>: the 6 Bitnomial open items that must be confirmed with
+   Bitnomial support BEFORE any live-connectivity code (diagram design proceeds immediately, code does
+   NOT cross this gate) -- (1) sandbox perp listing, (2) USDC margin, (3) contract minimums/tick/lot
+   vs the CIATS fixed-notional sizing, (4) REST cancel/modify + kill-switch, (5) base_symbol naming,
+   (6) eligible-US-client criteria.
+
+NO NEW CIATS SEED: the scope anchor records intent and the spec gate; it mints no trading-loop tunable.
+The perps CIATS seeds (contract fee, funding, margin) are introduced at the siting slices. No TB00000
+seed change.
+
+R DISPOSITION: no figure R bump -- Section 13 is a prose section with NO figure/SVG; the slice adds
+<p>/<pre> prose only, no polygon / region / figure-structure change, no new visual geometry, counted
+element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass, no exceptions); opening/closing tag classes balanced
+and UNCHANGED from the baseline -- g 217/217, text 957/957, desc 126/126, svg 10/10, title 126/126,
+figcaption 10/10 (new prose adds no counted tag); apostrophes/quotes entity-encoded (&#x27; / &#x22;),
+no bare-angle / bare-ampersand strict-XML issue; no residual dv1_263 in the live diagram. Diagram-first:
+no perps code in this slice; live-connectivity code is gated on the 6 confirm-first items.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_73 / DocPath ...dv1_73... /
+DocDate 06-18-2026 / DocTime 22:45:00 UTC
+LIVE: DocVersion dv1_74 / DocPath ...dv1_74... /
+DocDate 06-19-2026 / DocTime 04:15:00 UTC
+
+----- END TB00796 SITE the perps-expansion SCOPE ANCHOR + Bitnomial CONFIRM-FIRST gate dv1_264 OP RECORD -----
 
 
 ============================================================
