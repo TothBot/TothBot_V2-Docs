@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_270</title>
+<title>0500000 System Architecture Overview dv1_271</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_270</td></tr>
+  <tr><td>DocVersion</td><td>dv1_271</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_270_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_271_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>06:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>06:15:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -8028,6 +8028,87 @@ parameter-siting slice.
     fixed-notional target onto whole contracts against the same USDC margin wallet.
     The metric DIFFERENCE between sides lives in the §13.4 entry / stop / exit logic,
     NOT in funding, margin, or sizing.
+</pre>
+<p>
+13.6 Proposed Perp CIATS Parameter Registry — Named-as-Proposed Across §13.1–§13.5 (pre-spec; NOT yet minted in TB00000 sec 8)
+</p>
+<p>
+This slice CONSOLIDATES every perp parameter NAMED as proposed across §13.1–§13.5 into one place, so
+that the formal registration is a SINGLE clean graduation step once the six §13.1 confirm-first items
+clear. NOTHING here is minted yet — TB00000 v2_102 is UNCHANGED, no perp seed lands in TB00000 sec 8 or
+the §13.4 mechanism figures at this slice. Per the TB00000 sec 4 binary architecture test a parameter&#x27;s
+EXISTENCE and CIATS-ownership is architecture (it belongs in the diagram), while only its numeric
+STARTING VALUE is a sec 8 registry entry; this registry names the proposed perp parameters and defers
+both the value and the formal mint to graduation. EXCHANGE-SET inputs and engineering constants are
+listed too, but explicitly marked NOT seeds. The LONG and SHORT parameter sets are enumerated to EQUAL
+DETAIL — the SHORT side mints NEW proposed seeds because its mechanism is new (§13.4), while the LONG
+side mints NONE because it REUSES the already-registered validated 24h-decision seeds; both full sets are
+shown here.
+</p>
+<pre>
+  PROPOSED PERP SEEDS — SHORT SIDE (the revived mechanism; from §13.4; all PROPOSED, none minted)
+
+  perp_short_entry_meanrev   PROPOSED. The mean-reversion entry band for the perps short
+                             (the TB00794 short survivors are mean-reversion + filtered,
+                             NOT breakout). Starting value derived from TB00794 + refined
+                             from paper. Analogue of the spot rsi_short_low/high (70/50,
+                             TB00000 sec 8) but a DIFFERENT mechanism (mean-reversion, not SSS).
+  perp_short_regime_filter   PROPOSED. The regime set in which the perps short is ENABLED
+                             (short only in the regimes where TB00794 showed it survives).
+                             Starting set derived from TB00794 regime split; refined from paper.
+  perp_short_exit_trail      PROPOSED. The trailing-or-target exit magnitude for the perps
+                             short (§13.4 SHORT exit = trail / target, NOT a pure reversal).
+                             Starting value from TB00794; refined from paper. The wide
+                             layer:L2 stop REUSES decision_atr_stop_mult (no new stop seed).
+</pre>
+<pre>
+  PROPOSED PERP SEEDS — LONG SIDE (carries the validated spot edge; from §13.4; REUSES existing, mints NONE)
+
+  decision_ema_fast = 12     EXISTING registered seed (TB00000 sec 8) — REUSED unchanged: the
+  decision_ema_slow = 26     24h EMA bullish-cross family IS the perps long entry (§13.4 LONG).
+  decision_atr_period = 14   EXISTING registered seed — REUSED: the wide-stop volatility basis.
+  decision_atr_stop_mult     EXISTING registered seed (2.5x ATR-14 daily) — REUSED: the WIDE
+                             layer:L2 perps long stop (§13.4 LONG Stop), and the short L2 stop too.
+  decision_bar_interval_min  EXISTING registered seed (1440) — REUSED: the 24h decision cadence.
+  per_trade_size_usd         EXISTING registered seed — REUSED for BOTH sides&#x27; contract sizing
+                             (§13.5), raised per product onto whole contracts. NO new long seed.
+</pre>
+<pre>
+  PROPOSED PERP SEEDS — VENUE / EXECUTION (both sides; from §13.1 / §13.3)
+
+  perp_fee_per_contract      PROPOSED. The flat ~$0.07-0.10/contract Bitnomial fee (maker ==
+                             taker) — the analogue of FEE_TAKER_PCT (TB00000 sec 8): an
+                             exchange-published rate that is REGISTERED + CIATS-monitored for
+                             tier divergence, and folds into perp net_loss + the sacred 1:1.5
+                             R:R floor. Confirmed pre-live; the short-revival FEE lever (TB00794).
+  perp_exit_cross_ticks      PROPOSED (§13.3). N, the number of ticks the synthetic-exit
+                             marketable limit prices THROUGH the book to maximise fill
+                             probability; bounded by the §13.1 item-3 tick / lot. Refined from paper.
+
+  Design-intent tunables (§13.3 mitigations; candidate seeds confirmed at CODE time, not named seeds yet):
+  perp_exit_chase_cap        the bounded re-price CHASE limit before escalating to the
+                             kill-switch (§13.3 GAP-RISK mitigation).
+  perp_mark_poll_interval    the §13.2 mark-price watchdog poll cadence (the &#x22;tight mark
+                             polling&#x22; mitigation).
+</pre>
+<pre>
+  NOT SEEDS — exchange-set inputs + engineering constants (listed for completeness, both sides)
+
+  funding rate               EXCHANGE-SET per-8h rate, NOT a TothBot parameter — the realized
+                             funding COST folds into perp net_loss (§13.5), but the rate itself
+                             is not tunable.
+  8h funding cadence         ENGINEERING CONSTANT (exchange-set), NOT a seed (§13.5).
+  initial / maintenance margin   EXCHANGE-SET per contract, not publicly disclosed (§13.1 item 3).
+  tick / lot / contract multiplier   EXCHANGE-SET (§13.1 item 3) — the quantization basis for
+                             §13.5 whole-contract sizing, not a TothBot tunable.
+
+  REGISTRATION DISCIPLINE — deferred to graduation (equal detail, both sides):
+  Nothing above is minted now; TB00000 v2_102 stays unchanged. When the six §13.1 confirm items
+  clear and Section 13 GRADUATES out of Open Items into a formal numbered section + figure, each
+  PROPOSED seed lands formally in TB00000 sec 8 (value + class + per-module scope) and its
+  provenance appends to 0521001 (the §4.6 externalization discipline). Until then the perp seeds
+  are PROPOSED only. The SHORT side contributes the new proposed seeds (new mechanism); the LONG
+  side contributes none (it reuses the validated registered seeds) — both sets shown to EQUAL DETAIL.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>

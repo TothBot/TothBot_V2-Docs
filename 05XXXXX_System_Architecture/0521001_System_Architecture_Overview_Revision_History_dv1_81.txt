@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_80
+DocVersion: dv1_81
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_80.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_81.txt
 DocDate:    06-19-2026
-DocTime:    06:00:00 UTC
+DocTime:    06:15:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32311,6 +32311,59 @@ LIVE: DocVersion dv1_80 / DocPath ...dv1_80... /
 DocDate 06-19-2026 / DocTime 06:00:00 UTC
 
 ----- END TB00797 SITE the perps FUNDING / MARGIN MODEL Section 13.5 LONG and SHORT to EQUAL DETAIL dv1_270 OP RECORD -----
+
+
+----- TB00797 SITE the perps PROPOSED CIATS PARAMETER REGISTRY Section 13.6 LONG and SHORT to EQUAL DETAIL dv1_271 OP RECORD -----
+
+TB00797: SITE the PROPOSED PERP CIATS PARAMETER REGISTRY as Section 13.6 of 0500000 -- the sixth slice
+of the perps design track, diagram-first, PROSE-ONLY (new <p> + four <pre> in the prose Section 13 with
+NO SVG geometry). The slice CONSOLIDATES every perp parameter NAMED as proposed across 13.1 - 13.5 into
+ONE place so the formal registration is a single clean graduation step once the six 13.1 confirm items
+clear. NOTHING is minted here: TB00000 v2_102 is UNCHANGED, no perp seed lands in TB00000 sec 8 or the
+13.4 mechanism figures. NO new counted element, NO formally-minted namespace token, NO new CIATS seed.
+Per the TB00000 sec 4 binary test a parameter EXISTENCE + CIATS-ownership is architecture (the diagram)
+and only its numeric STARTING VALUE is a sec 8 entry; this registry names the proposed parameters and
+defers both value and mint to graduation. LONG and SHORT enumerated to EQUAL DETAIL.
+
+0500000 EDITS (new prose, Section 13, inserted between 13.5 and section 14):
+ - 13.6 heading <p> + lead <p>: consolidates the proposed perp parameters; nothing minted (v2_102
+   unchanged); binary-test framing (existence = architecture, value = sec 8); exchange-set inputs +
+   constants listed but marked NOT seeds; LONG/SHORT to equal detail (SHORT mints new proposed seeds,
+   LONG reuses the registered validated 24h-decision seeds and mints none).
+ - SHORT-SIDE <pre> (proposed, none minted): perp_short_entry_meanrev (mean-reversion entry band,
+   TB00794-derived, analogue of rsi_short_low/high but different mechanism); perp_short_regime_filter
+   (the regime set where the short is enabled); perp_short_exit_trail (trailing-or-target exit
+   magnitude; the L2 stop REUSES decision_atr_stop_mult, no new stop seed).
+ - LONG-SIDE <pre> (reuses existing, mints none): decision_ema_fast 12 / decision_ema_slow 26 /
+   decision_atr_period 14 / decision_atr_stop_mult / decision_bar_interval_min 1440 / per_trade_size_usd
+   -- all EXISTING registered TB00000 sec 8 seeds REUSED for the perps long (and the shared L2 stop +
+   sizing), NO new long seed.
+ - VENUE / EXECUTION <pre>: perp_fee_per_contract (PROPOSED; flat ~$0.07-0.10/contract, analogue of
+   FEE_TAKER_PCT, registered + CIATS tier-divergence-monitored, folds into net_loss + the sacred R:R
+   floor); perp_exit_cross_ticks (PROPOSED, 13.3, N ticks through the book, bounded by item-3 tick/lot);
+   plus two DESIGN-INTENT tunables NOT yet named seeds (perp_exit_chase_cap, perp_mark_poll_interval),
+   candidate seeds confirmed at code time.
+ - NOT SEEDS <pre>: funding rate (exchange-set, cost folds to net_loss), 8h cadence (engineering
+   constant), initial/maintenance margin + tick/lot/contract multiplier (exchange-set, item 3); plus the
+   REGISTRATION DISCIPLINE -- nothing minted now, at graduation each proposed seed lands in TB00000 sec 8
+   (value + class + per-module) and appends provenance to 0521001 (the 4.6 externalization discipline);
+   SHORT contributes the new proposed seeds, LONG contributes none -- both shown to EQUAL DETAIL.
+
+NO NEW CIATS SEED. No TB00000 seed change (v2_102 unchanged; first perp seed lands formally at
+graduation). R DISPOSITION: no figure R bump -- new prose, NO geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + quotes
+entity-encoded (&#x27; / &#x22;); no residual dv1_270 in the live diagram. 13.6 consolidates the proposed
+perp seeds with LONG and SHORT to EQUAL DETAIL.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_80 / DocPath ...dv1_80... /
+DocDate 06-19-2026 / DocTime 06:00:00 UTC
+LIVE: DocVersion dv1_81 / DocPath ...dv1_81... /
+DocDate 06-19-2026 / DocTime 06:15:00 UTC
+
+----- END TB00797 SITE the perps PROPOSED CIATS PARAMETER REGISTRY Section 13.6 LONG and SHORT to EQUAL DETAIL dv1_271 OP RECORD -----
 
 
 ============================================================
