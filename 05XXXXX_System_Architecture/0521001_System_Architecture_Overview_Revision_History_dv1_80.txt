@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_79
+DocVersion: dv1_80
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_79.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_80.txt
 DocDate:    06-19-2026
-DocTime:    05:30:00 UTC
+DocTime:    06:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32253,6 +32253,64 @@ LIVE: DocVersion dv1_79 / DocPath ...dv1_79... /
 DocDate 06-19-2026 / DocTime 05:30:00 UTC
 
 ----- END TB00796 COMPLETE the 13.4 SHORT MECHANISM to EQUAL DETAIL add the explicit Stop line dv1_269 OP RECORD -----
+
+
+----- TB00797 SITE the perps FUNDING / MARGIN MODEL Section 13.5 LONG and SHORT to EQUAL DETAIL dv1_270 OP RECORD -----
+
+TB00797: SITE the perps FUNDING / MARGIN MODEL as Section 13.5 of 0500000 -- the fifth slice of the
+perps design track, diagram-first, PROSE-ONLY (new <p> + <pre> in the prose Section 13 with NO SVG
+geometry). The slice documents how the perps organism handles funding, margin, and contract sizing
+under the §13.1 LOCKED SCOPE and the §13.2 connection points, with the LONG and SHORT sides documented
+to EQUAL DETAIL (Bill's standing directive). NO new counted element, NO formally-minted namespace token,
+NO new CIATS seed: the funding rate and the margin / tick / lot numbers are EXCHANGE-SET and gated by
+the §13.1 confirm-first items (item 2 USDC margin, item 3 minimums / tick / lot / margin); the 8h
+funding cadence is an engineering constant, NOT a seed; any proposed perps tunable is enumerated at the
+§13.6 parameter-siting slice.
+
+0500000 EDITS (new prose, Section 13, inserted between 13.4 and §14):
+ - 13.5 heading <p> + lead <p>: the perps organism is a CFTC FCM account -- margin and funding settle
+   INSIDE the Bitnomial clearing account with NO spot-wallet doorway; unlike the §2 Kraken spot-margin
+   short path (param:margin_borrow_fee), the perps side never touches a spot wallet. Scope of the slice:
+   8h funding, USDC margin (item 2), fixed-notional sizing onto whole contracts (item 3), equal detail.
+ - FUNDING MODEL <pre>: 8h cadence (engineering constant, not a seed); funding folded into Variation
+   Margin (the §13.2 funding-rates pull), funding RATE exchange-set, realized funding cost folds into
+   perps net P&amp;L + net_loss exactly as the spot-short param:margin_borrow_fee does, so the sacred
+   1:1.5 net R:R floor absorbs it AUTOMATICALLY and is NEVER lowered. Long-vs-Short sign difference
+   (equal detail): LONG pays funding when the rate is positive / receives when negative; SHORT is the
+   mirror; same mechanism, only the SIGN differs by side and regime; this REPLACES the spot-short per-4h
+   margin rollover (param:margin_rollover_fee_pct) -- on perps BOTH sides settle 8h funding into VM and
+   NEITHER pays a Kraken spot-margin rollover.
+ - MARGIN MODEL <pre>: USDC as collateral (item 2, pending confirmation; RLUSD + BTC/ETH/XRP confirmed
+   first-class, USDC the open item); the perps organism holds its OWN operator-funded margin wallet
+   (TB00000 sec 7 parallel modules), isolated from the spot module wallets (§13.1 hot-path isolation),
+   CIATS sizes against it but does not own it; per-contract initial + maintenance margin exchange-set
+   and not publicly disclosed (item 3); the wallet balance is the SOLE sizing boundary, same rule both
+   sides.
+ - CONTRACT SIZING <pre>: fixed-notional sizing UNCHANGED (per_trade_size_usd = max(50, 5 x max(costmin,
+   ordermin x entry_limit_price)), TB00000 sec 8) -- a target DOLLAR notional (~$50+ floor), NOT a
+   risk-based 1R; quantization onto WHOLE contracts (Contracts = floor(target_notional /
+   per_contract_notional) snapped to the lot increment, item 3); per-product floor RAISE when a single
+   contract notional exceeds $50 (the existing per_trade_size_usd raise-per-product behaviour, NOT a new
+   seed; an unaffordable 1-contract product is excluded from the universe); equal detail -- the sizing
+   MECHANISM is IDENTICAL for LONG and SHORT, the metric difference lives in §13.4 entry/stop/exit, NOT
+   in funding/margin/sizing.
+
+NO NEW CIATS SEED. No TB00000 seed change (TB00000 v2_102 unchanged; first perp seed lands formally at
+the §13.6 / parameter-siting slice). R DISPOSITION: no figure R bump -- new prose, NO geometry, counted
+element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; ampersands entity-encoded
+(&amp;), apostrophes entity-encoded &#x27;; no residual dv1_269 in the live diagram. 13.5 documents
+funding / margin / sizing for the perps with LONG and SHORT to EQUAL DETAIL.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_79 / DocPath ...dv1_79... /
+DocDate 06-19-2026 / DocTime 05:30:00 UTC
+LIVE: DocVersion dv1_80 / DocPath ...dv1_80... /
+DocDate 06-19-2026 / DocTime 06:00:00 UTC
+
+----- END TB00797 SITE the perps FUNDING / MARGIN MODEL Section 13.5 LONG and SHORT to EQUAL DETAIL dv1_270 OP RECORD -----
 
 
 ============================================================

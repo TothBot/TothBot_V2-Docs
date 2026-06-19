@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_269</title>
+<title>0500000 System Architecture Overview dv1_270</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_269</td></tr>
+  <tr><td>DocVersion</td><td>dv1_270</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_269_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_270_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>05:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>06:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7938,6 +7938,96 @@ the LONG side; the machine stays Long/Short-CAPABLE. There is no symmetric-mecha
   + side plumbing intact, co-equal, never ripped out). There is NO symmetric-
   mechanics requirement; the requirement is EQUAL DOCUMENTATION DETAIL, which the two
   mechanism blocks above are built to satisfy.
+</pre>
+<p>
+13.5 Funding / Margin Model — Bitnomial Perps (design intent; pre-spec, gated on the §13.1 confirm-first items)
+</p>
+<p>
+The perps organism is a CFTC FCM account: margin and funding settle INSIDE the Bitnomial clearing
+account, with NO spot-wallet doorway. Unlike the §2 Kraken spot-margin short path (where a short borrows
+against a spot balance and pays the TB00000 sec 8 param:margin_borrow_fee), the perps side never touches
+a spot wallet — collateral, funding, and variation margin all live in the isolated FCM account (§13.1
+ACCESS MODE). This slice documents the 8h funding model, the USDC margin model (§13.1 confirm item 2),
+and how the CIATS-owned fixed-notional sizing maps onto WHOLE contracts (§13.1 confirm item 3), with the
+LONG and SHORT sides documented to EQUAL DETAIL. No new namespace token or CIATS seed is minted here: the
+funding rate and the margin / tick / lot numbers are EXCHANGE-SET and gated by the confirm-first items,
+the 8h cadence is an engineering constant, and any proposed perps tunable is enumerated at the §13.6
+parameter-siting slice.
+</p>
+<pre>
+  FUNDING MODEL — 8h funding folded into Variation Margin (FCM; no spot doorway)
+
+  Cadence:
+    Bitnomial perps settle funding every 8h. The 8h cadence is an ENGINEERING
+    CONSTANT (exchange-set), NOT a CIATS seed.
+
+  Mechanism:
+    Funding is folded into the Variation Margin accounting (the §13.2 funding-rates
+    pull), NOT charged as a separate spot borrow. The funding RATE is EXCHANGE-SET
+    (not a TothBot parameter); the realized funding cost folds into perps net P&amp;L
+    and into net_loss exactly as the spot-short param:margin_borrow_fee does
+    (TB00000 sec 8), so the sacred 1:1.5 net (after-fee) R:R floor absorbs it
+    AUTOMATICALLY and is NEVER lowered.
+
+  Long vs Short — the natural sign difference (equal detail):
+    LONG  pays funding when the funding rate is POSITIVE, RECEIVES it when negative.
+    SHORT is the mirror — RECEIVES funding when the rate is positive, PAYS when
+          negative.
+    Same mechanism on both sides; only the SIGN of the funding flow differs by side
+    and by funding regime. This REPLACES the spot-short per-4h margin rollover
+    (param:margin_rollover_fee_pct): on perps BOTH sides settle 8h funding into
+    Variation Margin, and NEITHER side pays a Kraken spot-margin rollover.
+</pre>
+<pre>
+  MARGIN MODEL — USDC collateral, isolated operator-funded perps wallet
+
+  Collateral:
+    USDC as margin collateral (§13.1 confirm item 2 — pending Bitnomial
+    confirmation; RLUSD + BTC/ETH/XRP are the confirmed first-class collateral,
+    USDC is the open item).
+
+  Wallet:
+    Per TB00000 sec 7 parallel modules, the perps organism holds its OWN
+    operator-funded margin wallet — what Bill can afford to lose on the perps side,
+    the primary loss control — isolated from the spot Long/Short module wallets
+    (§13.1 ACCESS MODE hot-path isolation). CIATS observes the USDC margin balance
+    and sizes against it; it does NOT own the balance.
+
+  Initial / maintenance margin:
+    Per-contract initial + maintenance margin is EXCHANGE-SET and not publicly
+    disclosed (§13.1 confirm item 3). Sizing reads the live per-contract margin so a
+    position never exceeds the module wallet — the wallet balance is the SOLE sizing
+    boundary (TB00000 sec 7), the same rule on both sides.
+</pre>
+<pre>
+  CONTRACT SIZING — fixed notional onto WHOLE contracts (LONG and SHORT, equal detail)
+
+  Target notional:
+    The CIATS-owned fixed-notional sizing is UNCHANGED — per_trade_size_usd =
+    max(50, 5 x max(costmin, ordermin x entry_limit_price)) (TB00000 sec 8). It sets
+    a target DOLLAR notional per trade (~$50+ floor), NOT a risk-based 1R: the wide
+    layer:L2 stop only sets the exit price, so the realized $ risk per trade varies
+    with the stop width.
+
+  Quantization onto contracts:
+    Each Bitnomial perp contract is a fixed underlying multiplier x mark price = a
+    per-contract notional. Contracts = floor(target_notional / per_contract_notional),
+    snapped to the exchange lot increment (§13.1 confirm item 3). WHOLE contracts only
+    — fractional perps do not exist, so the realized notional is the nearest whole-
+    contract value at or below the target.
+
+  Per-product floor raise (no new seed):
+    If a SINGLE contract notional EXCEEDS the $50 target (a high-multiplier product),
+    the fixed-notional floor is RAISED for that product to buy at least 1 whole
+    contract — the existing per_trade_size_usd raise-per-product behaviour (TB00000
+    sec 8), NOT a new seed. A product whose 1-contract notional is unaffordable for
+    the perps wallet is EXCLUDED from the perps universe.
+
+  Equal detail, both sides:
+    The sizing MECHANISM is IDENTICAL for LONG and SHORT — both map the same
+    fixed-notional target onto whole contracts against the same USDC margin wallet.
+    The metric DIFFERENCE between sides lives in the §13.4 entry / stop / exit logic,
+    NOT in funding, margin, or sizing.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>
