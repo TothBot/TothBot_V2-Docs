@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_84
+DocVersion: dv1_85
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_84.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_85.txt
 DocDate:    06-19-2026
-DocTime:    10:00:00 UTC
+DocTime:    10:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32520,6 +32520,48 @@ LIVE: DocVersion dv1_84 / DocPath ...dv1_84... /
 DocDate 06-19-2026 / DocTime 10:00:00 UTC
 
 ----- END TB00798 DEMOTE 13.2 / 13.3 to the DIRECT-BITNOMIAL FALLBACK ROUTE primary is Kraken-Pro native stops dv1_274 OP RECORD -----
+
+
+----- TB00798 FIX 13.5 COLLATERAL to the USD baseline USDC drops to possible unconfirmed dv1_275 OP RECORD -----
+
+TB00798: FIX the Section 13.5 collateral baseline of 0500000 from USDC to USD -- slice D of the perps
+decision fold-in, diagram-first, PROSE-ONLY (in-place edits to the 13.5 lead + MARGIN MODEL collateral
+block + two trailing USDC references, NO SVG geometry). TB00799 item 2 resolved the Kraken-Pro route as
+USD-margined / USD cash-settled (NOT USDC); the USDC-margin assumption that the v1_0 13.5 slice carried is
+corrected here. NO new counted element, NO namespace token, NO new CIATS seed. The D-03 SPOT-universe
+USD+USDC+USDT references elsewhere in the diagram are a DIFFERENT thing (spot trading pairs) and are
+untouched.
+
+0500000 EDITS (in-place prose, Section 13.5 + one 13.2 fallback line):
+ - 13.5 lead <p>: "the USDC margin model" changed to "the USD margin model (TB00799 resolved the
+   collateral baseline to USD, NOT USDC)".
+ - MARGIN MODEL <pre> retitled "USDC collateral" to "USD collateral baseline". Collateral block rewritten
+   (TB00799 item 2): USD cash is the CONFIRMED baseline -- Kraken-Pro route USD-margined / USD
+   cash-settled, variation margin USD T+1. RLUSD + BTC / ETH / XRP are the confirmed first-class
+   collateral on the DIRECT-Bitnomial route (13.2 fallback), NOT exposed on Kraken-Pro at launch. USDC
+   drops to "possible, unconfirmed" (CFTC Dec-2025 pilot eligibility + open rulebook clause, but not a
+   publicly-confirmed live asset on either route). Wallet block: "CIATS observes the USDC margin balance"
+   changed to "USD margin balance"; added the 13.7 split into Long-Perp / Short-Perp pools.
+ - CONTRACT SIZING <pre> "against the same USDC margin wallet" changed to "USD margin wallet".
+ - 13.2 fallback REST <pre> "positions/margin ... the USDC margin model (item 2)" changed to "the margin
+   model (item 2; USD baseline per 13.5, RLUSD / BTC / ETH / XRP on this direct route)".
+
+NO NEW CIATS SEED. No TB00000 seed change (v2_102 unchanged). R DISPOSITION: no figure R bump --
+in-place prose, NO geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + quotes
+entity-encoded (&#x27; / &#x22;); no residual dv1_274 in the live diagram; all four remaining Section-13
+USDC strings are the intentional "USDC is NOT the baseline / drops to unconfirmed" statements (no stale
+USDC-as-confirmed claim). 13.5 collateral baseline is now USD; USDC is documented as unconfirmed.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_84 / DocPath ...dv1_84... /
+DocDate 06-19-2026 / DocTime 10:00:00 UTC
+LIVE: DocVersion dv1_85 / DocPath ...dv1_85... /
+DocDate 06-19-2026 / DocTime 10:30:00 UTC
+
+----- END TB00798 FIX 13.5 COLLATERAL to the USD baseline USDC drops to possible unconfirmed dv1_275 OP RECORD -----
 
 
 ============================================================

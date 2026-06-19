@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_274</title>
+<title>0500000 System Architecture Overview dv1_275</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_274</td></tr>
+  <tr><td>DocVersion</td><td>dv1_275</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_274_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_275_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>10:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>10:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7890,7 +7890,8 @@ SUPERSEDED direct-isolated design, retained here as the fallback&#x27;s premise.
     cancel/modify — exit-leg cleanup + continuous re-assertion of the synthesized
                     stops (§13.1 item 4).
     funding-rates — 8h funding pull, folded into Variation Margin accounting.
-    positions/margin — account state for sizing + the USDC margin model (item 2).
+    positions/margin — account state for sizing + the margin model (item 2; USD
+                    baseline per §13.5, RLUSD / BTC / ETH / XRP on this direct route).
     kill-switch   — account-level flatten / cancel-all (item 4); see the
                     CRASH-PROTECTION INVERSION below.
 </pre>
@@ -8006,8 +8007,9 @@ The perps organism is a CFTC FCM account: margin and funding settle INSIDE the B
 account, with NO spot-wallet doorway. Unlike the §2 Kraken spot-margin short path (where a short borrows
 against a spot balance and pays the TB00000 sec 8 param:margin_borrow_fee), the perps side never touches
 a spot wallet — collateral, funding, and variation margin all live in the isolated FCM account (§13.1
-ACCESS MODE). This slice documents the 8h funding model, the USDC margin model (§13.1 confirm item 2),
-and how the CIATS-owned fixed-notional sizing maps onto WHOLE contracts (§13.1 confirm item 3), with the
+ACCESS MODE). This slice documents the 8h funding model, the USD margin model (§13.1 confirm item 2 —
+TB00799 resolved the collateral baseline to USD, NOT USDC), and how the CIATS-owned fixed-notional sizing
+maps onto WHOLE contracts (§13.1 confirm item 3), with the
 LONG and SHORT sides documented to EQUAL DETAIL. No new namespace token or CIATS seed is minted here: the
 funding rate and the margin / tick / lot numbers are EXCHANGE-SET and gated by the confirm-first items,
 the 8h cadence is an engineering constant, and any proposed perps tunable is enumerated at the §13.6
@@ -8038,19 +8040,23 @@ parameter-siting slice.
     Variation Margin, and NEITHER side pays a Kraken spot-margin rollover.
 </pre>
 <pre>
-  MARGIN MODEL — USDC collateral, isolated operator-funded perps wallet
+  MARGIN MODEL — USD collateral baseline, isolated operator-funded perps wallet
 
-  Collateral:
-    USDC as margin collateral (§13.1 confirm item 2 — pending Bitnomial
-    confirmation; RLUSD + BTC/ETH/XRP are the confirmed first-class collateral,
-    USDC is the open item).
+  Collateral (TB00799 item 2):
+    USD cash is the CONFIRMED collateral baseline — the §13.1 Kraken-Pro US-perps
+    route is USD-margined and USD cash-settled (variation margin settles in USD,
+    T+1). RLUSD + BTC / ETH / XRP are the confirmed first-class collateral on the
+    DIRECT-Bitnomial route (§13.2 fallback), NOT exposed on the Kraken-Pro route at
+    launch. USDC drops to &#x22;possible, unconfirmed&#x22; — eligible FCM-wide under
+    the CFTC Dec-2025 pilot and addable under the rulebook&#x27;s open collateral
+    clause, but NOT a publicly-confirmed live collateral asset on either route.
 
   Wallet:
     Per TB00000 sec 7 parallel modules, the perps organism holds its OWN
     operator-funded margin wallet — what Bill can afford to lose on the perps side,
-    the primary loss control — isolated from the spot Long/Short module wallets
-    (§13.1 ACCESS MODE hot-path isolation). CIATS observes the USDC margin balance
-    and sizes against it; it does NOT own the balance.
+    the primary loss control — isolated from the spot Long/Short module wallets and,
+    per §13.7, split into the separately-funded Long-Perp and Short-Perp pools. CIATS
+    observes the USD margin balance and sizes against it; it does NOT own the balance.
 
   Initial / maintenance margin:
     Per-contract initial + maintenance margin is EXCHANGE-SET and not publicly
@@ -8084,7 +8090,7 @@ parameter-siting slice.
 
   Equal detail, both sides:
     The sizing MECHANISM is IDENTICAL for LONG and SHORT — both map the same
-    fixed-notional target onto whole contracts against the same USDC margin wallet.
+    fixed-notional target onto whole contracts against the same USD margin wallet.
     The metric DIFFERENCE between sides lives in the §13.4 entry / stop / exit logic,
     NOT in funding, margin, or sizing.
 </pre>
