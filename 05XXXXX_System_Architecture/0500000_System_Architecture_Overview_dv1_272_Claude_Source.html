@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_271</title>
+<title>0500000 System Architecture Overview dv1_272</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_271</td></tr>
+  <tr><td>DocVersion</td><td>dv1_272</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_271_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_272_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>06:15:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>09:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7761,16 +7761,52 @@ slice.
     folded into Variation Margin; HMAC-SHA256 connection auth that MIRRORS the existing
     Kraken signing; REST orders + REST funding-rates + WS market-data; 24/7 sandbox.
 
-  ACCESS MODE — DIRECT BITNOMIAL, ISOLATED PERPS ORGANISM (FP/DP resolved)
-    The perps organism connects DIRECT to Bitnomial as an isolated venue, NOT through the
-    Kraken-Pro unified wallet. Hot-path isolation (the perps organism cannot disturb the
-    live-in-paper spot organism) outweighs cross-collateral convenience, and the HMAC auth
-    mirrors Kraken at low new-surface cost. Matching / clearing is Bitnomial either way.
+  ACCESS MODE — KRAKEN-PRO ROUTE, ISOLATED-MARGIN LOSS CAP (TB00798; FP/DP re-resolved)
+    The perps organism connects through the KRAKEN-PRO US-perps route (one Payward stack
+    over Bitnomial DCM/DCO/FCM), NOT the direct-Bitnomial native protocol. Bill RATIFIED
+    this at TB00798 (verbatim: &#x22;Kraken Pro is the best choice&#x22;). The crash-proof
+    loss cap is the EXCHANGE-ENFORCED isolated-margin liquidation, sized at ~ the maximum
+    intended loss per pool — a loss boundary that is EXCHANGE-resident, not bot-resident.
 
-  ORDER MODEL — LIMIT-ONLY, CLIENT-SIDE-SYNTHESIZED EXITS (FP/DP resolved)
-    Bitnomial is LIMIT-ORDERS-ONLY. The layer:L2 stop, the layer:L3 emergency-SL, and
-    market exits are SYNTHESIZED client-side. The sacred 1:1.5 R:R floor is UNAFFECTED —
-    it sets the limit exit prices and is NEVER lowered.
+    WHY THIS REVERSES THE EARLIER 13.1 CALL (stated plainly; nothing hidden, nothing erased).
+    The prior &#x22;DIRECT BITNOMIAL, ISOLATED PERPS ORGANISM&#x22; call was tagged
+    &#x22;FP/DP resolved&#x22; but was reasoned WRONG: it optimized the PART (hot-path
+    isolation of one organism) over the WHOLE (the loss-tail of the actual trade), and it
+    chose INSPECTION (a client-side synthesized-stop watchdog) over BUILDING QUALITY IN
+    (an exchange-enforced loss cap). Re-grounded on the REAL FP/DP — First Principles /
+    Deming Philosophy (NOT Failure-Point / Decision-Point):
+      First Principles: a loss cap must be EXCHANGE-resident, not bot-resident; venue
+        isolation is achievable as a FUNDING boundary (separately-funded pools, §13.7),
+        so it need NOT be bought by surrendering server-side stops.
+      Deming: optimize the WHOLE organism; REMOVE the common-cause bot-liveness coupling
+        of client-synthesized stops; Point 3 &#x22;cease dependence on inspection — build
+        quality IN&#x22; = exchange-enforced isolated-margin liquidation over a liveness
+        watchdog. PDSA staging keeps the rollout paper-first.
+    The native-order-type finding (TB00799 item 4: Stop / Take-Profit / Trailing exist on
+    the Kraken-Pro front-end; &#x22;limit-only&#x22; was a DIRECT-Bitnomial BTP/FIX
+    constraint, not this route) is what RE-OPENED the call. Funding isolation now comes
+    from the three-pool wallet model (§13.7), not from a direct-venue connection.
+
+    DIRECT-BITNOMIAL ISOLATED ROUTE — PRESERVED AS A DOCUMENTED FALLBACK (not deleted).
+    The direct-Bitnomial native protocol (BTP / FIX, limit-only, client-synthesized exits)
+    remains a documented FALLBACK route — used only if the Kraken-Pro retail-perps
+    subaccount structure proves unavailable (the one open Kraken-support item, §13.7) or if
+    direct-venue isolation is ever required. Its connection + exit-synthesis design is
+    PRESERVED in §13.2 / §13.3, reframed there as the fallback path. Matching / clearing is
+    Bitnomial either way.
+
+  ORDER MODEL — NATIVE EXCHANGE ORDER TYPES (TB00798 / TB00799; FP/DP re-resolved)
+    The Kraken-Pro route exposes NATIVE order types — Limit, Market, Stop-Loss /
+    Stop-Limit, Take-Profit / Limit, Trailing-Stop / Limit, Iceberg (TB00799 item 4). On
+    the PRIMARY path the layer:L2 stop and the layer:L3 emergency-SL are placed as NATIVE
+    exchange orders, backstopped by isolated-margin liquidation — NO client-side exit
+    synthesis. This DELETES the largest chunk of proposed new code (the §13.3 exit-synthesis
+    machinery), a loss-minimization win. &#x22;LIMIT-ORDERS-ONLY&#x22; was a DIRECT-Bitnomial
+    BTP / FIX constraint and now governs only the §13.3 FALLBACK. The sacred 1:1.5 R:R floor
+    is UNAFFECTED — it sets the exit prices (native or synthesized) and is NEVER lowered.
+    UNCONFIRMED (TB00799): whether a Kraken stop RESTS server-side on the Bitnomial engine
+    or is Kraken-side synthetic — i.e. whether it survives a TothBot crash. Isolated-margin
+    liquidation is the crash backstop REGARDLESS, so the loss cap does not depend on this.
 
   DIRECTION MECHANISM — DIFFERENT METRICS PER SIDE, DOCUMENTED TO EQUAL DETAIL
     TB00794 perps data shows long and short use DIFFERENT metrics: long = breakout /
@@ -7791,22 +7827,36 @@ slice.
     per-element siting slices that follow.
 </pre>
 <pre>
-  CONFIRM-FIRST SPECIFICATION GATE — 6 Bitnomial open items
-  (must be confirmed with Bitnomial support BEFORE any live-connectivity code; the diagram
-   design proceeds immediately, code does NOT cross this gate)
+  CONFIRM-FIRST SPECIFICATION GATE — researched in TB00799 (5 of 6 answered from public sources)
+  (the diagram design proceeds; live-connectivity CODE does not cross this gate. TB00799 ran
+   six parallel web-research agents — ~90 primary sources: Bitnomial API + rulebook, CFTC
+   filings, Kraken support — and ANSWERED five of the six items. Residual opens flagged below.)
 
-    1. Sandbox perp listing — the 24/7 sandbox currently lists NO perp product; confirm a
-       sandbox perp to test against before live connectivity.
-    2. USDC margin — confirm USDC as eligible margin collateral and its mechanics.
-    3. Minimums — confirm contract minimums / tick / lot so the CIATS-owned fixed-notional
-       sizing (~$50+/trade) maps onto whole contracts.
-    4. REST cancel / modify + kill-switch — confirm order cancel/modify endpoints and an
-       account-level kill-switch (required because exits are client-synthesized under the
-       limit-only order model).
-    5. base_symbol naming — confirm the perp symbol / naming convention for the product
-       universe.
-    6. Eligible-US-client criteria — confirm the eligibility criteria for a US-retail
-       client (the access constraint that drove the venue selection).
+    1. Sandbox perp listing — ANSWERED: the 24/7 Bitnomial sandbox lists NO perp (dummy ZZZ
+       futures only); perps exist in PRODUCTION. RESIDUAL OPEN: Bitnomial must PROVISION a
+       sandbox perp for pre-go-live order-code testing — NOT needed to PAPER-trade (paper
+       simulates fills locally vs the live feed, TB00000 sec 4.3).
+    2. Margin collateral — ANSWERED: the Kraken-Pro route is USD-margined / USD cash-settled
+       (NOT USDC; USDC drops to &#x22;possible, unconfirmed&#x22;). RLUSD + BTC / ETH / XRP are
+       the direct-route crypto collateral. Folded into §13.5.
+    3. Minimums / tick / lot / margin — LARGELY ANSWERED: BTC perp = 0.01 BTC/contract,
+       ETH 0.5, SOL 5; margin tiered from 2% (~50x max), no account minimum (~$25 intraday).
+       RESIDUAL OPEN: the full per-product margin ladder + per-perp tick / lot.
+    4. Order types + cancel / kill-switch — ANSWERED + HEADLINE: the Kraken-Pro route exposes
+       NATIVE Stop / Take-Profit / Trailing-Stop (see ORDER MODEL above) — &#x22;limit-only&#x22;
+       was a DIRECT-Bitnomial BTP / FIX constraint. Cancel-on-disconnect is the forced default
+       but cancels WORKING ORDERS, not a held POSITION; isolated-margin liquidation is the
+       crash backstop. RESIDUAL OPEN: does a Kraken stop rest server-side on Bitnomial?
+    5. base_symbol naming — ANSWERED: base_symbol = BTCUC (no &#x22;PBTCUC&#x22;); the Kraken
+       instrument = PBTCUC; the ~18-asset perp universe is enumerated in TB00799 item 5.
+    6. Eligible-US-client criteria — ANSWERED: these are CFTC FUTURES (not swaps), so ordinary
+       RETAIL is eligible (no ECP gate); ME / NY are excluded on the Kraken route; a verified
+       account + a suitability questionnaire + risk disclosures are the gate.
+
+    THE ONE GENUINELY NON-PUBLIC ITEM (a Kraken support ticket; Bill may ping): whether a
+    retail derivatives SUBACCOUNT structure is wired into the US-Bitnomial perps stack (the
+    §13.7 three-pool model). If NO, the §13.7 FALLBACK applies (one futures wallet, isolated
+    margin per position, CIATS accounting).
 </pre>
 <p>
 13.2 Perps Connection Architecture — Bitnomial (design intent; pre-spec, gated on the §13.1 confirm-first items)

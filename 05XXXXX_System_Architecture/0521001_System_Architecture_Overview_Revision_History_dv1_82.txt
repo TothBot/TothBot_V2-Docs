@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_81
+DocVersion: dv1_82
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_81.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_82.txt
 DocDate:    06-19-2026
-DocTime:    06:15:00 UTC
+DocTime:    09:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32364,6 +32364,60 @@ LIVE: DocVersion dv1_81 / DocPath ...dv1_81... /
 DocDate 06-19-2026 / DocTime 06:15:00 UTC
 
 ----- END TB00797 SITE the perps PROPOSED CIATS PARAMETER REGISTRY Section 13.6 LONG and SHORT to EQUAL DETAIL dv1_271 OP RECORD -----
+
+
+----- TB00798 RE-GROUND 13.1 ACCESS MODE to the KRAKEN-PRO ROUTE plus FOLD TB00799 RESEARCH dv1_272 OP RECORD -----
+
+TB00798: RE-GROUND Section 13.1 of 0500000 on the TB00798-ratified KRAKEN-PRO decision + the TB00799
+confirm-item research -- slice A of the perps decision fold-in, diagram-first, PROSE-ONLY (rewrite of
+the existing 13.1 ACCESS MODE + ORDER MODEL locked-decision blocks and the CONFIRM-FIRST gate, NO SVG
+geometry). Bill RATIFIED the access-mode flip (verbatim "Kraken Pro is the best choice"); this slice
+SITES that decision and is NOT a re-litigation. NOTHING erased: the prior direct-Bitnomial / limit-only
+design DEMOTES to a documented FALLBACK (preserved verbatim in 13.2 / 13.3, reframed slice C). NO new
+counted element, NO formally-minted namespace token, NO new CIATS seed. LONG and SHORT unaffected here
+(13.1 is route/access, not direction).
+
+0500000 EDITS (in-place prose, Section 13.1):
+ - ACCESS MODE block: retitled DIRECT BITNOMIAL ISOLATED to KRAKEN-PRO ROUTE, ISOLATED-MARGIN LOSS CAP
+   (TB00798). Connects through the Kraken-Pro US-perps route (one Payward stack over Bitnomial
+   DCM/DCO/FCM), NOT the direct-Bitnomial native protocol. Crash-proof loss cap = EXCHANGE-ENFORCED
+   isolated-margin liquidation, EXCHANGE-resident not bot-resident. Adds the WHY-THIS-REVERSES block:
+   the prior call optimized the PART (hot-path isolation) over the WHOLE (loss-tail) and chose
+   INSPECTION (synthesized-stop watchdog) over BUILDING QUALITY IN (exchange-enforced cap). Re-grounded
+   on the REAL FP/DP = First Principles / Deming (NOT Failure-Point / Decision-Point): FP = loss cap
+   must be exchange-resident, isolation achievable as a FUNDING boundary (13.7); Deming = optimize the
+   whole, remove the bot-liveness common cause, Point 3 cease dependence on inspection. Adds the
+   PRESERVED-AS-FALLBACK paragraph (direct-Bitnomial BTP/FIX retained as fallback, design preserved in
+   13.2 / 13.3).
+ - ORDER MODEL block: retitled LIMIT-ONLY SYNTHESIZED to NATIVE EXCHANGE ORDER TYPES (TB00799 item 4:
+   Limit / Market / Stop-Loss / Take-Profit / Trailing-Stop / Iceberg). Primary path = native L2 + L3
+   exchange orders backstopped by isolated-margin liquidation, NO client synthesis -- DELETES the
+   largest proposed new-code chunk (13.3 synthesis). "limit-only" reframed as a DIRECT-Bitnomial
+   constraint governing only the 13.3 fallback. UNCONFIRMED flagged: does a Kraken stop rest
+   server-side on Bitnomial (crash survival); isolated-margin liquidation is the backstop REGARDLESS.
+   Sacred 1:1.5 R:R floor unaffected, NEVER lowered.
+ - CONFIRM-FIRST gate: reframed from "6 open items, confirm with Bitnomial support" to "researched in
+   TB00799, 5 of 6 answered from ~90 public sources" with each item annotated ANSWERED + RESIDUAL OPEN
+   (1 sandbox-perp provisioning; 2 USD-not-USDC collateral; 3 full margin ladder + tick/lot; 4 native
+   order types + COD-cancels-orders-not-position; 5 base_symbol BTCUC; 6 retail-eligible CFTC futures,
+   ME/NY out). Adds THE ONE GENUINELY NON-PUBLIC ITEM = retail derivatives subaccount availability on
+   the US-Bitnomial stack (Kraken support ticket; 13.7 fallback if NO).
+
+NO NEW CIATS SEED. No TB00000 seed change (v2_102 unchanged; first perp seed lands at graduation).
+R DISPOSITION: no figure R bump -- in-place prose, NO geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + quotes
+entity-encoded (&#x27; / &#x22;); no residual dv1_271 in the live diagram. 13.1 now reflects the ratified
+Kraken-Pro route with the direct-Bitnomial path preserved as a documented FALLBACK.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_81 / DocPath ...dv1_81... /
+DocDate 06-19-2026 / DocTime 06:15:00 UTC
+LIVE: DocVersion dv1_82 / DocPath ...dv1_82... /
+DocDate 06-19-2026 / DocTime 09:00:00 UTC
+
+----- END TB00798 RE-GROUND 13.1 ACCESS MODE to the KRAKEN-PRO ROUTE plus FOLD TB00799 RESEARCH dv1_272 OP RECORD -----
 
 
 ============================================================
