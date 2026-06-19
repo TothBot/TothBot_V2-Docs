@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_77
+DocVersion: dv1_78
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_77.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_78.txt
 DocDate:    06-19-2026
-DocTime:    05:00:00 UTC
+DocTime:    05:15:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32178,6 +32178,54 @@ LIVE: DocVersion dv1_77 / DocPath ...dv1_77... /
 DocDate 06-19-2026 / DocTime 05:00:00 UTC
 
 ----- END TB00796 SITE the perps DIRECTION MECHANISM 13.4 ASYMMETRIC long/short + the tension NAMED to Bill dv1_267 OP RECORD -----
+
+
+----- TB00796 CORRECT the 13.1/13.4 DRIFT remove the fabricated symmetric-mechanics ruling + tension restore Bill's EQUAL-DETAIL directive dv1_268 OP RECORD -----
+
+TB00796: CORRECT a DRIFT introduced by this same session at dv1_267 (and dv1_264). The 13.1 DIRECTION
+MECHANISM line and the 13.4 SYMMETRY-vs-ASYMMETRY block asserted that Bill had made a "symmetric mirror"
+Short ruling and framed the perps long/short metric difference as a TENSION named to Bill that PROCEEDS
+unless he re-rules. BILL CORRECTED THIS (2026-06-19): he NEVER created or required a symmetric-mechanics
+rule. His actual standing directive is that the SHORT side be SHOWN in the diagrams and 0500000 to the
+SAME DETAIL as the LONG side; Shorts obviously require DIFFERENT metrics than Longs, which is EXPECTED
+and correct, not a conflict and not something needing a ruling. Manufacturing a ruling Bill did not make
+and acting on it is the same error class as the unauthorized Bitcoin-Longs-only restriction; it is
+corrected here on sight. PROSE-ONLY, in-place text, NO counted-element change, NO geometry change.
+
+0500000 EDITS (in-place corrections, Section 13):
+ - 13.1 DIRECTION MECHANISM bullet: retitled from "ASYMMETRIC (named to Bill; proceed unless re-ruled)"
+   to "DIFFERENT METRICS PER SIDE, DOCUMENTED TO EQUAL DETAIL". Removed the false "REFINES the older
+   symmetric mirror Short ruling" + "stays Long/Short-SYMMETRIC in ARCHITECTURE" + "proceeds unless Bill
+   re-rules" language. Now states: different metrics per side are EXPECTED not a conflict; Bill's
+   standing directive is EQUAL DETAIL for the SHORT side; the machine stays Long/Short-CAPABLE; there is
+   NO symmetric-mechanics rule.
+ - 13.4 heading: from "Asymmetric Long / Short ... a tension named to Bill" to "Long and Short: Different
+   Metrics, Documented to Equal Detail". Lead <p> reworded to drop "ASYMMETRIC ... machine whose
+   ARCHITECTURE stays Long/Short-SYMMETRIC" and state the EQUAL-DETAIL directive.
+ - 13.4 third <pre>: REPLACED the "SYMMETRY vs ASYMMETRY -- the tension, named to Bill ... a Bill
+   re-rule ... is the single open DECISION" block with "EQUAL DETAIL -- Bill's standing directive (NOT a
+   symmetric-mechanics rule)": the SHORT side shown to the SAME DETAIL as LONG, different metrics
+   expected and correct, machine stays Long/Short-CAPABLE, NO symmetric-mechanics requirement -- the
+   requirement is EQUAL DOCUMENTATION DETAIL. The LONG MECHANISM and SHORT MECHANISM <pre> blocks (the
+   actual equal-detail content) are UNCHANGED and correct.
+
+NO NEW CIATS SEED. No TB00000 seed change. R DISPOSITION: no figure R bump -- in-place prose, NO
+geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes entity-encoded
+&#x27;; no residual dv1_267 in the live diagram; zero residual "symmetric mirror" / "SYMMETRY vs
+ASYMMETRY" / "the tension" / "unless Bill re-rule" drift strings. Memory long-short-parity-mission and
+long-short-paradigm-standing corrected in the same turn to record the EQUAL-DETAIL directive over the
+mischaracterized "symmetric" gloss.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_77 / DocPath ...dv1_77... /
+DocDate 06-19-2026 / DocTime 05:00:00 UTC
+LIVE: DocVersion dv1_78 / DocPath ...dv1_78... /
+DocDate 06-19-2026 / DocTime 05:15:00 UTC
+
+----- END TB00796 CORRECT the 13.1/13.4 DRIFT remove the fabricated symmetric-mechanics ruling + tension restore Bill's EQUAL-DETAIL directive dv1_268 OP RECORD -----
 
 
 ============================================================

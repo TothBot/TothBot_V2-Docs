@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_267</title>
+<title>0500000 System Architecture Overview dv1_268</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_267</td></tr>
+  <tr><td>DocVersion</td><td>dv1_268</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_267_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_268_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>05:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>05:15:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7772,13 +7772,13 @@ slice.
     market exits are SYNTHESIZED client-side. The sacred 1:1.5 R:R floor is UNAFFECTED —
     it sets the limit exit prices and is NEVER lowered.
 
-  DIRECTION MECHANISM — ASYMMETRIC (named to Bill; proceed on data unless re-ruled)
-    TB00794 perps data shows long and short want DIFFERENT mechanisms: long = breakout /
+  DIRECTION MECHANISM — DIFFERENT METRICS PER SIDE, DOCUMENTED TO EQUAL DETAIL
+    TB00794 perps data shows long and short use DIFFERENT metrics: long = breakout /
     trend + wide stop + reversal exit; short = mean-reversion / filtered + trailing-or-
-    target + regime filter. This REFINES the older &#x22;symmetric mirror&#x22; Short ruling: the
-    machine stays Long/Short-SYMMETRIC in ARCHITECTURE (Short_Module / side plumbing
-    intact), while the STRATEGY runs the data-validated asymmetric mechanisms. Named
-    plainly to Bill per the what/how division; proceeds on the data unless Bill re-rules.
+    target + regime filter. Different metrics per side are EXPECTED, not a conflict.
+    Bill&#x27;s standing directive is that the SHORT side be documented in 0500000 to the
+    SAME DETAIL as the LONG side; the machine stays Long/Short-CAPABLE (Short_Module /
+    side plumbing intact, co-equal). There is NO symmetric-mechanics rule.
 
   STAGING
     Paper-first. Perps live go-live is a Bill gate (mirror of spot F4). The spot organism
@@ -7902,13 +7902,13 @@ order to a client-driven marketable limit.
   and is the CIATS-monitored truth.
 </pre>
 <p>
-13.4 Direction Mechanism — Asymmetric Long / Short (design intent; pre-spec; a tension named to Bill)
+13.4 Direction Mechanism — Long and Short: Different Metrics, Documented to Equal Detail
 </p>
 <p>
 TB00794 perps research found that on Bitnomial-class fees (the ~0.05% vs Kraken-spot 0.26% lever)
-systematic SHORTS revive — but the long and short edges live in DIFFERENT mechanisms, not one
-mirrored rule. The perps strategy therefore runs ASYMMETRIC direction mechanics on a machine whose
-ARCHITECTURE stays Long/Short-SYMMETRIC.
+systematic SHORTS revive. Long and short use DIFFERENT metrics — expected and correct, not a
+conflict. Per Bill&#x27;s standing directive the SHORT side is documented here to the SAME DETAIL as
+the LONG side; the machine stays Long/Short-CAPABLE. There is no symmetric-mechanics rule.
 </p>
 <pre>
   LONG MECHANISM (carries the validated spot edge)
@@ -7927,18 +7927,15 @@ ARCHITECTURE stays Long/Short-SYMMETRIC.
     registered at the perps parameter-siting slice; the sacred 1:1.5 floor untouched.
 </pre>
 <pre>
-  SYMMETRY vs ASYMMETRY — the tension, named to Bill (the what/how division)
+  EQUAL DETAIL — Bill&#x27;s standing directive (NOT a symmetric-mechanics rule)
 
-  Bill&#x27;s earlier ruling (the Long/Short parity mission) was a SYMMETRIC short — a
-  full mirror of long. TB00794 data says the short edge is a DIFFERENT mechanism.
-
-  Resolution proposed on the data: the MACHINE stays Long/Short-SYMMETRIC in
-  ARCHITECTURE (Short_Module + side plumbing intact, co-equal, never ripped out),
-  while the STRATEGY runs the data-validated ASYMMETRIC mechanisms above. This is a
-  WHAT that touches Bill&#x27;s prior WHAT, so it is named here PLAINLY rather than
-  silently overridden; it PROCEEDS on the data unless Bill re-rules. A Bill re-rule
-  to force a symmetric mirror is recorded here as the single open DECISION of the
-  direction-mechanism design.
+  Bill&#x27;s standing directive is that the SHORT side be SHOWN in 0500000 to the SAME
+  DETAIL as the LONG side. Shorts require DIFFERENT metrics than Longs by nature —
+  that difference is EXPECTED and correct, NOT a conflict and NOT something that
+  needs a Bill ruling to resolve. The machine stays Long/Short-CAPABLE (Short_Module
+  + side plumbing intact, co-equal, never ripped out). There is NO symmetric-
+  mechanics requirement; the requirement is EQUAL DOCUMENTATION DETAIL, which the two
+  mechanism blocks above are built to satisfy.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>
