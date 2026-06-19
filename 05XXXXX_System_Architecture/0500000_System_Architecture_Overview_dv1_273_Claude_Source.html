@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_272</title>
+<title>0500000 System Architecture Overview dv1_273</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_272</td></tr>
+  <tr><td>DocVersion</td><td>dv1_273</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_272_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_273_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>09:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>09:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -8159,6 +8159,90 @@ shown here.
   provenance appends to 0521001 (the §4.6 externalization discipline). Until then the perp seeds
   are PROPOSED only. The SHORT side contributes the new proposed seeds (new mechanism); the LONG
   side contributes none (it reuses the validated registered seeds) — both sets shown to EQUAL DETAIL.
+</pre>
+<p>
+13.7 Wallet / Isolation Model — Three Separately-Funded Pools (TB00798; Long Spot / Long Perp / Short Perp)
+</p>
+<p>
+The perps organism is funded as THREE separately-funded, ring-fenced pools — Long Spot, Long Perp, and
+Short Perp — ratified by Bill at TB00798. This is the wallet-isolation realization of the §13.1
+First-Principles property that venue isolation be a FUNDING boundary, not a direct-venue connection:
+separately-funded pools give the isolation the old direct-Bitnomial route was chosen to buy, while the
+§13.1 Kraken-Pro route keeps native server-side stops + isolated-margin liquidation. Each pool is its own
+TB00000 sec 7 module. The LONG and SHORT perp pools are documented here to EQUAL DETAIL.
+</p>
+<pre>
+  THE THREE POOLS — separately funded, ring-fenced (TB00798 wallet model)
+
+  Pool 1 — LONG SPOT (the live-in-paper spot organism):
+    Its OWN full Kraken account. Kraken permits multiple full accounts and NAMES
+    conflicting strategies / multiple bots / separating margin as legitimate uses.
+    Physically isolated from the perps stack — a different account entirely.
+
+  Pool 2 — LONG PERP, and Pool 3 — SHORT PERP:
+    TWO LINKED DERIVATIVES SUBACCOUNTS under the perps stack. Derivatives subaccounts
+    are open to ANY eligible client — UNLIKE spot subaccounts, which are institutional-
+    only (this corrected an earlier wrong assumption that retail cannot hold
+    subaccounts). Each has its OWN balance / margin / liquidation / API keys / rate
+    limits, and one subaccount&#x27;s liquidation CANNOT reach another&#x27;s — a true
+    ring-fence. The US Derivatives Client Agreement FORBIDS multiple UNLINKED
+    derivatives accounts, so a SUBACCOUNT structure is the PRESCRIBED mechanism here,
+    not a workaround.
+
+  Isolation summary:
+    Between SPOT and PERPS the isolation is PHYSICAL — separate full accounts.
+    Between LONG-PERP and SHORT-PERP the isolation is SUBACCOUNT-ENFORCED — linked subs.
+    Each pool = its own TB00000 sec 7 module: its own CIATS instance, its own
+    operator-funded wallet, its own halts. Funded with only what Bill can afford to
+    lose on THAT side — the primary loss control, per pool.
+</pre>
+<pre>
+  ISOLATED-MARGIN LIQUIDATION — the crash-proof loss cap (§13.1 FP/DP primary path)
+
+  Each perp pool runs in ISOLATED-margin mode, NOT cross: only the margin posted to a
+  position is at risk, and the EXCHANGE liquidates the position when that isolated
+  margin is exhausted. Sized at ~ the maximum intended loss, this liquidation IS the
+  crash-proof loss cap — it is EXCHANGE-resident and fires whether or not TothBot is
+  alive, which is exactly the First-Principles property §13.1 requires. It sits UNDER
+  the native L2 / L3 stops (§13.1 ORDER MODEL): the native stops do the ordinary
+  risk-managed exit at the 1:1.5-floor prices; isolated-margin liquidation catches the
+  TAIL if a stop fails to fire or TothBot is dead. The sacred 1:1.5 R:R floor is
+  unaffected and is NEVER lowered.
+</pre>
+<pre>
+  CIATS RULE TO ADD — no same-instrument long+short collision (both sides, equal detail)
+
+  Because Long Perp and Short Perp trade the SAME futures venue, a simultaneous LONG
+  and SHORT on the SAME instrument (both in PBTCUC, say) would NET against each other
+  inside ONE futures engine — defeating the ring-fence and wasting margin. New CIATS
+  rule: NO same-instrument long+short open at once across the two perp pools. The rule
+  is SYMMETRIC by construction — it binds the Long-Perp CIATS and the Short-Perp CIATS
+  identically (equal detail). Different instruments on opposite sides are fine; only
+  the SAME base_symbol is blocked from simultaneous long+short.
+</pre>
+<pre>
+  FALLBACK — if US-perp retail subaccounts are NOT live (the one open Kraken item)
+
+  The one genuinely non-public question (§13.1 confirm gate) is whether a retail
+  derivatives SUBACCOUNT structure is wired into the US-Bitnomial perps stack. A Kraken
+  support ticket settles it; Bill may ping Kraken. If the answer is NO:
+    Both perp sides run in ONE Futures wallet under ISOLATED margin PER POSITION, with
+    the Long / Short separation enforced by CIATS accounting — per-side ledgers, per-side
+    wallet-fraction caps — instead of by a subaccount boundary. The isolated-margin loss
+    cap and the no-same-instrument-collision rule are UNCHANGED in the fallback; only the
+    ring-fence MECHANISM differs (subaccount boundary vs CIATS ledger). The three-pool
+    model is the PRIMARY; this is the documented fallback, nothing erased.
+</pre>
+<pre>
+  EQUAL DETAIL — Long Perp and Short Perp pools documented identically
+
+  The two perp pools are STRUCTURALLY identical: each is a linked derivatives subaccount
+  with its own balance / margin / isolated-liquidation / API keys / CIATS instance /
+  operator-funded wallet / halts, funded with affordable-to-lose capital, bound by the
+  same no-same-instrument-collision rule. They DIFFER only in the §13.4 direction metrics
+  (long = breakout / wide-stop / reversal-exit; short = mean-reversion / filtered /
+  trailing-or-target), NOT in wallet, margin, isolation, or loss-cap mechanics — which
+  are documented here to EQUAL DETAIL on both sides.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>

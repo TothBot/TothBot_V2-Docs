@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_82
+DocVersion: dv1_83
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_82.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_83.txt
 DocDate:    06-19-2026
-DocTime:    09:00:00 UTC
+DocTime:    09:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32418,6 +32418,60 @@ LIVE: DocVersion dv1_82 / DocPath ...dv1_82... /
 DocDate 06-19-2026 / DocTime 09:00:00 UTC
 
 ----- END TB00798 RE-GROUND 13.1 ACCESS MODE to the KRAKEN-PRO ROUTE plus FOLD TB00799 RESEARCH dv1_272 OP RECORD -----
+
+
+----- TB00798 SITE the THREE-POOL WALLET / ISOLATION MODEL Section 13.7 LONG and SHORT to EQUAL DETAIL dv1_273 OP RECORD -----
+
+TB00798: SITE the TB00798-ratified THREE-POOL WALLET / ISOLATION MODEL as a NEW Section 13.7 of 0500000
+-- slice B of the perps decision fold-in, diagram-first, PROSE-ONLY (new <p> heading + lead <p> + five
+<pre> in the prose Section 13, inserted between 13.6 and section 14, NO SVG geometry). Sited as 13.7
+(appended, NO renumber of 13.1 - 13.6) to keep the slice non-breaking; graduation (slice F) formalizes
+final numbering. NO new counted element, NO formally-minted namespace token, NO new CIATS seed (the
+no-same-instrument-collision rule is a PROPOSED CIATS rule, registered at graduation like the other
+proposed perp params). LONG and SHORT perp pools documented to EQUAL DETAIL.
+
+0500000 EDITS (new prose, Section 13.7):
+ - Heading <p> + lead <p>: three separately-funded ring-fenced pools (Long Spot / Long Perp / Short
+   Perp), ratified TB00798; the wallet-isolation realization of the 13.1 First-Principles property that
+   venue isolation be a FUNDING boundary not a direct-venue connection; each pool its own TB00000 sec 7
+   module; LONG/SHORT to equal detail.
+ - THE THREE POOLS <pre>: Pool 1 Long Spot = its OWN full Kraken account (Kraken permits multiple full
+   accounts; conflicting strategies / multiple bots / separating margin are NAMED legitimate uses).
+   Pools 2+3 Long Perp + Short Perp = TWO LINKED DERIVATIVES SUBACCOUNTS (open to any eligible client,
+   UNLIKE institutional-only spot subaccounts; own balance/margin/liquidation/API keys; one sub cannot
+   reach another; the US Derivatives Client Agreement FORBIDS multiple UNLINKED derivatives accounts so
+   subaccounts are PRESCRIBED). Isolation: spot vs perps PHYSICAL; long-perp vs short-perp
+   SUBACCOUNT-ENFORCED. Each pool funded with only affordable-to-lose capital, the per-pool loss control.
+ - ISOLATED-MARGIN LIQUIDATION <pre>: each pool ISOLATED margin (not cross); EXCHANGE liquidates when
+   isolated margin exhausted; sized ~ max intended loss = the crash-proof loss cap, EXCHANGE-resident,
+   fires whether or not TothBot is alive (the 13.1 First-Principles property); sits UNDER the native
+   L2/L3 stops, catches the TAIL if a stop fails or TothBot is dead; sacred 1:1.5 floor NEVER lowered.
+ - CIATS RULE <pre>: NO same-instrument long+short collision across the two perp pools (a simultaneous
+   long+short on the SAME base_symbol would NET in one futures engine, defeating the ring-fence);
+   SYMMETRIC by construction, binds both perp CIATS identically; different instruments per side are fine.
+ - FALLBACK <pre>: if US-perp retail subaccounts are NOT live (the one open Kraken support item), both
+   perp sides run in ONE Futures wallet under ISOLATED margin per position with Long/Short separation by
+   CIATS accounting (per-side ledgers + wallet-fraction caps); loss cap + collision rule UNCHANGED, only
+   the ring-fence MECHANISM differs; three-pool model is PRIMARY, fallback documented, nothing erased.
+ - EQUAL DETAIL <pre>: the two perp pools are STRUCTURALLY identical (wallet/margin/isolation/keys/CIATS/
+   halts); they DIFFER only in the 13.4 direction metrics, NOT in wallet/margin/isolation/loss-cap.
+
+NO NEW CIATS SEED. No TB00000 seed change (v2_102 unchanged; the no-collision rule + perp seeds land
+formally at graduation). R DISPOSITION: no figure R bump -- new prose, NO geometry, counted element
+COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + quotes
+entity-encoded (&#x27; / &#x22;); no residual dv1_272 in the live diagram. 13.7 documents the three-pool
+wallet model with the Long Perp and Short Perp pools to EQUAL DETAIL.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_82 / DocPath ...dv1_82... /
+DocDate 06-19-2026 / DocTime 09:00:00 UTC
+LIVE: DocVersion dv1_83 / DocPath ...dv1_83... /
+DocDate 06-19-2026 / DocTime 09:30:00 UTC
+
+----- END TB00798 SITE the THREE-POOL WALLET / ISOLATION MODEL Section 13.7 LONG and SHORT to EQUAL DETAIL dv1_273 OP RECORD -----
 
 
 ============================================================
