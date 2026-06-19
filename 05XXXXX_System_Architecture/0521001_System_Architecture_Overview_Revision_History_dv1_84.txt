@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_83
+DocVersion: dv1_84
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_83.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_84.txt
 DocDate:    06-19-2026
-DocTime:    09:30:00 UTC
+DocTime:    10:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32472,6 +32472,54 @@ LIVE: DocVersion dv1_83 / DocPath ...dv1_83... /
 DocDate 06-19-2026 / DocTime 09:30:00 UTC
 
 ----- END TB00798 SITE the THREE-POOL WALLET / ISOLATION MODEL Section 13.7 LONG and SHORT to EQUAL DETAIL dv1_273 OP RECORD -----
+
+
+----- TB00798 DEMOTE 13.2 / 13.3 to the DIRECT-BITNOMIAL FALLBACK ROUTE primary is Kraken-Pro native stops dv1_274 OP RECORD -----
+
+TB00798: DEMOTE Sections 13.2 (Perps Connection Architecture) and 13.3 (Exit Synthesis under Limit-Only)
+of 0500000 to the DIRECT-BITNOMIAL FALLBACK route -- slice C of the perps decision fold-in, diagram-first,
+PROSE-ONLY (retitle two heading <p> + rewrite two lead <p>, NO SVG geometry). The TB00798 ACCESS MODE
+flip made the Kraken-Pro route PRIMARY (native order types + 13.7 isolated-margin loss cap); the entire
+limit-only connection + client-synthesized-exit design that 13.2 / 13.3 detail is the DIRECT-Bitnomial
+FALLBACK now. NOTHING erased: every <pre> detail block (proposed connection points, the crash-protection
+inversion, the synthetic exit mechanism, the gap-risk consequence) is PRESERVED verbatim as the
+documented fallback design; only the two headings + the two leads were reframed. NO new counted element,
+NO namespace token, NO new CIATS seed.
+
+0500000 EDITS (in-place prose, Sections 13.2 / 13.3):
+ - 13.2 heading <p>: retitled "Perps Connection Architecture -- Bitnomial (design intent...)" to
+   "Perps Connection Architecture -- DIRECT-BITNOMIAL FALLBACK ROUTE (demoted at TB00798; primary path
+   is the 13.1 Kraken-Pro route + 13.7 isolated-margin)".
+ - 13.2 lead <p>: rewritten to DEMOTED TO FALLBACK (TB00798) -- primary is the 13.1 Kraken-Pro route +
+   13.7 isolated-margin + three-pool wallet; this direct-Bitnomial connection is PRESERVED nothing erased
+   as the documented fallback used only if the 13.7 Kraken-Pro retail subaccount structure is unavailable
+   or direct-venue isolation is required; HMAC-mirrors-Kraken signing makes the fallback cheap to keep;
+   references to "13.1 ACCESS MODE" / limit-only below denote the SUPERSEDED direct-isolated design,
+   retained as the fallback premise.
+ - 13.3 heading <p>: retitled "Exit Synthesis under Limit-Only -- Bitnomial (design intent...)" to
+   "Exit Synthesis under Limit-Only -- DIRECT-BITNOMIAL FALLBACK ROUTE (demoted at TB00798; primary path
+   = native Kraken stops + 13.7 isolated-margin)".
+ - 13.3 lead <p>: rewritten to DEMOTED TO FALLBACK (TB00798) -- on the PRIMARY Kraken-Pro route the exit
+   layers are NATIVE exchange orders (Stop-Loss / Take-Profit / Trailing-Stop) backstopped by 13.7
+   isolated-margin liquidation, NO client synthesis, machinery DELETED from the primary build; this
+   section PRESERVED as the documented fallback where BTP/FIX exposes no native stop primitive so the 4
+   exit layers are synthesized client-side; 4-layer SEMANTICS preserved exactly, only ENFORCEMENT changes.
+
+NO NEW CIATS SEED. No TB00000 seed change (v2_102 unchanged). R DISPOSITION: no figure R bump --
+in-place prose, NO geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + quotes
+entity-encoded (&#x27; / &#x22;); no residual dv1_273 in the live diagram. 13.2 / 13.3 are now the
+documented DIRECT-BITNOMIAL FALLBACK; the Kraken-Pro native-stops path is PRIMARY; nothing erased.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_83 / DocPath ...dv1_83... /
+DocDate 06-19-2026 / DocTime 09:30:00 UTC
+LIVE: DocVersion dv1_84 / DocPath ...dv1_84... /
+DocDate 06-19-2026 / DocTime 10:00:00 UTC
+
+----- END TB00798 DEMOTE 13.2 / 13.3 to the DIRECT-BITNOMIAL FALLBACK ROUTE primary is Kraken-Pro native stops dv1_274 OP RECORD -----
 
 
 ============================================================

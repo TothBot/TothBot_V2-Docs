@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_273</title>
+<title>0500000 System Architecture Overview dv1_274</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_273</td></tr>
+  <tr><td>DocVersion</td><td>dv1_274</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_273_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_274_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>09:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>10:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7859,16 +7859,20 @@ slice.
     margin per position, CIATS accounting).
 </pre>
 <p>
-13.2 Perps Connection Architecture — Bitnomial (design intent; pre-spec, gated on the §13.1 confirm-first items)
+13.2 Perps Connection Architecture — DIRECT-BITNOMIAL FALLBACK ROUTE (demoted at TB00798; primary path is the §13.1 Kraken-Pro route + §13.7 isolated-margin)
 </p>
 <p>
-The perps connection is a SIBLING of the §2 Kraken API Connection Architecture, designed here as
-prose intent ahead of the confirm-first gate; the formal venue container, the connection node, and
-its figure are registered when the §13.1 items clear and the element graduates out of Open Items
-into a numbered section. The proposed Bitnomial_Perps venue connects DIRECT as an isolated organism
-(§13.1 ACCESS MODE) over the Bitnomial REST + WS surfaces, authenticated by HMAC-SHA256 connection
-signing that MIRRORS the existing Kraken request signer — the shared signing discipline is the
-low-new-surface reason the direct-isolated mode was chosen.
+DEMOTED TO FALLBACK (TB00798). The PRIMARY perps path is the §13.1 Kraken-Pro route (native order
+types) with the §13.7 isolated-margin loss cap and three-pool wallet; on that path this direct-Bitnomial
+connection design is NOT used. This section is PRESERVED — nothing erased — as the documented FALLBACK,
+used only if the §13.7 Kraken-Pro retail subaccount structure proves unavailable or direct-venue
+isolation is ever required. As a FALLBACK the perps connection is a SIBLING of the §2 Kraken API
+Connection Architecture: the proposed Bitnomial_Perps venue connects DIRECT over the Bitnomial REST + WS
+surfaces, authenticated by HMAC-SHA256 connection signing that MIRRORS the existing Kraken request signer
+— the shared signing discipline is the low-new-surface reason the direct-isolated FALLBACK is cheap to
+keep. Its formal venue container / connection node / figure would be registered only if this fallback is
+ever activated. References to &#x22;§13.1 ACCESS MODE&#x22; / the limit-only order model below denote the
+SUPERSEDED direct-isolated design, retained here as the fallback&#x27;s premise.
 </p>
 <pre>
   PROPOSED CONNECTION POINTS (Bitnomial perps; mirror of §2, limit-only)
@@ -7909,13 +7913,18 @@ low-new-surface reason the direct-isolated mode was chosen.
   limit exit prices either way.
 </pre>
 <p>
-13.3 Exit Synthesis under Limit-Only — Bitnomial (design intent; pre-spec, gated on the §13.1 items)
+13.3 Exit Synthesis under Limit-Only — DIRECT-BITNOMIAL FALLBACK ROUTE (demoted at TB00798; primary path = native Kraken stops + §13.7 isolated-margin)
 </p>
 <p>
-Bitnomial exposes NO native stop or stop-market primitive (§13.1 ORDER MODEL), so the §4 exit
-layers are SYNTHESIZED client-side from limit orders + the §13.2 mark-price watchdog. The §4 layer
-SEMANTICS are preserved exactly; only the ENFORCEMENT mechanism changes from a resting exchange
-order to a client-driven marketable limit.
+DEMOTED TO FALLBACK (TB00798). On the PRIMARY §13.1 Kraken-Pro route the exit layers are NATIVE
+exchange orders — Stop-Loss / Take-Profit / Trailing-Stop — backstopped by §13.7 isolated-margin
+liquidation, so there is NO client-side exit synthesis; this machinery is DELETED from the primary
+build (a loss-minimization win). This section is PRESERVED — nothing erased — as the documented
+FALLBACK: the DIRECT-Bitnomial native protocol (BTP / FIX) exposes NO native stop or stop-market
+primitive, so under THAT route ONLY the §4 exit layers are SYNTHESIZED client-side from limit orders +
+the §13.2 mark-price watchdog. The §4 layer SEMANTICS are preserved exactly; only the ENFORCEMENT
+mechanism changes from a resting exchange order to a client-driven marketable limit. Everything below
+describes that fallback path.
 </p>
 <pre>
   SYNTHETIC EXIT MECHANISM (per §4 layer; mark-price watchdog on the §13.2 WS feed)
