@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_265</title>
+<title>0500000 System Architecture Overview dv1_266</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_265</td></tr>
+  <tr><td>DocVersion</td><td>dv1_266</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_265_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_266_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>04:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>04:45:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7857,6 +7857,49 @@ low-new-surface reason the direct-isolated mode was chosen.
   precisely why §13.1 confirm item 4 (REST cancel/modify + kill-switch) GATES live
   connectivity. The sacred 1:1.5 R:R floor is unaffected — it sets the synthesized
   limit exit prices either way.
+</pre>
+<p>
+13.3 Exit Synthesis under Limit-Only — Bitnomial (design intent; pre-spec, gated on the §13.1 items)
+</p>
+<p>
+Bitnomial exposes NO native stop or stop-market primitive (§13.1 ORDER MODEL), so the §4 exit
+layers are SYNTHESIZED client-side from limit orders + the §13.2 mark-price watchdog. The §4 layer
+SEMANTICS are preserved exactly; only the ENFORCEMENT mechanism changes from a resting exchange
+order to a client-driven marketable limit.
+</p>
+<pre>
+  SYNTHETIC EXIT MECHANISM (per §4 layer; mark-price watchdog on the §13.2 WS feed)
+
+  layer:L1a regime-reversal exit (primary):
+    fires on the 24h bearish-cross event (the mirror of the perps long entry
+    trigger) — flatten via a MARKETABLE limit, event-driven, NOT a resting
+    take-profit order.
+
+  layer:L2 wide ATR stop (structural):
+    NO native stop — the watchdog reads the WS mark each tick; when the mark
+    crosses the synthetic L2 level it fires a MARKETABLE limit priced THROUGH the
+    book by a bounded number of ticks to maximize fill probability.
+
+  layer:L3 emergency-SL (outermost):
+    the synthetic watchdog PLUS the exchange-side kill-switch / dead-man&#x27;s-switch
+    backstop (§13.2 CRASH-PROTECTION INVERSION) — the kill-switch covers the case
+    where the watchdog itself is dead (a TothBot crash).
+</pre>
+<pre>
+  HONEST CONSEQUENCE — synthetic-stop GAP RISK (stated, not papered over)
+
+  A limit order cannot guarantee a fill at any price. If the mark GAPS past the
+  synthetic L2/L3 level between ticks, or the marketable limit does not fill at the
+  first price, the realized loss can EXCEED the planned 1R — a genuine degradation
+  vs the Kraken matching-engine stop, which becomes a true MARKET order on trigger.
+
+  Mitigations (design intent, refined at code time): tight mark polling; aggressive
+  marketable-limit pricing (cross N ticks, N a proposed CIATS seed bounded by the
+  §13.1 item-3 tick / lot); a bounded re-price CHASE up to a cap, then escalate to
+  the kill-switch; and position sizing that accounts for the worse loss tail. The
+  sacred 1:1.5 R:R floor is set at the PLANNED limit exit prices; the realized
+  actual_rr (the existing contract:TRADE_CLOSE field) absorbs the bounded slippage
+  and is the CIATS-monitored truth.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>

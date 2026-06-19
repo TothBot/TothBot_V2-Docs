@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_75
+DocVersion: dv1_76
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_75.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_76.txt
 DocDate:    06-19-2026
-DocTime:    04:30:00 UTC
+DocTime:    04:45:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32080,6 +32080,56 @@ LIVE: DocVersion dv1_75 / DocPath ...dv1_75... /
 DocDate 06-19-2026 / DocTime 04:30:00 UTC
 
 ----- END TB00796 SITE the perps CONNECTION ARCHITECTURE 13.2 + the CRASH-PROTECTION INVERSION dv1_265 OP RECORD -----
+
+
+----- TB00796 SITE the perps EXIT SYNTHESIS 13.3 under LIMIT-ONLY + the synthetic-stop GAP RISK dv1_266 OP RECORD -----
+
+TB00796: SITE the perps EXIT SYNTHESIS under LIMIT-ONLY -- a new Section 13.3 -- as the third slice of
+the perps design track. Diagram-first, PROSE-ONLY (new <p>/<pre> in the prose Section 13, NO SVG/figure
+geometry). Bitnomial exposes NO native stop primitive, so the Section 4 exit layers are SYNTHESIZED
+client-side; the layer SEMANTICS are preserved, only the ENFORCEMENT mechanism changes. NO new counted
+element, NO formally-minted namespace token, NO new CIATS seed (the cross-N-ticks slippage knob is
+named as a PROPOSED seed, registered at the parameter-siting slice).
+
+0500000 EDITS (Section 13.3, appended after the 13.2 CRASH-PROTECTION INVERSION <pre>, before
+<h2>14</h2>):
+ - 13.3 lead <p>: NO native stop / stop-market on Bitnomial, so the Section 4 layers are synthesized
+   from limit orders + the 13.2 mark-price watchdog; Section 4 layer semantics preserved exactly, only
+   the enforcement mechanism changes from a resting exchange order to a client-driven marketable limit.
+ - SYNTHETIC EXIT MECHANISM <pre> (per Section 4 layer): layer:L1a regime-reversal exit fires on the
+   24h bearish-cross event, flatten via a MARKETABLE limit, event-driven not a resting take-profit;
+   layer:L2 wide ATR stop has NO native stop, a watchdog reads the WS mark each tick and on cross fires
+   a MARKETABLE limit priced THROUGH the book by a bounded number of ticks; layer:L3 emergency-SL is
+   the synthetic watchdog PLUS the exchange kill-switch / dead-man's-switch backstop (13.2 inversion)
+   covering a dead watchdog (TothBot crash).
+ - HONEST CONSEQUENCE -- synthetic-stop GAP RISK <pre> (stated, not papered over): a limit cannot
+   guarantee a fill, so if the mark GAPS past the synthetic L2/L3 level or the marketable limit does
+   not fill, realized loss can EXCEED the planned 1R -- a genuine degradation vs the Kraken matching-
+   engine stop that becomes a true MARKET order on trigger. Mitigations (design intent): tight mark
+   polling, aggressive marketable-limit pricing (cross N ticks, N a proposed CIATS seed bounded by the
+   13.1 item-3 tick/lot), a bounded re-price CHASE up to a cap then escalate to the kill-switch, and
+   sizing for the worse loss tail. The sacred 1:1.5 R:R floor is set at the PLANNED limit exit prices;
+   the existing contract:TRADE_CLOSE actual_rr field absorbs the bounded slippage and is the CIATS-
+   monitored truth.
+
+NO NEW CIATS SEED: the slippage cross-N-ticks knob is named as a PROPOSED seed only; it is registered
+at the perps parameter-siting slice. No TB00000 seed change.
+
+R DISPOSITION: no figure R bump -- Section 13 remains prose with NO figure/SVG; <p>/<pre> prose only,
+no geometry change, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophe (dead-man's-switch)
+entity-encoded &#x27;, no bare-angle / bare-ampersand issue; no residual dv1_265 in the live diagram.
+Diagram-first: no perps code this slice; live connectivity gated on the 13.1 confirm-first items.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_75 / DocPath ...dv1_75... /
+DocDate 06-19-2026 / DocTime 04:30:00 UTC
+LIVE: DocVersion dv1_76 / DocPath ...dv1_76... /
+DocDate 06-19-2026 / DocTime 04:45:00 UTC
+
+----- END TB00796 SITE the perps EXIT SYNTHESIS 13.3 under LIMIT-ONLY + the synthetic-stop GAP RISK dv1_266 OP RECORD -----
 
 
 ============================================================
