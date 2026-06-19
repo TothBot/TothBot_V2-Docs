@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_268</title>
+<title>0500000 System Architecture Overview dv1_269</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_268</td></tr>
+  <tr><td>DocVersion</td><td>dv1_269</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_268_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_269_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>05:15:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>05:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7918,10 +7918,12 @@ the LONG side; the machine stays Long/Short-CAPABLE. There is no symmetric-mecha
     Exit:   layer:L1a regime-reversal (the 24h bearish cross) — a reversal exit, not
             a fixed target; the validated EXIT lever.
 
-  SHORT MECHANISM (revived by the perps fee lever; NOT a mirror of long)
+  SHORT MECHANISM (revived by the perps fee lever; different metrics, equal detail)
     Entry:  MEAN-REVERSION / FILTERED — the TB00794 short survivors are mean-rev +
             filtered, not breakout — plus a REGIME FILTER (short only in the regimes
             where it survives).
+    Stop:   WIDE — layer:L2 = decision_atr_stop_mult x ATR-14 daily, placed ABOVE
+            entry (short side), synthesized client-side per §13.3.
     Exit:   TRAILING-or-TARGET — the survivors trail / target, not a pure reversal.
     All short entry-filter / regime / trailing magnitudes are PROPOSED CIATS seeds,
     registered at the perps parameter-siting slice; the sacred 1:1.5 floor untouched.
