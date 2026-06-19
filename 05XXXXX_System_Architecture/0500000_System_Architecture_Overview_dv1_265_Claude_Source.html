@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_264</title>
+<title>0500000 System Architecture Overview dv1_265</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_264</td></tr>
+  <tr><td>DocVersion</td><td>dv1_265</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_264_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_265_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>04:15:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>04:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7807,6 +7807,56 @@ slice.
        universe.
     6. Eligible-US-client criteria — confirm the eligibility criteria for a US-retail
        client (the access constraint that drove the venue selection).
+</pre>
+<p>
+13.2 Perps Connection Architecture — Bitnomial (design intent; pre-spec, gated on the §13.1 confirm-first items)
+</p>
+<p>
+The perps connection is a SIBLING of the §2 Kraken API Connection Architecture, designed here as
+prose intent ahead of the confirm-first gate; the formal venue container, the connection node, and
+its figure are registered when the §13.1 items clear and the element graduates out of Open Items
+into a numbered section. The proposed Bitnomial_Perps venue connects DIRECT as an isolated organism
+(§13.1 ACCESS MODE) over the Bitnomial REST + WS surfaces, authenticated by HMAC-SHA256 connection
+signing that MIRRORS the existing Kraken request signer — the shared signing discipline is the
+low-new-surface reason the direct-isolated mode was chosen.
+</p>
+<pre>
+  PROPOSED CONNECTION POINTS (Bitnomial perps; mirror of §2, limit-only)
+
+  Connection Auth:
+    HMAC-SHA256 connection signing — mirrors the existing Kraken request signer.
+
+  WS market-data (inbound):
+    perp OHLC / ticker feed — the perps system clock + the mark price the
+    client-synthesized exit logic reads. Symbol / base_symbol per §13.1 item 5.
+
+  REST (outbound + pull):
+    place_order   — LIMIT-ONLY entry (§13.1 ORDER MODEL): a marketable limit for
+                    immediate fills, resting limits for the synthesized exits.
+    cancel/modify — exit-leg cleanup + continuous re-assertion of the synthesized
+                    stops (§13.1 item 4).
+    funding-rates — 8h funding pull, folded into Variation Margin accounting.
+    positions/margin — account state for sizing + the USDC margin model (item 2).
+    kill-switch   — account-level flatten / cancel-all (item 4); see the
+                    CRASH-PROTECTION INVERSION below.
+</pre>
+<pre>
+  CRASH-PROTECTION INVERSION vs §2 Kraken — a key limit-only consequence
+
+  Kraken (§2 Matching Engine): the layer:L3 emergency-SL RESTS off-book on the
+  matching engine and SURVIVES any TothBot failure — which is exactly why §2
+  REJECTED cancel-on-disconnect / DMS (ar:AR-001): a DMS would DESTROY that resting
+  crash protection.
+
+  Bitnomial perps (LIMIT-ONLY): there is NO resting off-book stop to survive a
+  crash — the layer:L2 and layer:L3 stops are CLIENT-SYNTHESIZED and enforced only
+  while TothBot is alive, so a TothBot crash leaves a NAKED perps position. The
+  mitigation INVERTS the Kraken logic: an exchange-side dead-man&#x27;s-switch /
+  kill-switch that FLATTENS on disconnect is PROTECTIVE here, not destructive,
+  because it REPLACES the absent resting stop rather than destroying it. This is
+  precisely why §13.1 confirm item 4 (REST cancel/modify + kill-switch) GATES live
+  connectivity. The sacred 1:1.5 R:R floor is unaffected — it sets the synthesized
+  limit exit prices either way.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>

@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_74
+DocVersion: dv1_75
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_74.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_75.txt
 DocDate:    06-19-2026
-DocTime:    04:15:00 UTC
+DocTime:    04:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32028,6 +32028,58 @@ LIVE: DocVersion dv1_74 / DocPath ...dv1_74... /
 DocDate 06-19-2026 / DocTime 04:15:00 UTC
 
 ----- END TB00796 SITE the perps-expansion SCOPE ANCHOR + Bitnomial CONFIRM-FIRST gate dv1_264 OP RECORD -----
+
+
+----- TB00796 SITE the perps CONNECTION ARCHITECTURE 13.2 + the CRASH-PROTECTION INVERSION dv1_265 OP RECORD -----
+
+TB00796: SITE the perps CONNECTION ARCHITECTURE -- a new Section 13.2 designed as a SIBLING of the
+Section 2 Kraken API Connection Architecture -- into the Open Items area, as the second slice of the
+perps design track. Diagram-first, PROSE-ONLY (new <p>/<pre> in the prose Section 13 with NO SVG/figure
+geometry): describes the proposed Bitnomial perps connection as DESIGN INTENT ahead of the confirm-first
+gate, with the formal venue container / connection node / figure DEFERRED until the 13.1 confirm items
+clear and the element graduates into a numbered section. NO new counted element, NO formally-minted
+namespace token (Bitnomial_Perps is named as a PROPOSED venue, not registered geometry), NO new CIATS
+seed.
+
+0500000 EDITS (Section 13.2, appended after the 13.1 confirm-first <pre>, before <h2>14</h2>):
+ - 13.2 lead <p>: the perps connection is a SIBLING of Section 2, DIRECT isolated organism over
+   Bitnomial REST + WS, authenticated by HMAC-SHA256 connection signing MIRRORING the existing Kraken
+   request signer -- the shared signing discipline is the low-new-surface reason the direct-isolated
+   ACCESS MODE was chosen.
+ - PROPOSED CONNECTION POINTS <pre> (mirror of Section 2, limit-only): Connection Auth (HMAC-SHA256
+   mirroring Kraken); WS market-data (perp OHLC/ticker = the perps system clock + mark price for the
+   synthesized exits, symbol per 13.1 item 5); REST (place_order LIMIT-ONLY marketable + resting limits,
+   cancel/modify re-asserting the synthesized stops per item 4, funding-rates 8h into Variation Margin,
+   positions/margin for sizing + USDC model item 2, kill-switch account flatten item 4).
+ - CRASH-PROTECTION INVERSION <pre> (a key limit-only consequence): under Kraken (Section 2 Matching
+   Engine) the layer:L3 emergency-SL RESTS off-book and SURVIVES a TothBot crash, which is exactly why
+   Section 2 REJECTED cancel-on-disconnect / DMS (ar:AR-001) -- a DMS would DESTROY that resting
+   protection. Under Bitnomial LIMIT-ONLY there is NO resting stop to survive a crash -- the layer:L2 /
+   layer:L3 stops are CLIENT-SYNTHESIZED, enforced only while TothBot is alive, so a crash leaves a
+   NAKED perps position. The mitigation INVERTS the Kraken logic: an exchange-side dead-man's-switch /
+   kill-switch that FLATTENS on disconnect is PROTECTIVE here, not destructive, because it REPLACES the
+   absent resting stop rather than destroying it -- which is precisely why 13.1 confirm item 4 (REST
+   cancel/modify + kill-switch) GATES live connectivity. The sacred 1:1.5 R:R floor is unaffected.
+
+NO NEW CIATS SEED: connection mechanics, not a trading-loop tunable. No TB00000 seed change.
+
+R DISPOSITION: no figure R bump -- Section 13 remains a prose section with NO figure/SVG; the slice adds
+<p>/<pre> prose only, no polygon / region / figure-structure change, no new visual geometry, counted
+element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass, no exceptions); opening/closing tag classes balanced
+and UNCHANGED -- g 217/217, text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; the
+one apostrophe (dead-man's-switch) is entity-encoded &#x27;, no bare-angle / bare-ampersand strict-XML
+issue; no residual dv1_264 in the live diagram. Diagram-first: no perps code in this slice; live
+connectivity remains gated on the 13.1 confirm-first items.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_74 / DocPath ...dv1_74... /
+DocDate 06-19-2026 / DocTime 04:15:00 UTC
+LIVE: DocVersion dv1_75 / DocPath ...dv1_75... /
+DocDate 06-19-2026 / DocTime 04:30:00 UTC
+
+----- END TB00796 SITE the perps CONNECTION ARCHITECTURE 13.2 + the CRASH-PROTECTION INVERSION dv1_265 OP RECORD -----
 
 
 ============================================================
