@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_85
+DocVersion: dv1_86
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_85.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_86.txt
 DocDate:    06-19-2026
-DocTime:    10:30:00 UTC
+DocTime:    11:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32562,6 +32562,48 @@ LIVE: DocVersion dv1_85 / DocPath ...dv1_85... /
 DocDate 06-19-2026 / DocTime 10:30:00 UTC
 
 ----- END TB00798 FIX 13.5 COLLATERAL to the USD baseline USDC drops to possible unconfirmed dv1_275 OP RECORD -----
+
+
+----- TB00798 UPDATE the 13.6 REGISTRY perp_fee ROUTE-DEPENDENT plus synthesis params FALLBACK-ONLY plus funding schedule dv1_276 OP RECORD -----
+
+TB00798: UPDATE the Section 13.6 PROPOSED PERP CIATS PARAMETER REGISTRY of 0500000 for the Kraken-Pro
+route -- slice E (the final fold-in slice), diagram-first, PROSE-ONLY (in-place edits to the VENUE /
+EXECUTION <pre> + the NOT-SEEDS <pre>, NO SVG geometry). Aligns the registry with the TB00798 ACCESS
+MODE flip + the TB00799 funding facts. EVERYTHING stays PROPOSED -- nothing minted, TB00000 v2_102
+UNCHANGED. NO new counted element, NO namespace token, NO new CIATS seed. LONG and SHORT unaffected (the
+venue / execution params are both-sides).
+
+0500000 EDITS (in-place prose, Section 13.6):
+ - perp_fee_per_contract: made ROUTE-DEPENDENT (TB00798 / TB00799). PRIMARY 13.1 Kraken-Pro route = the
+   KRAKEN maker / taker schedule, re-verify at code time, NOT the flat Bitnomial-direct rate. 13.2
+   DIRECT-Bitnomial FALLBACK route = the flat ~$0.07-0.10/contract Bitnomial fee (maker == taker). Either
+   way the analogue of FEE_TAKER_PCT, REGISTERED + CIATS tier-divergence-monitored, folds into net_loss +
+   the sacred 1:1.5 floor; the short-revival FEE lever holds on both routes.
+ - perp_exit_cross_ticks + the two design-intent tunables (perp_exit_chase_cap, perp_mark_poll_interval):
+   re-scoped to DIRECT-BITNOMIAL FALLBACK ONLY -- they exist only on the 13.2 / 13.3 synthesis path; the
+   PRIMARY Kraken-Pro route uses NATIVE stops (no synthesis), so these are not used on the primary path.
+ - VENUE / EXECUTION header annotated "route-aware after TB00798".
+ - NOT-SEEDS funding rate: enriched with the TB00799 formula FR = avg(Premium) + clamp(IR - avg(Premium),
+   -0.05%, +0.05%), IR fixed 0.01% (still exchange-set, not tunable). 8h funding cadence: enriched with
+   the TB00799 schedule -- 8h intervals 7pm / 3am / 11am CT, Kraken cash-settles once daily 3pm CT (still
+   an engineering constant, NOT a seed).
+
+NO NEW CIATS SEED. No TB00000 seed change (v2_102 unchanged; all perp params remain PROPOSED, first lands
+formally at graduation). R DISPOSITION: no figure R bump -- in-place prose, NO geometry, counted element
+COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + quotes
+entity-encoded (&#x27; / &#x22;); no residual dv1_275 in the live diagram. 13.6 now reflects the
+route-dependent fee + the fallback-only synthesis params + the concrete funding schedule, all PROPOSED.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_85 / DocPath ...dv1_85... /
+DocDate 06-19-2026 / DocTime 10:30:00 UTC
+LIVE: DocVersion dv1_86 / DocPath ...dv1_86... /
+DocDate 06-19-2026 / DocTime 11:00:00 UTC
+
+----- END TB00798 UPDATE the 13.6 REGISTRY perp_fee ROUTE-DEPENDENT plus synthesis params FALLBACK-ONLY plus funding schedule dv1_276 OP RECORD -----
 
 
 ============================================================

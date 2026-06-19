@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_275</title>
+<title>0500000 System Architecture Overview dv1_276</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_275</td></tr>
+  <tr><td>DocVersion</td><td>dv1_276</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_275_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_276_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>10:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>11:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -8139,30 +8139,39 @@ shown here.
                              (§13.5), raised per product onto whole contracts. NO new long seed.
 </pre>
 <pre>
-  PROPOSED PERP SEEDS — VENUE / EXECUTION (both sides; from §13.1 / §13.3)
+  PROPOSED PERP SEEDS — VENUE / EXECUTION (both sides; from §13.1 / §13.3; route-aware after TB00798)
 
-  perp_fee_per_contract      PROPOSED. The flat ~$0.07-0.10/contract Bitnomial fee (maker ==
-                             taker) — the analogue of FEE_TAKER_PCT (TB00000 sec 8): an
-                             exchange-published rate that is REGISTERED + CIATS-monitored for
-                             tier divergence, and folds into perp net_loss + the sacred 1:1.5
-                             R:R floor. Confirmed pre-live; the short-revival FEE lever (TB00794).
-  perp_exit_cross_ticks      PROPOSED (§13.3). N, the number of ticks the synthetic-exit
-                             marketable limit prices THROUGH the book to maximise fill
-                             probability; bounded by the §13.1 item-3 tick / lot. Refined from paper.
+  perp_fee_per_contract      PROPOSED — ROUTE-DEPENDENT (TB00798 / TB00799). On the PRIMARY
+                             §13.1 Kraken-Pro route the fee is the KRAKEN maker / taker schedule
+                             (re-verify at code time — NOT the flat Bitnomial-direct rate). On
+                             the §13.2 DIRECT-Bitnomial FALLBACK route it is the flat
+                             ~$0.07-0.10/contract Bitnomial fee (maker == taker). Either way it
+                             is the analogue of FEE_TAKER_PCT (TB00000 sec 8): an
+                             exchange-published rate, REGISTERED + CIATS-monitored for tier
+                             divergence, folding into perp net_loss + the sacred 1:1.5 R:R floor.
+                             The short-revival FEE lever (TB00794) holds on both routes.
+  perp_exit_cross_ticks      PROPOSED — DIRECT-BITNOMIAL FALLBACK ONLY (§13.3). N, the number of
+                             ticks the synthetic-exit marketable limit prices THROUGH the book to
+                             maximise fill probability; bounded by the §13.1 item-3 tick / lot.
+                             Used ONLY on the §13.2 / §13.3 fallback synthesis path — the PRIMARY
+                             Kraken-Pro route uses NATIVE stops (no synthesis). Refined from paper.
 
-  Design-intent tunables (§13.3 mitigations; candidate seeds confirmed at CODE time, not named seeds yet):
+  Design-intent tunables — DIRECT-BITNOMIAL FALLBACK ONLY (§13.3 mitigations; candidate seeds at CODE time):
   perp_exit_chase_cap        the bounded re-price CHASE limit before escalating to the
-                             kill-switch (§13.3 GAP-RISK mitigation).
+                             kill-switch (§13.3 GAP-RISK mitigation). Fallback path only.
   perp_mark_poll_interval    the §13.2 mark-price watchdog poll cadence (the &#x22;tight mark
-                             polling&#x22; mitigation).
+                             polling&#x22; mitigation). Fallback path only.
 </pre>
 <pre>
   NOT SEEDS — exchange-set inputs + engineering constants (listed for completeness, both sides)
 
-  funding rate               EXCHANGE-SET per-8h rate, NOT a TothBot parameter — the realized
-                             funding COST folds into perp net_loss (§13.5), but the rate itself
-                             is not tunable.
-  8h funding cadence         ENGINEERING CONSTANT (exchange-set), NOT a seed (§13.5).
+  funding rate               EXCHANGE-SET, NOT a TothBot parameter — FR = avg(Premium) +
+                             clamp(IR - avg(Premium), -0.05%, +0.05%), IR fixed 0.01% (TB00799
+                             item 3). The realized funding COST folds into perp net_loss (§13.5),
+                             but the rate itself is not tunable.
+  8h funding cadence         ENGINEERING CONSTANT (exchange-set) — 8h intervals 7pm / 3am / 11am
+                             CT; Kraken cash-settles funding once daily 3pm CT (TB00799 item 3).
+                             NOT a seed (§13.5).
   initial / maintenance margin   EXCHANGE-SET per contract, not publicly disclosed (§13.1 item 3).
   tick / lot / contract multiplier   EXCHANGE-SET (§13.1 item 3) — the quantization basis for
                              §13.5 whole-contract sizing, not a TothBot tunable.
