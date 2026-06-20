@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_88
+DocVersion: dv1_89
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_88.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_89.txt
 DocDate:    06-20-2026
-DocTime:    05:30:00 UTC
+DocTime:    06:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32714,6 +32714,62 @@ LIVE: DocVersion dv1_88 / DocPath ...dv1_88... /
 DocDate 06-20-2026 / DocTime 05:30:00 UTC
 
 ----- END TB00807 SITE the NEW 13.8 PERPS HEDGE MODEL drawdown regime insurance not a return improver via TB00806 battery A B dv1_278 OP RECORD -----
+
+
+----- TB00807 SITE the NEW 13.9 PERPS HEDGE RISK CONTROLS funding monitor plus breaker recalibration via TB00806 whole-organism dv1_279 OP RECORD -----
+
+TB00807: SITE a NEW Section 13.9 PERPS HEDGE RISK CONTROLS into 0500000 -- slice 3 of the perps +
+hedging fold-in. Diagram-first, PROSE-ONLY (new <p> heading + lead <p> + three <pre> blocks appended
+after the 13.8 FUNDING block, before the Section 14 pointer; NO SVG geometry). Folds the TB00806
+whole-organism analysis (tb00806d) + the hedge-breaker recalibration (tb00806e), both DERIVED by running
+the proposed change through the LIVE gates. Both controls REUSE existing machinery -- NO new module, NO
+new gate. NO new counted element, NO namespace token, NO new CIATS seed minted (the funding-monitor +
+breaker-config items are NAMED-as-proposed here, formally registered in the 13.6 slice). TB00000 v2_102
+UNCHANGED. STAY IN PAPER. Nothing erased -- pure append.
+
+0500000 EDITS (new prose, Section 13.9):
+ - heading <p> "13.9 Perps Hedge Risk Controls -- Funding Monitor + Breaker Recalibration (TB00806
+   whole-organism)" + a lead <p>: both controls derived from running the proposed change through the LIVE
+   gates (imported tothbot.pipeline.risk_guard G7 + position_sizer G8 + config.registry + ciats.ewma_monitor,
+   not a stovepiped model); the perps SHORT is the existing dormant Short_Module re-grounded, NOT a new
+   "perp module"; sacred 1:1.5 floor + frozen-deposit ruin HALT untouched.
+ - FUNDING MONITOR <pre>: covers the 13.8 B2 sensitivity -- ONE new instance of the live EwmaMonitor (the
+   fee_tier_divergence machinery) + one threshold seed, SIGNALS-ONLY (D5, routes to CIATS PDCA + Bill
+   HR-CI-011, cannot deadlock); fires at sustained_n on a pinned-adverse regime, silent on real funding;
+   folds into the 13.6 tier-divergence monitor as the proposed perp_funding_divergence_monitor.
+ - HEDGE-BREAKER RECALIBRATION <pre>: the live 5% frozen-baseline PAUSE STRANGLES a thin-edge hedge (90 of
+   1007 trades, 917 pauses, -$304) -- a hedge sits at a drawdown-from-deposit by design + a paused hedge
+   cannot self-equity-recover (the TB00804 DEADLOCK LAW: resume must be EXOGENOUS). FIX: keep the HALT on
+   the FROZEN deposit (ruin floor), move the PAUSE to a rolling-window exogenous re-arm wide enough to clear
+   the hedge's ~7.5% natural drawdown. RECALIBRATION: PAUSE rolling 10% / HALT frozen 20%. Tested through
+   the LIVE evaluate_risk_guard: hedge DEPLOYS (1005-1007 of 1007 vs 90), RUIN-SAFE (HALT never trips, worst
+   ~7.5% real / ~15% bootstrap, 0 halts in 150 resamples), flips -$304 to +$1353; PRINCIPLED pick V2;
+   implemented via evaluate_risk_guard's EXISTING override params, NO new gate; sacred 1:1.5 + frozen ruin
+   HALT untouched.
+ - PART-VS-WHOLE LAW <pre>: the reusable Deming lesson -- drive proposed changes through the LIVE gates.
+   It corrected three stovepiped recs: (1) the 2-3x leverage band was ALREADY leverage_cap_short = 3; (2)
+   "size the short as a hedge" OVERTURNED at the account level (the long's own breaker already makes ruin
+   impossible ~1.3%, hedge insurance largely redundant, adding short capital dilutes Calmar ~16.1 to ~15.8
+   -- HOW MUCH is the 13.8 sizing call, not default-on); (3) only the funding monitor + breaker recalibration
+   survived as genuine adds, both reusing existing machinery. The deployed spot LONG is unaffected (all
+   trades, 0 pauses, identical PnL under any breaker config).
+
+NO NEW CIATS SEED minted. No TB00000 seed change (v2_102 unchanged). R DISPOSITION: no figure R bump --
+new prose, NO geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes + the "perp module"
+quotes in the new prose entity-encoded (&#x27; / &#x22;); no residual dv1_278 in the live diagram. Section
+13.9 now documents the funding monitor + the hedge-breaker recalibration + the part-vs-whole law, all
+reusing existing machinery with no new module / no new gate.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_88 / DocPath ...dv1_88... /
+DocDate 06-20-2026 / DocTime 05:30:00 UTC
+LIVE: DocVersion dv1_89 / DocPath ...dv1_89... /
+DocDate 06-20-2026 / DocTime 06:00:00 UTC
+
+----- END TB00807 SITE the NEW 13.9 PERPS HEDGE RISK CONTROLS funding monitor plus breaker recalibration via TB00806 whole-organism dv1_279 OP RECORD -----
 
 
 ============================================================

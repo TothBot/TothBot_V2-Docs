@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_278</title>
+<title>0500000 System Architecture Overview dv1_279</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_278</td></tr>
+  <tr><td>DocVersion</td><td>dv1_279</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_278_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_279_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-20-2026</td></tr>
-  <tr><td>DocTime</td><td>05:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>06:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -8374,6 +8374,69 @@ controls it implies (the funding monitor + the hedge-breaker recalibration) are 
   sustained-adverse funding is the short&#x27;s most material cost — which is exactly why
   §13.9 adds a CIATS sustained-funding monitor. Neither the per-contract fee NOR typical
   funding is the edge lever; the lever is native short ACCESS + the §13.4 config.
+</pre>
+<p>
+13.9 Perps Hedge Risk Controls — Funding Monitor + Breaker Recalibration (TB00806 whole-organism)
+</p>
+<p>
+The §13.8 hedge implies two risk controls, both DERIVED by running the proposed change through the LIVE
+gates — the TB00806 whole-organism analysis imported the live tothbot.pipeline.risk_guard (G7) +
+position_sizer (G8) + config.registry + ciats.ewma_monitor and ran BOTH modules through the real
+per-module wallets / frozen baselines / breakers, NOT a stovepiped model. Both controls REUSE existing
+machinery; NEITHER is a new module nor a new gate. The perps SHORT is the EXISTING dormant Short_Module
+(TB00000 sec 7) re-grounded from the §2 spot-margin path to the perps route — NOT a new &#x22;perp
+module&#x22;. The sacred 1:1.5 R:R floor and the frozen-deposit ruin HALT are untouched.
+</p>
+<pre>
+  FUNDING MONITOR — reuses the live EwmaMonitor, signals-only (covers the §13.8 B2 sensitivity)
+
+  The §13.8 sustained-adverse-funding sensitivity is covered by a CIATS sustained-funding
+  monitor — ONE new instance of the live EwmaMonitor (the exact fee_tier_divergence
+  machinery, ciats/ewma_monitor.py) plus one threshold seed. It is SIGNALS-ONLY (TB00000
+  D5: monitors + alerts, never self-adjusts — routes to the CIATS PDCA cycle + Bill
+  HR-CI-011), so it CANNOT deadlock. Verified in the whole-organism run: it fires at the
+  sustained_n count on a pinned-adverse funding regime and stays SILENT on real funding.
+  It folds into the §13.6 tier-divergence monitor as the proposed
+  perp_funding_divergence_monitor instance — a cheap, safe add IF perps go live.
+</pre>
+<pre>
+  HEDGE-BREAKER RECALIBRATION — per-module breaker config via the EXISTING override params
+
+  The whole-organism analysis found that the LIVE 5% frozen-baseline session-PAUSE breaker
+  STRANGLES a thin-edge hedge (in the run: 90 of 1007 trades taken, 917 pauses, -$304). A
+  hedge sits at a drawdown-from-deposit BY DESIGN, and a PAUSED hedge cannot self-equity-
+  recover — the TB00804 DEADLOCK LAW: a paused book makes no equity, so any RESUME must be
+  EXOGENOUS (regime / time), never self-equity. FIX (FP/DP): keep the HALT on the FROZEN
+  deposit (the ruin floor) but move the PAUSE to an EXOGENOUSLY-re-arming rolling-window
+  basis wide enough to clear the hedge&#x27;s ~7.5% natural drawdown. RECALIBRATION:
+  short-module PAUSE = rolling-window 10% (exogenous re-arm) / HALT = frozen-deposit 20%
+  (ruin floor). Tested through the LIVE evaluate_risk_guard across five variants: the hedge
+  DEPLOYS (1005-1007 of 1007 trades vs 90), stays RUIN-SAFE (HALT never trips; worst ~7.5%
+  real / ~15% bootstrap-worst, under the 20% halt; 0 halts in 150 resamples), and flips
+  -$304 to +$1353. Every deploying variant is outcome-equivalent, so the pick is PRINCIPLED:
+  V2 rolling-pause 10% / frozen-halt 20% (tightest safe ruin floor + exogenous deadlock-safe
+  re-arm). Implemented ENTIRELY through evaluate_risk_guard&#x27;s EXISTING override params
+  (baseline-source + the two thresholds) — NO new gate code; a per-module breaker config,
+  CIATS-ownable. The sacred 1:1.5 R:R floor + the frozen-deposit ruin HALT are untouched.
+</pre>
+<pre>
+  THE PART-VS-WHOLE LAW — re-ground, do not rebuild; drive changes through the LIVE gates
+
+  The reusable Deming lesson from this analysis: always drive a proposed change through the
+  LIVE gates, NOT a simplified model. Doing so MATERIALLY CORRECTED three stovepiped
+  recommendations:
+    1. The 2-3x leverage band was ALREADY in the model — registry leverage_cap_short = 3
+       already feeds the short&#x27;s committed margin in G7 (validated by battery C, §13.7);
+       nothing to add.
+    2. &#x22;Size the short as a hedge&#x22; was OVERTURNED at the account level: the long&#x27;s
+       OWN 5% frozen-baseline breaker already makes ruin impossible (~1.3% worst-from-deposit),
+       so the hedge&#x27;s insurance is largely REDUNDANT with the breaker that already exists,
+       and adding short capital slightly DILUTES whole-account Calmar (~16.1 to ~15.8). HOW
+       MUCH hedge to run is therefore a §13.8 allocation-frontier sizing call, NOT a default-on.
+    3. Only the FUNDING MONITOR + the BREAKER RECALIBRATION survived as genuine adds — both
+       reuse existing machinery (no new module, no new gate).
+  The deployed spot LONG is UNAFFECTED by either control: it already takes all its trades
+  with 0 pauses and identical PnL under any breaker config — its breaker simply never fires.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>
