@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_91
+DocVersion: dv1_92
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_91.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_92.txt
 DocDate:    06-20-2026
-DocTime:    16:00:00 UTC
+DocTime:    17:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32872,6 +32872,54 @@ LIVE: DocVersion dv1_91 / DocPath ...dv1_91... /
 DocDate 06-20-2026 / DocTime 16:00:00 UTC
 
 ----- END TB00807 GRADUATE Section 13 out of Open Items plus SITE the NEW Image10 Perps Hedge Organism figure plus MINT the perp seeds TB00000 v2_103 dv1_281 OP RECORD -----
+
+
+----- TB00808 AUDIT FIX correct the 13.1 plus 13.5 venue sub-headings to name the ratified Kraken-Pro primary route dv1_282 OP RECORD -----
+
+TB00808: AUDIT FIX of the perps graduation. The TB00808 read-first audit of the TB00807 work product
+(0500000 + the diagrams: unintended-alterations / correctness / completeness) found the section CLEAN on
+all counts EXCEPT one factual inconsistency in two sub-headings. Bill directed it be made CORRECT (not
+rationalized). This slice fixes it in place. PROSE-ONLY; element COUNT UNCHANGED (g 231 / text 1022 /
+desc 137 / svg 11 / title 137 / figcaption 11); HTML well-formed (html.parser). Nothing erased. Sacred
+1:1.5 R:R floor untouched. STAY IN PAPER.
+
+THE DEFECT: the section 13.1 and 13.5 sub-headings still framed the VENUE itself as "Bitnomial" --
+  13.1 "... Expansion -- Bitnomial Venue"
+  13.5 "Funding / Margin Model -- Bitnomial Perps"
+-- which CONTRADICTS the ratified PRIMARY access route. TB00798 ratified KRAKEN-PRO as the primary perps
+route (Bill verbatim "Kraken Pro is the best choice"); the direct-Bitnomial native protocol is the
+DEMOTED section 13.2 FALLBACK. The headings predate that reversal (they carry the TB00796 design-GO
+framing) and were never updated when the route was reversed, so the GRADUATED section opened by naming
+the wrong primary venue. The section 13.10 figure already names it correctly ("Kraken-Pro / Bitnomial
+US-Perps ... one Payward stack"); the headings were the lone stale spot.
+
+0500000 EDITS (two sub-headings, primary route named FIRST; Bitnomial retained as the clearing backend):
+  13.1 "Perpetual-Futures (Perps) Expansion -- Kraken-Pro / Bitnomial Venue (TB00796 design GO; primary
+       route ratified Kraken-Pro at TB00798)"
+  13.5 "Funding / Margin Model -- Kraken-Pro / Bitnomial Perps (GRADUATED; gated on the section 13.1
+       confirm-first live-readiness items)"
+
+SCOPE CHECK (why only two lines changed): a full grep of every "Bitnomial" mention in section 13 confirmed
+the other ~30 are CORRECT and were left byte-identical -- they name the regulated clearing entity
+(Bitnomial holds the CFTC DCM + DCO + FCM trifecta), the section 13.2/13.3 DIRECT-Bitnomial FALLBACK route
+(explicitly headed "DIRECT-BITNOMIAL FALLBACK ROUTE (demoted at TB00798)"), 8h funding settlement inside
+the Bitnomial clearing, the per-contract multiplier, and the real maint-margin specs to pin at code time.
+Only the two venue-framing sub-headings were factually stale; only they were changed.
+
+VERIFICATION: html.parser PASS; element counts UNCHANGED (prose-only, no geometry touched) -- g 231 /
+text 1022 / desc 137 / svg 11 / title 137 / figcaption 11; no residual dv1_281 in the live diagram; both
+corrected headings present. The audit's other three dimensions confirmed CLEAN with no further fixes:
+file-level blast radius = only these two docs; the 10 pre-existing figures byte-identical; Image10 strict-
+XML valid; TB00000 sec 8 mints exactly the seeds section 13.6 names; both sides (Long Perp + Short Perp +
+hedging) present; the only residual "PROPOSED" is the intentional section 13.2 unbuilt FALLBACK.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_91 / DocPath ...dv1_91... /
+DocDate 06-20-2026 / DocTime 16:00:00 UTC
+LIVE: DocVersion dv1_92 / DocPath ...dv1_92... /
+DocDate 06-20-2026 / DocTime 17:30:00 UTC
+
+----- END TB00808 AUDIT FIX correct the 13.1 plus 13.5 venue sub-headings to name the ratified Kraken-Pro primary route dv1_282 OP RECORD -----
 
 
 ============================================================
