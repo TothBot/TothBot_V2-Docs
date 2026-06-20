@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_279</title>
+<title>0500000 System Architecture Overview dv1_280</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_279</td></tr>
+  <tr><td>DocVersion</td><td>dv1_280</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_279_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_280_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-20-2026</td></tr>
-  <tr><td>DocTime</td><td>06:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>06:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -8100,7 +8100,7 @@ parameter-siting slice.
 13.6 Proposed Perp CIATS Parameter Registry — Named-as-Proposed Across §13.1–§13.5 (pre-spec; NOT yet minted in TB00000 sec 8)
 </p>
 <p>
-This slice CONSOLIDATES every perp parameter NAMED as proposed across §13.1–§13.5 into one place, so
+This slice CONSOLIDATES every perp parameter NAMED as proposed across §13.1–§13.5 (plus the §13.8–§13.9 hedge controls) into one place, so
 that the formal registration is a SINGLE clean graduation step once the six §13.1 confirm-first items
 clear. NOTHING here is minted yet — TB00000 v2_102 is UNCHANGED, no perp seed lands in TB00000 sec 8 or
 the §13.4 mechanism figures at this slice. Per the TB00000 sec 4 binary architecture test a parameter&#x27;s
@@ -8163,6 +8163,40 @@ shown here.
                              kill-switch (§13.3 GAP-RISK mitigation). Fallback path only.
   perp_mark_poll_interval    the §13.2 mark-price watchdog poll cadence (the &#x22;tight mark
                              polling&#x22; mitigation). Fallback path only.
+</pre>
+<pre>
+  PROPOSED PERP SEEDS — HEDGE CONTROLS (TB00806; both perp pools; all PROPOSED, CIATS-owned)
+
+  perp_short_hedge_weight    PROPOSED (§13.8). The allocation-frontier short-sizing knob —
+                             HOW MUCH Short-Perp capital to run as a hedge. A LIGHT weight
+                             (e.g. ~90 / 5 / 5 Long-Spot / Long-Perp / Short-Perp) keeps
+                             ~100% of long-only Calmar while buying tail insurance; heavier
+                             short weight buys more drawdown protection at a Calmar cost. The
+                             hedge is sized as INSURANCE, NOT as a co-equal profit center.
+                             CIATS-owned (the A6 frontier), NOT a hand-set Bill knob.
+  perp_funding_divergence_monitor
+                             PROPOSED (§13.9). The sustained-adverse-funding monitor — ONE new
+                             instance of the live EwmaMonitor (the fee_tier_divergence
+                             machinery, ciats/ewma_monitor.py) + one threshold seed. SIGNALS-
+                             ONLY (TB00000 D5: monitors / alerts, never self-adjusts — routes
+                             to the CIATS PDCA cycle + Bill HR-CI-011), so it CANNOT deadlock.
+                             Covers the §13.8 B2 sensitivity (a thin short edge erased by
+                             sustained hard-adverse funding); alerts on a sharp sustained flip.
+                             Folds into the tier-divergence monitor above as a sibling instance.
+  perp_short_breaker_config  PROPOSED (§13.9). The per-module hedge-breaker config — the
+                             Short-Perp module&#x27;s PAUSE = rolling-window 10% (exogenous
+                             re-arm) / HALT = frozen-deposit 20% (ruin floor). NOT a new gate:
+                             it is evaluate_risk_guard&#x27;s EXISTING override params
+                             (baseline-source + the two thresholds), set per-module. CIATS-
+                             ownable. The frozen-deposit ruin HALT + the sacred 1:1.5 R:R floor
+                             are untouched; the spot LONG module keeps its existing 5% / 10%
+                             frozen-baseline breaker (unaffected, §13.9).
+
+  ALREADY REGISTERED — VALIDATED by TB00806, not new:
+  leverage_cap_short = 3     EXISTING registered seed (TB00000 sec 8) — the §13.7 battery-C
+                             2-3x leverage constraint IS this seed (it already feeds the
+                             short&#x27;s committed margin in the G7 Risk Guard). VALIDATED, not
+                             added; listed here so the hedge-control set reads complete.
 </pre>
 <pre>
   NOT SEEDS — exchange-set inputs + engineering constants (listed for completeness, both sides)

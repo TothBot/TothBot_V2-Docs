@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_89
+DocVersion: dv1_90
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_89.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_90.txt
 DocDate:    06-20-2026
-DocTime:    06:00:00 UTC
+DocTime:    06:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32770,6 +32770,52 @@ LIVE: DocVersion dv1_89 / DocPath ...dv1_89... /
 DocDate 06-20-2026 / DocTime 06:00:00 UTC
 
 ----- END TB00807 SITE the NEW 13.9 PERPS HEDGE RISK CONTROLS funding monitor plus breaker recalibration via TB00806 whole-organism dv1_279 OP RECORD -----
+
+
+----- TB00807 UPDATE the 13.6 PERP CIATS PARAMETER REGISTRY add the HEDGE CONTROLS proposed set via TB00806 dv1_280 OP RECORD -----
+
+TB00807: UPDATE the Section 13.6 PROPOSED PERP CIATS PARAMETER REGISTRY of 0500000 to register the
+hedge-control parameters NAMED across the new 13.8 / 13.9 -- slice 4 (the final fold-in slice).
+Diagram-first, PROSE-ONLY (in-place lead enrichment + ONE new HEDGE CONTROLS <pre> inserted after the
+VENUE / EXECUTION block, before the NOT-SEEDS block; NO SVG geometry). EVERYTHING stays PROPOSED --
+nothing minted, TB00000 v2_102 UNCHANGED. NO new counted element, NO namespace token, NO new CIATS seed
+formally minted (these are consolidated NAMED-as-proposed, the single graduation mint stays deferred).
+Both perp pools; the spot LONG breaker is unaffected. STAY IN PAPER. Nothing erased.
+
+0500000 EDITS (in-place prose, Section 13.6):
+ - lead <p>: "across 13.1-13.5" enriched to "across 13.1-13.5 (plus the 13.8-13.9 hedge controls)" so the
+   registry's self-description stays accurate.
+ - NEW HEDGE CONTROLS <pre> (after VENUE / EXECUTION, before NOT-SEEDS), all PROPOSED + CIATS-owned:
+     perp_short_hedge_weight -- the 13.8 allocation-frontier short-sizing knob (a light ~90/5/5 keeps
+       ~100% long-only Calmar; heavier = more protection at a Calmar cost); hedge sized as INSURANCE not a
+       co-equal profit center; CIATS-owned (A6 frontier), not a hand-set Bill knob.
+     perp_funding_divergence_monitor -- the 13.9 sustained-adverse-funding monitor; ONE new EwmaMonitor
+       instance (the fee_tier_divergence machinery) + one threshold seed; SIGNALS-ONLY (D5, routes to CIATS
+       PDCA + Bill HR-CI-011, cannot deadlock); covers the 13.8 B2 sensitivity; sibling of the tier-
+       divergence monitor.
+     perp_short_breaker_config -- the 13.9 per-module hedge breaker (PAUSE rolling 10% / HALT frozen 20%);
+       NOT a new gate, it is evaluate_risk_guard's EXISTING override params set per-module; CIATS-ownable;
+       frozen-deposit ruin HALT + sacred 1:1.5 floor untouched; spot LONG keeps its existing 5%/10% breaker.
+     ALREADY REGISTERED -- VALIDATED not new: leverage_cap_short = 3 (TB00000 sec 8) IS the 13.7 battery-C
+       2-3x constraint (already feeds the short's committed margin in G7); listed so the set reads complete.
+
+NO NEW CIATS SEED minted. No TB00000 seed change (v2_102 unchanged; all perp params remain PROPOSED, first
+land formally at graduation -- the SHORT side contributes the new proposed seeds incl these hedge controls,
+the LONG side contributes none). R DISPOSITION: no figure R bump -- in-place prose, NO geometry, counted
+element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophes in the new block
+entity-encoded (&#x27;); no residual dv1_279 in the live diagram. Section 13.6 now consolidates the three
+PROPOSED hedge-control params + the validated leverage_cap_short, completing the perps + hedging fold-in.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_89 / DocPath ...dv1_89... /
+DocDate 06-20-2026 / DocTime 06:00:00 UTC
+LIVE: DocVersion dv1_90 / DocPath ...dv1_90... /
+DocDate 06-20-2026 / DocTime 06:30:00 UTC
+
+----- END TB00807 UPDATE the 13.6 PERP CIATS PARAMETER REGISTRY add the HEDGE CONTROLS proposed set via TB00806 dv1_280 OP RECORD -----
 
 
 ============================================================
