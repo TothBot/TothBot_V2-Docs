@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_277</title>
+<title>0500000 System Architecture Overview dv1_278</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_277</td></tr>
+  <tr><td>DocVersion</td><td>dv1_278</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_277_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_278_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-20-2026</td></tr>
-  <tr><td>DocTime</td><td>05:00:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>05:30:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -8299,6 +8299,81 @@ TB00000 sec 7 module. The LONG and SHORT perp pools are documented here to EQUAL
   (long = breakout / wide-stop / reversal-exit; short = mean-reversion / filtered /
   trailing-or-target), NOT in wallet, margin, isolation, or loss-cap mechanics — which
   are documented here to EQUAL DETAIL on both sides.
+</pre>
+<p>
+13.8 Perps Hedge Model — Drawdown / Regime Insurance, Not a Return Improver (TB00806 battery A/B)
+</p>
+<p>
+The two perp pools (§13.7 Long Perp + Short Perp), together with the spot Long, form the hedged
+organism. TB00806 rigorously tested what running BOTH sides actually buys (battery A = concurrent
+two-pool drawdown; battery B = funding stress), pre-registering pass bars and keeping the failures
+visible. The honest finding: the hedge is DRAWDOWN / REGIME INSURANCE, NOT a risk-adjusted-return
+improver. The LONG (the validated spot edge + the long-perp breakout) is the profit engine; the perp
+SHORT is an incremental, ruin-safe, MODESTLY-sized regime hedge — documented here as such, NOT as a
+co-equal profit center. This slice records the validated hedge behaviour + the funding sensitivity; the
+controls it implies (the funding monitor + the hedge-breaker recalibration) are §13.9.
+</p>
+<pre>
+  THE HEDGE — what battery A proved (drawdown / regime insurance; 7 of 8, honestly mixed)
+
+  HOLDS (the insurance is REAL):
+    - At EQUAL capital the combined 3-pool book cuts maxDD ~50% vs long-only
+      (~$620 vs ~$1226 in the TB00806 run).
+    - Long vs Short monthly PnL is ANTI-CORRELATED (~0 in bear, slightly negative
+      overall) — the two sides cover different regimes.
+    - Shuffled Monte-Carlo tail tighter; worst month ~halved (-$175 vs -$452).
+    - maxDD is LOWER in 6 of 6 walk-forward eras, including all three bear eras.
+    - The §13.7 no-same-instrument-collision rule is FREE (+5.6% — it removes trades
+      that would fight an already-open opposite position).
+
+  THE HONEST FAIL (pre-registered, kept VISIBLE — not papered over):
+    - The combined full-sample CALMAR does NOT beat the pure spot long (~13.6 vs ~16.1).
+      The spot long is the single best risk-adjusted pool; every perp allocation trades
+      some return for safety. The hedge win shows up in the WORST PHASE, not in the
+      full-sample average — consistent with the halving-cycle finding that the both-sides
+      book is the cycle hedge.
+</pre>
+<pre>
+  HONEST FRAMING — long = profit engine, short = ruin-safe modest hedge
+
+  The LONG carries the organism: the validated spot edge (~5x over 7.5yr, Calmar ~16,
+  parameter-plateau robust). The perp SHORT, once its breaker is recalibrated (§13.9),
+  is marginally profitable standalone (~5%/yr on its own pool) but its REAL job is
+  bear / cooling-phase drawdown protection. It is documented as an incremental,
+  ruin-safe REGIME HEDGE — NOT a co-equal profit center. Two prior findings land here:
+  the perps re-validation (the revived short is a regime-CONCENTRATED bear / cooling
+  hedge, not all-weather alpha) and the cycle verdict (the both-sides book IS the 4yr
+  halving-cycle hedge — breakout-long harvests bulls, mean-reversion-short carries
+  bears). The sacred 1:1.5 R:R floor is untouched on both sides and is NEVER lowered.
+</pre>
+<pre>
+  SIZING — the A6 allocation frontier is the CIATS short-sizing knob (proposed)
+
+  HOW MUCH short to run is an allocation-frontier choice, CIATS-owned (NOT a hand-set
+  Bill knob). A LIGHT hedge weight (e.g. ~90 / 5 / 5 Long-Spot / Long-Perp / Short-Perp)
+  keeps ~100% of long-only Calmar while still buying the tail insurance; heavier short
+  weight buys more drawdown protection at a Calmar cost. The frontier is registered as
+  the proposed perp_short_hedge_weight knob (§13.6). Honest scale note: at an equal
+  $5000-per-module split the deployed hedge cuts whole-account BEAR-phase drawdown only
+  ~2% — the §13.9 breaker recalibration UNBLOCKS the hedge and makes it ruin-safe; HOW
+  MUCH protection to buy is this sizing call, deferred to CIATS + the allocation frontier.
+  STAY IN PAPER.
+</pre>
+<pre>
+  FUNDING — battery B: second-order + de-risked, with ONE monitored sensitivity (4 of 5)
+
+  Funding is largely SECOND-ORDER. In the historical positive-funding regime the short
+  COLLECTS funding on average (a tailwind), so real OR 5x-amplified funding HELPS the
+  short (B1); the worst single REAL funding cost was ~$5 vs the ~$16.67 posted margin
+  (B3); funding cost is NOT compounded with price losses (correlation ~ -0.04, B4); the
+  bear-hedge role survives 2x funding (B5).
+  THE ONE SENSITIVITY (B2, honest FAIL kept visible): because the short is a THIN ~2.5%
+  edge, funding pinned HARD-ADVERSE and SUSTAINED across a whole holding history erases
+  it — break-even ~0.13%/day (~0.04%/8h), ABOVE typical funding (~4x headroom) but BELOW
+  the exchange clamp ceiling (0.225%/day). A permanent adverse pin is unphysical, but
+  sustained-adverse funding is the short&#x27;s most material cost — which is exactly why
+  §13.9 adds a CIATS sustained-funding monitor. Neither the per-contract fee NOR typical
+  funding is the edge lever; the lever is native short ACCESS + the §13.4 config.
 </pre>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>

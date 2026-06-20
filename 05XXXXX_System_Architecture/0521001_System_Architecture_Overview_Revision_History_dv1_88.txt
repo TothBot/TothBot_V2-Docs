@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_87
+DocVersion: dv1_88
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_87.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_88.txt
 DocDate:    06-20-2026
-DocTime:    05:00:00 UTC
+DocTime:    05:30:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32663,6 +32663,57 @@ LIVE: DocVersion dv1_87 / DocPath ...dv1_87... /
 DocDate 06-20-2026 / DocTime 05:00:00 UTC
 
 ----- END TB00807 GRADUATE the 13.1 plus 13.7 ISOLATED-MARGIN LOSS CAP to VALIDATED-STRUCTURAL via TB00806 battery C dv1_277 OP RECORD -----
+
+
+----- TB00807 SITE the NEW 13.8 PERPS HEDGE MODEL drawdown regime insurance not a return improver via TB00806 battery A B dv1_278 OP RECORD -----
+
+TB00807: SITE a NEW Section 13.8 PERPS HEDGE MODEL into 0500000 -- slice 2 of the perps + hedging
+fold-in. Diagram-first, PROSE-ONLY (new <p> heading + lead <p> + four <pre> blocks appended after the
+13.7 EQUAL-DETAIL block, before the Section 14 pointer; NO SVG geometry). Folds the TB00806 battery A
+(concurrent two-pool drawdown, 7/8) + battery B (funding stress, 4/5) results: the both-sides hedge is
+DRAWDOWN / REGIME INSURANCE, NOT a risk-adjusted-return improver. NO new counted element, NO namespace
+token, NO new CIATS seed (perp_short_hedge_weight is NAMED-as-proposed here, formally registered in the
+13.6 slice). TB00000 v2_102 UNCHANGED. STAY IN PAPER. Nothing erased -- pure append.
+
+0500000 EDITS (new prose, Section 13.8):
+ - heading <p> "13.8 Perps Hedge Model -- Drawdown / Regime Insurance, Not a Return Improver (TB00806
+   battery A/B)" + a lead <p> framing the honest finding: long = profit engine, perp short = incremental,
+   ruin-safe, modestly-sized regime hedge; controls deferred to 13.9.
+ - THE HEDGE <pre> (battery A 7/8): HOLDS -- equal-capital combined book cuts maxDD ~50% (~$620 vs ~$1226);
+   Long vs Short monthly PnL anti-correlated (~0 bear); shuffled-MC tail tighter; worst month ~halved;
+   maxDD lower in 6/6 walk-forward eras incl all 3 bear eras; the 13.7 no-same-instrument-collision rule is
+   FREE (+5.6%). HONEST FAIL kept visible: combined full-sample Calmar does NOT beat the pure spot long
+   (~13.6 vs ~16.1) -- the win is in the WORST PHASE not the average.
+ - HONEST FRAMING <pre>: long carries the organism (~5x/7.5yr, Calmar ~16, plateau-robust); the perp short
+   once breaker-recalibrated (13.9) is marginally profitable but its real job is bear/cooling drawdown
+   protection -- an incremental ruin-safe REGIME HEDGE, not a co-equal profit center; the perps-revalidation
+   + cycle findings land here; sacred 1:1.5 floor untouched.
+ - SIZING <pre>: the A6 allocation frontier is the CIATS short-sizing knob (proposed perp_short_hedge_weight,
+   13.6); a light ~90/5/5 split keeps ~100% of long-only Calmar while buying tail insurance; heavier short
+   = more protection at a Calmar cost; at equal $5000/module the hedge cuts whole-account bear-phase
+   drawdown only ~2% -- HOW MUCH to buy is the CIATS sizing call.
+ - FUNDING <pre> (battery B 4/5): funding second-order + de-risked -- the short COLLECTS funding on average
+   (real or 5x HELPS it, B1), worst real cost ~$5 vs ~$16.67 margin (B3), not compounded with price (B4),
+   survives 2x (B5). The ONE SENSITIVITY (B2 honest fail): a thin ~2.5% edge is erased by SUSTAINED
+   hard-adverse funding -- break-even ~0.13%/day, above typical (~4x headroom) but below the 0.225%/day
+   clamp ceiling -> the 13.9 sustained-funding monitor. Lever = native short ACCESS + 13.4 config, NOT fee
+   or typical funding.
+
+NO NEW CIATS SEED minted. No TB00000 seed change (v2_102 unchanged). R DISPOSITION: no figure R bump --
+new prose, NO geometry, counted element COUNT unchanged.
+
+VERIFICATION: HTML well-formed (html.parser pass); tag classes balanced and UNCHANGED -- g 217/217,
+text 957/957, desc 126/126, svg 10/10, title 126/126, figcaption 10/10; apostrophe in the new prose
+entity-encoded (short&#x27;s); no residual dv1_277 in the live diagram. Section 13.8 now documents the
+validated hedge behaviour + the funding sensitivity, framed honestly as insurance not alpha.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_87 / DocPath ...dv1_87... /
+DocDate 06-20-2026 / DocTime 05:00:00 UTC
+LIVE: DocVersion dv1_88 / DocPath ...dv1_88... /
+DocDate 06-20-2026 / DocTime 05:30:00 UTC
+
+----- END TB00807 SITE the NEW 13.8 PERPS HEDGE MODEL drawdown regime insurance not a return improver via TB00806 battery A B dv1_278 OP RECORD -----
 
 
 ============================================================
