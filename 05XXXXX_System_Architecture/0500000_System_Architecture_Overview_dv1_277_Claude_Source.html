@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_276</title>
+<title>0500000 System Architecture Overview dv1_277</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_276</td></tr>
+  <tr><td>DocVersion</td><td>dv1_277</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_276_Claude_Source.html</td></tr>
-  <tr><td>DocDate</td><td>06-19-2026</td></tr>
-  <tr><td>DocTime</td><td>11:00:00 UTC</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_277_Claude_Source.html</td></tr>
+  <tr><td>DocDate</td><td>06-20-2026</td></tr>
+  <tr><td>DocTime</td><td>05:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7767,6 +7767,8 @@ slice.
     this at TB00798 (verbatim: &#x22;Kraken Pro is the best choice&#x22;). The crash-proof
     loss cap is the EXCHANGE-ENFORCED isolated-margin liquidation, sized at ~ the maximum
     intended loss per pool — a loss boundary that is EXCHANGE-resident, not bot-resident.
+    This loss cap is now VALIDATED as STRUCTURAL (TB00806 battery C, 7/7) — see the §13.7
+    VALIDATED block below.
 
     WHY THIS REVERSES THE EARLIER 13.1 CALL (stated plainly; nothing hidden, nothing erased).
     The prior &#x22;DIRECT BITNOMIAL, ISOLATED PERPS ORGANISM&#x22; call was tagged
@@ -8232,6 +8234,36 @@ TB00000 sec 7 module. The LONG and SHORT perp pools are documented here to EQUAL
   risk-managed exit at the 1:1.5-floor prices; isolated-margin liquidation catches the
   TAIL if a stop fails to fire or TothBot is dead. The sacred 1:1.5 R:R floor is
   unaffected and is NEVER lowered.
+</pre>
+<pre>
+  VALIDATED — TB00806 battery C (isolated-margin loss cap under gaps; 7 of 7 pass)
+
+  The §13.1 First-Principles claim that this isolated-margin liquidation is a
+  crash-proof loss cap is now VALIDATED by the TB00806 unified 3-pool perp-account
+  simulator (battery C, 7 of 7 sub-tests pass). The loss cap is STRUCTURAL, not
+  statistical: on isolated margin a position&#x27;s realized POOL loss is bounded by the
+  posted margin BY CONSTRUCTION — even on a gap-through to 50%-plus, the overflow
+  beyond the posted margin belongs to the EXCHANGE insurance fund, not to the pool.
+  Verified four ways that agree: gap sweeps; native-stop-fails (a gap-through with no
+  resting stop); every pair&#x27;s worst REAL historical wick; a 40k-draw fat-tailed
+  Monte-Carlo (both the 99.9th-percentile AND the absolute-max pool loss stay at or
+  below the posted margin); and an all-pairs simultaneous-crash cascade. The three
+  pools are BYTE-isolated — crashing one pool 99% leaves the other two bit-for-bit
+  unchanged = ZERO contagion = the ring-fence above, proven by construction.
+
+  DESIGN CONSTRAINT (battery C7) — keep leverage LOW (2-3x) so the liquidation price
+  sits UNDER the wide layer:L2 = decision_atr_stop_mult x ATR stop and stays a TAIL
+  backstop, never the primary exit. At 2-3x the edge is preserved bit-for-bit vs a
+  no-margin baseline; at 5x or higher the liquidation starts eating the edge; at 20x
+  it goes negative. This constraint is ALREADY satisfied — the registry
+  leverage_cap_short = 3 seed (TB00000 sec 8) already feeds the short&#x27;s committed
+  margin in the G7 Risk Guard, confirmed by the §13.9 whole-organism analysis; nothing
+  to add, the seed is VALIDATED not new.
+
+  CAVEAT — pin at code time. The real Kraken / Bitnomial maintenance-margin ratio and
+  per-contract multiplier are NON-PUBLIC (§13.1 confirm item 3); TB00806 swept them
+  across a plausible range. They must be pinned from the rulebook at code time, and the
+  perps organism STAYS IN PAPER until they are.
 </pre>
 <pre>
   CIATS RULE TO ADD — no same-instrument long+short collision (both sides, equal detail)
