@@ -1,10 +1,10 @@
 DocDCN:     0521001
 DocTitle:   System_Architecture_Overview_Revision_History
-DocVersion: dv1_90
+DocVersion: dv1_91
 DocOwner:   Bill
-DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_90.txt
+DocPath:    GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0521001_System_Architecture_Overview_Revision_History_dv1_91.txt
 DocDate:    06-20-2026
-DocTime:    06:30:00 UTC
+DocTime:    16:00:00 UTC
 
 ============================================================
 SYSTEM ARCHITECTURE OVERVIEW -- REVISION HISTORY (ARCHIVE)
@@ -32816,6 +32816,62 @@ LIVE: DocVersion dv1_90 / DocPath ...dv1_90... /
 DocDate 06-20-2026 / DocTime 06:30:00 UTC
 
 ----- END TB00807 UPDATE the 13.6 PERP CIATS PARAMETER REGISTRY add the HEDGE CONTROLS proposed set via TB00806 dv1_280 OP RECORD -----
+
+
+----- TB00807 GRADUATE Section 13 out of Open Items plus SITE the NEW Image10 Perps Hedge Organism figure plus MINT the perp seeds TB00000 v2_103 dv1_281 OP RECORD -----
+
+TB00807: GRADUATE the perps + hedging fully into 0500000 per Bill's directive (verbatim: "Graduate the
+Mother Fucker like you are instructed"; finish the document, stop deferring). This is the GRADUATION slice
+-- the prior slices 1-4 folded the prose; this slice (a) SITES a NEW counted SVG figure (Image10 Perps
+Hedge Organism, R1), (b) GRADUATES Section 13 OUT of "Open Items -- Require Specification Documents" into a
+numbered architecture section, (c) flips the §13 registry language from PROPOSED / deferred to REGISTERED,
+and (d) MINTS the perp seed VALUES into TB00000 sec 8 (v2_102 -> v2_103). This is the first NON-prose,
+counted-element-changing slice of the perps fold-in; element counts CHANGE (a real figure was added).
+Sacred 1:1.5 R:R floor NEVER lowered. STAY IN PAPER. Nothing erased.
+
+0500000 EDITS:
+ - NEW FIGURE Image10 (Diagram 10) "Perps Hedge Organism" inserted at the end of Section 13 (after 13.9,
+   before the Section 14 pointer) as a new §13.10. A canonical R1 Tier-2 figure: VENUE
+   (container:Perps_Venue_Kraken_Pro) -> THREE POOLS (mod:Long_Spot_Pool / mod:Long_Perp_Pool /
+   mod:Short_Perp_Pool, ring-fenced) -> ISOLATED-MARGIN LOSS CAP (rule:Perp_Isolated_Margin_Loss_Cap,
+   VALIDATED-structural battery C) -> HEDGE RELATIONSHIP (rule:Perp_Hedge_Drawdown_Insurance, drawdown /
+   regime insurance battery A) + rule:No_Same_Instrument_Collision -> HEDGE CONTROLS
+   (mod:Perp_Funding_Divergence_Monitor / param:perp_short_breaker_config / param:perp_short_hedge_weight).
+   10 canonical elements (title + desc each) + 4 chrome g + footer. Strict-XML validated.
+ - Section 13 GRADUATED: the §13 h2 retitled from "Open Items -- Require Specification Documents" to
+   "Perpetual-Futures (Perps) Hedge Organism -- GRADUATED Architecture (TB00807)"; the 13.1 NAMESPACE /
+   PARAMETER REGISTRATION block + the 13.6 heading / lead / REGISTRATION-DISCIPLINE block + the 13.4 short
+   magnitudes + the 13.5 heading flipped from DEFERRED / PROPOSED / pre-spec / "nothing minted" to
+   GRADUATED / REGISTERED in TB00000 sec 8 (v2_103). The §13.6 seed blocks (SHORT side, VENUE/EXECUTION,
+   HEDGE CONTROLS) retitled PROPOSED -> REGISTERED; each perp seed line PROPOSED -> REGISTERED (TB00000 sec
+   8). The §13.2 DIRECT-Bitnomial FALLBACK "PROPOSED CONNECTION POINTS" stays PROPOSED (the fallback route
+   is genuinely unbuilt) + the three fallback-route synthesis tunables (perp_exit_cross_ticks /
+   perp_exit_chase_cap / perp_mark_poll_interval) stay scoped fallback-route-only.
+
+TB00000 v2_102 -> v2_103 (companion mint, SessionLogs repo): Section 8 gains the "CIATS - perps" group
+minting perp_short_entry_meanrev / perp_short_regime_filter / perp_short_exit_trail / perp_fee_per_contract
+/ perp_short_hedge_weight / perp_funding_divergence_monitor / perp_short_breaker_config (all CIATS-owned,
+per-module); leverage_cap_short = 3x REUSED (TB00806 battery C). A v2_103 version note added at the top.
+
+R DISPOSITION: NEW figure Image10 assigned R1 (figure R-baseline at graduation). Counted element COUNT
+CHANGES this slice (a real SVG figure added): g 217 -> 231 (+14), text 957 -> 1022 (+65), desc 126 -> 137
+(+11), svg 10 -> 11 (+1), title 126 -> 137 (+11), figcaption 10 -> 11 (+1).
+
+VERIFICATION: HTML well-formed (html.parser pass); the new Image10 <svg> subtree ALSO validated as strict
+XML (xml.etree.ElementTree.fromstring); tag classes now g 231 / text 1022 / desc 137 / svg 11 / title 137 /
+figcaption 11 (consistent with the single new figure); apostrophes + quotes entity-encoded (&#x27; /
+&#x22;); no residual dv1_280 in the live diagram; no residual "PROPOSED / pre-spec / DEFERRED" in the
+PRIMARY perps architecture (the one remaining "PROPOSED CONNECTION POINTS" is the §13.2 unbuilt FALLBACK,
+intentional). Section 13 now reads as graduated architecture with the §13.10 figure; the perp seeds are
+minted in TB00000 sec 8 v2_103.
+
+[FA-HDR | standard four-line header bump]
+REMOVED: DocVersion dv1_90 / DocPath ...dv1_90... /
+DocDate 06-20-2026 / DocTime 06:30:00 UTC
+LIVE: DocVersion dv1_91 / DocPath ...dv1_91... /
+DocDate 06-20-2026 / DocTime 16:00:00 UTC
+
+----- END TB00807 GRADUATE Section 13 out of Open Items plus SITE the NEW Image10 Perps Hedge Organism figure plus MINT the perp seeds TB00000 v2_103 dv1_281 OP RECORD -----
 
 
 ============================================================

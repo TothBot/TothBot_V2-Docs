@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0500000 System Architecture Overview dv1_280</title>
+<title>0500000 System Architecture Overview dv1_281</title>
 <style>
 :root {
   --bg: #ffffff;
@@ -132,11 +132,11 @@ figure.diagram-placeholder .placeholder-box {
 <table class="dc-meta">
   <tr><td>DocDCN</td><td>0500000</td></tr>
   <tr><td>DocTitle</td><td>System_Architecture_Overview</td></tr>
-  <tr><td>DocVersion</td><td>dv1_280</td></tr>
+  <tr><td>DocVersion</td><td>dv1_281</td></tr>
   <tr><td>DocOwner</td><td>Bill</td></tr>
-  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_280_Claude_Source.html</td></tr>
+  <tr><td>DocPath</td><td>GitHub.com/TothBot/TothBot_V2-Docs/05XXXXX_System_Architecture/0500000_System_Architecture_Overview_dv1_281_Claude_Source.html</td></tr>
   <tr><td>DocDate</td><td>06-20-2026</td></tr>
-  <tr><td>DocTime</td><td>06:30:00 UTC</td></tr>
+  <tr><td>DocTime</td><td>16:00:00 UTC</td></tr>
 </table>
 <p class="format-note">
 <strong>HTML CANONICAL FORMAT — ALL 10 DIAGRAMS INLINE.</strong> This is the
@@ -7733,7 +7733,7 @@ prefix taxonomy:
   standing rule, this triadic encoding is the architectural
   basis for paper-trading data validity for live operation.
 </pre>
-<h2>13. Open Items — Require Specification Documents</h2>
+<h2>13. Perpetual-Futures (Perps) Hedge Organism — GRADUATED Architecture (TB00807)</h2>
 <p>
 13.1 Perpetual-Futures (Perps) Expansion — Bitnomial Venue (TB00796; diagram-first design GO)
 </p>
@@ -7746,8 +7746,8 @@ TB00000 sec 7 the parallel Long_Module / Short_Module framework already admits f
 trading modules; the perps expansion re-activates the dormant Short_Module on a venue whose
 fee structure makes systematic shorts viable. This section records the locked scope decisions
 and the confirm-first specification gate; the formal namespace and parameter registrations
-are DEFERRED to the per-element siting slices that follow, each its own clean non-breaking
-slice.
+are GRADUATED in the TB00807 siting slices and the §13.10 figure, with the seed values minted in
+TB00000 sec 8 (v2_103).
 </p>
 <pre>
   PERPS EXPANSION — LOCKED SCOPE DECISIONS (TB00796; design HOWs resolved up front)
@@ -7822,11 +7822,11 @@ slice.
     Paper-first. Perps live go-live is a Bill gate (mirror of spot F4). The spot organism
     F3 observation continues unchanged in the background.
 
-  NAMESPACE / PARAMETER REGISTRATION — DEFERRED TO THE SITING SLICES
-    No new namespace token or CIATS seed is minted in this scope-anchor slice. The formal
-    registrations — the Bitnomial venue container, the perps connection-architecture node,
-    and the perps CIATS seeds (contract fee, funding, margin) — are introduced at the
-    per-element siting slices that follow.
+  NAMESPACE / PARAMETER REGISTRATION — GRADUATED (TB00807)
+    The namespace tokens and CIATS seeds are GRADUATED: the Bitnomial venue container, the
+    perps pools, the hedge controls, and the perps CIATS seeds (contract fee, funding, margin,
+    hedge weight, breaker config) are sited in the §13.10 figure and their starting VALUES are
+    minted in TB00000 sec 8 (v2_103).
 </pre>
 <pre>
   CONFIRM-FIRST SPECIFICATION GATE — researched in TB00799 (5 of 6 answered from public sources)
@@ -7987,8 +7987,8 @@ the LONG side; the machine stays Long/Short-CAPABLE. There is no symmetric-mecha
     Stop:   WIDE — layer:L2 = decision_atr_stop_mult x ATR-14 daily, placed ABOVE
             entry (short side), synthesized client-side per §13.3.
     Exit:   TRAILING-or-TARGET — the survivors trail / target, not a pure reversal.
-    All short entry-filter / regime / trailing magnitudes are PROPOSED CIATS seeds,
-    registered at the perps parameter-siting slice; the sacred 1:1.5 floor untouched.
+    All short entry-filter / regime / trailing magnitudes are REGISTERED CIATS seeds
+    (TB00000 sec 8, v2_103); the sacred 1:1.5 floor untouched.
 </pre>
 <pre>
   EQUAL DETAIL — Bill&#x27;s standing directive (NOT a symmetric-mechanics rule)
@@ -8002,7 +8002,7 @@ the LONG side; the machine stays Long/Short-CAPABLE. There is no symmetric-mecha
   mechanism blocks above are built to satisfy.
 </pre>
 <p>
-13.5 Funding / Margin Model — Bitnomial Perps (design intent; pre-spec, gated on the §13.1 confirm-first items)
+13.5 Funding / Margin Model — Bitnomial Perps (GRADUATED; gated on the §13.1 confirm-first live-readiness items)
 </p>
 <p>
 The perps organism is a CFTC FCM account: margin and funding settle INSIDE the Bitnomial clearing
@@ -8097,39 +8097,39 @@ parameter-siting slice.
     NOT in funding, margin, or sizing.
 </pre>
 <p>
-13.6 Proposed Perp CIATS Parameter Registry — Named-as-Proposed Across §13.1–§13.5 (pre-spec; NOT yet minted in TB00000 sec 8)
+13.6 Perp CIATS Parameter Registry — Registered in TB00000 sec 8 (GRADUATED, TB00807)
 </p>
 <p>
 This slice CONSOLIDATES every perp parameter NAMED as proposed across §13.1–§13.5 (plus the §13.8–§13.9 hedge controls) into one place, so
-that the formal registration is a SINGLE clean graduation step once the six §13.1 confirm-first items
-clear. NOTHING here is minted yet — TB00000 v2_102 is UNCHANGED, no perp seed lands in TB00000 sec 8 or
-the §13.4 mechanism figures at this slice. Per the TB00000 sec 4 binary architecture test a parameter&#x27;s
+that the registration reads in one place. These seeds are now MINTED — TB00000 v2_103 sec 8 carries the
+perp seed starting values (the TB00807 graduation); the §13.4 mechanism figures and the §13.10 figure
+reference them as live architecture. Per the TB00000 sec 4 binary architecture test a parameter&#x27;s
 EXISTENCE and CIATS-ownership is architecture (it belongs in the diagram), while only its numeric
-STARTING VALUE is a sec 8 registry entry; this registry names the proposed perp parameters and defers
-both the value and the formal mint to graduation. EXCHANGE-SET inputs and engineering constants are
+STARTING VALUE is a sec 8 registry entry; this registry registers the perp parameters; their starting
+values are minted in TB00000 sec 8 (v2_103). EXCHANGE-SET inputs and engineering constants are
 listed too, but explicitly marked NOT seeds. The LONG and SHORT parameter sets are enumerated to EQUAL
-DETAIL — the SHORT side mints NEW proposed seeds because its mechanism is new (§13.4), while the LONG
+DETAIL — the SHORT side mints NEW seeds because its mechanism is new (§13.4), while the LONG
 side mints NONE because it REUSES the already-registered validated 24h-decision seeds; both full sets are
 shown here.
 </p>
 <pre>
-  PROPOSED PERP SEEDS — SHORT SIDE (the revived mechanism; from §13.4; all PROPOSED, none minted)
+  REGISTERED PERP SEEDS — SHORT SIDE (the revived mechanism; from §13.4; minted in TB00000 sec 8 v2_103)
 
-  perp_short_entry_meanrev   PROPOSED. The mean-reversion entry band for the perps short
+  perp_short_entry_meanrev   REGISTERED (TB00000 sec 8). The mean-reversion entry band for the perps short
                              (the TB00794 short survivors are mean-reversion + filtered,
                              NOT breakout). Starting value derived from TB00794 + refined
                              from paper. Analogue of the spot rsi_short_low/high (70/50,
                              TB00000 sec 8) but a DIFFERENT mechanism (mean-reversion, not SSS).
-  perp_short_regime_filter   PROPOSED. The regime set in which the perps short is ENABLED
+  perp_short_regime_filter   REGISTERED (TB00000 sec 8). The regime set in which the perps short is ENABLED
                              (short only in the regimes where TB00794 showed it survives).
                              Starting set derived from TB00794 regime split; refined from paper.
-  perp_short_exit_trail      PROPOSED. The trailing-or-target exit magnitude for the perps
+  perp_short_exit_trail      REGISTERED (TB00000 sec 8). The trailing-or-target exit magnitude for the perps
                              short (§13.4 SHORT exit = trail / target, NOT a pure reversal).
                              Starting value from TB00794; refined from paper. The wide
                              layer:L2 stop REUSES decision_atr_stop_mult (no new stop seed).
 </pre>
 <pre>
-  PROPOSED PERP SEEDS — LONG SIDE (carries the validated spot edge; from §13.4; REUSES existing, mints NONE)
+  REGISTERED PERP SEEDS — LONG SIDE (carries the validated spot edge; from §13.4; REUSES existing, mints NONE)
 
   decision_ema_fast = 12     EXISTING registered seed (TB00000 sec 8) — REUSED unchanged: the
   decision_ema_slow = 26     24h EMA bullish-cross family IS the perps long entry (§13.4 LONG).
@@ -8141,9 +8141,9 @@ shown here.
                              (§13.5), raised per product onto whole contracts. NO new long seed.
 </pre>
 <pre>
-  PROPOSED PERP SEEDS — VENUE / EXECUTION (both sides; from §13.1 / §13.3; route-aware after TB00798)
+  REGISTERED PERP SEEDS — VENUE / EXECUTION (both sides; from §13.1 / §13.3; route-aware after TB00798)
 
-  perp_fee_per_contract      PROPOSED — ROUTE-DEPENDENT (TB00798 / TB00799). On the PRIMARY
+  perp_fee_per_contract      REGISTERED (TB00000 sec 8) — ROUTE-DEPENDENT (TB00798 / TB00799). On the PRIMARY
                              §13.1 Kraken-Pro route the fee is the KRAKEN maker / taker schedule
                              (re-verify at code time — NOT the flat Bitnomial-direct rate). On
                              the §13.2 DIRECT-Bitnomial FALLBACK route it is the flat
@@ -8152,7 +8152,7 @@ shown here.
                              exchange-published rate, REGISTERED + CIATS-monitored for tier
                              divergence, folding into perp net_loss + the sacred 1:1.5 R:R floor.
                              The short-revival FEE lever (TB00794) holds on both routes.
-  perp_exit_cross_ticks      PROPOSED — DIRECT-BITNOMIAL FALLBACK ONLY (§13.3). N, the number of
+  perp_exit_cross_ticks      REGISTERED (fallback-route only) — DIRECT-BITNOMIAL FALLBACK ONLY (§13.3). N, the number of
                              ticks the synthetic-exit marketable limit prices THROUGH the book to
                              maximise fill probability; bounded by the §13.1 item-3 tick / lot.
                              Used ONLY on the §13.2 / §13.3 fallback synthesis path — the PRIMARY
@@ -8165,9 +8165,9 @@ shown here.
                              polling&#x22; mitigation). Fallback path only.
 </pre>
 <pre>
-  PROPOSED PERP SEEDS — HEDGE CONTROLS (TB00806; both perp pools; all PROPOSED, CIATS-owned)
+  REGISTERED PERP SEEDS — HEDGE CONTROLS (TB00806; both perp pools; minted in TB00000 sec 8 v2_103, CIATS-owned)
 
-  perp_short_hedge_weight    PROPOSED (§13.8). The allocation-frontier short-sizing knob —
+  perp_short_hedge_weight    REGISTERED (TB00000 sec 8; §13.8). The allocation-frontier short-sizing knob —
                              HOW MUCH Short-Perp capital to run as a hedge. A LIGHT weight
                              (e.g. ~90 / 5 / 5 Long-Spot / Long-Perp / Short-Perp) keeps
                              ~100% of long-only Calmar while buying tail insurance; heavier
@@ -8175,7 +8175,7 @@ shown here.
                              hedge is sized as INSURANCE, NOT as a co-equal profit center.
                              CIATS-owned (the A6 frontier), NOT a hand-set Bill knob.
   perp_funding_divergence_monitor
-                             PROPOSED (§13.9). The sustained-adverse-funding monitor — ONE new
+                             REGISTERED (TB00000 sec 8; §13.9). The sustained-adverse-funding monitor — ONE new
                              instance of the live EwmaMonitor (the fee_tier_divergence
                              machinery, ciats/ewma_monitor.py) + one threshold seed. SIGNALS-
                              ONLY (TB00000 D5: monitors / alerts, never self-adjusts — routes
@@ -8183,7 +8183,7 @@ shown here.
                              Covers the §13.8 B2 sensitivity (a thin short edge erased by
                              sustained hard-adverse funding); alerts on a sharp sustained flip.
                              Folds into the tier-divergence monitor above as a sibling instance.
-  perp_short_breaker_config  PROPOSED (§13.9). The per-module hedge-breaker config — the
+  perp_short_breaker_config  REGISTERED (TB00000 sec 8; §13.9). The per-module hedge-breaker config — the
                              Short-Perp module&#x27;s PAUSE = rolling-window 10% (exogenous
                              re-arm) / HALT = frozen-deposit 20% (ruin floor). NOT a new gate:
                              it is evaluate_risk_guard&#x27;s EXISTING override params
@@ -8212,13 +8212,13 @@ shown here.
   tick / lot / contract multiplier   EXCHANGE-SET (§13.1 item 3) — the quantization basis for
                              §13.5 whole-contract sizing, not a TothBot tunable.
 
-  REGISTRATION DISCIPLINE — deferred to graduation (equal detail, both sides):
-  Nothing above is minted now; TB00000 v2_102 stays unchanged. When the six §13.1 confirm items
-  clear and Section 13 GRADUATES out of Open Items into a formal numbered section + figure, each
-  PROPOSED seed lands formally in TB00000 sec 8 (value + class + per-module scope) and its
-  provenance appends to 0521001 (the §4.6 externalization discipline). Until then the perp seeds
-  are PROPOSED only. The SHORT side contributes the new proposed seeds (new mechanism); the LONG
-  side contributes none (it reuses the validated registered seeds) — both sets shown to EQUAL DETAIL.
+  REGISTRATION DISCIPLINE — GRADUATED (TB00807; equal detail, both sides):
+  These seeds are MINTED in TB00000 sec 8 (v2_103) — value + class + per-module scope — and this
+  provenance appends to 0521001 (the §4.6 externalization discipline). Section 13 is now a graduated
+  numbered architecture section with the §13.10 figure (R1). The SHORT side contributes the new seeds
+  (new mechanism); the LONG side contributes none (it reuses the validated registered seeds) — both
+  sets shown to EQUAL DETAIL. The one residual item (retail derivatives subaccount availability,
+  §13.1 / §13.7) gates real-money go-live, not the architecture; the organism STAYS IN PAPER.
 </pre>
 <p>
 13.7 Wallet / Isolation Model — Three Separately-Funded Pools (TB00798; Long Spot / Long Perp / Short Perp)
@@ -8472,6 +8472,334 @@ module&#x22;. The sacred 1:1.5 R:R floor and the frozen-deposit ruin HALT are un
   The deployed spot LONG is UNAFFECTED by either control: it already takes all its trades
   with 0 pauses and identical PnL under any breaker config — its breaker simply never fires.
 </pre>
+<p>
+13.10 Perps Hedge Organism — Structural Diagram (GRADUATED; TB00798 access / TB00806 mechanics)
+</p>
+<p>
+This is the structural diagram for the perps organism described in §13.1–§13.9: the Kraken-Pro / Bitnomial
+venue, the three separately-funded ring-fenced pools (§13.7), the isolated-margin loss cap (§13.7,
+VALIDATED-structural by TB00806 battery C), the both-sides hedge relationship (§13.8, drawdown / regime
+insurance), and the two hedge controls (§13.9, the funding-divergence monitor + the per-module breaker)
+plus the allocation-frontier sizing knob (§13.8). Per the TB00807 graduation this figure is LIVE architecture — every element is a canonical R1 element and
+its starting VALUES are minted in TB00000 sec 8 (v2_103). The one residual live-readiness item (retail
+derivatives subaccount availability, §13.1 / §13.7) gates real-money go-live, not the architecture. The
+sacred 1:1.5 R:R floor is NEVER lowered; the perps organism STAYS IN PAPER.
+</p>
+<figure class="diagram">
+  <div class="diagram-svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1080"
+     font-family="Arial, Helvetica, sans-serif" font-size="12">
+  <title>0500000_Image10_T2_R1_Perps_Hedge_Organism</title>
+  <desc>
+    diagram_canonical: 0500000_Image10_T2_R1_Perps_Hedge_Organism
+    tier: 2
+    parent_dcn: 0500000
+    parent_diagram: 0500000_Context_T1_System_Context
+    schema_version: 1.0
+    status: GRADUATED (TB00807; TB00798 access decision + TB00806 mechanics validation; §13.1–§13.10).
+            Canonical perps architecture — seed starting VALUES registered in TB00000 sec 8 (v2_103).
+    CURRENT R: R1.
+    governs: container:Perps_Venue_Kraken_Pro, mod:Long_Spot_Pool, mod:Long_Perp_Pool,
+            mod:Short_Perp_Pool, rule:Perp_Isolated_Margin_Loss_Cap, rule:Perp_Hedge_Drawdown_Insurance,
+            rule:No_Same_Instrument_Collision, mod:Perp_Funding_Divergence_Monitor,
+            param:perp_short_breaker_config, param:perp_short_hedge_weight
+    sacred_constraints: rule:Sacred_R_R_1_to_1_5 (NEVER lowered; sets exit prices on both sides)
+  </desc>
+  <defs>
+    <marker id="perp_arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="1080" fill="#ffffff"/>
+
+  <g id="perp_title_bar" class="decoration">
+    <rect x="20" y="20" width="1460" height="60" fill="#1a2942" rx="4"/>
+    <text x="750" y="51" fill="#ffffff" font-size="20" font-weight="700"
+          text-anchor="middle">DIAGRAM 10 — Perps Hedge Organism (three-pool wallet + hedge controls) — R1</text>
+    <text x="750" y="72" fill="#cbd5e1" font-size="11" text-anchor="middle">
+      0500000_Image10_T2_R1_Perps_Hedge_Organism  |  schema_version: 1.0  |  parent: 0500000_Context_T1_System_Context  |  CURRENT R: R1
+    </text>
+  </g>
+
+  <g id="perp_status_banner" class="decoration">
+    <rect x="20" y="92" width="1460" height="28" fill="#dcfce7" stroke="#15803d" stroke-width="1.5" rx="4"/>
+    <text x="750" y="111" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">GRADUATED (TB00807) — canonical perps architecture; seed values registered in TB00000 sec 8 (v2_103). STAY IN PAPER. Sacred 1:1.5 R:R never lowered.</text>
+  </g>
+
+  <!-- VENUE -->
+  <g id="perp_venue" class="tier-2">
+    <title>container:Perps_Venue_Kraken_Pro</title>
+    <desc>
+      canonical: container:Perps_Venue_Kraken_Pro
+      tier: 2
+      status: GRADUATED (TB00807) (TB00798 ACCESS MODE)
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: rule:Sacred_R_R_1_to_1_5; §13.1 confirm-first gate (live connectivity does not cross it)
+      q1_do: the US-perps trading venue — the KRAKEN-PRO route over Bitnomial (one Payward stack; Bitnomial holds the CFTC DCM + DCO + FCM trifecta). USD-margined / USD cash-settled; NATIVE order types (Limit / Market / Stop-Loss / Take-Profit / Trailing-Stop); flat ~$0.07-0.10/contract maker==taker on the direct-Bitnomial fallback, the Kraken maker/taker schedule on the primary route (§13.6, re-verify at code time); 8h funding folded into Variation Margin; HMAC-SHA256 signing mirrors the existing Kraken signer. The direct-Bitnomial limit-only protocol is the documented §13.2/§13.3 FALLBACK.
+      q4_triggers: triggers perp market-data + execution flow into the three pools below; gated live by the §13.1 confirm-first items (esp. retail derivatives subaccount availability)
+      q5_logs: connection / auth / order events log via mod:Logger at INFO; auth failure CRITICAL with SMTP alert (mirrors the §2 Kraken discipline)
+      consumes: none (external venue)
+      produces: perp OHLC / mark feed, fills, funding-rate pull, isolated-margin liquidation events
+      schema_version: 1.0
+    </desc>
+    <rect x="40" y="130" width="1420" height="64" fill="#ede9fe" stroke="#6d28d9" stroke-width="2" rx="6"/>
+    <text x="750" y="155" font-size="14" font-weight="700" fill="#4c1d95" text-anchor="middle">VENUE (GRADUATED) — Kraken-Pro / Bitnomial US-Perps (DCM + DCO + FCM, one Payward stack)</text>
+    <text x="750" y="178" font-size="11" fill="#5b21b6" text-anchor="middle">USD-margined • native Stop / TP / Trailing order types • ~$0.07-0.10/contract • 8h funding into Variation Margin • HMAC mirrors Kraken • direct-Bitnomial limit-only = §13.2/§13.3 FALLBACK</text>
+  </g>
+  <line x1="750" y1="194" x2="750" y2="214" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#perp_arrow)"/>
+
+  <!-- POOL 1 LONG SPOT -->
+  <g id="perp_pool_long_spot" class="tier-2">
+    <title>mod:Long_Spot_Pool</title>
+    <desc>
+      canonical: mod:Long_Spot_Pool
+      tier: 2
+      status: GRADUATED (TB00807) label for the EXISTING live-in-paper spot organism as Pool 1 (not a new module; re-stated here as the first ring-fenced pool)
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: TB00000 sec 7 parallel module; physically isolated full Kraken account
+      q1_do: Pool 1 of the §13.7 three-pool model — the existing spot Long organism in its OWN full Kraken account (Kraken permits multiple full accounts; conflicting strategies / separating margin are named legitimate uses). Physically isolated from the perps stack (a different account entirely). Carries the validated 24h-decision long edge (§13.4 LONG; the profit engine per §13.8).
+      q4_triggers: trades the spot long strategy on its own wallet; its existing 5%/10% frozen-baseline breaker is UNAFFECTED by the perps hedge controls (§13.9)
+      q5_logs: existing spot logging path (unchanged)
+      consumes: spot OHLC_5m / 24h decision clock
+      produces: contract:CIATS_Trade_Outcome_Bus records (side=LONG)
+      schema_version: 1.0
+    </desc>
+    <rect x="40" y="216" width="450" height="186" fill="#dcfce7" stroke="#15803d" stroke-width="2" rx="6"/>
+    <text x="265" y="241" font-size="13" font-weight="700" fill="#14532d" text-anchor="middle">POOL 1 — LONG SPOT (existing)</text>
+    <text x="265" y="263" font-size="10" fill="#166534" text-anchor="middle">Own FULL Kraken account (physical isolation)</text>
+    <text x="265" y="281" font-size="10" fill="#166534" text-anchor="middle">Validated 24h-decision long edge (§13.4)</text>
+    <text x="265" y="299" font-size="10" fill="#166534" text-anchor="middle">THE PROFIT ENGINE (§13.8)</text>
+    <text x="265" y="323" font-size="10" font-weight="700" fill="#14532d" text-anchor="middle">own balance / margin / keys / halts</text>
+    <text x="265" y="345" font-size="10" fill="#166534" text-anchor="middle">Existing 5% PAUSE / 10% HALT breaker</text>
+    <text x="265" y="363" font-size="10" fill="#166534" text-anchor="middle">(frozen deposit baseline) — UNAFFECTED</text>
+    <text x="265" y="387" font-size="9" font-style="italic" fill="#15803d" text-anchor="middle">status: GRADUATED — Pool 1 (existing module)</text>
+  </g>
+
+  <!-- POOL 2 LONG PERP -->
+  <g id="perp_pool_long_perp" class="tier-2">
+    <title>mod:Long_Perp_Pool</title>
+    <desc>
+      canonical: mod:Long_Perp_Pool
+      tier: 2
+      status: GRADUATED (TB00807) (the existing dormant Long-side capability re-grounded to the perps route; not a new module)
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: TB00000 sec 7 parallel module; linked derivatives subaccount; isolated margin; rule:Sacred_R_R_1_to_1_5
+      q1_do: Pool 2 — a LINKED DERIVATIVES SUBACCOUNT under the perps stack. Own balance / margin / liquidation / API keys / rate limits; one subaccount&#x27;s liquidation CANNOT reach another&#x27;s (ring-fence). Long-perp mechanism = breakout / trend + wide layer:L2 stop + reversal exit (§13.4 LONG). Leverage held LOW 2-3x (= registry leverage_cap_short band, §13.7 battery-C constraint) so isolated-margin liquidation stays a tail backstop UNDER the native stop.
+      q4_triggers: trades long-perp candidates on its own subaccount wallet; bounded by the §13.7 no-same-instrument-collision rule vs Pool 3
+      q5_logs: contract:CIATS_Trade_Outcome_Bus records (side=LONG, venue=perp); CIATS instance per pool
+      consumes: perp OHLC / mark feed from container:Perps_Venue_Kraken_Pro
+      produces: long-perp fills + isolated-margin state
+      schema_version: 1.0
+    </desc>
+    <rect x="525" y="216" width="450" height="186" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" rx="6"/>
+    <text x="750" y="241" font-size="13" font-weight="700" fill="#1e3a8a" text-anchor="middle">POOL 2 — LONG PERP (GRADUATED)</text>
+    <text x="750" y="263" font-size="10" fill="#1e40af" text-anchor="middle">Linked derivatives SUBACCOUNT (ring-fenced)</text>
+    <text x="750" y="281" font-size="10" fill="#1e40af" text-anchor="middle">Breakout / trend + wide L2 stop + reversal exit</text>
+    <text x="750" y="299" font-size="10" fill="#1e40af" text-anchor="middle">(§13.4 LONG metrics)</text>
+    <text x="750" y="323" font-size="10" font-weight="700" fill="#1e3a8a" text-anchor="middle">own balance / margin / liquidation / keys</text>
+    <text x="750" y="345" font-size="10" fill="#1e40af" text-anchor="middle">Leverage 2-3x (= leverage_cap_short band)</text>
+    <text x="750" y="363" font-size="10" fill="#1e40af" text-anchor="middle">so liquidation stays a TAIL backstop</text>
+    <text x="750" y="387" font-size="9" font-style="italic" fill="#1d4ed8" text-anchor="middle">status: GRADUATED — Short_Module sibling, long side</text>
+  </g>
+
+  <!-- POOL 3 SHORT PERP -->
+  <g id="perp_pool_short_perp" class="tier-2">
+    <title>mod:Short_Perp_Pool</title>
+    <desc>
+      canonical: mod:Short_Perp_Pool
+      tier: 2
+      status: GRADUATED (TB00807) (the existing dormant Short_Module re-grounded from the §2 spot-margin path to the perps route; NOT a new module)
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: TB00000 sec 7 parallel module; linked derivatives subaccount; isolated margin; rule:Sacred_R_R_1_to_1_5; param:perp_short_breaker_config; param:perp_short_hedge_weight
+      q1_do: Pool 3 — the EXISTING dormant Short_Module re-grounded to the perps route as a LINKED DERIVATIVES SUBACCOUNT. Own balance / margin / liquidation / keys; ring-fenced from Pool 2. Short-perp mechanism = mean-reversion / filtered + regime filter + trailing-or-target exit (§13.4 SHORT). It is an incremental, ruin-safe, MODESTLY-sized regime HEDGE (§13.8) — NOT a co-equal profit center; sized via param:perp_short_hedge_weight; governed by the recalibrated param:perp_short_breaker_config (§13.9). Leverage LOW 2-3x.
+      q4_triggers: trades short-perp candidates on its own subaccount wallet; bounded by rule:No_Same_Instrument_Collision vs Pool 2; PAUSE/HALT per param:perp_short_breaker_config
+      q5_logs: contract:CIATS_Trade_Outcome_Bus records (side=SHORT, venue=perp); CIATS instance per pool
+      consumes: perp OHLC / mark feed; funding signal from mod:Perp_Funding_Divergence_Monitor
+      produces: short-perp fills + isolated-margin state
+      schema_version: 1.0
+    </desc>
+    <rect x="1010" y="216" width="450" height="186" fill="#fee2e2" stroke="#b91c1c" stroke-width="2" rx="6"/>
+    <text x="1235" y="241" font-size="13" font-weight="700" fill="#991b1b" text-anchor="middle">POOL 3 — SHORT PERP (GRADUATED)</text>
+    <text x="1235" y="263" font-size="10" fill="#b91c1c" text-anchor="middle">Linked derivatives SUBACCOUNT (ring-fenced)</text>
+    <text x="1235" y="281" font-size="10" fill="#b91c1c" text-anchor="middle">Mean-reversion / filtered + regime + trail/target</text>
+    <text x="1235" y="299" font-size="10" fill="#b91c1c" text-anchor="middle">(§13.4 SHORT metrics) = Short_Module re-grounded</text>
+    <text x="1235" y="323" font-size="10" font-weight="700" fill="#991b1b" text-anchor="middle">own balance / margin / liquidation / keys</text>
+    <text x="1235" y="345" font-size="10" fill="#b91c1c" text-anchor="middle">RUIN-SAFE MODEST HEDGE (§13.8) — not a</text>
+    <text x="1235" y="363" font-size="10" fill="#b91c1c" text-anchor="middle">profit center; sized by perp_short_hedge_weight</text>
+    <text x="1235" y="387" font-size="9" font-style="italic" fill="#b91c1c" text-anchor="middle">status: GRADUATED — Short_Module re-grounded</text>
+  </g>
+
+  <line x1="265" y1="402" x2="265" y2="426" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#perp_arrow)"/>
+  <line x1="750" y1="402" x2="750" y2="426" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#perp_arrow)"/>
+  <line x1="1235" y1="402" x2="1235" y2="426" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#perp_arrow)"/>
+
+  <!-- ISOLATED-MARGIN LOSS CAP -->
+  <g id="perp_loss_cap" class="tier-2">
+    <title>rule:Perp_Isolated_Margin_Loss_Cap</title>
+    <desc>
+      canonical: rule:Perp_Isolated_Margin_Loss_Cap
+      tier: 2
+      status: GRADUATED (TB00807) — VALIDATED-structural by TB00806 battery C (7/7)
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: each pool ISOLATED margin (NOT cross); sits UNDER native L2/L3 stops; rule:Sacred_R_R_1_to_1_5
+      q1_do: the crash-proof loss cap — each perp pool runs ISOLATED margin; the EXCHANGE liquidates a position when its posted margin is exhausted, so the realized POOL loss is bounded by the posted margin BY CONSTRUCTION, EXCHANGE-resident, firing whether or not TothBot is alive. TB00806 battery C (7/7) VALIDATED this as STRUCTURAL even on a 50%+ gap-through (the overflow is the exchange insurance fund&#x27;s, not the pool&#x27;s); the three pools are BYTE-isolated (zero contagion = the ring-fence). It sits UNDER the native L2/L3 stops (the ordinary 1:1.5-floor exit) and catches only the TAIL.
+      q4_triggers: fires on isolated-margin exhaustion as the tail backstop; kept a backstop (not the primary exit) by the 2-3x leverage band
+      q5_logs: liquidation events log via mod:Logger; CIATS observes frequency
+      consumes: per-position isolated margin state from the three pools
+      produces: bounded-loss guarantee per pool (the §13.1 First-Principles loss cap)
+      schema_version: 1.0
+    </desc>
+    <rect x="40" y="428" width="1420" height="80" fill="#fef9c3" stroke="#a16207" stroke-width="2" rx="6"/>
+    <text x="750" y="453" font-size="13" font-weight="700" fill="#854d0e" text-anchor="middle">ISOLATED-MARGIN LOSS CAP (GRADUATED) — exchange-resident liquidation UNDER the native L2/L3 stops</text>
+    <text x="750" y="475" font-size="10" fill="#854d0e" text-anchor="middle">VALIDATED STRUCTURAL — TB00806 battery C 7/7: realized pool loss bounded by posted margin BY CONSTRUCTION even on a 50%+ gap-through; three pools BYTE-isolated = zero contagion</text>
+    <text x="750" y="495" font-size="10" fill="#854d0e" text-anchor="middle">Fires whether or not TothBot is alive • catches only the TAIL • the sacred 1:1.5 R:R floor sets the ordinary exit prices and is NEVER lowered</text>
+  </g>
+  <line x1="750" y1="508" x2="750" y2="528" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#perp_arrow)"/>
+
+  <!-- HEDGE RELATIONSHIP -->
+  <g id="perp_hedge_relationship" class="tier-2">
+    <title>rule:Perp_Hedge_Drawdown_Insurance</title>
+    <desc>
+      canonical: rule:Perp_Hedge_Drawdown_Insurance
+      tier: 2
+      status: GRADUATED (TB00807) — characterised by TB00806 battery A (7/8)
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: hedge sized modestly via param:perp_short_hedge_weight; rule:Sacred_R_R_1_to_1_5
+      q1_do: the both-sides hedge relationship — Long (Pool 1 spot + Pool 2 long-perp) vs Short (Pool 3 short-perp). TB00806 battery A: at equal capital the combined book cuts maxDD ~50%; Long vs Short monthly PnL anti-correlated (~0 in bear); worst month ~halved; maxDD lower in 6/6 walk-forward eras. HONEST: the combined full-sample Calmar does NOT beat the pure spot long — the hedge is DRAWDOWN / REGIME INSURANCE, not a return improver; the win shows up in the WORST PHASE (the halving-cycle hedge). Long = profit engine; short = incremental ruin-safe modest hedge.
+      q4_triggers: realised continuously as the two sides trade; size is the param:perp_short_hedge_weight allocation-frontier call
+      q5_logs: CIATS observes combined drawdown / anti-correlation via the trade-outcome corpus
+      consumes: trade outcomes from Pools 1/2 (long) and Pool 3 (short)
+      produces: the drawdown-insurance property (tail / regime protection)
+      schema_version: 1.0
+    </desc>
+    <rect x="40" y="530" width="1420" height="76" fill="#cffafe" stroke="#0e7490" stroke-width="2" rx="6"/>
+    <text x="750" y="555" font-size="13" font-weight="700" fill="#155e75" text-anchor="middle">HEDGE RELATIONSHIP (GRADUATED) — LONG (Pool 1 + Pool 2) vs SHORT (Pool 3): DRAWDOWN / REGIME INSURANCE, not a return improver</text>
+    <text x="750" y="577" font-size="10" fill="#155e75" text-anchor="middle">TB00806 battery A: equal-capital maxDD ~halved • anti-correlated (~0 bear) • lower maxDD 6/6 eras • HONEST: combined Calmar does NOT beat the pure spot long</text>
+    <text x="750" y="595" font-size="10" fill="#155e75" text-anchor="middle">Long = profit engine • Short = incremental ruin-safe MODEST hedge • the win lands in the WORST PHASE (the halving-cycle hedge)</text>
+  </g>
+
+  <!-- COLLISION RULE -->
+  <g id="perp_collision_rule" class="tier-2">
+    <title>rule:No_Same_Instrument_Collision</title>
+    <desc>
+      canonical: rule:No_Same_Instrument_Collision
+      tier: 2
+      status: GRADUATED (TB00807) — TB00798 §13.7 CIATS rule
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: binds Pool 2 + Pool 3 CIATS identically (symmetric)
+      q1_do: NO same-instrument long+short open at once across Pool 2 (long perp) and Pool 3 (short perp) — a simultaneous LONG and SHORT on the SAME base_symbol would NET inside one futures engine, defeating the ring-fence and wasting margin. Different instruments on opposite sides are fine; only the SAME base_symbol is blocked. TB00806 battery A found the rule is FREE (+5.6% — it removes trades fighting an open opposite position). Symmetric by construction (binds both perp CIATS identically).
+      q4_triggers: checked at perp entry on both pools; blocks a colliding same-instrument open
+      q5_logs: a blocked collision logs via mod:Logger; CIATS observes
+      consumes: open-position state of both perp pools
+      produces: ring-fence integrity (no netting across pools)
+      schema_version: 1.0
+    </desc>
+    <rect x="40" y="622" width="1420" height="44" fill="#f1f5f9" stroke="#475569" stroke-width="1.5" rx="6"/>
+    <text x="750" y="640" font-size="12" font-weight="700" fill="#334155" text-anchor="middle">CIATS RULE (GRADUATED) — No same-instrument long+short collision across Pool 2 / Pool 3</text>
+    <text x="750" y="657" font-size="10" fill="#475569" text-anchor="middle">same base_symbol blocked (would net in one engine) • different instruments OK • symmetric • FREE (+5.6%, removes self-fighting trades) — TB00806 battery A</text>
+  </g>
+
+  <!-- HEDGE CONTROLS HEADER -->
+  <g id="perp_controls_hdr" class="decoration">
+    <rect x="40" y="684" width="1420" height="30" fill="#713f12" rx="4"/>
+    <text x="750" y="704" fill="#ffffff" font-size="13" font-weight="700" text-anchor="middle">HEDGE CONTROLS (GRADUATED; CIATS-owned) — reuse existing machinery, NO new gate / NO new module (§13.9)</text>
+  </g>
+
+  <!-- FUNDING MONITOR -->
+  <g id="perp_funding_monitor" class="tier-2">
+    <title>mod:Perp_Funding_Divergence_Monitor</title>
+    <desc>
+      canonical: mod:Perp_Funding_Divergence_Monitor
+      tier: 2
+      status: GRADUATED (TB00807) — reuses the live mod:CIATS_EWMA_Monitor
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: SIGNALS-ONLY (TB00000 D5: monitors / alerts, never self-adjusts; cannot deadlock)
+      q1_do: the §13.9 sustained-adverse-funding monitor — ONE new instance of the live EwmaMonitor (the exact fee_tier_divergence machinery, ciats/ewma_monitor.py) plus one threshold seed. Covers the §13.8 battery-B sensitivity (a thin ~2.5% short edge erased by SUSTAINED hard-adverse funding, break-even ~0.13%/day). SIGNALS-ONLY (D5) — routes to the CIATS PDCA cycle + Bill HR-CI-011, never self-adjusts, so it CANNOT deadlock; verified to fire at the sustained_n count on a pinned-adverse regime and stay silent on real funding.
+      q4_triggers: evaluates funding on the perp clock; alerts on a sharp sustained funding flip; routes to CIATS PDCA
+      q5_logs: divergence alerts log via mod:Logger; CIATS observes
+      consumes: 8h funding-rate pull from container:Perps_Venue_Kraken_Pro
+      produces: a sustained-adverse-funding alert signal (to Pool 3 + CIATS)
+      schema_version: 1.0
+    </desc>
+    <rect x="40" y="724" width="450" height="150" fill="#fae8ff" stroke="#a21caf" stroke-width="2" rx="6"/>
+    <text x="265" y="748" font-size="12" font-weight="700" fill="#86198f" text-anchor="middle">FUNDING MONITOR (GRADUATED)</text>
+    <text x="265" y="770" font-size="10" fill="#a21caf" text-anchor="middle">One new EwmaMonitor instance</text>
+    <text x="265" y="788" font-size="10" fill="#a21caf" text-anchor="middle">(reuses fee_tier_divergence machinery)</text>
+    <text x="265" y="810" font-size="10" fill="#a21caf" text-anchor="middle">SIGNALS-ONLY (D5) — cannot deadlock</text>
+    <text x="265" y="828" font-size="10" fill="#a21caf" text-anchor="middle">covers §13.8 B2 (sustained-adverse</text>
+    <text x="265" y="846" font-size="10" fill="#a21caf" text-anchor="middle">funding break-even ~0.13%/day)</text>
+    <text x="265" y="866" font-size="9" font-style="italic" fill="#a21caf" text-anchor="middle">routes to CIATS PDCA + Bill HR-CI-011</text>
+  </g>
+
+  <!-- BREAKER CONFIG -->
+  <g id="perp_breaker_config" class="tier-2">
+    <title>param:perp_short_breaker_config</title>
+    <desc>
+      canonical: param:perp_short_breaker_config
+      tier: 2
+      status: GRADUATED (TB00807) — per-module override of the existing evaluate_risk_guard params
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: NOT a new gate — reuses G7 evaluate_risk_guard override params; frozen-deposit ruin HALT + rule:Sacred_R_R_1_to_1_5 untouched
+      q1_do: the §13.9 per-module hedge-breaker config for Pool 3. The live 5% frozen-baseline session-PAUSE STRANGLES a thin-edge hedge (the run: 90/1007 trades, 917 pauses); a hedge sits at a drawdown-from-deposit BY DESIGN and a paused hedge cannot self-equity-recover (the TB00804 DEADLOCK LAW — resume must be EXOGENOUS). FIX: keep the HALT on the FROZEN deposit (ruin floor) but move the PAUSE to a rolling-window EXOGENOUS re-arm. RECALIBRATION: PAUSE = rolling-window 10% / HALT = frozen-deposit 20%. Implemented ENTIRELY through evaluate_risk_guard&#x27;s EXISTING override params (baseline-source + the two thresholds) — NO new gate code. Tested through the LIVE gate: the hedge DEPLOYS + stays ruin-safe (HALT never trips) + flips -$304 to +$1353.
+      q4_triggers: evaluated in G7 per Pool 3 candidate; PAUSE on rolling-window cross, HALT on frozen-deposit cross
+      q5_logs: PAUSE / HALT dispositions log via the existing G7 evt:G7_DRAWDOWN_HALT path
+      consumes: Pool 3 rolling-window drawdown + frozen-deposit baseline
+      produces: per-module PAUSE / HALT disposition (deadlock-safe, ruin-safe)
+      schema_version: 1.0
+    </desc>
+    <rect x="525" y="724" width="450" height="150" fill="#ffedd5" stroke="#c2410c" stroke-width="2" rx="6"/>
+    <text x="750" y="748" font-size="12" font-weight="700" fill="#9a3412" text-anchor="middle">PER-MODULE BREAKER (GRADUATED)</text>
+    <text x="750" y="770" font-size="10" fill="#c2410c" text-anchor="middle">PAUSE = rolling-window 10% (exogenous re-arm)</text>
+    <text x="750" y="788" font-size="10" fill="#c2410c" text-anchor="middle">HALT = frozen-deposit 20% (ruin floor)</text>
+    <text x="750" y="810" font-size="10" fill="#c2410c" text-anchor="middle">via evaluate_risk_guard EXISTING override</text>
+    <text x="750" y="828" font-size="10" fill="#c2410c" text-anchor="middle">params — NO new gate (§13.9)</text>
+    <text x="750" y="848" font-size="10" fill="#c2410c" text-anchor="middle">deadlock-safe (TB00804 law) • ruin-safe</text>
+    <text x="750" y="866" font-size="9" font-style="italic" fill="#c2410c" text-anchor="middle">hedge deploys; flips -$304 to +$1353</text>
+  </g>
+
+  <!-- HEDGE WEIGHT -->
+  <g id="perp_hedge_weight" class="tier-2">
+    <title>param:perp_short_hedge_weight</title>
+    <desc>
+      canonical: param:perp_short_hedge_weight
+      tier: 2
+      status: GRADUATED (TB00807) — the A6 allocation-frontier sizing knob; CIATS-owned
+      parent_diagram: 0500000_Context_T1_System_Context
+      constraints: CIATS-owned (NOT a hand-set Bill knob); hedge sized as INSURANCE not a profit center
+      q1_do: the §13.8 allocation-frontier short-sizing knob — HOW MUCH Pool 3 capital to run as a hedge. A LIGHT weight (e.g. ~90/5/5 Long-Spot / Long-Perp / Short-Perp) keeps ~100% of long-only Calmar while buying the tail insurance; heavier short weight buys more drawdown protection at a Calmar cost. CIATS-owned (the A6 frontier), NOT a hand-set Bill knob. At an equal $5000/module split the deployed hedge cuts whole-account bear-phase drawdown only ~2% — HOW MUCH protection to buy is this sizing call.
+      q4_triggers: sets Pool 3 wallet allocation; CIATS tunes on the allocation frontier
+      q5_logs: allocation changes recorded; CIATS PDCA
+      consumes: combined-book drawdown / Calmar frontier from the trade corpus
+      produces: the Pool 3 hedge size (modest by design)
+      schema_version: 1.0
+    </desc>
+    <rect x="1010" y="724" width="450" height="150" fill="#e0e7ff" stroke="#4338ca" stroke-width="2" rx="6"/>
+    <text x="1235" y="748" font-size="12" font-weight="700" fill="#3730a3" text-anchor="middle">HEDGE SIZING (GRADUATED)</text>
+    <text x="1235" y="770" font-size="10" fill="#4338ca" text-anchor="middle">param:perp_short_hedge_weight</text>
+    <text x="1235" y="788" font-size="10" fill="#4338ca" text-anchor="middle">A6 allocation frontier — CIATS-owned</text>
+    <text x="1235" y="810" font-size="10" fill="#4338ca" text-anchor="middle">light ~90/5/5 keeps ~100% long-only Calmar</text>
+    <text x="1235" y="828" font-size="10" fill="#4338ca" text-anchor="middle">heavier = more protection at a Calmar cost</text>
+    <text x="1235" y="848" font-size="10" fill="#4338ca" text-anchor="middle">sized as INSURANCE, not a profit center</text>
+    <text x="1235" y="866" font-size="9" font-style="italic" fill="#4338ca" text-anchor="middle">HOW MUCH = the CIATS / Bill sizing call</text>
+  </g>
+
+  <g id="perp_footer" class="decoration">
+    <rect x="20" y="900" width="1460" height="150" fill="#1a2942" rx="4"/>
+    <text x="40" y="928" fill="#ffffff" font-size="13" font-weight="700">Perps Hedge Organism — design notes (GRADUATED, TB00807)</text>
+    <text x="40" y="952" fill="#cbd5e1" font-size="10">REGISTERED — every element is canonical graduated architecture; the seed starting VALUES are minted in TB00000 sec 8 (v2_103). TB00807 graduation.</text>
+    <text x="40" y="974" fill="#cbd5e1" font-size="10">NO NEW MODULE / NO NEW GATE — the perps short is the existing dormant Short_Module re-grounded; the breaker reuses G7 evaluate_risk_guard override params; the funding monitor reuses the live EwmaMonitor (§13.9 part-vs-whole law).</text>
+    <text x="40" y="996" fill="#cbd5e1" font-size="10">HONEST FRAMING — the LONG is the profit engine; the perp SHORT is an incremental, ruin-safe, modestly-sized regime HEDGE, not a co-equal profit center (§13.8).</text>
+    <text x="40" y="1018" fill="#cbd5e1" font-size="10">ONE OPEN ITEM gates live: whether US-Bitnomial retail derivatives SUBACCOUNTS exist (§13.1 / §13.7); if not, the §13.7 one-futures-wallet + CIATS-ledger fallback applies. Real margin specs pinned at code time.</text>
+    <text x="40" y="1040" fill="#fde68a" font-size="10" font-weight="700">SACRED 1:1.5 R:R FLOOR — NEVER lowered. STAY IN PAPER (spot and perps).</text>
+  </g>
+</svg>
+  </div>
+  <figcaption>
+    Image10 Perps Hedge Organism (R1). CURRENT R: R1. GRADUATED architecture (TB00807; TB00798 access + TB00806 mechanics; §13.1–§13.10); seed values registered in TB00000 sec 8 (v2_103). STAY IN PAPER.<br>
+  </figcaption>
+</figure>
 <h2>14. Revision History</h2>
 <p>The complete revision history of this document has been relocated, verbatim and complete, to the archive instance document 0521001_System_Architecture_Overview_Revision_History (under sub-domain anchor 0520000_System_Architecture_History_Anchor). The live design diagram carries only this pointer; see 0521001 for the full revision record.</p>
 <h2>END OF DOCUMENT</h2>
